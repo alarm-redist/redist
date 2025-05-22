@@ -114,6 +114,61 @@ inline int mat_index_from_pair(int i, int j, int row_length){
     return i * row_length + j;
 }
 
+
+// template class for a hashmap 
+// Hashes pairs (x,y) where 0 <= x < y < num_elements to the
+// values of type U
+// under the hood just implements as vector of size num_elements choose 2
+template <typename T, typename U> class DistinctPairHash{
+    public:
+        DistinctPairHash(int const num_elements, U const default_value):
+        num_elements(num_elements),
+        default_value(default_value),
+        values((num_elements*(num_elements-1))/2, default_value),
+        hashed((num_elements*(num_elements-1))/2, false){
+            if(num_elements < 2) throw Rcpp::exception("Pair hash must have at least 2 elements!\n");
+        }
+
+        
+        int const num_elements;
+        U const default_value;
+        std::vector<U> values;
+        std::vector<bool> hashed;
+
+        // resets the hash map to blank state
+        void reset(){
+            std::fill(
+                values.begin(),
+                values.end(),
+                default_value
+            );
+            std::fill(
+                hashed.begin(),
+                hashed.end(),
+                false
+            );
+        }
+        
+        // Custom operator() that returns the index of the pair (x, y)
+        size_t pair_hash(T const x, T const y) const{
+            return ((x * (2 * num_elements - x - 1)) / 2 ) + (y - x - 1);
+        }
+
+        // methods for accessing 
+        // constant read only
+        const U operator()(T const x, T const y) const {
+            // Mapping (x, y) with x < y to the index in a flattened upper triangular matrix
+            return values[pair_hash(x, y)];
+        }
+        // allows for modification 
+        U& operator()(T const x, T const y) {
+            // Mapping (x, y) with x < y to the index in a flattened upper triangular matrix
+            return values[pair_hash(x, y)];
+        }
+
+};
+
+
 /*
  * Initialize empty multigraph structure on graph with `V` vertices
  */
@@ -310,7 +365,8 @@ std::string splitting_method_to_str(SplittingMethodType splitting_method);
 enum class SplittingSizeScheduleType : unsigned char
 {
     DistrictOnly,
-    AnyValidSize,
+    AnyValidSizeSMD,
+    AnyValidSizeMMD,
     OneCustomSize,
     PureMergeSplitSize,
     CustomSizes

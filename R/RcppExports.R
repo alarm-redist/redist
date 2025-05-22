@@ -372,44 +372,6 @@ var_info_vec <- function(m, ref, pop) {
     .Call(`_gredist_var_info_vec`, m, ref, pop)
 }
 
-#' Computes the effective sample size from log incremental weights
-#'
-#' Takes a vector of log incremental weights and computes the effective sample
-#' size which is the sum of the weights squared divided by the sum of squared
-#' weights
-#'
-#'
-#' @title Compute Effective Sample Size
-#'
-#' @param log_wgt vector of log incremental weights
-#'
-#' @details No modifications to inputs made
-#'
-#' @return sum of weights squared over sum of squared weights (sum(wgt)^2 / sum(wgt^2))
-#'
-NULL
-
-#'
-#' Current supported options are
-#'     - uniform - Every pair has equal probability
-#'     - district_pair - double district pairs have weight 1000, one district is 10,
-#'         and two multidistricts have 1/(1+sum of their dvals)
-#'
-#' @title Get Sampler over Adj Regions List
-#'
-#' @param plan A plan object
-#' @param adj_pairs_and_boundary_lens A vector where each pair is 
-#' (adj region1, adj region2, boundary length between 2 regions)
-#' @param selection_type A string controlling the function to use
-#' in assigning the unnormalized weight to each pair
-#'
-#' @details No modifications to inputs made
-#'
-#' @return A sampler where index i has probability proportional to the weight 
-#' given to that pair 
-#'
-NULL
-
 sample_ust <- function(l, pop, lower, upper, counties, ignore) {
     .Call(`_gredist_sample_ust`, l, pop, lower, upper, counties, ignore)
 }

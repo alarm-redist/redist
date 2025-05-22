@@ -57,6 +57,7 @@ Rcpp::NumericVector compute_log_unnormalized_plan_target_density(
         // check number of counties is valid and no double county intersect region components
         // if too many then log(target) = -Inf
         if(!hiearhically_valid){
+            // REprintf("Invalid!\n");
             log_unnormalized_density[i] = -arma::math::inf();
         }else{
             log_unnormalized_density[i] = 0.0;

@@ -110,10 +110,10 @@ void DistrictOnlySplittingSchedule::set_potential_cut_sizes_for_each_valid_size(
 }
 
 
-AnyRegionSplittingSchedule::AnyRegionSplittingSchedule(
+AnyRegionSMDSplittingSchedule::AnyRegionSMDSplittingSchedule(
     const int num_splits, const int ndists
 ):
-    SplittingSchedule(SplittingSizeScheduleType::AnyValidSize, ndists){
+    SplittingSchedule(SplittingSizeScheduleType::AnyValidSizeSMD, ndists){
     // If doing any sizes then for `region_size` the possible split sizes are always 
     // if any sizes allowed then for 2, ..., ndists make it 1,...,floor(size/2)
     for (int region_size = 2; region_size <= ndists; region_size++)
@@ -133,9 +133,7 @@ AnyRegionSplittingSchedule::AnyRegionSplittingSchedule(
 }
 
 
-
-
-void AnyRegionSplittingSchedule::set_potential_cut_sizes_for_each_valid_size(
+void AnyRegionSMDSplittingSchedule::set_potential_cut_sizes_for_each_valid_size(
     int split_num, int presplit_num_regions
 ){
     // The biggest size a region can be is if all but one region is a district
@@ -169,6 +167,48 @@ void AnyRegionSplittingSchedule::set_potential_cut_sizes_for_each_valid_size(
     return;
 }
 
+
+
+AnyRegionMMDSplittingSchedule::AnyRegionMMDSplittingSchedule(
+            const int num_splits, const int ndists,
+            const int total_seats,
+            const int district_size_lb, const int district_size_ub
+):
+    SplittingSchedule(SplittingSizeScheduleType::AnyValidSizeMMD, ndists),
+    total_seats(total_seats){
+    // make sure the district size bounds are ok 
+    if(district_size_lb < 1) throw Rcpp::exception("The smallest possible district size must be at least 1!\n");
+    if(district_size_ub >= total_seats) throw Rcpp::exception("The largest possible district size must be less than total number of seats!\n");
+
+    // If doing any sizes then for `region_size` the possible split sizes are always 
+    // if any sizes allowed then for 2, ..., ndists make it 1,...,floor(size/2)
+    for (int region_size = 2; region_size <= ndists; region_size++)
+    {
+        // Get the lrgest smaller cut size we'll try which is the
+        // floor of the size of region over 2
+        int smaller_cut_size_max = std::floor(region_size / 2);
+        all_regions_smaller_cut_sizes_to_try[region_size].resize(smaller_cut_size_max);
+        // Now makes the entry for region size go 1,...smaller_cut_size_max
+        std::iota(
+            all_regions_smaller_cut_sizes_to_try[region_size].begin(), 
+            all_regions_smaller_cut_sizes_to_try[region_size].end(), 
+            1);
+        // smallest possible cut size is 1 and biggest is region_size-1
+        all_regions_min_and_max_possible_cut_sizes[region_size] = {1, region_size-1};
+    }
+
+    // Iterate over each possible multidistrict size and set the cut sizes to try and min and max
+    for (int region_size = district_size_lb; region_size <= total_seats; region_size++){
+        // largest possible smaller size is floor of half 
+        int smaller_cut_size_max = std::floor(region_size / 2);
+        all_regions_smaller_cut_sizes_to_try[region_size].reserve(smaller_cut_size_max);
+        for (int smaller_cut_size = district_size_lb; smaller_cut_size <= smaller_cut_size_max; smaller_cut_size++)
+        {
+            // check if 
+        }
+        
+    }
+}
 
 
 PureMSSplittingSchedule::PureMSSplittingSchedule(
@@ -329,8 +369,8 @@ std::unique_ptr<SplittingSchedule> get_splitting_schedule(
 ){
     if(schedule_type == SplittingSizeScheduleType::DistrictOnly){
         return std::make_unique<DistrictOnlySplittingSchedule>(num_splits, ndists);
-    }else if(schedule_type == SplittingSizeScheduleType::AnyValidSize){
-        return std::make_unique<AnyRegionSplittingSchedule>(num_splits, ndists);
+    }else if(schedule_type == SplittingSizeScheduleType::AnyValidSizeSMD){
+        return std::make_unique<AnyRegionSMDSplittingSchedule>(num_splits, ndists);
     }else if(schedule_type == SplittingSizeScheduleType::OneCustomSize){
         return std::make_unique<OneCustomSplitSchedule>(num_splits, ndists, control);
     }else if(schedule_type == SplittingSizeScheduleType::CustomSizes){

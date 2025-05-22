@@ -14,7 +14,7 @@
 #' (if relevant) and the procuct over regions of the regions compactness and
 #' its score
 #'
-#' @inheritParams generic_redist_gsmc
+#' @inheritParams redist_gsmc
 #' @param plans Either a `redist_plans` object or a matrix or vector of plan labels
 #' @param num_threads The number of threads used for computing
 #' the target densities.
@@ -34,20 +34,19 @@ compute_log_target_density <- function(
         num_threads = 0, pop_temper = 0L
         ){
 
-    if (inherits(data, "redist_plans")){
+    if (inherits(plans, "redist_plans")){
         plan_matrix <- get_plans_matrix(plans)
+        ndists <- attr(plans, "ndists")
     }else if(is.vector(plans)){
         plan_matrix <- as.matrix(plans, cols = 1)
+        ndists <- dplyr::n_distinct(plan_matrix[,1])
     }else if(is.matrix(plans)){
         plan_matrix <- plans
+        ndists <- dplyr::n_distinct(plan_matrix[,1])
     }else{
         cli::cli_abort("{.arg plans} must be a matrix or {.cls redist_plans} type!")
     }
-    ndists <- attr(map, "ndists")
-    # if its just a single plan make it a matrix
-    if(is.vector(plan_matrix)){
-        plan_matrix <- as.matrix(plan_matrix, cols = 1)
-    }
+
     # if sizes matrix is null then assume all regions are the same size
     if(is.null(sizes_matrix)){
         sizes_matrix <- matrix(1L, nrow = ndists, ncol = ncol(plan_matrix))
@@ -101,7 +100,7 @@ compute_log_target_density <- function(
 #' that if the target measure has a plan-wide component then the sum of the log
 #' densities over regions is not neccesarily equal to the log density of an entire plan.
 #'
-#' @inheritParams generic_redist_gsmc
+#' @inheritParams redist_gsmc
 #' @param num_threads The number of threads used for computing
 #' the target densities.
 #' @param plan_matrix A matrix of 1-indexed plans
@@ -120,15 +119,15 @@ compute_log_target_density_by_region <- function(
         constraints = list(),
         num_threads = 0, pop_temper = 0L
 ){
-    ndists <- attr(map, "ndists")
-
-    if (inherits(data, "redist_plans")){
+    if (inherits(plans, "redist_plans")){
         plan_matrix <- get_plans_matrix(plans)
+        ndists <- attr(plans, "ndists")
     }else if(is.vector(plans)){
-        # if its just a single plan make it a matrix
         plan_matrix <- as.matrix(plans, cols = 1)
+        ndists <- dplyr::n_distinct(plan_matrix[,1])
     }else if(is.matrix(plans)){
         plan_matrix <- plans
+        ndists <- dplyr::n_distinct(plan_matrix[,1])
     }else{
         cli::cli_abort("{.arg plans} must be a matrix or {.cls redist_plans} type!")
     }
@@ -194,7 +193,7 @@ compute_log_target_density_by_region <- function(
 #' This function draws samples from a specific target measure controlled by
 #' the `map` parameters.
 #'
-#' @inheritParams generic_redist_gsmc
+#' @inheritParams redist_gsmc
 #' @param num_threads The number of threads used for computing
 #' the target densities.
 #' @param plan_matrix A matrix of 1-indexed plans

@@ -90,22 +90,44 @@ class DistrictOnlySplittingSchedule : public SplittingSchedule {
 
 
 /* 
- * Derived Class for any region split schedule (full gsmc)
+ * Derived Class for any region split schedule (full gsmc) for single member districts
  * This is the splitting schedule for which allows for any size splits
  * to be made (where both split regions have to have at least size 1)
  */
-class AnyRegionSplittingSchedule : public SplittingSchedule {
+class AnyRegionSMDSplittingSchedule : public SplittingSchedule {
 
     public:
         // constructor
-        AnyRegionSplittingSchedule(
+        AnyRegionSMDSplittingSchedule(
             const int num_splits, const int ndists
         );
-        // this does nothing and should not be called
+        
         void set_potential_cut_sizes_for_each_valid_size(
             int split_num, int presplit_num_regions) override;    
 };
 
+
+
+/* 
+ * Derived Class for any region split schedule for multi-member districts
+ * This is the splitting schedule for which allows for any size splits
+ * to be made (where both split regions have to have at least size district_size_lb)
+ */
+class AnyRegionMMDSplittingSchedule : public SplittingSchedule {
+
+    public:
+        // constructor
+        AnyRegionMMDSplittingSchedule(
+            const int num_splits, const int ndists,
+            const int total_seats,
+            const int district_size_lb, const int district_size_ub
+        );
+
+        int const total_seats;
+        
+        // void set_potential_cut_sizes_for_each_valid_size(
+        //     int split_num, int presplit_num_regions) override;    
+};
 
 
 /* 

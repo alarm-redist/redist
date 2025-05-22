@@ -2,7 +2,7 @@
 % Please edit documentation in R/redist_gsmc.R
 \name{redist_gsmc}
 \alias{redist_gsmc}
-\title{gSMC Redistricting Sampler (O'Sullivan, McCartan and Imai ???)}
+\title{Generalized SMCS Redistricting Sampler (O'Sullivan, McCartan and Imai ???)}
 \usage{
 redist_gsmc(
   map,
@@ -11,15 +11,14 @@ redist_gsmc(
   compactness = 1,
   constraints = list(),
   runs = 1L,
-  num_splitting_steps = NULL,
-  estimate_cut_k = TRUE,
-  manual_k_params = NULL,
-  adapt_k_thresh = 0.9999,
   split_district_only = FALSE,
   weight_type = "optimal",
-  ms_freq = 0,
-  ms_steps_multiplier = 1L,
-  run_ms = 0 < ms_freq && ms_freq <= attr(map, "ndists"),
+  sampling_space = gredist:::GRAPH_PLAN_SPACE_SAMPLING,
+  splitting_method = gredist:::NAIVE_K_SPLITTING,
+  splitting_params = list(adapt_k_thresh = 0.99),
+  ms_frequency = 0L,
+  ms_moves_multiplier = 1,
+  run_ms = 0 < ms_frequency && ms_frequency <= attr(map, "ndists"),
   merge_prob_type = "uniform",
   resample = TRUE,
   num_processes = 0L,
@@ -29,10 +28,15 @@ redist_gsmc(
   init_region_ids_mat = NULL,
   init_region_sizes_mat = NULL,
   custom_size_split_list = NULL,
+  num_splitting_steps = NULL,
   ref_name = NULL,
+  truncate = (compactness != 1),
+  trunc_fn = redist_quantile_trunc,
   verbose = FALSE,
   silent = FALSE,
-  diagnostic_mode = FALSE
+  diagnostic_level = 0,
+  counties_q = NULL,
+  use_counties_q = F
 )
 }
 \arguments{
@@ -65,37 +69,65 @@ standard errors. Output will only be shown for the first run. For
 compatibility with MCMC methods, runs are identified with the \code{chain}
 column in the output.}
 
-\item{num_splitting_steps}{How many steps to run the SMC algorithm for.
-Each step splits off a new district. Defaults to all remaining districts.
-If fewer than the number of remaining splits, reference plans are disabled.}
-
-\item{manual_k_params}{Either a single value to use as the splitting parameter for
-every round or a vector of length num_splitting_steps-1 where each value is the one to use for
-a split.}
-
 \item{split_district_only}{Whether or not to split plans by splitting off one
 district at a time.}
 
 \item{weight_type}{The type of SMC weights to use. Optimal weights typically
-have lower variance but can be more computationally expensive, especially for
-complex constraints or when sampling on the space of spanning forests.}
+have lower variance and lead to faster convergence but can be more
+computationally expensive, especially for computationally complex constraints.}
+
+\item{sampling_space}{The space to sample the plans on. This does not affect
+the plans output by the function but the sample space used can have a large
+impact on computational cost/runtime and convergence. Current spaces supported
+right now are
+\itemize{
+\item graph_plan_space : graph partition space
+\item spanning_forest_space : spanning forest space
+\item linking_edge_space : linking edge forest space
+}}
+
+\item{splitting_method}{The method used for splitting spanning trees in the
+sampling process. When sampling on the space of graph partitions it must be
+the naive top k method but any method is allowed for forest space sampling.}
+
+\item{splitting_params}{A list of parameters associated with the splitting
+method passed in. Specific parameters depends on the splitting types}
+
+\item{ms_frequency}{How often to run merge steps. Should either be an integer
+(meaning run after every _ smc steps) or a vector of 1 indexed step numbers
+indicating which smc steps to run merge split. A value of -1 means just run
+after all smc steps have been run.}
+
+\item{ms_moves_multiplier}{Multiplier to the baseline number of mergesplit
+moves to be performed each step. For a mergesplit step the baseline number of
+moves is calculated as the ceiling of 1 over the previous mergesplit steps
+acceptance rate (or smc step if no prior mergesplit steps were done). The
+total number of moves is \code{ceiling(ms_moves_multiplier * baseline_num_moves)}.}
+
+\item{run_ms}{Whether to run any merge split steps or not. If set to \code{FALSE}
+then any other merge split inputs will be ignored.}
+
+\item{merge_prob_type}{What probability to use to select regions to merge
+in the mergesplit kernel. Defaults to giving all pairs equal probability.}
 
 \item{resample}{Whether to perform a final resampling step so that the
 generated plans can be used immediately.  Set this to \code{FALSE} to
 perform direct importance sampling estimates, or to adjust the weights
 manually.}
 
-\item{num_processes}{The number of processes (independent instances of R to
-spawn) spawned to simulate the plans. The processes can execute runs in parallel}
+\item{num_processes}{The number of processes (independent instances of R)
+spawned to simulate the plans. The processes execute runs in parallel, each
+using \code{num_threads_per_process} threads. If more than one process is used, the
+sampler output will not be fully reproducible with \code{set.seed()}. If full
+reproducibility is desired, set \code{num_processes=1}.}
 
 \item{num_threads_per_process}{The number of threads assigned to each process.
 This is the number of threads used when performing a specific run. If simulations
 are memory constrained it can be better to lower the number of processes and increase
 the threads per process.}
 
-\item{multiprocess}{Whether or not to launch multiple processes (sometimes
-better to disable to avoid using too much memory. NOTE: Non multiprocessing
-appears to introduce validation bugs right now)}
+\item{multiprocess}{Whether or not to launch multiple processes. If performance
+is memory constrained it is better to disable multiprocessing.}
 
 \item{pop_temper}{The strength of the automatic population tempering. Try
 values of 0.01-0.05 to start if the algorithm gets stuck on the final few
@@ -113,9 +145,22 @@ columns and at least as many rows as the number of regions in the
 \code{init_region_ids_mat} and each column must sum to the number of seats in the
 map.}
 
+\item{num_splitting_steps}{How many steps to run the SMC algorithm for.
+Each step splits off a new district. Defaults to all remaining districts.
+If fewer than the number of remaining splits, reference plans are disabled.}
+
 \item{ref_name}{a name for the existing plan, which will be added as a
 reference plan, or \code{FALSE} to not include the initial plan in the
 output. Defaults to the column name of the existing plan.}
+
+\item{truncate}{Whether to truncate the importance sampling weights at the
+final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.
+Truncation only applied if \code{resample=TRUE}.}
+
+\item{trunc_fn}{A function which takes in a vector of weights and returns a
+truncated vector. If the \link[loo:loo]{loo} package is installed (strongly
+recommended), will default to Pareto-smoothed Importance Sampling (PSIS)
+rather than naive truncation.}
 
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}
@@ -127,12 +172,30 @@ Recommended.}
 plans.
 }
 \description{
-\code{redist_gsmc} uses a Sequential Monte Carlo algorithm (O'Sullivan, McCartan and Imai ???)
-to generate representative samples of congressional or legislative
-redistricting plans according to contiguity, population, compactness, and
-administrative boundary constraints.
+\code{redist_gsmc} uses a Sequential Monte Carlo Sampler algorithm
+(O'Sullivan, McCartan and Imai ???) to generate representative samples of
+congressional or legislative redistricting plans according to
+contiguity, population, compactness, and administrative boundary constraints.
 }
 \details{
 This function draws samples from a specific target measure controlled by
-the \code{map} parameters.
+the \code{map}, \code{compactness}, and \code{constraints} parameters.
+
+Key to ensuring good performance is monitoring the efficiency of the resampling
+process at each SMC stage.  Unless \code{silent=FALSE}, this function will print
+out the effective sample size of each resampling step to allow the user to
+monitor the efficiency.  If \code{verbose=TRUE} the function will also print
+out information on any relevant splitting values chosen and the
+acceptance rate (based on the population constraint) at each step.
+Users should also check diagnostics of the sample by running
+\code{summary.redist_plans()}.
+
+Higher values of \code{compactness} sample more compact districts;
+setting this parameter to 1 is computationally efficient and generates nicely
+compact districts.  Values of other than 1 may lead to highly variable
+importance sampling weights.  In these cases, these weights are by default
+truncated using \code{\link[=redist_quantile_trunc]{redist_quantile_trunc()}} to stabilize the resulting
+estimates, but if truncation is used, a specific truncation function should
+probably be chosen by the user.
 }
+\concept{simulate}

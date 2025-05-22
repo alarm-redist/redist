@@ -7,6 +7,9 @@
 
 #include "gredist_types.h"
 
+
+
+
 /*
  * Convert zero-indxed R adjacency list to Graph object (vector of vectors of ints).
  */
@@ -278,7 +281,9 @@ SplittingSizeScheduleType get_splitting_size_regime(std::string const &splitting
     if(splitting_size_regime_str == "split_district_only"){
         return SplittingSizeScheduleType::DistrictOnly;
     }else if(splitting_size_regime_str == "any_valid_sizes"){
-        return SplittingSizeScheduleType::AnyValidSize;
+        return SplittingSizeScheduleType::AnyValidSizeSMD;
+    }else if(splitting_size_regime_str == "any_valid_sizes_mmd"){
+        return SplittingSizeScheduleType::AnyValidSizeMMD;
     }else if(splitting_size_regime_str == "one_custom_size"){
         return SplittingSizeScheduleType::OneCustomSize;
     }else if(splitting_size_regime_str == "pure_ms_size"){

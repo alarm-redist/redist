@@ -9,8 +9,10 @@
 # constructors and reconstructors
 
 # Main internal constructor
-new_redist_map <- function(data, adj, ndists, pop_bounds, pop_col = "pop",
-                           adj_col = "adj", add_adj = TRUE, existing_col = NULL) {
+new_redist_map <- function(
+        data, adj, ndists, total_seats, district_sizes,
+        pop_bounds, pop_col = "pop",
+        adj_col = "adj", add_adj = TRUE, existing_col = NULL) {
     if (add_adj) {
         stopifnot(!is.null(adj))
 
@@ -20,13 +22,24 @@ new_redist_map <- function(data, adj, ndists, pop_bounds, pop_col = "pop",
     if (!is.integer(ndists)) cli_abort("{.arg ndists} must be an integer.")
     if (!is.numeric(pop_bounds) || length(pop_bounds) != 3)
         cli_abort("{.arg pop_bounds} must be a numeric vector of length 3.")
+    if(ndists > total_seats){
+        cli::cli_abort("{.arg ndists} must be less than or equal to {.arg total_seats}")
+    }
 
     data <- reconstruct.redist_map(data)
     attr(data, "ndists") <- ndists
+    attr(data, "total_seats") <- total_seats
     attr(data, "pop_bounds") <- pop_bounds
+    attr(data, "district_sizes") <- district_sizes
     attr(data, "pop_col") <- pop_col
     attr(data, "adj_col") <- adj_col
     attr(data, "existing_col") <- existing_col
+    # set the districting scheme
+    if(assertthat::is.scalar(district_sizes) && district_sizes == 1){
+        attr(data, "districting_scheme") <- "SMD"
+    }else{
+        attr(data, "districting_scheme") <- "MMD"
+    }
 
     data
 }
@@ -53,6 +66,9 @@ validate_redist_map <- function(data, check_contig = TRUE, call = parent.frame()
 
     stopifnot(!is.null(attr(data, "pop_col")))
     stopifnot(!is.null(attr(data, "ndists")))
+    stopifnot(!is.null(attr(data, "total_seats")))
+    stopifnot(!is.null(attr(data, "district_sizes")))
+
 
     exist_col <- attr(data, "existing_col")
     if (!is.null(exist_col) && !is.numeric(data[[exist_col]]))
@@ -111,7 +127,7 @@ reconstruct.redist_map <- function(data, old) {
 #' Sets up a redistricting problem.
 #'
 #' A \code{redist_map} object is a \code{\link{tibble}} which contains an
-#' adjacency list and additional information about the number of districts and
+#' adjacency list and additional information about the number of districts, seats, and
 #' population bounds.  It supports all of the \code{dplyr} generics, and will
 #' adjust the adjacency list and attributes according to these functions; i.e.,
 #' if we \code{filter} to a subset of units, the graph will change to subset to
@@ -139,6 +155,12 @@ reconstruct.redist_map <- function(data, old) {
 #' \code{total_pop} columns, if one exists.
 #' @param ndists \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the integer number of
 #' districts to partition the map into. Must be specified if `existing_plan` is not supplied.
+#' @param total_seats \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the total number of
+#' legislative seats in the map. For single-member districting schemes this is equal to `ndists`.
+#' If not provided then defaults to `ndists`.
+#' @param district_sizes Sizes that a valid district is allowed to be. Sizes
+#' here refers to the number of seats contained in a district. For single member
+#' districting schemes this is always 1.
 #' @param pop_bounds \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} more specific
 #' population bounds, in the form of \code{c(lower, target, upper)}.
 #' @param adj the adjacency graph for the object. Defaults to being computed
@@ -159,7 +181,8 @@ reconstruct.redist_map <- function(data, old) {
 #' @export
 redist_map <- function(..., existing_plan = NULL, pop_tol = NULL,
                        total_pop = c("pop", "population", "total_pop", "POP100"),
-                       ndists = NULL, pop_bounds = NULL,
+                       ndists = NULL, total_seats = NULL, district_sizes = NULL,
+                       pop_bounds = NULL,
                        adj = NULL, adj_col = "adj", planarize = 3857) {
     x <- tibble(...)
     is_sf <- any(vapply(x, function(x) inherits(x, "sfc"), TRUE))
@@ -223,6 +246,35 @@ redist_map <- function(..., existing_plan = NULL, pop_tol = NULL,
         ndists <- as.integer(rlang::eval_tidy(rlang::enquo(ndists), x))
     }
 
+    if(is.null(total_seats)){
+        total_seats <- ndists
+    }
+    # if no district size passed throw error if MMD
+    if(is.null(district_sizes)){
+        if(ndists == total_seats){
+            district_sizes <- 1L
+        }else{
+            cli::cli_abort("Must specify {.arg district_sizes} if multi-member districting scheme is being used.")
+        }
+    }else{
+        # check the district sizes are numbers
+        if(!is.numeric(district_sizes)){
+            cli::cli_abort("{.arg district_sizes} must be integers.")
+        }
+        # check they are integers
+        if(!all(as.integer(district_sizes) == district_sizes)){
+            cli::cli_abort("{.arg district_sizes} must be integers.")
+        }
+        # check they are positive
+        if(!all(district_sizes > 0)){
+            cli::cli_abort("{.arg district_sizes} must be positive.")
+        }
+        # check its not bigger than the total number of seats
+        if(!all(district_sizes <= total_seats)){
+            cli::cli_abort("{.arg district_sizes} must all be less than the total number of seats.")
+        }
+    }
+
     pop_tol <- eval_tidy(enquo(pop_tol), x)
     if (is.null(pop_tol) && is.null(pop_bounds)) {
         if (!is.null(existing_col)) {
@@ -254,7 +306,8 @@ redist_map <- function(..., existing_plan = NULL, pop_tol = NULL,
     }
 
     validate_redist_map(
-        new_redist_map(x, adj, ndists, pop_bounds, pop_col, adj_col,
+        new_redist_map(x, adj, ndists, total_seats, district_sizes,
+                       pop_bounds, pop_col, adj_col,
             add_adj = TRUE, existing_col)
     )
 }

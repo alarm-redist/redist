@@ -11,6 +11,8 @@ redist_map(
   pop_tol = NULL,
   total_pop = c("pop", "population", "total_pop", "POP100"),
   ndists = NULL,
+  total_seats = NULL,
+  district_sizes = NULL,
   pop_bounds = NULL,
   adj = NULL,
   adj_col = "adj",
@@ -39,6 +41,14 @@ of precinct populations. Defaults to the \code{pop}, \code{population}, or
 \item{ndists}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the integer number of
 districts to partition the map into. Must be specified if \code{existing_plan} is not supplied.}
 
+\item{total_seats}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the total number of
+legislative seats in the map. For single-member districting schemes this is equal to \code{ndists}.
+If not provided then defaults to \code{ndists}.}
+
+\item{district_sizes}{Sizes that a valid district is allowed to be. Sizes
+here refers to the number of seats contained in a district. For single member
+districting schemes this is always 1.}
+
 \item{pop_bounds}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} more specific
 population bounds, in the form of \code{c(lower, target, upper)}.}
 
@@ -60,7 +70,7 @@ Sets up a redistricting problem.
 }
 \details{
 A \code{redist_map} object is a \code{\link{tibble}} which contains an
-adjacency list and additional information about the number of districts and
+adjacency list and additional information about the number of districts, seats, and
 population bounds.  It supports all of the \code{dplyr} generics, and will
 adjust the adjacency list and attributes according to these functions; i.e.,
 if we \code{filter} to a subset of units, the graph will change to subset to

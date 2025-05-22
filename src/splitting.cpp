@@ -45,7 +45,7 @@ void estimate_cut_k(
     int max_V = 0;
     Tree ust = init_tree(V);
 
-    bool any_size_split = splitting_schedule.schedule_type == SplittingSizeScheduleType::AnyValidSize;
+    bool any_size_split = splitting_schedule.schedule_type == SplittingSizeScheduleType::AnyValidSizeSMD;
     
     for (int i = 0; i < N_max && idx < N_adapt; i++, idx++) {
         if (unnormalized_weights.at(i) == 0) { // skip if not valid

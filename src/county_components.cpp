@@ -568,6 +568,7 @@ bool CountyComponents::check_is_county_component_multigraph_valid(
             // Rprintf("v=%d, parent=%d\n",current_vertex, parent);
             // if we already visited this then that means there's a cycle
             if(counties_component_adj[current_vertex]){
+                // Rprintf("v=%d, parent=%d\n",current_vertex, parent);
                 // Rprintf("Cycle!\n");
                 return false;
             } 
@@ -594,6 +595,7 @@ bool CountyComponents::check_valid_hiearchical_plan(Plan const &plan,
     if(!counties_on) return true;
     // first we check if the number of splits and connected components is ok
     std::pair<bool, int> component_results = count_county_splits(plan);
+    // REprintf("%d Splits and %d \n", component_results.second, component_results.first);
     if(component_results.first || component_results.second > num_regions-1) return false;
 
     // if thats ok then build the component tree 

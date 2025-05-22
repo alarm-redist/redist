@@ -437,8 +437,7 @@ List run_redist_gsmc(
     double pop_temper = as<double>(control["pop_temper"]);
 
 
-    // This is a total_ms_steps by nsims vector where [s][i] is the number of 
-    // successful merge splits performed for plan i on merge split round s
+
 
     // total number of steps to run 
     int total_steps = static_cast<int>(step_types.size());
@@ -472,7 +471,7 @@ List run_redist_gsmc(
     bool splitting_all_the_way = ndists == initial_num_regions + total_smc_steps;
 
     // multipler for number of merge split steps 
-    int ms_steps_multiplier = as<int>(control["ms_steps_multiplier"]);
+    double ms_steps_multiplier = as<double>(control["ms_steps_multiplier"]);
     std::string merge_prob_type = as<std::string>(control["merge_prob_type"]);
 
 
@@ -594,7 +593,7 @@ List run_redist_gsmc(
               << total_ms_steps << " merge split steps, ";
         if(splitting_size_regime == SplittingSizeScheduleType::DistrictOnly){
             Rcout << "and only performing 1-district splits.";
-        }else if(splitting_size_regime == SplittingSizeScheduleType::AnyValidSize){
+        }else if(splitting_size_regime == SplittingSizeScheduleType::AnyValidSizeSMD){
             Rcout << "and generalized region splits.";
         }else if(splitting_size_regime == SplittingSizeScheduleType::OneCustomSize){
             Rcout << "and custom size region splits.";
@@ -781,7 +780,7 @@ List run_redist_gsmc(
             // if the acceptance is zero just default to 5
             prev_acceptance_rate = prev_acceptance_rate > 0 ? prev_acceptance_rate : .1;
 
-            int nsteps_to_run = ms_steps_multiplier * std::ceil(1/prev_acceptance_rate); 
+            int nsteps_to_run = std::ceil(ms_steps_multiplier * std::ceil((1/prev_acceptance_rate))); 
             smc_diagnostics.num_merge_split_attempts_vec.at(merge_split_step_num) = nsteps_to_run;
 
             if (verbosity >= 3){
