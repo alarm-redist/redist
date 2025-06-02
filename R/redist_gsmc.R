@@ -130,6 +130,10 @@ DEBUG_MODE <- FALSE
 #' truncated vector. If the [loo][loo::loo] package is installed (strongly
 #' recommended), will default to Pareto-smoothed Importance Sampling (PSIS)
 #' rather than naive truncation.
+#' @param score_districts_only Whether or not to apply the constraints to
+#' districts only. If constraints are only applied to districts then it will
+#' likely cause a drop in efficiency in the final round. If splitting plans all
+#' the way this does not affect the final target distribution.
 #' @param verbose Whether to print out intermediate information while sampling.
 #' Recommended.
 #' @param silent Whether to suppress all diagnostic information.
@@ -163,6 +167,7 @@ redist_gsmc <- function(
         num_splitting_steps = NULL,
         ref_name = NULL,
         truncate = (compactness != 1), trunc_fn = redist_quantile_trunc,
+        score_districts_only = FALSE,
         verbose = FALSE, silent = FALSE, diagnostic_level = 0,
         counties_q = NULL, use_counties_q = F)
 {
@@ -382,6 +387,7 @@ redist_gsmc <- function(
         weight_type=weight_type,
         lags=lags,
         pop_temper = pop_temper,
+        score_districts_only = score_districts_only,
         num_threads=as.integer(num_threads_per_process),
         splitting_method = splitting_method,
         splitting_size_regime = splitting_size_regime,

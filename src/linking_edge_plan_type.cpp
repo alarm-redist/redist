@@ -191,7 +191,7 @@ void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
 
 double LinkingEdgePlan::get_log_eff_boundary_len(
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-    TreeSplitter const &tree_splitter, 
+    TreeSplitter const &tree_splitter, CountyComponents &county_components,
     const int region1_id, int const region2_id
 ) const {
     // Go through and find that pair 
@@ -207,12 +207,12 @@ double LinkingEdgePlan::get_log_eff_boundary_len(
 }
 
 
-std::vector<std::tuple<int, int, double>> LinkingEdgePlan::get_valid_adj_regions_and_eff_log_boundary_lens(
+std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_adj_regions_and_eff_log_boundary_lens(
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-    TreeSplitter const &tree_splitter,
-    std::unordered_map<std::pair<int, int>, double, bounded_hash> const &existing_pair_map
+    TreeSplitter const &tree_splitter, CountyComponents &county_components,
+    EffBoundaryMap &pair_map
 ) const{
-    std::vector<std::tuple<int, int, double>> valid_adj_region_pairs_to_boundary_map;
+    std::vector<std::tuple<RegionID, RegionID, double>> valid_adj_region_pairs_to_boundary_map;
     valid_adj_region_pairs_to_boundary_map.reserve(linking_edges.size());
 
 
@@ -237,7 +237,8 @@ std::vector<std::tuple<int, int, double>> LinkingEdgePlan::get_valid_adj_regions
 
 
 int LinkingEdgePlan::count_valid_adj_regions(
-    MapParams const &map_params, SplittingSchedule const &splitting_schedule
+    MapParams const &map_params, SplittingSchedule const &splitting_schedule,
+    CountyComponents &county_components
 ) const{
     int num_valid_pairs = 0;
     // Go through and count linking edge pairs that can be merged
@@ -257,11 +258,11 @@ int LinkingEdgePlan::count_valid_adj_regions(
 }
 
 
-std::vector<std::pair<int,int>> LinkingEdgePlan::get_valid_adj_regions(
+std::vector<std::pair<RegionID,RegionID>> LinkingEdgePlan::get_valid_adj_regions(
     MapParams const &map_params, SplittingSchedule const &splitting_schedule,
-    bool const check_split_constraint
+    CountyComponents &county_components
 ) const{
-    std::vector<std::pair<int,int>> valid_adj_region;
+    std::vector<std::pair<RegionID,RegionID>> valid_adj_region;
     valid_adj_region.reserve(linking_edges.size());
 
 

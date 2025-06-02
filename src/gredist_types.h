@@ -115,25 +115,33 @@ inline int mat_index_from_pair(int i, int j, int row_length){
 }
 
 
+
+
 // template class for a hashmap 
-// Hashes pairs (x,y) where 0 <= x < y < num_elements to the
+// Hashes pairs (x,y) where 0 <= x != y < num_elements to the
 // values of type U
 // under the hood just implements as vector of size num_elements choose 2
 template <typename T, typename U> class DistinctPairHash{
     public:
+        // actual constructor
         DistinctPairHash(int const num_elements, U const default_value):
         num_elements(num_elements),
+        num_hashed_values(0),
+        hash_table_size((num_elements*(num_elements-1))/2),
         default_value(default_value),
-        values((num_elements*(num_elements-1))/2, default_value),
-        hashed((num_elements*(num_elements-1))/2, false){
+        values(hash_table_size, default_value),
+        hashed(hash_table_size, false){
             if(num_elements < 2) throw Rcpp::exception("Pair hash must have at least 2 elements!\n");
         }
 
         
         int const num_elements;
+        int num_hashed_values;
+        int hash_table_size;
         U const default_value;
         std::vector<U> values;
         std::vector<bool> hashed;
+        std::vector<std::pair<T, T>> hashed_pairs;
 
         // resets the hash map to blank state
         void reset(){
@@ -147,27 +155,70 @@ template <typename T, typename U> class DistinctPairHash{
                 hashed.end(),
                 false
             );
+            hashed_pairs.clear();
+            num_hashed_values = 0;
         }
         
         // Custom operator() that returns the index of the pair (x, y)
-        size_t pair_hash(T const x, T const y) const{
+        size_t pair_hash(T x, T y) const{
+            // swap if y < x
+            if(y < x) std::swap(x, y);
+            int da_index = ((x * (2 * num_elements - x - 1)) / 2 ) + (y - x - 1);
+
+            if(da_index >= hash_table_size || da_index < 0){
+                REprintf("HASH ERROR: (%u, %u) has Index %d but container size is %d!\n", 
+                x,y, da_index, 
+                hash_table_size);
+                throw Rcpp::exception("HASH INDEXING ERROR!!\n");
+            }
+
             return ((x * (2 * num_elements - x - 1)) / 2 ) + (y - x - 1);
         }
 
-        // methods for accessing 
-        // constant read only
-        const U operator()(T const x, T const y) const {
-            // Mapping (x, y) with x < y to the index in a flattened upper triangular matrix
-            return values[pair_hash(x, y)];
+        // gets the value a pair is hashed to if its been hashed
+        std::pair<bool, U> get_value(T const x, T const y) const{
+            auto hash_index = pair_hash(x, y);
+            // check if we've hashed this pair or not
+            if(hashed[hash_index]){
+                return std::make_pair(true, values[hash_index]);
+            }else{
+                return std::make_pair(false, default_value);
+            }
         }
-        // allows for modification 
-        U& operator()(T const x, T const y) {
-            // Mapping (x, y) with x < y to the index in a flattened upper triangular matrix
-            return values[pair_hash(x, y)];
+
+        // sets the value for a pair 
+        void set_value(T const x, T const y, U const new_value){
+            auto hash_index = pair_hash(x, y);
+            // if not added before then increase count
+            if(!hashed[hash_index]){
+                hashed[hash_index] = true;
+                if(x < y){
+                    hashed_pairs.push_back({x,y});
+                }else{
+                    hashed_pairs.push_back({y,x});
+                }
+                ++num_hashed_values;
+            }
+            values[hash_index] = new_value;
+            return;
+        }
+
+        // adds to the value for a pair. If no value is present then just sets
+        // it to that value 
+        void add_to_value(T const x, T const y, U const value_to_add){
+            auto hash_index = pair_hash(x, y);
+            if(!hashed[hash_index]){
+                set_value(x, y, value_to_add);
+            }else{
+                set_value(x, y, values[hash_index] + value_to_add);
+            }
+            return;
         }
 
 };
 
+// alias for type hashing region pairs to their effective boundary length
+typedef DistinctPairHash<RegionID, double> EffBoundaryMap;
 
 /*
  * Initialize empty multigraph structure on graph with `V` vertices

@@ -64,61 +64,7 @@ double log_graph_boundary(const Graph &g, const arma::subview_col<arma::uword> &
     return std::log(count);
 }
 
-double new_log_graph_boundary(const Graph &g, PlanVector const &region_ids,
-                    int const region1_id, int const region2_id,
-                    int const num_counties, arma::uvec counties){
-    int V = g.size();
-    std::set<int> split_counties;
 
-    if(num_counties > 1 && false){
-        // first find the counties that are not wholly contained within either district
-        for (int v = 0; v < V; v++)
-        {
-            int v_region = region_ids[v];
-            int v_county = counties(v);
-            // ignore if not pairs 
-            if(v_region != region1_id && v_region != region2_id) continue;
-
-            for(auto const &u: g[v]){
-                int u_region = region_ids[u];
-                // ignore if not region 2
-                if(u_region == v_region){
-                    continue;
-                }
-                int u_county = counties(u);
-                // else if region splits county add it to the set 
-                if(v_county == u_county){
-                    split_counties.insert(v_county);
-                }
-            }
-        }
-    }
-    bool const check_county_boundaries = split_counties.size() > 0 && false;
-
-    double count = 0; // number of cuttable edges to create eq-pop districts
-    for (int v = 0; v < V; v++) {
-        int v_region = region_ids[v];
-        if (v_region != region1_id) continue; // Only count if starting vertex in region 1
-        for (int u : g[v]) {
-            int u_region = region_ids[u];
-            // ignore if not the right id
-            if (region_ids[u] != region2_id){
-                continue;
-            }else if( // ignore if we care about counties and this is invalid boundary split
-                check_county_boundaries &&
-                (counties(v) != counties(u)) &&
-                split_counties.count(counties(v)) > 0 &&
-                split_counties.count(counties(u)) > 0
-            ){
-                continue;
-            }
-            // otherwise, boundary with v -> u
-            count += 1.0;
-        }
-    }
-
-    return std::log(count);
-}
 
 
 /*

@@ -3,6 +3,7 @@
 #include <RcppThread.h>
 #include "smc_base.h"
 #include "tree_op.h"
+#include "county_components.h"
 
 
 #ifndef MAP_CALC_H
@@ -18,10 +19,6 @@ double log_graph_boundary(const Graph &g, const subview_col<uword> &region_ids,
                     int const region1_id, int const region2_id, 
                     int const num_counties, arma::uvec counties);
 
-
-double new_log_graph_boundary(const Graph &g, PlanVector const &region_ids,
-                    int const region1_id, int const region2_id, 
-                    int const num_counties, arma::uvec counties);
 
 
 /*

@@ -41,19 +41,20 @@ class LinkingEdgePlan : public Plan {
 
         double get_log_eff_boundary_len(
             const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-            TreeSplitter const &tree_splitter, 
+            TreeSplitter const &tree_splitter, CountyComponents &county_components,
             const int region1_id, int const region2_id
         ) const override;
 
-        std::vector<std::tuple<int, int, double>> get_valid_adj_regions_and_eff_log_boundary_lens(
+        std::vector<std::tuple<RegionID, RegionID, double>> get_valid_adj_regions_and_eff_log_boundary_lens(
             const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-            TreeSplitter const &tree_splitter,
-            std::unordered_map<std::pair<int, int>, double, bounded_hash> const &existing_pair_map = {}
+            TreeSplitter const &tree_splitter, CountyComponents &county_components,
+            EffBoundaryMap &pair_map
         ) const override;
 
         // Count the number of valid adj regions in a map
         int count_valid_adj_regions(
-            MapParams const &map_params, SplittingSchedule const &splitting_schedule
+            MapParams const &map_params, SplittingSchedule const &splitting_schedule,
+            CountyComponents &county_components
         ) const override;
 
         // For a plan and edge across two regions it returns the log probability 
@@ -64,9 +65,9 @@ class LinkingEdgePlan : public Plan {
         ) const;
 
         // Get a vector of all valid adj region pairs
-        std::vector<std::pair<int,int>> get_valid_adj_regions(
+        std::vector<std::pair<RegionID,RegionID>> get_valid_adj_regions(
             MapParams const &map_params, SplittingSchedule const &splitting_schedule,
-            bool const check_split_constraint = true
+            CountyComponents &county_components
         ) const override;
 
         std::vector<std::array<double, 3>> get_linking_edges() override{

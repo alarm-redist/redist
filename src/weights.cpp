@@ -171,69 +171,7 @@ arma::vec get_adj_pair_sampler(
 
 
 
-arma::vec get_adj_pair_unnormalized_weights(
-    Plan const &plan,
-    std::vector<std::pair<int, int>> const &valid_region_adj_pairs,
-    std::string const &selection_type
-){
-    // make a vector for the unnormalized weights 
-    arma::vec unnormalized_sampling_weights(valid_region_adj_pairs.size());
 
-    // if uniform then just make all the weights 1 over the size 
-    if(selection_type == "uniform"){
-        std::fill(
-            unnormalized_sampling_weights.begin(), 
-            unnormalized_sampling_weights.end(), 
-            static_cast<double>(valid_region_adj_pairs.size())
-            );
-    }else if(selection_type == "district_pair"){
-        // if district pair then give huge weight to pairs of districts 
-        for (size_t i = 0; i < valid_region_adj_pairs.size(); i++)
-        {
-            int region1_id = valid_region_adj_pairs[i].first;
-            int region2_id = valid_region_adj_pairs[i].second;
-            int region1_dval = plan.region_sizes[region1_id]; int region2_dval = plan.region_sizes[region2_id];
-
-            // check if both are districts
-            if(region1_dval == 1 && region2_dval == 1){
-                unnormalized_sampling_weights.at(i) = 1000.0;
-            }else if(region1_dval == 1 || region2_dval == 1){
-                // else check if at least one is a district
-                unnormalized_sampling_weights.at(i) = 10.0;
-            }else{
-                // if both multidistricts then do 1/1+(sum of two dvals)
-                // This penalizes bigger pairs 
-                unnormalized_sampling_weights.at(i) = 1/(1+ static_cast<double>(region1_dval+region2_dval));
-            }
-        }
-        
-    }else if(selection_type == "multidistrict_pair"){
-        // if multidistrict pair then give huge weight to pairs of districts 
-        for (size_t i = 0; i < valid_region_adj_pairs.size(); i++)
-        {
-            int region1_id = valid_region_adj_pairs[i].first;
-            int region2_id = valid_region_adj_pairs[i].second;
-            int region1_dval = plan.region_sizes[region1_id]; int region2_dval = plan.region_sizes[region2_id];
-
-            // check if both are districts
-            if(region1_dval == 1 && region2_dval == 1){
-                unnormalized_sampling_weights.at(i) = .5;
-            }else if(region1_dval == 1 || region2_dval == 1){
-                // else check if at least one is a district
-                unnormalized_sampling_weights.at(i) = 1.0;
-            }else{
-                // if both multidistricts then do 1/1+(sum of two dvals)
-                // This penalizes bigger pairs 
-                unnormalized_sampling_weights.at(i) = 1000.0;
-            }
-        }
-        
-    }else{
-        throw Rcpp::exception("No valid adjacent pair sampler provided!");
-    }
-    // Return weights 
-    return unnormalized_sampling_weights;
-}
 
 
 //' Returns the log of the count of the number of edges across two regions in
@@ -362,44 +300,42 @@ double compute_simple_log_incremental_weight(
     SamplingSpace const sampling_space,
     ScoringFunction const &scoring_function, double rho,
     Plan const &plan, 
-    const TreeSplitter &edge_splitter, 
+    const TreeSplitter &edge_splitter, CountyComponents &county_components,
+    EffBoundaryMap &pair_map,
     bool compute_log_splitting_prob, bool is_final_plan
 ){
     // bool for whether we'll need to compute spanning tree count
     bool compute_log_tau = rho != 1;
     // find the index of the two newly split regions 
     auto most_recent_split_regions = plan.get_most_recently_split_regions();
-    int region1_id = most_recent_split_regions.first;
-    int region2_id = most_recent_split_regions.second;
+    auto region1_id = most_recent_split_regions.first;
+    auto region2_id = most_recent_split_regions.second;
 
     if(DEBUG_WEIGHTS_VERBOSE){
         Rprintf("The two regions are %d and %d\n", region1_id, region2_id);
         Rcpp::Rcerr << std::flush;
     } 
 
+    // build the county component graph and prepare the hash map 
+    plan.prepare_adj_pair_boundary_map(
+        map_params, splitting_schedule, county_components, pair_map
+    );
+
     // compute forward and backwards kernel term 
     double log_backwards_kernel_term = 0.0; double log_forward_kernel_term = 0.0;
     double log_tau_ratio_term = 0.0;
 
     if(sampling_space == SamplingSpace::GraphSpace){
-        // Get the number of valid adjacent regions 
-        // const int num_valid_adj_region_pairs = plan.count_valid_adj_regions(
-        //     map_params, splitting_schedule
-        // );
-
-        // get region pair to effective boundary length map
-        auto region_pair_log_eff_boundary_map = plan.get_valid_adj_regions_and_eff_log_boundary_lens(
-            map_params, splitting_schedule, edge_splitter
-        );
-        // TEMP FIX
-        const int num_valid_adj_region_pairs = region_pair_log_eff_boundary_map.size();
+        // the number of valid adjacent regions is just the number of elements in the map
+        const int num_valid_adj_region_pairs = pair_map.num_hashed_values;
 
         log_backwards_kernel_term -= std::log(
             static_cast<double>(num_valid_adj_region_pairs)
         );
         // taus cancel so just add the boundary length
         log_forward_kernel_term = plan.get_log_eff_boundary_len(
-            map_params, splitting_schedule, edge_splitter, region1_id, region2_id
+            map_params, splitting_schedule, edge_splitter, county_components,
+            region1_id, region2_id
         );
         if(compute_log_tau){
             // do merged region tau if neccesary
@@ -412,7 +348,7 @@ double compute_simple_log_incremental_weight(
         double spanning_tree_sum = 0.0;
         double last_split_merge_log_tau = 0.0;
 
-        auto adj_pairs = plan.get_valid_adj_regions(map_params, splitting_schedule);
+        auto adj_pairs = plan.get_valid_adj_regions(map_params, splitting_schedule, county_components);
 
         for (auto const &region_pair : adj_pairs){
             int pair_region1_id = region_pair.first;
@@ -445,7 +381,8 @@ double compute_simple_log_incremental_weight(
         log_forward_kernel_term -= last_split_merge_log_tau;
         // tree boundary length 
         log_forward_kernel_term += plan.get_log_eff_boundary_len(
-            map_params, splitting_schedule, edge_splitter, region1_id, region2_id
+            map_params, splitting_schedule, edge_splitter, county_components,
+            region1_id, region2_id
         );
 
         if(compute_log_tau){
@@ -547,16 +484,20 @@ void compute_all_plans_simple_weights(
     std::vector<double> &unnormalized_sampling_weights,
     int verbosity
 ){
-    int M = (int) plans_ptr_vec.size();
+    int const M = (int) plans_ptr_vec.size();
+    int const num_regions = plans_ptr_vec[0]->num_regions;
+
 
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
+        CountyComponents county_components(map_params, num_regions);
+        EffBoundaryMap pair_map(num_regions, 0.0);
 
         double log_incr_weight = compute_simple_log_incremental_weight(
             map_params, splitting_schedule, sampling_space,
             scoring_function, rho,
             *plans_ptr_vec.at(i), 
-            tree_splitter,
+            tree_splitter, county_components, pair_map,
             compute_log_splitting_prob,
             is_final_plans
         );
@@ -664,7 +605,8 @@ double compute_log_optimal_weights(
     SamplingSpace const sampling_space,
     ScoringFunction const &scoring_function, double rho,
     Plan const &plan, 
-    TreeSplitter const &edge_splitter, CountyComponents const &county_components,
+    TreeSplitter const &edge_splitter, CountyComponents &county_components,
+    EffBoundaryMap &pair_map,
     bool const compute_log_splitting_prob,
     bool const is_final_plan
 ){
@@ -678,9 +620,14 @@ double compute_log_optimal_weights(
 
     if(DEBUG_WEIGHTS_VERBOSE) Rprintf("Getting Pairs!");
 
+    // build the county component graph and prepare the hash map 
+    plan.prepare_adj_pair_boundary_map(
+        map_params, splitting_schedule, county_components, pair_map
+    );
+
     // get region pair to effective boundary length map
     auto region_pair_log_eff_boundary_map = plan.get_valid_adj_regions_and_eff_log_boundary_lens(
-        map_params, splitting_schedule, edge_splitter
+        map_params, splitting_schedule, edge_splitter, county_components, pair_map
     );
 
     // get region multigraph if linked edge 
@@ -806,6 +753,9 @@ double compute_log_optimal_weights(
         REprintf("Weight=%f, log weight = %f\n", incremental_weight, extra_log_terms-std::log(incremental_weight));
     }
     
+    if (!std::isfinite(extra_log_terms-std::log(incremental_weight))) {
+        throw Rcpp::exception("log_of_sum_term is not finite!");
+    }
 
     // now return the log of the inverse of the sum
     return extra_log_terms-std::log(incremental_weight);
@@ -861,20 +811,25 @@ void compute_all_plans_log_optimal_weights(
 ){
     const int nsims = static_cast<int>(plans_ptr_vec.size());
     const int check_int = 50; // check for interrupts every _ iterations
+    const int num_regions = plans_ptr_vec[0]->num_regions;
     if(DEBUG_WEIGHTS_VERBOSE) Rprintf("About to start computing weights!");
+
+
     RcppThread::ProgressBar bar(nsims, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, nsims, [&] (int i) {
-        static thread_local CountyComponents county_components(
-            map_params, plans_ptr_vec[0]->num_regions
-        );
+        CountyComponents county_components(map_params, num_regions);
+        EffBoundaryMap pair_map(num_regions, 0.0);
+
+
         // REprintf("I=%d\n", i);
         double log_incr_weight = compute_log_optimal_weights(
             map_params, splitting_schedule, sampling_space,
             scoring_function, rho,
             *plans_ptr_vec.at(i), 
-            tree_splitter, county_components,
-            compute_log_splitting_prob,
+            tree_splitter, 
+            county_components, pair_map,
+            compute_log_splitting_prob, 
             is_final_plans
         );
 
@@ -890,7 +845,6 @@ void compute_all_plans_log_optimal_weights(
 
     // Wait for all the threads to finish
     pool.wait();
-
 
     return;
 }

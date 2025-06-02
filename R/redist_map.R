@@ -66,6 +66,12 @@ validate_redist_map <- function(data, check_contig = TRUE, call = parent.frame()
 
     stopifnot(!is.null(attr(data, "pop_col")))
     stopifnot(!is.null(attr(data, "ndists")))
+    if(is.null(attr(data, "total_seats"))){
+        attr(data, "total_seats") <- attr(data, "ndists")
+    }
+    if(is.null(attr(data, "district_sizes"))){
+        attr(data, "district_sizes") <- 1L
+    }
     stopifnot(!is.null(attr(data, "total_seats")))
     stopifnot(!is.null(attr(data, "district_sizes")))
 

@@ -274,6 +274,7 @@ arma::vec compute_plans_log_optimal_weights(
         static thread_local std::vector<int> pair_eff_bounary_counts(
             (num_regions*(num_regions-1))/2, -1
         );
+        static thread_local EffBoundaryMap pair_map(num_regions, 0.0);
         std::fill(
             pair_eff_bounary_counts.begin(),
             pair_eff_bounary_counts.end(),
@@ -294,12 +295,12 @@ arma::vec compute_plans_log_optimal_weights(
                     i);
                 throw Rcpp::exception("Plan has at least one region intersect county with more than 1 connected component!\n");
             }
-            county_components.build_component_graph_and_tree(plan_ensemble.plan_ptr_vec[i]->region_ids);
+            county_components.build_component_graph(plan_ensemble.plan_ptr_vec[i]->region_ids);
         }
 
-        auto adj_pairs_ignoring_county = plan_ensemble.plan_ptr_vec[i]->get_or_count_valid_adj_regions_ignore_counties(
-                map_params, *splitting_schedule_ptr, false
-                ).second;
+        auto adj_pairs_ignoring_county = plan_ensemble.plan_ptr_vec[i]->get_or_count_valid_adj_regions(
+                map_params, *splitting_schedule_ptr, county_components, false
+        ).second;
         REprintf("Size intially was %u\n", adj_pairs_ignoring_county.size());
         REprintf("Adjacent regions: ");
         for(auto const &a_pair: adj_pairs_ignoring_county){
@@ -354,7 +355,7 @@ arma::vec compute_plans_log_optimal_weights(
             map_params, *splitting_schedule_ptr, sampling_space,
             scoring_function, rho,
             *plan_ensemble.plan_ptr_vec[i], 
-            tree_splitter, county_components,
+            tree_splitter, county_components, pair_map,
             false,
             is_final
         );

@@ -23,16 +23,16 @@ public:
     ) override;
 
 
-    std::vector<std::tuple<int, int, double>> get_valid_adj_regions_and_eff_log_boundary_lens(
+    std::vector<std::tuple<RegionID, RegionID, double>> get_valid_adj_regions_and_eff_log_boundary_lens(
         const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-        TreeSplitter const &tree_splitter,
-        std::unordered_map<std::pair<int, int>, double, bounded_hash> const &existing_pair_map = {}
+        TreeSplitter const &tree_splitter, CountyComponents &county_components,
+        EffBoundaryMap &pair_map
     ) const override;
 
 
     double get_log_eff_boundary_len(
         const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-        TreeSplitter const &tree_splitter, 
+        TreeSplitter const &tree_splitter, CountyComponents &county_components,
         const int region1_id, int const region2_id
     ) const override;
 };

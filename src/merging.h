@@ -25,6 +25,12 @@
 
 
 
+arma::vec get_adj_pair_unnormalized_weights(
+    Plan const &plan,
+    std::vector<std::pair<RegionID, RegionID>> const &valid_region_adj_pairs,
+    std::string const &selection_type
+);
+
 
 std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     MapParams const &map_params, const SplittingSchedule &splitting_schedule,
@@ -32,8 +38,10 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     RNGState &rng_state, SamplingSpace const sampling_space,
     Plan &plan, Plan &new_plan,
     USTSampler &ust_sampler, TreeSplitter const &tree_splitter,
+    CountyComponents &current_county_components,
+    CountyComponents &proposed_county_components,
     std::string const merge_prob_type, bool save_edge_selection_prob,
-    std::vector<std::pair<int,int>> &adj_region_pairs,
+    std::vector<std::pair<RegionID, RegionID>> &adj_region_pairs,
     arma::vec &unnormalized_pair_wgts,
     double const rho, bool const is_final
 );
@@ -44,6 +52,8 @@ int run_merge_split_steps(
     RNGState &rng_state, SamplingSpace const sampling_space,
     Plan &plan, Plan &dummy_plan,
     USTSampler &ust_sampler, TreeSplitter const &tree_splitter,
+    CountyComponents &current_county_components,
+    CountyComponents &proposed_county_components,
     std::string const merge_prob_type,
     double const rho, bool const is_final, 
     int num_steps_to_run,

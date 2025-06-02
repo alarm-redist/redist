@@ -22,6 +22,7 @@
 #include "map_calc.h"
 #include "ust_sampler.h"
 #include "graph_ops.h"
+#include "county_components.h"
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
@@ -48,6 +49,10 @@ struct bounded_hash {
 };
 
 class USTSampler;
+class CountyComponents;
+
+
+
 
 /*
  * Abstract Class implementation of plan 
@@ -150,20 +155,23 @@ public:
     int count_merged_county_splits(MapParams const &map_params, std::vector<bool> &visited,
         int const region1_id, int const region2_id) const;
 
-    std::pair<int, std::vector<std::pair<int,int>>> get_or_count_valid_adj_regions_ignore_counties(
+    // Get a vector of all valid adj region pairs
+    std::pair<int, std::vector<std::pair<RegionID,RegionID>>> get_or_count_valid_adj_regions(
         MapParams const &map_params, SplittingSchedule const &splitting_schedule,
+        CountyComponents &county_components,
         bool const count_only = false
     ) const;
 
     // Count the number of valid adj regions in a map
     virtual int count_valid_adj_regions(
-        MapParams const &map_params, SplittingSchedule const &splitting_schedule
+        MapParams const &map_params, SplittingSchedule const &splitting_schedule,
+        CountyComponents &county_components
     ) const;
 
     // Get a vector of all valid adj region pairs
-    virtual std::vector<std::pair<int,int>> get_valid_adj_regions(
+    virtual std::vector<std::pair<RegionID,RegionID>> get_valid_adj_regions(
         MapParams const &map_params, SplittingSchedule const &splitting_schedule,
-        bool const check_split_constraint = true
+        CountyComponents &county_components
     ) const;
 
 
@@ -191,6 +199,11 @@ public:
         bool const add_region
     );
 
+    void prepare_adj_pair_boundary_map(
+        MapParams const &map_params, SplittingSchedule const &splitting_schedule,
+        CountyComponents &county_components, EffBoundaryMap &pair_map
+    ) const;
+
     // virtual redist_smc methods
     virtual void update_vertex_and_plan_specific_info_from_cut(
         TreeSplitter const &tree_splitter,
@@ -203,7 +216,7 @@ public:
     // The specifics depend on the sampling space
     virtual double get_log_eff_boundary_len(
         const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-        TreeSplitter const &tree_splitter, 
+        TreeSplitter const &tree_splitter, CountyComponents &county_components,
         const int region1_id, int const region2_id
     ) const = 0;
 
@@ -211,10 +224,10 @@ public:
     // and the log eff boundary length
     // - for graph sampling its just the log of the graph theoretic boundary legnth
     // - for forest sampling its the effective tree boundary length
-    virtual std::vector<std::tuple<int, int, double>> get_valid_adj_regions_and_eff_log_boundary_lens(
+    virtual std::vector<std::tuple<RegionID, RegionID, double>> get_valid_adj_regions_and_eff_log_boundary_lens(
         const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-        TreeSplitter const &tree_splitter,
-        std::unordered_map<std::pair<int, int>, double, bounded_hash> const &existing_pair_map = {}
+        TreeSplitter const &tree_splitter, CountyComponents &county_components,
+        EffBoundaryMap &pair_map
     ) const = 0;  
 };
 

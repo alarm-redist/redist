@@ -67,14 +67,6 @@ arma::vec get_adj_pair_sampler(
     std::string const &selection_type
 );
 
-arma::vec get_adj_pair_unnormalized_weights(
-    Plan const &plan,
-    std::vector<std::pair<int, int>> const &valid_region_adj_pairs,
-    std::string const &selection_type
-);
-
-
-
 
 
 
@@ -87,7 +79,7 @@ void compute_all_plans_simple_weights(
     ScoringFunction const &scoring_function,
     double rho,
     std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
-    TreeSplitter const &tree_splitter,
+    TreeSplitter const &tree_splitter, 
     bool compute_log_splitting_prob, bool is_final_plans,
     arma::subview_col<double> log_incremental_weights,
     std::vector<double> &unnormalized_sampling_weights,
@@ -99,7 +91,8 @@ double compute_log_optimal_weights(
     SamplingSpace const sampling_space,
     ScoringFunction const &scoring_function, double rho,
     Plan const &plan, 
-    TreeSplitter const &edge_splitter, CountyComponents const &county_components,
+    TreeSplitter const &edge_splitter, CountyComponents &county_components,
+    EffBoundaryMap &pair_map,
     bool const compute_log_splitting_prob,
     bool const is_final_plan
 );

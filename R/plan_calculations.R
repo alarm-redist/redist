@@ -220,6 +220,8 @@ compute_log_optimal_weights <- function(
     # if sizes matrix is null then assume all regions are the same size
     if(is.null(sizes_matrix)){
         sizes_matrix <- matrix(1L, nrow = ndists, ncol = ncol(plan_matrix))
+    }else if(is.vector(sizes_matrix)){
+        sizes_matrix <- as.matrix(sizes_matrix, cols = 1)
     }
 
 

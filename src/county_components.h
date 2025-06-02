@@ -10,7 +10,7 @@
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
-
+class Plan;
 
 class CountyComponents{
 
@@ -31,19 +31,26 @@ public:
     std::vector<bool> merged_components_visited;
     std::vector<bool> component_pairs_visited;
     std::vector<bool> counties_component_adj; // used for checking if there's more than one edge between counties on the components graph
+    std::vector<bool> neighbor_regions_checked; // used for checking if more than one county overlap with neighbors when checking merge
     
     CountyComponentGraph county_component_graph;
     std::vector<CountyComponentVertex> region_vertices; // gives the vertex of some component of each region
     std::vector<CountyRegion> region_component_counts;
     std::vector<CountyComponentVertex> component_graph_vertices; // maps component graph index to the actual vertex
+
+    DistinctPairHash<RegionID, CountyID> shared_county_hash; // hash for which county (if any) regions overlap in
     
     int num_components; // number of connected components 
 
+    // resets everything 
+    void reset();
 
-    // This builds the county component graph and tree
-    // WARNING: THIS WILL CAUSE FAILURES IF YOU TRY TO CALL THIS WITH NON-HIEARCHICAL SPLITTING
-    // THAT IS BECAUSE THERE WILL BE MORE THAN num_regions-1+num_counties components!!!!!!!!! 
-    void build_component_graph_and_tree(PlanVector const &region_ids);
+
+    // This tries building the county component graph and tree for a hierarchical plan
+    // If any region intersect county has more than one connected component or there
+    // are more than num_region-1 components total then this will 
+    // return false and stop building the graph 
+    bool build_component_graph(PlanVector const &region_ids);
 
     // counts splits in a plan and checks if any county intersect district has more than 1 
     // connected component 

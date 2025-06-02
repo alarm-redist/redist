@@ -154,6 +154,7 @@ void run_smc_step(
         static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
         static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
 
+        // REprintf("Thread ID %d\n", thread_id);
         // REprintf("Plan %d\n\n", i);
         bool ok = false;
         int idx;
@@ -296,6 +297,7 @@ void run_merge_split_step_on_all_plans(
     SMCDiagnostics &smc_diagnostics,
     int verbosity
 ){
+    int const num_regions = plan_ptrs_vec[0]->num_regions;
     const int check_int = 50; // check for interrupts every _ iterations
     int nsims = (int) plan_ptrs_vec.size();
     if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Going to run %d steps!\n", nsteps_to_run);
@@ -312,6 +314,17 @@ void run_merge_split_step_on_all_plans(
     std::vector<std::vector<int>> thread_successful_tree_sizes(rng_states.size(), 
         std::vector<int>(map_params.ndists, 0)
     );
+    // create county components 
+    std::vector<CountyComponents> current_county_components_vec;
+    current_county_components_vec.reserve(pool.getNumThreads());
+    std::vector<CountyComponents> proposed_county_components_vec;
+    proposed_county_components_vec.reserve(pool.getNumThreads());
+
+    for (int i = 0; i < pool.getNumThreads(); ++i) {
+        current_county_components_vec.emplace_back(map_params, num_regions);
+        proposed_county_components_vec.emplace_back(map_params, num_regions);
+    }
+    
 
     // thread safe id counter for seeding RNG generator 
     std::atomic<int> thread_id_counter{0};
@@ -323,12 +336,18 @@ void run_merge_split_step_on_all_plans(
         static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
         // Create variables needed for each 
 
+        CountyComponents current_county_components(map_params, num_regions);
+        CountyComponents proposed_county_components(map_params, num_regions);
+
+
         // store the number of succesful runs
         success_count_vec[i] = run_merge_split_steps(
             map_params, splitting_schedule, scoring_function,
             rng_states[thread_id], sampling_space,
             *plan_ptrs_vec[i], *new_plan_ptrs_vec[i], 
             ust_sampler, tree_splitter,
+            current_county_components, 
+            proposed_county_components,
             merge_prob_type, 
             rho, is_final, 
             nsteps_to_run,
@@ -409,7 +428,10 @@ List run_redist_gsmc(
     // set the number of threads
     int num_threads = (int) control["num_threads"];
     if (num_threads <= 0) num_threads = std::thread::hardware_concurrency();
-    if (num_threads == 1) num_threads = 1;
+    // if (num_threads == 1){
+    //     REprintf("Single-Threading is not supported right now! 2 Thread used instead!\n");
+    //     num_threads = 2;
+    // }
     // re-seed MT so that `set.seed()` works in R
     int global_rng_seed = (int) Rcpp::sample(INT_MAX, 1)[0];
     int num_rng_states = num_threads > 0 ? num_threads : 1;
@@ -471,7 +493,7 @@ List run_redist_gsmc(
     bool splitting_all_the_way = ndists == initial_num_regions + total_smc_steps;
 
     // multipler for number of merge split steps 
-    double ms_steps_multiplier = as<double>(control["ms_steps_multiplier"]);
+    double ms_steps_multiplier = as<double>(control["ms_moves_multiplier"]);
     std::string merge_prob_type = as<std::string>(control["merge_prob_type"]);
 
 
@@ -516,10 +538,12 @@ List run_redist_gsmc(
         diagnostic_level, splitting_all_the_way, split_district_only
     );
 
+    bool const score_districts_only = as<bool>(control["score_districts_only"]);
+
     // Add scoring function (constraints)
     ScoringFunction const scoring_function(
         map_params, constraints, 
-        pop_temper);
+        pop_temper, score_districts_only);
 
 
     // Create a threadpool
@@ -734,7 +758,7 @@ List run_redist_gsmc(
             }else{
                 throw Rcpp::exception("invalid weight type!");
             }
-            
+            if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Done computing weights!\n");
             
             auto t2 = std::chrono::high_resolution_clock::now();
             /* Getting number of milliseconds as a double. */

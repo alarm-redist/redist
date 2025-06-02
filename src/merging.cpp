@@ -12,6 +12,70 @@ constexpr bool DEBUG_MERGING_VERBOSE = false; // Compile-time constant
 
 
 
+arma::vec get_adj_pair_unnormalized_weights(
+    Plan const &plan,
+    std::vector<std::pair<RegionID, RegionID>> const &valid_region_adj_pairs,
+    std::string const &selection_type
+){
+    // make a vector for the unnormalized weights 
+    arma::vec unnormalized_sampling_weights(valid_region_adj_pairs.size());
+
+    // if uniform then just make all the weights 1 over the size 
+    if(selection_type == "uniform"){
+        std::fill(
+            unnormalized_sampling_weights.begin(), 
+            unnormalized_sampling_weights.end(), 
+            static_cast<double>(valid_region_adj_pairs.size())
+            );
+    }else if(selection_type == "district_pair"){
+        // if district pair then give huge weight to pairs of districts 
+        for (size_t i = 0; i < valid_region_adj_pairs.size(); i++)
+        {
+            int region1_id = valid_region_adj_pairs[i].first;
+            int region2_id = valid_region_adj_pairs[i].second;
+            int region1_dval = plan.region_sizes[region1_id]; int region2_dval = plan.region_sizes[region2_id];
+
+            // check if both are districts
+            if(region1_dval == 1 && region2_dval == 1){
+                unnormalized_sampling_weights.at(i) = 1000.0;
+            }else if(region1_dval == 1 || region2_dval == 1){
+                // else check if at least one is a district
+                unnormalized_sampling_weights.at(i) = 10.0;
+            }else{
+                // if both multidistricts then do 1/1+(sum of two dvals)
+                // This penalizes bigger pairs 
+                unnormalized_sampling_weights.at(i) = 1/(1+ static_cast<double>(region1_dval+region2_dval));
+            }
+        }
+        
+    }else if(selection_type == "multidistrict_pair"){
+        // if multidistrict pair then give huge weight to pairs of districts 
+        for (size_t i = 0; i < valid_region_adj_pairs.size(); i++)
+        {
+            int region1_id = valid_region_adj_pairs[i].first;
+            int region2_id = valid_region_adj_pairs[i].second;
+            int region1_dval = plan.region_sizes[region1_id]; int region2_dval = plan.region_sizes[region2_id];
+
+            // check if both are districts
+            if(region1_dval == 1 && region2_dval == 1){
+                unnormalized_sampling_weights.at(i) = .5;
+            }else if(region1_dval == 1 || region2_dval == 1){
+                // else check if at least one is a district
+                unnormalized_sampling_weights.at(i) = 1.0;
+            }else{
+                // if both multidistricts then do 1/1+(sum of two dvals)
+                // This penalizes bigger pairs 
+                unnormalized_sampling_weights.at(i) = 1000.0;
+            }
+        }
+        
+    }else{
+        throw Rcpp::exception("No valid adjacent pair sampler provided!");
+    }
+    // Return weights 
+    return unnormalized_sampling_weights;
+}
+
 // computes log metropolis hastings ratio
 double get_log_mh_ratio(
     MapParams const &map_params, ScoringFunction const &scoring_function,
@@ -83,8 +147,10 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     RNGState &rng_state, SamplingSpace const sampling_space,
     Plan &plan, Plan &new_plan, 
     USTSampler &ust_sampler, TreeSplitter const &tree_splitter,
+    CountyComponents &current_county_components,
+    CountyComponents &proposed_county_components,
     std::string const merge_prob_type, bool save_edge_selection_prob,
-    std::vector<std::pair<int,int>> &adj_region_pairs,
+    std::vector<std::pair<RegionID, RegionID>> &adj_region_pairs,
     arma::vec &unnormalized_pair_wgts,
     double const rho, bool const is_final
 ){
@@ -156,7 +222,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
 
     // get adj pairs 
     auto new_valid_adj_region_pairs = new_plan.get_valid_adj_regions(
-        map_params, splitting_schedule, false
+        map_params, splitting_schedule, proposed_county_components
     );
     // get the weights
     auto new_valid_pair_weights = get_adj_pair_unnormalized_weights(
@@ -204,11 +270,11 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     bool using_linking_edge_space = sampling_space == SamplingSpace::LinkingEdgeSpace;
     // compute the boundary length 
     double current_log_eff_boundary = plan.get_log_eff_boundary_len(
-        map_params, splitting_schedule, tree_splitter,
+        map_params, splitting_schedule, tree_splitter, current_county_components,
         region1_id, region2_id
     );
     double proposed_log_eff_boundary = new_plan.get_log_eff_boundary_len(
-        map_params, splitting_schedule, tree_splitter,
+        map_params, splitting_schedule, tree_splitter, proposed_county_components,
         region1_id, region2_id
     );
     // If linking edge space we need to subtract linking edge correction term
@@ -278,6 +344,8 @@ int run_merge_split_steps(
     RNGState &rng_state, SamplingSpace const sampling_space,
     Plan &plan, Plan &dummy_plan, 
     USTSampler &ust_sampler, TreeSplitter const &tree_splitter,
+    CountyComponents &current_county_components,
+    CountyComponents &proposed_county_components,
     std::string const merge_prob_type,
     double const rho, bool const is_final, 
     int num_steps_to_run,
@@ -286,8 +354,8 @@ int run_merge_split_steps(
     int num_succesful_steps = 0;
     bool save_edge_selection_prob = sampling_space == SamplingSpace::LinkingEdgeSpace;
     // Get pairs of adj districts
-    std::vector<std::pair<int,int>> current_plan_adj_region_pairs = plan.get_valid_adj_regions(
-        map_params, splitting_schedule, false
+    auto current_plan_adj_region_pairs = plan.get_valid_adj_regions(
+        map_params, splitting_schedule, current_county_components
     );
     arma::vec current_plan_pair_unnoramalized_wgts = get_adj_pair_unnormalized_weights(
         plan,
@@ -302,6 +370,8 @@ int run_merge_split_steps(
             rng_state, sampling_space,
             plan, dummy_plan, 
             ust_sampler, tree_splitter,
+            current_county_components,
+            proposed_county_components,
             merge_prob_type, save_edge_selection_prob,
             current_plan_adj_region_pairs,
             current_plan_pair_unnoramalized_wgts,
