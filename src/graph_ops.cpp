@@ -8,7 +8,42 @@
 #include "graph_ops.h"
 
 
+RegionMultigraph build_county_aware_multigraph(
+    Graph const &g,
+    PlanVector const &region_ids,
+    CountyComponents &county_components,
+    DistinctPairHash<RegionID, bool> &pair_map,
+    int const num_regions
+){
+    RegionMultigraph region_multigraph(num_regions);
+    int const V = g.size();
 
+    for (int v = 0; v < V; v++) {
+        // Find out which region this vertex corresponds to
+        auto v_region_num = region_ids[v];
+        auto v_county = county_components.map_params.counties[v];
+
+        // now iterate over its neighbors
+        for (int v_nbor : g[v]) {
+            // find which region neighbor corresponds to
+            auto v_nbor_region_num = region_ids[v_nbor];
+
+            // to avoid double counting only count when v less u 
+            if(v_region_num >= v_nbor_region_num) continue;
+            // check region pair is valid and county is ok to county
+            if(pair_map.get_value(v_region_num, v_nbor_region_num).first && 
+                county_components.count_county_boundary(v_region_num, v_county,
+                v_nbor_region_num, county_components.map_params.counties[v_nbor])
+            ){
+                // we increase the count of edges
+                region_multigraph[v_region_num][v_nbor_region_num]++;
+                region_multigraph[v_nbor_region_num][v_region_num]++;
+            }
+        }
+    }
+
+    return region_multigraph;
+}
 
 
 RegionMultigraph build_region_multigraph(

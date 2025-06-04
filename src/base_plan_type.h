@@ -147,7 +147,7 @@ public:
     // Compute the log number of spanning trees on the entire plan
     double compute_log_plan_spanning_trees(MapParams const &map_params) const;
 
-    double compute_log_linking_edge_count(MapParams const &map_params) const;
+    double compute_log_linking_edge_count(CountyComponents &county_components) const;
 
     // count global number of county splits the map creates
     int count_county_splits(MapParams const &map_params, std::vector<bool> &visited) const;
@@ -171,6 +171,11 @@ public:
     // Get a vector of all valid adj region pairs
     virtual std::vector<std::pair<RegionID,RegionID>> get_valid_adj_regions(
         MapParams const &map_params, SplittingSchedule const &splitting_schedule,
+        CountyComponents &county_components
+    ) const;
+
+    // gets all hierarchically valid adj region pairs (ignores size)
+    DistinctPairHash<RegionID, bool> get_hierarchically_valid_adj_regions(
         CountyComponents &county_components
     ) const;
 

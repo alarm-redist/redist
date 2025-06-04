@@ -496,6 +496,46 @@ std::pair<int, std::vector<std::pair<RegionID, RegionID>>> Plan::get_or_count_va
 }
 
 
+DistinctPairHash<RegionID, bool> Plan::get_hierarchically_valid_adj_regions(
+        CountyComponents &county_components
+) const{
+    DistinctPairHash<RegionID, bool> pair_map(num_regions, false);
+    // tracks if we've visited each pair yet or not 
+    std::vector<bool> seen_adj_pair_before((num_regions * (num_regions-1))/2, false);
+
+    int const V = county_components.map_params.V;
+
+    for (int v = 0; v < V; v++) {
+        // Find out which region this vertex corresponds to
+        auto v_region = region_ids[v];
+        
+        // now iterate over its neighbors
+        for (auto const u : county_components.map_params.g[v]) {
+            // find which region neighbor corresponds to
+            auto u_region = region_ids[u];
+
+            // ignore if they are in the same region or v is larger region
+            if(v_region >= u_region) continue;
+
+            // check if we've seen this pair before 
+            auto smaller_region_id  = std::min(u_region, v_region);
+            auto bigger_region_id  = std::max(u_region, v_region);
+            auto check_index = index_from_ordered_pair(smaller_region_id, bigger_region_id, num_regions);
+
+            // Check if we've counted this before and its ok to merge 
+            if(!seen_adj_pair_before[check_index]){
+                // mark as seen 
+                seen_adj_pair_before[check_index] = true;
+                if(!county_components.check_merging_regions_is_ok(smaller_region_id, bigger_region_id)){
+                    continue;
+                }
+                pair_map.set_value(u_region, v_region, true);            
+            }
+        }
+    }
+    return pair_map;
+}
+
 // prepares the hash map 
 void Plan::prepare_adj_pair_boundary_map(
     MapParams const &map_params, SplittingSchedule const &splitting_schedule,
@@ -576,10 +616,15 @@ double Plan::compute_log_merged_region_spanning_trees(MapParams const &map_param
 
 
 double Plan::compute_log_linking_edge_count(
-    MapParams const &map_params
+    CountyComponents &county_components
 ) const{
+    auto simple_pair_map =  get_hierarchically_valid_adj_regions(county_components);
     return compute_log_region_multigraph_spanning_tree(
-        build_region_multigraph(map_params.g, region_ids, num_regions)
+        build_county_aware_multigraph(
+            county_components.map_params.g, region_ids, 
+            county_components, simple_pair_map,
+            num_regions
+        )
     );
 };
 

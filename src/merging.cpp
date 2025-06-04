@@ -207,14 +207,14 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         Rprintf("A Splitting Checkpoint 2.\n");
     }
     // check new plan doesn't have illegal number of county splits 
-    int proposal_county_splits = new_plan.count_county_splits(map_params, ust_sampler.visited);
+    bool new_plan_valid = proposed_county_components.build_component_graph(new_plan.region_ids);
     if(DEBUG_MERGING_VERBOSE){
-        Rprintf("%d county splits!\n", proposal_county_splits);
+        Rprintf("%d county splits!\n", new_plan_valid);
     }
-    if(proposal_county_splits > new_plan.num_regions-1){
+    if(!new_plan_valid){
         if(DEBUG_MERGING_VERBOSE){
             REprintf("%d splits for %d regions\n", 
-                proposal_county_splits, plan.num_regions);
+                new_plan_valid, plan.num_regions);
         }
         // return failure
         return std::make_tuple(true, false, -1*std::log(0.0), merged_region_size);
@@ -280,8 +280,8 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     // If linking edge space we need to subtract linking edge correction term
     if(using_linking_edge_space){
         // add instead of subtract bc its flipped in MH ratio
-        current_log_eff_boundary += plan.compute_log_linking_edge_count(map_params);
-        proposed_log_eff_boundary += new_plan.compute_log_linking_edge_count(map_params);
+        current_log_eff_boundary += plan.compute_log_linking_edge_count(current_county_components);
+        proposed_log_eff_boundary += new_plan.compute_log_linking_edge_count(proposed_county_components);
     }
 
     if(DEBUG_MERGING_VERBOSE){
@@ -325,7 +325,9 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
             region1_id, region2_id,
             false
         );
-        
+        // update the current county components 
+        // TODO write custom swap function 
+        current_county_components.build_component_graph(plan.region_ids); 
         // update pairs and weights to be current one
         unnormalized_pair_wgts = new_valid_pair_weights;
         adj_region_pairs = new_valid_adj_region_pairs;
@@ -353,6 +355,7 @@ int run_merge_split_steps(
 ){
     int num_succesful_steps = 0;
     bool save_edge_selection_prob = sampling_space == SamplingSpace::LinkingEdgeSpace;
+    current_county_components.build_component_graph(plan.region_ids);
     // Get pairs of adj districts
     auto current_plan_adj_region_pairs = plan.get_valid_adj_regions(
         map_params, splitting_schedule, current_county_components

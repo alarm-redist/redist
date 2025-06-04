@@ -427,6 +427,28 @@ double compute_simple_log_incremental_weight(
         );
     }
 
+    double log_extra_plan_terms = 0.0;
+    double log_extra_prev_plan_terms = 0.0;
+    // if linking edge space we also need to correct for that
+    if(sampling_space == SamplingSpace::LinkingEdgeSpace){
+        auto simple_pair_map =  plan.get_hierarchically_valid_adj_regions(county_components);
+        auto region_multigraph = build_county_aware_multigraph(
+            map_params.g, plan.region_ids, 
+            county_components, simple_pair_map,
+            plan.num_regions
+        );
+        // we divide target by number of linking edges so 
+        // subtract log linking edges from denominator 
+        log_extra_plan_terms -= compute_log_region_multigraph_spanning_tree(region_multigraph);
+        std::vector<int> merge_index_reshuffle(plan.num_regions);
+        log_extra_prev_plan_terms -= get_log_merged_region_multigraph_spanning_tree(
+                region_multigraph,
+                merge_index_reshuffle,
+                region1_id, region2_id
+            );
+
+    }
+
     // The weight is 
     //      - Numerator: backwards kernel * e^-(J(new_region1)+J(new_region2))
     //      - Denominator: multid_selection_prob * forward kernel term * e^-J(old_region)
@@ -434,8 +456,8 @@ double compute_simple_log_incremental_weight(
     //      - log numerator: backwards kernel -J(new_region1)+J(new_region2))
     //      - log Denominator: log(multid_selection_prob) + log(forward kernel) - J(old_region)
 
-    const double log_numerator = log_backwards_kernel_term - (region1_score + region2_score);
-    const double log_denom =  log_forward_kernel_term + log_splitting_prob - merged_region_score;
+    const double log_numerator = log_backwards_kernel_term - (region1_score + region2_score) + log_extra_plan_terms;
+    const double log_denom =  log_forward_kernel_term + log_splitting_prob - merged_region_score + log_extra_prev_plan_terms;
 
 
     if(DEBUG_WEIGHTS_VERBOSE){
@@ -639,8 +661,14 @@ double compute_log_optimal_weights(
         use_linked_edge_space ? plan.num_regions : 0
     );
     if(use_linked_edge_space){
-        region_multigraph = build_region_multigraph(
-            map_params.g, plan.region_ids, plan.num_regions
+        // region_multigraph = build_region_multigraph(
+        //     map_params.g, plan.region_ids, plan.num_regions
+        // );
+        auto simple_pair_map =  plan.get_hierarchically_valid_adj_regions(county_components);
+        region_multigraph = build_county_aware_multigraph(
+            map_params.g, plan.region_ids, 
+            county_components, simple_pair_map,
+            plan.num_regions
         );
     }
 
