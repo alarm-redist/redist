@@ -130,10 +130,6 @@ DEBUG_MODE <- FALSE
 #' truncated vector. If the [loo][loo::loo] package is installed (strongly
 #' recommended), will default to Pareto-smoothed Importance Sampling (PSIS)
 #' rather than naive truncation.
-#' @param score_districts_only Whether or not to apply the constraints to
-#' districts only. If constraints are only applied to districts then it will
-#' likely cause a drop in efficiency in the final round. If splitting plans all
-#' the way this does not affect the final target distribution.
 #' @param verbose Whether to print out intermediate information while sampling.
 #' Recommended.
 #' @param silent Whether to suppress all diagnostic information.
@@ -150,7 +146,7 @@ redist_gsmc <- function(
         constraints = list(),
         runs = 1L,
         split_district_only = FALSE, weight_type = "optimal",
-        sampling_space = gredist:::GRAPH_PLAN_SPACE_SAMPLING,
+        sampling_space = c("graph_plan_space", "spanning_forest_space", "linking_edge_space"),
         splitting_method = gredist:::NAIVE_K_SPLITTING,
         splitting_params = list(adapt_k_thresh = .99),
         ms_frequency = 0L,
@@ -167,10 +163,35 @@ redist_gsmc <- function(
         num_splitting_steps = NULL,
         ref_name = NULL,
         truncate = (compactness != 1), trunc_fn = redist_quantile_trunc,
-        score_districts_only = FALSE,
         verbose = FALSE, silent = FALSE, diagnostic_level = 0,
         counties_q = NULL, use_counties_q = F)
 {
+    # check default inputs
+    sampling_space <- rlang::arg_match(sampling_space)
+    # do this for all the easily configurable options
+
+    # Make num processes is just equal runs and don't need threads per process
+
+    # remove the counties q thing (talk to Cory)
+
+    # score districts only should be constraint level not a global flag
+
+    # try to consolidate merge split stuff to a single list
+
+    # come up with a better name for diagnostic level code
+
+
+    # just make the merge split parameters all a single list
+
+    # eliminate
+    #   - custom_size_split_list
+
+
+    # want things to be as similar as possible to current code (dev branch)
+    #   - better to add function inputs, bad to remove old ones
+    #   - For mergesplit parallel put it back and then just have it call the
+    #        other on
+    #   - maybe just shove everything else into a control or options parameter
 
     if (compactness < 0)
         cli_abort("{.arg compactness} must be non-negative.")
@@ -387,7 +408,6 @@ redist_gsmc <- function(
         weight_type=weight_type,
         lags=lags,
         pop_temper = pop_temper,
-        score_districts_only = score_districts_only,
         num_threads=as.integer(num_threads_per_process),
         splitting_method = splitting_method,
         splitting_size_regime = splitting_size_regime,
@@ -634,6 +654,8 @@ redist_gsmc <- function(
         )
 
         # add high level diagnostic stuff
+        # DOUBLE CHECK ALL THE SAME
+        # Need to standardize with merge split
         algout$l_diag <- list(
             n_eff = n_eff,
             step_n_eff = algout$step_n_eff,

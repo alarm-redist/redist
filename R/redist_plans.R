@@ -24,6 +24,7 @@ new_redist_plans <- function(plans, map, algorithm, wgt, resampled = TRUE, ndist
 
 
     prec_pop <- map[[attr(map, "pop_col")]]
+    # can replace with a check if 0 in index then add 1
     if (!partial) {
         distr_range <- 1:ndists
         distr_pop <- pop_tally(plans, prec_pop, ndists)

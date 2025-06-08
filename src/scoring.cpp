@@ -126,12 +126,10 @@ double GroupHingeConstraint::compute_merged_region_constraint_score(const Plan &
 // Scoring function
 ScoringFunction::ScoringFunction(
     MapParams const &map_params,
-    Rcpp::List const &constraints, double const pop_temper,
-    bool const score_districts_only
+    Rcpp::List const &constraints, double const pop_temper
 ):
-num_non_final_constraints(0), num_final_constraints(0), all_rounds_constraints(0), 
-total_constraints(0),
-score_districts_only(score_districts_only){
+map_params(map_params), num_non_final_constraints(0), num_final_constraints(0), all_rounds_constraints(0), 
+total_constraints(0){
     // add pop temper if doing that 
     if(pop_temper != 0){
         non_final_plan_constraint_ptrs.emplace_back(
@@ -150,6 +148,7 @@ score_districts_only(score_districts_only){
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
             double strength = constr_inst["strength"];
+            // check if the 
             if (strength != 0) {
                 // Add constraint here 
             }
@@ -163,7 +162,7 @@ score_districts_only(score_districts_only){
         // all_rounds_constraints++;
     }
     if (constraints.containsElementNamed("status_quo")) {
-        Rcpp::stop("Error: 'status_quo' constraint not implemented yet!");
+        throw Rcpp::exception("Error: 'status_quo' constraint not implemented yet!");
         // create here
         // lp[i] += add_constraint("status_quo", constraints,
         // [&] (List l) -> double {
@@ -174,7 +173,7 @@ score_districts_only(score_districts_only){
         // all_rounds_constraints++;
     }
     if (constraints.containsElementNamed("segregation")) {
-        Rcpp::stop("Error: 'segregation' constraint not implemented yet!");
+        throw Rcpp::exception("Error: 'segregation' constraint not implemented yet!");
         // create here
         // lp[i] += add_constraint("segregation", constraints,
         //     [&] (List l) -> double {
@@ -184,7 +183,7 @@ score_districts_only(score_districts_only){
         // all_rounds_constraints++;
     }
     if (constraints.containsElementNamed("grp_pow")) {
-        Rcpp::stop("Error: 'grp_pow' constraint not implemented yet!");
+        throw Rcpp::exception("Error: 'grp_pow' constraint not implemented yet!");
         // create here
         // [&] (List l) -> double {
         // return eval_grp_pow(districts.col(i), j,
@@ -195,7 +194,7 @@ score_districts_only(score_districts_only){
         // all_rounds_constraints++;
     }
     if (constraints.containsElementNamed("compet")) {
-        Rcpp::stop("Error: 'compet' constraint not implemented yet!");
+        throw Rcpp::exception("Error: 'compet' constraint not implemented yet!");
         // lp[i] += add_constraint("compet", constraints,
         // [&] (List l) -> double {
         // uvec dvote = l["dvote"];
@@ -212,11 +211,17 @@ score_districts_only(score_districts_only){
             List constr_inst = constr[i];
             double strength = constr_inst["strength"];
             if (strength != 0) {
+                bool constr_score_districts_only = false;
+                if (constr_inst.containsElementNamed("score_districts_only")){
+                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                }
                 constraint_ptrs.emplace_back(
                     std::make_unique<GroupHingeConstraint>(
                         strength, as<arma::vec>(constr_inst["tgts_group"]),
-                        as<arma::uvec>(constr_inst["group_pop"]), as<arma::uvec>(constr_inst["total_pop"])
+                        as<arma::uvec>(constr_inst["group_pop"]), as<arma::uvec>(constr_inst["total_pop"]),
+                        constr_score_districts_only
                     ));
+                REprintf("Added and its %d!\n", constraint_ptrs[0]->score_districts_only);
                 // increase constraints applied at every split count
                 all_rounds_constraints++;
             }
@@ -230,10 +235,15 @@ score_districts_only(score_districts_only){
             List constr_inst = constr[i];
             double strength = constr_inst["strength"];
             if (strength != 0) {
+                bool constr_score_districts_only = false;
+                if (constr_inst.containsElementNamed("score_districts_only")){
+                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                }
                 constraint_ptrs.emplace_back(
                     std::make_unique<GroupHingeConstraint>(
                         strength, as<arma::vec>(constr_inst["tgts_group"]),
-                        as<arma::uvec>(constr_inst["group_pop"]), as<arma::uvec>(constr_inst["total_pop"])
+                        as<arma::uvec>(constr_inst["group_pop"]), as<arma::uvec>(constr_inst["total_pop"]),
+                        constr_score_districts_only
                     ));
                 // increase constraints applied at every split count
                 all_rounds_constraints++;
@@ -301,14 +311,17 @@ score_districts_only(score_districts_only){
 
 
 double ScoringFunction::compute_region_score(const Plan &plan, int const region_id, bool const is_final) 
-    const{
-    // If only scoring districts return zero if region is multidistrict
-    if(score_districts_only && plan.region_sizes[region_id] > 1) return 0.0;
+    const{    
     // start out with score of zero
     double region_score = 0.0;
 
+    // check if its a multidistrict 
+    bool const is_multidistrict = !map_params.district_seats[plan.region_sizes[region_id]];
+
     // add the score from each constraint 
     for(auto const &constraint_ptr: constraint_ptrs){
+        // skip if multidistrict and we only score districts
+        if(constraint_ptr->score_districts_only && is_multidistrict) continue;
         region_score += constraint_ptr->compute_region_constraint_score(plan, region_id);
     }
     // if final then return 
@@ -316,6 +329,8 @@ double ScoringFunction::compute_region_score(const Plan &plan, int const region_
 
     // if not final then add those constraints (for now just pop_temper)
     for(auto const &constraint_ptr: non_final_plan_constraint_ptrs){
+        // skip if multidistrict and we only score districts
+        if(constraint_ptr->score_districts_only && is_multidistrict) continue;
         region_score += constraint_ptr->compute_region_constraint_score(plan, region_id);
     }
 
@@ -326,13 +341,17 @@ double ScoringFunction::compute_region_score(const Plan &plan, int const region_
 double ScoringFunction::compute_merged_region_score(const Plan &plan, 
     int const region1_id, int const region2_id, bool const is_final) 
     const{
-    // If only scoring districts this is always 0
-    if(score_districts_only) return 0.0;
     // start out with log score of zero
     double region_score = 0.0;
 
+    // check if its a multidistrict 
+    bool const is_multidistrict = !map_params.district_seats[
+        plan.region_sizes[region1_id] + plan.region_sizes[region2_id]
+    ];
+
     // get the log constraint 
     for(auto const &constraint_ptr: constraint_ptrs){
+        if(constraint_ptr->score_districts_only && is_multidistrict) continue;
         region_score += constraint_ptr->compute_merged_region_constraint_score(plan, region1_id, region2_id);
     }
     // if final then return 
@@ -340,6 +359,7 @@ double ScoringFunction::compute_merged_region_score(const Plan &plan,
 
     // if not final then add those constraints 
     for(auto const &constraint_ptr: non_final_plan_constraint_ptrs){
+        if(constraint_ptr->score_districts_only && is_multidistrict) continue;
         region_score += constraint_ptr->compute_merged_region_constraint_score(plan, region1_id, region2_id);
     }
 

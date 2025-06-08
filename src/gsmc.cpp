@@ -5,7 +5,6 @@
 * Purpose: Run SMC with MCMC merge-split steps mixed in
 ********************************************************/
 
-
 constexpr bool DEBUG_GSMC_PLANS_VERBOSE = false; // Compile-time constant
 
 #include "gsmc.h"
@@ -102,7 +101,6 @@ void run_smc_step(
         int verbosity, int diagnostic_level
 ) {
     // important constants
-    const int V = map_params.V;
     const int M = old_plan_ensemble->nsims;
     bool const split_district_only = splitting_schedule.schedule_type == SplittingSizeScheduleType::DistrictOnly;
 
@@ -459,8 +457,6 @@ List run_redist_gsmc(
     double pop_temper = as<double>(control["pop_temper"]);
 
 
-
-
     // total number of steps to run 
     int total_steps = static_cast<int>(step_types.size());
     int total_ms_steps = 0; int total_smc_steps = 0;
@@ -538,13 +534,10 @@ List run_redist_gsmc(
         diagnostic_level, splitting_all_the_way, split_district_only
     );
 
-    bool const score_districts_only = as<bool>(control["score_districts_only"]);
-
     // Add scoring function (constraints)
     ScoringFunction const scoring_function(
         map_params, constraints, 
-        pop_temper, score_districts_only);
-
+        pop_temper);
 
     // Create a threadpool
     RcppThread::ThreadPool pool(num_threads);

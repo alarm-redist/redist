@@ -271,8 +271,9 @@ class MapParams {
         county_forest(build_county_forest(g, counties, num_counties).first), 
         county_forest_roots(build_county_forest(g, counties, num_counties).second),
         pop(pop),
-        V(static_cast<int>(g.size())), ndists(ndists), 
-        lower(lower), target(target), upper(upper){
+        V(static_cast<int>(g.size())), ndists(ndists), total_seats(ndists),
+        lower(lower), target(target), upper(upper),
+        district_seats(total_seats+1, false){
             // check the sizes are ok 
             if(ndists-1 > MAX_SUPPORTED_NUM_DISTRICTS){
                 REprintf("The maximum number of districts supported right now is %u!\n",
@@ -289,6 +290,7 @@ class MapParams {
                     MAX_SUPPORTED_NUM_VERTICES);
                 throw Rcpp::exception("Too many vertices in the map! This number of vertices isn't supported!\n");
             }
+            district_seats[1] = true;
         };
 
     Graph const g; // The graph as undirected adjacency list 
@@ -301,9 +303,11 @@ class MapParams {
     arma::uvec const pop; // population of each vertex
     int const V; // Number of vertices in the graph
     int const ndists; // The number of districts a final plan should have
+    int const total_seats; // the total number of seats 
     double const lower; // lower bound on district population
     double const target; // target district population
     double const upper; // upper bound on district population
+    std::vector<bool> district_seats; // of length total_seats that says whether or not that size is a district
 
 };
 
