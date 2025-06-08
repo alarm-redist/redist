@@ -278,6 +278,8 @@ Rcpp::List ms_plans(
     // Track total number of successes after warmup
     int post_warump_acceptances = 0;
 
+    // build county component graph
+    current_county_components.build_component_graph(plan_ensemble.plan_ptr_vec[0]->region_ids);
     // Get pairs of adj districts
     auto current_plan_adj_region_pairs = plan_ensemble.plan_ptr_vec[0]->get_valid_adj_regions(
         map_params, *splitting_schedule_ptr, current_county_components
