@@ -583,6 +583,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// infer_region_sizes
+Rcpp::IntegerMatrix infer_region_sizes(Rcpp::IntegerMatrix const& region_pops, double const lower, double const upper, int const total_seats, int const num_threads);
+RcppExport SEXP _gredist_infer_region_sizes(SEXP region_popsSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP total_seatsSEXP, SEXP num_threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix const& >::type region_pops(region_popsSEXP);
+    Rcpp::traits::input_parameter< double const >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double const >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< int const >::type total_seats(total_seatsSEXP);
+    Rcpp::traits::input_parameter< int const >::type num_threads(num_threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(infer_region_sizes(region_pops, lower, upper, total_seats, num_threads));
+    return rcpp_result_gen;
+END_RCPP
+}
 // max_dev
 NumericVector max_dev(const IntegerMatrix& districts, const arma::vec& pop, int const n_distr, int const num_threads);
 RcppExport SEXP _gredist_max_dev(SEXP districtsSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP num_threadsSEXP) {
@@ -1142,6 +1157,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_prec_cooccur", (DL_FUNC) &_gredist_prec_cooccur, 3},
     {"_gredist_group_pct", (DL_FUNC) &_gredist_group_pct, 5},
     {"_gredist_pop_tally", (DL_FUNC) &_gredist_pop_tally, 4},
+    {"_gredist_infer_region_sizes", (DL_FUNC) &_gredist_infer_region_sizes, 5},
     {"_gredist_max_dev", (DL_FUNC) &_gredist_max_dev, 4},
     {"_gredist_order_district_stats", (DL_FUNC) &_gredist_order_district_stats, 3},
     {"_gredist_parallel_n_removed", (DL_FUNC) &_gredist_parallel_n_removed, 4},

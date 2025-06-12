@@ -543,7 +543,7 @@ redist_gsmc <- function(
             rs_idx <- resample_plans_lowvar(
                 normalized_wgts,
                 algout$plans_mat,
-                algout$plan_sizes_mat, algout$plan_sizes_saved
+                algout$region_sizes_mat, algout$plan_sizes_saved
             )
             if(DEBUG_MODE) print("Checkpoint 3.5 - did in place reordering!")
 
@@ -596,7 +596,7 @@ redist_gsmc <- function(
         if(DEBUG_MODE) print("Checkpoint 5.1 - got summary info!")
         # make sizes null if needed
         if(!algout$plan_sizes_saved){
-            algout$plan_sizes_mat <- NULL
+            algout$region_sizes_mat <- NULL
         }
         if(DEBUG_MODE) print("Checkpoint 5.5 - got summary info!")
 
@@ -613,6 +613,9 @@ redist_gsmc <- function(
 
         # add the numerically stable weights back
         algout$wgt <- wgt
+
+        # flatten the region sizes by column
+        dim(algout$region_sizes_mat) <- NULL
 
         storage.mode(algout$original_ancestors_mat) <- "integer"
         storage.mode(algout$parent_index) <- "integer"
@@ -682,13 +685,13 @@ redist_gsmc <- function(
         cli_text("{format(nsims*runs, big.mark=',')} plans sampled in
                  {format(t2-t1, digits=2)}")
     }
-    #return(all_out)
+    # return(all_out)
     if(DEBUG_MODE) print("Checkpoint 7 - Out of for loop!")
 
     # combine if needed
     if(runs > 1){
         plans <- do.call(cbind, lapply(all_out, function(x) x$plans))
-        plan_sizes <- do.call(cbind, lapply(all_out, function(x) x$plan_sizes))
+        region_sizes <- do.call(c, lapply(all_out, function(x) x$region_sizes_mat))
         wgt <- do.call(c, lapply(all_out, function(x) x$wgt))
         l_diag <- lapply(all_out, function(x) x$l_diag)
         run_information <- lapply(all_out, function(x) x$run_information)
@@ -696,12 +699,13 @@ redist_gsmc <- function(
     }else{
         # else if just one run extract directly
         plans <- all_out[[1]]$plans
-        plan_sizes <- all_out[[1]]$plan_sizes
+        region_sizes <- all_out[[1]]$region_sizes_mat
         wgt <- all_out[[1]]$wgt
         l_diag <- list(all_out[[1]]$l_diag)
         run_information <- list(all_out[[1]]$run_information)
         internal_diagnostics <- list(all_out[[1]]$internal_diagnostics)
     }
+
 
     if(DEBUG_MODE) print("Checkpoint 7.2 - Past the All Combine")
 
@@ -712,15 +716,14 @@ redist_gsmc <- function(
     if(DEBUG_MODE) print("Checkpoint 7.5 -About to create new plans!")
     out <- new_redist_plans(plans, map, alg_type, wgt, resample,
                             ndists = n_dist_act,
+                            region_sizes = region_sizes,
                             n_eff = all_out[[1]]$n_eff,
                             compactness = compactness,
                             constraints = constraints,
                             version = packageVersion("gredist"),
                             diagnostics = l_diag,
-                            plan_sizes = plan_sizes,
                             run_information = run_information,
                             internal_diagnostics = internal_diagnostics,
-                            pop_bounds = pop_bounds,
                             num_admin_units = num_admin_units,
                             entire_runtime = t2-t1)
 

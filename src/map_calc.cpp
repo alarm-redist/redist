@@ -512,6 +512,68 @@ NumericMatrix pop_tally(IntegerMatrix const &districts, vec const &pop, int cons
     return tally;
 }
 
+// We assume that the population deviations are less than 1
+// If they are 1 or greater then you cannot uniquely infer sizes
+Rcpp::IntegerMatrix infer_region_sizes(
+    Rcpp::IntegerMatrix const &region_pops,
+    double const lower, double const upper,
+    int const total_seats,
+    int const num_threads
+){
+    // 
+    int const num_plans = region_pops.ncol() ;
+    int const num_regions = region_pops.nrow();
+
+    bool bounds_issues = false;
+    // warn if population bounds aren't tight 
+    for (int a_size = 2; a_size <= total_seats; a_size++)
+    {
+        if(upper * (a_size - 1) >= lower * a_size){
+            REprintf("WARNING: Population bounds are not tight for size %d and %d\n",
+            a_size-1, a_size);
+            Rcpp::warning("Population bounds are not tight, inferring a unique number of seats" 
+                " may not be possible.\n");
+            bounds_issues = true;
+        }
+    }
+    if(bounds_issues){
+        REprintf("WARNING: Population bounds are not tight, inferring a unique number of seats" 
+                " may not be possible.\n");
+    }
+
+    Rcpp::IntegerMatrix region_sizes(num_regions, num_plans);
+    REprintf("%d Plans!\n",num_plans);
+
+    // parallel for loop over each plan 
+    RcppThread::parallelFor(0, num_plans, [&] (unsigned int i) {
+        // loop over each region 
+        for (int j = 0; j < num_regions; j++) {
+            // get region pop
+            auto region_pop = region_pops(j, i);
+            int region_size; bool size_selected = false;
+            // find the first instance in which the region is in bounds 
+            for (int potential_size = 1; potential_size <= total_seats; potential_size++)
+            {
+                // see if this size works
+                if(lower * potential_size <= region_pop && region_pop <= upper * potential_size){
+                    region_size = potential_size; 
+                    size_selected = true;
+                }
+            }
+            if(!size_selected){
+                REprintf("No valid size could be found for Plan %i\n", i+1);
+                throw Rcpp::exception("No valid size could be inferred!\n");    
+            }
+
+            region_sizes(j, i) = region_size;
+        }
+    }, num_threads > 0 ? num_threads : 0);
+    
+    return region_sizes;
+}
+
+
+
 /*
  * Create the projective distribution of a variable `x`
  */

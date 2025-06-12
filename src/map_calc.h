@@ -129,21 +129,33 @@ arma::mat prec_cooccur(arma::umat m, arma::uvec idxs, int ncores=0);
 // [[Rcpp::export]]
 NumericMatrix group_pct(IntegerMatrix const &plans_mat, 
     arma::vec const &group_pop, arma::vec const &total_pop, 
-    int const n_distr, int const num_threads = 1);
+    int const n_distr, int const num_threads = 0);
 
 /*
  * Tally a variable by district.
  */
 // [[Rcpp::export]]
 NumericMatrix pop_tally(IntegerMatrix const &districts, arma::vec const &pop, int const n_distr,
-                        int const num_threads = 1);
+                        int const num_threads = 0);
+
+
+/*
+ * Infer the sizes of the regions 
+ */
+// [[Rcpp::export]]
+Rcpp::IntegerMatrix infer_region_sizes(
+    Rcpp::IntegerMatrix const &region_pops,
+    double const lower, double const upper,
+    int const total_seats,
+    int const num_threads = 0
+);
 
 /*
  * Compute the maximum deviation from the equal population constraint.
  */
 // [[Rcpp::export]]
 NumericVector max_dev(const IntegerMatrix &districts, const arma::vec &pop, int const n_distr,
-                      int const num_threads = 1);
+                      int const num_threads = 0);
 
 /*
  * Calculate the deviation for cutting at every edge in a spanning tree.

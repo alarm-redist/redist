@@ -179,15 +179,19 @@ prec_cooccur <- function(m, idxs, ncores = 0L) {
     .Call(`_gredist_prec_cooccur`, m, idxs, ncores)
 }
 
-group_pct <- function(plans_mat, group_pop, total_pop, n_distr, num_threads = 1L) {
+group_pct <- function(plans_mat, group_pop, total_pop, n_distr, num_threads = 0L) {
     .Call(`_gredist_group_pct`, plans_mat, group_pop, total_pop, n_distr, num_threads)
 }
 
-pop_tally <- function(districts, pop, n_distr, num_threads = 1L) {
+pop_tally <- function(districts, pop, n_distr, num_threads = 0L) {
     .Call(`_gredist_pop_tally`, districts, pop, n_distr, num_threads)
 }
 
-max_dev <- function(districts, pop, n_distr, num_threads = 1L) {
+infer_region_sizes <- function(region_pops, lower, upper, total_seats, num_threads = 0L) {
+    .Call(`_gredist_infer_region_sizes`, region_pops, lower, upper, total_seats, num_threads)
+}
+
+max_dev <- function(districts, pop, n_distr, num_threads = 0L) {
     .Call(`_gredist_max_dev`, districts, pop, n_distr, num_threads)
 }
 
