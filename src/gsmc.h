@@ -54,8 +54,9 @@
 //' @keywords internal
 // [[Rcpp::export]]
 List run_redist_gsmc(
-        int const nsims, int const total_seats,
-        int const ndists, int const initial_num_regions, 
+        int const nsims, 
+        int const total_seats, int const ndists, Rcpp::IntegerVector const district_seat_sizes,
+        int const initial_num_regions, 
         List const &adj_list,
         arma::uvec const &counties, const arma::uvec &pop,
         Rcpp::CharacterVector const &step_types,

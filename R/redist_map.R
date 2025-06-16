@@ -307,7 +307,7 @@ redist_map <- function(..., existing_plan = NULL, pop_tol = NULL,
         stopifnot(!is.null(pop_tol))
         stopifnot(pop_tol > 0)
 
-        target <- sum(x[[pop_col]])/ndists
+        target <- sum(x[[pop_col]])/total_seats
         pop_bounds <- target*c(1 - pop_tol, 1, 1 + pop_tol)
     } else {
         pop_bounds <- rlang::eval_tidy(rlang::enquo(pop_bounds), x)

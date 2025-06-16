@@ -35,6 +35,7 @@ new_redist_plans <- function(
     pop_bounds <- attr(map, "pop_bounds")
 
 
+
     prec_pop <- map[[attr(map, "pop_col")]]
     # if plans are 0 indexed then add 1
     if(0 %in% plans){
@@ -129,7 +130,7 @@ validate_redist_plans <- function(x) {
         cli_abort("District numbers must start at 1 and run sequentially to the number of districts.")
 
     # check if its not SMD then nseats is present
-    if (!is.null(attr(plans, "districting_scheme")) && attr(plans, "districting_scheme") != "SMD"){
+    if (!is.null(attr(x, "districting_scheme")) && attr(x, "districting_scheme") != "SMD"){
         if(!"nseats" %in% names(x)){
             cli::cli_abort("Multi-member district plans must have a {.field nseats} column")
         }
@@ -253,6 +254,40 @@ as.matrix.redist_plans <- function(x, ...) get_plans_matrix(x)
 set_plan_matrix <- function(x, mat) {
     attr(x, "plans") <- mat
     x
+}
+
+
+#' Extract the matrix of the number of seats for each district from a redistricting simulation
+#'
+#' For \code{redist_plans} object with `M` plans, `ndists` districts and `S` total
+#' seats this returns a `ndists` by `M` matrix where each column sums to `S`.
+#'
+#' @param x the \code{redist_plans} object
+#' @param ... ignored
+#' @return matrix
+#' @concept analyze
+#' @export
+get_nseats_matrix <- function(x) {
+    if (!inherits(x, "redist_plans")) cli_abort("Not a {.cls redist_plans}")
+    if (!"nseats" %in% names(x)) cli_abort("{.cls redist_plans} does not have {.field nseats}!")
+
+    num_regions <- attr(x, "ndists")
+    total_seats <- attr(x, "total_seats")
+    nplans <- get_plans_matrix(x) |> ncol()
+
+    # if not partial and SMD just return a matrix of ones
+    if(attr(x, "districting_scheme") == "SMD" && isFALSE(attr(x, "partial"))){
+        sizes_matrix <- matrix(1L, nrow = num_regions, ncol = nplans)
+    }else if(all(
+        rep(seq.int(num_regions), times = nplans) == x$district
+    )){# check if any reindexing needs to be done
+        sizes_matrix <- matrix(
+            x$nseats, nrow = num_regions, ncol = nplans
+        )
+    }else{
+        cli::cli_abort("Not implemented for shuffled district plans!")
+    }
+    return(sizes_matrix)
 }
 
 #' Extract the sampling weights from a redistricting simulation.

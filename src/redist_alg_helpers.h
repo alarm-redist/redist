@@ -97,7 +97,7 @@ class PlanEnsemble {
     public:
         // constructor for empty plans
         PlanEnsemble(
-            int const V, int const ndists, 
+            int const V, int const ndists, int const total_seats,
             int const total_pop, int const nsims, 
             SamplingSpace const sampling_space,
             RcppThread::ThreadPool &pool,
@@ -105,7 +105,8 @@ class PlanEnsemble {
         );
         // constructor for non-empty starting plans 
         PlanEnsemble(
-            int const V, int const ndists, int const num_regions,
+            int const V, int const ndists, int const total_seats,
+            int const num_regions,
             arma::uvec const &pop, int const nsims, 
             SamplingSpace const sampling_space,
             Rcpp::IntegerMatrix const &plans_mat, 
@@ -115,9 +116,10 @@ class PlanEnsemble {
         );
 
     
-        int nsims;
-        int V;
-        int ndists;
+        int const nsims;
+        int const V;
+        int const ndists;
+        int const total_seats;
         std::vector<RegionID> flattened_all_plans;
         std::vector<RegionID> flattened_all_region_sizes;
         std::vector<int> flattened_all_region_pops;
@@ -135,7 +137,8 @@ class PlanEnsemble {
 };
 
 PlanEnsemble get_plan_ensemble(
-    int const V, int const ndists, int const num_regions,
+    int const V, int const ndists, int const total_seats, 
+    int const num_regions,
     arma::uvec const &pop, int const nsims, 
     SamplingSpace const sampling_space,
     Rcpp::IntegerMatrix const &plans_mat, 
@@ -146,8 +149,9 @@ PlanEnsemble get_plan_ensemble(
 
 
 std::unique_ptr<PlanEnsemble> get_plan_ensemble_ptr(
-    int const V, int const total_seats,
-    int const ndists, int const num_regions,
+    int const V, 
+    int const ndists, int const total_seats, 
+    int const num_regions,
     arma::uvec const &pop, int const nsims, 
     SamplingSpace const sampling_space,
     Rcpp::IntegerMatrix const &plans_mat, 
@@ -167,19 +171,19 @@ class SMCDiagnostics{
 
     public:
         SMCDiagnostics(
-            SamplingSpace sampling_space, SplittingMethodType splitting_method_type,
-            SplittingSizeScheduleType splitting_schedule_type, 
-            std::vector<bool> &merge_split_step_vec,
-            int V, int nsims,
-            int ndists, int initial_num_regions,
-            int total_smc_steps, int total_ms_steps,
-            int diagnostic_level,
-            bool splitting_all_the_way, bool split_district_only
+            SamplingSpace const sampling_space, SplittingMethodType const splitting_method_type,
+            SplittingSizeScheduleType const splitting_schedule_type, 
+            std::vector<bool> const &merge_split_step_vec,
+            int const V, int const nsims,
+            int const ndists, int const total_seats, int const initial_num_regions,
+            int const total_smc_steps, int const total_ms_steps,
+            int const diagnostic_level,
+            bool const splitting_all_the_way, bool const split_district_only
         );
 
     
-    int diagnostic_level;
-    int total_steps;
+    int const diagnostic_level;
+    int const total_steps;
     // Level 0
     // Essential Diagnostics that are always created 
     std::vector<double> log_wgt_stddevs; // log weight std devs

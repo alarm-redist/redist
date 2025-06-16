@@ -24,15 +24,15 @@
 /*
  * Main entry point.
  *
- * USING MCMMC
+ * USING MCMC
  * Sample `N` redistricting plans on map `g`, ensuring that the maximum
  * population deviation is between `lower` and `upper` (and ideally `target`)
  */
 // [[Rcpp::export]]
 Rcpp::List ms_plans(
     int const nsims, int const warmup, int const thin, 
-    int const ndists, List const &adj_list,
-    const arma::uvec &counties, const arma::uvec &pop,
+    int const ndists, int const total_seats, Rcpp::IntegerVector const &district_seat_sizes, 
+    List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
     double const target, double const lower, double const upper,
     double const rho, // compactness 
     Rcpp::IntegerMatrix const &initial_plan, Rcpp::IntegerMatrix const &initial_region_sizes,

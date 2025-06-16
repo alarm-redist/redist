@@ -95,8 +95,8 @@ get_merged_log_number_linking_edges <- function(adj_list, region_ids, region1_id
 #' running <ADD OPTIONS>
 #' @export
 #' @keywords internal
-run_redist_gsmc <- function(nsims, total_seats, ndists, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat) {
-    .Call(`_gredist_run_redist_gsmc`, nsims, total_seats, ndists, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat)
+run_redist_gsmc <- function(nsims, total_seats, ndists, district_seat_sizes, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat) {
+    .Call(`_gredist_run_redist_gsmc`, nsims, total_seats, ndists, district_seat_sizes, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat)
 }
 
 log_st_map <- function(g, districts, counties, n_distr) {
@@ -147,16 +147,16 @@ attempt_splits_on_a_region <- function(adj_list, counties, pop, ndists, init_num
     .Call(`_gredist_attempt_splits_on_a_region`, adj_list, counties, pop, ndists, init_num_regions, region_id_to_split, lower, target, upper, region_ids, region_sizes, splitting_schedule_str, k_param, num_plans, num_threads, verbose)
 }
 
-compute_log_unnormalized_plan_target_density <- function(adj_list, counties, pop, constraints, pop_temper, rho, ndists, num_regions, lower, target, upper, region_ids, region_sizes, num_threads) {
-    .Call(`_gredist_compute_log_unnormalized_plan_target_density`, adj_list, counties, pop, constraints, pop_temper, rho, ndists, num_regions, lower, target, upper, region_ids, region_sizes, num_threads)
+compute_log_unnormalized_plan_target_density <- function(adj_list, counties, pop, constraints, pop_temper, rho, ndists, total_seats, num_regions, lower, target, upper, region_ids, region_sizes, num_threads) {
+    .Call(`_gredist_compute_log_unnormalized_plan_target_density`, adj_list, counties, pop, constraints, pop_temper, rho, ndists, total_seats, num_regions, lower, target, upper, region_ids, region_sizes, num_threads)
 }
 
-compute_log_unnormalized_region_target_density <- function(adj_list, counties, pop, constraints, pop_temper, rho, ndists, num_regions, lower, target, upper, region_ids, region_sizes, num_threads) {
-    .Call(`_gredist_compute_log_unnormalized_region_target_density`, adj_list, counties, pop, constraints, pop_temper, rho, ndists, num_regions, lower, target, upper, region_ids, region_sizes, num_threads)
+compute_log_unnormalized_region_target_density <- function(adj_list, counties, pop, constraints, pop_temper, rho, ndists, total_seats, num_regions, lower, target, upper, region_ids, region_sizes, num_threads) {
+    .Call(`_gredist_compute_log_unnormalized_region_target_density`, adj_list, counties, pop, constraints, pop_temper, rho, ndists, total_seats, num_regions, lower, target, upper, region_ids, region_sizes, num_threads)
 }
 
-compute_plans_log_optimal_weights <- function(adj_list, counties, pop, constraints, pop_temper, rho, splitting_schedule_str, ndists, num_regions, lower, target, upper, region_ids, region_sizes, num_threads) {
-    .Call(`_gredist_compute_plans_log_optimal_weights`, adj_list, counties, pop, constraints, pop_temper, rho, splitting_schedule_str, ndists, num_regions, lower, target, upper, region_ids, region_sizes, num_threads)
+compute_plans_log_optimal_weights <- function(adj_list, counties, pop, constraints, pop_temper, rho, splitting_schedule_str, ndists, total_seats, district_seat_sizes, num_regions, lower, target, upper, region_ids, region_sizes, num_threads) {
+    .Call(`_gredist_compute_plans_log_optimal_weights`, adj_list, counties, pop, constraints, pop_temper, rho, splitting_schedule_str, ndists, total_seats, district_seat_sizes, num_regions, lower, target, upper, region_ids, region_sizes, num_threads)
 }
 
 group_pct_top_k <- function(m, group_pop, total_pop, k, n_distr) {
@@ -227,8 +227,8 @@ parallel_polsbypopper <- function(from, to, area, perimeter, dm, nd, num_threads
     .Call(`_gredist_parallel_polsbypopper`, from, to, area, perimeter, dm, nd, num_threads)
 }
 
-ms_plans <- function(nsims, warmup, thin, ndists, adj_list, counties, pop, target, lower, upper, rho, initial_plan, initial_region_sizes, sampling_space_str, merge_prob_type, control, constraints, verbosity = 3L, diagnostic_mode = FALSE) {
-    .Call(`_gredist_ms_plans`, nsims, warmup, thin, ndists, adj_list, counties, pop, target, lower, upper, rho, initial_plan, initial_region_sizes, sampling_space_str, merge_prob_type, control, constraints, verbosity, diagnostic_mode)
+ms_plans <- function(nsims, warmup, thin, ndists, total_seats, district_seat_sizes, adj_list, counties, pop, target, lower, upper, rho, initial_plan, initial_region_sizes, sampling_space_str, merge_prob_type, control, constraints, verbosity = 3L, diagnostic_mode = FALSE) {
+    .Call(`_gredist_ms_plans`, nsims, warmup, thin, ndists, total_seats, district_seat_sizes, adj_list, counties, pop, target, lower, upper, rho, initial_plan, initial_region_sizes, sampling_space_str, merge_prob_type, control, constraints, verbosity, diagnostic_mode)
 }
 
 pareto_dominated <- function(x) {

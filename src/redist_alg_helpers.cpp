@@ -114,7 +114,7 @@ RcppThread::ThreadPool get_thread_pool(int const num_threads){
 
 // creates plan ensemble of blank plans
 PlanEnsemble::PlanEnsemble(
-    int const V, int const ndists, 
+    int const V, int const ndists, int const total_seats,
     int const total_pop, int const nsims, 
     SamplingSpace const sampling_space,
     RcppThread::ThreadPool &pool,
@@ -123,6 +123,7 @@ PlanEnsemble::PlanEnsemble(
     nsims(nsims), 
     V(V),
     ndists(ndists),
+    total_seats(total_seats),
     flattened_all_plans(V*nsims, 0),
     flattened_all_region_sizes(ndists*nsims, 0),
     flattened_all_region_pops(ndists*nsims, 0),
@@ -148,19 +149,19 @@ PlanEnsemble::PlanEnsemble(
         // create the plans 
         if(use_graph_space){
             plan_ptr_vec[i] = std::make_unique<GraphPlan>(
-                ndists, total_pop, 
+                total_seats, total_pop, 
                 plan_region_ids, plan_sizes,
                 plan_pops, plan_region_order_added
             );
         }else if(use_forest_space){
             plan_ptr_vec[i] = std::make_unique<ForestPlan>(
-                ndists, total_pop, 
+                total_seats, total_pop, 
                 plan_region_ids, plan_sizes,
                 plan_pops, plan_region_order_added
             );
         }else if(use_linking_edge_space){
             plan_ptr_vec[i] = std::make_unique<LinkingEdgePlan>(
-                ndists, total_pop, 
+                total_seats, total_pop, 
                 plan_region_ids, plan_sizes,
                 plan_pops, plan_region_order_added
             );
@@ -179,7 +180,8 @@ PlanEnsemble::PlanEnsemble(
 
 // creates plan ensemble of partial plans
 PlanEnsemble::PlanEnsemble(
-    int const V, int const ndists, int const num_regions,
+    int const V, int const ndists, int const total_seats,
+    int const num_regions,
     arma::uvec const &pop, int const nsims,
     SamplingSpace const sampling_space,
     Rcpp::IntegerMatrix const &plans_mat, 
@@ -190,32 +192,37 @@ PlanEnsemble::PlanEnsemble(
     nsims(nsims), 
     V(V),
     ndists(ndists),
+    total_seats(total_seats),
     flattened_all_plans(plans_mat.begin(), plans_mat.end()),
-    flattened_all_region_sizes(region_sizes_mat.begin(), region_sizes_mat.end()),
+    flattened_all_region_sizes(ndists*nsims, 0),
     flattened_all_region_pops(ndists*nsims, 0),
     flattened_all_region_order_added(ndists*nsims, -1),
     plan_ptr_vec(nsims)
 {
     // check matrix dimensions 
     if(plans_mat.ncol() != nsims){
-        REprintf("The number of columns (%u) in the initial plan matrix was not equal to nsims %d!\n",
+        REprintf("The number of columns (%u) in the initial plan matrix was not equal to nsims!\n",
             plans_mat.ncol(), nsims
         );
+        throw Rcpp::exception("The number of columns in the initial plan matrix was not equal to nsims!\n");
     }
     if(region_sizes_mat.ncol() != nsims){
-        REprintf("The number of columns (%u) in the initial sizes matrix  was not equal to nsims %d!\n",
+        REprintf("The number of columns (%u) in the initial sizes matrix  was not equal to nsims!\n",
             region_sizes_mat.ncol(), nsims
         );
+        throw Rcpp::exception("The number of columns in the initial sizes matrix was not equal to nsims!\n");
     }
     if(plans_mat.nrow() != V){
-        REprintf("The number of rows (%u) in the initial plan matrix , was not equal to V %d!\n",
+        REprintf("The number of rows (%u) in the initial plan matrix , was not equal to V!\n",
             plans_mat.nrow(), V
         );
+        throw Rcpp::exception("The number of rows in the initial plan matrix , was not equal to V!\n");
     }
-    if(region_sizes_mat.nrow() != ndists){
-        REprintf("The number of rows (%u) in the initial sizes matrix, was not equal to ndists %d!\n",
-            region_sizes_mat.nrow(), ndists
+    if(region_sizes_mat.nrow() != num_regions){
+        REprintf("The number of rows (%u) in the initial sizes matrix, was not equal to initial number of regions!\n",
+            region_sizes_mat.nrow(), num_regions
         );
+        throw Rcpp::exception("The number of rows in the initial sizes matrix was not equal to ndists!\n");
     }
 
     // check num_regions and num_districts inputs make sense
@@ -235,19 +242,26 @@ PlanEnsemble::PlanEnsemble(
     
     RcppThread::ProgressBar bar(nsims, 1);
     pool.parallelFor(0, nsims, [&] (int i) {
+        // create the plan attributes for this specific plan
+        PlanVector plan_region_ids(flattened_all_plans, V * i, V * (i+1));
+        RegionSizes plan_sizes(flattened_all_region_sizes, ndists * i, ndists * (i+1));
+        IntPlanAttribute plan_pops(flattened_all_region_pops, ndists * i, ndists * (i+1));
+        IntPlanAttribute plan_region_order_added(flattened_all_region_order_added, ndists * i, ndists * (i+1));
+
+        // copy the sizes from matrix into the vector
+        std::copy(
+            region_sizes_mat.begin() + i * num_regions,
+            region_sizes_mat.begin() + (i + 1) * num_regions,
+            plan_sizes.begin()
+        );
+
         // create the plans 
         if(use_graph_space){
-            // create the plan attributes for this specific plan
-            PlanVector plan_region_ids(flattened_all_plans, V * i, V * (i+1));
-            RegionSizes plan_sizes(flattened_all_region_sizes, ndists * i, ndists * (i+1));
-            IntPlanAttribute plan_pops(flattened_all_region_pops, ndists * i, ndists * (i+1));
-            IntPlanAttribute plan_region_order_added(flattened_all_region_order_added, ndists * i, ndists * (i+1));
             plan_ptr_vec[i] = std::make_unique<GraphPlan>(
-                ndists, num_regions, pop, 
+                num_regions, pop, 
                 plan_region_ids, plan_sizes,
                 plan_pops, plan_region_order_added
             );
-
         }else{
             throw Rcpp::exception("This plan type not supported!\n");
         }
@@ -308,7 +322,8 @@ Rcpp::IntegerMatrix PlanEnsemble::get_R_sizes_matrix(
 }
 
 PlanEnsemble get_plan_ensemble(
-    int const V, int const ndists, int const num_regions,
+    int const V, int const ndists, int const total_seats, 
+    int const num_regions,
     arma::uvec const &pop, int const nsims, 
     SamplingSpace const sampling_space,
     Rcpp::IntegerMatrix const &plans_mat, 
@@ -317,10 +332,10 @@ PlanEnsemble get_plan_ensemble(
     int const verbosity
 ){
     if(num_regions == 1){
-        return PlanEnsemble(V, ndists, arma::sum(pop), nsims, sampling_space, pool, verbosity);
+        return PlanEnsemble(V, ndists, total_seats, arma::sum(pop), nsims, sampling_space, pool, verbosity);
     }else{
         return PlanEnsemble(
-            V, ndists, num_regions, pop, nsims,
+            V, ndists, total_seats, num_regions, pop, nsims,
             sampling_space, plans_mat, region_sizes_mat, 
             pool, verbosity);
     }
@@ -328,8 +343,9 @@ PlanEnsemble get_plan_ensemble(
 
 
 std::unique_ptr<PlanEnsemble> get_plan_ensemble_ptr(
-    int const V, int const total_seats,
-    int const ndists, int const num_regions,
+    int const V, 
+    int const ndists, int const total_seats, 
+    int const num_regions,
     arma::uvec const &pop, int const nsims, 
     SamplingSpace const sampling_space,
     Rcpp::IntegerMatrix const &plans_mat, 
@@ -339,11 +355,11 @@ std::unique_ptr<PlanEnsemble> get_plan_ensemble_ptr(
 ){
     if(num_regions == 1){
         return std::make_unique<PlanEnsemble>(
-            V, ndists, arma::sum(pop), nsims, sampling_space, pool, verbosity
+            V, ndists, total_seats, arma::sum(pop), nsims, sampling_space, pool, verbosity
         );
     }else{
         return std::make_unique<PlanEnsemble>(
-            V, ndists, num_regions, pop, nsims,
+            V, ndists, total_seats, num_regions, pop, nsims,
             sampling_space, plans_mat, region_sizes_mat, 
             pool, verbosity
         );
@@ -440,14 +456,14 @@ std::unique_ptr<TreeSplitter> get_tree_splitters(
 
 
 SMCDiagnostics::SMCDiagnostics(
-    SamplingSpace sampling_space, SplittingMethodType splitting_method_type,
-    SplittingSizeScheduleType splitting_schedule_type, 
-    std::vector<bool> &merge_split_step_vec,
-    int V, int nsims,
-    int ndists, int initial_num_regions,
-    int total_smc_steps, int total_ms_steps,
-    int diagnostic_level,
-    bool splitting_all_the_way, bool split_district_only
+    SamplingSpace const sampling_space, SplittingMethodType const splitting_method_type,
+    SplittingSizeScheduleType const splitting_schedule_type, 
+    std::vector<bool> const &merge_split_step_vec,
+    int const V, int const nsims,
+    int const ndists, int const total_seats, int const initial_num_regions,
+    int const total_smc_steps, int const total_ms_steps,
+    int const diagnostic_level,
+    bool const splitting_all_the_way, bool const split_district_only
 ): diagnostic_level(diagnostic_level), total_steps(total_smc_steps+total_ms_steps),
 log_wgt_stddevs(total_smc_steps), acceptance_rates(total_steps),
 nunique_parents(total_smc_steps), n_eff(total_smc_steps),
@@ -462,8 +478,8 @@ cut_k_values(sampling_space == SamplingSpace::GraphSpace ? total_steps : 0)
     // successful merge splits performed for plan i on merge split round s
     merge_split_successes_mat = Rcpp::IntegerMatrix(nsims, total_ms_steps);
     // counts the size of the trees
-    tree_sizes_mat = Rcpp::IntegerMatrix(ndists, total_steps);
-    successful_tree_sizes_mat = Rcpp::IntegerMatrix(ndists, total_steps);
+    tree_sizes_mat = Rcpp::IntegerMatrix(total_seats, total_steps);
+    successful_tree_sizes_mat = Rcpp::IntegerMatrix(total_seats, total_steps);
 
 
     // Level 2
@@ -535,7 +551,7 @@ void SMCDiagnostics::add_full_step_diagnostics(
     if(is_smc_step){
         int current_num_regions = plan_ensemble.plan_ptr_vec[0]->num_regions;
         // save the acceptable split sizes 
-        for (int region_size = 1; region_size <= splitting_schedule.ndists - current_num_regions + 2; region_size++)
+        for (int region_size = 1; region_size <= splitting_schedule.total_seats - current_num_regions + 2; region_size++)
         {
             if(splitting_schedule.valid_split_region_sizes[region_size]){
                 all_steps_valid_split_region_sizes[smc_step_num].push_back(region_size);

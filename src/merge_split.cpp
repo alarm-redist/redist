@@ -124,8 +124,8 @@ int adapt_ms_parameters(const Graph &g, int n_distr, double thresh,
  */
 Rcpp::List ms_plans(
     int const nsims, int const warmup, int const thin, 
-    int const ndists, List const &adj_list,
-    const arma::uvec &counties, const arma::uvec &pop,
+    int const ndists, int const total_seats, Rcpp::IntegerVector const &district_seat_sizes, 
+    List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
     double const target, double const lower, double const upper,
     double const rho, // compactness 
     Rcpp::IntegerMatrix const &initial_plan, Rcpp::IntegerMatrix const &initial_region_sizes,
@@ -169,13 +169,17 @@ Rcpp::List ms_plans(
     // get the splitting size regime
     SplittingSizeScheduleType splitting_size_regime = SplittingSizeScheduleType::PureMergeSplitSize;
 
-    auto splitting_schedule_ptr = std::make_unique<PureMSSplittingSchedule>(ndists, 1, 1);
+    auto splitting_schedule_ptr = std::make_unique<PureMSSplittingSchedule>(ndists, total_seats, 1, 1);
 
 
     // Do some input checking 
 
     // Create map level graph and county level multigraph
-    MapParams const map_params(adj_list, counties, pop, ndists, lower, target, upper);
+    MapParams const map_params(
+        adj_list, counties, pop, 
+        ndists, total_seats, as<std::vector<int>>(district_seat_sizes),
+        lower, target, upper
+    );
     int V = map_params.g.size();
 
     // Add scoring function (constraints)
@@ -213,14 +217,14 @@ Rcpp::List ms_plans(
     RcppThread::ThreadPool pool(0);
     // underlying vector from plan    
     PlanEnsemble plan_ensemble = get_plan_ensemble(
-        V, ndists, initial_num_regions,
+        V, ndists, total_seats, initial_num_regions,
         pop, 1, sampling_space,
         initial_plan, initial_region_sizes,
         pool, verbosity
     );
     // now get for proposal plan
     PlanEnsemble proposal_plan_ensemble = get_plan_ensemble(
-        V, ndists, initial_num_regions,
+        V, ndists, total_seats, initial_num_regions,
         pop, 1, sampling_space,
         initial_plan, initial_region_sizes,
         pool, verbosity

@@ -87,13 +87,16 @@ List draw_a_tree_on_a_region(
     double total_pop = sum(pop);
     double target = total_pop / ndists;
 
-    MapParams map_params(adj_list, counties, pop, ndists, lower, target, upper);
+    MapParams map_params(
+        adj_list, counties, pop, 
+        ndists, ndists, std::vector<int>{},
+        lower, target, upper);
 
 
     // Create a plan object via size 1 ensemble
     RcppThread::ThreadPool pool(0);
     PlanEnsemble plan_ensemble(
-        V, ndists, num_regions,
+        V, ndists, ndists, num_regions,
         pop, 1,
         SamplingSpace::GraphSpace,
         region_ids, 
@@ -181,7 +184,10 @@ List perform_a_valid_multidistrict_split(
     bool verbose, int k_param
 ){
     if(split_dval_min > split_dval_max) throw Rcpp::exception("Split min must be less than split max!\n");
-    MapParams map_params(adj_list, counties, pop, ndists, lower, target, upper);
+    MapParams map_params(
+        adj_list, counties, pop,
+        ndists, ndists, std::vector<int>{},
+        lower, target, upper);
     // unpack control params
     int V = map_params.V;
     
@@ -191,7 +197,7 @@ List perform_a_valid_multidistrict_split(
     // Create a plan object via size 1 ensemble
     RcppThread::ThreadPool pool(0);
     PlanEnsemble plan_ensemble(
-        V, ndists, num_regions,
+        V, ndists, ndists, num_regions,
         pop, 1,
         SamplingSpace::GraphSpace,
         region_ids, 
@@ -208,7 +214,7 @@ List perform_a_valid_multidistrict_split(
         plan_ensemble.plan_ptr_vec[0]->Rprint();
     }
 
-    auto splitting_schedule_ptr = std::make_unique<PureMSSplittingSchedule>(ndists, 1, 1);
+    auto splitting_schedule_ptr = std::make_unique<PureMSSplittingSchedule>(ndists, ndists, 1, 1);
 
     // Create tree related stuff
     int uncut_tree_root;
@@ -450,7 +456,7 @@ List perform_a_valid_multidistrict_split(
 // }
 
 
-
+// TODO: Add support for multimember districts 
 // Draws num_trees number of trees on a region
 List draw_trees_on_a_region(
     List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
@@ -463,7 +469,9 @@ List draw_trees_on_a_region(
 ){
 
     // Create adj params 
-    MapParams map_params(adj_list, counties, pop, ndists, lower, target, upper);
+    MapParams map_params(adj_list, counties, pop, 
+        ndists, ndists, std::vector<int>{},
+        lower, target, upper);
     // count how many times we had to call sample_sub_ust
 
     // create thread pool
@@ -600,14 +608,18 @@ List attempt_splits_on_a_region(
 ){
 
     // Create adj params 
-    MapParams map_params(adj_list, counties, pop, ndists, lower, target, upper);
+    MapParams map_params(
+        adj_list, counties, pop, 
+        ndists, ndists, std::vector<int>{},
+        lower, target, upper);
     // count how many times we had to call sample_sub_ust
     Rcpp::List control;
 
     // get splitting schedule 
     SplittingSizeScheduleType splitting_schedule_type = get_splitting_size_regime(splitting_schedule_str);
     auto splitting_schedule = get_splitting_schedule(
-        1, ndists, splitting_schedule_type, control
+        1, ndists, ndists, std::vector<int>{},
+        splitting_schedule_type, control
     );
     
     // create thread pool
@@ -616,7 +628,7 @@ List attempt_splits_on_a_region(
 
     // create the plan
     PlanEnsemble plan_ensemble(
-        map_params.V, ndists, init_num_regions,
+        map_params.V, ndists, ndists, init_num_regions,
         pop, 1,
         SamplingSpace::GraphSpace,
         region_ids, 
@@ -631,12 +643,10 @@ List attempt_splits_on_a_region(
 
 
     PlanEnsemble thread_plan_ensemble(
-        map_params.V, ndists, arma::sum(pop),
+        map_params.V, ndists, ndists, arma::sum(pop),
         num_threads, SamplingSpace::GraphSpace,
         pool
     );
-
-
 
     // create the splitter
     NaiveTopKSplitter tree_splitter(map_params.V, k_param);

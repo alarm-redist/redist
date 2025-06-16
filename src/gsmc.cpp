@@ -135,11 +135,11 @@ void run_smc_step(
     
     // count the sizes we draw trees on
     std::vector<std::vector<int>> thread_tree_sizes(rng_states.size(), 
-        std::vector<int>(map_params.ndists, 0)
+        std::vector<int>(map_params.total_seats, 0)
     );
     // count the sizes of regions successful trees drawn on
     std::vector<std::vector<int>> thread_successful_tree_sizes(rng_states.size(), 
-        std::vector<int>(map_params.ndists, 0)
+        std::vector<int>(map_params.total_seats, 0)
     );
 
     // thread safe id counter for seeding RNG generator 
@@ -178,14 +178,14 @@ void run_smc_step(
             }
             int region_to_split_size = old_plan_ensemble->plan_ptr_vec[idx]->region_sizes[region_id_to_split];
             
-            // int size_of_region_to_split = old_plans_ptr_vec[idx]->region_sizes(region_id_to_split);
+            // int size_of_region_to_split = old_plan_ensemble->plan_ptr_vec[idx]->region_sizes[region_id_to_split];
             // Rprintf("Picked idx %d, Splitting Region size %d. Sizes to try:\n", idx, size_of_region_to_split);
             // for(auto i: splitting_schedule.all_regions_smaller_cut_sizes_to_try[size_of_region_to_split]){
             //     Rprintf("%d, ", i);
             // }
             // Rprintf("\nThe min possible =%d, max possible=%d\n", 
-            // splitting_schedule.all_regions_min_and_max_possible_cut_sizes[size_of_region_to_split][0],
-            //     splitting_schedule.all_regions_min_and_max_possible_cut_sizes[size_of_region_to_split][1]);
+            // splitting_schedule.all_regions_min_and_max_possible_cut_sizes[size_of_region_to_split].first,
+            //     splitting_schedule.all_regions_min_and_max_possible_cut_sizes[size_of_region_to_split].second);
 
             //increase the count 
             ++thread_tree_sizes[thread_id][region_to_split_size-1];
@@ -253,7 +253,7 @@ void run_smc_step(
     std::swap(old_plan_ensemble, new_plan_ensemble);
 
     // update tree sizes counts 
-    for (size_t region_size = 0; region_size < map_params.ndists; region_size++)
+    for (size_t region_size = 0; region_size < map_params.total_seats; region_size++)
     {
         for (size_t a_thread_id = 0; a_thread_id < rng_states.size(); a_thread_id++)
         {
@@ -307,10 +307,10 @@ void run_merge_split_step_on_all_plans(
 
     // count the sizes we draw trees on
     std::vector<std::vector<int>> thread_tree_sizes(rng_states.size(), 
-        std::vector<int>(map_params.ndists, 0)
+        std::vector<int>(map_params.total_seats, 0)
     );
     std::vector<std::vector<int>> thread_successful_tree_sizes(rng_states.size(), 
-        std::vector<int>(map_params.ndists, 0)
+        std::vector<int>(map_params.total_seats, 0)
     );
     // create county components 
     std::vector<CountyComponents> current_county_components_vec;
@@ -364,7 +364,7 @@ void run_merge_split_step_on_all_plans(
     pool.wait();
 
     // update tree sizes counts 
-    for (size_t region_size = 0; region_size < map_params.ndists; region_size++)
+    for (size_t region_size = 0; region_size < map_params.total_seats; region_size++)
     {
         for (size_t a_thread_id = 0; a_thread_id < rng_states.size(); a_thread_id++)
         {
@@ -408,8 +408,9 @@ void run_merge_split_step_on_all_plans(
 //' running <ADD OPTIONS>
 //' @export
 List run_redist_gsmc(
-    int const nsims, int const total_seats,
-    int const ndists, int const initial_num_regions, 
+    int const nsims, 
+    int const total_seats, int const ndists, Rcpp::IntegerVector const district_seat_sizes,
+    int const initial_num_regions, 
     List const &adj_list,
     arma::uvec const &counties, const arma::uvec &pop,
     Rcpp::CharacterVector const &step_types,
@@ -422,14 +423,12 @@ List run_redist_gsmc(
     Rcpp::IntegerMatrix const &region_id_mat, 
     Rcpp::IntegerMatrix const &region_sizes_mat
 ){
+    if (DEBUG_GSMC_PLANS_VERBOSE) REprintf("Inside c++ code!\n");
     bool diagnostic_mode = diagnostic_level == 1;
     // set the number of threads
     int num_threads = (int) control["num_threads"];
     if (num_threads <= 0) num_threads = std::thread::hardware_concurrency();
-    // if (num_threads == 1){
-    //     REprintf("Single-Threading is not supported right now! 2 Thread used instead!\n");
-    //     num_threads = 2;
-    // }
+
     // re-seed MT so that `set.seed()` works in R
     int global_rng_seed = (int) Rcpp::sample(INT_MAX, 1)[0];
     int num_rng_states = num_threads > 0 ? num_threads : 1;
@@ -446,6 +445,7 @@ List run_redist_gsmc(
     // Legacy, in future remove
     RNGState rng_state((int) Rcpp::sample(INT_MAX, 1)[0]);
     global_seed_rng((int) Rcpp::sample(INT_MAX, 1)[0]);
+    if (DEBUG_GSMC_PLANS_VERBOSE) REprintf("RNG States created!\n");
 
 
     // unpack control params
@@ -484,7 +484,8 @@ List run_redist_gsmc(
             "Desired number of splits will produce more than ndist districts!"
             );
     }
-    
+    if (DEBUG_GSMC_PLANS_VERBOSE) REprintf("Step types vec created!\n");
+
     // see if we are splitting plans all the way or just creating partial plans
     bool splitting_all_the_way = ndists == initial_num_regions + total_smc_steps;
 
@@ -506,8 +507,10 @@ List run_redist_gsmc(
         static_cast<std::string>(control["splitting_size_regime"])
     );
     auto splitting_schedule_ptr = get_splitting_schedule(
-        total_smc_steps, ndists, splitting_size_regime, control
+        total_smc_steps, ndists, total_seats, as<std::vector<int>>(district_seat_sizes),
+        splitting_size_regime, control
     );
+    if (DEBUG_GSMC_PLANS_VERBOSE) REprintf("Splitting Schedule Obj created!\n");
 
     // Whether or not to only do district splits only 
     bool split_district_only = splitting_size_regime == SplittingSizeScheduleType::DistrictOnly;
@@ -519,9 +522,12 @@ List run_redist_gsmc(
         throw Rcpp::exception("The first entry of merge_split_step_vec cannot be true.");
     };
 
-
+    
     // Create map level graph and county level multigraph
-    MapParams const map_params(adj_list, counties, pop, ndists, lower, target, upper);
+    MapParams const map_params(
+        adj_list, counties, pop, 
+        ndists, total_seats, as<std::vector<int>>(district_seat_sizes),
+        lower, target, upper);
     int V = map_params.g.size();
 
     // Now create diagnostic information 
@@ -529,7 +535,7 @@ List run_redist_gsmc(
         sampling_space, splitting_method,
         splitting_size_regime, 
         merge_split_step_vec,
-        V, nsims, ndists, initial_num_regions,
+        V, nsims, ndists, total_seats, initial_num_regions,
         total_smc_steps, total_ms_steps,
         diagnostic_level, splitting_all_the_way, split_district_only
     );
@@ -545,8 +551,8 @@ List run_redist_gsmc(
     // Now we add everything here to a scope since it won't be needed for the end
     // create the ensemble 
     std::unique_ptr<PlanEnsemble> plan_ensemble_ptr = get_plan_ensemble_ptr(
-        V, total_seats,
-        ndists, initial_num_regions,
+        V, ndists, total_seats,
+        initial_num_regions,
         pop, nsims, sampling_space,
         region_id_mat, region_sizes_mat,
         pool, verbosity 
@@ -555,8 +561,8 @@ List run_redist_gsmc(
     {
     // Ensemble of dummy plans for copying 
     std::unique_ptr<PlanEnsemble> dummy_plan_ensemble_ptr = get_plan_ensemble_ptr(
-        V, total_seats,
-        ndists, initial_num_regions,
+        V, ndists, total_seats,
+        initial_num_regions,
         pop, nsims, sampling_space,
         region_id_mat, region_sizes_mat,
         pool, verbosity 
@@ -655,6 +661,8 @@ List run_redist_gsmc(
             splitting_schedule_ptr->set_potential_cut_sizes_for_each_valid_size(
                 smc_step_num, plan_ensemble_ptr->plan_ptr_vec[0]->num_regions
                 );
+
+            // splitting_schedule_ptr->print_current_step_splitting_info();
             
             // Print if needed
             if(verbosity >= 3 && splitting_size_regime == SplittingSizeScheduleType::OneCustomSize){
@@ -718,7 +726,7 @@ List run_redist_gsmc(
             // Rcout << "Running SMC " << ms_doublef.count() << " ms\n";
             auto t1 = std::chrono::high_resolution_clock::now();
             bool compute_log_splitting_prob = splitting_schedule_ptr->schedule_type != SplittingSizeScheduleType::DistrictOnly &&
-            plan_ensemble_ptr->plan_ptr_vec[0]->num_regions != ndists;
+            (plan_ensemble_ptr->plan_ptr_vec[0]->num_regions != ndists || splitting_schedule_ptr->schedule_type == SplittingSizeScheduleType::AnyValidSizeMMD) ;
             bool is_final_plans = plan_ensemble_ptr->plan_ptr_vec[0]->num_regions == ndists;
             
             if(wgt_type == "optimal"){
@@ -899,7 +907,7 @@ List run_redist_gsmc(
     if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Plans saved!\n");
 
     // if only sampling partial plans then return the size matrix
-    if(!splitting_all_the_way){
+    if(!splitting_all_the_way || splitting_schedule_ptr->schedule_type == SplittingSizeScheduleType::AnyValidSizeMMD){
         if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Getting ready to save region sizes!\n");
         plan_sizes_mat.push_back(plan_ensemble_ptr->get_R_sizes_matrix(pool));
         plan_sizes_saved = true;

@@ -15,14 +15,17 @@
 Rcpp::NumericVector compute_log_unnormalized_plan_target_density(
     List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
     List const &constraints, double const pop_temper,  double const rho,
-    int const ndists, int const num_regions,
+    int const ndists, int const total_seats, int const num_regions,
     double const lower, double const target, double const upper,
     Rcpp::IntegerMatrix const &region_ids, 
     Rcpp::IntegerMatrix const &region_sizes,
     int num_threads
 ){
     // create the map param object
-    MapParams map_params(adj_list, counties, pop, ndists, lower, target, upper);
+    MapParams map_params(
+        adj_list, counties, pop, 
+        ndists, ndists, std::vector<int>{},
+        lower, target, upper);
     // Create the scoring function 
     ScoringFunction scoring_function(map_params, constraints, pop_temper);
 
@@ -31,7 +34,7 @@ Rcpp::NumericVector compute_log_unnormalized_plan_target_density(
     // Create the plan objects
     int num_plans = region_ids.ncol();
     PlanEnsemble plan_ensemble(
-        map_params.V, ndists, num_regions,
+        map_params.V, ndists, total_seats, num_regions,
         pop, num_plans,
         SamplingSpace::GraphSpace,
         region_ids, 
@@ -87,14 +90,17 @@ Rcpp::NumericVector compute_log_unnormalized_plan_target_density(
 Rcpp::NumericMatrix compute_log_unnormalized_region_target_density(
     List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
     List const &constraints, double const pop_temper,  double const rho,
-    int const ndists, int const num_regions,
+    int const ndists, int const total_seats, int const num_regions,
     double const lower, double const target, double const upper,
     Rcpp::IntegerMatrix const &region_ids, 
     Rcpp::IntegerMatrix const &region_sizes,
     int const num_threads
 ){
     // create the map param object
-    MapParams map_params(adj_list, counties, pop, ndists, lower, target, upper);
+    MapParams map_params(
+        adj_list, counties, pop, 
+        ndists, ndists, std::vector<int>{},
+        lower, target, upper);
     // Create the scoring function 
     ScoringFunction scoring_function(map_params, constraints, pop_temper);
 
@@ -104,7 +110,7 @@ Rcpp::NumericMatrix compute_log_unnormalized_region_target_density(
     // Create the plan objects
     int num_plans = region_ids.ncol();
     PlanEnsemble plan_ensemble(
-        map_params.V, ndists, num_regions,
+        map_params.V, ndists, total_seats, num_regions,
         pop, num_plans,
         SamplingSpace::GraphSpace,
         region_ids, 
@@ -206,7 +212,8 @@ arma::vec compute_plans_log_optimal_weights(
     List const &adj_list, arma::uvec const &counties, arma::uvec const &pop,
     List const &constraints, double const pop_temper,  double const rho,
     std::string const &splitting_schedule_str,
-    int const ndists, int const num_regions,
+    int const ndists, int const total_seats, Rcpp::IntegerVector const &district_seat_sizes,
+    int const num_regions,
     double const lower, double const target, double const upper,
     Rcpp::IntegerMatrix const &region_ids, 
     Rcpp::IntegerMatrix const &region_sizes,
@@ -227,12 +234,15 @@ arma::vec compute_plans_log_optimal_weights(
     RcppThread::ThreadPool pool(num_threads);
 
     // create the map param object
-    MapParams map_params(adj_list, counties, pop, ndists, lower, target, upper);
+    MapParams map_params(
+        adj_list, counties, pop, 
+        ndists, total_seats, as<std::vector<int>>(district_seat_sizes),
+        lower, target, upper);
     // Create the scoring function 
     ScoringFunction scoring_function(map_params, constraints, pop_temper);
 
     PlanEnsemble plan_ensemble(
-        map_params.V, ndists, num_regions,
+        map_params.V, ndists, total_seats, num_regions,
         pop, num_plans,
         SamplingSpace::GraphSpace,
         region_ids, 
@@ -244,7 +254,8 @@ arma::vec compute_plans_log_optimal_weights(
     Rcpp::List control;
     SplittingSizeScheduleType splitting_schedule_type = get_splitting_size_regime(splitting_schedule_str);
     auto splitting_schedule_ptr = get_splitting_schedule(
-        1, ndists, splitting_schedule_type, control
+        1, ndists, total_seats, as<std::vector<int>>(district_seat_sizes),
+        splitting_schedule_type, control
     );
     splitting_schedule_ptr->set_potential_cut_sizes_for_each_valid_size(
         0, num_regions-1

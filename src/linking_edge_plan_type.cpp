@@ -15,19 +15,20 @@ VertexGraph LinkingEdgePlan::get_forest_adj(){
 }
 
 
-LinkingEdgePlan::LinkingEdgePlan(int const ndists, 
+LinkingEdgePlan::LinkingEdgePlan(
+    int const total_seats, 
     int const total_pop,
     PlanVector &this_plan_region_ids, 
     RegionSizes &this_plan_region_sizes,
     IntPlanAttribute &this_plan_region_pops,
     IntPlanAttribute &this_plan_order_added
 ):
-    Plan(ndists, total_pop, 
+    Plan(total_seats, total_pop, 
         this_plan_region_ids, this_plan_region_sizes, this_plan_region_pops, this_plan_order_added
     )
 {
     forest_graph.resize(region_ids.size());
-    linking_edges.reserve(ndists-1);
+    linking_edges.reserve(this_plan_region_sizes.size()-1);
 };
 
 LinkingEdgePlan::LinkingEdgePlan(
@@ -40,7 +41,7 @@ LinkingEdgePlan::LinkingEdgePlan(
     const std::vector<std::array<double, 3>> &linking_edges,
     const Rcpp::List &initial_forest_adj_list
 ):
-Plan(ndists, num_regions, pop, 
+Plan(num_regions, pop, 
     this_plan_region_ids, this_plan_region_sizes, this_plan_region_pops, this_plan_order_added
 ){
     throw Rcpp::exception("Custom linking edges not ready yet!");

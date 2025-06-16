@@ -282,6 +282,8 @@ SplittingSizeScheduleType get_splitting_size_regime(std::string const &splitting
         return SplittingSizeScheduleType::DistrictOnly;
     }else if(splitting_size_regime_str == "any_valid_sizes"){
         return SplittingSizeScheduleType::AnyValidSizeSMD;
+    }else if(splitting_size_regime_str == "split_district_only_mmd"){
+        return SplittingSizeScheduleType::DistrictOnlySMD;
     }else if(splitting_size_regime_str == "any_valid_sizes_mmd"){
         return SplittingSizeScheduleType::AnyValidSizeMMD;
     }else if(splitting_size_regime_str == "one_custom_size"){
@@ -296,5 +298,4 @@ SplittingSizeScheduleType get_splitting_size_regime(std::string const &splitting
         throw Rcpp::exception("Invalid splitting size regime passed");
     }
 };
-
 

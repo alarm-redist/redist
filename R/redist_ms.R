@@ -136,6 +136,8 @@ redist_mergesplit <- function(
     constraints <- validate_constraints(map=map, constraints_q=constraints_q, use_constraints_q=TRUE)
     # get the total number of districts
     ndists <- attr(map, "ndists")
+    total_seats <- attr(map, "total_seats")
+    district_seat_sizes <- attr(map, "district_seat_sizes")
 
 
     map_params <- get_map_parameters(map, use_counties_q=T, counties_q = rlang::enquo(counties))
@@ -292,7 +294,7 @@ redist_mergesplit <- function(
         t1_run <- Sys.time()
         algout <- ms_plans(
             nsims, warmup, thin,
-            ndists,
+            ndists, total_seats, district_seat_sizes,
             adj_list, counties, pop,
             target=pop_bounds[2], lower=pop_bounds[1], upper=pop_bounds[3],
             compactness,

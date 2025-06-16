@@ -95,7 +95,7 @@ void Plan::check_inputted_region_ids(int ndists) const{
 
 
 // Constructs existing parital plan
-Plan::Plan(int const ndists, int const num_regions,
+Plan::Plan(int const num_regions,
     const arma::uvec &pop,
     PlanVector &this_plan_region_ids, 
     RegionSizes &this_plan_region_sizes,
@@ -107,7 +107,7 @@ Plan::Plan(int const ndists, int const num_regions,
     region_pops(this_plan_region_pops),
     region_added_order(this_plan_order_added),
     num_regions(num_regions),
-    region_order_max(ndists+1)
+    region_order_max(num_regions+2)
 {
 
     // Create other region-level information 

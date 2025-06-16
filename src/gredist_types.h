@@ -262,8 +262,9 @@ Graph build_restricted_county_graph(Graph const &g,  arma::uvec const &counties)
 class MapParams {
     public:
     // Constructor 
-    MapParams(Rcpp::List adj_list, const arma::uvec &counties, const arma::uvec &pop,
-        int ndists, double lower, double target, double upper) :
+    MapParams(Rcpp::List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
+        int const ndists, int const total_seats, std::vector<int> const &district_seat_sizes,
+        double const lower, double const target, double const upper) :
         g(list_to_graph(adj_list)), counties(counties), num_counties(max(counties)),
         cg(county_graph(g, counties)),
         county_restricted_graph(num_counties > 1 ? build_restricted_county_graph(g, counties) : Graph(0)),
@@ -271,11 +272,11 @@ class MapParams {
         county_forest(build_county_forest(g, counties, num_counties).first), 
         county_forest_roots(build_county_forest(g, counties, num_counties).second),
         pop(pop),
-        V(static_cast<int>(g.size())), ndists(ndists), total_seats(ndists),
+        V(static_cast<int>(g.size())), ndists(ndists), total_seats(total_seats),
         lower(lower), target(target), upper(upper),
-        district_seats(total_seats+1, false){
+        district_seat_sizes(total_seats+1, false){
             // check the sizes are ok 
-            if(ndists-1 > MAX_SUPPORTED_NUM_DISTRICTS){
+            if(ndists-1 > MAX_SUPPORTED_NUM_DISTRICTS || total_seats-1 > MAX_SUPPORTED_NUM_DISTRICTS){
                 REprintf("The maximum number of districts supported right now is %u!\n",
                     MAX_SUPPORTED_NUM_DISTRICTS);
                 throw Rcpp::exception("Too many districts! This number of districts isn't supported!\n");
@@ -290,7 +291,20 @@ class MapParams {
                     MAX_SUPPORTED_NUM_VERTICES);
                 throw Rcpp::exception("Too many vertices in the map! This number of vertices isn't supported!\n");
             }
-            district_seats[1] = true;
+            if(ndists > total_seats){
+                throw Rcpp::exception("The number of distrcts must be less than or equal to the total number of seats!\n");
+            }else if(ndists != total_seats){
+                for (auto const &a_size: district_seat_sizes){
+                    if(a_size < 0) throw Rcpp::exception("District Seat Sizes must be strictly positive!\n");
+                    if(a_size >= total_seats)  throw Rcpp::exception("District Seat Sizes must be less than total seats!\n");
+                    // mark this as a district size 
+                    this->district_seat_sizes[a_size] = true;
+                }
+                
+            }else{
+                this->district_seat_sizes[1] = true;
+            }
+            
         };
 
     Graph const g; // The graph as undirected adjacency list 
@@ -307,7 +321,7 @@ class MapParams {
     double const lower; // lower bound on district population
     double const target; // target district population
     double const upper; // upper bound on district population
-    std::vector<bool> district_seats; // of length total_seats that says whether or not that size is a district
+    std::vector<bool> district_seat_sizes; // of length total_seats that says whether or not that size is a district
 
 };
 
@@ -421,6 +435,7 @@ enum class SplittingSizeScheduleType : unsigned char
 {
     DistrictOnly,
     AnyValidSizeSMD,
+    DistrictOnlySMD,
     AnyValidSizeMMD,
     OneCustomSize,
     PureMergeSplitSize,

@@ -10,7 +10,7 @@ ForestPlan::ForestPlan(
     IntPlanAttribute &this_plan_order_added,
     const Rcpp::List &initial_forest_adj_list
 ):
-Plan(ndists, num_regions, pop, 
+Plan(num_regions, pop, 
     this_plan_region_ids, this_plan_region_sizes, this_plan_region_pops, this_plan_order_added
 ){
     if(num_regions == 1 || num_regions == ndists){

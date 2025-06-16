@@ -11,14 +11,14 @@ class ForestPlan : public Plan {
 
 public:
     // constructor for a blank plan 
-    ForestPlan(int const ndists,
+    ForestPlan(int const total_seats,
         int const total_pop,
         PlanVector &this_plan_region_ids, 
         RegionSizes &this_plan_region_sizes,
         IntPlanAttribute &this_plan_region_pops,
         IntPlanAttribute &this_plan_order_added
    ):
-    Plan(ndists, total_pop, 
+    Plan(total_seats, total_pop, 
         this_plan_region_ids, this_plan_region_sizes, this_plan_region_pops, this_plan_order_added
     ){forest_graph.resize(region_ids.size());};
 

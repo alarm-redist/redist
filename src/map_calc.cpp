@@ -542,7 +542,6 @@ Rcpp::IntegerMatrix infer_region_sizes(
     }
 
     Rcpp::IntegerMatrix region_sizes(num_regions, num_plans);
-    REprintf("%d Plans!\n",num_plans);
 
     // parallel for loop over each plan 
     RcppThread::parallelFor(0, num_plans, [&] (unsigned int i) {

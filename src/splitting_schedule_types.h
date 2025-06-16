@@ -24,20 +24,23 @@ class SplittingSchedule {
         
         // Base constructor just creates vectors, does not set them
         SplittingSchedule(
-            const SplittingSizeScheduleType schedule_type, const int ndists
+            const SplittingSizeScheduleType schedule_type, 
+            const int ndists, const int total_seats
         ):
             schedule_type(schedule_type),
             ndists(ndists),
-            all_regions_smaller_cut_sizes_to_try(ndists+1),
-            all_regions_min_and_max_possible_cut_sizes(ndists+1),
-            valid_region_sizes_to_split(ndists+1),
-            valid_split_region_sizes(ndists+1),
-            check_adj_to_regions(ndists+1),
-            valid_merge_pair_sizes(ndists+1, std::vector<bool>(ndists+1, false)
+            total_seats(total_seats),
+            all_regions_smaller_cut_sizes_to_try(total_seats+1),
+            all_regions_min_and_max_possible_cut_sizes(total_seats+1),
+            valid_region_sizes_to_split(total_seats+1),
+            valid_split_region_sizes(total_seats+1),
+            check_adj_to_regions(total_seats+1),
+            valid_merge_pair_sizes(total_seats+1, std::vector<bool>(total_seats+1, false)
             ) {};
     
         SplittingSizeScheduleType schedule_type; // the splitting type 
-        int ndists; // the number of districts 
+        int const ndists; // the number of districts 
+        int const total_seats;
         double multidistrict_alpha;
 
         /*
@@ -109,6 +112,32 @@ class AnyRegionSMDSplittingSchedule : public SplittingSchedule {
 
 
 /* 
+ * Derived Class for district only split schedule for multi-member districts
+ * This is the splitting schedule where at each step we split off a district
+ * from the remainder.
+ */
+class DistrictOnlyMMDSplittingSchedule : public SplittingSchedule {
+
+    public:
+        // constructor
+        DistrictOnlyMMDSplittingSchedule(
+            const int num_splits, const int ndists,
+            const int total_seats,
+            std::vector<int> const &district_seat_sizes
+        );
+
+        int const smallest_district_size;
+        int const largest_district_size;
+        std::vector<int> const &district_seat_sizes;
+        std::vector<bool> is_district;
+        std::vector<bool> reachable_size;
+        
+        void set_potential_cut_sizes_for_each_valid_size(
+            int split_num, int presplit_num_regions) override;    
+};
+
+
+/* 
  * Derived Class for any region split schedule for multi-member districts
  * This is the splitting schedule for which allows for any size splits
  * to be made (where both split regions have to have at least size district_size_lb)
@@ -120,13 +149,16 @@ class AnyRegionMMDSplittingSchedule : public SplittingSchedule {
         AnyRegionMMDSplittingSchedule(
             const int num_splits, const int ndists,
             const int total_seats,
-            const int district_size_lb, const int district_size_ub
+            std::vector<int> const &district_seat_sizes
         );
 
-        int const total_seats;
+        int const smallest_district_size;
+        std::vector<int> const &district_seat_sizes;
+        std::vector<bool> is_district;
+        std::vector<bool> reachable_size;
         
-        // void set_potential_cut_sizes_for_each_valid_size(
-        //     int split_num, int presplit_num_regions) override;    
+        void set_potential_cut_sizes_for_each_valid_size(
+            int split_num, int presplit_num_regions) override;    
 };
 
 
@@ -139,7 +171,8 @@ class PureMSSplittingSchedule : public SplittingSchedule {
     public:
         // constructor
         PureMSSplittingSchedule(
-            const int ndists, int const district_size_lb, int const district_size_ub 
+            const int ndists, const int total_size,
+            int const district_size_lb, int const district_size_ub 
         );
 
         void set_potential_cut_sizes_for_each_valid_size(
@@ -173,7 +206,8 @@ class OneCustomSplitSchedule : public SplittingSchedule {
 
     
 std::unique_ptr<SplittingSchedule> get_splitting_schedule(
-    const int num_splits, const int ndists, 
+    const int num_splits, const int ndists, const int total_seats,
+    std::vector<int> const &district_seat_sizes,
     SplittingSizeScheduleType const schedule_type,
     Rcpp::List const &control
 );

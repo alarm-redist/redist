@@ -36,22 +36,14 @@ compute_log_target_density <- function(
 
     if (inherits(plans, "redist_plans")){
         plan_matrix <- get_plans_matrix(plans)
-        ndists <- attr(plans, "ndists")
     }else if(is.vector(plans)){
         plan_matrix <- as.matrix(plans, cols = 1)
-        ndists <- dplyr::n_distinct(plan_matrix[,1])
     }else if(is.matrix(plans)){
         plan_matrix <- plans
-        ndists <- dplyr::n_distinct(plan_matrix[,1])
     }else{
         cli::cli_abort("{.arg plans} must be a matrix or {.cls redist_plans} type!")
     }
-
-    # if sizes matrix is null then assume all regions are the same size
-    if(is.null(sizes_matrix)){
-        sizes_matrix <- matrix(1L, nrow = ndists, ncol = ncol(plan_matrix))
-    }
-
+    num_regions <- dplyr::n_distinct(plan_matrix[,1])
 
     counties_q <- rlang::enquo(counties)
     # get validated inputs
@@ -63,16 +55,31 @@ compute_log_target_density <- function(
     pop <- map_params$pop
     pop_bounds <- map_params$pop_bounds
 
+    ndists <- attr(map, "ndists")
+    total_seats <- attr(map, "total_seats")
+
+    if (inherits(plans, "redist_plans")){
+        sizes_matrix <- get_nseats_matrix(plans)
+    }else if(is.null(sizes_matrix)){
+        # infer
+        prec_pop <- map[[attr(map, "pop_col")]]
+        distr_pop <- pop_tally(plan_matrix, prec_pop, num_regions)
+        sizes_matrix <- infer_region_sizes(
+            distr_pop,
+            attr(map, "pop_bounds")[1], attr(map, "pop_bounds")[3],
+            total_seats
+        )
+    }
+
+
     # need to pass in quosure
     constraints_q <- rlang::enquo(constraints)
     constraints <- validate_constraints(map, constraints_q=constraints_q, use_constraints_q=TRUE)
 
-
-    num_regions <- dplyr::n_distinct(plan_matrix[,1])
     unnormalized_log_density <- compute_log_unnormalized_plan_target_density(
         adj_list, counties, pop,
         constraints, pop_temper, rho=compactness,
-        ndists=ndists, num_regions=num_regions,
+        ndists=ndists, total_seats = total_seats, num_regions=num_regions,
         lower=pop_bounds[1],
         target=pop_bounds[2],
         upper=pop_bounds[3],
@@ -121,20 +128,14 @@ compute_log_target_density_by_region <- function(
 ){
     if (inherits(plans, "redist_plans")){
         plan_matrix <- get_plans_matrix(plans)
-        ndists <- attr(plans, "ndists")
     }else if(is.vector(plans)){
         plan_matrix <- as.matrix(plans, cols = 1)
-        ndists <- dplyr::n_distinct(plan_matrix[,1])
     }else if(is.matrix(plans)){
         plan_matrix <- plans
-        ndists <- dplyr::n_distinct(plan_matrix[,1])
     }else{
         cli::cli_abort("{.arg plans} must be a matrix or {.cls redist_plans} type!")
     }
-    # if sizes matrix is null then assume all regions are the same size
-    if(is.null(sizes_matrix)){
-        sizes_matrix <- matrix(1L, nrow = ndists, ncol = ncol(plan_matrix))
-    }
+    num_regions <- dplyr::n_distinct(plan_matrix[,1])
 
 
     counties_q <- rlang::enquo(counties)
@@ -147,16 +148,30 @@ compute_log_target_density_by_region <- function(
     pop <- map_params$pop
     pop_bounds <- map_params$pop_bounds
 
+    ndists <- attr(map, "ndists")
+    total_seats <- attr(map, "total_seats")
+
+    if (inherits(plans, "redist_plans")){
+        sizes_matrix <- get_nseats_matrix(plans)
+    }else if(is.null(sizes_matrix)){
+        # infer
+        prec_pop <- map[[attr(map, "pop_col")]]
+        distr_pop <- pop_tally(plans, prec_pop, num_regions)
+        sizes_matrix <- infer_region_sizes(
+            distr_pop,
+            attr(map, "pop_bounds")[1], attr(map, "pop_bounds")[3],
+            total_seats
+        )
+    }
+
     # need to pass in quosure
     constraints_q <- rlang::enquo(constraints)
     constraints <- validate_constraints(map, constraints_q=constraints_q, use_constraints_q=TRUE)
 
-
-    num_regions <- dplyr::n_distinct(plan_matrix[,1])
     unnormalized_log_region_densities <- compute_log_unnormalized_region_target_density(
         adj_list, counties, pop,
         constraints, pop_temper, rho=compactness,
-        ndists=ndists, num_regions=num_regions,
+        ndists=ndists, total_seats = total_seats, num_regions=num_regions,
         lower=pop_bounds[1],
         target=pop_bounds[2],
         upper=pop_bounds[3],

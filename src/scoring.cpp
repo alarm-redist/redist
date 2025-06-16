@@ -316,7 +316,7 @@ double ScoringFunction::compute_region_score(const Plan &plan, int const region_
     double region_score = 0.0;
 
     // check if its a multidistrict 
-    bool const is_multidistrict = !map_params.district_seats[plan.region_sizes[region_id]];
+    bool const is_multidistrict = !map_params.district_seat_sizes[plan.region_sizes[region_id]];
 
     // add the score from each constraint 
     for(auto const &constraint_ptr: constraint_ptrs){
@@ -345,7 +345,7 @@ double ScoringFunction::compute_merged_region_score(const Plan &plan,
     double region_score = 0.0;
 
     // check if its a multidistrict 
-    bool const is_multidistrict = !map_params.district_seats[
+    bool const is_multidistrict = !map_params.district_seat_sizes[
         plan.region_sizes[region1_id] + plan.region_sizes[region2_id]
     ];
 

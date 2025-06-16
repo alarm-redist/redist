@@ -9,7 +9,7 @@ class LinkingEdgePlan : public Plan {
 
     public:
     // constructor for a blank plan 
-    LinkingEdgePlan(int const ndists, 
+    LinkingEdgePlan(int const total_seats, 
         int const total_pop,
         PlanVector &this_plan_region_ids, 
         RegionSizes &this_plan_region_sizes,

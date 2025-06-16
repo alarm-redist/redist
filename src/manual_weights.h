@@ -29,7 +29,7 @@
 Rcpp::NumericVector compute_log_unnormalized_plan_target_density(
     List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
     List const &constraints, double const pop_temper,  double const rho,
-    int const ndists, int const num_regions,
+    int const ndists, int const total_seats, int const num_regions,
     double const lower, double const target, double const upper,
     Rcpp::IntegerMatrix const &region_ids, 
     Rcpp::IntegerMatrix const &region_sizes,
@@ -41,7 +41,7 @@ Rcpp::NumericVector compute_log_unnormalized_plan_target_density(
 Rcpp::NumericMatrix compute_log_unnormalized_region_target_density(
     List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
     List const &constraints, double const pop_temper,  double const rho,
-    int const ndists, int const num_regions,
+    int const ndists, int const total_seats, int const num_regions,
     double const lower, double const target, double const upper,
     Rcpp::IntegerMatrix const &region_ids, 
     Rcpp::IntegerMatrix const &region_sizes,
@@ -54,7 +54,8 @@ arma::vec compute_plans_log_optimal_weights(
     List const &adj_list, arma::uvec const &counties, arma::uvec const &pop,
     List const &constraints, double const pop_temper,  double const rho,
     std::string const &splitting_schedule_str,
-    int const ndists, int const num_regions,
+    int const ndists, int const total_seats, Rcpp::IntegerVector const &district_seat_sizes,
+    int const num_regions,
     double const lower, double const target, double const upper,
     Rcpp::IntegerMatrix const &region_ids, 
     Rcpp::IntegerMatrix const &region_sizes,

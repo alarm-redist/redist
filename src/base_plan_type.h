@@ -93,7 +93,7 @@ protected:
 
 public:
     // constructor for a blank plan 
-    Plan(int const ndists,
+    Plan(int const total_seats,
         int const total_pop,
         PlanVector &this_plan_region_ids, 
         RegionSizes &this_plan_region_sizes,
@@ -101,7 +101,7 @@ public:
         IntPlanAttribute &this_plan_order_added
    );
    // constructor for partial plan (more than 1 region)
-    Plan(int const ndists, int const num_regions,
+    Plan(int const num_regions,
         const arma::uvec &pop,
         PlanVector &this_plan_region_ids, 
         RegionSizes &this_plan_region_sizes,

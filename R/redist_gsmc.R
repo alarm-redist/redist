@@ -216,8 +216,7 @@ redist_gsmc <- function(
     # validate constraints
     constraints_q <- rlang::enquo(constraints)
     constraints <- validate_constraints(map=map, constraints_q=constraints_q, use_constraints_q=TRUE)
-    # get the total number of districts
-    ndists <- attr(map, "ndists")
+
 
     # update quosure if quosure not passed in
     if(!use_counties_q){
@@ -232,6 +231,18 @@ redist_gsmc <- function(
     num_admin_units <- length(unique(counties))
     pop <- map_params$pop
     pop_bounds <- map_params$pop_bounds
+
+    # get the total number of districts
+    ndists <- attr(map, "ndists")
+    total_seats <- attr(map, "total_seats")
+    district_seat_sizes <- attr(map, "district_seat_sizes")
+    storage.mode(district_seat_sizes) <- "integer"
+    districting_scheme <- attr(map, "districting_scheme")
+
+    # check that the seat sizes are a range
+    if(any(district_seat_sizes != seq.int(from = min(district_seat_sizes), to = max(district_seat_sizes) ))){
+        cli::cli_abort("For {.arg district_seat_sizes} only a continuous range of district seat sizes are allowed!")
+    }
 
 
     # handle particle inits
@@ -250,6 +261,7 @@ redist_gsmc <- function(
     }
     if (is.null(num_splitting_steps)) {
         num_splitting_steps <- ndists - init_num_regions
+        # cli::cli_text("{num_splitting_steps} steps!")
     }
     final_dists <- init_num_regions + num_splitting_steps
     if (final_dists > ndists) {
@@ -316,10 +328,23 @@ redist_gsmc <- function(
 
     # setting the splitting size regime
     if(split_district_only){
-        splitting_size_regime = "split_district_only"
+        if(districting_scheme == "SMD"){
+            splitting_size_regime = "split_district_only"
+        }else if(districting_scheme == "MMD"){
+            splitting_size_regime = "split_district_only_mmd"
+        }else{
+            cli::cli_abort("Districting scheme {districting_scheme} is not supported!")
+        }
     }else if(is.null(custom_size_split_list)){
-        # this is means allow any valid sizes
-        splitting_size_regime = "any_valid_sizes"
+        if(districting_scheme == "SMD"){
+            # this is means allow any valid sizes
+            splitting_size_regime = "any_valid_sizes"
+        }else if(districting_scheme == "MMD"){
+            splitting_size_regime = "any_valid_sizes_mmd"
+        }else{
+            cli::cli_abort("Districting scheme {districting_scheme} is not supported!")
+        }
+
     }else{ # else its custom
         # only support doing a single size right now
         # validate it
@@ -433,8 +458,8 @@ redist_gsmc <- function(
 
         algout <- gredist::run_redist_gsmc(
             nsims=nsims,
-            total_seats=ndists,
-            ndists=ndists,
+            ndists=ndists, total_seats=total_seats,
+            district_seat_sizes = district_seat_sizes,
             initial_num_regions=init_num_regions,
             adj_list=adj_list,
             counties=counties,
@@ -735,6 +760,7 @@ redist_gsmc <- function(
 
     exist_name <- attr(map, "existing_col")
     if (!is.null(exist_name) && !isFALSE(ref_name) && ndists == final_dists) {
+        if(DEBUG_MODE) print("Checkpoint 8.1 - adding reference plan!")
         ref_name <- if (!is.null(ref_name)) ref_name else exist_name
         out <- add_reference(out, map[[exist_name]], ref_name)
     }
