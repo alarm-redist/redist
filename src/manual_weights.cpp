@@ -16,6 +16,7 @@ Rcpp::NumericVector compute_log_unnormalized_plan_target_density(
     List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
     List const &constraints, double const pop_temper,  double const rho,
     int const ndists, int const total_seats, int const num_regions,
+    Rcpp::IntegerVector const &district_seat_sizes,
     double const lower, double const target, double const upper,
     Rcpp::IntegerMatrix const &region_ids, 
     Rcpp::IntegerMatrix const &region_sizes,
@@ -24,8 +25,10 @@ Rcpp::NumericVector compute_log_unnormalized_plan_target_density(
     // create the map param object
     MapParams map_params(
         adj_list, counties, pop, 
-        ndists, ndists, std::vector<int>{},
+        ndists, total_seats, as<std::vector<int>>(district_seat_sizes),
         lower, target, upper);
+    // Add hard constraints to scoring function 
+    constraints["plan_valid_district_sizes"] = true;
     // Create the scoring function 
     ScoringFunction scoring_function(map_params, constraints, pop_temper);
 
@@ -56,26 +59,38 @@ Rcpp::NumericVector compute_log_unnormalized_plan_target_density(
         static thread_local Graph county_graph(map_params.num_counties);
 
         // auto county_splits_result = county_components.count_county_splits(plans_vec[i]);
-        bool const hiearhically_valid = county_components.check_valid_hiearchical_plan(*plan_ensemble.plan_ptr_vec[i], county_graph);
         // check number of counties is valid and no double county intersect region components
         // if too many then log(target) = -Inf
+        bool const hiearhically_valid = county_components.check_valid_hiearchical_plan(*plan_ensemble.plan_ptr_vec[i], county_graph);
         if(!hiearhically_valid){
-            // REprintf("Invalid!\n");
             log_unnormalized_density[i] = -arma::math::inf();
-        }else{
-            log_unnormalized_density[i] = 0.0;
-            // compute the tau for the plan if we care about it
-            if(rho != 0){
-                log_unnormalized_density[i] += rho * plan_ensemble.plan_ptr_vec[i]->compute_log_plan_spanning_trees(map_params);
-            }
-            // subtract score from each region
-            for (size_t region_id = 0; region_id < num_regions; region_id++)
-            {
-                log_unnormalized_density[i] -= scoring_function.compute_region_score(
-                    *plan_ensemble.plan_ptr_vec[i], region_id, is_final
-                );
-            }
+            ++bar;
+            RcppThread::checkUserInterrupt(i % check_int == 0);
+            return; // return to break the lambda 
         }
+        // Now check hard constraints 
+        auto hard_score = scoring_function.compute_hard_plan_constraints_score(*plan_ensemble.plan_ptr_vec[i]);
+        if(!hard_score.first){
+            log_unnormalized_density[i] = -arma::math::inf();
+            ++bar;
+            RcppThread::checkUserInterrupt(i % check_int == 0);
+            return; // return to break the lambda 
+        }
+
+        
+        log_unnormalized_density[i] = - hard_score.second;
+        // compute the tau for the plan if we care about it
+        if(rho != 0){
+            log_unnormalized_density[i] += rho * plan_ensemble.plan_ptr_vec[i]->compute_log_plan_spanning_trees(map_params);
+        }
+        // subtract score from each region
+        for (size_t region_id = 0; region_id < num_regions; region_id++)
+        {
+            log_unnormalized_density[i] -= scoring_function.compute_region_score(
+                *plan_ensemble.plan_ptr_vec[i], region_id, is_final
+            );
+        }
+        
         ++bar;
         RcppThread::checkUserInterrupt(i % check_int == 0);
     });
@@ -91,6 +106,7 @@ Rcpp::NumericMatrix compute_log_unnormalized_region_target_density(
     List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
     List const &constraints, double const pop_temper,  double const rho,
     int const ndists, int const total_seats, int const num_regions,
+    Rcpp::IntegerVector const &district_seat_sizes,
     double const lower, double const target, double const upper,
     Rcpp::IntegerMatrix const &region_ids, 
     Rcpp::IntegerMatrix const &region_sizes,
@@ -99,8 +115,11 @@ Rcpp::NumericMatrix compute_log_unnormalized_region_target_density(
     // create the map param object
     MapParams map_params(
         adj_list, counties, pop, 
-        ndists, ndists, std::vector<int>{},
+        ndists, total_seats, as<std::vector<int>>(district_seat_sizes),
         lower, target, upper);
+    
+    // Add hard constraints to scoring function 
+    constraints["plan_valid_district_sizes"] = true;
     // Create the scoring function 
     ScoringFunction scoring_function(map_params, constraints, pop_temper);
 
@@ -132,29 +151,45 @@ Rcpp::NumericMatrix compute_log_unnormalized_region_target_density(
         static thread_local Graph county_graph(map_params.num_counties);
 
         // auto county_splits_result = county_components.count_county_splits(plans_vec[i]);
-        bool const hiearhically_valid = county_components.check_valid_hiearchical_plan(*plan_ensemble.plan_ptr_vec[i], county_graph);
         // check number of counties is valid and no double county intersect region components
         // if too many then log(target) = -Inf
+        bool const hiearhically_valid = county_components.check_valid_hiearchical_plan(*plan_ensemble.plan_ptr_vec[i], county_graph);
         if(!hiearhically_valid){
             for (size_t region_id = 0; region_id < num_regions; region_id++)
             {
                 log_unnormalized_region_densities(region_id, i) = -arma::math::inf();
             }
-        }else{
-            // compute contribution for each region
+            ++bar;
+            RcppThread::checkUserInterrupt(i % check_int == 0);
+            return; // return to break the lambda 
+        }
+        // Now check hard constraints 
+        auto hard_score = scoring_function.compute_hard_plan_constraints_score(*plan_ensemble.plan_ptr_vec[i]);
+        if(!hard_score.first){
             for (size_t region_id = 0; region_id < num_regions; region_id++)
             {
-                log_unnormalized_region_densities(region_id, i) = 0.0;
-                if(rho != 0){
-                    log_unnormalized_region_densities(region_id, i) += rho * plan_ensemble.plan_ptr_vec[i]->compute_log_region_spanning_trees(
-                        map_params, region_id
-                    );
-                }
-                log_unnormalized_region_densities(region_id, i) -= scoring_function.compute_region_score(
-                    *plan_ensemble.plan_ptr_vec[i], region_id, is_final
+                log_unnormalized_region_densities(region_id, i) = -arma::math::inf();
+            }
+            ++bar;
+            RcppThread::checkUserInterrupt(i % check_int == 0);
+            return; // return to break the lambda 
+        }
+
+
+        // compute contribution for each region
+        for (size_t region_id = 0; region_id < num_regions; region_id++)
+        {
+            log_unnormalized_region_densities(region_id, i) = 0.0;
+            if(rho != 0){
+                log_unnormalized_region_densities(region_id, i) += rho * plan_ensemble.plan_ptr_vec[i]->compute_log_region_spanning_trees(
+                    map_params, region_id
                 );
             }
+            log_unnormalized_region_densities(region_id, i) -= scoring_function.compute_region_score(
+                *plan_ensemble.plan_ptr_vec[i], region_id, is_final
+            );
         }
+        
         ++bar;
         RcppThread::checkUserInterrupt(i % check_int == 0);
     });

@@ -25,23 +25,40 @@ class SplittingSchedule {
         // Base constructor just creates vectors, does not set them
         SplittingSchedule(
             const SplittingSizeScheduleType schedule_type, 
-            const int ndists, const int total_seats
+            const int ndists, const int total_seats, 
+            std::vector<int> const &district_seat_sizes
         ):
             schedule_type(schedule_type),
             ndists(ndists),
             total_seats(total_seats),
+            smallest_district_size(*min_element(district_seat_sizes.begin(), district_seat_sizes.end())),
+            largest_district_size(*max_element(district_seat_sizes.begin(), district_seat_sizes.end())),
+            district_seat_sizes(district_seat_sizes),
+            is_district(total_seats + 1, false),
             all_regions_smaller_cut_sizes_to_try(total_seats+1),
             all_regions_min_and_max_possible_cut_sizes(total_seats+1),
             valid_region_sizes_to_split(total_seats+1),
             valid_split_region_sizes(total_seats+1),
             check_adj_to_regions(total_seats+1),
             valid_merge_pair_sizes(total_seats+1, std::vector<bool>(total_seats+1, false)
-            ) {};
+            ){
+                // make sure the district sizes are ok 
+                for (auto const &a_size: district_seat_sizes){
+                    if(a_size < 0) throw Rcpp::exception("District Seat Sizes must be strictly positive!\n");
+                    if(a_size >= total_seats)  throw Rcpp::exception("District Seat Sizes must be less than total seats!\n");
+                    // mark this as a district size 
+                    is_district[a_size] = true;
+                }
+            };
     
         SplittingSizeScheduleType schedule_type; // the splitting type 
         int const ndists; // the number of districts 
         int const total_seats;
         double multidistrict_alpha;
+        int const smallest_district_size;
+        int const largest_district_size;
+        std::vector<int> const &district_seat_sizes;
+        std::vector<bool> is_district;
 
         /*
          * This is a vector of vectors where entry for index `r` it is a vector
@@ -126,12 +143,6 @@ class DistrictOnlyMMDSplittingSchedule : public SplittingSchedule {
             std::vector<int> const &district_seat_sizes
         );
 
-        int const smallest_district_size;
-        int const largest_district_size;
-        std::vector<int> const &district_seat_sizes;
-        std::vector<bool> is_district;
-        std::vector<bool> reachable_size;
-        
         void set_potential_cut_sizes_for_each_valid_size(
             int split_num, int presplit_num_regions) override;    
 };
@@ -152,9 +163,6 @@ class AnyRegionMMDSplittingSchedule : public SplittingSchedule {
             std::vector<int> const &district_seat_sizes
         );
 
-        int const smallest_district_size;
-        std::vector<int> const &district_seat_sizes;
-        std::vector<bool> is_district;
         std::vector<bool> reachable_size;
         
         void set_potential_cut_sizes_for_each_valid_size(
@@ -172,7 +180,7 @@ class PureMSSplittingSchedule : public SplittingSchedule {
         // constructor
         PureMSSplittingSchedule(
             const int ndists, const int total_size,
-            int const district_size_lb, int const district_size_ub 
+            std::vector<int> const &district_seat_sizes
         );
 
         void set_potential_cut_sizes_for_each_valid_size(

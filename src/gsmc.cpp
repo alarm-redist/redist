@@ -627,8 +627,8 @@ List run_redist_gsmc(
             Rcout << "Ensuring no more than " << ndists - 1 << " splits of the "
                   << map_params.cg.size() << " administrative units.\n";
         }
-        if(scoring_function.total_constraints > 0){
-            Rcout << "Applying " << scoring_function.total_constraints << " constraints.\n";
+        if(scoring_function.total_soft_constraints > 0){
+            Rcout << "Applying " << scoring_function.total_soft_constraints << " constraints.\n";
         }
     }
 

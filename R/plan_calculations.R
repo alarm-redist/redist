@@ -36,10 +36,10 @@ compute_log_target_density <- function(
 
     if (inherits(plans, "redist_plans")){
         plan_matrix <- get_plans_matrix(plans)
-    }else if(is.vector(plans)){
-        plan_matrix <- as.matrix(plans, cols = 1)
     }else if(is.matrix(plans)){
         plan_matrix <- plans
+    }else if(is.vector(plans) && is.numeric(enum_plans)){
+        plan_matrix <- as.matrix(plans, cols = 1)
     }else{
         cli::cli_abort("{.arg plans} must be a matrix or {.cls redist_plans} type!")
     }
@@ -57,6 +57,8 @@ compute_log_target_density <- function(
 
     ndists <- attr(map, "ndists")
     total_seats <- attr(map, "total_seats")
+    district_seat_sizes <- attr(map, "district_seat_sizes")
+    storage.mode(district_seat_sizes) <- "integer"
 
     if (inherits(plans, "redist_plans")){
         sizes_matrix <- get_nseats_matrix(plans)
@@ -80,6 +82,7 @@ compute_log_target_density <- function(
         adj_list, counties, pop,
         constraints, pop_temper, rho=compactness,
         ndists=ndists, total_seats = total_seats, num_regions=num_regions,
+        district_seat_sizes=district_seat_sizes,
         lower=pop_bounds[1],
         target=pop_bounds[2],
         upper=pop_bounds[3],
@@ -128,10 +131,10 @@ compute_log_target_density_by_region <- function(
 ){
     if (inherits(plans, "redist_plans")){
         plan_matrix <- get_plans_matrix(plans)
-    }else if(is.vector(plans)){
-        plan_matrix <- as.matrix(plans, cols = 1)
     }else if(is.matrix(plans)){
         plan_matrix <- plans
+    }else if(is.vector(plans) && is.numeric(enum_plans)){
+        plan_matrix <- as.matrix(plans, cols = 1)
     }else{
         cli::cli_abort("{.arg plans} must be a matrix or {.cls redist_plans} type!")
     }
@@ -150,19 +153,22 @@ compute_log_target_density_by_region <- function(
 
     ndists <- attr(map, "ndists")
     total_seats <- attr(map, "total_seats")
+    district_seat_sizes <- attr(map, "district_seat_sizes")
+    storage.mode(district_seat_sizes) <- "integer"
 
     if (inherits(plans, "redist_plans")){
         sizes_matrix <- get_nseats_matrix(plans)
     }else if(is.null(sizes_matrix)){
         # infer
         prec_pop <- map[[attr(map, "pop_col")]]
-        distr_pop <- pop_tally(plans, prec_pop, num_regions)
+        distr_pop <- pop_tally(plan_matrix, prec_pop, num_regions)
         sizes_matrix <- infer_region_sizes(
             distr_pop,
             attr(map, "pop_bounds")[1], attr(map, "pop_bounds")[3],
             total_seats
         )
     }
+
 
     # need to pass in quosure
     constraints_q <- rlang::enquo(constraints)
@@ -172,6 +178,7 @@ compute_log_target_density_by_region <- function(
         adj_list, counties, pop,
         constraints, pop_temper, rho=compactness,
         ndists=ndists, total_seats = total_seats, num_regions=num_regions,
+        district_seat_sizes=district_seat_sizes,
         lower=pop_bounds[1],
         target=pop_bounds[2],
         upper=pop_bounds[3],

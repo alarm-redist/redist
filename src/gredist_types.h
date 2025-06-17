@@ -274,7 +274,10 @@ class MapParams {
         pop(pop),
         V(static_cast<int>(g.size())), ndists(ndists), total_seats(total_seats),
         lower(lower), target(target), upper(upper),
-        district_seat_sizes(total_seats+1, false){
+        smallest_district_size(*min_element(district_seat_sizes.begin(), district_seat_sizes.end())),
+        largest_district_size(*max_element(district_seat_sizes.begin(), district_seat_sizes.end())),
+        district_seat_sizes(district_seat_sizes),
+        is_district(total_seats+1, false){
             // check the sizes are ok 
             if(ndists-1 > MAX_SUPPORTED_NUM_DISTRICTS || total_seats-1 > MAX_SUPPORTED_NUM_DISTRICTS){
                 REprintf("The maximum number of districts supported right now is %u!\n",
@@ -298,11 +301,11 @@ class MapParams {
                     if(a_size < 0) throw Rcpp::exception("District Seat Sizes must be strictly positive!\n");
                     if(a_size >= total_seats)  throw Rcpp::exception("District Seat Sizes must be less than total seats!\n");
                     // mark this as a district size 
-                    this->district_seat_sizes[a_size] = true;
+                    is_district[a_size] = true;
                 }
                 
             }else{
-                this->district_seat_sizes[1] = true;
+                is_district[1] = true;
             }
             
         };
@@ -321,7 +324,10 @@ class MapParams {
     double const lower; // lower bound on district population
     double const target; // target district population
     double const upper; // upper bound on district population
-    std::vector<bool> district_seat_sizes; // of length total_seats that says whether or not that size is a district
+    int const smallest_district_size; // smallest district size
+    int const largest_district_size; // largest district size
+    std::vector<int> const &district_seat_sizes; // vector of all district seat sizes 
+    std::vector<bool> is_district; // of length total_seats that says whether or not that size is a district
 
 };
 

@@ -269,22 +269,26 @@ set_plan_matrix <- function(x, mat) {
 #' @export
 get_nseats_matrix <- function(x) {
     if (!inherits(x, "redist_plans")) cli_abort("Not a {.cls redist_plans}")
+    # if not partial and SMD just return a matrix of ones
+    if(attr(x, "districting_scheme") == "SMD" && isFALSE(attr(x, "partial"))){
+        return(matrix(1L, nrow = num_regions, ncol = nplans))
+    }
+
     if (!"nseats" %in% names(x)) cli_abort("{.cls redist_plans} does not have {.field nseats}!")
 
     num_regions <- attr(x, "ndists")
     total_seats <- attr(x, "total_seats")
     nplans <- get_plans_matrix(x) |> ncol()
 
-    # if not partial and SMD just return a matrix of ones
-    if(attr(x, "districting_scheme") == "SMD" && isFALSE(attr(x, "partial"))){
-        sizes_matrix <- matrix(1L, nrow = num_regions, ncol = nplans)
-    }else if(all(
+    # Check if the districts are still in the same order
+    if(all(
         rep(seq.int(num_regions), times = nplans) == x$district
-    )){# check if any reindexing needs to be done
+    )){# if no reindexing needed then just reshape
         sizes_matrix <- matrix(
             x$nseats, nrow = num_regions, ncol = nplans
         )
     }else{
+        # check if any reindexing needs to be done
         cli::cli_abort("Not implemented for shuffled district plans!")
     }
     return(sizes_matrix)

@@ -169,7 +169,7 @@ Rcpp::List ms_plans(
     // get the splitting size regime
     SplittingSizeScheduleType splitting_size_regime = SplittingSizeScheduleType::PureMergeSplitSize;
 
-    auto splitting_schedule_ptr = std::make_unique<PureMSSplittingSchedule>(ndists, total_seats, 1, 1);
+    auto splitting_schedule_ptr = std::make_unique<PureMSSplittingSchedule>(ndists, total_seats, as<std::vector<int>>(district_seat_sizes));
 
 
     // Do some input checking 
@@ -321,8 +321,8 @@ Rcpp::List ms_plans(
             Rcout << "Sampling hierarchically with respect to the "
                 << map_params.cg.size() << " administrative units." << std::endl;
         }
-        if(scoring_function.total_constraints > 0){
-            Rcout << "Applying " << scoring_function.total_constraints << " constraints"
+        if(scoring_function.total_soft_constraints > 0){
+            Rcout << "Applying " << scoring_function.total_soft_constraints << " constraints"
             << std::endl;
         }
     }

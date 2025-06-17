@@ -414,7 +414,7 @@ double compute_simple_log_incremental_weight(
     region1_score = region2_score = merged_region_score = 0;
 
     // compute if any constraints 
-    if(scoring_function.any_constraints){
+    if(scoring_function.any_soft_constraints){
         // compute scoring functions
         region1_score = scoring_function.compute_region_score(
             plan, region1_id, is_final_plan
@@ -719,7 +719,7 @@ double compute_log_optimal_weights(
 
 
         // compute score ratio if any constraints 
-        if(scoring_function.any_constraints){
+        if(scoring_function.any_soft_constraints){
             // compute scoring functions
             const double region1_score = scoring_function.compute_region_score(
                 plan, region1_id, is_final_plan

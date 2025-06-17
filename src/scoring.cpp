@@ -99,14 +99,7 @@ double GroupHingeConstraint::compute_region_constraint_score(const Plan &plan, i
         tgts_group, group_pop, total_pop,
         region_id);
 
-    double adj_strength = strength;
-    // if(plan.region_sizes(region_id) > 1){
-    //     double adj_strength = strength * std::exp(- static_cast<double>(plan.region_sizes(region_id)) / plan.ndists);
-    //     // adj_strength = strength * std::exp(- static_cast<double>(plan.region_sizes(region_id)));
-    //     // double adj_strength = 0;
-    // } 
-
-    return adj_strength * raw_score;
+    return strength * raw_score;
 }
 // log constraint for region made by merging region 1 and 2
 double GroupHingeConstraint::compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
@@ -114,13 +107,30 @@ double GroupHingeConstraint::compute_merged_region_constraint_score(const Plan &
         plan.region_ids,  
         tgts_group, group_pop, total_pop,
         region1_id, region2_id);
-    double adj_strength = strength;
-    // double adj_strength = strength * std::exp(- static_cast<double>(plan.region_sizes(region1_id) + plan.region_sizes(region2_id)) / plan.ndists);
-    // adj_strength = strength * std::exp(- static_cast<double>(plan.region_sizes(region1_id) + plan.region_sizes(region2_id)));
-    return adj_strength * raw_score;
+    return strength * raw_score;
 }
 
 
+
+std::pair<bool, double> ValidDistrictsConstraint::compute_plan_constraint_score(const Plan &plan) const{
+    // first check no region is smaller than the smallest district size 
+    for (size_t i = 0; i < plan.num_regions; i++)
+    {
+        auto region_size = plan.region_sizes[i];
+        if(region_size < map_params.smallest_district_size){
+            return std::make_pair(false, 0);
+        }
+        // if the plan is all districts, ie ndists = num regions then check every region is a district
+        if(plan.num_regions == map_params.ndists && !map_params.is_district[region_size]){
+            // if not a district return false
+            return std::make_pair(false, 0);
+        }
+    }
+    // Now return ok 
+    return std::make_pair(true, 0);
+    
+    
+}
 
 
 // Scoring function
@@ -128,16 +138,17 @@ ScoringFunction::ScoringFunction(
     MapParams const &map_params,
     Rcpp::List const &constraints, double const pop_temper
 ):
-map_params(map_params), num_non_final_constraints(0), num_final_constraints(0), all_rounds_constraints(0), 
-total_constraints(0){
+map_params(map_params), num_non_final_soft_constraints(0), num_final_soft_constraints(0), all_rounds_soft_constraints(0), 
+total_soft_constraints(0), num_hard_constraints(0){
+    // First add region constraints 
     // add pop temper if doing that 
     if(pop_temper != 0){
-        non_final_plan_constraint_ptrs.emplace_back(
+        non_final_region_constraint_ptrs.emplace_back(
             std::make_unique<PopTemperConstraint>(
                 map_params.target, map_params.ndists, 
                 map_params, pop_temper
             ));
-        num_non_final_constraints++;
+        num_non_final_soft_constraints++;
     }
 
     // add constraints if in the list 
@@ -159,7 +170,7 @@ total_constraints(0){
         //         return eval_pop_dev(districts.col(i), j,
         //                                pop, parity);
         //     });
-        // all_rounds_constraints++;
+        // all_rounds_soft_constraints++;
     }
     if (constraints.containsElementNamed("status_quo")) {
         throw Rcpp::exception("Error: 'status_quo' constraint not implemented yet!");
@@ -170,7 +181,7 @@ total_constraints(0){
         //          j, pop, n_distr,
         //          as<int>(l["n_current"]), V);
         // });
-        // all_rounds_constraints++;
+        // all_rounds_soft_constraints++;
     }
     if (constraints.containsElementNamed("segregation")) {
         throw Rcpp::exception("Error: 'segregation' constraint not implemented yet!");
@@ -180,7 +191,7 @@ total_constraints(0){
         //         return eval_segregation(districts.col(i), j,
         //                                 as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"]));
         //     });
-        // all_rounds_constraints++;
+        // all_rounds_soft_constraints++;
     }
     if (constraints.containsElementNamed("grp_pow")) {
         throw Rcpp::exception("Error: 'grp_pow' constraint not implemented yet!");
@@ -191,7 +202,7 @@ total_constraints(0){
         //       as<double>(l["tgt_group"]), as<double>(l["tgt_other"]),
         //       as<double>(l["pow"]));
         // });
-        // all_rounds_constraints++;
+        // all_rounds_soft_constraints++;
     }
     if (constraints.containsElementNamed("compet")) {
         throw Rcpp::exception("Error: 'compet' constraint not implemented yet!");
@@ -202,7 +213,7 @@ total_constraints(0){
         // return eval_grp_pow(districts.col(i), j,
         //       dvote, total, 0.5, 0.5, as<double>(l["pow"]));
         // });
-        // all_rounds_constraints++;
+        // all_rounds_soft_constraints++;
     }
     if (constraints.containsElementNamed("grp_hinge")) {
         // create constraint objects
@@ -215,15 +226,15 @@ total_constraints(0){
                 if (constr_inst.containsElementNamed("score_districts_only")){
                     constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
                 }
-                constraint_ptrs.emplace_back(
+                region_constraint_ptrs.emplace_back(
                     std::make_unique<GroupHingeConstraint>(
                         strength, as<arma::vec>(constr_inst["tgts_group"]),
                         as<arma::uvec>(constr_inst["group_pop"]), as<arma::uvec>(constr_inst["total_pop"]),
                         constr_score_districts_only
                     ));
-                REprintf("Added and its %d!\n", constraint_ptrs[0]->score_districts_only);
+                REprintf("Added and its %d!\n", region_constraint_ptrs[0]->score_districts_only);
                 // increase constraints applied at every split count
-                all_rounds_constraints++;
+                all_rounds_soft_constraints++;
             }
         }
     }
@@ -239,20 +250,28 @@ total_constraints(0){
                 if (constr_inst.containsElementNamed("score_districts_only")){
                     constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
                 }
-                constraint_ptrs.emplace_back(
+                region_constraint_ptrs.emplace_back(
                     std::make_unique<GroupHingeConstraint>(
                         strength, as<arma::vec>(constr_inst["tgts_group"]),
                         as<arma::uvec>(constr_inst["group_pop"]), as<arma::uvec>(constr_inst["total_pop"]),
                         constr_score_districts_only
                     ));
                 // increase constraints applied at every split count
-                all_rounds_constraints++;
+                all_rounds_soft_constraints++;
             }
         }
     }
 
-    total_constraints = num_non_final_constraints+num_final_constraints+all_rounds_constraints;
-    any_constraints = total_constraints != 0; 
+    // Now add plan constraints 
+    if (constraints.containsElementNamed("plan_valid_district_sizes")) {
+        // Add this check 
+        hard_plan_constraint_ptrs.emplace_back(
+            std::make_unique<ValidDistrictsConstraint>(map_params)
+        );
+    }
+
+    total_soft_constraints = num_non_final_soft_constraints+num_final_soft_constraints+all_rounds_soft_constraints;
+    any_soft_constraints = total_soft_constraints != 0; 
 }
 
 
@@ -319,7 +338,7 @@ double ScoringFunction::compute_region_score(const Plan &plan, int const region_
     bool const is_multidistrict = !map_params.district_seat_sizes[plan.region_sizes[region_id]];
 
     // add the score from each constraint 
-    for(auto const &constraint_ptr: constraint_ptrs){
+    for(auto const &constraint_ptr: region_constraint_ptrs){
         // skip if multidistrict and we only score districts
         if(constraint_ptr->score_districts_only && is_multidistrict) continue;
         region_score += constraint_ptr->compute_region_constraint_score(plan, region_id);
@@ -328,7 +347,7 @@ double ScoringFunction::compute_region_score(const Plan &plan, int const region_
     if(is_final) return region_score;
 
     // if not final then add those constraints (for now just pop_temper)
-    for(auto const &constraint_ptr: non_final_plan_constraint_ptrs){
+    for(auto const &constraint_ptr: non_final_region_constraint_ptrs){
         // skip if multidistrict and we only score districts
         if(constraint_ptr->score_districts_only && is_multidistrict) continue;
         region_score += constraint_ptr->compute_region_constraint_score(plan, region_id);
@@ -350,7 +369,7 @@ double ScoringFunction::compute_merged_region_score(const Plan &plan,
     ];
 
     // get the log constraint 
-    for(auto const &constraint_ptr: constraint_ptrs){
+    for(auto const &constraint_ptr: region_constraint_ptrs){
         if(constraint_ptr->score_districts_only && is_multidistrict) continue;
         region_score += constraint_ptr->compute_merged_region_constraint_score(plan, region1_id, region2_id);
     }
@@ -358,10 +377,26 @@ double ScoringFunction::compute_merged_region_score(const Plan &plan,
     if(is_final) return region_score;
 
     // if not final then add those constraints 
-    for(auto const &constraint_ptr: non_final_plan_constraint_ptrs){
+    for(auto const &constraint_ptr: non_final_region_constraint_ptrs){
         if(constraint_ptr->score_districts_only && is_multidistrict) continue;
         region_score += constraint_ptr->compute_merged_region_constraint_score(plan, region1_id, region2_id);
     }
 
     return region_score;
+}
+
+std::pair<bool, double> ScoringFunction::compute_hard_plan_constraints_score(const Plan &plan) const{
+    double plan_score = 0.0;
+ 
+    for(auto const &constraint_ptr: hard_plan_constraint_ptrs){
+        auto result = constraint_ptr->compute_plan_constraint_score(plan);
+        // if false then failed to satisfy constraint so return false
+        if(!result.first){
+            return std::make_pair(false, 0.0);
+        }else{
+            plan_score += result.second;
+        }
+    }
+
+    return std::make_pair(true, plan_score);
 }

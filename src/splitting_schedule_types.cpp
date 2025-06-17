@@ -104,7 +104,7 @@ void SplittingSchedule::print_current_step_splitting_info(){
 DistrictOnlySplittingSchedule::DistrictOnlySplittingSchedule(
     const int num_splits, const int ndists
 ):
-    SplittingSchedule(SplittingSizeScheduleType::DistrictOnly, ndists, ndists){
+    SplittingSchedule(SplittingSizeScheduleType::DistrictOnly, ndists, ndists, std::vector<int> {1}){
     // For each size above 2 make the min=1 and the max=size-1
     for (int region_size = 2; region_size <= ndists; region_size++)
     {
@@ -145,7 +145,7 @@ void DistrictOnlySplittingSchedule::set_potential_cut_sizes_for_each_valid_size(
 AnyRegionSMDSplittingSchedule::AnyRegionSMDSplittingSchedule(
     const int num_splits, const int ndists
 ):
-    SplittingSchedule(SplittingSizeScheduleType::AnyValidSizeSMD, ndists, ndists){
+    SplittingSchedule(SplittingSizeScheduleType::AnyValidSizeSMD, ndists, ndists, std::vector<int> {1}){
     // If doing any sizes then for `region_size` the possible split sizes are always 
     // if any sizes allowed then for 2, ..., ndists make it 1,...,floor(size/2)
     for (int region_size = 2; region_size <= ndists; region_size++)
@@ -204,12 +204,7 @@ DistrictOnlyMMDSplittingSchedule::DistrictOnlyMMDSplittingSchedule(
             const int num_splits, const int ndists,
             const int total_seats, std::vector<int> const &district_seat_sizes
 ):
-    SplittingSchedule(SplittingSizeScheduleType::DistrictOnlySMD, ndists, total_seats),
-    smallest_district_size(*min_element(district_seat_sizes.begin(), district_seat_sizes.end())),
-    largest_district_size(*max_element(district_seat_sizes.begin(), district_seat_sizes.end())),
-    district_seat_sizes(district_seat_sizes),
-    is_district(total_seats + 1, false),
-    reachable_size(total_seats + 1, false){
+    SplittingSchedule(SplittingSizeScheduleType::DistrictOnlySMD, ndists, total_seats, district_seat_sizes){
     // make sure the district sizes are ok 
     for (auto const &a_size: district_seat_sizes){
         if(a_size < 0) throw Rcpp::exception("District Seat Sizes must be strictly positive!\n");
@@ -353,19 +348,9 @@ AnyRegionMMDSplittingSchedule::AnyRegionMMDSplittingSchedule(
             const int num_splits, const int ndists,
             const int total_seats, std::vector<int> const &district_seat_sizes
 ):
-    SplittingSchedule(SplittingSizeScheduleType::AnyValidSizeMMD, ndists, total_seats),
-    smallest_district_size(*min_element(district_seat_sizes.begin(), district_seat_sizes.end())),
-    district_seat_sizes(district_seat_sizes),
-    is_district(total_seats + 1, false),
+    SplittingSchedule(SplittingSizeScheduleType::AnyValidSizeMMD, ndists, total_seats, district_seat_sizes),
     reachable_size(total_seats + 1, false){
-    // make sure the district sizes are ok 
-    for (auto const &a_size: district_seat_sizes){
-        REprintf("%d!\n", a_size);
-        if(a_size < 0) throw Rcpp::exception("District Seat Sizes must be strictly positive!\n");
-        if(a_size >= total_seats)  throw Rcpp::exception("District Seat Sizes must be less than total seats!\n");
-        // mark this as a district size 
-        is_district[a_size] = true;
-    }
+
 
     // the smallest size divided by total seats must be at least ndists or its not even
     // possible to split this map. 
@@ -504,23 +489,13 @@ void AnyRegionMMDSplittingSchedule::set_potential_cut_sizes_for_each_valid_size(
 
 PureMSSplittingSchedule::PureMSSplittingSchedule(
     const int ndists, const int total_size,
-    int const district_size_lb, int const district_size_ub
+    std::vector<int> const &district_seat_sizes
 ):
-    SplittingSchedule(SplittingSizeScheduleType::PureMergeSplitSize, ndists, total_size){
+    SplittingSchedule(SplittingSizeScheduleType::PureMergeSplitSize, ndists, total_size, district_seat_sizes){
     
-    // check bounds make sense
-    if(district_size_lb < 1){
-        throw Rcpp::exception("Pure MS District Size Lower Bound must be at least 1!\n");
-    }
-    if(district_size_lb > district_size_ub){
-        throw Rcpp::exception("Pure MS District Size Lower Bound must not be greater than the upper bound!\n");
-    }
-    if(district_size_ub > ndists){
-        throw Rcpp::exception("Pure MS District Size Upper Bound must not be greater than the total number of districts in the map!\n");
-    }
 
-    for(int district_size1 = district_size_lb; 
-            district_size1 <= district_size_ub;
+    for(int district_size1 = smallest_district_size;
+            district_size1 <= largest_district_size;
             district_size1++){
         // mark each district size as a valid split region size
         valid_split_region_sizes[district_size1] = true;
@@ -530,8 +505,8 @@ PureMSSplittingSchedule::PureMSSplittingSchedule(
             throw Rcpp::exception("Pure MS not supported when one district bigger than half total seats\n");
         }
 
-        for(int district_size2 = district_size_lb; 
-            district_size2 <= district_size_ub;
+        for(int district_size2 = smallest_district_size; 
+            district_size2 <= largest_district_size;
             district_size2++){
             
             if(district_size1 + district_size2 <= ndists){
@@ -551,7 +526,7 @@ PureMSSplittingSchedule::PureMSSplittingSchedule(
     // get min and max sizes 
 
     // NOT TESTED
-    for (size_t region_size = 0; region_size <= ndists; region_size++)
+    for (size_t region_size = 1; region_size <= total_seats; region_size++)
     {
         if(!valid_region_sizes_to_split[region_size]) continue;
         // sort and remove duplicates 
@@ -581,7 +556,7 @@ PureMSSplittingSchedule::PureMSSplittingSchedule(
 OneCustomSplitSchedule::OneCustomSplitSchedule(
     const int num_splits, const int ndists,
     Rcpp::List const &control
-): SplittingSchedule(SplittingSizeScheduleType::OneCustomSize, ndists, ndists){
+): SplittingSchedule(SplittingSizeScheduleType::OneCustomSize, ndists, ndists, std::vector<int> {1}){
 
     // Ensure "custom_size_split_list" exists and is a list
     if (!control.containsElementNamed("custom_size_split_list")) {

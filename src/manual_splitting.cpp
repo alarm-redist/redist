@@ -214,7 +214,7 @@ List perform_a_valid_multidistrict_split(
         plan_ensemble.plan_ptr_vec[0]->Rprint();
     }
 
-    auto splitting_schedule_ptr = std::make_unique<PureMSSplittingSchedule>(ndists, ndists, 1, 1);
+    auto splitting_schedule_ptr = std::make_unique<PureMSSplittingSchedule>(ndists, ndists, std::vector<int>{1});
 
     // Create tree related stuff
     int uncut_tree_root;
