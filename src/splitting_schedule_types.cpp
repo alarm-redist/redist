@@ -275,6 +275,11 @@ void DistrictOnlyMMDSplittingSchedule::set_potential_cut_sizes_for_each_valid_si
     }
     // REprintf("Smallest Remainder Size: %d\n", presplit_smallest_possible_size);
 
+    // Don't think this should be possible but just adding a flag 
+    if(presplit_biggest_possible_size <= largest_district_size){
+        REprintf("BIG PROBLEM: Biggest remainder size is %d but that is less than largest district %d!\n", 
+        presplit_biggest_possible_size, largest_district_size);
+    }
 
     // reset all regions split and merge booleans
     reset_splitting_and_merge_booleans();
@@ -284,6 +289,9 @@ void DistrictOnlyMMDSplittingSchedule::set_potential_cut_sizes_for_each_valid_si
          remainder_size <= presplit_biggest_possible_size; 
          remainder_size++
     ){
+        // If the size is a district then skip it 
+        if(is_district[remainder_size]) continue;
+
         // check if it is possible to reach 
         // if not smallest_district_size <= remainder_size/remainder_ndists <= largest_district_size
         if(
