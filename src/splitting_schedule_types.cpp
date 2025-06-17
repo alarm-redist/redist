@@ -289,9 +289,6 @@ void DistrictOnlyMMDSplittingSchedule::set_potential_cut_sizes_for_each_valid_si
          remainder_size <= presplit_biggest_possible_size; 
          remainder_size++
     ){
-        // If the size is a district then skip it 
-        if(is_district[remainder_size]) continue;
-
         // check if it is possible to reach 
         // if not smallest_district_size <= remainder_size/remainder_ndists <= largest_district_size
         if(
