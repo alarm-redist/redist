@@ -100,6 +100,10 @@
 #' @param verbose Whether to print out intermediate information while sampling.
 #' Recommended.
 #' @param silent Whether to suppress all diagnostic information.
+#' @param control A list of optional advanced parameters.
+#' \itemize{
+#'  \item \code{parameter1}: Crazy
+#' }
 #'
 #' @return `redist_smc` returns a [redist_plans] object containing the simulated
 #' plans.

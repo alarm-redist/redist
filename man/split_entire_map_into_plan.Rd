@@ -28,9 +28,6 @@ splits further, or to constrain a second type of administrative split,
 consider using \code{add_constr_splits()}, \code{add_constr_multisplits()}, and
 \code{add_constr_total_splits()}.}
 
-\item{split_district_only}{Whether or not to split plans by splitting off one
-district at a time.}
-
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}
 }

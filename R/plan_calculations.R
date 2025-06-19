@@ -38,16 +38,16 @@ compute_log_target_density <- function(
         plan_matrix <- get_plans_matrix(plans)
     }else if(is.matrix(plans)){
         plan_matrix <- plans
-    }else if(is.vector(plans) && is.numeric(enum_plans)){
+    }else if(is.vector(plans) && is.numeric(plans)){
         plan_matrix <- as.matrix(plans, cols = 1)
     }else{
         cli::cli_abort("{.arg plans} must be a matrix or {.cls redist_plans} type!")
     }
     num_regions <- dplyr::n_distinct(plan_matrix[,1])
 
-    counties_q <- rlang::enquo(counties)
+
     # get validated inputs
-    map_params <- get_map_parameters(map, counties_q=counties_q, use_counties_q = TRUE)
+    map_params <- get_map_parameters(map, !!rlang::enquo(counties))
     map <- map_params$map
     V <- map_params$V
     adj_list <- map_params$adj_list
@@ -74,9 +74,8 @@ compute_log_target_density <- function(
     }
 
 
-    # need to pass in quosure
-    constraints_q <- rlang::enquo(constraints)
-    constraints <- validate_constraints(map, constraints_q=constraints_q, use_constraints_q=TRUE)
+    # need to pass in the defused quosure
+    constraints <- validate_constraints(map=map, constraints=rlang::enquo(constraints))
 
     unnormalized_log_density <- compute_log_unnormalized_plan_target_density(
         adj_list, counties, pop,
@@ -133,7 +132,7 @@ compute_log_target_density_by_region <- function(
         plan_matrix <- get_plans_matrix(plans)
     }else if(is.matrix(plans)){
         plan_matrix <- plans
-    }else if(is.vector(plans) && is.numeric(enum_plans)){
+    }else if(is.vector(plans) && is.numeric(plans)){
         plan_matrix <- as.matrix(plans, cols = 1)
     }else{
         cli::cli_abort("{.arg plans} must be a matrix or {.cls redist_plans} type!")
@@ -141,9 +140,8 @@ compute_log_target_density_by_region <- function(
     num_regions <- dplyr::n_distinct(plan_matrix[,1])
 
 
-    counties_q <- rlang::enquo(counties)
     # get validated inputs
-    map_params <- get_map_parameters(map, counties_q=counties_q, use_counties_q = TRUE)
+    map_params <- get_map_parameters(map, !!rlang::enquo(counties))
     map <- map_params$map
     V <- map_params$V
     adj_list <- map_params$adj_list
@@ -170,9 +168,8 @@ compute_log_target_density_by_region <- function(
     }
 
 
-    # need to pass in quosure
-    constraints_q <- rlang::enquo(constraints)
-    constraints <- validate_constraints(map, constraints_q=constraints_q, use_constraints_q=TRUE)
+    # need to pass in the defused quosure
+    constraints <- validate_constraints(map=map, constraints=rlang::enquo(constraints))
 
     unnormalized_log_region_densities <- compute_log_unnormalized_region_target_density(
         adj_list, counties, pop,
@@ -257,9 +254,8 @@ compute_log_optimal_weights <- function(
     pop <- map_params$pop
     pop_bounds <- map_params$pop_bounds
 
-    # need to pass in quosure
-    constraints_q <- rlang::enquo(constraints)
-    constraints <- validate_constraints(map, constraints_q=constraints_q, use_constraints_q=TRUE)
+    # need to pass in the defused quosure
+    constraints <- validate_constraints(map=map, constraints=rlang::enquo(constraints))
 
 
     num_regions <- dplyr::n_distinct(plan_matrix[,1])

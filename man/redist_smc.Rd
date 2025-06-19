@@ -115,6 +115,11 @@ output. Defaults to the column name of the existing plan.}
 Recommended.}
 
 \item{silent}{Whether to suppress all diagnostic information.}
+
+\item{control}{A list of optional advanced parameters.
+\itemize{
+\item \code{parameter1}: Crazy
+}}
 }
 \value{
 \code{redist_smc} returns a \link{redist_plans} object containing the simulated

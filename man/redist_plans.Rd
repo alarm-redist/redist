@@ -4,7 +4,7 @@
 \alias{redist_plans}
 \title{A set of redistricting plans}
 \usage{
-redist_plans(plans, map, algorithm, wgt = NULL, ...)
+redist_plans(plans, map, algorithm, wgt = NULL, region_nseats = NULL, ...)
 }
 \arguments{
 \item{plans}{a matrix with \code{n_precinct} columns and \code{n_sims} rows,
@@ -15,6 +15,8 @@ or a single vector of precinct assignments.}
 \item{algorithm}{the algorithm used to generate the plans (usually "smc" or "mcmc")}
 
 \item{wgt}{the weights to use, if any.}
+
+\item{region_nseats}{The number of seats in each region (if they are not all the same).}
 
 \item{...}{Other named attributes to set}
 }

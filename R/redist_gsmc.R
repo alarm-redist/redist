@@ -23,7 +23,7 @@ DEBUG_MODE <- FALSE
 #' process at each SMC stage.  Unless `silent=FALSE`, this function will print
 #' out the effective sample size of each resampling step to allow the user to
 #' monitor the efficiency.  If `verbose=TRUE` the function will also print
-#' out information on any relevant splitting values chosen and the
+#' out information on any relevant splitting parameters chosen and the
 #' acceptance rate (based on the population constraint) at each step.
 #' Users should also check diagnostics of the sample by running
 #' \code{summary.redist_plans()}.
@@ -42,7 +42,7 @@ DEBUG_MODE <- FALSE
 #' geographic unit) labels for each unit, which may be integers ranging from 1
 #' to the number of counties, or a factor or character vector.  If provided,
 #' the algorithm will only generate maps which split up to `ndists-1`
-#' counties. Even there are fewer counties than `ndists - 1`, the spanning
+#' counties. Even if there are fewer counties than `ndists - 1`, the spanning
 #' trees will change the results of the simulations. There is no strength
 #' parameter associated with this constraint. To adjust the number of county
 #' splits further, or to constrain a second type of administrative split,
@@ -54,16 +54,33 @@ DEBUG_MODE <- FALSE
 #' considerations.
 #' @param constraints A [redist_constr()] object or a list containing
 #' information on sampling constraints. See [constraints] for more information.
+#' @param resample Whether to perform a final resampling step so that the
+#' generated plans can be used immediately.  Set this to `FALSE` to
+#' perform direct importance sampling estimates, or to adjust the weights
+#' manually.
 #' @param runs How many independent parallel runs to conduct. Each run will
 #' have `nsims` simulations. Multiple runs allows for estimation of simulation
 #' standard errors. Output will only be shown for the first run. For
 #' compatibility with MCMC methods, runs are identified with the `chain`
 #' column in the output.
-#' @param split_district_only Whether or not to split plans by splitting off one
-#' district at a time.
-#' @param weight_type The type of SMC weights to use. Optimal weights typically
-#' have lower variance and lead to faster convergence but can be more
-#' computationally expensive, especially for computationally complex constraints.
+#' @param ncores How many threads to use to parallelize plan generation within each
+#' run. The default, 0, will use the number of available cores on the machine
+#' as long as `nsims` and the number of units is large enough. If `runs>1`
+#' you will need to set this manually. If more than one core is used, the
+#' sampler output will not be fully reproducible with `set.seed()`. If full
+#' reproducibility is desired, set `ncores=1` and `num_processes=1`. This argument
+#' is equivalent to `num_threads_per_process`
+#' @param init_particles Either a [redist_plans] object or a matrix of partial
+#' plans to begin sampling from. For advanced use only. The matrix must have
+#' `nsims` columns and a row for every precinct. It is important to ensure that
+#' the existing districts meet contiguity and population constraints, or there
+#' may be major issues when sampling.
+#' @param init_particles_nseats A matrix of the number of seats per region of
+#' the partial plans to begin sampling from. For advanced use only. The matrix
+#' must have `nsims` columns, as many rows as there are regions in `init_particles`
+#' and each column must sum to the total number of seats in the map. Not needed
+#' if `init_particles` is a [redist_plans] object. If `init_particles` are passed
+#' but not `init_particles_nseats`
 #' @param sampling_space The space to sample the plans on. This does not affect
 #' the plans output by the function but the sample space used can have a large
 #' impact on computational cost/runtime and convergence. Current spaces supported
@@ -74,55 +91,68 @@ DEBUG_MODE <- FALSE
 #' @param splitting_method The method used for splitting spanning trees in the
 #' sampling process. When sampling on the space of graph partitions it must be
 #' the naive top k method but any method is allowed for forest space sampling.
-#' @param splitting_params A list of parameters associated with the splitting
-#' method passed in. Specific parameters depends on the splitting types
-#' @param ms_frequency How often to run merge steps. Should either be an integer
+#' @param splitting_params A list of parameters related to splitting the plans.
+#' Options include
+#' \itemize{
+#'  \item \code{splitting_schedule} What rule to use for selecting splitting
+#'  sizes. The final target distribution is the same regardless of splitting
+#'  schedule but the intermediate distributions can change. Current options
+#'  include
+#'  \itemize{
+#'      \item \code{split_district_only} At each step split off a single district.
+#'      \item \code{any_valid_sizes} At each step allow for regions to be split
+#'      into any two sizes (assuming the sizes can eventually be split into
+#'      districts.) Currently this is only supported for single member districting.
+#'  }
+#' }
+#' Parameters for \code{splitting_method} Any relevant parameters for the
+#'  \code{splitting_method}. These include the following
+#'  \itemize{
+#'      \item `r NAIVE_K_SPLITTING` parameters:
+#'        \itemize{
+#'      \item \code{adapt_k_thresh} The threshold value used in the heuristic to
+#'       select a value `k_i` for each splitting iteration for graph space
+#'       sampling if estimation is desired (the `k_i` can also be manually passed in.)
+#'       Higher values are more accurate but may require more
+#'       computation. Set to 1 for the most conservative sampling.
+#'       Must be between 0 and 1.
+#'      \item \code{manual_k_params} The `k_i` values to be used for each splitting
+#'      iteration for graph space sampling. Beware when specifying manual values
+#'      it is crucial they are close to the true values as too small `k_i` values
+#'      will cause the algorithm to fail to sample from the target distribution
+#'      correctly and too large values will cause a drastic performance hit. The
+#'      input must either be a single integer to use for each step or a vector
+#'      of integers equal to the number of smc steps.
+#'      }
+#'      \item `r EXP_BIGGER_ABS_DEV_SPLITTING`
+#'      \itemize{
+#'          \item \code{splitting_alpha} When selecting an edge to cut in the
+#'          tree a valid edge is selected with probability proportional to
+#'          \code{exp(-splitting_alpha * max_dev)}. \code{splitting_alpha} can
+#'          be any real number. Values closer to zero result in more stable weights
+#'          and larger values result in more unstable weights.
+#'      }
+#'  }
+#' @param mergesplit_params A list of mergesplit parameters.
+#' \itemize{
+#'  \item \code{ms_frequency}: How often to run merge steps. Should either be an integer
 #' (meaning run after every _ smc steps) or a vector of 1 indexed step numbers
 #' indicating which smc steps to run merge split. A value of -1 means just run
-#' after all smc steps have been run.
-#' @param ms_moves_multiplier Multiplier to the baseline number of mergesplit
+#' after all smc steps have been run. A value of 1 means run after every smc step.
+#' \item \code{ms_moves_multiplier} Multiplier to the baseline number of mergesplit
 #' moves to be performed each step. For a mergesplit step the baseline number of
 #' moves is calculated as the ceiling of 1 over the previous mergesplit steps
 #' acceptance rate (or smc step if no prior mergesplit steps were done). The
 #' total number of moves is `ceiling(ms_moves_multiplier * baseline_num_moves)`.
-#' @param run_ms Whether to run any merge split steps or not. If set to `FALSE`
-#' then any other merge split inputs will be ignored.
-#' @param merge_prob_type What probability to use to select regions to merge
+#' \item \code{merge_prob_type} What probability to use to select regions to merge
 #' in the mergesplit kernel. Defaults to giving all pairs equal probability.
-#' @param resample Whether to perform a final resampling step so that the
-#' generated plans can be used immediately.  Set this to `FALSE` to
-#' perform direct importance sampling estimates, or to adjust the weights
-#' manually.
-#' @param num_processes The number of processes (independent instances of R)
-#' spawned to simulate the plans. The processes execute runs in parallel, each
-#' using `num_threads_per_process` threads. If more than one process is used, the
-#' sampler output will not be fully reproducible with `set.seed()`. If full
-#' reproducibility is desired, set `num_processes=1`.
-#' @param num_threads_per_process The number of threads assigned to each process.
-#' This is the number of threads used when performing a specific run. If simulations
-#' are memory constrained it can be better to lower the number of processes and increase
-#' the threads per process.
-#' @param multiprocess Whether or not to launch multiple processes. If performance
-#' is memory constrained it is better to disable multiprocessing.
-#' @param pop_temper The strength of the automatic population tempering. Try
-#' values of 0.01-0.05 to start if the algorithm gets stuck on the final few
-#' splits.
-#' @param init_region_ids_mat A matrix of partial plans to begin sampling from. For
-#' advanced use only.  The matrix must have `nsims` columns and a row for
-#' every precinct. It is important to ensure that the existing districts meet
-#' contiguity and population constraints, or there may be major issues when
-#' sampling.
-#' @param init_region_sizes_mat A matrix of region sizes of the partial plans to
-#' begin sampling from. For advanced use only.  The matrix must have `nsims`
-#' columns and at least as many rows as the number of regions in the
-#' `init_region_ids_mat` and each column must sum to the number of seats in the
-#' map.
-#' @param num_splitting_steps How many steps to run the SMC algorithm for.
-#' Each step splits off a new district. Defaults to all remaining districts.
+#' }
+#' @param weight_type The type of SMC weights to use. Optimal weights typically
+#' have lower variance and lead to faster convergence but can be more
+#' computationally expensive, especially for computationally complex constraints.
+#' @param n_steps How many steps to run the SMC algorithm for.
+#' Each step splits off a new region. Defaults to all remaining districts.
 #' If fewer than the number of remaining splits, reference plans are disabled.
-#' @param ref_name a name for the existing plan, which will be added as a
-#' reference plan, or `FALSE` to not include the initial plan in the
-#' output. Defaults to the column name of the existing plan.
 #' @param truncate Whether to truncate the importance sampling weights at the
 #' final step by `trunc_fn`.  Recommended if `compactness` is not 1.
 #' Truncation only applied if `resample=TRUE`.
@@ -130,9 +160,30 @@ DEBUG_MODE <- FALSE
 #' truncated vector. If the [loo][loo::loo] package is installed (strongly
 #' recommended), will default to Pareto-smoothed Importance Sampling (PSIS)
 #' rather than naive truncation.
+#' @param pop_temper The strength of the automatic population tempering. Try
+#' values of 0.01-0.05 to start if the algorithm gets stuck on the final few
+#' splits.
+#' @param ref_name a name for the existing plan, which will be added as a
+#' reference plan, or `FALSE` to not include the initial plan in the
+#' output. Defaults to the column name of the existing plan.
 #' @param verbose Whether to print out intermediate information while sampling.
 #' Recommended.
 #' @param silent Whether to suppress all diagnostic information.
+#' @param diagnostic_level What level of diagnostic information to save
+#' @param control A list of optional advanced parameters.
+#' \itemize{
+#'  \item \code{num_processes}: The number of processes (independent instances of R)
+#' spawned to simulate the plans. The processes execute runs in parallel, each
+#' using `num_threads_per_process` threads. If more than one process is used, the
+#' sampler output will not be fully reproducible with `set.seed()`. If full
+#' reproducibility is desired, set `num_processes=1` and
+#' `num_threads_per_process = 1`. If missing defaults to the minimum of the
+#' number of cores on the machine and `runs`
+#'  \item \code{num_threads_per_process} The number of threads assigned to each process.
+#' This is the number of threads used when performing a specific run. If simulations
+#' are memory constrained it can be better to lower the number of processes and increase
+#' the threads per process.
+#' }
 #'
 #' @return `redist_gsmc` returns a [redist_plans] object containing the simulated
 #' plans.
@@ -142,56 +193,46 @@ DEBUG_MODE <- FALSE
 #' @order 1
 #' @export
 redist_gsmc <- function(
-        map, nsims, counties = NULL, compactness = 1,
-        constraints = list(),
-        runs = 1L,
-        split_district_only = FALSE, weight_type = "optimal",
-        sampling_space = c("graph_plan_space", "spanning_forest_space", "linking_edge_space"),
-        splitting_method = gredist:::NAIVE_K_SPLITTING,
-        splitting_params = list(adapt_k_thresh = .99),
-        ms_frequency = 0L,
-        ms_moves_multiplier = 1,
-        run_ms = 0 < ms_frequency && ms_frequency <= attr(map, "ndists"),
-        merge_prob_type = "uniform",
+        map, nsims, counties = NULL,
+        compactness = 1, constraints = list(),
         resample = TRUE,
-        num_processes=0L, num_threads_per_process=0L,
-        multiprocess=FALSE,
-        pop_temper = 0,
-        init_region_ids_mat = NULL,
-        init_region_sizes_mat = NULL,
-        custom_size_split_list = NULL,
-        num_splitting_steps = NULL,
-        ref_name = NULL,
+        runs = 1L, ncores = 0L,
+        init_particles = NULL,
+        init_particles_nseats = NULL,
+        sampling_space = c("graph_plan_space", "spanning_forest_space", "linking_edge_space"),
+        splitting_method = c("naive_top_k","uniform_valid_edge", "expo_bigger_abs_dev"),
+        splitting_params = list(adapt_k_thresh = .99),
+        mergesplit_params = list(),
+        weight_type = c("optimal", "simple"),
+        n_steps = NULL,
         truncate = (compactness != 1), trunc_fn = redist_quantile_trunc,
+        pop_temper = 0, ref_name = NULL,
         verbose = FALSE, silent = FALSE, diagnostic_level = 0,
-        counties_q = NULL, use_counties_q = F)
+        control = list()
+)
 {
+    # defunct code not used right now
+    custom_size_split_list = list()
+
+    # not supported right now
+    if(truncate){
+        cli::cli_abort("Truncation not suppored right now!")
+    }
+
     # check default inputs
     sampling_space <- rlang::arg_match(sampling_space)
-    # do this for all the easily configurable options
+    weight_type <- rlang::arg_match(weight_type)
+    splitting_method <- rlang::arg_match(splitting_method)
 
-    # Make num processes is just equal runs and don't need threads per process
-
-    # remove the counties q thing (talk to Cory)
-
-    # score districts only should be constraint level not a global flag
-
-    # try to consolidate merge split stuff to a single list
 
     # come up with a better name for diagnostic level code
 
-
-    # just make the merge split parameters all a single list
-
-    # eliminate
-    #   - custom_size_split_list
 
 
     # want things to be as similar as possible to current code (dev branch)
     #   - better to add function inputs, bad to remove old ones
     #   - For mergesplit parallel put it back and then just have it call the
     #        other on
-    #   - maybe just shove everything else into a control or options parameter
 
     if (compactness < 0)
         cli_abort("{.arg compactness} must be non-negative.")
@@ -214,16 +255,9 @@ redist_gsmc <- function(
     }
 
     # validate constraints
-    constraints_q <- rlang::enquo(constraints)
-    constraints <- validate_constraints(map=map, constraints_q=constraints_q, use_constraints_q=TRUE)
-
-
-    # update quosure if quosure not passed in
-    if(!use_counties_q){
-        counties_q <- rlang::enquo(counties)
-    }
-
-    map_params <- get_map_parameters(map, counties_q=counties_q, use_counties_q=T)
+    constraints <- validate_constraints(map, rlang::enquo(constraints))
+    # get map params
+    map_params <- get_map_parameters(map, !!rlang::enquo(counties))
     map <- map_params$map
     V <- map_params$V
     adj_list <- map_params$adj_list
@@ -246,64 +280,91 @@ redist_gsmc <- function(
 
 
     # handle particle inits
-    if (is.null(init_region_ids_mat)) {
+    if (is.null(init_particles)) {
         # if no initial plans passed in then create empty matrix
-        init_region_ids_mat <- matrix(0L)
+        init_particles <- matrix(0L)
+        init_particles_nseats <- matrix(0L)
         init_num_regions <- 1L
-    } else {
-        # make sure size matrix passed in as well, inferring size not supported now
-        if(is.null(init_region_sizes_mat)){
-            cli::cli_abort("Initial Plans Matrix provided but no associated sizes. Inferring region sizes is not supported right now!")
+    }else {
+        if(is.null(init_particles_nseats)){
+            if (inherits(init_particles, "redist_plans")){
+                init_particles_nseats <- get_nseats_matrix(init_particles)
+            }else{
+                # else infer
+                cli::cli_warning("{.arg init_particles_nseats} was not passed in, attempting to infer number of seats per region.")
+                init_particles_nseats <- infer_plan_nseats(
+                    init_particles, total_seats, pop,
+                    pop_bounds[1], pop_bounds[3]
+                )
+            }
         }
         # if user input then check its valid
-        init_num_regions <- length(unique(init_region_ids_mat[,1]))
-        validate_initial_region_id_mat(init_region_ids_mat, V, nsims, init_num_regions)
+        init_num_regions <- length(unique(init_particles[,1]))
+        validate_initial_region_id_mat(init_particles, V, nsims, init_num_regions)
+        validate_initial_region_sizes_mat(init_particles_nseats, ndists, nsims, init_num_regions)
     }
-    if (is.null(num_splitting_steps)) {
-        num_splitting_steps <- ndists - init_num_regions
-        # cli::cli_text("{num_splitting_steps} steps!")
+    if (is.null(n_steps)) {
+        n_steps <- ndists - init_num_regions
     }
-    final_dists <- init_num_regions + num_splitting_steps
+    final_dists <- init_num_regions + n_steps
     if (final_dists > ndists) {
-        cli_abort("Too many districts already drawn to take {num_splitting_steps} steps.")
+        cli_abort("Too many districts already drawn to take {n_steps} steps.")
     }
 
-    # handle region size inits
-    if (is.null(init_region_sizes_mat)) {
-        # if no initial plans passed in then create empty matrix
-        init_region_sizes_mat <- matrix(0L)
-    } else {
-        validate_initial_region_sizes_mat(init_region_sizes_mat, ndists, nsims, init_num_regions)
-    }
 
     #validate the splitting method and params
     splitting_params <- validate_sample_space_and_splitting_method(
-        sampling_space, splitting_method, splitting_params, num_splitting_steps
+        sampling_space, splitting_method, splitting_params, n_steps
     )
-    total_smc_steps <- num_splitting_steps
+    total_smc_steps <- n_steps
 
-    # check weights are ok
-    if(!weight_type %in% c("optimal", "simple")){
-        cli_abort("{.arg weight_type} must be either `optimal` or `simple`!")
-    }
+
+
+    ms_param_names <- c("ms_moves_multiplier", "ms_frequency", "merge_prob_type")
 
     # create merge split parameter information
+    if(is.list(mergesplit_params) && any(ms_param_names %in% names(mergesplit_params))){
+        # check if ms_moves_multiplier was passed else default to 1
+        if("ms_moves_multiplier" %in% names(mergesplit_params)){
+            ms_moves_multiplier <- mergesplit_params[["ms_moves_multiplier"]]
+            # check that ms_moves_multiplier is positive
+            if(!assertthat::is.scalar(ms_moves_multiplier) || !ms_moves_multiplier > 0){
+                cli::cli_abort("{.arg ms_moves_multiplier} must be a positive scalar")
+            }
+        }else{
+            ms_moves_multiplier <- 1L
+        }
 
-    # check that ms_moves_multiplier is positive
-    if(!assertthat::is.scalar(ms_moves_multiplier)){
-        cli::cli_abort("{.arg ms_moves_multiplier} must be a positive scalar")
+        # check if the frequency was passed else default to after every step
+        if("ms_frequency" %in% names(mergesplit_params)){
+            ms_frequency <- mergesplit_params[["ms_frequency"]]
+        }else{
+            # else default to after every step
+            ms_frequency <- 1L
+        }
+
+        # check merge probability
+        if("merge_prob_type" %in% names(mergesplit_params)){
+            merge_prob_type <- mergesplit_params[["merge_prob_type"]]
+            if(!assertthat::is.scalar(ms_moves_multiplier) || merge_prob_type != "uniform"){
+                cli::cli_abort("Only uniform merge probability is supported right now!")
+            }
+        }else{
+            # else default to after every step
+            merge_prob_type <- "uniform"
+        }
+
+    }else{
+        run_ms <- FALSE
+        merge_prob_type <- "ignore"
     }
-    if(!ms_moves_multiplier > 0){
-        cli::cli_abort("{.arg ms_moves_multiplier} must be a positive scalar")
-    }
 
 
-    # check if there will be any merge split steps
-    any_ms_steps_ran <- ms_frequency <= total_smc_steps && run_ms
-
-    merge_split_step_vec <- rep(FALSE, total_smc_steps)
-
-    if(any_ms_steps_ran){
+    if(!run_ms){
+        merge_split_step_vec <- rep(FALSE, total_smc_steps)
+    }else if(ms_frequency == 1){
+        # if frequency 1 then do after every step
+        merge_split_step_vec <- rep(FALSE, total_smc_steps)
         # Now add merge split every `ms_frequency` steps
         # insertion trick
         # https://stackoverflow.com/questions/1493969/insert-elements-into-a-vector-at-given-indexes
@@ -313,10 +374,18 @@ redist_gsmc <- function(
 
         # number of merge split is sum of trues
         merge_split_step_vec <- val[order(id)]
+    }else if(ms_frequency == -1){
+        # if negative 1 then just put at the end
+        merge_split_step_vec <- rep(FALSE, total_smc_steps)
+        merge_split_step_vec <- c(
+            merge_split_step_vec, TRUE
+        )
     }
 
 
-    # get the types
+
+
+    # get the step types
     step_types <- ifelse(merge_split_step_vec, "ms", "smc")
     assertthat::assert_that(sum(!merge_split_step_vec) == total_smc_steps)
     # assert first step is not smc
@@ -327,34 +396,45 @@ redist_gsmc <- function(
 
 
     # setting the splitting size regime
-    if(split_district_only){
+    if("splitting_schedule" %in% names(splitting_params)){
+        splitting_schedule <- splitting_params[["splitting_schedule"]]
+        if(splitting_schedule == "split_district_only"){
+            if(districting_scheme == "SMD"){
+                splitting_size_regime = "split_district_only"
+            }else if(districting_scheme == "MMD"){
+                splitting_size_regime = "split_district_only_mmd"
+            }else{
+                cli::cli_abort("Districting scheme {districting_scheme} is not supported!")
+            }
+        }else if(splitting_schedule == "any_valid_sizes"){
+            if(districting_scheme == "SMD"){
+                splitting_size_regime = "any_valid_sizes"
+            }else if(districting_scheme == "MMD"){
+                cli::cli_abort("Generaliezd region splits are not supported for Multi-member districting!")
+            }else{
+                cli::cli_abort("Districting scheme {districting_scheme} is not supported!")
+            }
+        }else{ # else its custom
+            cli::cli_abort("Custom splitting schedules are not supported right now!")
+            # only support doing a single size right now
+            # validate it
+            validate_custom_size_split_list(ndists, n_steps, init_num_regions, custom_size_split_list)
+            splitting_size_regime = "one_custom_size"
+        }
+    }else{
+        # default to any size if SMD and district if MMD
         if(districting_scheme == "SMD"){
-            splitting_size_regime = "split_district_only"
+            splitting_size_regime = "any_valid_sizes"
         }else if(districting_scheme == "MMD"){
             splitting_size_regime = "split_district_only_mmd"
         }else{
             cli::cli_abort("Districting scheme {districting_scheme} is not supported!")
         }
-    }else if(is.null(custom_size_split_list)){
-        if(districting_scheme == "SMD"){
-            # this is means allow any valid sizes
-            splitting_size_regime = "any_valid_sizes"
-        }else if(districting_scheme == "MMD"){
-            splitting_size_regime = "any_valid_sizes_mmd"
-        }else{
-            cli::cli_abort("Districting scheme {districting_scheme} is not supported!")
-        }
-
-    }else{ # else its custom
-        # only support doing a single size right now
-        # validate it
-        validate_custom_size_split_list(ndists, num_splitting_steps, init_num_regions, custom_size_split_list)
-        splitting_size_regime = "one_custom_size"
     }
+
 
     # compute lags thing
     lags <- 1 + unique(round((ndists - 1)^0.8*seq(0, 0.7, length.out = 4)^0.9))
-
 
     # verbosity stuff
     verbosity <- 1
@@ -364,34 +444,57 @@ redist_gsmc <- function(
     # set up parallel processing stuff
     ncores_max <- parallel::detectCores()
 
+    control_param_names <- c("num_processes", "num_threads_per_process")
+    # legacy, ncores is essentially the number of threads per process
+    if(is.list(control)){
+        control[["num_threads_per_process"]] <- ncores
+    }
 
-    if(num_processes > ncores_max){
-        cli_warn("Inputted number of processes to spawn is greater than detected number of cores on machine")
-    }else if(num_processes == 0){
-        if(multiprocess){# if multiprocess then spawn min(runs, max cores) processes
-            num_processes <- min(runs, ncores_max)
+    if(is.list(control) && any(control_param_names %in% names(control))){
+        if("num_processes" %in% names(control)){
+            num_processes <- control[["num_processes"]]
+            if(!rlang::is_integerish(num_processes) || !assertthat::is.scalar(num_processes)){
+                cli::cli_abort("{.arg num_processes} in {.arg control} must be a single integer!")
+            }else if(num_processes <= 0){
+                cli::cli_abort("{.arg num_processes} in {.arg control} must be a positive integer!")
+            }
         }else{
-            num_processes <- 1
+            # default to 1
+            num_processes <- 1L
+        }
+
+        if("num_threads_per_process" %in% names(control)){
+            num_threads_per_process <- control[["num_threads_per_process"]]
+            if(!rlang::is_integerish(num_threads_per_process) || !assertthat::is.scalar(num_threads_per_process)){
+                cli::cli_abort("{.arg num_threads_per_process} in {.arg control} must be a single integer!")
+            }else if(num_threads_per_process == 0){
+                num_threads_per_process <- ncores_max
+            }else if(num_threads_per_process < 0){
+                cli::cli_abort("{.arg num_threads_per_process} in {.arg control} can't be negative!")
+            }
+        }else{
+            # default to ncores max
+            num_threads_per_process <- ncores_max
         }
     }else{
-        # make sure we're not spawning more proccesses than runs
-        num_processes <- min(runs, num_processes)
+        num_processes <- 1L
+        num_threads_per_process <- ncores_max
     }
 
-    if (num_threads_per_process == 0) {
-        if(!multiprocess || num_processes == 1){
-            # if no multiprocessing then the single process gets all threads
-            num_threads_per_process <- ncores_max
-        }else{
-            # else each process gets ncores_max/num_processes threads
-            num_threads_per_process <- floor(ncores_max/num_processes)
-            num_threads_per_process <- max(1, num_threads_per_process)
-        }
+    multiprocess <- num_processes > 1
+    # make sure we're not spawning more proccesses than runs
+    num_processes <- min(runs, num_processes)
+
+    # warn if more processes than cores
+    if(num_processes > ncores_max){
+        cli_warn("Inputted number of processes to spawn is greater than detected number of cores on machine")
     }
+
+    num_processes <- as.integer(num_processes)
     num_threads_per_process <- as.integer(num_threads_per_process)
 
 
-    if (num_processes > 1 && multiprocess && runs > 1) {
+    if (num_processes > 1 && runs > 1) {
         `%oper%` <- `%dorng%`
         of <- if (Sys.info()[["sysname"]] == "Windows") {
             tempfile(pattern = paste0("smc_", substr(Sys.time(), 1, 10)), fileext = ".txt")
@@ -412,8 +515,7 @@ redist_gsmc <- function(
             suppressPackageStartupMessages(library(rngtools))
             suppressPackageStartupMessages(library(gredist))
         })
-        # weird code, probably remove in production and find better way to ensure printing
-        # but essentially makes it so only one process will print but if more runs then processes
+        # Makes it so only one process will print but if more runs then processes
         # it doesn't just print once
         parallel::clusterEvalQ(cl, {
             if (!exists("is_chain1", envir = .GlobalEnv)) {
@@ -429,7 +531,7 @@ redist_gsmc <- function(
     }
 
 
-    control <- list(
+    cpp_control_list <- list(
         weight_type=weight_type,
         lags=lags,
         pop_temper = pop_temper,
@@ -443,7 +545,7 @@ redist_gsmc <- function(
     )
 
     # add the splitting parameters
-    control <- c(control, splitting_params)
+    cpp_control_list <- c(cpp_control_list, splitting_params)
 
 
     t1 <- Sys.time()
@@ -470,12 +572,12 @@ redist_gsmc <- function(
             upper=pop_bounds[3],
             rho=compactness,
             sampling_space = sampling_space,
-            control = control,
+            control = cpp_control_list,
             constraints = constraints,
             verbosity=run_verbosity,
             diagnostic_level=diagnostic_level,
-            region_id_mat = init_region_ids_mat,
-            region_sizes_mat = init_region_sizes_mat
+            region_id_mat = init_particles,
+            region_sizes_mat = init_particles_nseats
         )
 
         if (length(algout) == 0) {
@@ -548,20 +650,22 @@ redist_gsmc <- function(
         }
 
         if (resample) {
-            # SKIPPED FOR NOW!
-            # if (!truncate) {
-            #     mod_wgt <- wgt
-            # } else if (requireNamespace("loo", quietly = TRUE) && is.null(trunc_fn)) {
-            #     mod_wgt <- wgt/sum(wgt)
-            #     mod_wgt <- loo::weights.importance_sampling(
-            #         loo::psis(log(mod_wgt), r_eff = NA), log = FALSE)
-            # } else {
-            #     mod_wgt <- trunc_fn(wgt)
-            # }
-            # mod_wgt <- wgt/sum(wgt)
-            # n_eff <- 1/sum(mod_wgt^2)
 
-            normalized_wgts <- wgt/sum(wgt)
+            if (!truncate) {
+                normalized_wgts <- wgt/sum(wgt)
+            } else if (requireNamespace("loo", quietly = TRUE) && is.null(trunc_fn)) {
+                cli::cli_abort("loo truncation not suppored right now!")
+                normalized_wgts <- wgt/sum(wgt)
+                truncated_
+                normalized_wgts <- loo::weights.importance_sampling(
+                    loo::psis(log(mod_wgt), r_eff = NA), log = FALSE)
+            } else {
+                # truncate the weights
+                wgt <- trunc_fn(wgt)
+                # get normalized weights
+                normalized_wgts <- wgt/sum(wgt)
+            }
+
             n_eff <- 1/sum(normalized_wgts^2)
 
             # resample matrices in place

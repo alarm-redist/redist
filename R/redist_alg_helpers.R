@@ -2,45 +2,51 @@
 # Author: Philip O'Sullivan
 # Institution: Harvard University
 # Date Created: 2024/12/26
-# Purpose: Helper functions shared across all smc algorithm types
+# Purpose: Helper functions shared across all redist algorithm types
 ####################################################
 
 
 
 
-#' Checks a county label input is valid and if so returns it.
+
+
+
+
+#' Takes a map and possibly a county label and returns map parameters for redist algorithms
 #'
-#' Checks that a county label input is valid and if so returns it.
+#' Takes a `redist_map` and possibly a county label vector and after checking
+#' the inputs are valid it returns a list with the adjacency map, county vector,
+#' and population variables
 #'
 #' @param map A `redist_map`
-#' @param V The number of vertices in the plan graph.
-#' @param counties County thing
-#' @param counties_q The quosure in the county label input ie
-#' `counties_q <- rlang::enquo(counties)` must have been called in
-#' the nested function.
+#' @param counties Either a numeric or factor vector mapping each vertex in the
+#' graph to a county.
 #'
-#'
-#' @returns A counties label vector
-validate_counties <- function(map, adj_list, V, counties_q, use_counties_q=TRUE,counties=NULL){
+#' @returns A list with 0-indexed adjancency list, county label vector,
+#' population bounds vector, and population vector.
+get_map_parameters <- function(map, counties=NULL){
 
-    if(use_counties_q){
-        counties <- rlang::eval_tidy(counties_q, map)
-    }else{
-        counties <- rlang::eval_tidy(rlang::enquo(counties), map)
-    }
+    # get the map in adjacency form
+    map <- validate_redist_map(map)
+    V <- nrow(map)
+    adj_list <- get_adj(map)
+    counties <- rlang::eval_tidy(rlang::enquo(counties), map)
 
+    # validate the counties
     if (is.null(counties)) {
         counties <- rep(1, V)
     } else {
-        if(any(is.na(counties))){
-            cli_abort("County vector must not contain missing values.")
-        }
+        # check if just the column name was passed in
         if(assertthat::is.scalar(counties) && assertthat::is.string(counties)){
             if(!counties %in% names(map)){
                 cli::cli_abort("{counties} is not in the map!")
             }else{
                 counties <- map[[counties]]
             }
+        }
+
+        if(any(is.na(counties))){
+            cli::cli_abort("County vector must not contain missing values.")
         }
 
         # handle discontinuous counties
@@ -54,47 +60,6 @@ validate_counties <- function(map, adj_list, V, counties_q, use_counties_q=TRUE,
             cli_warn("Counties were not contiguous; expect additional splits.")
         }
     }
-
-
-    return(counties)
-}
-
-
-
-#' Takes a map and possibly a county label and returns map parameters for SMC algorithms
-#'
-#' Takes a `redist_map` and possibly a county label vector and after checking
-#' the inputs are valid it returns a list with the adjacency map, county vector,
-#' and population variables
-#'
-#' @param map A `redist_map`
-#' @param counties Either a numeric or factor vector mapping each vertex in the
-#' graph to a county.
-#'
-#' @returns A list with 0-indexed adjancency list, county label vector,
-#' population bounds vector, and population vector.
-get_map_parameters <- function(map, counties_q=NULL, use_counties_q=TRUE, counties=NULL){
-
-    # get the map in adjacency form
-    map <- validate_redist_map(map)
-    V <- nrow(map)
-    adj <- get_adj(map)
-
-
-    if(use_counties_q){
-        # if true just use the quosure passed in
-        counties <- validate_counties(
-            map, adj, V,
-            counties_q=counties_q,
-            use_counties_q=use_counties_q)
-    }else{
-        # else pass enquo of counties in
-        counties <- validate_counties(
-            map, adj, V,
-            counties_q=rlang::enquo(counties),
-            use_counties_q=T)
-    }
-
 
 
     # get population stuff
@@ -121,7 +86,7 @@ get_map_parameters <- function(map, counties_q=NULL, use_counties_q=TRUE, counti
 
     return(list(
         map=map,
-        adj_list=adj,
+        adj_list=adj_list,
         V=V,
         counties=counties,
         pop=pop,
@@ -140,14 +105,11 @@ get_map_parameters <- function(map, counties_q=NULL, use_counties_q=TRUE, counti
 #'
 #'
 #' @returns A list of splitting parameters which is safe to pass into c++ code
-validate_constraints <- function(map, constraints_q=NULL, use_constraints_q=TRUE, constraints=NULL){
+validate_constraints <- function(map, constraints){
     # Other constraints
     if (!inherits(constraints, "redist_constr")) {
-        if(use_constraints_q){
-            constraints <- new_redist_constr(eval_tidy(constraints_q, map))
-        }else{
-            constraints <- new_redist_constr(eval_tidy(rlang::enquo(constraints), map))
-        }
+        ms_param_names <- c("ms_moves_multiplier", "ms_frequency")
+        constraints <- new_redist_constr(!!rlang::eval_tidy(rlang::enquo(constraints), map))
     }
     if (any(c("edges_removed", "log_st") %in% names(constraints))) {
         cli_warn(c("{.var edges_removed} or {.var log_st} constraint found in
@@ -621,4 +583,47 @@ validate_custom_size_split_list <- function(
 
     # for now just return. No other validation performed
     return()
+}
+
+
+#' Attempts to infer the number of seats for each district in a plan
+#'
+#' Attempts to guess the number of seats assigned to each region in a plans
+#' matrix.
+#'
+#' @param plans Either a [redist_plans] object or a 1-indexed plans matrix
+#' @param total_seats The total number of seats in the plan
+#' @param precint_pops A vector of precinct population assignments with same
+#' number of rows as the plans matrix.
+#' @param lower_pop_bound The minimum population bounds for a single seat
+#' @param upper_pop_bound The maximum population bounds for a single seat
+#' @param num_threads The number of threads to use while calculating. Defaults to
+#' maximum availible on the machine.
+#'
+#'
+#' @returns A matrix of the number of seats for each region in `plans`
+infer_plan_nseats <- function(
+        plans, total_seats, precint_pops,
+        lower_pop_bound, upper_pop_bound,
+        num_threads = 0L){
+
+    if (inherits(plans, "redist_plans")){
+        plan_matrix <- get_plans_matrix(plans)
+    }else if(is.matrix(plans)){
+        plan_matrix <- plans
+    }else if(is.vector(plans) && is.numeric(plans)){
+        plan_matrix <- as.matrix(plans, cols = 1)
+    }else{
+        cli::cli_abort("{.arg plans} must be a matrix or {.cls redist_plans} type!")
+    }
+
+    num_regions <- length(unique(plan_matrix[,1]))
+    distr_pop <- pop_tally(plan_matrix, precint_pops, num_regions)
+    sizes_matrix <- infer_region_sizes(
+        distr_pop,
+        lower_pop_bound, upper_pop_bound,
+        total_seats, num_threads
+    )
+    return(sizes_matrix)
+
 }

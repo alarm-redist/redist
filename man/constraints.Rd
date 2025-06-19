@@ -20,7 +20,7 @@
 \alias{add_constr_custom}
 \title{Sampling constraints}
 \usage{
-add_constr_status_quo(constr, strength, current)
+add_constr_status_quo(constr, strength, current, score_districts_only = TRUE)
 
 add_constr_grp_pow(
   constr,
@@ -29,7 +29,8 @@ add_constr_grp_pow(
   total_pop = NULL,
   tgt_group = 0.5,
   tgt_other = 0.5,
-  pow = 1
+  pow = 1,
+  score_districts_only = FALSE
 )
 
 add_constr_grp_hinge(
@@ -37,7 +38,8 @@ add_constr_grp_hinge(
   strength,
   group_pop,
   total_pop = NULL,
-  tgts_group = c(0.55)
+  tgts_group = c(0.55),
+  score_districts_only = FALSE
 )
 
 add_constr_grp_inv_hinge(
@@ -45,38 +47,63 @@ add_constr_grp_inv_hinge(
   strength,
   group_pop,
   total_pop = NULL,
-  tgts_group = c(0.55)
+  tgts_group = c(0.55),
+  score_districts_only = FALSE
 )
 
-add_constr_compet(constr, strength, dvote, rvote, pow = 0.5)
+add_constr_compet(
+  constr,
+  strength,
+  dvote,
+  rvote,
+  pow = 0.5,
+  score_districts_only = FALSE
+)
 
-add_constr_incumbency(constr, strength, incumbents)
+add_constr_incumbency(
+  constr,
+  strength,
+  incumbents,
+  score_districts_only = TRUE
+)
 
-add_constr_splits(constr, strength, admin)
+add_constr_splits(constr, strength, admin, score_districts_only = TRUE)
 
-add_constr_multisplits(constr, strength, admin)
+add_constr_multisplits(constr, strength, admin, score_districts_only = FALSE)
 
-add_constr_total_splits(constr, strength, admin)
+add_constr_total_splits(constr, strength, admin, score_districts_only = FALSE)
 
-add_constr_pop_dev(constr, strength)
+add_constr_pop_dev(constr, strength, score_districts_only = FALSE)
 
-add_constr_segregation(constr, strength, group_pop, total_pop = NULL)
+add_constr_segregation(
+  constr,
+  strength,
+  group_pop,
+  total_pop = NULL,
+  score_districts_only = FALSE
+)
 
-add_constr_polsby(constr, strength, perim_df = NULL)
+add_constr_polsby(
+  constr,
+  strength,
+  perim_df = NULL,
+  score_districts_only = FALSE
+)
 
 add_constr_fry_hold(
   constr,
   strength,
   total_pop = NULL,
   ssdmat = NULL,
-  denominator = 1
+  denominator = 1,
+  score_districts_only = FALSE
 )
 
-add_constr_log_st(constr, strength, admin = NULL)
+add_constr_log_st(constr, strength, admin = NULL, score_districts_only = FALSE)
 
-add_constr_edges_rem(constr, strength)
+add_constr_edges_rem(constr, strength, score_districts_only = FALSE)
 
-add_constr_custom(constr, strength, fn)
+add_constr_custom(constr, strength, fn, score_districts_only = FALSE)
 }
 \arguments{
 \item{constr}{A \code{\link[=redist_constr]{redist_constr()}} object}
@@ -84,6 +111,11 @@ add_constr_custom(constr, strength, fn)
 \item{strength}{The strength of the constraint. Higher values mean a more restrictive constraint.}
 
 \item{current}{The reference map for the status quo constraint.}
+
+\item{score_districts_only}{Whether or not to apply the constraints to
+districts only. If constraints are only applied to districts then it will
+likely cause a drop in efficiency in the final round. If splitting plans all
+the way this does not affect the final target distribution.}
 
 \item{group_pop}{A vector of group population}
 

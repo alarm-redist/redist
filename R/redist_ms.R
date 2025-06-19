@@ -132,15 +132,15 @@ redist_mergesplit <- function(
 
 
     # validate constraints
-    constraints_q <- rlang::enquo(constraints)
-    constraints <- validate_constraints(map=map, constraints_q=constraints_q, use_constraints_q=TRUE)
+    constraints <- validate_constraints(map=map, constraints=rlang::enquo(constraints))
     # get the total number of districts
     ndists <- attr(map, "ndists")
     total_seats <- attr(map, "total_seats")
     district_seat_sizes <- attr(map, "district_seat_sizes")
 
 
-    map_params <- get_map_parameters(map, use_counties_q=T, counties_q = rlang::enquo(counties))
+    # get map params
+    map_params <- get_map_parameters(map, !!rlang::enquo(counties))
     map <- map_params$map
     V <- map_params$V
     adj_list <- map_params$adj_list
@@ -195,7 +195,7 @@ redist_mergesplit <- function(
         # heuristic. Do at least 50 plans to not get stuck
         n_smc_nsims <- max(chains, 50)
         init_plans <- get_plans_matrix(
-            generic_redist_gsmc(map, n_smc_nsims, counties, compactness, constraints,
+            redist_gsmc(map, n_smc_nsims, counties, compactness, constraints,
                        resample = TRUE, splitting_params = splitting_params,
                        sampling_space = sampling_space, splitting_method = splitting_method,
                        ref_name = FALSE, verbose = verbose, silent = silent, num_processes = 1)

@@ -8,6 +8,7 @@ run_redist_gsmc(
   nsims,
   total_seats,
   ndists,
+  district_seat_sizes,
   initial_num_regions,
   adj_list,
   counties,

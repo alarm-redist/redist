@@ -26,7 +26,7 @@ compute_log_optimal_weights(
 geographic unit) labels for each unit, which may be integers ranging from 1
 to the number of counties, or a factor or character vector.  If provided,
 the algorithm will only generate maps which split up to \code{ndists-1}
-counties. Even there are fewer counties than \code{ndists - 1}, the spanning
+counties. Even if there are fewer counties than \code{ndists - 1}, the spanning
 trees will change the results of the simulations. There is no strength
 parameter associated with this constraint. To adjust the number of county
 splits further, or to constrain a second type of administrative split,
