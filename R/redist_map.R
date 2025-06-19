@@ -74,6 +74,7 @@ validate_redist_map <- function(data, check_contig = TRUE, call = parent.frame()
     }
     stopifnot(!is.null(attr(data, "total_seats")))
     stopifnot(!is.null(attr(data, "district_seat_sizes")))
+    district_seat_sizes <- attr(data, "district_seat_sizes")
 
     if(is.null(attr(data, "districting_scheme"))){
         # set the districting scheme

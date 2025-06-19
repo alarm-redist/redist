@@ -286,6 +286,9 @@ redist_gsmc <- function(
         init_particles_nseats <- matrix(0L)
         init_num_regions <- 1L
     }else {
+        if (inherits(init_particles, "redist_plans")){
+            init_particles <- get_plans_matrix(init_particles) - 1L
+        }
         if(is.null(init_particles_nseats)){
             if (inherits(init_particles, "redist_plans")){
                 init_particles_nseats <- get_nseats_matrix(init_particles)
@@ -346,7 +349,7 @@ redist_gsmc <- function(
         # check merge probability
         if("merge_prob_type" %in% names(mergesplit_params)){
             merge_prob_type <- mergesplit_params[["merge_prob_type"]]
-            if(!assertthat::is.scalar(ms_moves_multiplier) || merge_prob_type != "uniform"){
+            if(!assertthat::is.scalar(merge_prob_type) || merge_prob_type != "uniform"){
                 cli::cli_abort("Only uniform merge probability is supported right now!")
             }
         }else{
@@ -357,6 +360,8 @@ redist_gsmc <- function(
     }else{
         run_ms <- FALSE
         merge_prob_type <- "ignore"
+        ms_moves_multiplier <- NULL
+        ms_frequency <- NULL
     }
 
 
@@ -393,6 +398,7 @@ redist_gsmc <- function(
     total_ms_steps <- sum(merge_split_step_vec)
     # total number of steps to run
     total_steps <- total_smc_steps + total_ms_steps
+    any_ms_steps_ran <- run_ms
 
 
     # setting the splitting size regime
@@ -583,7 +589,7 @@ redist_gsmc <- function(
         if (length(algout) == 0) {
             cli::cli_process_done()
         }
-        if(DEBUG_MODE) print("Out!")
+        if(DEBUG_MODE) print("Done with c++ Code!")
 
 
         diagnostic_mode = diagnostic_level == 1
@@ -814,7 +820,7 @@ redist_gsmc <- function(
         cli_text("{format(nsims*runs, big.mark=',')} plans sampled in
                  {format(t2-t1, digits=2)}")
     }
-    # return(all_out)
+
     if(DEBUG_MODE) print("Checkpoint 7 - Out of for loop!")
 
     # combine if needed

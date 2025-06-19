@@ -73,8 +73,6 @@
 #' @param silent Whether to suppress all diagnostic information.
 #' @param ncores The number of clusters to spawn Defaults to the
 #' maximum available detected by `parallel::detectCores()`.
-#' @param multiprocess Whether or not to spawn separate clusters to run the chains
-#' on or to just run them sequentially.
 #' @param cl_type the cluster type (see [makeCluster()]). Safest is `"PSOCK"`,
 #' but `"FORK"` may be appropriate in some settings.
 #' @param return_all if `TRUE` return all sampled plans; otherwise, just return
@@ -119,16 +117,19 @@ redist_mergesplit <- function(
     thin = 1L, chains = 1,
     init_plan = NULL,
     constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
-    sampling_space = gredist:::GRAPH_PLAN_SPACE_SAMPLING,
-    splitting_method = gredist:::NAIVE_K_SPLITTING,
+    sampling_space = c("graph_plan_space", "spanning_forest_space", "linking_edge_space"),
+    splitting_method = c("naive_top_k","uniform_valid_edge", "expo_bigger_abs_dev"),
     splitting_params = list(adapt_k_thresh = .99),
     merge_prob_type = "uniform", compactness = 1,
     ncores = NULL,
     cl_type = "PSOCK", return_all = TRUE, init_name = NULL,
-    multiprocess = T,
     verbose = FALSE, silent = FALSE, diagnostic_mode = FALSE
 ) {
     if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
+
+    # check default inputs
+    sampling_space <- rlang::arg_match(sampling_space)
+    splitting_method <- rlang::arg_match(splitting_method)
 
 
     # validate constraints
@@ -137,6 +138,7 @@ redist_mergesplit <- function(
     ndists <- attr(map, "ndists")
     total_seats <- attr(map, "total_seats")
     district_seat_sizes <- attr(map, "district_seat_sizes")
+    storage.mode(district_seat_sizes) <- "integer"
 
 
     # get map params
@@ -242,7 +244,10 @@ redist_mergesplit <- function(
     # set up parallel
     if (is.null(ncores)) ncores <- parallel::detectCores()
     ncores <- min(ncores, chains)
-    if (ncores > 1 && multiprocess && chains > 1) {
+
+    multiprocess <- ncores > 1
+
+    if (multiprocess) {
         `%oper%` <- `%dorng%`
 
         of <- ifelse(Sys.info()[['sysname']] == 'Windows',

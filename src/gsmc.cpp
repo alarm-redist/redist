@@ -490,8 +490,12 @@ List run_redist_gsmc(
     bool splitting_all_the_way = ndists == initial_num_regions + total_smc_steps;
 
     // multipler for number of merge split steps 
-    double ms_steps_multiplier = as<double>(control["ms_moves_multiplier"]);
-    std::string merge_prob_type = as<std::string>(control["merge_prob_type"]);
+    double ms_steps_multiplier;
+    std::string merge_prob_type;
+    if(total_ms_steps > 0){
+        ms_steps_multiplier = as<double>(control["ms_moves_multiplier"]);
+        merge_prob_type = as<std::string>(control["merge_prob_type"]);
+    }
 
 
     double tol = std::max(target - lower, upper - target) / target;
