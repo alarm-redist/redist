@@ -36,12 +36,17 @@ Rcpp::NumericVector compute_log_unnormalized_plan_target_density(
     RcppThread::ThreadPool pool = get_thread_pool(num_threads);
     // Create the plan objects
     int num_plans = region_ids.ncol();
+
+    int global_rng_seed2 = (int) Rcpp::sample(INT_MAX, 1)[0];
+    std::vector<RNGState> rng_states;rng_states.reserve(1);
+    rng_states.emplace_back(global_rng_seed2, 6);
+
     PlanEnsemble plan_ensemble(
-        map_params.V, ndists, total_seats, num_regions,
-        pop, num_plans,
+        map_params, num_regions,
+        num_plans,
         SamplingSpace::GraphSpace,
         region_ids, 
-        region_sizes,
+        region_sizes, rng_states,
         pool 
     );
     
@@ -128,12 +133,16 @@ Rcpp::NumericMatrix compute_log_unnormalized_region_target_density(
 
     // Create the plan objects
     int num_plans = region_ids.ncol();
+
+    int global_rng_seed2 = (int) Rcpp::sample(INT_MAX, 1)[0];
+    std::vector<RNGState> rng_states;rng_states.reserve(1);
+    rng_states.emplace_back(global_rng_seed2, 6);
     PlanEnsemble plan_ensemble(
-        map_params.V, ndists, total_seats, num_regions,
-        pop, num_plans,
+        map_params, num_regions,
+        num_plans,
         SamplingSpace::GraphSpace,
         region_ids, 
-        region_sizes,
+        region_sizes, rng_states,
         pool 
     );
     
@@ -276,12 +285,16 @@ arma::vec compute_plans_log_optimal_weights(
     // Create the scoring function 
     ScoringFunction scoring_function(map_params, constraints, pop_temper);
 
+
+    int global_rng_seed2 = (int) Rcpp::sample(INT_MAX, 1)[0];
+    std::vector<RNGState> rng_states;rng_states.reserve(1);
+    rng_states.emplace_back(global_rng_seed2, 6);
     PlanEnsemble plan_ensemble(
-        map_params.V, ndists, total_seats, num_regions,
-        pop, num_plans,
+        map_params, num_regions,
+        num_plans,
         SamplingSpace::GraphSpace,
         region_ids, 
-        region_sizes,
+        region_sizes, rng_states,
         pool 
     );
 

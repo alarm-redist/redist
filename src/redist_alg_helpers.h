@@ -97,7 +97,7 @@ class PlanEnsemble {
     public:
         // constructor for empty plans
         PlanEnsemble(
-            int const V, int const ndists, int const total_seats,
+            MapParams const &map_params,
             int const total_pop, int const nsims, 
             SamplingSpace const sampling_space,
             RcppThread::ThreadPool &pool,
@@ -105,12 +105,12 @@ class PlanEnsemble {
         );
         // constructor for non-empty starting plans 
         PlanEnsemble(
-            int const V, int const ndists, int const total_seats,
-            int const num_regions,
-            arma::uvec const &pop, int const nsims, 
+            MapParams const &map_params,
+            int const num_regions, int const nsims, 
             SamplingSpace const sampling_space,
             Rcpp::IntegerMatrix const &plans_mat, 
             Rcpp::IntegerMatrix const &region_sizes_mat,
+            std::vector<RNGState> &rng_states,
             RcppThread::ThreadPool &pool,
             int const verbosity = 3 
         );
@@ -137,25 +137,24 @@ class PlanEnsemble {
 };
 
 PlanEnsemble get_plan_ensemble(
-    int const V, int const ndists, int const total_seats, 
-    int const num_regions,
-    arma::uvec const &pop, int const nsims, 
+    MapParams const &map_params,
+    int const num_regions, int const nsims,
     SamplingSpace const sampling_space,
     Rcpp::IntegerMatrix const &plans_mat, 
     Rcpp::IntegerMatrix const &region_sizes_mat,
+    std::vector<RNGState> &rng_states,
     RcppThread::ThreadPool &pool,
     int const verbosity
 );
 
 
 std::unique_ptr<PlanEnsemble> get_plan_ensemble_ptr(
-    int const V, 
-    int const ndists, int const total_seats, 
-    int const num_regions,
-    arma::uvec const &pop, int const nsims, 
+    MapParams const &map_params,
+    int const num_regions, int const nsims, 
     SamplingSpace const sampling_space,
     Rcpp::IntegerMatrix const &plans_mat, 
     Rcpp::IntegerMatrix const &region_sizes_mat,
+    std::vector<RNGState> &rng_states,
     RcppThread::ThreadPool &pool,
     int const verbosity
 );

@@ -15,7 +15,6 @@ class USTSampler {
 private:
 
 
-
 public:
 
     USTSampler(MapParams const &map_params, SplittingSchedule const &splitting_schedule) : 
@@ -32,13 +31,12 @@ public:
     SplittingSchedule const &splitting_schedule;
     
 
-
     // Attempts to draw a tree on a region 
-    bool draw_tree_on_region(RNGState &rng_state,
+    bool attempt_to_draw_tree_on_region(RNGState &rng_state,
         Plan const &plan, const int region_to_draw_tree_on);
 
     // Attempts to draw a tree on a region formed by merging the two regions
-    bool draw_tree_on_merged_region(RNGState &rng_state,
+    bool attempt_to_draw_tree_on_merged_region(RNGState &rng_state,
         Plan const &plan, 
         const int region1_to_draw_tree_on, const int region2_to_draw_tree_on);
 

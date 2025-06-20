@@ -29,7 +29,9 @@ public:
         RegionSizes &this_plan_region_sizes,
         IntPlanAttribute &this_plan_region_pops,
         IntPlanAttribute &this_plan_order_added,
-        const Rcpp::List &initial_forest_adj_list
+        MapParams const &map_params, 
+        Tree &ust, std::vector<bool> &visited, std::vector<bool> &ignore,
+        RNGState &rng_state, const Rcpp::List &initial_forest_adj_list = {}
     );
     
 

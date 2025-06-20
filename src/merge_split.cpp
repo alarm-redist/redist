@@ -213,21 +213,27 @@ Rcpp::List ms_plans(
 
     bool split_district_only;
 
-    // temp plan
-    RcppThread::ThreadPool pool(0);
+    // Create current plan and proposal
+
+    int global_rng_seed2 = (int) Rcpp::sample(INT_MAX, 1)[0];
+    std::vector<RNGState> rng_states;rng_states.reserve(1);
+    rng_states.emplace_back(global_rng_seed2, 6);
+
+
+    RcppThread::ThreadPool pool(1);
     // underlying vector from plan    
     PlanEnsemble plan_ensemble = get_plan_ensemble(
-        V, ndists, total_seats, initial_num_regions,
-        pop, 1, sampling_space,
+        map_params, initial_num_regions,
+        1, sampling_space,
         initial_plan, initial_region_sizes,
-        pool, verbosity
+        rng_states, pool, verbosity
     );
     // now get for proposal plan
     PlanEnsemble proposal_plan_ensemble = get_plan_ensemble(
-        V, ndists, total_seats, initial_num_regions,
-        pop, 1, sampling_space,
+        map_params, initial_num_regions,
+        1, sampling_space,
         initial_plan, initial_region_sizes,
-        pool, verbosity
+        rng_states, pool, verbosity
     );
 
 

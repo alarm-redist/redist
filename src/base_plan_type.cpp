@@ -812,68 +812,100 @@ int Plan::choose_multidistrict_to_split(
 
 //' Attempts to draw a spanning tree on a region using Wilson's algorithm
 //'
-//' Takes a spanning tree `ust` drawn on a specific region and attempts to cut
-//' it to produce two new regions using the generalized splitting procedure
-//' outlined <PAPER HERE>. This function is based on `cut_districts` in `smc.cpp`
-//' however the crucial difference is even if a cut is successful it does not
-//' update the plan. Instead it just returns the information on the two new
-//' regions if successful and the cut tree.
-//'
-//' It will only attempt to create regions where the size is between
-//' min_potential_d and max_potential_d (inclusive). So the one district
-//' split case is `min_potential_d=max_potential_d=1`.
-//'
-//' By convention the first new region (`new_region1`) will always be the region
-//' with the smaller d-value (although they can be equal).
+//' Attempts to draw a spanning tree on a specific region of a plan using 
+//' Wilson's algorithm. The function will try `attempts_to_make` times to 
+//' draw a tree and if all those fail then it will return false. If its 
+//' successful true will be returned and the tree will be copied into the spanning forest.
 //'
 //' @title Attempt to Find a Valid Spanning Tree Edge to Cut into Two New Regions 
 //'
-//' @param g A graph (adjacency list) passed by reference
-//' @param ust A directed tree object (this will be cleared in the function so
-//' whatever it was before doesn't matter)
-//' @param counties Vector of county labels of each vertex in `g`
-//' @param cg multigraph object 
+//' @param map_params Map parameters (adj graph, population, etc.)
+//' @param ust_sampler Uniform tree sampler object 
 //' @param region_to_draw_tree_on The id of the region to draw the tree on
-//' @param visited A vector of length `V` that will be used to draw the tree.
-//' This will be cleared in the function so whatever was in it before doesn't 
-//' matter
-//' @param ignore A vector of length `V` that will be used to draw the tree.
-//' This will be cleared in the function so whatever was in it before doesn't 
-//' matter
-//' @param pop A vector of the population associated with each vertex in `g`
-//' @param lower Acceptable lower bounds on a valid district's population
-//' @param upper Acceptable upper bounds on a valid district's population
-//' @param root Will be set to the root of the tree drawn
+//' @param rng_state thread safe random number generation object
+//' @param attempts_to_make How many attempts at calling wilson's algorithm to make 
+//' before giving up.
 //'
 //' @details Modifications
-//'    - `ust` is modified in place to be the new tree
-//'    - `root` is set to be the root of the tree drawn
+//'    - `ust_sampler` is modified in place to store the new tree is sampling is 
+//'         successful
 //'
 //' @return `true` if tree was successfully draw, `false` otherwise.
 //'
 //' @keyword internal
 //' @noRd
-bool Plan::draw_tree_on_region(const MapParams &map_params, const int region_to_draw_tree_on,
-        Tree &ust, std::vector<bool> &visited, std::vector<bool> &ignore, int &root,
-        RNGState &rng_state) {
+std::pair<bool, int> Plan::draw_tree_on_region(
+    const MapParams &map_params, const int region_to_draw_tree_on,
+    Tree &ust, std::vector<bool> &visited, std::vector<bool> &ignore, int &root,
+    RNGState &rng_state, int const attempts_to_make) {
 
-    int V = map_params.g.size();
+    int num_attempts = 0;
+    bool tree_drawn = false;
+    for (size_t attempt_num = 0; attempt_num < attempts_to_make; attempt_num++)
+    {
+        ++num_attempts;
+        // attempt to draw a tree 
+        // Mark it as ignore if its not in the region to split
+        for (int i = 0; i < map_params.V; i++){
+            ignore[i] = region_ids[i] != region_to_draw_tree_on;
+        }
 
-    // Mark it as ignore if its not in the region to split
-    for (int i = 0; i < V; i++){
-        ignore[i] = region_ids[i] != region_to_draw_tree_on;
+        // Get a uniform spanning tree drawn on that region
+        clear_tree(ust);
+        // Get a tree
+        int result = sample_sub_ust(map_params.g, ust, 
+            map_params.V, root, visited, ignore, 
+            map_params.pop, map_params.lower, map_params.upper, 
+            map_params.counties, map_params.cg,
+            rng_state);
+
+        tree_drawn = result == 0;
+
+        // if successful return 
+        if(tree_drawn) break;
     }
 
-    // Get a uniform spanning tree drawn on that region
-    clear_tree(ust);
-    // Get a tree
-    int result = sample_sub_ust(map_params.g, ust, 
-        V, root, visited, ignore, 
-        map_params.pop, map_params.lower, map_params.upper, 
-        map_params.counties, map_params.cg,
-        rng_state);
-    // result == 0 means it was successful
-    return(result == 0);
+    // return immediately if false 
+    if(!tree_drawn) return std::make_pair(false, num_attempts);
+
+    // update root region id
+    // and its forest vertices
+    int n_desc = ust[root].size();
+    // clear this vertices neighbors in the graph and reserve size for children
+    forest_graph[root].clear(); forest_graph[root].reserve(n_desc);
+
+    // make a queue of vertex, parent 
+    std::queue<std::pair<int,int>> vertex_queue;
+    // add roots children to queue 
+    for(auto const &child_vertex: ust[root]){
+        vertex_queue.push({child_vertex, root});
+        forest_graph[root].push_back(child_vertex);
+    }
+    
+    // update all the children
+    while(!vertex_queue.empty()){
+        // get and remove head of queue 
+        auto queue_pair = vertex_queue.front();
+        int vertex = queue_pair.first;
+        int parent_vertex = queue_pair.second;
+        vertex_queue.pop();
+
+        // clear this vertices neighbors in the graph and reserve size for children and parent 
+        forest_graph[vertex].clear(); 
+        forest_graph[vertex].reserve(ust[vertex].size()+1);
+        // add the edge from vertex to parent 
+        forest_graph[vertex].push_back(parent_vertex);
+        
+        for(auto const &child_vertex: ust[vertex]){
+            // add children to queue
+            vertex_queue.push({child_vertex, vertex});
+            // add this edge from vertex to its children 
+            forest_graph[vertex].push_back(child_vertex);
+        }
+    }
+
+    return std::make_pair(true, num_attempts);
+
 }
 
 

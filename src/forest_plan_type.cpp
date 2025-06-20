@@ -1,6 +1,7 @@
 #include "forest_plan_type.h"
 
 
+// constructor for partial plan (more than 1 region)
 ForestPlan::ForestPlan(
     int const ndists, int const num_regions,
     const arma::uvec &pop,
@@ -8,18 +9,34 @@ ForestPlan::ForestPlan(
     RegionSizes &this_plan_region_sizes,
     IntPlanAttribute &this_plan_region_pops,
     IntPlanAttribute &this_plan_order_added,
-    const Rcpp::List &initial_forest_adj_list
+    MapParams const &map_params, 
+    Tree &ust, std::vector<bool> &visited, std::vector<bool> &ignore,
+    RNGState &rng_state, const Rcpp::List &initial_forest_adj_list
 ):
 Plan(num_regions, pop, 
     this_plan_region_ids, this_plan_region_sizes, this_plan_region_pops, this_plan_order_added
 ){
-    if(num_regions == 1 || num_regions == ndists){
-        forest_graph.resize(region_ids.size());
-        // complete hueristic        
-    }else if(num_regions > 1){
-        throw Rcpp::exception("Custom forests not ready yet!");
-        // forest_graph = list_to_graph(initial_forest_adj_list);
-    }    
+    // resize the forest graph 
+    forest_graph.resize(region_ids.size());
+
+    if(initial_forest_adj_list.size() > 1){
+        throw Rcpp::exception("Input Forest list not supported right now\n");
+    }else{
+        // else just build a forest at random 
+        for (size_t region_id = 0; region_id < num_regions; region_id++)
+        {
+            int root;
+            auto result = draw_tree_on_region(
+                map_params, region_id, ust, visited, ignore,
+                root, rng_state, 1000000
+            );
+
+            if(!result.first){
+                throw Rcpp::exception("Could not draw a tree on a region after 1000000 attempts");
+            } 
+        }
+    
+    } 
 }
 
 

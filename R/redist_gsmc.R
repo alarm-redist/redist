@@ -327,6 +327,7 @@ redist_gsmc <- function(
 
     # create merge split parameter information
     if(is.list(mergesplit_params) && any(ms_param_names %in% names(mergesplit_params))){
+        run_ms <- TRUE
         # check if ms_moves_multiplier was passed else default to 1
         if("ms_moves_multiplier" %in% names(mergesplit_params)){
             ms_moves_multiplier <- mergesplit_params[["ms_moves_multiplier"]]

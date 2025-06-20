@@ -93,14 +93,16 @@ List draw_a_tree_on_a_region(
         lower, target, upper);
 
 
+    int global_rng_seed2 = (int) Rcpp::sample(INT_MAX, 1)[0];
+    std::vector<RNGState> rng_states;rng_states.reserve(1);
+    rng_states.emplace_back(global_rng_seed2, 6);
     // Create a plan object via size 1 ensemble
     RcppThread::ThreadPool pool(0);
     PlanEnsemble plan_ensemble(
-        V, ndists, ndists, num_regions,
-        pop, 1,
-        SamplingSpace::GraphSpace,
+        map_params, num_regions,
+        1, SamplingSpace::GraphSpace,
         region_ids, 
-        region_sizes,
+        region_sizes, rng_states,
         pool 
     );
 
@@ -130,8 +132,25 @@ List draw_a_tree_on_a_region(
     // Keep running until a tree is successfully drawn
     while(!successful_split_made){
         // try to draw a tree 
-        successful_split_made = plan_ensemble.plan_ptr_vec[0]->draw_tree_on_region(map_params, region_id_to_draw_tree_on,
-        ust, visited, ignore, root, rng_state);
+
+        // Mark it as ignore if its not in the region to split
+        for (int i = 0; i < V; i++){
+            ignore[i] = plan_ensemble.plan_ptr_vec[0]->region_ids[i] != region_id_to_draw_tree_on;
+        }
+
+        // clear the tree
+        clear_tree(ust);
+        // Get a uniform spanning tree drawn on that region
+        int result = sample_sub_ust(map_params.g, ust, 
+            V, root, visited, ignore, 
+            map_params.pop, 
+            map_params.lower, map_params.upper, 
+            map_params.counties, map_params.cg,
+            rng_state);
+
+        // result == 0 means it was successful
+        successful_split_made = result == 0;
+
         num_attempts++;
     }
 
@@ -183,6 +202,7 @@ List perform_a_valid_multidistrict_split(
     int split_dval_min, int split_dval_max, bool split_district_only,
     bool verbose, int k_param
 ){
+    throw Rcpp::exception("Not working right now!");
     if(split_dval_min > split_dval_max) throw Rcpp::exception("Split min must be less than split max!\n");
     MapParams map_params(
         adj_list, counties, pop,
@@ -194,14 +214,16 @@ List perform_a_valid_multidistrict_split(
 
     Rprintf("It is %d\n", (int) split_district_only);
 
+    int global_rng_seed2 = (int) Rcpp::sample(INT_MAX, 1)[0];
+    std::vector<RNGState> rng_states;rng_states.reserve(1);
+    rng_states.emplace_back(global_rng_seed2, 6);
     // Create a plan object via size 1 ensemble
     RcppThread::ThreadPool pool(0);
     PlanEnsemble plan_ensemble(
-        V, ndists, ndists, num_regions,
-        pop, 1,
-        SamplingSpace::GraphSpace,
+        map_params, num_regions,
+        1, SamplingSpace::GraphSpace,
         region_ids, 
-        region_sizes,
+        region_sizes, rng_states,
         pool 
     );
 
@@ -264,8 +286,9 @@ List perform_a_valid_multidistrict_split(
         clear_tree(ust_sampler.ust);
  
         // Try to draw a tree on region
-        bool tree_drawn = plan_ensemble.plan_ptr_vec[0]->draw_tree_on_region(map_params, region_id_to_split,
-            ust_sampler.ust, visited, ignore, uncut_tree_root, rng_state);
+        // bool tree_drawn = plan_ensemble.plan_ptr_vec[0]->draw_tree_on_region(map_params, region_id_to_split,
+        //     ust_sampler.ust, visited, ignore, uncut_tree_root, rng_state);
+        bool tree_drawn = false;
 
         // Try again and increase counter if tree not drawn
         if (!tree_drawn){
@@ -622,17 +645,25 @@ List attempt_splits_on_a_region(
         splitting_schedule_type, control
     );
     
+    int global_rng_seed = (int) Rcpp::sample(INT_MAX, 1)[0];
+    int num_rng_states = num_threads > 0 ? num_threads : 1;
+    std::vector<RNGState> rng_states;rng_states.reserve(num_rng_states);
+    for (size_t i = 1; i <= num_rng_states; i++)
+    {
+        // same seed with i*3 long_jumps for state
+        rng_states.emplace_back(global_rng_seed, i*3);
+    }
+    
     // create thread pool
     if (num_threads <= 0) num_threads = std::thread::hardware_concurrency();
     RcppThread::ThreadPool pool(num_threads);
 
     // create the plan
     PlanEnsemble plan_ensemble(
-        map_params.V, ndists, ndists, init_num_regions,
-        pop, 1,
-        SamplingSpace::GraphSpace,
+        map_params, init_num_regions,
+        1, SamplingSpace::GraphSpace,
         region_ids, 
-        region_sizes,
+        region_sizes, rng_states,
         pool 
     );
 
@@ -643,7 +674,7 @@ List attempt_splits_on_a_region(
 
 
     PlanEnsemble thread_plan_ensemble(
-        map_params.V, ndists, ndists, arma::sum(pop),
+        map_params, arma::sum(pop),
         num_threads, SamplingSpace::GraphSpace,
         pool
     );
@@ -663,14 +694,7 @@ List attempt_splits_on_a_region(
     std::atomic<int> thread_id_counter{0};
 
 
-    int global_rng_seed = (int) Rcpp::sample(INT_MAX, 1)[0];
-    int num_rng_states = num_threads > 0 ? num_threads : 1;
-    std::vector<RNGState> rng_states;rng_states.reserve(num_rng_states);
-    for (size_t i = 1; i <= num_rng_states; i++)
-    {
-        // same seed with i*3 long_jumps for state
-        rng_states.emplace_back(global_rng_seed, i*3);
-    }
+
 
     std::vector<bool> successful_update(num_plans);
 
@@ -687,12 +711,12 @@ List attempt_splits_on_a_region(
 
         // keep trying until a tree is drawn
         // ie ignore cases where algorithm fails bc of randomness
-        bool tree_successfully_drawn = ust_sampler.draw_tree_on_region(
+        bool tree_successfully_drawn = ust_sampler.attempt_to_draw_tree_on_region(
             rng_states[thread_id], *thread_plan_ensemble.plan_ptr_vec[thread_id], region_id_to_split);
         ++thread_attempts[thread_id];
 
         while(!tree_successfully_drawn){
-            tree_successfully_drawn = ust_sampler.draw_tree_on_region(
+            tree_successfully_drawn = ust_sampler.attempt_to_draw_tree_on_region(
                 rng_states[thread_id], *thread_plan_ensemble.plan_ptr_vec[thread_id], region_id_to_split);
             ++thread_attempts[thread_id];
         }

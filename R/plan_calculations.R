@@ -244,9 +244,8 @@ compute_log_optimal_weights <- function(
     }
 
 
-    counties_q <- rlang::enquo(counties)
     # get validated inputs
-    map_params <- get_map_parameters(map, counties_q=counties_q, use_counties_q = TRUE)
+    map_params <- get_map_parameters(map, !!rlang::enquo(counties))
     map <- map_params$map
     V <- map_params$V
     adj_list <- map_params$adj_list

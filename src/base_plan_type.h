@@ -185,9 +185,11 @@ public:
         RNGState &rng_state,
         double const selection_alpha = SELECTION_ALPHA) const;
 
-    bool draw_tree_on_region(const MapParams &map_params, const int region_to_draw_tree_on,
+    std::pair<bool, int> draw_tree_on_region(
+        const MapParams &map_params, const int region_to_draw_tree_on,
         Tree &ust, std::vector<bool> &visited, std::vector<bool> &ignore, int &root,
-        RNGState &rng_state);
+        RNGState &rng_state, int const attempts_to_make
+    );
 
 
     void update_region_info_from_cut(

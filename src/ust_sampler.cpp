@@ -8,7 +8,7 @@
 #include "ust_sampler.h"
 
 
-bool USTSampler::draw_tree_on_region(
+bool USTSampler::attempt_to_draw_tree_on_region(
     RNGState &rng_state,
     Plan const &plan, const int region_to_draw_tree_on){
     int V = map_params.V;
@@ -37,7 +37,7 @@ bool USTSampler::draw_tree_on_region(
 }
 
 
-bool USTSampler::draw_tree_on_merged_region(RNGState &rng_state,
+bool USTSampler::attempt_to_draw_tree_on_merged_region(RNGState &rng_state,
     Plan const &plan, 
     const int region1_to_draw_tree_on, const int region2_to_draw_tree_on){
     int V = map_params.V;
@@ -108,7 +108,7 @@ std::pair<bool, EdgeCut> USTSampler::attempt_to_find_valid_tree_split(
     bool const save_selection_prob
 ){
     // Try to draw a tree
-    bool tree_drawn = draw_tree_on_region(
+    bool tree_drawn = attempt_to_draw_tree_on_region(
         rng_state,
         plan, region_to_split
     );
@@ -134,7 +134,7 @@ std::pair<bool, EdgeCut> USTSampler::attempt_to_find_valid_tree_mergesplit(
     bool const save_selection_prob
 ){
     // Try to draw a tree
-    bool tree_drawn = draw_tree_on_merged_region(
+    bool tree_drawn = attempt_to_draw_tree_on_merged_region(
         rng_state,
         plan, merge_region1, merge_region2
     );

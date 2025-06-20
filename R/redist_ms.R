@@ -127,6 +127,7 @@ redist_mergesplit <- function(
 ) {
     if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
 
+
     # check default inputs
     sampling_space <- rlang::arg_match(sampling_space)
     splitting_method <- rlang::arg_match(splitting_method)
@@ -134,11 +135,7 @@ redist_mergesplit <- function(
 
     # validate constraints
     constraints <- validate_constraints(map=map, constraints=rlang::enquo(constraints))
-    # get the total number of districts
-    ndists <- attr(map, "ndists")
-    total_seats <- attr(map, "total_seats")
-    district_seat_sizes <- attr(map, "district_seat_sizes")
-    storage.mode(district_seat_sizes) <- "integer"
+
 
 
     # get map params
@@ -150,6 +147,11 @@ redist_mergesplit <- function(
     num_admin_units <- length(unique(counties))
     pop <- map_params$pop
     pop_bounds <- map_params$pop_bounds
+    # get the total number of districts
+    ndists <- attr(map, "ndists")
+    total_seats <- attr(map, "total_seats")
+    district_seat_sizes <- attr(map, "district_seat_sizes")
+    storage.mode(district_seat_sizes) <- "integer"
 
 
     thin <- as.integer(thin)
@@ -167,6 +169,7 @@ redist_mergesplit <- function(
     splitting_params <- validate_sample_space_and_splitting_method(
         sampling_space, splitting_method, splitting_params, num_splitting_steps
     )
+
 
     exist_name <- attr(map, "existing_col")
     if (is.null(init_plan)) {
@@ -196,12 +199,14 @@ redist_mergesplit <- function(
         if (!silent) cat("Sampling initial plans with SMC\n")
         # heuristic. Do at least 50 plans to not get stuck
         n_smc_nsims <- max(chains, 50)
+
         init_plans <- get_plans_matrix(
             redist_gsmc(map, n_smc_nsims, counties, compactness, constraints,
                        resample = TRUE, splitting_params = splitting_params,
                        sampling_space = sampling_space, splitting_method = splitting_method,
-                       ref_name = FALSE, verbose = verbose, silent = silent, num_processes = 1)
+                       ref_name = FALSE, verbose = verbose, silent = silent)
             )[, sample.int(n=n_smc_nsims, size=chains, replace=F), drop=FALSE]
+
         if (is.null(init_name))
             init_names <- paste0("<init> ", seq_len(chains))
         else
@@ -288,26 +293,27 @@ redist_mergesplit <- function(
         if(chain == 1){
             is_chain1 <- T
         }
+        run_verbosity <- if (is_chain1 || !multiprocess) verbosity else 0
         if (!silent && is_chain1){
             cat("Starting chain ", chain, "\n", sep = "")
             # flush.console()
             }
 
 
-        run_verbosity <- if (is_chain1 || !multiprocess) verbosity else 0
-
         t1_run <- Sys.time()
         algout <- ms_plans(
-            nsims, warmup, thin,
-            ndists, total_seats, district_seat_sizes,
-            adj_list, counties, pop,
+            nsims=nsims, warmup=warmup, thin=thin,
+            ndists=ndists, total_seats=total_seats,
+            district_seat_sizes=district_seat_sizes,
+            adj_list=adj_list, counties=counties, pop=pop,
             target=pop_bounds[2], lower=pop_bounds[1], upper=pop_bounds[3],
-            compactness,
-            init_plans[, chain, drop=FALSE], init_sizes[, chain, drop=FALSE],
+            rho=compactness,
+            initial_plan=init_plans[, chain, drop=FALSE],
+            initial_region_sizes=init_sizes[, chain, drop=FALSE],
             sampling_space_str = sampling_space,
-            merge_prob_type,
-            control, constraints,
-            run_verbosity, diagnostic_mode
+            merge_prob_type = merge_prob_type,
+            control=control, constraints=constraints,
+            verbosity=run_verbosity, diagnostic_mode=diagnostic_mode
         )
         t2_run <- Sys.time()
         # 1 index the plans
