@@ -225,7 +225,7 @@ double compute_simple_log_incremental_weight(
         Rcpp::Rcerr << std::flush;
     } 
 
-    bool const use_linking_edge_space = sampling_space != SamplingSpace::LinkingEdgeSpace;
+    bool const use_linking_edge_space = sampling_space == SamplingSpace::LinkingEdgeSpace;
 
     // build the plan multigraph 
     plan_multigraph.build_plan_multigraph(plan);
