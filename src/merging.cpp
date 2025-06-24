@@ -147,16 +147,13 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     RNGState &rng_state, SamplingSpace const sampling_space,
     Plan &plan, Plan &new_plan, 
     USTSampler &ust_sampler, TreeSplitter const &tree_splitter,
-    CountyComponents &current_county_components,
-    CountyComponents &proposed_county_components,
+    PlanMultigraph &current_plan_multigraph,
+    PlanMultigraph &proposed_plan_multigraph,
     std::string const merge_prob_type, bool save_edge_selection_prob,
     std::vector<std::pair<RegionID, RegionID>> &adj_region_pairs,
     arma::vec &unnormalized_pair_wgts,
     double const rho, bool const is_final
 ){
-    if(DEBUG_MERGING_VERBOSE){
-        Rprintf("Doing regions %d, %d!\n", adj_region_pairs[0].first, adj_region_pairs[0].second);
-    }
     // sample a pair 
     int sampled_pair_index = rng_state.r_int_unnormalized_wgt(unnormalized_pair_wgts);
     std::pair<int, int> merge_pair = adj_region_pairs[sampled_pair_index];
@@ -206,24 +203,25 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     if(DEBUG_MERGING_VERBOSE){
         Rprintf("A Splitting Checkpoint 2.\n");
     }
-    // check new plan doesn't have illegal number of county splits 
-    bool new_plan_valid = proposed_county_components.build_component_graph(new_plan.region_ids);
+    // check new plan is hierarchically valid if needed
+    auto build_attempt = new_plan.attempt_to_get_valid_mergesplit_pairs(
+        proposed_plan_multigraph, splitting_schedule
+    );
+    bool new_plan_valid = build_attempt.first;
+
     if(DEBUG_MERGING_VERBOSE){
-        Rprintf("%d county splits!\n", new_plan_valid);
+        Rprintf("%d county splits!\n", proposed_plan_multigraph.num_county_region_components);
     }
     if(!new_plan_valid){
         if(DEBUG_MERGING_VERBOSE){
             REprintf("%d splits for %d regions\n", 
-                new_plan_valid, plan.num_regions);
+                proposed_plan_multigraph.num_county_region_components, plan.num_regions);
         }
         // return failure
         return std::make_tuple(true, false, -1*std::log(0.0), merged_region_size);
     }
-
     // get adj pairs 
-    auto new_valid_adj_region_pairs = new_plan.get_valid_adj_regions(
-        map_params, splitting_schedule, proposed_county_components
-    );
+    auto new_valid_adj_region_pairs = build_attempt.second;
     // get the weights
     auto new_valid_pair_weights = get_adj_pair_unnormalized_weights(
         new_plan,
@@ -270,28 +268,28 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     bool using_linking_edge_space = sampling_space == SamplingSpace::LinkingEdgeSpace;
     // compute the boundary length 
     double current_log_eff_boundary = plan.get_log_eff_boundary_len(
-        map_params, splitting_schedule, tree_splitter, current_county_components,
+        current_plan_multigraph, splitting_schedule, tree_splitter, 
         region1_id, region2_id
     );
     double proposed_log_eff_boundary = new_plan.get_log_eff_boundary_len(
-        map_params, splitting_schedule, tree_splitter, proposed_county_components,
+        proposed_plan_multigraph, splitting_schedule, tree_splitter,
         region1_id, region2_id
     );
     // If linking edge space we need to subtract linking edge correction term
     if(using_linking_edge_space){
         // add instead of subtract bc its flipped in MH ratio
-        current_log_eff_boundary += plan.compute_log_linking_edge_count(current_county_components);
-        proposed_log_eff_boundary += new_plan.compute_log_linking_edge_count(proposed_county_components);
+        current_log_eff_boundary += plan.compute_log_linking_edge_count(current_plan_multigraph);
+        proposed_log_eff_boundary += new_plan.compute_log_linking_edge_count(proposed_plan_multigraph);
     }
 
     if(DEBUG_MERGING_VERBOSE){
-        Rprintf("Doing regions %d, %d!\n", region1_id, region2_id);
+        Rprintf("Finding Adjacent regions %d, %d!\n", region1_id, region2_id);
         Rprintf(
             "Current Plan: %d Adjacent Regions and I picked index %d ",
             (int) adj_region_pairs.size(), sampled_pair_index
         );
         Rprintf(
-            "and %f\n",
+            "with probability %f\n",
             std::exp(std::log(unnormalized_pair_wgts(sampled_pair_index)) - std::log(arma::sum(unnormalized_pair_wgts)))
         );
         Rprintf(
@@ -299,7 +297,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
             (int) new_valid_adj_region_pairs.size(), region_pair_proposal_index
         );
         Rprintf(
-            "and %f\n",
+            "with probability %f\n",
             std::exp(std::log(new_valid_pair_weights(region_pair_proposal_index)) - std::log(arma::sum(new_valid_pair_weights)))
         );
     }
@@ -315,9 +313,9 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         rho, is_final
     );
     bool proposal_accepted = rng_state.r_unif() <= std::exp(log_mh_ratio);
-    if(DEBUG_MERGING_VERBOSE) Rprintf("Ratio is %f!!\n", std::exp(log_mh_ratio));
+    if(DEBUG_MERGING_VERBOSE) Rprintf("Ratio is %f and it is", std::exp(log_mh_ratio));
     if(proposal_accepted){
-        if(DEBUG_MERGING_VERBOSE) Rprintf("Accepted!!\n", std::exp(log_mh_ratio));
+        if(DEBUG_MERGING_VERBOSE) Rprintf("ACCEPTED!! Now updating plans\n", std::exp(log_mh_ratio));
         // if successful then actually update
         plan.update_from_successful_split(
             tree_splitter,
@@ -325,14 +323,14 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
             region1_id, region2_id,
             false
         );
-        // update the current county components 
-        // TODO write custom swap function 
-        current_county_components.build_component_graph(plan.region_ids); 
+        // swap the plan multigraphs
+        swap_plan_multigraphs(current_plan_multigraph, proposed_plan_multigraph);
         // update pairs and weights to be current one
         unnormalized_pair_wgts = new_valid_pair_weights;
         adj_region_pairs = new_valid_adj_region_pairs;
         return std::make_tuple(true, true, log_mh_ratio, merged_region_size);
     }else{
+        if(DEBUG_MERGING_VERBOSE) Rprintf("REJECTED!!\n", std::exp(log_mh_ratio));
         // else reject and do nothing 
         return std::make_tuple(true, false, log_mh_ratio, merged_region_size);
     }
@@ -346,8 +344,8 @@ int run_merge_split_steps(
     RNGState &rng_state, SamplingSpace const sampling_space,
     Plan &plan, Plan &dummy_plan, 
     USTSampler &ust_sampler, TreeSplitter const &tree_splitter,
-    CountyComponents &current_county_components,
-    CountyComponents &proposed_county_components,
+    PlanMultigraph &current_plan_multigraph,
+    PlanMultigraph &proposed_plan_multigraph,
     std::string const merge_prob_type,
     double const rho, bool const is_final, 
     int num_steps_to_run,
@@ -355,11 +353,11 @@ int run_merge_split_steps(
 ){
     int num_succesful_steps = 0;
     bool save_edge_selection_prob = sampling_space == SamplingSpace::LinkingEdgeSpace;
-    current_county_components.build_component_graph(plan.region_ids);
-    // Get pairs of adj districts
-    auto current_plan_adj_region_pairs = plan.get_valid_adj_regions(
-        map_params, splitting_schedule, current_county_components
-    );
+
+    // Build the multigraph and get pairs of adj districts
+    auto current_plan_adj_region_pairs = plan.attempt_to_get_valid_mergesplit_pairs(
+        current_plan_multigraph, splitting_schedule
+    ).second;
     arma::vec current_plan_pair_unnoramalized_wgts = get_adj_pair_unnormalized_weights(
         plan,
         current_plan_adj_region_pairs,
@@ -373,8 +371,8 @@ int run_merge_split_steps(
             rng_state, sampling_space,
             plan, dummy_plan, 
             ust_sampler, tree_splitter,
-            current_county_components,
-            proposed_county_components,
+            current_plan_multigraph,
+            proposed_plan_multigraph,
             merge_prob_type, save_edge_selection_prob,
             current_plan_adj_region_pairs,
             current_plan_pair_unnoramalized_wgts,

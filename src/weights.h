@@ -20,7 +20,6 @@
 #include "scoring.h"
 #include "map_calc.h"
 #include "graph_ops.h"
-#include "county_components.h"
 
 
 /* Computes Compute Effective Sample Size from log incremental weights
@@ -87,14 +86,11 @@ void compute_all_plans_simple_weights(
 );
 
 double compute_log_optimal_weights(
-    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    Plan const &plan, PlanMultigraph &plan_multigraph,
+    const SplittingSchedule &splitting_schedule, const TreeSplitter &edge_splitter,
     SamplingSpace const sampling_space,
-    ScoringFunction const &scoring_function, double rho,
-    Plan const &plan, 
-    TreeSplitter const &edge_splitter, CountyComponents &county_components,
-    EffBoundaryMap &pair_map,
-    bool const compute_log_splitting_prob,
-    bool const is_final_plan
+    ScoringFunction const &scoring_function, double const rho,
+    bool compute_log_splitting_prob, bool is_final_plan
 );
 
 void compute_all_plans_log_optimal_weights(

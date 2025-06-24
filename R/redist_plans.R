@@ -21,6 +21,7 @@ new_redist_plans <- function(
     n_sims <- ncol(plans)
     if (n_sims < 1) cli_abort("Need at least one simulation draw.")
 
+
     n_prec <- nrow(plans)
     map_dists <- attr(map, "ndists")
     partial <- ndists < map_dists
@@ -35,15 +36,15 @@ new_redist_plans <- function(
     pop_bounds <- attr(map, "pop_bounds")
 
 
-
     prec_pop <- map[[attr(map, "pop_col")]]
     # if plans are 0 indexed then add 1
-    if(0 %in% plans){
+    if(min(plans) == 0){
         plans <- plans + 1L
     }
     distr_range <- 1:ndists
     # tally the population
     distr_pop <- pop_tally(plans, prec_pop, ndists)
+
 
     # check if partial or MMD then region sizes must not be null
     if(partial || districting_scheme == "MMD"){
@@ -219,8 +220,13 @@ redist_plans <- function(plans, map, algorithm, wgt = NULL, region_nseats = NULL
     if (nrow(plans) != nrow(map)) cli_abort("{.arg plans} matrix must have as many rows as {.arg map} has precincts.")
     if (!inherits(map, "redist_map")) cli_abort("{.arg map} must be a {.cls redist_map}")
 
+
     if (min(plans) == 0L) plans <- plans + 1L
-    storage.mode(plans) <- "integer"
+
+    if(storage.mode(plans) != "integer"){
+        storage.mode(plans) <- "integer"
+    }
+
 
 
     obj <- new_redist_plans(plans, map, algorithm, wgt = wgt,

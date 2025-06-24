@@ -32,6 +32,8 @@ class LinkingEdgePlan : public Plan {
 
         VertexGraph get_forest_adj() override;
 
+        void Rprint(bool verbose = false) const override;
+
         void update_vertex_and_plan_specific_info_from_cut(
             TreeSplitter const &tree_splitter,
             USTSampler &ust_sampler, EdgeCut const cut_edge, 
@@ -40,21 +42,14 @@ class LinkingEdgePlan : public Plan {
         ) override;
 
         double get_log_eff_boundary_len(
-            const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-            TreeSplitter const &tree_splitter, CountyComponents &county_components,
+            PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
+            TreeSplitter const &tree_splitter, 
             const int region1_id, int const region2_id
         ) const override;
 
         std::vector<std::tuple<RegionID, RegionID, double>> get_valid_adj_regions_and_eff_log_boundary_lens(
-            const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-            TreeSplitter const &tree_splitter, CountyComponents &county_components,
-            EffBoundaryMap &pair_map
-        ) const override;
-
-        // Count the number of valid adj regions in a map
-        int count_valid_adj_regions(
-            MapParams const &map_params, SplittingSchedule const &splitting_schedule,
-            CountyComponents &county_components
+            PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
+            TreeSplitter const &tree_splitter
         ) const override;
 
         // For a plan and edge across two regions it returns the log probability 
@@ -64,10 +59,15 @@ class LinkingEdgePlan : public Plan {
             const int region1_root, const int region2_root
         ) const;
 
-        // Get a vector of all valid adj region pairs
-        std::vector<std::pair<RegionID,RegionID>> get_valid_adj_regions(
-            MapParams const &map_params, SplittingSchedule const &splitting_schedule,
-            CountyComponents &county_components
+        // This builds a plan multigraph and 
+        // This just returns pairs with a linking edge between them and valid size 
+        std::pair<bool, std::vector<std::pair<RegionID,RegionID>>> attempt_to_get_valid_mergesplit_pairs(
+            PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule
+        ) const override;
+
+        // Get a vector of all valid adj region pairs for the backwards kernel
+        std::vector<std::pair<RegionID,RegionID>> get_valid_smc_merge_regions(
+            PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule
         ) const override;
 
         std::vector<std::array<double, 3>> get_linking_edges() override{

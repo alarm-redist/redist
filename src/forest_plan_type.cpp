@@ -106,17 +106,15 @@ void ForestPlan::update_vertex_and_plan_specific_info_from_cut(
  * region ids in the form (smaller id, bigger id) to the effective tree boundary length 
  * between them in `g`.
  */
-std::vector<std::tuple<RegionID, RegionID, double>> NEW_get_valid_pairs_and_log_tree_eff_boundary_len_map(
-    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-    const ForestPlan &plan, const TreeSplitter &edge_splitter,
-    CountyComponents &county_components,
-    VertexGraph const &forest_graph,
-    EffBoundaryMap &pair_map
+std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundary_lens(
+    const ForestPlan &plan, VertexGraph const &forest_graph,
+    PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
+    const TreeSplitter &edge_splitter
 ){
-    std::vector<bool> visited(map_params.V);
-    std::vector<int> pops_below_vertex(map_params.V, 0);
+    std::vector<bool> visited(plan_multigraph.map_params.V);
+    std::vector<int> pops_below_vertex(plan_multigraph.map_params.V, 0);
     
-    int const V = map_params.V;
+    int const V = plan_multigraph.map_params.V;
 
     for (int v = 0; v < V; v++) {
         // Find out which region this vertex corresponds to
@@ -127,12 +125,9 @@ std::vector<std::tuple<RegionID, RegionID, double>> NEW_get_valid_pairs_and_log_
         // and if not keep going
         if(!splitting_schedule.check_adj_to_regions.at(v_region_size)) continue;
 
-
-        // get neighbors
-        auto nbors = map_params.g.at(v);
-
+        
         // now iterate over its neighbors
-        for (auto const v_nbor : nbors) {
+        for (auto const v_nbor : plan_multigraph.map_params.g[v]) {
             // find which region neighbor corresponds to
             auto v_nbor_region_num = plan.region_ids[v_nbor];
             // ignore if same region 
@@ -147,23 +142,34 @@ std::vector<std::tuple<RegionID, RegionID, double>> NEW_get_valid_pairs_and_log_
             if(double_counting_possible && v_region_num < v_nbor_region_num) continue;
 
             // see if this pair is one we count 
-            auto search_result = pair_map.get_value(v_region_num, v_nbor_region_num);
-            // ignore if not hashing or if we don't count this boundary 
-            if(!search_result.first || 
-                !county_components.count_county_boundary(
-                    v_region_num, map_params.counties(v),
-                    v_nbor_region_num, map_params.counties(v_nbor)
-                )
-            ) continue;
-            // Now we can get the effective boundary length 
+            auto search_result = plan_multigraph.pair_map.get_value(v_nbor_region_num, v_region_num);
+
+            // plan_multigraph.Rprint();
+            // REprintf("(%d, %d) - (%u, %u)\n", 
+            //     v, v_nbor, v_region_num, v_nbor_region_num);
+
+            // REprintf("Its %s and %s\n",
+            //     (search_result.first ? "TRUE" : "FALSE"),
+            // (std::get<3>(search_result.second) ? "TRUE" : "FALSE") );
             
+            // ignore if not a pair in the map or we're ignoring it for other reasons
+            if(!search_result.first || !search_result.second.count_pair) continue;
+
+
+            // ignore if hierarchically adjacent but this edge isn't in the same county
+            if(
+               (plan_multigraph.map_params.counties[v] != plan_multigraph.map_params.counties[v_nbor]) &&
+               search_result.second.admin_adjacent
+            ) continue;
+
+            // Now we can get the effective boundary length             
             auto merged_region_size = v_region_size + v_nbor_region_size;
             auto cut_size_bounds = splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size];
             auto min_possible_cut_size = cut_size_bounds.first;
             auto max_possible_cut_size = cut_size_bounds.second;
 
             double log_edge_selection_prob = edge_splitter.get_log_retroactive_splitting_prob_for_joined_tree(
-                    map_params, forest_graph,
+                    plan_multigraph.map_params, forest_graph,
                     visited, pops_below_vertex,
                     v, v_nbor,
                     plan.region_pops[plan.region_ids[v]], plan.region_pops[plan.region_ids[v_nbor]],
@@ -171,29 +177,28 @@ std::vector<std::tuple<RegionID, RegionID, double>> NEW_get_valid_pairs_and_log_
                     min_possible_cut_size, max_possible_cut_size,
                     splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_region_size]);
 
-            // set the value to be the current boundary length plus 
-            pair_map.set_value(
-                v_region_num, v_nbor_region_num, 
-                search_result.second + std::exp(log_edge_selection_prob)
+            // we add to the boundary 
+            plan_multigraph.pair_map.add_to_eff_boundary(
+                v_region_num, v_nbor_region_num,
+                std::exp(log_edge_selection_prob)
             );
 
-                // Rprintf("Adding (%d,%d) w/ %.4f\n", v, nbor, std::exp(log_edge_selection_prob));
+            // Rprintf("Adding (%d,%d) w/ %.4f\n", v, v_nbor, std::exp(log_edge_selection_prob));
         }
     }
 
     // now make the output vector 
     std::vector<std::tuple<RegionID, RegionID, double>> region_pairs_tuple_vec;
-    region_pairs_tuple_vec.reserve(pair_map.num_hashed_values);
+    region_pairs_tuple_vec.reserve(plan_multigraph.pair_map.num_hashed_values);
 
-    for(auto const &a_pair: pair_map.hashed_pairs){
-        auto search_result = pair_map.get_value(a_pair.first, a_pair.second);
-        // add the region ids and the log of the boundary 
+    for(auto const key_val_pair: plan_multigraph.pair_map.get_all_values()){
         region_pairs_tuple_vec.emplace_back(
-            a_pair.first, 
-            a_pair.second,
-            std::log(search_result.second)
+            key_val_pair.first.first, 
+            key_val_pair.first.second, 
+            std::log(key_val_pair.second.eff_boundary_len)
         );
     }
+
 
     return region_pairs_tuple_vec;
 }
@@ -201,15 +206,20 @@ std::vector<std::tuple<RegionID, RegionID, double>> NEW_get_valid_pairs_and_log_
 
 
 std::vector<std::tuple<RegionID, RegionID, double>> ForestPlan::get_valid_adj_regions_and_eff_log_boundary_lens(
-    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-    TreeSplitter const &tree_splitter, CountyComponents &county_components,
-    EffBoundaryMap &pair_map
+    PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
+    TreeSplitter const &tree_splitter
 ) const{
+    // build the multigraph 
+    plan_multigraph.build_plan_multigraph(*this);
+    // remove invalid hierarchical merges if needed
+    plan_multigraph.remove_invalid_hierarchical_merge_pairs(*this);
+    // remove invalid size pairs 
+    plan_multigraph.remove_invalid_size_pairs(*this, splitting_schedule);
     // get pairs and log tree effective boundary
-    auto region_pairs_tuple_vec = NEW_get_valid_pairs_and_log_tree_eff_boundary_len_map(
-        map_params, splitting_schedule,
-        *this, tree_splitter, county_components,
-        forest_graph, pair_map
+    auto region_pairs_tuple_vec = compute_log_tree_eff_boundary_lens(
+        *this, forest_graph,
+        plan_multigraph, splitting_schedule,
+         tree_splitter
     );
 
     return region_pairs_tuple_vec;
@@ -220,37 +230,43 @@ std::vector<std::tuple<RegionID, RegionID, double>> ForestPlan::get_valid_adj_re
 
 
 double ForestPlan::get_log_eff_boundary_len(
-    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-    TreeSplitter const &tree_splitter, CountyComponents &county_components,
+    PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
+    TreeSplitter const &tree_splitter, 
     const int region1_id, int const region2_id
 ) const{
 
-    std::vector<bool> visited(map_params.V);
-    std::vector<int> pops_below_vertex(map_params.V);
+    std::vector<bool> visited(plan_multigraph.map_params.V);
+    std::vector<int> pops_below_vertex(plan_multigraph.map_params.V);
 
-    int const V = map_params.V;
+    int const V = plan_multigraph.map_params.V;
     int const merged_region_size = region_sizes[region1_id]+ region_sizes[region2_id];
 
     auto cut_size_bounds = splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size];
     int min_possible_cut_size = cut_size_bounds.first;
     int max_possible_cut_size = cut_size_bounds.second;
+
+    // figure out if we are allowed to count across county boundaries 
+    bool count_edges_across;
+    if(plan_multigraph.counties_on){
+        auto search_result = plan_multigraph.pair_map.get_value(region1_id, region2_id);
+        // only count across if not admin adjacent 
+        count_edges_across = !search_result.second.admin_adjacent;
+    }else{
+        count_edges_across = true; 
+    }
     
     double tree_selection_probs = 0.0;
     for (int v = 0; v < V; v++) {
         if (region_ids[v] != region1_id) continue; // Only count if starting vertex in region 1
-        auto v_county = map_params.counties[v];
-        for (auto nbor : map_params.g[v]) {
+        auto v_county = plan_multigraph.map_params.counties[v];
+        for (auto nbor : plan_multigraph.map_params.g[v]) {
             // ignore if not region 2
             if (region_ids[nbor] != region2_id) continue;
             // ignore if we can't count this boundary
-            if(!county_components.count_county_boundary(
-                region1_id, v_county, 
-                region2_id, map_params.counties[nbor]
-            )) continue;
-            
+            if(v_county != plan_multigraph.map_params.counties[nbor] && !count_edges_across) continue;
 
             double log_edge_selection_prob = tree_splitter.get_log_retroactive_splitting_prob_for_joined_tree(
-                map_params, forest_graph,
+                plan_multigraph.map_params, forest_graph,
                 visited, pops_below_vertex,
                 v, nbor,
                 region_pops[region_ids[v]], region_pops[region_ids[nbor]],

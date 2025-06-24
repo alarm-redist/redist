@@ -65,136 +65,61 @@ void GraphPlan::update_vertex_and_plan_specific_info_from_cut(
  * region ids in the form (smaller id, bigger id) to the length of the boundary
  * between them in `g`.
  */
-std::vector<std::tuple<RegionID, RegionID, double>> NEW_get_valid_pairs_and_log_graph_boundary_len_map(
-    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-    const Plan &plan,
-    CountyComponents &county_components,
-    EffBoundaryMap &pair_map
-){    
-    int const V = map_params.V;
 
-    for (int v = 0; v < V; v++) {
-        // Find out which region this vertex corresponds to
-        auto v_region_num = plan.region_ids[v];
-        auto v_region_size = plan.region_sizes[v_region_num];
-
-        // check if its a region we want to find regions adjacent to 
-        // and if not keep going
-        if(!splitting_schedule.check_adj_to_regions.at(v_region_size)) continue;
-
-        // now iterate over its neighbors
-        for (auto const v_nbor : map_params.g.at(v)) {
-            // find which region neighbor corresponds to
-            auto v_nbor_region_num = plan.region_ids[v_nbor];
-            // ignore if same region 
-            if(v_region_num == v_nbor_region_num) continue;
-
-            auto v_nbor_region_size = plan.region_sizes[v_nbor_region_num];
-            // else they are different so regions are adj
-            // check if we need to be aware of double counting. IE if both regions
-            // are ones where check adjacent is true then its possible to double count edges
-            bool const double_counting_possible = splitting_schedule.check_adj_to_regions[v_nbor_region_size];
-            // ignore if double counting is possible and v is smaller region 
-            if(double_counting_possible && v_region_num < v_nbor_region_num) continue;
-
-            // see if this pair is one we count 
-            auto search_result = pair_map.get_value(v_region_num, v_nbor_region_num);
-            // ignore if not hashing or if we don't count this boundary 
-            if(!search_result.first || 
-                !county_components.count_county_boundary(
-                    v_region_num, map_params.counties(v),
-                    v_nbor_region_num, map_params.counties(v_nbor)
-                )
-            ) continue;
-            // Now we add 1 for this boundary 
-
-            // set the value to be the current boundary length plus 
-            pair_map.set_value(
-                v_region_num, v_nbor_region_num, 
-                search_result.second + 1.0
-            );
-        }
-    }
-
-    // now make the output vector 
-    std::vector<std::tuple<RegionID, RegionID, double>> region_pairs_tuple_vec;
-    region_pairs_tuple_vec.reserve(pair_map.num_hashed_values);
-
-    for(auto const &a_pair: pair_map.hashed_pairs){
-        auto search_result = pair_map.get_value(a_pair.first, a_pair.second);
-        if(search_result.second == 0.0){
-            REprintf("Pair (%u,%u) = 0\n", a_pair.first, a_pair.second);
-        }
-        // add the region ids and the log of the boundary 
-        region_pairs_tuple_vec.emplace_back(
-            a_pair.first, 
-            a_pair.second,
-            std::log(search_result.second)
-        );
-    }
-
-    return region_pairs_tuple_vec;
-}
 
 
 
 std::vector<std::tuple<RegionID, RegionID, double>> GraphPlan::get_valid_adj_regions_and_eff_log_boundary_lens(
-    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-    TreeSplitter const &tree_splitter, CountyComponents &county_components,
-    EffBoundaryMap &pair_map
+    PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
+    TreeSplitter const &tree_splitter
 ) const{
-    
-    return NEW_get_valid_pairs_and_log_graph_boundary_len_map(
-        map_params, splitting_schedule, *this,
-        county_components, pair_map
-    );
 
-}
+    // build the multigraph 
+    plan_multigraph.build_plan_multigraph(*this);
+    // remove invalid hierarchical merges if needed
+    plan_multigraph.remove_invalid_hierarchical_merge_pairs(*this);
+    // remove invalid size pairs 
+    plan_multigraph.remove_invalid_size_pairs(*this, splitting_schedule);
+    // now make the output vector 
+    std::vector<std::tuple<RegionID, RegionID, double>> region_pairs_tuple_vec;
+    region_pairs_tuple_vec.reserve(plan_multigraph.pair_map.num_hashed_values);
 
-
-
-
-/*
- * Compute the logarithm of the graph theoretic length of the boundary between
- * `distr_root` and `distr_other`, where the root of `ust` is in `distr_root`
- * 
- * If county constraints are on then it won't count any boundaries in invalid counties
- */
-double count_log_graph_boundary(
-    PlanVector const &region_ids,
-    int const region1_id, int const region2_id,
-    CountyComponents &county_components
-){
-    int const V = county_components.map_params.V;
-    double count = 0.0;
-
-    for (int v = 0; v < V; v++) {
-        auto v_region = region_ids[v];
-        if (v_region != region1_id) continue; // Only count if starting vertex in region 1
-        auto v_county = county_components.map_params.counties[v];
-        for (int u : county_components.map_params.g[v]) {
-            int u_region = region_ids[u];
-            // ignore if not the right id
-            if (region_ids[u] != region2_id) continue;
-            // ignore if we can't count this boundary
-            if(!county_components.count_county_boundary(
-                region1_id, v_county, 
-                region2_id, county_components.map_params.counties[u]
-                )) continue;
-            count += 1.0;
+    for(auto const key_val_pair: plan_multigraph.pair_map.get_all_values()){
+        
+        double log_boundary_len;
+        if(key_val_pair.second.admin_adjacent){
+            // if administratively adjacent only count within same county
+            log_boundary_len = std::log(key_val_pair.second.within_county_edges);
+        }else{
+            // else only count across county 
+            log_boundary_len = std::log(key_val_pair.second.across_county_edges);
         }
+
+        region_pairs_tuple_vec.emplace_back(
+            key_val_pair.first.first, 
+            key_val_pair.first.second, 
+            log_boundary_len
+        );
     }
 
-    return std::log(count);
+    return region_pairs_tuple_vec;
+    
 }
 
+
 double GraphPlan::get_log_eff_boundary_len(
-    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-    TreeSplitter const &tree_splitter, CountyComponents &county_components,
+    PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
+    TreeSplitter const &tree_splitter, 
     const int region1_id, int const region2_id
 ) const{
-    // Return the log of the graph theoretic boundary 
-    return count_log_graph_boundary(region_ids,
-        region1_id, region2_id, county_components
-    );
+    // Return the log of the graph theoretic boundary
+    auto search_result = plan_multigraph.pair_map.get_value(region1_id, region2_id);
+
+    if(search_result.second.admin_adjacent){
+        // if administratively adjacent only count within same county
+        return std::log(search_result.second.within_county_edges);
+    }else{
+        // else only count across county 
+        return std::log(search_result.second.across_county_edges);
+    }
 }

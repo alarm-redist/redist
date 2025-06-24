@@ -5,7 +5,7 @@
 * Purpose: Exposes weight calculation functions to R code
 ********************************************************/
 
-
+bool DEBUG_MANUAL_WEIGHTS_VERBOSE = false;
 
 #include "manual_weights.h"
 
@@ -58,16 +58,31 @@ Rcpp::NumericVector compute_log_unnormalized_plan_target_density(
     Rcpp::Rcout << "Computing Log Target Density!" << std::endl;
     RcppThread::ProgressBar bar(num_plans, 1);
     pool.parallelFor(0, num_plans, [&] (int i) {
-        static thread_local CountyComponents county_components(
-            map_params, num_regions
+        static thread_local PlanMultigraph plan_multigraph(map_params);
+        static thread_local std::vector<bool> county_component_lookup(
+            num_regions * map_params.num_counties, false
         );
-        static thread_local Graph county_graph(map_params.num_counties);
 
-        // auto county_splits_result = county_components.count_county_splits(plans_vec[i]);
-        // check number of counties is valid and no double county intersect region components
-        // if too many then log(target) = -Inf
-        bool const hiearhically_valid = county_components.check_valid_hiearchical_plan(*plan_ensemble.plan_ptr_vec[i], county_graph);
-        if(!hiearhically_valid){
+        if(DEBUG_MANUAL_WEIGHTS_VERBOSE){
+        auto test_result = plan_multigraph.is_hierarchically_connected(
+            *plan_ensemble.plan_ptr_vec[i], county_component_lookup
+        );
+        Rcpp::Rcout << "Result is " << (test_result.first ? "TRUE" : "FALSE") 
+                    << " and " << test_result.second << " components!" << std::endl; 
+        }
+
+        bool hierarchically_valid = plan_multigraph.is_hierarchically_valid(
+            *plan_ensemble.plan_ptr_vec[i], county_component_lookup
+        );
+
+        if(DEBUG_MANUAL_WEIGHTS_VERBOSE){
+        Rcpp::Rcout << "Result is " << (hierarchically_valid ? "TRUE" : "FALSE") 
+                    << std::endl; 
+        }
+
+
+        // If not hierarchically valid then set log(target) = -Inf
+        if(!hierarchically_valid){
             log_unnormalized_density[i] = -arma::math::inf();
             ++bar;
             RcppThread::checkUserInterrupt(i % check_int == 0);
@@ -154,16 +169,25 @@ Rcpp::NumericMatrix compute_log_unnormalized_region_target_density(
     Rcpp::Rcout << "Computing Log Target Density!" << std::endl;
     RcppThread::ProgressBar bar(num_plans, 1);
     pool.parallelFor(0, num_plans, [&] (int i) {
-        static thread_local CountyComponents county_components(
-            map_params, num_regions
+        static thread_local PlanMultigraph plan_multigraph(map_params);
+        static thread_local std::vector<bool> county_component_lookup(
+            num_regions * map_params.num_counties, false
         );
-        static thread_local Graph county_graph(map_params.num_counties);
+
+
+        bool hierarchically_valid = plan_multigraph.is_hierarchically_valid(
+            *plan_ensemble.plan_ptr_vec[i], county_component_lookup
+        );
+
+
 
         // auto county_splits_result = county_components.count_county_splits(plans_vec[i]);
         // check number of counties is valid and no double county intersect region components
         // if too many then log(target) = -Inf
-        bool const hiearhically_valid = county_components.check_valid_hiearchical_plan(*plan_ensemble.plan_ptr_vec[i], county_graph);
-        if(!hiearhically_valid){
+
+        // TODO only check for each region 
+
+        if(!hierarchically_valid){
             for (size_t region_id = 0; region_id < num_regions; region_id++)
             {
                 log_unnormalized_region_densities(region_id, i) = -arma::math::inf();
@@ -206,49 +230,6 @@ Rcpp::NumericMatrix compute_log_unnormalized_region_target_density(
     pool.wait();
 
     return log_unnormalized_region_densities;
-}
-
-
-// std::vector<std::pair<std::pair<int,int>, int>>
-std::vector<int> new_boundary_counting(
-    MapParams const &map_params,
-    std::vector<int> &pair_boundary_count_vec,
-    PlanVector const &region_ids, int const num_regions,
-    CountyComponents const &county_components
-){
-    bool const check_counties = map_params.num_counties > 1;
-
-    // iterate through the graph 
-    for (int v = 0; v < map_params.V; v++) {
-        // Find out which region this vertex corresponds to
-        int v_region = region_ids[v];
-        int v_county = map_params.counties(v);
-
-        // now iterate over its neighbors
-        for (int u : map_params.g[v]) {
-            // find which region neighbor corresponds to
-            int u_region = region_ids[u];
-            // ignore if u_region <= v_region to avoid double counting 
-            if(u_region <= v_region) continue;
-            if(!check_counties || v_county == map_params.counties(u)){
-                // if not checking counties we just always count since
-                // incrementing is cheaper then checking and incrementing 
-                ++pair_boundary_count_vec[index_from_ordered_pair(v_region, u_region, num_regions)];
-                // REprintf("Counting (%d, %d) - Regions (%u, %u) \n", u, v, v_region, u_region);
-            }else if(pair_boundary_count_vec[index_from_ordered_pair(v_region, u_region, num_regions)] >= 0){
-                // else this edge crosses a county boundary of pair we care about
-                // We only count if no edges between 
-                //      (v_county, v_region), (u_county, v_region)
-                //      (u_county, u_region), (v_county, u_region)
-                pair_boundary_count_vec[index_from_ordered_pair(v_region, u_region, num_regions)] += county_components.count_county_boundary(
-                    v_region, v_county-1,
-                    u_region, map_params.counties(u)-1
-                );
-                
-            }
-        }
-    }
-    return pair_boundary_count_vec;
 }
 
 
@@ -308,7 +289,8 @@ arma::vec compute_plans_log_optimal_weights(
     splitting_schedule_ptr->set_potential_cut_sizes_for_each_valid_size(
         0, num_regions-1
     );
-    
+
+
     // create the splitter
     NaiveTopKSplitter tree_splitter(map_params.V, 1);
 
@@ -317,8 +299,6 @@ arma::vec compute_plans_log_optimal_weights(
     bool const counties_on = map_params.num_counties > 1;
 
     
-
-
     arma::vec log_weights(num_plans, arma::fill::none);
 
     const int nsims = plan_ensemble.nsims;
@@ -327,97 +307,49 @@ arma::vec compute_plans_log_optimal_weights(
     RcppThread::ProgressBar bar(nsims, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, nsims, [&] (int i) {
-        static thread_local CountyComponents county_components(
-            map_params, num_regions
-        );
-        static thread_local std::vector<int> pair_eff_bounary_counts(
-            (num_regions*(num_regions-1))/2, -1
-        );
-        static thread_local EffBoundaryMap pair_map(num_regions, 0.0);
-        std::fill(
-            pair_eff_bounary_counts.begin(),
-            pair_eff_bounary_counts.end(),
-            -1
-        );
-        // first make sure if counties are on then the plan doesn't
-        // have an illegal number of splits 
-        if(counties_on){
-            auto county_splits_result = county_components.count_county_splits(*plan_ensemble.plan_ptr_vec[i]);
-            // check number of counties is valid and no double county intersect region components
-            // if too many then log(0) = -Inf
-            if(county_splits_result.second > num_regions - 1){
-                REprintf("Plan %d should have %d county splits or less but it actually has %d!\n",
-                    i, num_regions-1, county_splits_result.second);
-                throw Rcpp::exception("Plan has too many county splits!\n");
-            }else if(county_splits_result.first){
-                REprintf("Plan %d has at least one region intersect county with more than 1 connected component!\n",
-                    i);
-                throw Rcpp::exception("Plan has at least one region intersect county with more than 1 connected component!\n");
-            }
-            county_components.build_component_graph(plan_ensemble.plan_ptr_vec[i]->region_ids);
-        }
+        static thread_local PlanMultigraph plan_multigraph(map_params);
 
-        auto adj_pairs_ignoring_county = plan_ensemble.plan_ptr_vec[i]->get_or_count_valid_adj_regions(
-                map_params, *splitting_schedule_ptr, county_components, false
-        ).second;
-        REprintf("Size intially was %u\n", adj_pairs_ignoring_county.size());
-        REprintf("Adjacent regions: ");
-        for(auto const &a_pair: adj_pairs_ignoring_county){
-            REprintf("(%d, %d), ", a_pair.first, a_pair.second);
-        }
-        REprintf("\n");
-        // dangerous but removing invalid pairs while iterating over 
-        auto it = adj_pairs_ignoring_county.begin();
-
-        while(it != adj_pairs_ignoring_county.end()){
-            bool pair_ok = !county_components.counties_on || county_components.check_merging_regions_is_ok(
-                it->first, it->second
-            );
-            REprintf("Regions (%d, %d): ",
-                it->first, it->second
-            );
-            if(pair_ok) {
-                REprintf(" is ok!\n");
-                // mark this as pair to check 
-                pair_eff_bounary_counts[index_from_ordered_pair(it->first, it->second, num_regions)] = 0;
-                REprintf("Index %d, value %d\n",index_from_ordered_pair(it->first, it->second, num_regions),
-                     pair_eff_bounary_counts[index_from_ordered_pair(it->first, it->second, num_regions)]);
-                // increase iterator 
-                ++it;
-            }else{
-                REprintf(" is NOT ok!\n");
-                // erase the pair
-                it = adj_pairs_ignoring_county.erase(it);
-            }
-        }
-        REprintf("Size now is %u\n", adj_pairs_ignoring_county.size());
-
-
-        auto new_results_map = new_boundary_counting(
-            map_params, pair_eff_bounary_counts, 
-            plan_ensemble.plan_ptr_vec[i]->region_ids, num_regions,
-             county_components
-        );
+        // build the multigraph 
+        plan_multigraph.build_plan_multigraph(*plan_ensemble.plan_ptr_vec[i]);
+        plan_multigraph.pair_map.Rprint();
+        // remove invalid hierarchical merges
+        plan_multigraph.remove_invalid_hierarchical_merge_pairs(*plan_ensemble.plan_ptr_vec[i]);
+        plan_multigraph.pair_map.Rprint();
+        // remove invalid size pairs 
+        plan_multigraph.remove_invalid_size_pairs(*plan_ensemble.plan_ptr_vec[i], *splitting_schedule_ptr);
+        plan_multigraph.pair_map.Rprint();
+        // now make the output vector 
+        std::vector<std::tuple<RegionID, RegionID, double>> region_pairs_tuple_vec;
+        region_pairs_tuple_vec.reserve(plan_multigraph.pair_map.num_hashed_values);
 
         double incremental_weight = 0.0;
-        REprintf("\nBoundary Length Maps:\n");
-        for(const auto &map_pair: adj_pairs_ignoring_county){
-            REprintf("(%d, %d) - %d, \n",
-                map_pair.first, map_pair.second,
-                pair_eff_bounary_counts[index_from_ordered_pair(map_pair.first, map_pair.second, num_regions)]);
-            incremental_weight += pair_eff_bounary_counts[index_from_ordered_pair(map_pair.first, map_pair.second, num_regions)];
+
+        for(auto const key_val_pair: plan_multigraph.pair_map.get_all_values()){
+            
+            double log_boundary_len;
+            if(key_val_pair.second.admin_adjacent){
+                // if administratively adjacent only count within same county
+                log_boundary_len = std::log(key_val_pair.second.within_county_edges);
+            }else{
+                // else only count across county 
+                log_boundary_len = std::log(key_val_pair.second.across_county_edges);
+            }
+
+            incremental_weight += log_boundary_len;
+            REprintf("(%u, %u) - %.4f \n", 
+            key_val_pair.first.first, 
+                key_val_pair.first.second, 
+                std::exp(log_boundary_len));
         }
-        REprintf("\n");
 
         REprintf("I=%d\n", i);
         log_weights(i) = compute_log_optimal_weights(
-            map_params, *splitting_schedule_ptr, sampling_space,
-            scoring_function, rho,
-            *plan_ensemble.plan_ptr_vec[i], 
-            tree_splitter, county_components, pair_map,
-            false,
-            is_final
+            *plan_ensemble.plan_ptr_vec[i], plan_multigraph,
+            *splitting_schedule_ptr, tree_splitter,
+            sampling_space, scoring_function, 
+            rho, false, is_final
         );
+
 
         REprintf("%f vs %f \n", 
             1.0 / static_cast<double>(incremental_weight), 

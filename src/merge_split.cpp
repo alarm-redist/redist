@@ -274,11 +274,6 @@ Rcpp::List ms_plans(
     Rcpp::IntegerVector mh_decisions(nsims);
     double mha;
 
-    USTSampler ust_sampler(map_params, *splitting_schedule_ptr);
-    CountyComponents current_county_components(map_params, initial_num_regions);
-    CountyComponents proposed_county_components(map_params, initial_num_regions);
-
-
     int total_post_warmup_steps = nsims * thin;
     int total_steps = total_post_warmup_steps + warmup;
     int start = 1 - warmup;
@@ -288,12 +283,15 @@ Rcpp::List ms_plans(
     // Track total number of successes after warmup
     int post_warump_acceptances = 0;
 
-    // build county component graph
-    current_county_components.build_component_graph(plan_ensemble.plan_ptr_vec[0]->region_ids);
-    // Get pairs of adj districts
-    auto current_plan_adj_region_pairs = plan_ensemble.plan_ptr_vec[0]->get_valid_adj_regions(
-        map_params, *splitting_schedule_ptr, current_county_components
-    );
+    USTSampler ust_sampler(map_params, *splitting_schedule_ptr);
+    PlanMultigraph current_plan_multigraph(map_params);
+    PlanMultigraph proposed_plan_multigraph(map_params);
+
+    // build multigraph on current plan and get pairs of adj districts to merge
+    auto current_plan_adj_region_pairs = plan_ensemble.plan_ptr_vec[0]->attempt_to_get_valid_mergesplit_pairs(
+        current_plan_multigraph, *splitting_schedule_ptr
+    ).second;
+    // get weights 
     arma::vec current_plan_pair_unnoramalized_wgts = get_adj_pair_unnormalized_weights(
         *plan_ensemble.plan_ptr_vec[0],
         current_plan_adj_region_pairs,
@@ -348,7 +346,7 @@ Rcpp::List ms_plans(
             rng_state, sampling_space,
             *plan_ensemble.plan_ptr_vec[0], *proposal_plan_ensemble.plan_ptr_vec[0], 
             ust_sampler, *tree_splitter_ptr,
-            current_county_components, proposed_county_components,
+            current_plan_multigraph, proposed_plan_multigraph,
             merge_prob_type, save_edge_selection_prob,
             current_plan_adj_region_pairs,
             current_plan_pair_unnoramalized_wgts,

@@ -28,11 +28,11 @@
 #' @order 1
 #' @export
 compute_log_target_density <- function(
-        map, plans, sizes_matrix = NULL,
-        counties = NULL, compactness = 1L,
+        map, plans, counties = NULL,
+        sizes_matrix = NULL, compactness = 1L,
         constraints = list(),
         num_threads = 0, pop_temper = 0L
-        ){
+){
 
     if (inherits(plans, "redist_plans")){
         plan_matrix <- get_plans_matrix(plans)
@@ -123,8 +123,8 @@ compute_log_target_density <- function(
 #' @order 1
 #' @export
 compute_log_target_density_by_region <- function(
-        map, plans, sizes_matrix = NULL,
-        counties = NULL, compactness = 1L,
+        map, plans, counties = NULL,
+        sizes_matrix = NULL, compactness = 1L,
         constraints = list(),
         num_threads = 0, pop_temper = 0L
 ){
@@ -226,22 +226,21 @@ compute_log_target_density_by_region <- function(
 #' @order 1
 #' @export
 compute_log_optimal_weights <- function(
-        map, plan_matrix, sizes_matrix = NULL,
-        counties = NULL, constraints = list(),
+        map, plans, counties = NULL,
+        sizes_matrix = NULL, constraints = list(),
         splitting_schedule = "any_valid_sizes",
         num_threads = 0, compactness = 1L, pop_temper = 0L
 ){
-    ndists <- attr(map, "ndists")
-    # if its just a single plan make it a matrix
-    if(is.vector(plan_matrix)){
-        plan_matrix <- as.matrix(plan_matrix, cols = 1)
+    if (inherits(plans, "redist_plans")){
+        plan_matrix <- get_plans_matrix(plans)
+    }else if(is.matrix(plans)){
+        plan_matrix <- plans
+    }else if(is.vector(plans) && is.numeric(plans)){
+        plan_matrix <- as.matrix(plans, cols = 1)
+    }else{
+        cli::cli_abort("{.arg plans} must be a matrix or {.cls redist_plans} type!")
     }
-    # if sizes matrix is null then assume all regions are the same size
-    if(is.null(sizes_matrix)){
-        sizes_matrix <- matrix(1L, nrow = ndists, ncol = ncol(plan_matrix))
-    }else if(is.vector(sizes_matrix)){
-        sizes_matrix <- as.matrix(sizes_matrix, cols = 1)
-    }
+    num_regions <- dplyr::n_distinct(plan_matrix[,1])
 
 
     # get validated inputs
@@ -253,17 +252,34 @@ compute_log_optimal_weights <- function(
     pop <- map_params$pop
     pop_bounds <- map_params$pop_bounds
 
+    ndists <- attr(map, "ndists")
+    total_seats <- attr(map, "total_seats")
+    district_seat_sizes <- attr(map, "district_seat_sizes")
+    storage.mode(district_seat_sizes) <- "integer"
+
+    if (inherits(plans, "redist_plans")){
+        sizes_matrix <- get_nseats_matrix(plans)
+    }else if(is.null(sizes_matrix)){
+        # infer
+        prec_pop <- map[[attr(map, "pop_col")]]
+        distr_pop <- pop_tally(plan_matrix, prec_pop, num_regions)
+        sizes_matrix <- infer_region_sizes(
+            distr_pop,
+            attr(map, "pop_bounds")[1], attr(map, "pop_bounds")[3],
+            total_seats
+        )
+    }
+
+
     # need to pass in the defused quosure
     constraints <- validate_constraints(map=map, constraints=rlang::enquo(constraints))
-
-
-    num_regions <- dplyr::n_distinct(plan_matrix[,1])
 
     unnormalized_log_density <- compute_plans_log_optimal_weights(
         adj_list, counties, pop,
         constraints, pop_temper, rho=compactness,
         splitting_schedule,
-        ndists, num_regions=num_regions,
+        ndists, total_seats, num_regions=num_regions,
+        district_seat_sizes,
         lower=pop_bounds[1],
         target=pop_bounds[2],
         upper=pop_bounds[3],

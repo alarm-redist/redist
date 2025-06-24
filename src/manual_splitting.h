@@ -22,8 +22,6 @@
 
 
 
-
-
 // ' Draws a spanning tree uniformly at random on a region and returns it
 // '
 // ' Draws a spanning tree uniformly at random on a region of a plan using

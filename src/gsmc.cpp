@@ -312,18 +312,9 @@ void run_merge_split_step_on_all_plans(
     std::vector<std::vector<int>> thread_successful_tree_sizes(rng_states.size(), 
         std::vector<int>(map_params.total_seats, 0)
     );
-    // create county components 
-    std::vector<CountyComponents> current_county_components_vec;
-    current_county_components_vec.reserve(pool.getNumThreads());
-    std::vector<CountyComponents> proposed_county_components_vec;
-    proposed_county_components_vec.reserve(pool.getNumThreads());
 
-    for (int i = 0; i < pool.getNumThreads(); ++i) {
-        current_county_components_vec.emplace_back(map_params, num_regions);
-        proposed_county_components_vec.emplace_back(map_params, num_regions);
-    }
+
     
-
     // thread safe id counter for seeding RNG generator 
     std::atomic<int> thread_id_counter{0};
     // create a progress bar
@@ -333,10 +324,8 @@ void run_merge_split_step_on_all_plans(
         static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
         static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
         // Create variables needed for each 
-
-        CountyComponents current_county_components(map_params, num_regions);
-        CountyComponents proposed_county_components(map_params, num_regions);
-
+        PlanMultigraph current_plan_multigraph(map_params);
+        PlanMultigraph proposed_plan_multigraph(map_params);
 
         // store the number of succesful runs
         success_count_vec[i] = run_merge_split_steps(
@@ -344,8 +333,8 @@ void run_merge_split_step_on_all_plans(
             rng_states[thread_id], sampling_space,
             *plan_ptrs_vec[i], *new_plan_ptrs_vec[i], 
             ust_sampler, tree_splitter,
-            current_county_components, 
-            proposed_county_components,
+            current_plan_multigraph, 
+            proposed_plan_multigraph,
             merge_prob_type, 
             rho, is_final, 
             nsteps_to_run,

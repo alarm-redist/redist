@@ -211,6 +211,7 @@ redist_gsmc <- function(
         control = list()
 )
 {
+
     # defunct code not used right now
     custom_size_split_list = list()
 

@@ -7,6 +7,8 @@
 
 #include "base_plan_type.h"
 
+bool DEBUG_BASE_PLANS_VERBOSE = false;
+
 // checks the inputted plan has the number of regions it claims it does
 // checks the sizes and that the labels make sense.
 // if makes sense then it counts the number of districts and multidistricts
@@ -290,7 +292,7 @@ std::pair<int, int> Plan::get_num_district_and_multidistricts() const{
 }
 
 // Prints our object using Rcout. Should be used in Rcpp call
-void Plan::Rprint() const{
+void Plan::Rprint(bool verbose) const{
     auto region_counts = get_num_district_and_multidistricts();
     int num_districts = region_counts.first;
     int num_multidistricts = region_counts.second;
@@ -307,6 +309,16 @@ void Plan::Rprint() const{
             region_pops[region_id] <<"), ";
     }
     Rcpp::Rcout << "]\n";
+
+    if(verbose){
+        REprintf("Plan IDs: c(");
+        for (size_t i = 0; i < region_ids.size(); ++i) {
+            REprintf("%u", region_ids[i]);
+            if (i + 1 != region_ids.size())
+                REprintf(", ");
+        }
+        REprintf(")\n");
+    }
 }
 
 
@@ -341,222 +353,6 @@ void Plan::shallow_copy(Plan const &plan_to_copy){
 }
 
 
-/*  
- * @title Count the Number of Valid Adjacent Region Pairs
- * 
- * Counts and returns the number of valid adjacent region pairs in a graph. 
- * We define a valid of pair of adjacent regions to be two regions that 
- *      1. Share at least one edge between them in `g`
- *      2. The regions sizes are valid to merge with eligibility determined
- *         by the `valid_merge_pairs` matrix
- * 
- * @param g A graph (adjacency list) passed by reference
- * @param plan A plan object
- * @param check_adj_to_regions A vector tracking whether or not we should 
- * check for edges adjacent to vertices in a region of a particular size. For
- * example, `check_adj_to_regions[i] == true` means we will attempt to find 
- * edges adjacent to any vertex in a region of size i. This vector is 1-indexed
- * meaning we don't need to subtract region size by 1 when accessing.
- * @param valid_merge_pairs A 2D `ndists+1` by `ndists+1` boolean matrix that
- * uses region size to check whether or not two regions are considered a valid
- * merge that can be counted in the map. For example `valid_merge_pairs[i][j]`
- * being true means that any regions where the sizes are (i,j) are considered
- * valid to merge. 2D matrix is 1 indexed (don't need to subtract region size)
- * @param existing_pair_map A hash map mapping pairs of regions to a double. 
- * This is an optional parameter and if its empty then its ignored. If its not
- * empty then pairs already in the hash won't be counted added to the output.
- * 
- * @details No modifications to inputs made
- * @return The number of valid adjacent region pairs
- */
-int Plan::count_valid_adj_regions(
-    MapParams const &map_params, SplittingSchedule const &splitting_schedule,
-    CountyComponents &county_components
-) const{
-    return get_or_count_valid_adj_regions(
-        map_params, splitting_schedule, county_components, true
-    ).first;
-}
-
-
-/*  
- * @title Count the Number of Valid Adjacent Region Pairs
- * 
- * Counts and returns the number of valid adjacent region pairs in a graph. 
- * We define a valid of pair of adjacent regions to be two regions that 
- *      1. Share at least one edge between them in `g`
- *      2. The regions sizes are valid to merge with eligibility determined
- *         by the `valid_merge_pairs` matrix
- * 
- * @param g A graph (adjacency list) passed by reference
- * @param plan A plan object
- * @param check_adj_to_regions A vector tracking whether or not we should 
- * check for edges adjacent to vertices in a region of a particular size. For
- * example, `check_adj_to_regions[i] == true` means we will attempt to find 
- * edges adjacent to any vertex in a region of size i. This vector is 1-indexed
- * meaning we don't need to subtract region size by 1 when accessing.
- * @param valid_merge_pairs A 2D `ndists+1` by `ndists+1` boolean matrix that
- * uses region size to check whether or not two regions are considered a valid
- * merge that can be counted in the map. For example `valid_merge_pairs[i][j]`
- * being true means that any regions where the sizes are (i,j) are considered
- * valid to merge. 2D matrix is 1 indexed (don't need to subtract region size)
- * @param existing_pair_map A hash map mapping pairs of regions to a double. 
- * This is an optional parameter and if its empty then its ignored. If its not
- * empty then pairs already in the hash won't be counted added to the output.
- * 
- * @details No modifications to inputs made
- * @return The number of valid adjacent region pairs
- */
-std::vector<std::pair<RegionID,RegionID>> Plan::get_valid_adj_regions(
-    MapParams const &map_params, SplittingSchedule const &splitting_schedule,
-    CountyComponents &county_components
-) const{
-    return get_or_count_valid_adj_regions(
-        map_params, splitting_schedule, county_components, false
-    ).second;
-}
-
-
-// gets adjacent pairs ignoring county restrictions
-std::pair<int, std::vector<std::pair<RegionID, RegionID>>> Plan::get_or_count_valid_adj_regions(
-    MapParams const &map_params, SplittingSchedule const &splitting_schedule,
-    CountyComponents &county_components,
-    bool const count_only
-) const{
-    // tracks if we've visited each pair yet or not 
-    std::vector<bool> seen_adj_pair_before((num_regions * (num_regions-1))/2, false);
-    // output
-    std::vector<std::pair<RegionID,RegionID>> valid_adj_pairs;
-    int num_valid_adj_regions = 0;
-
-
-    int const V = map_params.V;
-
-    for (int v = 0; v < V; v++) {
-        // Find out which region this vertex corresponds to
-        auto v_region = region_ids[v];
-        auto v_region_size = region_sizes[v_region];
-
-        // check if its a region we want to find regions adjacent to 
-        // and if not keep going
-        if(!splitting_schedule.check_adj_to_regions.at(v_region_size)){
-            continue;
-        }
-
-        // now iterate over its neighbors
-        for (auto const u : map_params.g[v]) {
-            // find which region neighbor corresponds to
-            auto u_region = region_ids[u];
-
-            // ignore if they are in the same region
-            if(v_region == u_region) continue;
-            // ignore if pair can't be merged
-            auto u_region_size = region_sizes[u_region];
-            if(!splitting_schedule.valid_merge_pair_sizes[v_region_size][u_region_size]) continue;
-
-            // else they are different so regions are adj
-            // check if we need to be aware of double counting. IE if both regions
-            // are ones where check adjacent is true then its possible to double count edges
-            bool double_counting_not_possible = !splitting_schedule.check_adj_to_regions[u_region_size];
-            // Rprintf("Neighbor size is %d and Double counting is %d\n", 
-            //     (int) v_nbor_region_size, (int) double_counting_not_possible);
-
-            // Now add this edge if either we can't double count it 
-            // or `v_region_num` is the smaller of the pair 
-            if(double_counting_not_possible || v_region < u_region){
-                auto smaller_region_id  = std::min(u_region, v_region);
-                auto bigger_region_id  = std::max(u_region, v_region);
-                auto check_index = index_from_ordered_pair(smaller_region_id, bigger_region_id, num_regions);
-
-                // Check if we've counted this before and its ok to merge 
-                if(!seen_adj_pair_before[check_index]){
-                    // mark as seen 
-                    seen_adj_pair_before[check_index] = true;
-                    // Rprintf("Counting (%d,%d) which is (%u, %u) \n",
-                    //      v, u, v_region, u_region);
-                    // If its not ok to merge then ignore 
-                    if(!county_components.check_merging_regions_is_ok(smaller_region_id, bigger_region_id)){
-                        continue;
-                    }
-
-                    // If ok to merge increase the count by one
-                    ++num_valid_adj_regions;
-                    // if we want the specific pairs then we also add that
-                    if(!count_only){
-                        // add the pair 
-                        valid_adj_pairs.emplace_back(smaller_region_id, bigger_region_id);
-                    }
-                }
-            }
-        }
-    }
-
-
-    return std::make_pair(num_valid_adj_regions, valid_adj_pairs);
-}
-
-
-DistinctPairHash<RegionID, bool> Plan::get_hierarchically_valid_adj_regions(
-        CountyComponents &county_components
-) const{
-    DistinctPairHash<RegionID, bool> pair_map(num_regions, false);
-    // tracks if we've visited each pair yet or not 
-    std::vector<bool> seen_adj_pair_before((num_regions * (num_regions-1))/2, false);
-
-    int const V = county_components.map_params.V;
-
-    for (int v = 0; v < V; v++) {
-        // Find out which region this vertex corresponds to
-        auto v_region = region_ids[v];
-        
-        // now iterate over its neighbors
-        for (auto const u : county_components.map_params.g[v]) {
-            // find which region neighbor corresponds to
-            auto u_region = region_ids[u];
-
-            // ignore if they are in the same region or v is larger region
-            if(v_region >= u_region) continue;
-
-            // check if we've seen this pair before 
-            auto smaller_region_id  = std::min(u_region, v_region);
-            auto bigger_region_id  = std::max(u_region, v_region);
-            auto check_index = index_from_ordered_pair(smaller_region_id, bigger_region_id, num_regions);
-
-            // Check if we've counted this before and its ok to merge 
-            if(!seen_adj_pair_before[check_index]){
-                // mark as seen 
-                seen_adj_pair_before[check_index] = true;
-                if(!county_components.check_merging_regions_is_ok(smaller_region_id, bigger_region_id)){
-                    continue;
-                }
-                pair_map.set_value(u_region, v_region, true);            
-            }
-        }
-    }
-    return pair_map;
-}
-
-// prepares the hash map 
-void Plan::prepare_adj_pair_boundary_map(
-    MapParams const &map_params, SplittingSchedule const &splitting_schedule,
-    CountyComponents &county_components, EffBoundaryMap &pair_map
-) const{
-    // build the county components graph 
-    county_components.build_component_graph(region_ids);
-    // clear the pair map 
-    pair_map.reset();
-    // get the valid adjacent regions 
-    auto adj_pairs = get_or_count_valid_adj_regions(
-        map_params, splitting_schedule,
-        county_components, false
-    ).second;
-    // now add these pairs to the hash map 
-    for(auto const a_pair: adj_pairs){
-        pair_map.set_value(a_pair.first, a_pair.second, 0.0);
-    }
-    // now we're done 
-    return;
-}
 
 // Compute the log number of spanning trees on a region 
 double Plan::compute_log_region_spanning_trees(MapParams const &map_params,
@@ -616,15 +412,10 @@ double Plan::compute_log_merged_region_spanning_trees(MapParams const &map_param
 
 
 double Plan::compute_log_linking_edge_count(
-    CountyComponents &county_components
+    PlanMultigraph &plan_multigraph
 ) const{
-    auto simple_pair_map =  get_hierarchically_valid_adj_regions(county_components);
     return compute_log_region_multigraph_spanning_tree(
-        build_county_aware_multigraph(
-            county_components.map_params.g, region_ids, 
-            county_components, simple_pair_map,
-            num_regions
-        )
+        plan_multigraph.pair_map.get_multigraph_counts(num_regions)
     );
 };
 
@@ -1021,4 +812,544 @@ void Plan::update_from_successful_split(
      
 }
 
+// Attempts Gets valid pairs to merge for MCMC
+// Returns false if multigraph was not successfully built 
+std::pair<bool, std::vector<std::pair<RegionID,RegionID>>> Plan::attempt_to_get_valid_mergesplit_pairs(
+        PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule
+) const{
+    bool const result = plan_multigraph.build_plan_multigraph(*this);
+    // return false if not successful
+    if(!result) return std::make_pair(false, std::vector<std::pair<RegionID,RegionID>>{}); 
 
+    // else remove all the invalid size and mergesplit pairs 
+    plan_multigraph.remove_invalid_size_pairs(*this, splitting_schedule);
+    plan_multigraph.remove_invalid_mergesplit_pairs(*this);
+
+    return std::make_pair(true, plan_multigraph.pair_map.hashed_pairs);
+
+}
+
+
+// Prints relevant info - for debugging
+void RegionPairHash::Rprint() const{
+    REprintf("Pair Map has %d Elements:\n", num_hashed_values);
+    for(auto const &a_pair: hashed_pairs){
+        auto val = get_value(a_pair.first, a_pair.second);
+        REprintf("    Regions: (%u, %u) | %s Hierarchically Adjacent | %d within county edges, %d across county edges\n",
+            a_pair.first, a_pair.second, (val.second.admin_adjacent ? "YES" : "NOT"),
+            val.second.within_county_edges, val.second.across_county_edges 
+        );
+    }
+};
+
+// Returns multigraph counts for a pair map that 
+// has been built on a plan
+RegionMultigraphCount RegionPairHash::get_multigraph_counts(int const num_regions)
+const{
+    RegionMultigraphCount region_multigraph(num_regions);
+    // iterate over all pairs and add the proper counts 
+    for(auto const key_val_pair: get_all_values()){
+        int boundary_len;
+        if(key_val_pair.second.admin_adjacent){
+            // if administratively adjacent only count within same county
+            boundary_len = key_val_pair.second.within_county_edges;
+        }else{
+            // else only count across county 
+            boundary_len = key_val_pair.second.across_county_edges;
+        }
+
+        // we increase the count of edges
+        region_multigraph[key_val_pair.first.first][key_val_pair.first.second] = boundary_len;
+        region_multigraph[key_val_pair.first.second][key_val_pair.first.first] = boundary_len;
+    }
+
+    return region_multigraph;
+}
+
+void swap_pair_maps(RegionPairHash &a, RegionPairHash &b) {
+    std::swap(a.num_hashed_values, b.num_hashed_values);
+    std::swap(a.values, b.values);
+    std::swap(a.hashed, b.hashed);
+    std::swap(a.hashed_pairs, b.hashed_pairs);
+};
+
+
+
+PlanMultigraph::PlanMultigraph(MapParams const &map_params):
+    map_params(map_params),
+    counties_on(map_params.num_counties > 1),
+    vertices_visited(map_params.V),
+    county_component(counties_on ? map_params.ndists : 0, 0), 
+    component_split_counts(counties_on ? map_params.ndists : 0, 0),
+    component_region_counts(counties_on ? map_params.ndists : 0, 0),
+    region_overlap_counties(counties_on ? map_params.ndists : 0),
+    num_county_region_components(0),
+    pair_map(map_params.ndists){
+
+};
+
+
+void PlanMultigraph::Rprint() const{
+    pair_map.Rprint();
+}
+
+
+
+
+// indexing (i,j) in a matrix 
+// assuming the length of a row is row_length
+// i is the row index
+// j is the column index so j < row_length
+inline size_t get_county_component_lookup_index(
+    int const county_id, RegionID const region_id, int const num_regions
+){
+    return county_id * num_regions + region_id;
+}
+
+// checks if a plan is hierarchically connected and if it is then it 
+// returns the number of county region components
+std::pair<bool, int> PlanMultigraph::is_hierarchically_connected(
+    Plan const &plan, std::vector<bool> component_lookup
+){
+    // if no counties then its just one giant component 
+    if(!counties_on) return std::make_pair(true, 1);
+    // reset the vertices visited vector 
+    std::fill(vertices_visited.begin(), vertices_visited.end(), false);
+    // component_lookup should be length num_countes * num_regions
+    // fill this vector with all false
+    std::fill(component_lookup.begin(), component_lookup.end(), false);
+    // reset the number of county region components
+    num_county_region_components = 0;
+
+    // start the counter at zero
+    int component_counter = 0;
+
+    // loop through the graph 
+    for (auto v = 0; v < map_params.V; v++)
+    {
+        // skip if we've already visited this vertex 
+        if(vertices_visited[v]) continue;
+        
+        // get current county 
+        int current_county = map_params.counties[v]-1; 
+        auto current_region = plan.region_ids[v];
+        // for lookup we pretend table is num_counties x num_regions
+        auto current_component_lookup_index = get_county_component_lookup_index(current_county, current_region, plan.num_regions);
+
+        // check if we've already declared this component 
+        // if default value then we haven't encountered this component yet 
+        if(!component_lookup[current_component_lookup_index]){
+            // increase number of connected components
+            ++num_county_region_components;
+        }else{
+            // else we have seen this before in which case its not hierarchically connected so immediately return false
+            return std::make_pair(false, -1);
+        }
+
+        // Now we traverse all neighbors in the same component 
+        std::queue<int> vertex_queue;
+        vertex_queue.push(v);
+
+        while(!vertex_queue.empty()){
+            int u = vertex_queue.front(); vertex_queue.pop();
+            int u_region = plan.region_ids[u];
+            int u_county = map_params.counties[u];
+
+            // mark this as visited 
+            vertices_visited[u] = true;
+            // now visit each of the vertices children 
+            for(auto const child_vertex: map_params.g[u]){
+                // ignore if we already visited 
+                if(vertices_visited[child_vertex]) continue;
+                // Now only add if region and county are the same 
+                if(u_region = plan.region_ids[child_vertex] && 
+                   u_county == map_params.counties[child_vertex]){
+                    // if same then same component mark as visited to avoid being added later  
+                    vertices_visited[child_vertex] = true;
+                    vertex_queue.push(child_vertex);
+                }
+            }
+        }
+    }
+    
+    // if we've passed through the whole graph then now return true 
+    return std::make_pair(true, num_county_region_components);
+
+}
+
+
+void PlanMultigraph::build_plan_non_hierarchical_multigraph(
+    Plan const &plan
+){
+    // reset the hash map 
+    pair_map.reset();
+
+    for (int v = 0; v < map_params.V; v++)
+    {
+        auto v_region = plan.region_ids[v];
+
+        for (auto const u: map_params.g[v])
+        {
+            auto u_region = plan.region_ids[u];
+            if(v_region < u_region){
+                // if true then count 
+                  pair_map.count_graph_edge(
+                        v_region, u_region, true, 0
+                    );
+            }
+        }
+    }
+    
+    return;
+}
+
+
+bool PlanMultigraph::build_plan_hierarchical_multigraph(
+    Plan const &plan
+){
+    // reset the hash map 
+    pair_map.reset();
+    // reset the vertices visited vector 
+    std::fill(vertices_visited.begin(), vertices_visited.end(), false);
+    // reset the region component assignments and countes 
+    std::fill(county_component.begin(), county_component.end(), 0);
+    std::fill(component_split_counts.begin(), component_split_counts.end(), 0);
+    std::fill(component_region_counts.begin(), component_region_counts.end(), 0);
+    
+
+    // reset the number of county region components
+    num_county_region_components = 0;
+    // counter for labelling components of administratively connected
+    // quotient graph
+    int county_connected_component_counter = 0;
+
+    // Now we walk through the graph 
+    for (int w = 0; w < map_params.V; w++)
+    {
+        // skip if already visited 
+        if(vertices_visited[w]) continue;
+
+        // else we've encountered a new component 
+        int num_current_county_region_components = 1;
+        int num_current_counties = 1;
+
+        std::queue<int> other_counties_vertices;
+        std::queue<int> current_county_diff_region_vertices;
+        std::queue<int> current_county_region_vertices;
+        // add this vertex and mark as visited 
+        current_county_region_vertices.push(w);
+        // assign this region to the component
+        county_component[plan.region_ids[w]] = county_connected_component_counter;
+
+        auto current_county = map_params.counties[w];
+        auto current_region = plan.region_ids[w];
+
+        while(
+            !current_county_region_vertices.empty() ||
+            !current_county_diff_region_vertices.empty() ||
+            !other_counties_vertices.empty()
+        ){
+            
+            int v;
+
+            // first see if anything in this region and county 
+            if (!current_county_region_vertices.empty()) {
+                v = current_county_region_vertices.front(); 
+                current_county_region_vertices.pop();
+            } else if (!current_county_diff_region_vertices.empty()) {
+                // else we've got a vertex in a different region in the same county
+                v = current_county_diff_region_vertices.front(); 
+                current_county_diff_region_vertices.pop();
+                // if we haven't visited this vertex yet that means we're reaching 
+                // this component for the first time 
+                if(!vertices_visited[v]){
+                    // then change the current region and increase the count 
+                    current_region = plan.region_ids[v];
+                    num_current_county_region_components++;
+                    // increase global count 
+                    num_county_region_components++;
+                    // mark the region as being in current component
+                    county_component[plan.region_ids[v]] = county_connected_component_counter;
+                    // REprintf("Assigned Region %u to component %d\n",
+                    //     plan.region_ids[v]+1, 
+                    // county_connected_component_counter);
+                }
+            } else if (!other_counties_vertices.empty()) {
+                // else we've got a vertex in a different county
+                v = other_counties_vertices.front(); 
+                other_counties_vertices.pop();
+                // if we haven't visited this vertex yet that means we're reaching 
+                // this county for the first time 
+                if(!vertices_visited[v]){
+                    // then change the current region and increase the count 
+                    current_county = map_params.counties[v];
+                    num_current_county_region_components++;
+                    num_current_counties++;
+                    // increase global count 
+                    num_county_region_components++;
+                    // mark the region as being in current component
+                    county_component[plan.region_ids[v]] = county_connected_component_counter;
+                    // REprintf("Assigned Region %u to component %d\n",
+                    //     plan.region_ids[v]+1, 
+                    // county_connected_component_counter);
+                }
+            }
+
+            // skip if we already visited 
+            if (vertices_visited[v]) continue;
+            // mark as visited now 
+            vertices_visited[v] = true;
+
+
+            auto v_region = plan.region_ids[v];
+            auto v_county = map_params.counties[v];
+
+            for (int u : map_params.g[v]) {
+                // get region and county 
+                auto u_region = plan.region_ids[u];
+                auto u_county = map_params.counties[u];
+                bool same_county = u_county == v_county;
+
+                // if v_region < u_region then count the edge
+                if(v_region < u_region){
+                    pair_map.count_graph_edge(
+                        v_region, u_region, same_county, u_county - 1
+                    );
+                }
+                // if already visited don't add to the queue again
+                if(vertices_visited[u]) continue;
+                // else add to queue
+                if(u_county == v_county){
+                    if(u_region == v_region){
+                        // if same region and county add to 
+                        // queue of same region and county vertices
+                        current_county_region_vertices.push(u);
+                    }else{
+                        // else if same county different region add to that 
+                        // queue 
+                        current_county_diff_region_vertices.push(u);
+                    }
+                }else if(u_region == v_region){
+                    // if differerent counties then only add if same region
+                    // we do not explore edges across both regions and counties 
+                    other_counties_vertices.push(u);
+                }
+            }
+        }
+
+        // now we've visited every vertex in this county adj component so get the count 
+        component_split_counts[county_connected_component_counter] = num_current_county_region_components - num_current_counties;
+
+        if(DEBUG_BASE_PLANS_VERBOSE){
+            REprintf("Component %d has %d components, %d counties so %d splits!\n",
+                county_connected_component_counter, 
+                num_current_county_region_components,
+                num_current_counties,
+                num_current_county_region_components - num_current_counties);
+        }
+
+
+        // now increment the counter by 1
+        county_connected_component_counter++;
+
+        // if too many global splits then auto reject
+        if(num_county_region_components - map_params.num_counties >= plan.num_regions){
+            return false;
+        }
+    }
+
+    // now for each component add up the number of regions in the component
+    for (size_t region_id = 0; region_id < plan.num_regions; region_id++)
+    {
+        ++component_region_counts[county_component[region_id]];
+    }
+
+    // now check for each component the number of splits is the number of regions
+    // minus 1 
+    for (size_t component_id = 0; component_id < county_connected_component_counter; component_id++)
+    {
+        if(DEBUG_BASE_PLANS_VERBOSE){
+            REprintf("Component %d has %d splits and %d regions!\n",
+                component_id, component_split_counts[component_id],
+                component_region_counts[component_id]);
+        }
+
+        // error check, this shouldn't be possible 
+        if(component_split_counts[component_id] < component_region_counts[component_id] - 1){
+            REprintf("CODE ERROR!!!! Somehow county adj component has %d regions but %d splits!\n",
+            component_region_counts[component_id], component_split_counts[component_id]);
+        }else if(component_split_counts[component_id] >= component_region_counts[component_id]){
+            return false;
+        }
+    }
+
+    
+    return true;    
+    
+}
+
+bool PlanMultigraph::build_plan_multigraph(
+    Plan const &plan
+){
+    if(counties_on){
+        return build_plan_hierarchical_multigraph(plan);
+    }else{
+        build_plan_non_hierarchical_multigraph(plan);
+        return true;
+    }
+}
+
+
+void PlanMultigraph::remove_invalid_size_pairs(
+    Plan const &plan, SplittingSchedule const &splitting_schedule
+){
+    // remove invalid sizes 
+    pair_map.hashed_pairs.erase(
+        std::remove_if(pair_map.hashed_pairs.begin(), pair_map.hashed_pairs.end(), 
+        [&](std::pair<RegionID, RegionID> a_pair) { 
+            bool invalid_sizing = (
+                !splitting_schedule.valid_split_region_sizes[plan.region_sizes[a_pair.first]] ||
+                !splitting_schedule.valid_split_region_sizes[plan.region_sizes[a_pair.second]] ||
+                !splitting_schedule.valid_merge_pair_sizes[plan.region_sizes[a_pair.first]][plan.region_sizes[a_pair.second]]
+            );
+            // if invalid then reset data in pair map 
+            if(invalid_sizing){
+                auto hash_index = pair_map.pair_hash(a_pair.first, a_pair.second);
+                // else reset values and decrease hash table count 
+                --pair_map.num_hashed_values;
+                pair_map.hashed[hash_index] = false;
+                pair_map.values[hash_index] = PairHashData();
+            }
+
+            // remove if any size is invalid split size or if merged size can't be split
+            return invalid_sizing;
+        }
+    ), pair_map.hashed_pairs.end());
+}
+
+
+void PlanMultigraph::remove_invalid_hierarchical_merge_pairs(
+    Plan const &plan
+){
+    if (!counties_on) return;
+
+    // Now remove the pairs that are in the same component but not administratively adjacent 
+    // remove invalid sizes 
+    pair_map.hashed_pairs.erase(
+        std::remove_if(pair_map.hashed_pairs.begin(), pair_map.hashed_pairs.end(), 
+        [&](std::pair<RegionID, RegionID> a_pair) { 
+
+            // if different components then its ok 
+            if(county_component[a_pair.first] != county_component[a_pair.first]) return false;
+            // else if they're the same component check if admin adjacent
+
+            auto hash_index = pair_map.pair_hash(a_pair.first, a_pair.second);
+            // if admin adjacent do nothing 
+            if(pair_map.values[hash_index].admin_adjacent) return false;
+            // else reset values and decrease hash table count 
+            --pair_map.num_hashed_values;
+            pair_map.hashed[hash_index] = false;
+            pair_map.values[hash_index] = PairHashData();
+            return true;
+
+        }
+    ), pair_map.hashed_pairs.end());
+
+    return;
+
+}
+
+
+
+void PlanMultigraph::remove_invalid_mergesplit_pairs(
+    Plan const &plan
+){
+    if (!counties_on) return;
+    // reset the sets
+    for (size_t i = 0; i < region_overlap_counties.size(); i++)
+    {
+        region_overlap_counties[i].clear();
+    }
+    // iterate through the pairs and note the counties they overlap in
+    for(auto const &key_val_pair: pair_map.get_all_values()){
+        if(key_val_pair.second.admin_adjacent){
+            // if they overlap then add that county to both of the regions
+            region_overlap_counties[key_val_pair.first.first].insert(key_val_pair.second.shared_county);
+            region_overlap_counties[key_val_pair.first.second].insert(key_val_pair.second.shared_county);
+        }
+    }
+
+    // Now we go through and delete and adjacent regions where
+    // - they ARE NOT admin adjacent and they are both contain the same county 
+
+    pair_map.hashed_pairs.erase(
+        std::remove_if(pair_map.hashed_pairs.begin(), pair_map.hashed_pairs.end(), 
+        [&](std::pair<RegionID, RegionID> a_pair) { 
+
+            // if different components then its ok 
+            if(county_component[a_pair.first] != county_component[a_pair.first]) return false;
+            // else if they're the same component check if admin adjacent
+            auto hash_index = pair_map.pair_hash(a_pair.first, a_pair.second);
+            // if admin adjacent do nothing because thats ok
+            if(pair_map.values[hash_index].admin_adjacent) return false;
+
+            bool invalid_merge = false;
+            // now check if they overlap in any of the two counties 
+            if(region_overlap_counties[a_pair.first].size() < region_overlap_counties[a_pair.second].size()){
+                // check if any element of the smaller set is in the larger set 
+                for(auto const a_county: region_overlap_counties[a_pair.first]){
+                    if(region_overlap_counties[a_pair.second].find(a_county) != region_overlap_counties[a_pair.second].end()){
+                        invalid_merge = true;
+                        break;
+                    }
+                }
+            }else{
+                for(auto const a_county: region_overlap_counties[a_pair.second]){
+                    if(region_overlap_counties[a_pair.first].find(a_county) != region_overlap_counties[a_pair.first].end()){
+                        invalid_merge = true;
+                        break;
+                    }
+                }
+            }
+            if(invalid_merge){
+                // if invalid merge deteced then remove
+                --pair_map.num_hashed_values;
+                pair_map.hashed[hash_index] = false;
+                pair_map.values[hash_index] = PairHashData();
+            }
+            return invalid_merge;
+
+        }
+    ), pair_map.hashed_pairs.end());
+
+    return;
+    
+}
+
+bool PlanMultigraph::is_hierarchically_valid(
+    Plan const &plan, std::vector<bool> component_lookup
+){
+    // if no counties then always valid 
+    if(!counties_on) return true;
+    // first check if hierarchically connected
+    auto result = is_hierarchically_connected(plan, component_lookup);
+    // if not immediately return false
+    if(!result.first) return false;
+    // if number of splits is greater than number of regions minus 1 reject
+    if(result.second - map_params.num_counties >= plan.num_regions) return false;
+
+    // Now we know its hierarchically connected and has at most num_regions-1
+    // splits so we just need to check for cycles in the administratively 
+    // adjacent quotient graph 
+    return build_plan_hierarchical_multigraph(plan);
+}
+
+
+void swap_plan_multigraphs(PlanMultigraph &a, PlanMultigraph &b) {
+    std::swap(a.county_component, b.county_component);
+    std::swap(a.component_split_counts, b.component_split_counts);
+    std::swap(a.component_region_counts, b.component_region_counts);
+    std::swap(a.region_overlap_counties, b.region_overlap_counties);
+    std::swap(a.num_county_region_components, b.num_county_region_components);
+    swap_pair_maps(a.pair_map, b.pair_map);
+}

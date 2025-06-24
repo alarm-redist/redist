@@ -192,7 +192,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // get_region_multigraph
-RegionMultigraph get_region_multigraph(Rcpp::List const& adj_list, arma::uvec const& region_ids);
+RegionMultigraphCount get_region_multigraph(Rcpp::List const& adj_list, arma::uvec const& region_ids);
 RcppExport SEXP _gredist_get_region_multigraph(SEXP adj_listSEXP, SEXP region_idsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;

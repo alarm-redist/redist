@@ -10,38 +10,6 @@ constexpr bool DEBUG_WEIGHTS_VERBOSE = false; // Compile-time constant
 
 
 
-int calc_merged_splits(const arma::subview_col<arma::uword> &region_ids,
-                       const arma::uvec &counties, int const n_cty,
-                        int const region1_id, int const region2_id) {
-
-    
-    int V = counties.size();
-
-    std::vector<std::set<int>> county_dist(n_cty);
-
-        
-    for (int i = 0; i < n_cty; i++) {
-        county_dist[i] = std::set<int>();
-    }
-    for (int i = 0; i < V; i++) {
-        int region_id = region_ids(i);
-        if(region_id == region2_id) region_id = region1_id;
-        county_dist[counties[i]-1].insert(region_id);
-    }
-
-
-    int total = 0;
-    for (size_t i = 0; i < county_dist.size(); i++)
-    {
-        total += county_dist[i].size();
-    }
-    total = total - n_cty;
-
-    
-
-    return total;
-}
-
 //' Computes the effective sample size from log incremental weights
 //'
 //' Takes a vector of log incremental weights and computes the effective sample
@@ -174,63 +142,6 @@ arma::vec get_adj_pair_sampler(
 
 
 
-//' Returns the log of the count of the number of edges across two regions in
-//' the underlying graph.
-//'
-//' Given a graph and two regions in the graph this function counts the number of
-//' edges across the the two regions (ie one vertex in one and the other in
-//' the other also know as the grap theoretic length of the boundary) and
-//' returns the log of that count.
-//'
-//'
-//' @title Log Region boundary count
-//'
-//' @param g A graph (adjacency list) passed by reference
-//' @param vertex_region_ids A vector mapping vertex id to the region its in 
-//' so `vertex_region_ids[i] = r` means vertex i is in region r
-//' @param region1_id The id of the first region
-//' @param region2_id The id of the second region
-//'
-//' @details No modifications to inputs made
-//'
-//' @return the log of the boundary count
-//'
- double region_log_boundary(const Graph &g, 
-                            const arma::subview_col<arma::uword> &vertex_region_ids,
-                            int const region1_id,
-                            int const region2_id
-){
-     int V = g.size(); // get number of vertices
-     double count = 0; // count of number of edges across the two regions
-
-     // Iterate over every vertex in the graph
-     for (int i = 0; i < V; i++) {
-         /* Check vertex if in first region, if not continue
-          Since edges appear twice in adjacency list to avoid double
-          counting we will only count those where first edge is in
-          region 1
-          */
-         if (vertex_region_ids(i) != region1_id) continue;
-
-         // Get vertice's neighbors
-         std::vector<int> nbors = g[i];
-
-         // Since edges show up twice to avoid double counting we will only count
-         // edges where first one is region1_id and second is region2_id
-
-         // Now check if neighbors are in second region
-         for (int nbor : nbors) {
-             if (vertex_region_ids(nbor) != region2_id)
-                 continue;
-             // if they are increase count by one
-             count += 1.0;
-         }
-     }
-
-     return std::log(count);
-}
-
-
 
 
 //' Get the probability the union of two regions was chosen to split
@@ -296,12 +207,10 @@ double get_log_retroactive_splitting_prob(
 // computes the backwards kernel that is uniform in 
 // the number of ancestors 
 double compute_simple_log_incremental_weight(
-    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    Plan const &plan, PlanMultigraph &plan_multigraph,
+    const SplittingSchedule &splitting_schedule, const TreeSplitter &edge_splitter,
     SamplingSpace const sampling_space,
     ScoringFunction const &scoring_function, double rho,
-    Plan const &plan, 
-    const TreeSplitter &edge_splitter, CountyComponents &county_components,
-    EffBoundaryMap &pair_map,
     bool compute_log_splitting_prob, bool is_final_plan
 ){
     // bool for whether we'll need to compute spanning tree count
@@ -316,10 +225,16 @@ double compute_simple_log_incremental_weight(
         Rcpp::Rcerr << std::flush;
     } 
 
-    // build the county component graph and prepare the hash map 
-    plan.prepare_adj_pair_boundary_map(
-        map_params, splitting_schedule, county_components, pair_map
-    );
+    bool const use_linking_edge_space = sampling_space != SamplingSpace::LinkingEdgeSpace;
+
+    // build the plan multigraph 
+    plan_multigraph.build_plan_multigraph(plan);
+    // filter out invalid hierarchical merges
+    plan_multigraph.remove_invalid_hierarchical_merge_pairs(plan);
+    // if not linking edge then filter by size as well 
+    if(!use_linking_edge_space){
+        plan_multigraph.remove_invalid_size_pairs(plan, splitting_schedule);
+    }
 
     // compute forward and backwards kernel term 
     double log_backwards_kernel_term = 0.0; double log_forward_kernel_term = 0.0;
@@ -327,20 +242,19 @@ double compute_simple_log_incremental_weight(
 
     if(sampling_space == SamplingSpace::GraphSpace){
         // the number of valid adjacent regions is just the number of elements in the map
-        const int num_valid_adj_region_pairs = pair_map.num_hashed_values;
-
+        const int num_valid_adj_region_pairs = plan_multigraph.pair_map.num_hashed_values;
         log_backwards_kernel_term -= std::log(
             static_cast<double>(num_valid_adj_region_pairs)
         );
-        // taus cancel so just add the boundary length
+        // taus cancel so just add the boundary length which we have from hash map 
         log_forward_kernel_term = plan.get_log_eff_boundary_len(
-            map_params, splitting_schedule, edge_splitter, county_components,
+            plan_multigraph, splitting_schedule, edge_splitter,
             region1_id, region2_id
         );
         if(compute_log_tau){
             // do merged region tau if neccesary
             log_tau_ratio_term -= (rho-1)*plan.compute_log_merged_region_spanning_trees(
-                map_params, region1_id, region2_id
+                plan_multigraph.map_params, region1_id, region2_id
             );
         }
     }else if(sampling_space == SamplingSpace::ForestSpace || sampling_space == SamplingSpace::LinkingEdgeSpace){
@@ -348,7 +262,12 @@ double compute_simple_log_incremental_weight(
         double spanning_tree_sum = 0.0;
         double last_split_merge_log_tau = 0.0;
 
-        auto adj_pairs = plan.get_valid_adj_regions(map_params, splitting_schedule, county_components);
+        std::vector<std::pair<RegionID, RegionID>> adj_pairs;
+        if(use_linking_edge_space){
+            adj_pairs = plan.get_valid_smc_merge_regions(plan_multigraph, splitting_schedule);
+        }else{
+            adj_pairs = plan_multigraph.pair_map.hashed_pairs;
+        }
 
         for (auto const &region_pair : adj_pairs){
             int pair_region1_id = region_pair.first;
@@ -364,12 +283,12 @@ double compute_simple_log_incremental_weight(
             // If its the merged region actually split save it for use in forward kernel
             if(pair_region1_id == region1_id && pair_region2_id == region2_id){
                 last_split_merge_log_tau = plan.compute_log_merged_region_spanning_trees(
-                    map_params, region1_id, region2_id
+                    plan_multigraph.map_params, region1_id, region2_id
                 );
                 spanning_tree_sum += std::exp(last_split_merge_log_tau);
             }else{
                 spanning_tree_sum += std::exp(plan.compute_log_merged_region_spanning_trees(
-                    map_params, pair_region1_id, pair_region2_id
+                    plan_multigraph.map_params, pair_region1_id, pair_region2_id
                 ));
             }
         }
@@ -381,7 +300,7 @@ double compute_simple_log_incremental_weight(
         log_forward_kernel_term -= last_split_merge_log_tau;
         // tree boundary length 
         log_forward_kernel_term += plan.get_log_eff_boundary_len(
-            map_params, splitting_schedule, edge_splitter, county_components,
+            plan_multigraph, splitting_schedule, edge_splitter,
             region1_id, region2_id
         );
 
@@ -391,10 +310,10 @@ double compute_simple_log_incremental_weight(
     }
     if(compute_log_tau){
         log_tau_ratio_term += (rho-1)*plan.compute_log_region_spanning_trees(
-            map_params, region1_id
+            plan_multigraph.map_params, region1_id
         );
         log_tau_ratio_term += (rho-1)*plan.compute_log_region_spanning_trees(
-            map_params, region2_id
+            plan_multigraph.map_params, region2_id
         );
     }
 
@@ -431,10 +350,7 @@ double compute_simple_log_incremental_weight(
     double log_extra_prev_plan_terms = 0.0;
     // if linking edge space we also need to correct for that
     if(sampling_space == SamplingSpace::LinkingEdgeSpace){
-        auto simple_pair_map =  plan.get_hierarchically_valid_adj_regions(county_components);
-        auto region_multigraph = build_county_aware_multigraph(
-            map_params.g, plan.region_ids, 
-            county_components, simple_pair_map,
+        auto region_multigraph = plan_multigraph.pair_map.get_multigraph_counts(
             plan.num_regions
         );
         // we divide target by number of linking edges so 
@@ -446,7 +362,6 @@ double compute_simple_log_incremental_weight(
                 merge_index_reshuffle,
                 region1_id, region2_id
             );
-
     }
 
     // The weight is 
@@ -512,15 +427,14 @@ void compute_all_plans_simple_weights(
 
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
-        CountyComponents county_components(map_params, num_regions);
-        EffBoundaryMap pair_map(num_regions, 0.0);
+        PlanMultigraph plan_multigraph(map_params);
 
         double log_incr_weight = compute_simple_log_incremental_weight(
-            map_params, splitting_schedule, sampling_space,
+            *plans_ptr_vec[i], plan_multigraph,
+            splitting_schedule, tree_splitter, 
+            sampling_space,
             scoring_function, rho,
-            *plans_ptr_vec.at(i), 
-            tree_splitter, county_components, pair_map,
-            compute_log_splitting_prob,
+            compute_log_splitting_prob, 
             is_final_plans
         );
 
@@ -623,14 +537,11 @@ Graph get_region_graph(const Graph &g, const Plan &plan) {
 //' @return the log of the incremental weight of the plan
 //'
 double compute_log_optimal_weights(
-    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    Plan const &plan, PlanMultigraph &plan_multigraph,
+    const SplittingSchedule &splitting_schedule, const TreeSplitter &edge_splitter,
     SamplingSpace const sampling_space,
-    ScoringFunction const &scoring_function, double rho,
-    Plan const &plan, 
-    TreeSplitter const &edge_splitter, CountyComponents &county_components,
-    EffBoundaryMap &pair_map,
-    bool const compute_log_splitting_prob,
-    bool const is_final_plan
+    ScoringFunction const &scoring_function, double const rho,
+    bool compute_log_splitting_prob, bool is_final_plan
 ){
 
     // bool for whether we'll need to compute spanning tree count
@@ -642,38 +553,25 @@ double compute_log_optimal_weights(
 
     if(DEBUG_WEIGHTS_VERBOSE) Rprintf("Getting Pairs!");
 
-    // build the county component graph and prepare the hash map 
-    plan.prepare_adj_pair_boundary_map(
-        map_params, splitting_schedule, county_components, pair_map
-    );
 
     // get region pair to effective boundary length map
     auto region_pair_log_eff_boundary_map = plan.get_valid_adj_regions_and_eff_log_boundary_lens(
-        map_params, splitting_schedule, edge_splitter, county_components, pair_map
+        plan_multigraph, splitting_schedule, edge_splitter
     );
 
-    // get region multigraph if linked edge 
+    // get region multigraph if using linked edge 
     bool const use_linked_edge_space = sampling_space == SamplingSpace::LinkingEdgeSpace;
-    RegionMultigraph region_multigraph(
+    RegionMultigraphCount region_multigraph(
         use_linked_edge_space ? plan.num_regions : 0
     );
     std::vector<int> merge_index_reshuffle(
         use_linked_edge_space ? plan.num_regions : 0
     );
     if(use_linked_edge_space){
-        // region_multigraph = build_region_multigraph(
-        //     map_params.g, plan.region_ids, plan.num_regions
-        // );
-        auto simple_pair_map =  plan.get_hierarchically_valid_adj_regions(county_components);
-        region_multigraph = build_county_aware_multigraph(
-            map_params.g, plan.region_ids, 
-            county_components, simple_pair_map,
-            plan.num_regions
-        );
+        region_multigraph = plan_multigraph.pair_map.get_multigraph_counts(plan.num_regions);
     }
 
     // iterate over the pairs 
-    std::vector<bool> visited(map_params.V);
     if(DEBUG_WEIGHTS_VERBOSE){
         REprintf("There are %d adjacent pairs!\n",
             region_pair_log_eff_boundary_map.size()
@@ -748,14 +646,14 @@ double compute_log_optimal_weights(
             double log_tau_ratio = 0.0;
             // add merged region
             log_tau_ratio += (rho-1)*plan.compute_log_merged_region_spanning_trees(
-                map_params, region1_id, region2_id
+                plan_multigraph.map_params, region1_id, region2_id
             );
             // subtract split regions
             log_tau_ratio -= (rho-1)*plan.compute_log_region_spanning_trees(
-                map_params, region1_id
+                plan_multigraph.map_params, region1_id
             );
             log_tau_ratio -= (rho-1)*plan.compute_log_region_spanning_trees(
-                map_params, region2_id
+                plan_multigraph.map_params, region2_id
             );
             log_of_sum_term += log_tau_ratio;
         }
@@ -846,22 +744,20 @@ void compute_all_plans_log_optimal_weights(
     RcppThread::ProgressBar bar(nsims, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, nsims, [&] (int i) {
-        CountyComponents county_components(map_params, num_regions);
-        EffBoundaryMap pair_map(num_regions, 0.0);
+        PlanMultigraph plan_multigraph(map_params);
 
 
         // REprintf("I=%d\n", i);
         double log_incr_weight = compute_log_optimal_weights(
-            map_params, splitting_schedule, sampling_space,
-            scoring_function, rho,
-            *plans_ptr_vec.at(i), 
-            tree_splitter, 
-            county_components, pair_map,
-            compute_log_splitting_prob, 
+            *plans_ptr_vec[i], plan_multigraph, 
+            splitting_schedule, tree_splitter,
+            sampling_space, scoring_function, 
+            rho, compute_log_splitting_prob, 
             is_final_plans
         );
 
-        log_incremental_weights(i) = log_incr_weight;
+
+        log_incremental_weights[i] = log_incr_weight;
         unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
 
         if (verbosity >= 3) {

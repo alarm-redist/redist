@@ -8,50 +8,13 @@
 #include "graph_ops.h"
 
 
-RegionMultigraph build_county_aware_multigraph(
-    Graph const &g,
-    PlanVector const &region_ids,
-    CountyComponents &county_components,
-    DistinctPairHash<RegionID, bool> &pair_map,
-    int const num_regions
-){
-    RegionMultigraph region_multigraph(num_regions);
-    int const V = g.size();
 
-    for (int v = 0; v < V; v++) {
-        // Find out which region this vertex corresponds to
-        auto v_region_num = region_ids[v];
-        auto v_county = county_components.map_params.counties[v];
-
-        // now iterate over its neighbors
-        for (int v_nbor : g[v]) {
-            // find which region neighbor corresponds to
-            auto v_nbor_region_num = region_ids[v_nbor];
-
-            // to avoid double counting only count when v less u 
-            if(v_region_num >= v_nbor_region_num) continue;
-            // check region pair is valid and county is ok to county
-            if(pair_map.get_value(v_region_num, v_nbor_region_num).first && 
-                county_components.count_county_boundary(v_region_num, v_county,
-                v_nbor_region_num, county_components.map_params.counties[v_nbor])
-            ){
-                // we increase the count of edges
-                region_multigraph[v_region_num][v_nbor_region_num]++;
-                region_multigraph[v_nbor_region_num][v_region_num]++;
-            }
-        }
-    }
-
-    return region_multigraph;
-}
-
-
-RegionMultigraph build_region_multigraph(
+RegionMultigraphCount build_region_multigraph(
     Graph const &g, 
     PlanVector const &region_ids,
     int const num_regions
 ){
-    RegionMultigraph region_multigraph(num_regions);
+    RegionMultigraphCount region_multigraph(num_regions);
     int const V = g.size();
 
     for (int v = 0; v < V; v++) {
@@ -80,7 +43,7 @@ RegionMultigraph build_region_multigraph(
 
 
 double get_log_merged_region_multigraph_spanning_tree(
-    RegionMultigraph const &region_multigraph,
+    RegionMultigraphCount const &region_multigraph,
     std::vector<int> &merge_index_reshuffle,
     int region1_id, int region2_id
 ){
@@ -151,7 +114,7 @@ double get_log_merged_region_multigraph_spanning_tree(
 }
 
 arma::mat build_region_laplacian(
-    RegionMultigraph const &region_multigraph
+    RegionMultigraphCount const &region_multigraph
 ){
     int num_regions = region_multigraph.size();
     arma::mat laplacian_mat(num_regions, num_regions, arma::fill::zeros);
@@ -174,7 +137,7 @@ arma::mat build_region_laplacian(
 }
 
 // Can call from R
-RegionMultigraph get_region_multigraph(
+RegionMultigraphCount get_region_multigraph(
     Rcpp::List const &adj_list,
     arma::uvec const &region_ids
 ){
@@ -214,7 +177,7 @@ arma::mat get_region_laplacian(
 
 // avoid submat because it copies 
 double compute_log_region_multigraph_spanning_tree(
-    RegionMultigraph const &region_multigraph
+    RegionMultigraphCount const &region_multigraph
 ){
     int num_regions = region_multigraph.size();
     arma::mat laplacian_mat(num_regions, num_regions, arma::fill::zeros);
@@ -259,7 +222,7 @@ double get_merged_log_number_linking_edges(
     arma::uvec const &region_ids,
     int const region1_id, int const region2_id
 ){
-    RegionMultigraph region_multigraph = get_region_multigraph(
+    RegionMultigraphCount region_multigraph = get_region_multigraph(
         adj_list,
         region_ids
     );

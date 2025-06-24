@@ -3,7 +3,6 @@
 #include <RcppThread.h>
 #include "smc_base.h"
 #include "tree_op.h"
-#include "county_components.h"
 
 
 #ifndef MAP_CALC_H

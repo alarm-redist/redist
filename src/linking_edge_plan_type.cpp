@@ -127,6 +127,7 @@ void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
         if(need_to_erase){
             linking_edges.erase(linking_edges.begin()+erase_index);
         }else{
+            Rprint(true);
             REprintf("Error could not find old edge!!\n");
             throw Rcpp::exception("NOOOO");
         }
@@ -191,8 +192,8 @@ void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
 
 
 double LinkingEdgePlan::get_log_eff_boundary_len(
-    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-    TreeSplitter const &tree_splitter, CountyComponents &county_components,
+    PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
+    TreeSplitter const &tree_splitter, 
     const int region1_id, int const region2_id
 ) const {
     // Go through and find that pair 
@@ -209,13 +210,16 @@ double LinkingEdgePlan::get_log_eff_boundary_len(
 
 
 std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_adj_regions_and_eff_log_boundary_lens(
-    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-    TreeSplitter const &tree_splitter, CountyComponents &county_components,
-    EffBoundaryMap &pair_map
+    PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
+    TreeSplitter const &tree_splitter
 ) const{
+    // build the multigraph 
+    plan_multigraph.build_plan_multigraph(*this);
+    // remove invalid hierarchical merges if needed
+    plan_multigraph.remove_invalid_hierarchical_merge_pairs(*this);
+
     std::vector<std::tuple<RegionID, RegionID, double>> valid_adj_region_pairs_to_boundary_map;
     valid_adj_region_pairs_to_boundary_map.reserve(linking_edges.size());
-
 
     // Go through and find that pair 
     for (auto const &edge_pair: linking_edges){
@@ -227,6 +231,13 @@ std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_a
         
         // Add if its ok to merge 
         if(splitting_schedule.valid_merge_pair_sizes[edge_region1_size][edge_region2_size]){
+            // sanity check that we never get invalid pair 
+            auto search_result = plan_multigraph.pair_map.get_value(edge_region1, edge_region2);
+            if(!search_result.first){
+                REprintf("A pair of regions with linking edge is somehow hierarchically invalid now!\n");
+                throw Rcpp::exception("A pair of regions with linking edge is somehow hierarchically invalid now!\n");
+            }
+
             valid_adj_region_pairs_to_boundary_map.push_back(
                 {edge_region1, edge_region2, std::get<2>(edge_pair)}
             );
@@ -237,31 +248,9 @@ std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_a
 
 
 
-int LinkingEdgePlan::count_valid_adj_regions(
-    MapParams const &map_params, SplittingSchedule const &splitting_schedule,
-    CountyComponents &county_components
-) const{
-    int num_valid_pairs = 0;
-    // Go through and count linking edge pairs that can be merged
-    for (auto const &edge_pair: linking_edges){
-        // get the regions associated with the linking edge
-        int edge_region1 = std::min(region_ids[std::get<0>(edge_pair)], region_ids[std::get<1>(edge_pair)]);
-        int edge_region2 = std::max(region_ids[std::get<0>(edge_pair)], region_ids[std::get<1>(edge_pair)]);
 
-        int edge_region1_size = region_sizes[edge_region1]; int edge_region2_size = region_sizes[edge_region2];
-        
-        // Add if its ok to merge 
-        if(splitting_schedule.valid_merge_pair_sizes[edge_region1_size][edge_region2_size]){
-            ++num_valid_pairs;
-        }
-    }
-    return(num_valid_pairs);
-}
-
-
-std::vector<std::pair<RegionID,RegionID>> LinkingEdgePlan::get_valid_adj_regions(
-    MapParams const &map_params, SplittingSchedule const &splitting_schedule,
-    CountyComponents &county_components
+std::vector<std::pair<RegionID,RegionID>> LinkingEdgePlan::get_valid_smc_merge_regions(
+    PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule
 ) const{
     std::vector<std::pair<RegionID,RegionID>> valid_adj_region;
     valid_adj_region.reserve(linking_edges.size());
@@ -277,10 +266,77 @@ std::vector<std::pair<RegionID,RegionID>> LinkingEdgePlan::get_valid_adj_regions
         
         // Add if its ok to merge 
         if(splitting_schedule.valid_merge_pair_sizes[edge_region1_size][edge_region2_size]){
+            // sanity check that we never get invalid pair 
+            auto search_result = plan_multigraph.pair_map.get_value(edge_region1, edge_region2);
+            if(!search_result.first){
+                REprintf("A pair of regions with linking edge is somehow hierarchically invalid now!\n");
+                throw Rcpp::exception("A pair of regions with linking edge is somehow hierarchically invalid now!\n");
+            }
+
             valid_adj_region.push_back(
                 {edge_region1, edge_region2}
             );
         }
     }
     return(valid_adj_region);
+}
+
+
+std::pair<bool, std::vector<std::pair<RegionID,RegionID>>> LinkingEdgePlan::attempt_to_get_valid_mergesplit_pairs(
+    PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule
+) const{
+    // attempt to build valid multigraph 
+    bool const result = plan_multigraph.build_plan_multigraph(*this);
+    // return false if not successful
+    if(!result) return std::make_pair(false, std::vector<std::pair<RegionID,RegionID>>{}); 
+
+    // else remove all the invalid hierarchical merge pairs for multigraph computation later
+    plan_multigraph.remove_invalid_hierarchical_merge_pairs(*this);
+
+
+    std::vector<std::pair<RegionID,RegionID>> valid_adj_region;
+    valid_adj_region.reserve(linking_edges.size());
+
+
+    // Go through and find that pair 
+    for (auto const &edge_pair: linking_edges){
+        // get the regions associated with the linking edge
+        auto edge_region1 = std::min(region_ids[std::get<0>(edge_pair)], region_ids[std::get<1>(edge_pair)]);
+        auto edge_region2 = std::max(region_ids[std::get<0>(edge_pair)], region_ids[std::get<1>(edge_pair)]);
+
+        int edge_region1_size = region_sizes[edge_region1]; int edge_region2_size = region_sizes[edge_region2];
+        // REprintf("(%u, %u) \n", edge_region1, edge_region2);
+        
+        // Add if its ok to merge 
+        if(splitting_schedule.valid_merge_pair_sizes[edge_region1_size][edge_region2_size]){
+            // sanity check that we never get invalid pair 
+            auto search_result = plan_multigraph.pair_map.get_value(edge_region1, edge_region2);
+            if(!search_result.first){
+                REprintf("A pair of regions with linking edge is somehow hierarchically invalid now!\n");
+                throw Rcpp::exception("A pair of regions with linking edge is somehow hierarchically invalid now!\n");
+            }
+
+            valid_adj_region.push_back(
+                {edge_region1, edge_region2}
+            );
+        }
+    }
+
+    return std::make_pair(true, valid_adj_region);
+};
+
+
+void LinkingEdgePlan::Rprint(bool verbose) const{
+    Plan::Rprint(verbose);
+    if(verbose){
+        Rprintf("Current Linking Edges:\n");
+        for (auto const &a_edge: linking_edges)
+        {
+            Rprintf("\tEdge(%d, %d) - Region (%d, %d)- Prob %f \n", 
+                std::get<0>(a_edge), std::get<1>(a_edge), 
+            region_ids[std::get<0>(a_edge)], region_ids[std::get<1>(a_edge)],
+            std::exp(std::get<2>(a_edge)));
+        }
+        Rprintf("\n");
+    }
 }
