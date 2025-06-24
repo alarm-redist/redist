@@ -312,8 +312,9 @@ std::pair<bool, std::vector<std::pair<RegionID,RegionID>>> LinkingEdgePlan::atte
             // sanity check that we never get invalid pair 
             auto search_result = plan_multigraph.pair_map.get_value(edge_region1, edge_region2);
             if(!search_result.first){
-                REprintf("A pair of regions with linking edge is somehow hierarchically invalid now!\n");
-                throw Rcpp::exception("A pair of regions with linking edge is somehow hierarchically invalid now!\n");
+                 plan_multigraph.Rprint();
+                REprintf("Getting Mergesplie Pairs: A pair of regions with linking edge is somehow hierarchically invalid now!\n");
+                throw Rcpp::exception("Getting Mergesplie Pairs: A pair of regions with linking edge is somehow hierarchically invalid now!\n");
             }
 
             valid_adj_region.push_back(

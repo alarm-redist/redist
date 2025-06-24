@@ -47,6 +47,12 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     RNGState rng_state((int) Rcpp::sample(INT_MAX, 1)[0]);
     global_seed_rng((int) Rcpp::sample(INT_MAX, 1)[0]);
 
+    MapParams const map_params(
+        l, counties, pop, 
+        n_distr, n_distr, {1},
+        lower, target, upper
+    );
+
     Graph g = list_to_graph(l);
     Multigraph cg = county_graph(g, counties);
     int V = g.size();
@@ -733,3 +739,7 @@ void adapt_parameters(const Graph &g, int &k, int last_k, const vec &lp, double 
     k = std::min(std::max(max_ok + 1, k) + 1 - (distr_ok(k) > 0.99) + (thresh == 1),
                 max_V - 1);
 }
+
+
+
+// copycat function to properly count boundary with counties and get adj pairs 

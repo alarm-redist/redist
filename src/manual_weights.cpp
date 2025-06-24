@@ -174,7 +174,6 @@ Rcpp::NumericMatrix compute_log_unnormalized_region_target_density(
             num_regions * map_params.num_counties, false
         );
 
-
         bool hierarchically_valid = plan_multigraph.is_hierarchically_valid(
             *plan_ensemble.plan_ptr_vec[i], county_component_lookup
         );

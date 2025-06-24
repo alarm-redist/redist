@@ -232,7 +232,7 @@ total_soft_constraints(0), num_hard_constraints(0){
                         as<arma::uvec>(constr_inst["group_pop"]), as<arma::uvec>(constr_inst["total_pop"]),
                         constr_score_districts_only
                     ));
-                REprintf("Added and its %d!\n", region_constraint_ptrs[0]->score_districts_only);
+                // REprintf("Added and its %d!\n", region_constraint_ptrs[0]->score_districts_only);
                 // increase constraints applied at every split count
                 all_rounds_soft_constraints++;
             }

@@ -1240,7 +1240,7 @@ void PlanMultigraph::remove_invalid_hierarchical_merge_pairs(
         [&](std::pair<RegionID, RegionID> a_pair) { 
 
             // if different components then its ok 
-            if(county_component[a_pair.first] != county_component[a_pair.first]) return false;
+            if(county_component[a_pair.first] != county_component[a_pair.second]) return false;
             // else if they're the same component check if admin adjacent
 
             auto hash_index = pair_map.pair_hash(a_pair.first, a_pair.second);
@@ -1287,7 +1287,7 @@ void PlanMultigraph::remove_invalid_mergesplit_pairs(
         [&](std::pair<RegionID, RegionID> a_pair) { 
 
             // if different components then its ok 
-            if(county_component[a_pair.first] != county_component[a_pair.first]) return false;
+            if(county_component[a_pair.first] != county_component[a_pair.second]) return false;
             // else if they're the same component check if admin adjacent
             auto hash_index = pair_map.pair_hash(a_pair.first, a_pair.second);
             // if admin adjacent do nothing because thats ok

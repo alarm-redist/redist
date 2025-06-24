@@ -108,8 +108,7 @@ get_map_parameters <- function(map, counties=NULL){
 validate_constraints <- function(map, constraints){
     # Other constraints
     if (!inherits(constraints, "redist_constr")) {
-        ms_param_names <- c("ms_moves_multiplier", "ms_frequency")
-        constraints <- new_redist_constr(!!rlang::eval_tidy(rlang::enquo(constraints), map))
+        constraints <- new_redist_constr(rlang::eval_tidy(rlang::enquo(constraints), map))
     }
     if (any(c("edges_removed", "log_st") %in% names(constraints))) {
         cli_warn(c("{.var edges_removed} or {.var log_st} constraint found in
