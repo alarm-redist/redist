@@ -606,7 +606,7 @@ List run_redist_gsmc(
         Rcout << " Sampling space to sample " << nsims << " " << V << "-unit ";
         Rcout << "maps with " << ndists << " districts and population between "
               << lower << " and " << upper << " using " 
-              << (num_threads == 0 ? 1 : num_threads) << " threads, "
+              << pool.getNumThreads() << " threads, "
               << total_ms_steps << " merge split steps, ";
         if(splitting_size_regime == SplittingSizeScheduleType::DistrictOnly){
             Rcout << "and only performing 1-district splits.";

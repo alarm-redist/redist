@@ -88,7 +88,11 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
     div_rg <- format(quantile(est_div, c(0.1, 0.9)), digits = 2)
     div_bad <- (mean(est_div) <= 0.35) || (mean(est_div <= 0.25) > 0.1)
 
-    if (algo == "smc") {
+    summary_supported_algs <- c("smc", "smc_ms", "mergesplit", "flip")
+
+    if(!algo %in% summary_supported_algs){
+        cli_abort("{.fn summary} is not supported for the {toupper(algo)} algorithm.")
+    }else if (algo == "smc") {
         cli_text("{.strong SMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
                  districts on {fmt_comma(nrow(plans_m))} units")
         cli_text("{.arg adapt_k_thresh}={format(all_diagn[[1]]$adapt_k_thresh, digits=3)} \u2022
