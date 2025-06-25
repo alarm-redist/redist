@@ -64,12 +64,11 @@ DEBUG_MODE <- FALSE
 #' compatibility with MCMC methods, runs are identified with the `chain`
 #' column in the output.
 #' @param ncores How many threads to use to parallelize plan generation within each
-#' run. The default, 0, will use the number of available cores on the machine
+#' process. The default, 0, will use the number of available cores on the machine
 #' as long as `nsims` and the number of units is large enough. If `runs>1`
 #' you will need to set this manually. If more than one core is used, the
 #' sampler output will not be fully reproducible with `set.seed()`. If full
-#' reproducibility is desired, set `ncores=1` and `num_processes=1`. This argument
-#' is equivalent to `num_threads_per_process`
+#' reproducibility is desired, set `ncores=1` and `num_processes=1`.
 #' @param init_particles Either a [redist_plans] object or a matrix of partial
 #' plans to begin sampling from. For advanced use only. The matrix must have
 #' `nsims` columns and a row for every precinct. It is important to ensure that
@@ -279,6 +278,43 @@ redist_gsmc <- function(
         cli::cli_abort("For {.arg district_seat_sizes} only a continuous range of district seat sizes are allowed!")
     }
 
+    # setting the splitting size regime
+    if("splitting_schedule" %in% names(splitting_params)){
+        splitting_schedule <- splitting_params[["splitting_schedule"]]
+        if(splitting_schedule == "split_district_only"){
+            if(districting_scheme == "SMD"){
+                splitting_size_regime = "split_district_only"
+            }else if(districting_scheme == "MMD"){
+                splitting_size_regime = "split_district_only_mmd"
+            }else{
+                cli::cli_abort("Districting scheme {districting_scheme} is not supported!")
+            }
+        }else if(splitting_schedule == "any_valid_sizes"){
+            if(districting_scheme == "SMD"){
+                splitting_size_regime = "any_valid_sizes"
+            }else if(districting_scheme == "MMD"){
+                cli::cli_abort("Generaliezd region splits are not supported for Multi-member districting!")
+            }else{
+                cli::cli_abort("Districting scheme {districting_scheme} is not supported!")
+            }
+        }else{ # else its custom
+            cli::cli_abort("Custom splitting schedules are not supported right now!")
+            # only support doing a single size right now
+            # validate it
+            validate_custom_size_split_list(ndists, n_steps, init_num_regions, custom_size_split_list)
+            splitting_size_regime = "one_custom_size"
+        }
+    }else{
+        # default to any size if SMD and district if MMD
+        if(districting_scheme == "SMD"){
+            splitting_size_regime = "any_valid_sizes"
+        }else if(districting_scheme == "MMD"){
+            splitting_size_regime = "split_district_only_mmd"
+        }else{
+            cli::cli_abort("Districting scheme {districting_scheme} is not supported!")
+        }
+    }
+
 
     # handle particle inits
     if (is.null(init_particles)) {
@@ -403,43 +439,6 @@ redist_gsmc <- function(
     any_ms_steps_ran <- run_ms
 
 
-    # setting the splitting size regime
-    if("splitting_schedule" %in% names(splitting_params)){
-        splitting_schedule <- splitting_params[["splitting_schedule"]]
-        if(splitting_schedule == "split_district_only"){
-            if(districting_scheme == "SMD"){
-                splitting_size_regime = "split_district_only"
-            }else if(districting_scheme == "MMD"){
-                splitting_size_regime = "split_district_only_mmd"
-            }else{
-                cli::cli_abort("Districting scheme {districting_scheme} is not supported!")
-            }
-        }else if(splitting_schedule == "any_valid_sizes"){
-            if(districting_scheme == "SMD"){
-                splitting_size_regime = "any_valid_sizes"
-            }else if(districting_scheme == "MMD"){
-                cli::cli_abort("Generaliezd region splits are not supported for Multi-member districting!")
-            }else{
-                cli::cli_abort("Districting scheme {districting_scheme} is not supported!")
-            }
-        }else{ # else its custom
-            cli::cli_abort("Custom splitting schedules are not supported right now!")
-            # only support doing a single size right now
-            # validate it
-            validate_custom_size_split_list(ndists, n_steps, init_num_regions, custom_size_split_list)
-            splitting_size_regime = "one_custom_size"
-        }
-    }else{
-        # default to any size if SMD and district if MMD
-        if(districting_scheme == "SMD"){
-            splitting_size_regime = "any_valid_sizes"
-        }else if(districting_scheme == "MMD"){
-            splitting_size_regime = "split_district_only_mmd"
-        }else{
-            cli::cli_abort("Districting scheme {districting_scheme} is not supported!")
-        }
-    }
-
 
     # compute lags thing
     lags <- 1 + unique(round((ndists - 1)^0.8*seq(0, 0.7, length.out = 4)^0.9))
@@ -454,11 +453,22 @@ redist_gsmc <- function(
 
     control_param_names <- c("num_processes", "num_threads_per_process")
     # legacy, ncores is essentially the number of threads per process
-    if(is.list(control)){
-        control[["num_threads_per_process"]] <- ncores
+    num_threads_per_process <- ncores
+    if(!is.null(num_threads_per_process)){
+        if(!rlang::is_integerish(num_threads_per_process) || !assertthat::is.scalar(num_threads_per_process)){
+            cli::cli_abort("{.arg num_threads_per_process} in {.arg control} must be a single integer!")
+        }else if(num_threads_per_process == 0){
+            num_threads_per_process <- ncores_max
+        }else if(num_threads_per_process < 0){
+            cli::cli_abort("{.arg num_threads_per_process} in {.arg control} can't be negative!")
+        }
+    }else{
+        num_threads_per_process <- ncores_max
     }
 
-    if(is.list(control) && any(control_param_names %in% names(control))){
+
+
+    if(is.list(control) && any("num_processes" %in% names(control))){
         if("num_processes" %in% names(control)){
             num_processes <- control[["num_processes"]]
             if(!rlang::is_integerish(num_processes) || !assertthat::is.scalar(num_processes)){
@@ -469,20 +479,6 @@ redist_gsmc <- function(
         }else{
             # default to 1
             num_processes <- 1L
-        }
-
-        if("num_threads_per_process" %in% names(control)){
-            num_threads_per_process <- control[["num_threads_per_process"]]
-            if(!rlang::is_integerish(num_threads_per_process) || !assertthat::is.scalar(num_threads_per_process)){
-                cli::cli_abort("{.arg num_threads_per_process} in {.arg control} must be a single integer!")
-            }else if(num_threads_per_process == 0){
-                num_threads_per_process <- ncores_max
-            }else if(num_threads_per_process < 0){
-                cli::cli_abort("{.arg num_threads_per_process} in {.arg control} can't be negative!")
-            }
-        }else{
-            # default to ncores max
-            num_threads_per_process <- ncores_max
         }
     }else{
         num_processes <- 1L
