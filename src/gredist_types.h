@@ -44,7 +44,7 @@ typedef std::vector<std::vector<CountyComponentVertex>> CountyComponentGraph;
 // old types
 typedef std::vector<std::vector<int>> Tree;
 typedef std::vector<std::vector<int>> Graph;
-typedef std::vector<std::vector<std::vector<int>>> Multigraph;
+typedef std::vector<std::vector<std::array<int, 3>>> Multigraph;
 
 
 

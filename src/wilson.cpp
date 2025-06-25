@@ -21,7 +21,7 @@ void loop_erase(std::vector<int> &path, int proposal);
  */
 // TESTED
 void walk_until_cty(const Multigraph &mg, int root,
-                    std::vector<std::vector<int>> &path,
+                    std::vector<std::array<int, 3>> &path,
                     const std::vector<bool> &visited,
                     const std::vector<bool> &ignore,
                     RNGState &rng_state);
@@ -30,7 +30,7 @@ void walk_until_cty(const Multigraph &mg, int root,
  * Erase loops in `path` that would be created by adding `proposal` to path
  */
 // TESTED
-void loop_erase_cty(std::vector<std::vector<int>> &path, int proposal, int root);
+void loop_erase_cty(std::vector<std::array<int, 3>> &path, int proposal, int root);
 
 
 // [[Rcpp::export]]
@@ -98,7 +98,7 @@ int sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
 
     // Connect counties
     Tree cty_tree = init_tree(n_county);
-    std::vector<std::vector<int>> path;
+    std::vector<std::array<int, 3>> path;
     while (c_remaining > 0) {
         int add = rvtx(c_visited, n_county, c_remaining, lower_c, rng_state);
         // random walk from `add` until we hit the path
@@ -252,7 +252,7 @@ int walk_until(const Graph &g, int root,
  */
 // TESTED
 void walk_until_cty(const Multigraph &mg, int root,
-                    std::vector<std::vector<int>> &path,
+                    std::vector<std::array<int, 3>> &path,
                     const std::vector<bool> &visited,
                     const std::vector<bool> &ignore,
                     RNGState &rng_state) {
@@ -287,7 +287,7 @@ void walk_until_cty(const Multigraph &mg, int root,
  * Erase loops in `path` that would be created by adding `proposal` to path
  */
 // TESTED
-void loop_erase_cty(std::vector<std::vector<int>> &path, int proposal, int root) {
+void loop_erase_cty(std::vector<std::array<int, 3>> &path, int proposal, int root) {
     int length = path.size();
     if (proposal == root) {
         path.erase(path.begin(), path.begin() + length);

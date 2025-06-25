@@ -29,7 +29,7 @@ Graph list_to_graph(const Rcpp::List &l) {
 Multigraph init_multigraph(int V) {
     Multigraph g;
     for (int i = 0; i < V; i++) {
-        std::vector<std::vector<int>> el;
+        std::vector<std::array<int, 3>> el;
         g.push_back(el);
     }
     return g;
@@ -52,7 +52,7 @@ Multigraph county_graph(const Graph &g, const arma::uvec &counties) {
         for (int j = 0; j < length; j++) {
             int nbor_cty = counties.at(nbors[j]) - 1;
             if (county == nbor_cty) continue;
-            std::vector<int> el = {nbor_cty, i, nbors[j]};
+            std::array<int, 3> el = {nbor_cty, i, nbors[j]};
             cg.at(county).push_back(el);
         }
     }
