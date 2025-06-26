@@ -417,6 +417,9 @@ List run_redist_gsmc(
     // set the number of threads
     int num_threads = (int) control["num_threads"];
     if (num_threads <= 0) num_threads = std::thread::hardware_concurrency();
+    // get seq_alpha 
+    double weights_alpha = as<double>(control["seq_alpha"]);
+    bool const apply_weights_alpha = weights_alpha != 1;
 
     // re-seed MT so that `set.seed()` works in R
     int global_rng_seed = (int) Rcpp::sample(INT_MAX, 1)[0];
@@ -806,7 +809,12 @@ List run_redist_gsmc(
                 Rprintf("  Running %d Merge Split Steps per plan, %d in total!\n", 
                     nsteps_to_run, nsteps_to_run*nsims);
             }
-            // TODO REVISE FOR MMD
+
+
+            splitting_schedule_ptr->update_cut_sizes_for_mergesplit_step(
+                smc_step_num, plan_ensemble_ptr->plan_ptr_vec[0]->num_regions
+            );
+
             bool is_final = plan_ensemble_ptr->plan_ptr_vec[0]->num_regions == ndists;
             // auto t1fm = high_resolution_clock::now();
             run_merge_split_step_on_all_plans(

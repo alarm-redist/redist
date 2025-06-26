@@ -92,6 +92,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
 
     if(!algo %in% summary_supported_algs){
         cli_abort("{.fn summary} is not supported for the {toupper(algo)} algorithm.")
+        return(invisible(out))
     }else if (algo == "smc") {
         cli_text("{.strong SMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
                  districts on {fmt_comma(nrow(plans_m))} units")

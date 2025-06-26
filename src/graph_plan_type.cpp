@@ -82,7 +82,7 @@ std::vector<std::tuple<RegionID, RegionID, double>> GraphPlan::get_valid_adj_reg
     plan_multigraph.remove_invalid_size_pairs(*this, splitting_schedule);
     // now make the output vector 
     std::vector<std::tuple<RegionID, RegionID, double>> region_pairs_tuple_vec;
-    region_pairs_tuple_vec.reserve(plan_multigraph.pair_map.num_hashed_values);
+    region_pairs_tuple_vec.reserve(plan_multigraph.pair_map.num_hashed_pairs);
 
     for(auto const key_val_pair: plan_multigraph.pair_map.get_all_values()){
         

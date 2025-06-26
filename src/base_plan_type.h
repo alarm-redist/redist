@@ -161,9 +161,7 @@ public:
 
     virtual std::vector<std::pair<RegionID,RegionID>> get_valid_smc_merge_regions(
         PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule
-    ) const {throw Rcpp::exception("get_valid_smc_merge_regions not implemented for this class!\n");};
-
-
+    ) const;
 
 
     // redist_smc related methods 
@@ -231,6 +229,7 @@ struct PairHashData{
         shared_county(-1),
         within_county_edges(0),
         across_county_edges(0),
+        merge_is_hier_valid(true),
         count_pair(true),
         eff_boundary_len(0.0)
     {};
@@ -239,12 +238,14 @@ struct PairHashData{
     PairHashData(
         bool const admin_adjacent, int const shared_county,
         int const within_county_edges, int const across_county_edges,
+        bool const merge_is_hier_valid,
         bool const count_pair, double const eff_boundary_len
     ): 
         admin_adjacent(admin_adjacent),
         shared_county(shared_county),
         within_county_edges(within_county_edges),
         across_county_edges(across_county_edges),
+        merge_is_hier_valid(merge_is_hier_valid),
         count_pair(count_pair),
         eff_boundary_len(eff_boundary_len)
     {};
@@ -254,6 +255,7 @@ struct PairHashData{
     int shared_county; // -1 if the two regions do not share a county, 0 indexed counties otherwise
     int within_county_edges;
     int across_county_edges;
+    bool merge_is_hier_valid; // If merging the two regions 
     bool count_pair; // only used for forest space, whether or not to compute probabilties for pairs
     double eff_boundary_len; // NOT THE LOG, THE ACTUAL BOUNDARY
     
@@ -268,7 +270,8 @@ class RegionPairHash{
         // actual constructor
         RegionPairHash(int const ndists):
         ndists(ndists),
-        num_hashed_values(0),
+        num_hashed_pairs(0),
+        num_hier_smc_merge_valid_pairs(0),
         hash_table_size((ndists*(ndists-1))/2),
         values(hash_table_size),
         hashed(hash_table_size, false){
@@ -277,7 +280,8 @@ class RegionPairHash{
 
         
         int const ndists;
-        int num_hashed_values;
+        int num_hashed_pairs;
+        int num_hier_smc_merge_valid_pairs;
         int const hash_table_size;
         // Table where each tuple is 
         // - bool: Whether or not regions are administratively adjacent 
@@ -311,7 +315,8 @@ class RegionPairHash{
                 false
             );
             hashed_pairs.clear();
-            num_hashed_values = 0;
+            num_hashed_pairs = 0;
+            num_hier_smc_merge_valid_pairs = 0;
         }
         
 
@@ -347,7 +352,7 @@ class RegionPairHash{
             std::pair<RegionID, RegionID>, 
             PairHashData
             >> all_data;
-            all_data.reserve(num_hashed_values);
+            all_data.reserve(num_hashed_pairs);
 
             for(auto const a_pair: hashed_pairs){
                 auto val = get_value(a_pair.first, a_pair.second);
@@ -372,7 +377,7 @@ class RegionPairHash{
             if(!hashed[hash_index]){
                 hashed[hash_index] = true;
                 hashed_pairs.push_back({region1_id, region2_id});
-                ++num_hashed_values;
+                ++num_hashed_pairs;
             }
             
             if(same_county){
@@ -402,7 +407,7 @@ class RegionPairHash{
             if(!hashed[hash_index]){
                 hashed[hash_index] = true;
                 hashed_pairs.push_back({region1_id, region2_id});
-                ++num_hashed_values;
+                ++num_hashed_pairs;
             }
             // increase the count 
             values[hash_index].eff_boundary_len += value_to_add;
@@ -413,6 +418,11 @@ class RegionPairHash{
 
 
         RegionMultigraphCount get_multigraph_counts(int const num_regions) const;
+        RegionMultigraphCount get_merged_multigraph_counts(
+            int const num_regions, std::vector<RegionID> &merge_index_reshuffle,
+            RegionID const region1_id, RegionID const region2_id 
+        ) const;
+
 
 
 };

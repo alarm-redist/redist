@@ -319,7 +319,7 @@ arma::vec compute_plans_log_optimal_weights(
         plan_multigraph.pair_map.Rprint();
         // now make the output vector 
         std::vector<std::tuple<RegionID, RegionID, double>> region_pairs_tuple_vec;
-        region_pairs_tuple_vec.reserve(plan_multigraph.pair_map.num_hashed_values);
+        region_pairs_tuple_vec.reserve(plan_multigraph.pair_map.num_hashed_pairs);
 
         double incremental_weight = 0.0;
 

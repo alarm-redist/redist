@@ -84,6 +84,11 @@ class SplittingSchedule {
     
         // This sets it for that split
         virtual void set_potential_cut_sizes_for_each_valid_size(int split_num, int presplit_num_regions) = 0;
+        // for district splits this allows to merge and split them during merge split 
+        virtual void update_cut_sizes_for_mergesplit_step(int split_num, int num_regions){
+            return;
+        };
+
         // Sets all the boolean vectors and matrices related to splitting and merging to false
         void reset_splitting_and_merge_booleans();
         
@@ -105,7 +110,8 @@ class DistrictOnlySplittingSchedule : public SplittingSchedule {
         );
 
 
-        void set_potential_cut_sizes_for_each_valid_size(int split_num, int presplit_num_regions) override;    
+        void set_potential_cut_sizes_for_each_valid_size(int split_num, int presplit_num_regions) override;
+        void update_cut_sizes_for_mergesplit_step(int split_num, int num_regions) override;    
 };
 
 
@@ -145,6 +151,7 @@ class DistrictOnlyMMDSplittingSchedule : public SplittingSchedule {
 
         void set_potential_cut_sizes_for_each_valid_size(
             int split_num, int presplit_num_regions) override;    
+        void update_cut_sizes_for_mergesplit_step(int split_num, int num_regions) override; 
 };
 
 

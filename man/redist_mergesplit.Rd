@@ -14,8 +14,8 @@ redist_mergesplit(
   init_plan = NULL,
   constraints = list(),
   constraint_fn = function(m) rep(0, ncol(m)),
-  sampling_space = gredist:::GRAPH_PLAN_SPACE_SAMPLING,
-  splitting_method = gredist:::NAIVE_K_SPLITTING,
+  sampling_space = c("graph_plan_space", "spanning_forest_space", "linking_edge_space"),
+  splitting_method = c("naive_top_k", "uniform_valid_edge", "expo_bigger_abs_dev"),
   splitting_params = list(adapt_k_thresh = 0.99),
   merge_prob_type = "uniform",
   compactness = 1,
@@ -23,7 +23,6 @@ redist_mergesplit(
   cl_type = "PSOCK",
   return_all = TRUE,
   init_name = NULL,
-  multiprocess = T,
   verbose = FALSE,
   silent = FALSE,
   diagnostic_mode = FALSE
@@ -82,9 +81,6 @@ the final plan from each chain.}
 \item{init_name}{a name for the initial plan, or \code{FALSE} to not include
 the initial plan in the output.  Defaults to the column name of the
 existing plan, or "\code{<init>}" if the initial plan is sampled.}
-
-\item{multiprocess}{Whether or not to spawn separate clusters to run the chains
-on or to just run them sequentially.}
 
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}

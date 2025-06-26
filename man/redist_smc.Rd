@@ -2,7 +2,7 @@
 % Please edit documentation in R/redist_smc.R
 \name{redist_smc}
 \alias{redist_smc}
-\title{SMC Redistricting Sampler (McCartan and Imai 2023)}
+\title{Generalized SMCS Redistricting Sampler (O'Sullivan, McCartan and Imai ???)}
 \usage{
 redist_smc(
   map,
@@ -12,20 +12,23 @@ redist_smc(
   constraints = list(),
   resample = TRUE,
   runs = 1L,
+  ncores = 0L,
   init_particles = NULL,
+  init_particles_nseats = NULL,
+  sampling_space = c("graph_plan_space", "spanning_forest_space", "linking_edge_space"),
+  splitting_method = c("naive_top_k", "uniform_valid_edge", "expo_bigger_abs_dev"),
+  splitting_params = list(adapt_k_thresh = 0.99),
+  mergesplit_params = list(),
+  weight_type = c("optimal", "simple"),
   n_steps = NULL,
-  adapt_k_thresh = 0.99,
-  seq_alpha = 0.5,
   truncate = (compactness != 1),
   trunc_fn = redist_quantile_trunc,
   pop_temper = 0,
-  final_infl = 1,
-  num_processes = 0L,
-  num_threads_per_process = 0L,
-  multiprocess = TRUE,
   ref_name = NULL,
   verbose = FALSE,
-  silent = FALSE
+  silent = FALSE,
+  diagnostic_level = 0,
+  control = list()
 )
 }
 \arguments{
@@ -37,7 +40,7 @@ redist_smc(
 geographic unit) labels for each unit, which may be integers ranging from 1
 to the number of counties, or a factor or character vector.  If provided,
 the algorithm will only generate maps which split up to \code{ndists-1}
-counties. Even there are fewer counties than \code{ndists - 1}, the spanning
+counties. Even if there are fewer counties than \code{ndists - 1}, the spanning
 trees will change the results of the simulations. There is no strength
 parameter associated with this constraint. To adjust the number of county
 splits further, or to constrain a second type of administrative split,
@@ -63,24 +66,105 @@ standard errors. Output will only be shown for the first run. For
 compatibility with MCMC methods, runs are identified with the \code{chain}
 column in the output.}
 
-\item{init_particles}{A matrix of partial plans to begin sampling from. For
-advanced use only.  The matrix must have \code{nsims} columns and a row for
-every precinct. It is important to ensure that the existing districts meet
-contiguity and population constraints, or there may be major issues when
-sampling.}
+\item{ncores}{How many threads to use to parallelize plan generation within each
+process. The default, 0, will use the number of available cores on the machine
+as long as \code{nsims} and the number of units is large enough. If \code{runs>1}
+you will need to set this manually. If more than one core is used, the
+sampler output will not be fully reproducible with \code{set.seed()}. If full
+reproducibility is desired, set \code{ncores=1} and \code{num_processes=1}.}
+
+\item{init_particles}{Either a \link{redist_plans} object or a matrix of partial
+plans to begin sampling from. For advanced use only. The matrix must have
+\code{nsims} columns and a row for every precinct. It is important to ensure that
+the existing districts meet contiguity and population constraints, or there
+may be major issues when sampling.}
+
+\item{init_particles_nseats}{A matrix of the number of seats per region of
+the partial plans to begin sampling from. For advanced use only. The matrix
+must have \code{nsims} columns, as many rows as there are regions in \code{init_particles}
+and each column must sum to the total number of seats in the map. Not needed
+if \code{init_particles} is a \link{redist_plans} object. If \code{init_particles} are passed
+but not \code{init_particles_nseats}}
+
+\item{sampling_space}{The space to sample the plans on. This does not affect
+the plans output by the function but the sample space used can have a large
+impact on computational cost/runtime and convergence. Current spaces supported
+right now are
+\itemize{
+\item graph_plan_space : graph partition space
+\item spanning_forest_space : spanning forest space
+\item linking_edge_space : linking edge forest space
+}}
+
+\item{splitting_method}{The method used for splitting spanning trees in the
+sampling process. When sampling on the space of graph partitions it must be
+the naive top k method but any method is allowed for forest space sampling.}
+
+\item{splitting_params}{A list of parameters related to splitting the plans.
+Options include
+\itemize{
+\item \code{splitting_schedule} What rule to use for selecting splitting
+sizes. The final target distribution is the same regardless of splitting
+schedule but the intermediate distributions can change. Current options
+include
+\itemize{
+\item \code{split_district_only} At each step split off a single district.
+\item \code{any_valid_sizes} At each step allow for regions to be split
+into any two sizes (assuming the sizes can eventually be split into
+districts.) Currently this is only supported for single member districting.
+}
+}
+Parameters for \code{splitting_method} Any relevant parameters for the
+\code{splitting_method}. These include the following
+\itemize{
+\item naive_top_k parameters:
+\itemize{
+\item \code{adapt_k_thresh} The threshold value used in the heuristic to
+select a value \code{k_i} for each splitting iteration for graph space
+sampling if estimation is desired (the \code{k_i} can also be manually passed in.)
+Higher values are more accurate but may require more
+computation. Set to 1 for the most conservative sampling.
+Must be between 0 and 1.
+\item \code{manual_k_params} The \code{k_i} values to be used for each splitting
+iteration for graph space sampling. Beware when specifying manual values
+it is crucial they are close to the true values as too small \code{k_i} values
+will cause the algorithm to fail to sample from the target distribution
+correctly and too large values will cause a drastic performance hit. The
+input must either be a single integer to use for each step or a vector
+of integers equal to the number of smc steps.
+}
+\item expo_bigger_abs_dev
+\itemize{
+\item \code{splitting_alpha} When selecting an edge to cut in the
+tree a valid edge is selected with probability proportional to
+\code{exp(-splitting_alpha * max_dev)}. \code{splitting_alpha} can
+be any real number. Values closer to zero result in more stable weights
+and larger values result in more unstable weights.
+}
+}}
+
+\item{mergesplit_params}{A list of mergesplit parameters.
+\itemize{
+\item \code{ms_frequency}: How often to run merge steps. Should either be an integer
+(meaning run after every _ smc steps) or a vector of 1 indexed step numbers
+indicating which smc steps to run merge split. A value of -1 means just run
+after all smc steps have been run. A value of 1 means run after every smc step.
+\item \code{ms_moves_multiplier} Multiplier to the baseline number of mergesplit
+moves to be performed each step. For a mergesplit step the baseline number of
+moves is calculated as the ceiling of 1 over the previous mergesplit steps
+acceptance rate (or smc step if no prior mergesplit steps were done). The
+total number of moves is \code{ceiling(ms_moves_multiplier * baseline_num_moves)}.
+\item \code{merge_prob_type} What probability to use to select regions to merge
+in the mergesplit kernel. Defaults to giving all pairs equal probability.
+}}
+
+\item{weight_type}{The type of SMC weights to use. Optimal weights typically
+have lower variance and lead to faster convergence but can be more
+computationally expensive, especially for computationally complex constraints.}
 
 \item{n_steps}{How many steps to run the SMC algorithm for.
-Each step splits off a new district. Defaults to all remaining districts.
+Each step splits off a new region. Defaults to all remaining districts.
 If fewer than the number of remaining splits, reference plans are disabled.}
-
-\item{adapt_k_thresh}{The threshold value used in the heuristic to select a
-value \code{k_i} for each splitting iteration. Higher values are more accurate
-but may require more computation. Set to 1 for the most conservative
-sampling. Must be between 0 and 1.}
-
-\item{seq_alpha}{The amount to adjust the weights by at each resampling step;
-higher values prefer exploitation, while lower values prefer exploration.
-Must be between 0 and 1.}
 
 \item{truncate}{Whether to truncate the importance sampling weights at the
 final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.
@@ -95,18 +179,6 @@ rather than naive truncation.}
 values of 0.01-0.05 to start if the algorithm gets stuck on the final few
 splits.}
 
-\item{final_infl}{A multiplier for the population constraint on the final
-iteration. Used to loosen the constraint when the sampler is getting stuck
-on the final split. \code{pop_temper} should be tried first, since using
-\code{final_infl} will actually change the target distribution.}
-
-\item{num_processes}{How many cores to use to parallelize plan generation within each
-run. The default, 0, will use the number of available cores on the machine
-as long as \code{nsims} and the number of units is large enough. If \code{runs>1}
-you will need to set this manually. If more than one core is used, the
-sampler output will not be fully reproducible with \code{set.seed()}. If full
-reproducibility is desired, set \code{num_processes=1}.}
-
 \item{ref_name}{a name for the existing plan, which will be added as a
 reference plan, or \code{FALSE} to not include the initial plan in the
 output. Defaults to the column name of the existing plan.}
@@ -116,9 +188,21 @@ Recommended.}
 
 \item{silent}{Whether to suppress all diagnostic information.}
 
+\item{diagnostic_level}{What level of diagnostic information to save}
+
 \item{control}{A list of optional advanced parameters.
 \itemize{
-\item \code{parameter1}: Crazy
+\item \code{num_processes}: The number of processes (independent instances of R)
+spawned to simulate the plans. The processes execute runs in parallel, each
+using \code{num_threads_per_process} threads. If more than one process is used, the
+sampler output will not be fully reproducible with \code{set.seed()}. If full
+reproducibility is desired, set \code{num_processes=1} and
+\code{num_threads_per_process = 1}. If missing defaults to the minimum of the
+number of cores on the machine and \code{runs}
+\item \code{num_threads_per_process} The number of threads assigned to each process.
+This is the number of threads used when performing a specific run. If simulations
+are memory constrained it can be better to lower the number of processes and increase
+the threads per process.
 }}
 }
 \value{
@@ -126,10 +210,10 @@ Recommended.}
 plans.
 }
 \description{
-\code{redist_smc} uses a Sequential Monte Carlo algorithm (McCartan and Imai 2023)
-to generate representative samples of congressional or legislative
-redistricting plans according to contiguity, population, compactness, and
-administrative boundary constraints.
+\code{redist_smc} uses a Sequential Monte Carlo Sampler algorithm
+(O'Sullivan, McCartan and Imai ???) to generate representative samples of
+congressional or legislative redistricting plans according to
+contiguity, population, compactness, and administrative boundary constraints.
 }
 \details{
 This function draws samples from a specific target measure controlled by
@@ -139,7 +223,7 @@ Key to ensuring good performance is monitoring the efficiency of the resampling
 process at each SMC stage.  Unless \code{silent=FALSE}, this function will print
 out the effective sample size of each resampling step to allow the user to
 monitor the efficiency.  If \code{verbose=TRUE} the function will also print
-out information on the \eqn{k_i} values automatically chosen and the
+out information on any relevant splitting parameters chosen and the
 acceptance rate (based on the population constraint) at each step.
 Users should also check diagnostics of the sample by running
 \code{summary.redist_plans()}.
@@ -171,10 +255,5 @@ redist_smc(fl_map, 1000, runs = 2)
 redist_smc(fl_map, 1000, num_processes = 2)
 }
 
-}
-\references{
-McCartan, C., & Imai, K. (2023). Sequential Monte Carlo for Sampling
-Balanced and Compact Redistricting Plans. \emph{Annals of Applied Statistics} 17(4).
-Available at \doi{10.1214/23-AOAS1763}.
 }
 \concept{simulate}

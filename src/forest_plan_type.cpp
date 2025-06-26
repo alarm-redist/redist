@@ -189,7 +189,7 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
 
     // now make the output vector 
     std::vector<std::tuple<RegionID, RegionID, double>> region_pairs_tuple_vec;
-    region_pairs_tuple_vec.reserve(plan_multigraph.pair_map.num_hashed_values);
+    region_pairs_tuple_vec.reserve(plan_multigraph.pair_map.num_hashed_pairs);
 
     for(auto const key_val_pair: plan_multigraph.pair_map.get_all_values()){
         region_pairs_tuple_vec.emplace_back(

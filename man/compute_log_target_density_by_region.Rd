@@ -7,8 +7,8 @@
 compute_log_target_density_by_region(
   map,
   plans,
-  sizes_matrix = NULL,
   counties = NULL,
+  sizes_matrix = NULL,
   compactness = 1L,
   constraints = list(),
   num_threads = 0,
@@ -16,33 +16,8 @@ compute_log_target_density_by_region(
 )
 }
 \arguments{
-\item{map}{A \code{\link[=redist_map]{redist_map()}} object.}
-
-\item{counties}{A vector containing county (or other administrative or
-geographic unit) labels for each unit, which may be integers ranging from 1
-to the number of counties, or a factor or character vector.  If provided,
-the algorithm will only generate maps which split up to \code{ndists-1}
-counties. Even if there are fewer counties than \code{ndists - 1}, the spanning
-trees will change the results of the simulations. There is no strength
-parameter associated with this constraint. To adjust the number of county
-splits further, or to constrain a second type of administrative split,
-consider using \code{add_constr_splits()}, \code{add_constr_multisplits()}, and
-\code{add_constr_total_splits()}.}
-
-\item{compactness}{Controls the compactness of the generated districts, with
-higher values preferring more compact districts. Must be nonnegative. See
-the 'Details' section for more information, and computational
-considerations.}
-
-\item{constraints}{A \code{\link[=redist_constr]{redist_constr()}} object or a list containing
-information on sampling constraints. See \link{constraints} for more information.}
-
 \item{num_threads}{The number of threads used for computing
 the target densities.}
-
-\item{pop_temper}{The strength of the automatic population tempering. Try
-values of 0.01-0.05 to start if the algorithm gets stuck on the final few
-splits.}
 
 \item{plan_matrix}{A matrix of 1-indexed plans}
 

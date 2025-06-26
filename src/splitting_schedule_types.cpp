@@ -141,6 +141,17 @@ void DistrictOnlySplittingSchedule::set_potential_cut_sizes_for_each_valid_size(
     return;
 }
 
+// makes it so districts can be merged during merge split
+void DistrictOnlySplittingSchedule::update_cut_sizes_for_mergesplit_step(int split_num, int num_regions){
+    // if only one region then do nothing because only 1 district (if ndists=2 then we don't need to worry)
+    if(num_regions == 2) return;
+    // make it so we can merge districts 
+    valid_merge_pair_sizes[1][1] = true;
+    // make it so we can split a region of size 2
+    valid_region_sizes_to_split[2] = true;
+    return;
+}
+
 
 AnyRegionSMDSplittingSchedule::AnyRegionSMDSplittingSchedule(
     const int num_splits, const int ndists
@@ -346,6 +357,15 @@ void DistrictOnlyMMDSplittingSchedule::set_potential_cut_sizes_for_each_valid_si
 
     }
     
+}
+
+
+void DistrictOnlyMMDSplittingSchedule::update_cut_sizes_for_mergesplit_step(int split_num, int num_regions){
+    // make it so we can merge districts 
+    valid_merge_pair_sizes[1][1] = true;
+    // make it so we can split a region of size 2
+    valid_split_region_sizes[2] = true;
+    return;
 }
 
 

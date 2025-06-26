@@ -829,10 +829,42 @@ std::pair<bool, std::vector<std::pair<RegionID,RegionID>>> Plan::attempt_to_get_
 
 }
 
+std::vector<std::pair<RegionID,RegionID>> Plan::get_valid_smc_merge_regions(
+        PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule
+) const{
+    // build the multigraph 
+    plan_multigraph.build_plan_multigraph(*this);
+
+    std::vector<std::pair<RegionID,RegionID>> output_pairs;
+    output_pairs.reserve(plan_multigraph.pair_map.num_hier_smc_merge_valid_pairs);
+
+    // go through and only add pairs with valid size pairs 
+    for(auto const a_pair: plan_multigraph.pair_map.hashed_pairs){
+        // check both region sizes are valid split sizes and they are ok to merge
+        bool invalid_sizing = (
+            !splitting_schedule.valid_split_region_sizes[region_sizes[a_pair.first]] ||
+            !splitting_schedule.valid_split_region_sizes[region_sizes[a_pair.second]] ||
+            !splitting_schedule.valid_merge_pair_sizes[region_sizes[a_pair.first]][region_sizes[a_pair.second]]
+        );
+
+        if(invalid_sizing) continue;
+
+        // now check hierarchical merge is ok 
+        auto result =  plan_multigraph.pair_map.get_value(a_pair.first, a_pair.second);
+        // if yes then add to output
+        if(result.second.merge_is_hier_valid){
+            // if yes then add to output 
+            output_pairs.emplace_back(a_pair);
+        }
+    }
+    
+    return output_pairs;
+}
+
 
 // Prints relevant info - for debugging
 void RegionPairHash::Rprint() const{
-    REprintf("Pair Map has %d Elements:\n", num_hashed_values);
+    REprintf("Pair Map has %d Elements:\n", num_hashed_pairs);
     for(auto const &a_pair: hashed_pairs){
         auto val = get_value(a_pair.first, a_pair.second);
         REprintf("    Regions: (%u, %u) | %s Hierarchically Adjacent | %d within county edges, %d across county edges\n",
@@ -849,6 +881,8 @@ const{
     RegionMultigraphCount region_multigraph(num_regions);
     // iterate over all pairs and add the proper counts 
     for(auto const key_val_pair: get_all_values()){
+        // skip if not hierarchically valid merge 
+        if(!key_val_pair.second.merge_is_hier_valid) continue;
         int boundary_len;
         if(key_val_pair.second.admin_adjacent){
             // if administratively adjacent only count within same county
@@ -866,8 +900,57 @@ const{
     return region_multigraph;
 }
 
+
+// Need to take care because some previously inelgible hier merge pairs now 
+// become ok to merge 
+RegionMultigraphCount RegionPairHash::get_merged_multigraph_counts(
+            int const num_regions, std::vector<RegionID> &merge_index_reshuffle,
+            RegionID const region1_id, RegionID const region2_id 
+) const{
+
+    RegionMultigraphCount merged_region_multigraph(num_regions-1);
+
+    int merged_reindex = num_regions-2;
+    for (int current_reindex = 0, i = 0; i < num_regions; i++){
+        if(i == region1_id || i == region2_id){
+            merge_index_reshuffle[i] = merged_reindex;
+        }else{
+            merge_index_reshuffle[i] = current_reindex;
+            ++current_reindex;
+        }
+    }
+
+    return(merged_region_multigraph);
+
+
+    // for(auto const key_val_pair: get_all_values()){
+    //     // get the regions in the pair 
+    //     auto reindexed_region1_id = merge_index_reshuffle[key_val_pair.first.first];
+    //     auto reindexed_region2_id = merge_index_reshuffle[key_val_pair.first.second];
+    //     // Skip if the same region since that means its the merged pair itself 
+    //     if(reindexed_region1_id == reindexed_region2_id) continue;
+    //     // swap if out of order 
+    //     if(reindexed_region2_id < reindexed_region1_id) std::swap(reindexed_region1_id, reindexed_region2_id);
+    //     //
+    //     // skip if not hierarchically valid merge 
+    //     if(!key_val_pair.second.merge_is_hier_valid) continue;
+    //     int boundary_len;
+    //     if(key_val_pair.second.admin_adjacent){
+    //         // if administratively adjacent only count within same county
+    //         boundary_len = key_val_pair.second.within_county_edges;
+    //     }else{
+    //         // else only count across county 
+    //         boundary_len = key_val_pair.second.across_county_edges;
+    //     }
+
+    //     // we increase the count of edges
+    //     merged_region_multigraph[key_val_pair.first.first][key_val_pair.first.second] = boundary_len;
+    //     merged_region_multigraph[key_val_pair.first.second][key_val_pair.first.first] = boundary_len;
+    // }
+}
+
 void swap_pair_maps(RegionPairHash &a, RegionPairHash &b) {
-    std::swap(a.num_hashed_values, b.num_hashed_values);
+    std::swap(a.num_hashed_pairs, b.num_hashed_pairs);
     std::swap(a.values, b.values);
     std::swap(a.hashed, b.hashed);
     std::swap(a.hashed_pairs, b.hashed_pairs);
@@ -999,6 +1082,8 @@ void PlanMultigraph::build_plan_non_hierarchical_multigraph(
             }
         }
     }
+
+    pair_map.num_hier_smc_merge_valid_pairs = pair_map.num_hashed_pairs;
     
     return;
 }
@@ -1183,7 +1268,22 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(
         }
     }
 
-    
+    pair_map.num_hier_smc_merge_valid_pairs = pair_map.num_hashed_pairs;
+
+    // Now mark which pairs are hierarchically ok to merge 
+    for(auto const a_pair: pair_map.hashed_pairs){
+        // if different components then its ok. Since merge ok by default then continue
+        if(county_component[a_pair.first] != county_component[a_pair.second]) continue;
+
+        // else if they're the same component check if admin adjacent
+        auto hash_index = pair_map.pair_hash(a_pair.first, a_pair.second);
+        // if admin adjacent do nothing 
+        if(pair_map.values[hash_index].admin_adjacent) continue;
+        // else reset values mark merge as false 
+        pair_map.values[hash_index].merge_is_hier_valid = false;
+        --pair_map.num_hier_smc_merge_valid_pairs;
+    }
+
     return true;    
     
 }
@@ -1216,7 +1316,7 @@ void PlanMultigraph::remove_invalid_size_pairs(
             if(invalid_sizing){
                 auto hash_index = pair_map.pair_hash(a_pair.first, a_pair.second);
                 // else reset values and decrease hash table count 
-                --pair_map.num_hashed_values;
+                --pair_map.num_hashed_pairs;
                 pair_map.hashed[hash_index] = false;
                 pair_map.values[hash_index] = PairHashData();
             }
@@ -1238,16 +1338,11 @@ void PlanMultigraph::remove_invalid_hierarchical_merge_pairs(
     pair_map.hashed_pairs.erase(
         std::remove_if(pair_map.hashed_pairs.begin(), pair_map.hashed_pairs.end(), 
         [&](std::pair<RegionID, RegionID> a_pair) { 
-
-            // if different components then its ok 
-            if(county_component[a_pair.first] != county_component[a_pair.second]) return false;
-            // else if they're the same component check if admin adjacent
-
             auto hash_index = pair_map.pair_hash(a_pair.first, a_pair.second);
-            // if admin adjacent do nothing 
-            if(pair_map.values[hash_index].admin_adjacent) return false;
+            if(pair_map.values[hash_index].merge_is_hier_valid) return false;
+            
             // else reset values and decrease hash table count 
-            --pair_map.num_hashed_values;
+            --pair_map.num_hashed_pairs;
             pair_map.hashed[hash_index] = false;
             pair_map.values[hash_index] = PairHashData();
             return true;
@@ -1313,7 +1408,7 @@ void PlanMultigraph::remove_invalid_mergesplit_pairs(
             }
             if(invalid_merge){
                 // if invalid merge deteced then remove
-                --pair_map.num_hashed_values;
+                --pair_map.num_hashed_pairs;
                 pair_map.hashed[hash_index] = false;
                 pair_map.values[hash_index] = PairHashData();
             }
@@ -1325,6 +1420,8 @@ void PlanMultigraph::remove_invalid_mergesplit_pairs(
     return;
     
 }
+
+
 
 bool PlanMultigraph::is_hierarchically_valid(
     Plan const &plan, std::vector<bool> component_lookup

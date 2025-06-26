@@ -227,14 +227,9 @@ double compute_simple_log_incremental_weight(
 
     bool const use_linking_edge_space = sampling_space == SamplingSpace::LinkingEdgeSpace;
 
-    // build the plan multigraph 
-    plan_multigraph.build_plan_multigraph(plan);
-    // filter out invalid hierarchical merges
-    plan_multigraph.remove_invalid_hierarchical_merge_pairs(plan);
-    // if not linking edge then filter by size as well 
-    if(!use_linking_edge_space){
-        plan_multigraph.remove_invalid_size_pairs(plan, splitting_schedule);
-    }
+    // build the plan multigraph and get valid adj pairs 
+    auto valid_adj_pairs = plan.get_valid_smc_merge_regions(plan_multigraph, splitting_schedule);
+
 
     // compute forward and backwards kernel term 
     double log_backwards_kernel_term = 0.0; double log_forward_kernel_term = 0.0;
@@ -242,7 +237,7 @@ double compute_simple_log_incremental_weight(
 
     if(sampling_space == SamplingSpace::GraphSpace){
         // the number of valid adjacent regions is just the number of elements in the map
-        const int num_valid_adj_region_pairs = plan_multigraph.pair_map.num_hashed_values;
+        const int num_valid_adj_region_pairs = valid_adj_pairs.size();
         log_backwards_kernel_term -= std::log(
             static_cast<double>(num_valid_adj_region_pairs)
         );
@@ -262,14 +257,7 @@ double compute_simple_log_incremental_weight(
         double spanning_tree_sum = 0.0;
         double last_split_merge_log_tau = 0.0;
 
-        std::vector<std::pair<RegionID, RegionID>> adj_pairs;
-        if(use_linking_edge_space){
-            adj_pairs = plan.get_valid_smc_merge_regions(plan_multigraph, splitting_schedule);
-        }else{
-            adj_pairs = plan_multigraph.pair_map.hashed_pairs;
-        }
-
-        for (auto const &region_pair : adj_pairs){
+        for (auto const &region_pair : valid_adj_pairs){
             int pair_region1_id = region_pair.first;
             int pair_region2_id = region_pair.second;
             

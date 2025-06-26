@@ -14,8 +14,8 @@
 #' constraints. The MCMC proposal is the same as is used in the SMC sampler
 #' (McCartan and Imai 2023); it is similar but not identical to those used in
 #' the references.  1-level hierarchical Merge-split is supported through the
-#' \code{counties} parameter; unlike in the SMC algorithm, this does not
-#' guarantee a maximum number of county splits.
+#' \code{counties} parameter and it has the same guarantees of a maximum number
+#' of county splits as the SMCS algorithm.
 #'
 #' This function draws samples from a specific target measure, controlled by the
 #' \code{map}, \code{compactness}, and \code{constraints} parameters.
@@ -118,7 +118,7 @@ redist_mergesplit <- function(
     init_plan = NULL,
     constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
     sampling_space = c("graph_plan_space", "spanning_forest_space", "linking_edge_space"),
-    splitting_method = c("naive_top_k","uniform_valid_edge", "expo_bigger_abs_dev"),
+    split_method = c("naive_top_k","uniform_valid_edge", "expo_bigger_abs_dev"),
     splitting_params = list(adapt_k_thresh = .99),
     merge_prob_type = "uniform", compactness = 1,
     ncores = NULL,
@@ -130,7 +130,7 @@ redist_mergesplit <- function(
 
     # check default inputs
     sampling_space <- rlang::arg_match(sampling_space)
-    splitting_method <- rlang::arg_match(splitting_method)
+    split_method <- rlang::arg_match(split_method)
 
 
     # validate constraints
@@ -167,7 +167,7 @@ redist_mergesplit <- function(
 
     #validate the splitting method and params
     splitting_params <- validate_sample_space_and_splitting_method(
-        sampling_space, splitting_method, splitting_params, num_splitting_steps
+        sampling_space, split_method, splitting_params, num_splitting_steps
     )
 
 
@@ -201,9 +201,9 @@ redist_mergesplit <- function(
         n_smc_nsims <- max(chains, 50)
 
         init_plans <- get_plans_matrix(
-            redist_gsmc(map, n_smc_nsims, counties, compactness, constraints,
+            redist_smc(map, n_smc_nsims, counties, compactness, constraints,
                        resample = TRUE, splitting_params = splitting_params,
-                       sampling_space = sampling_space, splitting_method = splitting_method,
+                       sampling_space = sampling_space, split_method = split_method,
                        ref_name = FALSE, verbose = verbose, silent = silent)
             )[, sample.int(n=n_smc_nsims, size=chains, replace=F), drop=FALSE]
 
@@ -237,7 +237,7 @@ redist_mergesplit <- function(
 
 
     control = list(
-        splitting_method=splitting_method
+        splitting_method=split_method
     )
 
     # add the splitting parameters
@@ -348,11 +348,11 @@ redist_mergesplit <- function(
         algout$run_information <- list(
             valid_region_sizes_to_split_list=algout$valid_region_sizes_to_split_list,
             valid_split_region_sizes_list=algout$valid_split_region_sizes_list,
-            sampling_space=GRAPH_PLAN_SPACE_SAMPLING,
-            splitting_method = NAIVE_K_SPLITTING,
-            merge_prob_type = "uniform",
+            sampling_space=sampling_space,
+            split_method = split_method,
+            merge_prob_type = merge_prob_type,
             nsims = nsims,
-            alg_name = "pure_ms"
+            alg_name = "mergesplit"
         )
 
         storage.mode(algout$plans) <- "integer"

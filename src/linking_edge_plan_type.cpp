@@ -215,8 +215,6 @@ std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_a
 ) const{
     // build the multigraph 
     plan_multigraph.build_plan_multigraph(*this);
-    // remove invalid hierarchical merges if needed
-    plan_multigraph.remove_invalid_hierarchical_merge_pairs(*this);
 
     std::vector<std::tuple<RegionID, RegionID, double>> valid_adj_region_pairs_to_boundary_map;
     valid_adj_region_pairs_to_boundary_map.reserve(linking_edges.size());
@@ -234,7 +232,10 @@ std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_a
             // sanity check that we never get invalid pair 
             auto search_result = plan_multigraph.pair_map.get_value(edge_region1, edge_region2);
             if(!search_result.first){
-                REprintf("A pair of regions with linking edge is somehow hierarchically invalid now!\n");
+                REprintf("BIG BIG ERROR: A pair of regions with linking edge is somehow hierarchically invalid now!\n");
+                throw Rcpp::exception("A pair of regions with linking edge is somehow hierarchically invalid now!\n");
+            }else if(!search_result.second.merge_is_hier_valid){
+                REprintf("ERROR: A pair of regions with linking edge is somehow hierarchically invalid now!\n");
                 throw Rcpp::exception("A pair of regions with linking edge is somehow hierarchically invalid now!\n");
             }
 
@@ -252,9 +253,11 @@ std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_a
 std::vector<std::pair<RegionID,RegionID>> LinkingEdgePlan::get_valid_smc_merge_regions(
     PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule
 ) const{
+    // build the multigraph 
+    plan_multigraph.build_plan_multigraph(*this);
+
     std::vector<std::pair<RegionID,RegionID>> valid_adj_region;
     valid_adj_region.reserve(linking_edges.size());
-
 
     // Go through and find that pair 
     for (auto const &edge_pair: linking_edges){
@@ -296,7 +299,6 @@ std::pair<bool, std::vector<std::pair<RegionID,RegionID>>> LinkingEdgePlan::atte
 
     std::vector<std::pair<RegionID,RegionID>> valid_adj_region;
     valid_adj_region.reserve(linking_edges.size());
-
 
     // Go through and find that pair 
     for (auto const &edge_pair: linking_edges){
