@@ -14,7 +14,7 @@
 #include <cassert>
 #include <map>
 
-#include "gredist_types.h"
+#include "redist_types.h"
 #include "splitting_schedule_types.h"
 #include "tree_splitter_types.h"
 #include "tree_op.h"

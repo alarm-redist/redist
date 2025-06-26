@@ -703,7 +703,7 @@ get_original_ancestors_mat <- function(parent_mat){
     # get the original ancestors at every step from the parent matrix
     original_ancestor_mat <- sapply(
         2:ncol(parent_mat),
-        function(col_num) gredist::get_k_step_ancestors(parent_mat, steps_back = col_num-1, start_col = col_num)
+        function(col_num) redist::get_k_step_ancestors(parent_mat, steps_back = col_num-1, start_col = col_num)
     )
 
     # add the first column where every particles ancestor is iteslf

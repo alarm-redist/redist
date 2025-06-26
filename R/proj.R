@@ -13,7 +13,7 @@
 #' distribution when looking at projective contrasts. The `pfdr` argument to
 #' `proj_contr()` will calculate q-values for each precinct that can be used to
 #' control the positive false discovery rate (pFDR) to avoid being misled by
-#' this variation. See [gredist.plot.contr_pfdr()] for a way to automatically
+#' this variation. See [redist.plot.contr_pfdr()] for a way to automatically
 #' plot projective contrasts with this false discovery rate control.
 #'
 #' @param plans A [redist_plans] object.
@@ -217,14 +217,14 @@ qvalues <- function(ests, p) {
 #' plans$dem <- group_frac(map, dem_08, tot_08, plans)
 #'
 #' pc = proj_contr(plans, dem, pfdr=TRUE)
-#' gredist.plot.contr_pfdr(map, pc, level=0.4) # high `level` just to demonstrate
+#' redist.plot.contr_pfdr(map, pc, level=0.4) # high `level` just to demonstrate
 #'
 #'
 #' @concept plot
 #' @export
-gredist.plot.contr_pfdr <- function(map, contr, level=0.05, density=0.2, spacing=0.015) {
+redist.plot.contr_pfdr <- function(map, contr, level=0.05, density=0.2, spacing=0.015) {
     if (is.null(attr(contr, "q"))) {
-        cli_abort("Must provide {.arg pfdr=TRUE} to {.fn proj_contr} to use {.fn gredist.plot.contr_pfdr}.")
+        cli_abort("Must provide {.arg pfdr=TRUE} to {.fn proj_contr} to use {.fn redist.plot.contr_pfdr}.")
     }
 
     p = plot(map, contr)

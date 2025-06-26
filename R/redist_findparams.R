@@ -228,14 +228,14 @@ run_sims <- function(i, params, map, nsims, init_plan,
 
 #' Run parameter testing for \code{redist_flip}
 #'
-#' \code{gredist.findparams} is used to find optimal parameter values of
+#' \code{redist.findparams} is used to find optimal parameter values of
 #' \code{redist_flip} for a given map.
 #'
 #' @param map A \code{\link{redist_map}} object.
 #' @param nsims The number of simulations run before a save point.
 #' @param init_plan A vector containing the congressional district labels
 #' of each geographic unit. The default is \code{NULL}. If not provided, random
-#' and contiguous congressional district assignments will be generated using \code{gredist.rsg}.
+#' and contiguous congressional district assignments will be generated using \code{redist.rsg}.
 #' @param adapt_lambda Whether to adaptively tune the lambda parameter so that the Metropolis-Hastings
 #' acceptance probability falls between 20% and 40%. Default is FALSE.
 #' @param adapt_eprob Whether to adaptively tune the edgecut probability parameter so that the
@@ -269,13 +269,13 @@ run_sims <- function(i, params, map, nsims, init_plan,
 #' @details This function allows users to test multiple parameter settings of
 #' \code{redist_flip} in preparation for a longer run for analysis.
 #'
-#' @return \code{gredist.findparams} returns a print-out of summary statistics
+#' @return \code{redist.findparams} returns a print-out of summary statistics
 #' about each parameter setting.
 #'
 #' @references Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander
 #' Tarr. (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte
 #' Carlo." Working Paper. Available at
-#' \url{http://imai.princeton.edu/research/files/gredist.pdf}.
+#' \url{http://imai.princeton.edu/research/files/redist.pdf}.
 #'
 #' @importFrom dplyr slice
 #'
@@ -292,12 +292,12 @@ run_sims <- function(i, params, map, nsims, init_plan,
 #' # Make map
 #' map_fl <- redist_map(fl25, ndists = 3, pop_tol = 0.2)
 #' ## Run the algorithm
-#' gredist.findparams(map_fl,
+#' redist.findparams(map_fl,
 #'     init_plan = init_plan, nsims = 10000, params = params)
 #' }
 #' @concept prepare
 #' @export
-gredist.findparams <- function(map,
+redist.findparams <- function(map,
                               nsims,
                               init_plan = NULL,
                               adapt_lambda = FALSE, adapt_eprob = FALSE,
@@ -313,7 +313,7 @@ gredist.findparams <- function(map,
     ## Starting statement
     if (verbose) {
         cat(paste("## ------------------------------\n",
-            "## gredist.findparams(): Parameter tuning for redist_flip()\n",
+            "## redist.findparams(): Parameter tuning for redist_flip()\n",
             "## Searching over", trials, "parameter combinations\n",
             "## ------------------------------\n\n", sep = " "))
     }

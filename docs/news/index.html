@@ -16,14 +16,14 @@
         <span class="icon-bar"></span>
       </button>
       <span class="navbar-brand">
-        <a class="navbar-link" href="../index.html">gredist</a>
+        <a class="navbar-link" href="../index.html">redist</a>
         <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.2.0</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav"><li>
-  <a href="../articles/gredist.html">Get started</a>
+  <a href="../articles/redist.html">Get started</a>
 </li>
 <li>
   <a href="../reference/index.html">Reference</a>
@@ -35,7 +35,7 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu"><li>
-      <a href="../articles/common_args.html">Common Arguments to `gredist` Functions</a>
+      <a href="../articles/common_args.html">Common Arguments to `redist` Functions</a>
     </li>
     <li>
       <a href="../articles/flip.html">Redistricting with Flip MCMC</a>
@@ -52,7 +52,7 @@
   </a>
   <ul class="dropdown-menu" role="menu"><li class="dropdown-header">Releases</li>
     <li>
-      <a href="https://alarm-gredist.github.io/posts/2021-04-02-gredist-300/" class="external-link">gredist 3.0</a>
+      <a href="https://alarm-redist.github.io/posts/2021-04-02-redist-300/" class="external-link">redist 3.0</a>
     </li>
     <li class="divider">
     <li>
@@ -60,7 +60,7 @@
     </li>
   </ul></li>
       </ul><ul class="nav navbar-nav navbar-right"><li>
-  <a href="https://github.com/alarm-gredist/gredist/" class="external-link">
+  <a href="https://github.com/alarm-redist/redist/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -75,25 +75,25 @@
   <div class="col-md-9 contents">
     <div class="page-header">
       <h1 data-toc-skip>Changelog <small></small></h1>
-      <small>Source: <a href="https://github.com/alarm-gredist/gredist/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/alarm-redist/redist/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
-<h2 class="page-header" data-toc-text="4.1.1" id="gredist-411">gredist 4.1.1<a class="anchor" aria-label="anchor" href="#gredist-411"></a></h2>
+<h2 class="page-header" data-toc-text="4.1.1" id="redist-411">redist 4.1.1<a class="anchor" aria-label="anchor" href="#redist-411"></a></h2>
 <ul><li>Resolves a sanitizer error for CRAN</li>
 </ul></div>
     <div class="section level2">
-<h2 class="page-header" data-toc-text="4.1.0" id="gredist-410">gredist 4.1.0<a class="anchor" aria-label="anchor" href="#gredist-410"></a></h2>
+<h2 class="page-header" data-toc-text="4.1.0" id="redist-410">redist 4.1.0<a class="anchor" aria-label="anchor" href="#redist-410"></a></h2>
 <ul><li>Improved diagnostic output</li>
 <li>New <code>redist_ci</code> interface for confidence interval calculation</li>
-<li>Improved plotting options with <code><a href="../reference/gredist.plot.distr_qtys.html">gredist.plot.distr_qtys()</a></code> for custom geometry types.</li>
+<li>Improved plotting options with <code><a href="../reference/redist.plot.distr_qtys.html">redist.plot.distr_qtys()</a></code> for custom geometry types.</li>
 <li>Improved resampling efficiency at the final SMC stage</li>
 <li>Faster implementation of loop-erased random walk in C++</li>
 <li>Faster random number generation in C++</li>
 <li>Updated citation information</li>
 </ul></div>
     <div class="section level2">
-<h2 class="page-header" data-toc-text="4.0.0" id="gredist-400">gredist 4.0.0<a class="anchor" aria-label="anchor" href="#gredist-400"></a></h2>
+<h2 class="page-header" data-toc-text="4.0.0" id="redist-400">redist 4.0.0<a class="anchor" aria-label="anchor" href="#redist-400"></a></h2>
 <ul><li>A new constraint interface that is more flexible, user friendly, and consistent across algorithms (see <code><a href="../reference/redist_constr.html">redist_constr()</a></code> and <code><a href="../reference/constraints.html">?constraints</a></code>). For the first time, user-defined custom constraints are supported and integrated within all three algorithms.</li>
 <li>New diagnostic-checking function, <code><a href="../reference/summary.redist_plans.html">summary.redist_plans()</a></code>
 </li>
@@ -108,45 +108,45 @@
 <li>Improved algorithm reporting, including new progress bars and <code>cli</code> errors and warnings throughout the package</li>
 <li>Update the SMC algorithm to include a missing correction factor for the number of ways to sequentially label districts. This factor should not have an effect on substantive conclusions and summary statistics.</li>
 <li>Remove deprecated functions</li>
-<li>Many bug fixes (see <a href="https://github.com/alarm-gredist/gredist/issues" class="external-link uri">https://github.com/alarm-gredist/gredist/issues</a>)</li>
+<li>Many bug fixes (see <a href="https://github.com/alarm-redist/redist/issues" class="external-link uri">https://github.com/alarm-redist/redist/issues</a>)</li>
 </ul></div>
     <div class="section level2">
-<h2 class="page-header" data-toc-text="3.1.6" id="gredist-316">gredist 3.1.6<a class="anchor" aria-label="anchor" href="#gredist-316"></a></h2>
+<h2 class="page-header" data-toc-text="3.1.6" id="redist-316">redist 3.1.6<a class="anchor" aria-label="anchor" href="#redist-316"></a></h2>
 <ul><li>Utilities for using municipalities as well as counties in split calculations</li>
 </ul></div>
     <div class="section level2">
-<h2 class="page-header" data-toc-text="3.1.5" id="gredist-315">gredist 3.1.5<a class="anchor" aria-label="anchor" href="#gredist-315"></a></h2>
+<h2 class="page-header" data-toc-text="3.1.5" id="redist-315">redist 3.1.5<a class="anchor" aria-label="anchor" href="#redist-315"></a></h2>
 <ul><li>skip SMC test on Linux</li>
 </ul></div>
     <div class="section level2">
-<h2 class="page-header" data-toc-text="3.1.4" id="gredist-314">gredist 3.1.4<a class="anchor" aria-label="anchor" href="#gredist-314"></a></h2>
+<h2 class="page-header" data-toc-text="3.1.4" id="redist-314">redist 3.1.4<a class="anchor" aria-label="anchor" href="#redist-314"></a></h2>
 <ul><li>skip SMC test on Solaris</li>
 </ul></div>
     <div class="section level2">
-<h2 class="page-header" data-toc-text="3.1.2" id="gredist-312">gredist 3.1.2<a class="anchor" aria-label="anchor" href="#gredist-312"></a></h2>
-<ul><li>Fixes crash caused by <code><a href="../reference/gredist.splits.html">gredist.splits()</a></code>
+<h2 class="page-header" data-toc-text="3.1.2" id="redist-312">redist 3.1.2<a class="anchor" aria-label="anchor" href="#redist-312"></a></h2>
+<ul><li>Fixes crash caused by <code><a href="../reference/redist.splits.html">redist.splits()</a></code>
 </li>
 </ul></div>
     <div class="section level2">
-<h2 class="page-header" data-toc-text="3.1.1" id="gredist-311">gredist 3.1.1<a class="anchor" aria-label="anchor" href="#gredist-311"></a></h2>
+<h2 class="page-header" data-toc-text="3.1.1" id="redist-311">redist 3.1.1<a class="anchor" aria-label="anchor" href="#redist-311"></a></h2>
 <ul><li>Fixes printing bug in <code>color_graph()</code>
 </li>
 </ul></div>
     <div class="section level2">
-<h2 class="page-header" data-toc-text="3.1.0" id="gredist-310">gredist 3.1.0<a class="anchor" aria-label="anchor" href="#gredist-310"></a></h2>
+<h2 class="page-header" data-toc-text="3.1.0" id="redist-310">redist 3.1.0<a class="anchor" aria-label="anchor" href="#redist-310"></a></h2>
 <ul><li>Removes prior deprecated functions and arguments</li>
-<li>Fix bugs (<a href="https://github.com/alarm-gredist/gredist/issues/78" class="external-link">#78</a>, <a href="https://github.com/alarm-gredist/gredist/issues/81" class="external-link">#81</a>, <a href="https://github.com/alarm-gredist/gredist/issues/86" class="external-link">#86</a>)</li>
+<li>Fix bugs (<a href="https://github.com/alarm-redist/redist/issues/78" class="external-link">#78</a>, <a href="https://github.com/alarm-redist/redist/issues/81" class="external-link">#81</a>, <a href="https://github.com/alarm-redist/redist/issues/86" class="external-link">#86</a>)</li>
 <li>Introduces <code><a href="../reference/redist_mergesplit_parallel.html">redist_mergesplit_parallel()</a></code>
 </li>
 <li>Adds <code><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind()</a></code> generic for <code>redist_plans</code> objects</li>
 <li>Improves sampling speed for SMC and Merge-split with county constraint</li>
 <li>Adds county split measures.</li>
 <li>Adds population overlap measures for plan comparisons.</li>
-<li>Deprecates <code>gredist.smc()</code> in favor of <code><a href="../reference/redist_smc.html">redist_smc()</a></code> and <code>gredist.mergesplit()</code> in favor of <code><a href="../reference/redist_mergesplit.html">redist_mergesplit()</a></code>. # gredist 3.0.2</li>
-<li>Fix bugs (<a href="https://github.com/alarm-gredist/gredist/issues/60" class="external-link">#60</a>, <a href="https://github.com/alarm-gredist/gredist/issues/61" class="external-link">#61</a>, <a href="https://github.com/alarm-gredist/gredist/issues/62" class="external-link">#62</a>, <a href="https://github.com/alarm-gredist/gredist/issues/70" class="external-link">#70</a>, <a href="https://github.com/alarm-gredist/gredist/issues/71" class="external-link">#71</a>, <a href="https://github.com/alarm-gredist/gredist/issues/72" class="external-link">#72</a>), including s2 compatibility, Solaris fixes, and improved dplyr verb robustness.</li>
+<li>Deprecates <code>redist.smc()</code> in favor of <code><a href="../reference/redist_smc.html">redist_smc()</a></code> and <code>redist.mergesplit()</code> in favor of <code><a href="../reference/redist_mergesplit.html">redist_mergesplit()</a></code>. # redist 3.0.2</li>
+<li>Fix bugs (<a href="https://github.com/alarm-redist/redist/issues/60" class="external-link">#60</a>, <a href="https://github.com/alarm-redist/redist/issues/61" class="external-link">#61</a>, <a href="https://github.com/alarm-redist/redist/issues/62" class="external-link">#62</a>, <a href="https://github.com/alarm-redist/redist/issues/70" class="external-link">#70</a>, <a href="https://github.com/alarm-redist/redist/issues/71" class="external-link">#71</a>, <a href="https://github.com/alarm-redist/redist/issues/72" class="external-link">#72</a>), including s2 compatibility, Solaris fixes, and improved dplyr verb robustness.</li>
 </ul></div>
     <div class="section level2">
-<h2 class="page-header" data-toc-text="3.0.1" id="gredist-301">gredist 3.0.1<a class="anchor" aria-label="anchor" href="#gredist-301"></a></h2>
+<h2 class="page-header" data-toc-text="3.0.1" id="redist-301">redist 3.0.1<a class="anchor" aria-label="anchor" href="#redist-301"></a></h2>
 <ul><li>New tidy interface, including new <code>redist_map</code> and <code>redist_plans</code> objects</li>
 <li>Merge-split MCMC now available in <code><a href="../reference/redist_mergesplit.html">redist_mergesplit()</a></code>
 </li>
@@ -166,8 +166,8 @@
 <li>Various bug fixes</li>
 </ul></div>
     <div class="section level2">
-<h2 class="page-header" data-toc-text="2.0.4" id="gredist-204">gredist 2.0.4<a class="anchor" aria-label="anchor" href="#gredist-204"></a></h2>
-<ul><li>New <code>gredist.subset</code> allows for easy subsetting of an adjacency graph</li>
+<h2 class="page-header" data-toc-text="2.0.4" id="redist-204">redist 2.0.4<a class="anchor" aria-label="anchor" href="#redist-204"></a></h2>
+<ul><li>New <code>redist.subset</code> allows for easy subsetting of an adjacency graph</li>
 <li>Added a <code>NEWS.md</code> file to track changes to the package</li>
 </ul></div>
   </div>

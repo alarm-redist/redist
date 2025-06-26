@@ -285,7 +285,7 @@ legacy_redist_smc <- function(map, nsims, counties = NULL, compactness = 1, cons
         parallel::clusterEvalQ(cl, {
             suppressPackageStartupMessages(library(foreach))
             suppressPackageStartupMessages(library(rngtools))
-            suppressPackageStartupMessages(library(gredist))
+            suppressPackageStartupMessages(library(redist))
         })
         # weird code, probably remove in production and find better way to ensure printing
         # but essentially makes it so only one process will print but if more runs then processes
@@ -305,7 +305,7 @@ legacy_redist_smc <- function(map, nsims, counties = NULL, compactness = 1, cons
     control[["cores"]] <- num_threads_per_process
 
     t1 <- Sys.time()
-    all_out <- foreach(chain = seq_len(runs), .inorder = FALSE, .packages="gredist") %oper% {
+    all_out <- foreach(chain = seq_len(runs), .inorder = FALSE, .packages="redist") %oper% {
         if(chain == 1){
             is_chain1 <- T
         }
@@ -343,7 +343,7 @@ legacy_redist_smc <- function(map, nsims, counties = NULL, compactness = 1, cons
                              {.val {NA}} or {.val {Inf}}",
                 "*" = "If you are not using any constraints, please call
                              {.code rlang::trace_back()} and file an issue at
-                             {.url https://github.com/alarm-gredist/gredist/issues/new}"))
+                             {.url https://github.com/alarm-redist/redist/issues/new}"))
         }
 
         n_unique <- NA
@@ -478,7 +478,7 @@ legacy_redist_smc <- function(map, nsims, counties = NULL, compactness = 1, cons
                             constraints = constraints,
                             pop_bounds = pop_bounds,
                             entire_runtime = t2-t1,
-                            version = packageVersion("gredist"),
+                            version = packageVersion("redist"),
                             diagnostics = l_diag,
                             run_information = run_information,
                             internal_diagnostics = internal_diagnostics,

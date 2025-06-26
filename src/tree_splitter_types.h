@@ -3,7 +3,7 @@
 #define TREE_SPLITTER_TYPES_H
 
 #include <RcppArmadillo.h>
-#include "gredist_types.h"
+#include "redist_types.h"
 #include "tree_op.h"
 #include "tree_splitting.h"
 

@@ -1,8 +1,8 @@
 #' @keywords internal
-#' @aliases gredist-package gredist
+#' @aliases redist-package redist
 "_PACKAGE"
 
-#' @useDynLib gredist, .registration = TRUE
+#' @useDynLib redist, .registration = TRUE
 #'
 #' @import redistmetrics
 #' @importFrom Rcpp evalCpp

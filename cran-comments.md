@@ -18,5 +18,5 @@ There are no reverse dependencies to check.
 
 ## Additional Notes
 
-* Fixes itemize braces Rd note for `gredist.calc.frontier.size.Rd`, `gredist.crsg.Rd`, and `gredist.rsg.Rd`.
+* Fixes itemize braces Rd note for `redist.calc.frontier.size.Rd`, `redist.crsg.Rd`, and `redist.rsg.Rd`.
 * Fixes "memory not mapped" error in `persily` function, which was due to be removed from the package in this release.

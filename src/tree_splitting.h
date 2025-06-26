@@ -8,7 +8,7 @@
 #include <queue>
 
 #include "gredist_constants.h"
-#include "gredist_types.h"
+#include "redist_types.h"
 #include "smc_base.h"
 #include "tree_op.h"
 

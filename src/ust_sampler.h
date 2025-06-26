@@ -3,7 +3,7 @@
 #define UST_SAMPLER_H
 
 #include <RcppArmadillo.h>
-#include "gredist_types.h"
+#include "redist_types.h"
 #include "tree_op.h"
 #include "base_plan_type.h"
 

@@ -3,7 +3,7 @@
 #define SPLITTING_SCHEDULE_TYPES_H
 
 
-#include "gredist_types.h"
+#include "redist_types.h"
 
 
 /*

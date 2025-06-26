@@ -98,7 +98,7 @@
 #' @param init_plan A vector containing the congressional district labels
 #' of each geographic unit. The default is \code{NULL}. If not provided,
 #' a random initial plan will be generated using \code{redist_smc}. You can also
-#' request to initialize using \code{gredist.rsg} by supplying 'rsg', though this is
+#' request to initialize using \code{redist.rsg} by supplying 'rsg', though this is
 #' not recommended behavior.
 #' @param constraints A `redist_constr` object.
 #' @param thin The amount by which to thin the Markov Chain. The
@@ -160,7 +160,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
 
     if (!missing(nthin)) {
         thin <- nthin
-        .Deprecated(msg = 'Argument `nthin` is deprecated in favor of `thin` in gredist 4.2.0 for consistency.')
+        .Deprecated(msg = 'Argument `nthin` is deprecated in favor of `thin` in redist 4.2.0 for consistency.')
     }
     if (verbose) {
         ## Initialize ##
@@ -231,7 +231,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
         cli::cli_alert_info("Preprocessing data.")
     }
 
-    preprocout <- gredist.preproc(
+    preprocout <- redist.preproc(
         adj = adj,
         total_pop = total_pop,
         init_plan = init_plan,
@@ -270,8 +270,8 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
         verbose = as.logical(verbose)
     )
 
-    algout <- gredist.warmup.chain(algout, warmup = warmup)
-    algout <- gredist.thin.chain(algout, thin = thin)
+    algout <- redist.warmup.chain(algout, warmup = warmup)
+    algout <- redist.thin.chain(algout, thin = thin)
 
 
     algout$plans <- algout$plans + 1L
@@ -333,7 +333,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
 #' @param init_plan A vector containing the congressional district labels
 #' of each geographic unit. The default is \code{NULL}. If not provided,
 #' a random initial plan will be generated using \code{redist_smc}. You can also
-#' request to initialize using \code{gredist.rsg} by supplying 'rsg', though this is
+#' request to initialize using \code{redist.rsg} by supplying 'rsg', though this is
 #' not recommended behavior.
 #' @param constraints A `redist_constr` object.
 #' @param num_hot_steps The number of steps to run the simulator at beta = 0.
@@ -456,7 +456,7 @@ redist_flip_anneal <- function(map,
     if (verbose) {
         cat("Preprocessing data.\n\n")
     }
-    preprocout <- gredist.preproc(adj = adj, total_pop = total_pop,
+    preprocout <- redist.preproc(adj = adj, total_pop = total_pop,
         init_plan = init_plan, ndists = ndists,
         pop_tol = pop_tol,
         temper = FALSE,
@@ -509,7 +509,7 @@ redist_flip_anneal <- function(map,
         warmup = warmup,
         nthin = thin,
         mh_acceptance = mean(algout$mhdecisions),
-        version = packageVersion("gredist"),
+        version = packageVersion("redist"),
     ) %>% mutate(
         distance_parity = rep(algout$distance_parity, each = ndists),
         mhdecisions = rep(algout$mhdecisions, each = ndists),

@@ -19,7 +19,7 @@
 #' @references Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander Tarr.
 #' (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte Carlo."
 #' Working Paper. Available at
-#' \url{http://imai.princeton.edu/research/files/gredist.pdf}.
+#' \url{http://imai.princeton.edu/research/files/redist.pdf}.
 #'
 #' Massey, Douglas and Nancy Denton. (1987) "The Dimensions of Social Segregation".
 #' Social Forces.
@@ -61,7 +61,7 @@ NULL
 #' @references Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander Tarr.
 #' (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte Carlo."
 #' Working Paper. Available at
-#' \url{http://imai.princeton.edu/research/files/gredist.pdf}.
+#' \url{http://imai.princeton.edu/research/files/redist.pdf}.
 #' @concept data
 #' @examples
 #' data(fl25)
@@ -81,7 +81,7 @@ NULL
 #' @references Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander Tarr.
 #' (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte Carlo."
 #' Working Paper. Available at
-#' \url{http://imai.princeton.edu/research/files/gredist.pdf}.
+#' \url{http://imai.princeton.edu/research/files/redist.pdf}.
 #' @concept data
 #' @examples
 #' data(fl25_adj)
@@ -197,7 +197,7 @@ NULL
 #' EPSG Table
 #'
 #' This data contains NAD83 (HARN) EPSG codes for every U.S. state.
-#' Since `gredist` uses projected geometries, it is often a good idea to use
+#' Since `redist` uses projected geometries, it is often a good idea to use
 #' projections tailored to a particular state, rather than, for example, a
 #' Mercator projection. Use these codes along with [sf::st_transform()] to
 #' project your shapefiles nicely.

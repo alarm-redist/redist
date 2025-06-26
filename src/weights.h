@@ -13,7 +13,7 @@
 #include <set>
 #include <utility> // for std::pair
 #include <cmath>
-#include "gredist_types.h"
+#include "redist_types.h"
 #include "base_plan_type.h"
 #include "splitting_schedule_types.h"
 #include "tree_op.h"

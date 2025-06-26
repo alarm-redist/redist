@@ -80,7 +80,7 @@ merge_by <- function(.data, ..., by_existing = TRUE, drop_geom = TRUE, collapse_
     }
 }
 
-#' @rdname gredist.identify.cores
+#' @rdname redist.identify.cores
 #' @order 1
 #'
 #' @param .data a \code{\link{redist_map}} object
@@ -99,7 +99,7 @@ make_cores <- function(.data = cur_map(), boundary = 1, focus = NULL) {
         cli_abort(c("No existing plan found from which to compute cores.",
                     ">" = "Add one using the {.arg existing_plan} argument to {.fun redist_map}"))
 
-    gredist.identify.cores(adj = get_adj(.data),
+    redist.identify.cores(adj = get_adj(.data),
                           plan = vctrs::vec_group_id(existing),
                           boundary = boundary, focus = focus, simplify = TRUE)
 }

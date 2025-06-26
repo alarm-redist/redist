@@ -12,9 +12,9 @@
 #' @examples
 #' cds <- matrix(c(rep(c(4L, 5L, 2L, 1L, 3L), 5),
 #'     rep(c(5L, 4L, 3L, 2L, 1L), 2), rep(c(4L, 5L, 2L, 1L, 3L), 3)), nrow = 25)
-#' gredist.reorder(cds)
+#' redist.reorder(cds)
 #'
-gredist.reorder <- function(plans) {
+redist.reorder <- function(plans) {
     # Check inputs
     if (!is.matrix(plans)) {
         if (is.numeric(plans)) {
@@ -47,7 +47,7 @@ gredist.reorder <- function(plans) {
 #' # Now plan can be used with redist_flip()
 #' plan
 #'
-gredist.sink.plan <- function(plan) {
+redist.sink.plan <- function(plan) {
     .Deprecated("vctrs::vec_group_id")
     vctrs::vec_group_id(plan)
 }

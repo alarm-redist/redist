@@ -2,8 +2,7 @@
 % Please edit documentation in R/plan_calculations.R
 \name{compute_log_optimal_weights}
 \alias{compute_log_optimal_weights}
-\title{Computes the unnormalized log target density for a ONE INDEXED! plans matrix
-gSMC Redistricting Sampler (O'Sullivan, McCartan and Imai ???)}
+\title{Computes the unnormalized log incremental weights for plan}
 \usage{
 compute_log_optimal_weights(
   map,
@@ -18,8 +17,33 @@ compute_log_optimal_weights(
 )
 }
 \arguments{
+\item{map}{A \code{\link[=redist_map]{redist_map()}} object.}
+
+\item{counties}{A vector containing county (or other administrative or
+geographic unit) labels for each unit, which may be integers ranging from 1
+to the number of counties, or a factor or character vector.  If provided,
+the algorithm will only generate maps which split up to \code{ndists-1}
+counties. Even if there are fewer counties than \code{ndists - 1}, the spanning
+trees will change the results of the simulations. There is no strength
+parameter associated with this constraint. To adjust the number of county
+splits further, or to constrain a second type of administrative split,
+consider using \code{add_constr_splits()}, \code{add_constr_multisplits()}, and
+\code{add_constr_total_splits()}.}
+
+\item{constraints}{A \code{\link[=redist_constr]{redist_constr()}} object or a list containing
+information on sampling constraints. See \link{constraints} for more information.}
+
 \item{num_threads}{The number of threads used for computing
 the target densities.}
+
+\item{compactness}{Controls the compactness of the generated districts, with
+higher values preferring more compact districts. Must be nonnegative. See
+the 'Details' section for more information, and computational
+considerations.}
+
+\item{pop_temper}{The strength of the automatic population tempering. Try
+values of 0.01-0.05 to start if the algorithm gets stuck on the final few
+splits.}
 
 \item{plan_matrix}{A matrix of 1-indexed plans}
 
@@ -31,18 +55,5 @@ must sum to \code{ndists}.}
 A vector of the unnormalized target density of each plan
 }
 \description{
-\code{generic_redist_gsmc} uses a Sequential Monte Carlo algorithm (O'Sullivan, McCartan and Imai ???)
-to generate representative samples of congressional or legislative
-redistricting plans according to contiguity, population, compactness, and
-administrative boundary constraints.
-}
-\details{
-Sampling can be performed either on the space of plans (graph partitions) or
-on the space of spanning forests. This is an internal function designed to
-support either sampling space and any arbitrary tree splitting method. The
-functions \code{redist_gsmc} and \code{treedist_gsmc} are largely wrappers to calling
-this function.
-
-This function draws samples from a specific target measure controlled by
-the \code{map} parameters.
+Computes the unnormalized log incremental weights for plan
 }

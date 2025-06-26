@@ -6,7 +6,7 @@
 #include <stack>
 #include <queue>
 #include <RcppArmadillo.h>
-#include "gredist_types.h"
+#include "redist_types.h"
 #include "smc_base.h"
 
 // [[Rcpp::depends(RcppArmadillo)]]

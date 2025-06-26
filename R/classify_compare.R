@@ -168,7 +168,7 @@ compare_plans <- function(plans, set1, set2, shp = NULL, plot = "fill", thresh =
             p1 + p2 + patchwork::plot_annotation(title = "Eigenvectors")
         } else if (plot == "adj") {
             if (!inherits(shp, "redist_map")) {
-                adj <- gredist.adjacency(shp)
+                adj <- redist.adjacency(shp)
             } else {
                 adj <- get_adj(shp)
             }

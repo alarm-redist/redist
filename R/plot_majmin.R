@@ -1,6 +1,6 @@
 #' Majority Minority Plots
 #'
-#' @param grouppercent output from gredist.group.percent
+#' @param grouppercent output from redist.group.percent
 #' @param type string in 'hist', 'toptwo', or 'box'
 #' @param title ggplot title
 #'
@@ -10,7 +10,7 @@
 #' @return ggplot
 #' @concept plot
 #' @export
-gredist.plot.majmin <- function(grouppercent, type = "hist", title = "") {
+redist.plot.majmin <- function(grouppercent, type = "hist", title = "") {
 
     if (type == "hist") {
         mm <- colSums(grouppercent > 0.5)

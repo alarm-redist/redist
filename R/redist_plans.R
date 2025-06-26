@@ -2,7 +2,7 @@
 ## Author: Cory McCartan
 ## Institution: Harvard University
 ## Date Created: 2021/01/28
-## Purpose: gredist functions for a tidy workflow
+## Purpose: redist functions for a tidy workflow
 ##############################################
 
 
@@ -206,7 +206,7 @@ reconstruct.redist_plans <- function(data, old) {
 #' data(iowa)
 #'
 #' iowa <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05, total_pop = pop)
-#' rsg_plan <- gredist.rsg(iowa$adj, iowa$pop, ndists = 4, pop_tol = 0.05)$plan
+#' rsg_plan <- redist.rsg(iowa$adj, iowa$pop, ndists = 4, pop_tol = 0.05)$plan
 #' redist_plans(rsg_plan, iowa, "rsg")
 #'
 #' @md

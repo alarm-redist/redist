@@ -30,7 +30,7 @@ data(fl25_enum)
 Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander Tarr.
 (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte Carlo."
 Working Paper. Available at
-\url{http://imai.princeton.edu/research/files/gredist.pdf}.
+\url{http://imai.princeton.edu/research/files/redist.pdf}.
 
 Massey, Douglas and Nancy Denton. (1987) "The Dimensions of Social Segregation".
 Social Forces.

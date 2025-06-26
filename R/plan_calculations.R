@@ -14,7 +14,7 @@
 #' (if relevant) and the procuct over regions of the regions compactness and
 #' its score
 #'
-#' @inheritParams redist_gsmc
+#' @inheritParams redist_smc
 #' @param plans Either a `redist_plans` object or a matrix or vector of plan labels
 #' @param num_threads The number of threads used for computing
 #' the target densities.
@@ -109,7 +109,7 @@ compute_log_target_density <- function(
 #' that if the target measure has a plan-wide component then the sum of the log
 #' densities over regions is not neccesarily equal to the log density of an entire plan.
 #'
-#' @inheritParams redist_gsmc
+#' @inheritParams redist_smc
 #' @param num_threads The number of threads used for computing
 #' the target densities.
 #' @param plan_matrix A matrix of 1-indexed plans
@@ -195,24 +195,10 @@ compute_log_target_density_by_region <- function(
 }
 
 
-#' Computes the unnormalized log target density for a ONE INDEXED! plans matrix
-#' gSMC Redistricting Sampler (O'Sullivan, McCartan and Imai ???)
+#' Computes the unnormalized log incremental weights for plan
 #'
-#' `generic_redist_gsmc` uses a Sequential Monte Carlo algorithm (O'Sullivan, McCartan and Imai ???)
-#' to generate representative samples of congressional or legislative
-#' redistricting plans according to contiguity, population, compactness, and
-#' administrative boundary constraints.
 #'
-#' Sampling can be performed either on the space of plans (graph partitions) or
-#' on the space of spanning forests. This is an internal function designed to
-#' support either sampling space and any arbitrary tree splitting method. The
-#' functions `redist_gsmc` and `treedist_gsmc` are largely wrappers to calling
-#' this function.
-#'
-#' This function draws samples from a specific target measure controlled by
-#' the `map` parameters.
-#'
-#' @inheritParams redist_gsmc
+#' @inheritParams redist_smc
 #' @param num_threads The number of threads used for computing
 #' the target densities.
 #' @param plan_matrix A matrix of 1-indexed plans

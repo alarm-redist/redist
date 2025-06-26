@@ -308,7 +308,6 @@ manually_split_a_multidistrict <- function(
 #' see \code{\link{manually_split_a_multidistrict}}.
 #'
 #' @inheritParams redist_smc
-#' @inheritParams redist_gsmc
 #'
 #' @returns A list of length `ndists - 1` where each element of the list is
 #' itself a list where each elements are the return values of

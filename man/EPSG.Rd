@@ -12,7 +12,7 @@ data("EPSG")
 }
 \description{
 This data contains NAD83 (HARN) EPSG codes for every U.S. state.
-Since \code{gredist} uses projected geometries, it is often a good idea to use
+Since \code{redist} uses projected geometries, it is often a good idea to use
 projections tailored to a particular state, rather than, for example, a
 Mercator projection. Use these codes along with \code{\link[sf:st_transform]{sf::st_transform()}} to
 project your shapefiles nicely.

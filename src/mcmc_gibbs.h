@@ -2,7 +2,7 @@
 #define MCMC_GIBBS_H
 
 #include <RcppArmadillo.h>
-#include "gredist_types.h"
+#include "redist_types.h"
 #include "make_swaps_helper.h"
 #include "map_calc.h"
 

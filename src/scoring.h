@@ -3,7 +3,7 @@
 #define SCORING_H
 
 #include "base_plan_type.h"
-#include "gredist_types.h"
+#include "redist_types.h"
 
 class RegionConstraint {
     public:

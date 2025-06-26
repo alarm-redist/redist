@@ -15,7 +15,7 @@ redist_mergesplit(
   constraints = list(),
   constraint_fn = function(m) rep(0, ncol(m)),
   sampling_space = c("graph_plan_space", "spanning_forest_space", "linking_edge_space"),
-  splitting_method = c("naive_top_k", "uniform_valid_edge", "expo_bigger_abs_dev"),
+  split_method = c("naive_top_k", "uniform_valid_edge", "expo_bigger_abs_dev"),
   splitting_params = list(adapt_k_thresh = 0.99),
   merge_prob_type = "uniform",
   compactness = 1,
@@ -106,8 +106,8 @@ according to contiguity, population, compactness, and administrative boundary
 constraints. The MCMC proposal is the same as is used in the SMC sampler
 (McCartan and Imai 2023); it is similar but not identical to those used in
 the references.  1-level hierarchical Merge-split is supported through the
-\code{counties} parameter; unlike in the SMC algorithm, this does not
-guarantee a maximum number of county splits.
+\code{counties} parameter and it has the same guarantees of a maximum number
+of county splits as the SMCS algorithm.
 }
 \details{
 This function draws samples from a specific target measure, controlled by the

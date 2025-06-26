@@ -9,7 +9,7 @@
 
 #ifndef MAKE_SWAPS_HELPER_H
 #define MAKE_SWAPS_HELPER_H
-#include "gredist_types.h"
+#include "redist_types.h"
 
 Rcpp::List adjcheck_propcd(Rcpp::List aList,
 			   Rcpp::NumericVector prop_partitions,

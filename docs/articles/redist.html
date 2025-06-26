@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Introduction to gredist • gredist</title>
+<title>Introduction to redist • redist</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
 <link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
@@ -17,8 +17,8 @@
 <script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><meta property="og:title" content="Introduction to gredist">
-<meta property="og:description" content="gredist">
+<script src="../pkgdown.js"></script><meta property="og:title" content="Introduction to redist">
+<meta property="og:description" content="redist">
 <meta property="og:image" content="/logo.png">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -39,7 +39,7 @@
         <span class="icon-bar"></span>
       </button>
       <span class="navbar-brand">
-        <a class="navbar-link" href="../index.html">gredist</a>
+        <a class="navbar-link" href="../index.html">redist</a>
         <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.2.0</span>
       </span>
     </div>
@@ -47,7 +47,7 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
 <li>
-  <a href="../articles/gredist.html">Get started</a>
+  <a href="../articles/redist.html">Get started</a>
 </li>
 <li>
   <a href="../reference/index.html">Reference</a>
@@ -60,7 +60,7 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/common_args.html">Common Arguments to `gredist` Functions</a>
+      <a href="../articles/common_args.html">Common Arguments to `redist` Functions</a>
     </li>
     <li>
       <a href="../articles/flip.html">Redistricting with Flip MCMC</a>
@@ -79,7 +79,7 @@
   <ul class="dropdown-menu" role="menu">
 <li class="dropdown-header">Releases</li>
     <li>
-      <a href="https://alarm-gredist.github.io/posts/2021-04-02-gredist-300/" class="external-link">gredist 3.0</a>
+      <a href="https://alarm-redist.github.io/posts/2021-04-02-redist-300/" class="external-link">redist 3.0</a>
     </li>
     <li class="divider">
     </li>
@@ -91,7 +91,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/alarm-gredist/gredist/" class="external-link">
+  <a href="https://github.com/alarm-redist/redist/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -109,17 +109,17 @@
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1 data-toc-skip>Introduction to gredist</h1>
+      <h1 data-toc-skip>Introduction to redist</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/alarm-gredist/gredist/blob/HEAD/vignettes/gredist.Rmd" class="external-link"><code>vignettes/gredist.Rmd</code></a></small>
-      <div class="hidden name"><code>gredist.Rmd</code></div>
+      <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/HEAD/vignettes/redist.Rmd" class="external-link"><code>vignettes/redist.Rmd</code></a></small>
+      <div class="hidden name"><code>redist.Rmd</code></div>
 
     </div>
 
     
     
-<p>The <code>gredist</code> package provides algorithms and tools for
+<p>The <code>redist</code> package provides algorithms and tools for
 scalable and replicable redistricting analyses. This vignette introduces
 the package by way of an analysis of redistricting in the state of Iowa,
 which can broken down into four distinct steps:</p>
@@ -132,13 +132,13 @@ data</a></li>
 </ol>
 <p>First, however, a brief overview of the package itself.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alarm-gredist.org/gredist/" class="external-link">gredist</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alarm-redist.org/redist/" class="external-link">redist</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
-<h2 id="package">The <code>gredist</code> package<a class="anchor" aria-label="anchor" href="#package"></a>
+<h2 id="package">The <code>redist</code> package<a class="anchor" aria-label="anchor" href="#package"></a>
 </h2>
-<p>To install <code>gredist</code>, follow the instructions in the <a href="../index.html#installation-instructions">README</a>.</p>
+<p>To install <code>redist</code>, follow the instructions in the <a href="../index.html#installation-instructions">README</a>.</p>
 <p>For more information on package components, check out the <a href="../reference/index.html">full documentation</a>.</p>
 <div class="section level3">
 <h3 id="algorithms">Algorithms<a class="anchor" aria-label="anchor" href="#algorithms"></a>
@@ -163,7 +163,7 @@ local proposals.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a>
 <p>The other algorithms are</p>
 <ul>
 <li>
-<code><a href="../reference/gredist.enumpart.html">gredist.enumpart()</a></code> for efficient enumeration of small
+<code><a href="../reference/redist.enumpart.html">redist.enumpart()</a></code> for efficient enumeration of small
 maps.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>
 </li>
 <li>
@@ -171,7 +171,7 @@ maps.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>
 a user-provided criterion.<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a>
 </li>
 <li>
-<code><a href="../reference/gredist.rsg.html">gredist.rsg()</a></code> and <code><a href="../reference/gredist.crsg.html">gredist.crsg()</a></code>, which do
+<code><a href="../reference/redist.rsg.html">redist.rsg()</a></code> and <code><a href="../reference/redist.crsg.html">redist.crsg()</a></code>, which do
 not sample from a known target distribution.<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a>
 </li>
 </ul>
@@ -212,11 +212,11 @@ and existing legislative district plans, precinct- or block-level
 demographic information from the Census, and precinct-level political
 data. These data generally come from different sources, and may not
 fully overlap with each other, further complicating the problem.</p>
-<p><code>gredist</code> is not focused on this data collection process.
+<p><code>redist</code> is not focused on this data collection process.
 The <a href="https://christophertkenny.com/geomander/" class="external-link"><code>geomander</code></a>
 package contains many helpful functions for compiling these data, and
 fixing problems in geographic data.</p>
-<p>The ALARM project provides <a href="https://alarm-gredist.org/posts/2021-08-10-census-2020/" class="external-link">pre-cleaned
+<p>The ALARM project provides <a href="https://alarm-redist.org/posts/2021-08-10-census-2020/" class="external-link">pre-cleaned
 redistricting data files</a> consisting of VEST election data joined
 2020 Census data at the precinct level. Other sources for precinct-level
 geographic and political information include the <a href="https://electionlab.mit.edu/data" class="external-link">MIT Election Lab</a>, the <a href="https://www.census.gov/programs-surveys/decennial-census/about/rdo.html" class="external-link">Census</a>,
@@ -321,15 +321,15 @@ that should be used to compare districts, one of which is the total
 perimeter of all districts. If the total perimeter is small, then the
 districts relatively compact.</p>
 <p>Contiguity of districts and no reliance on partisan or demographic
-data are built-in to <code>gredist</code>. We’ll look at how to specify
+data are built-in to <code>redist</code>. We’ll look at how to specify
 the desired population deviation (no more than 1% by law) in the next
 section, and discuss compactness in the <a href="#simulate">simulation
 section</a>.</p>
 </div>
 <div class="section level3">
-<h3 id="setting-up-the-problem-in-gredist">Setting up the problem in <code>gredist</code><a class="anchor" aria-label="anchor" href="#setting-up-the-problem-in-gredist"></a>
+<h3 id="setting-up-the-problem-in-redist">Setting up the problem in <code>redist</code><a class="anchor" aria-label="anchor" href="#setting-up-the-problem-in-redist"></a>
 </h3>
-<p>In <code>gredist</code>, a basic redistricting problem is defined by
+<p>In <code>redist</code>, a basic redistricting problem is defined by
 an object of type <code>redist_map</code>, which can be constructed
 using the eponymous function. The user must provide a vector of
 population counts (defaults to the <code>pop</code> column, if one
@@ -395,10 +395,10 @@ implement a status-quo-type constraint that encourages simulated
 districts to be close to a reference plan. This can be accomplished by
 freezing the “cores” of each district.</p>
 <p>All of these operations fall under the umbrella of map
-pre-processing, and <code>gredist</code> is well-equipped to handle them.
+pre-processing, and <code>redist</code> is well-equipped to handle them.
 You can use familiar <code>dplyr</code> verbs like <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter()</a></code>
-and <code><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize()</a></code>, along with new <code>gredist</code>
-operations like <code><a href="../reference/gredist.freeze.html">freeze()</a></code>, <code><a href="../reference/gredist.identify.cores.html">make_cores()</a></code>, and
+and <code><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize()</a></code>, along with new <code>redist</code>
+operations like <code><a href="../reference/redist.freeze.html">freeze()</a></code>, <code><a href="../reference/redist.identify.cores.html">make_cores()</a></code>, and
 <code><a href="../reference/merge_by.html">merge_by()</a></code>, to operate on <code>redist_map</code> objects.
 The package will make the appropriate modifications to the geometry and
 adjacency graph in the background.</p>
@@ -433,7 +433,7 @@ relatively balanced between Democrats and Republicans (at least in the
 <h2 id="simulate">Simulating redistricting plans<a class="anchor" aria-label="anchor" href="#simulate"></a>
 </h2>
 <p>The crux of a redistricting analysis is actually simulating new
-redistricting plans. As discussed above, <code>gredist</code> provides
+redistricting plans. As discussed above, <code>redist</code> provides
 several algorithms for performing this simulation, and each has its own
 advantages and incorporates a different set of constraints. Here, we’ll
 demonstrate use of the <code><a href="../reference/redist_smc.html">redist_smc()</a></code> algorithm, a Sequential
@@ -483,9 +483,9 @@ added using <code><a href="../reference/add_reference.html">add_reference()</a><
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 2              2    <span style="text-decoration: underline;">765</span>242     1</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 3,994 more rows</span></span></span></code></pre></div>
 <p>We can explore specific simulated plans with
-<code><a href="../reference/gredist.plot.plans.html">gredist.plot.plans()</a></code>.</p>
+<code><a href="../reference/redist.plot.plans.html">redist.plot.plans()</a></code>.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/gredist.plot.plans.html">gredist.plot.plans</a></span><span class="op">(</span><span class="va">iowa_plans</span>, draws<span class="op">=</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span>, shp<span class="op">=</span><span class="va">iowa_map</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/redist.plot.plans.html">redist.plot.plans</a></span><span class="op">(</span><span class="va">iowa_plans</span>, draws<span class="op">=</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span>, shp<span class="op">=</span><span class="va">iowa_map</span><span class="op">)</span></span></code></pre></div>
 <p><img src="redist_files/figure-html/ia-sim-plans-1.png" width="700"></p>
 </div>
 <div class="section level2">
@@ -522,18 +522,18 @@ and the reference plan.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 2       2           <span style="text-decoration: underline;">765</span>242     1       0.691</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 3,994 more rows</span></span></span></code></pre></div>
 <p>Then we can add summary statistics by district, using
-<code>gredist</code>’s analysis functions. Here, we’ll compute the
+<code>redist</code>’s analysis functions. Here, we’ll compute the
 population deviation, the perimeter-based compactness measure related to
 the Iowa Code’s redistricting requirements, and the fraction of minority
 voters and two-party Democratic vote share by district.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">county_perims</span> <span class="op">=</span> <span class="fu"><a href="http://alarm-gredist.org/redistmetrics/reference/prep_perims.html" class="external-link">prep_perims</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">iowa_map</span><span class="op">$</span><span class="va">adj</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">county_perims</span> <span class="op">=</span> <span class="fu"><a href="http://alarm-redist.org/redistmetrics/reference/prep_perims.html" class="external-link">prep_perims</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">iowa_map</span><span class="op">$</span><span class="va">adj</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">iowa_plans</span> <span class="op">=</span> <span class="va">iowa_plans</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>pop_dev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">total_pop</span> <span class="op">/</span> <span class="fu"><a href="../reference/get_target.html">get_target</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span>,</span>
-<span>           comp <span class="op">=</span> <span class="fu"><a href="http://alarm-gredist.org/redistmetrics/reference/comp_polsby.html" class="external-link">comp_polsby</a></span><span class="op">(</span><span class="fu"><a href="../reference/pl.html">pl</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">iowa_map</span>, perim_df<span class="op">=</span><span class="va">county_perims</span><span class="op">)</span>,</span>
-<span>           pct_min <span class="op">=</span> <span class="fu"><a href="../reference/gredist.group.percent.html">group_frac</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">vap</span> <span class="op">-</span> <span class="va">wvap</span>, <span class="va">vap</span><span class="op">)</span>,</span>
-<span>           pct_dem <span class="op">=</span> <span class="fu"><a href="../reference/gredist.group.percent.html">group_frac</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">dem_08</span>, <span class="va">dem_08</span> <span class="op">+</span> <span class="va">rep_08</span><span class="op">)</span><span class="op">)</span></span>
+<span>           comp <span class="op">=</span> <span class="fu"><a href="http://alarm-redist.org/redistmetrics/reference/comp_polsby.html" class="external-link">comp_polsby</a></span><span class="op">(</span><span class="fu"><a href="../reference/pl.html">pl</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">iowa_map</span>, perim_df<span class="op">=</span><span class="va">county_perims</span><span class="op">)</span>,</span>
+<span>           pct_min <span class="op">=</span> <span class="fu"><a href="../reference/redist.group.percent.html">group_frac</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">vap</span> <span class="op">-</span> <span class="va">wvap</span>, <span class="va">vap</span><span class="op">)</span>,</span>
+<span>           pct_dem <span class="op">=</span> <span class="fu"><a href="../reference/redist.group.percent.html">group_frac</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">dem_08</span>, <span class="va">dem_08</span> <span class="op">+</span> <span class="va">rep_08</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">iowa_plans</span><span class="op">)</span></span>
 <span><span class="co">#&gt; With plans resampled from weights</span></span>
 <span><span class="co">#&gt; Plans matrix: int [1:99, 1:1001] 3 3 1 2 4 1 1 4 1 1 ...</span></span>
@@ -556,7 +556,7 @@ important to check the algorithm’s diagnostics. As with any complex
 sampling algorithm, things can go wrong. Diagnostics, while not
 flawless, can help catch problems and stop you from making conclusions
 that are actually the fault of a broken sampling process. The
-<code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> function is <code>gredist</code>’s one-stop-shop
+<code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> function is <code>redist</code>’s one-stop-shop
 for algorithm diagnostics.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">iowa_plans</span><span class="op">)</span></span>
@@ -627,7 +627,7 @@ object into plan-level summary statistics.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 9       0.009<span style="text-decoration: underline;">84</span>      0.375       0.119         3</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 991 more rows</span></span></span></code></pre></div>
 <p>These tables of statistics are easily plotted using existing
-libraries like <code>ggplot2</code>, but <code>gredist</code> provides a
+libraries like <code>ggplot2</code>, but <code>redist</code> provides a
 number of helpful plotting functions that automate some common tasks,
 like adding a reference line for the reference plan. The output of these
 functions is a <code>ggplot</code> object, allowing for further
@@ -657,14 +657,14 @@ reference plan does not appear to be a complete outlier.</p>
 <p>We might also want to look at how the Democratic fraction in each
 district compares to the fraction of minority voters. We can make a
 scatterplot of districts, and overlay the reference districts, using
-<code>gredist.plot.scatter</code>. We’ll also color by the district
+<code>redist.plot.scatter</code>. We’ll also color by the district
 number (higher numbers are in lighter colors).</p>
 <p>Once again, we see that while district 1 and 2 of the reference plan
 look normal, district has a lower number of Democrats and minority
 voters than would otherwise be expected.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pal</span> <span class="op">=</span> <span class="fu">scales</span><span class="fu">::</span><span class="fu"><a href="https://scales.r-lib.org/reference/pal_viridis.html" class="external-link">viridis_pal</a></span><span class="op">(</span><span class="op">)</span><span class="op">(</span><span class="fl">5</span><span class="op">)</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span><span class="op">]</span></span>
-<span><span class="fu"><a href="../reference/gredist.plot.scatter.html">gredist.plot.scatter</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">pct_min</span>, <span class="va">pct_dem</span>, </span>
+<span><span class="fu"><a href="../reference/redist.plot.scatter.html">redist.plot.scatter</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">pct_min</span>, <span class="va">pct_dem</span>, </span>
 <span>                    color<span class="op">=</span><span class="va">pal</span><span class="op">[</span><span class="fu"><a href="../reference/subset_sampled.html">subset_sampled</a></span><span class="op">(</span><span class="va">iowa_plans</span><span class="op">)</span><span class="op">$</span><span class="va">district</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_color_manual</a></span><span class="op">(</span>values<span class="op">=</span><span class="st">"black"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="redist_files/figure-html/scatter-1.png" width="700"></p>
@@ -694,7 +694,7 @@ and Optimization by Short Bursts. arXiv preprint arXiv:2011.02288.<a href="#fnre
 <li id="fn6"><p>from Jowei Chen and Jonathan Rodden (2013)
 “Unintentional Gerrymandering: Political Geography and Electoral Bias in
 Legislatures.” Quarterly Journal of Political Science. 8(3): 239-269.<a href="#fnref6" class="footnote-back">↩︎</a></p></li>
-<li id="fn7"><p>for <code>gredist</code>’s purposes, adjacency requires
+<li id="fn7"><p>for <code>redist</code>’s purposes, adjacency requires
 that two regions touch at more than just one point or corner.<a href="#fnref7" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>

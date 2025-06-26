@@ -14,21 +14,21 @@
 With multiple scorers, the algorithm will stochastically explore to try to 
 find the largest Pareto frontier for the scores. The frontier can be accessed with
 `attr(<plans obj>, "pareto_score")`.
-* Removes the MPI vignette which relied on older implementations of `gredist.mcmc()`, which was replaced by `gredist.flip()` a few years ago, and finally `redist_flip()`.
+* Removes the MPI vignette which relied on older implementations of `redist.mcmc()`, which was replaced by `redist.flip()` a few years ago, and finally `redist_flip()`.
 
-# gredist 4.1.1
+# redist 4.1.1
 * Resolves a sanitizer error for CRAN
 
-# gredist 4.1.0
+# redist 4.1.0
 * Improved diagnostic output
 * New `redist_ci` interface for confidence interval calculation
-* Improved plotting options with `gredist.plot.distr_qtys()` for custom geometry types.
+* Improved plotting options with `redist.plot.distr_qtys()` for custom geometry types.
 * Improved resampling efficiency at the final SMC stage
 * Faster implementation of loop-erased random walk in C++
 * Faster random number generation in C++
 * Updated citation information
 
-# gredist 4.0.0
+# redist 4.0.0
 * A new constraint interface that is more flexible, user friendly, and consistent 
 across algorithms (see `redist_constr()` and `?constraints`). For the first time,
 user-defined custom constraints are supported and integrated within all three 
@@ -51,24 +51,24 @@ warnings throughout the package
 of ways to sequentially label districts. This factor should not have an effect
 on substantive conclusions and summary statistics.
 * Remove deprecated functions
-* Many bug fixes (see https://github.com/alarm-gredist/gredist/issues)
+* Many bug fixes (see https://github.com/alarm-redist/redist/issues)
 
-# gredist 3.1.6
+# redist 3.1.6
 * Utilities for using municipalities as well as counties in split calculations
 
-# gredist 3.1.5
+# redist 3.1.5
 * skip SMC test on Linux
 
-# gredist 3.1.4
+# redist 3.1.4
 * skip SMC test on Solaris
 
-# gredist 3.1.2
-* Fixes crash caused by `gredist.splits()`
+# redist 3.1.2
+* Fixes crash caused by `redist.splits()`
 
-# gredist 3.1.1
+# redist 3.1.1
 * Fixes printing bug in `color_graph()`
 
-# gredist 3.1.0
+# redist 3.1.0
 * Removes prior deprecated functions and arguments
 * Fix bugs (#78, #81, #86)
 * Introduces `redist_mergesplit_parallel()`
@@ -76,11 +76,11 @@ on substantive conclusions and summary statistics.
 * Improves sampling speed for SMC and Merge-split with county constraint
 * Adds county split measures.
 * Adds population overlap measures for plan comparisons.
-* Deprecates `gredist.smc()` in favor of `redist_smc()` and `gredist.mergesplit()` in favor of `redist_mergesplit()`.
-# gredist 3.0.2
+* Deprecates `redist.smc()` in favor of `redist_smc()` and `redist.mergesplit()` in favor of `redist_mergesplit()`.
+# redist 3.0.2
 * Fix bugs (#60, #61, #62, #70, #71, #72), including s2 compatibility, Solaris fixes, and improved dplyr verb robustness.
 
-# gredist 3.0.1
+# redist 3.0.1
 
 * New tidy interface, including new `redist_map` and `redist_plans` objects
 * Merge-split MCMC now available in `redist_mergesplit()`
@@ -100,7 +100,7 @@ on substantive conclusions and summary statistics.
 * Various bug fixes
 
 
-# gredist 2.0.4
+# redist 2.0.4
 
-* New `gredist.subset` allows for easy subsetting of an adjacency graph
+* New `redist.subset` allows for easy subsetting of an adjacency graph
 * Added a `NEWS.md` file to track changes to the package

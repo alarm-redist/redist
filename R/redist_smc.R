@@ -541,7 +541,7 @@ redist_smc <- function(
         parallel::clusterEvalQ(cl, {
             suppressPackageStartupMessages(library(foreach))
             suppressPackageStartupMessages(library(rngtools))
-            suppressPackageStartupMessages(library(gredist))
+            suppressPackageStartupMessages(library(redist))
         })
         # Makes it so only one process will print but if more runs then processes
         # it doesn't just print once
@@ -587,7 +587,7 @@ redist_smc <- function(
         run_verbosity <- if (is_chain1 || !multiprocess) verbosity else 0
         t1_run <- Sys.time()
 
-        algout <- gredist::run_redist_gsmc(
+        algout <- redist::run_redist_gsmc(
             nsims=nsims,
             ndists=ndists, total_seats=total_seats,
             district_seat_sizes = district_seat_sizes,
@@ -675,7 +675,7 @@ redist_smc <- function(
                                  {.val {NA}} or {.val {Inf}}",
                         "*" = "If you are not using any constraints, please call
                                  {.code rlang::trace_back()} and file an issue at
-                                 {.url https://github.com/alarm-gredist/gredist/issues/new}"))
+                                 {.url https://github.com/alarm-redist/redist/issues/new}"))
         }
 
         if (resample) {
@@ -878,7 +878,7 @@ redist_smc <- function(
                             n_eff = all_out[[1]]$n_eff,
                             compactness = compactness,
                             constraints = constraints,
-                            version = packageVersion("gredist"),
+                            version = packageVersion("redist"),
                             diagnostics = l_diag,
                             run_information = run_information,
                             internal_diagnostics = internal_diagnostics,

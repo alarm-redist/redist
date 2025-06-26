@@ -1,22 +1,22 @@
 #' Segregation index calculation for MCMC redistricting.
 #'
-#' \code{gredist.segcalc} calculates the dissimilarity index of segregation (see
+#' \code{redist.segcalc} calculates the dissimilarity index of segregation (see
 #' Massey & Denton 1987 for more details) for a specified subgroup under any
 #' redistricting plan.
 #'
 #' @param plans A matrix of congressional district assignments or a
-#' gredist object.
+#' redist object.
 #' @param group_pop A vector of populations for some subgroup of interest.
 #' @param total_pop A vector containing the populations of each geographic unit.
 #'
-#' @return \code{gredist.segcalc} returns a vector where each entry is the
+#' @return \code{redist.segcalc} returns a vector where each entry is the
 #' dissimilarity index of segregation (Massey & Denton 1987) for each
 #' redistricting plan in \code{algout}.
 #'
 #' @references Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander
 #' Tarr. (2016) "A New Automated Redistricting Simulator Using Markov Chain
 #' Monte Carlo." Working Paper. Available at
-#' \url{http://imai.princeton.edu/research/files/gredist.pdf}.
+#' \url{http://imai.princeton.edu/research/files/redist.pdf}.
 #'
 #' Massey, Douglas and Nancy Denton. (1987) "The Dimensions of Social
 #' Segregation". Social Forces.
@@ -37,17 +37,17 @@
 #'
 #'
 #' ## Get Republican Dissimilarity Index from simulations
-#' # old: rep_dmi_253 <- gredist.segcalc(alg_253, fl25$mccain, fl25$pop)
+#' # old: rep_dmi_253 <- redist.segcalc(alg_253, fl25$mccain, fl25$pop)
 #' rep_dmi_253 <- seg_dissim(alg_253, fl25, mccain, pop)  |>
 #'     redistmetrics::by_plan(ndists = 3)
 #' }
 #' @concept analyze
 #' @export
-gredist.segcalc <- function(plans, group_pop, total_pop) {
+redist.segcalc <- function(plans, group_pop, total_pop) {
     .Deprecated("seg_dissim")
 
-    ## If gredist object, get the partitions entry
-    if (all(class(plans) == "gredist")) {
+    ## If redist object, get the partitions entry
+    if (all(class(plans) == "redist")) {
         plans <- plans$plans
     }
 
@@ -85,10 +85,10 @@ gredist.segcalc <- function(plans, group_pop, total_pop) {
 #' data(fl25_enum)
 #'
 #' plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
-#' # old: comp <- gredist.competitiveness(plans_05, fl25$mccain, fl25$obama)
+#' # old: comp <- redist.competitiveness(plans_05, fl25$mccain, fl25$obama)
 #' comp <- compet_talisman(plans_05, fl25, mccain, obama)
 #'
-gredist.competitiveness <- function(plans, rvote, dvote, alpha = 1, beta = 1) {
+redist.competitiveness <- function(plans, rvote, dvote, alpha = 1, beta = 1) {
     .Deprecated("compet_talisman")
     nd <- length(unique(plans[, 1]))
     redistmetrics::compet_talisman(plans = plans, shp = data.frame(),
@@ -106,7 +106,7 @@ gredist.competitiveness <- function(plans, rvote, dvote, alpha = 1, beta = 1) {
 
 #' Calculate compactness measures for a set of plans
 #'
-#' \code{gredist.compactness} is used to compute different compactness statistics for a
+#' \code{redist.compactness} is used to compute different compactness statistics for a
 #' shapefile. It currently computes the Polsby-Popper, Schwartzberg score, Length-Width Ratio,
 #' Convex Hull score, Reock score, Boyce Clark Index, Fryer Holden score, Edges Removed number,
 #' and the log of the Spanning Trees.
@@ -122,7 +122,7 @@ gredist.competitiveness <- function(plans, rvote, dvote, alpha = 1, beta = 1) {
 #' @param total_pop A numeric vector with the population for every observation. Is
 #' only necessary when "FryerHolden" is used for measure. Defaults to NULL.
 #' @param adj A zero-indexed adjacency list. Only used for "PolsbyPopper",
-#' EdgesRemoved" and "logSpanningTree". Created with \code{gredist.adjacency} if not
+#' EdgesRemoved" and "logSpanningTree". Created with \code{redist.adjacency} if not
 #' supplied and needed. Default is NULL.
 #' @param draw A numeric to specify draw number. Defaults to 1 if only one map provided
 #' and the column number if multiple maps given. Can also take a factor input, which will become the
@@ -236,14 +236,14 @@ gredist.competitiveness <- function(plans, rvote, dvote, alpha = 1, beta = 1) {
 #'
 #' plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
 #'
-#' # old gredist.compactness(
+#' # old redist.compactness(
 #' #     shp = fl25, plans = plans_05[, 1:3],
 #' #     measure = c("PolsbyPopper", "EdgesRemoved")
 #' # )
 #' comp_polsby(plans_05[, 1:3], fl25)
 #' comp_edges_rem(plans_05[, 1:3], fl25, fl25$adj)
-#' @export gredist.compactness
-gredist.compactness <- function(shp = NULL,
+#' @export redist.compactness
+redist.compactness <- function(shp = NULL,
                                plans,
                                measure = c("PolsbyPopper"),
                                total_pop = NULL, adj = NULL, draw = 1,
@@ -448,7 +448,7 @@ gredist.compactness <- function(shp = NULL,
 
 
     if (any(measure %in% c("EdgesRemoved", "logSpanningTree", "FracKept")) & is.null(adj)) {
-        adj <- gredist.adjacency(shp)
+        adj <- redist.adjacency(shp)
     }
 
     if ("logSpanningTree" %in% measure) {
@@ -473,7 +473,7 @@ gredist.compactness <- function(shp = NULL,
 
 #' Calculate Group Proportion by District
 #'
-#' \code{gredist.group.percent} computes the proportion that a group makes up in
+#' \code{redist.group.percent} computes the proportion that a group makes up in
 #' each district across a matrix of maps.
 #'
 #' @param plans A matrix with one row
@@ -496,7 +496,7 @@ gredist.compactness <- function(shp = NULL,
 #' fl25_plans = redist_plans(cd, fl25_map, algorithm="enumpart")
 #'
 #' group_frac(fl25_map, BlackPop, TotPop, fl25_plans)
-gredist.group.percent <- function(plans, group_pop, total_pop, ncores = 1) {
+redist.group.percent <- function(plans, group_pop, total_pop, ncores = 1) {
     .Deprecated("group_frac()")
     if (!is.numeric(group_pop) || !is.numeric(total_pop))
         cli_abort("{.arg group_pop} and {.arg total_pop} must be numeric vectors.")
@@ -525,7 +525,7 @@ gredist.group.percent <- function(plans, group_pop, total_pop, ncores = 1) {
 
 #' Calculate gerrymandering metrics for a set of plans
 #'
-#' \code{gredist.metrics} is used to compute different gerrymandering metrics for a
+#' \code{redist.metrics} is used to compute different gerrymandering metrics for a
 #' set of maps.
 #'
 #' @param plans A numeric vector (if only one map) or matrix with one row
@@ -574,7 +574,7 @@ gredist.group.percent <- function(plans, group_pop, total_pop, ncores = 1) {
 #' data(fl25)
 #' data(fl25_enum)
 #' plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
-#' # old: gredist.metrics(plans_05, measure = "DSeats", rvote = fl25$mccain, dvote = fl25$obama)
+#' # old: redist.metrics(plans_05, measure = "DSeats", rvote = fl25$mccain, dvote = fl25$obama)
 #' part_dseats(plans_05, fl25, mccain, obama)
 #'
 #' @references
@@ -595,7 +595,7 @@ gredist.group.percent <- function(plans, group_pop, total_pop, ncores = 1) {
 #' @md
 #' @concept analyze
 #' @export
-gredist.metrics <- function(plans, measure = "DSeats", rvote, dvote,
+redist.metrics <- function(plans, measure = "DSeats", rvote, dvote,
                            tau = 1, biasV = 0.5, respV = 0.5, bandwidth = 0.01,
                            draw = 1) {
     repl = c(
@@ -766,7 +766,7 @@ gredist.metrics <- function(plans, measure = "DSeats", rvote, dvote,
 #'
 #' @concept analyze
 #' @export
-gredist.splits <- function(plans, counties) {
+redist.splits <- function(plans, counties) {
     .Deprecated("splits_admin")
     if (missing(plans)) {
         cli_abort("Please provide an argument to {.arg plans}.")
@@ -778,7 +778,7 @@ gredist.splits <- function(plans, counties) {
         plans <- matrix(plans, ncol = 1)
     }
     if (any(class(plans) %in% c("numeric", "matrix"))) {
-        plans <- gredist.reorder(plans)
+        plans <- redist.reorder(plans)
     }
 
     if (missing(counties)) {
@@ -809,9 +809,9 @@ gredist.splits <- function(plans, counties) {
 #' data(iowa)
 #' ia <- redist_map(iowa, existing_plan = cd_2010, total_pop = pop, pop_tol = 0.01)
 #' plans <- redist_smc(ia, 50, silent = TRUE)
-#' #old gredist.district.splits(plans, ia$region)
+#' #old redist.district.splits(plans, ia$region)
 #' splits_count(plans, ia, region)
-gredist.district.splits <- function(plans, counties) {
+redist.district.splits <- function(plans, counties) {
     .Deprecated("splits_count")
     if (missing(plans)) {
         stop("Please provide an argument to plans.")
@@ -830,7 +830,7 @@ gredist.district.splits <- function(plans, counties) {
         stop("Please provide an argument to counties.")
     }
     if (class(counties) %in% c("character", "numeric", "integer")) {
-        county_id <- gredist.county.id(counties)
+        county_id <- redist.county.id(counties)
     } else {
         stop('Please provide "counties" as a character, numeric, or integer vector.')
     }
@@ -857,9 +857,9 @@ gredist.district.splits <- function(plans, counties) {
 #' data(iowa)
 #' ia <- redist_map(iowa, existing_plan = cd_2010, total_pop = pop, pop_tol = 0.01)
 #' plans <- redist_smc(ia, 50, silent = TRUE)
-#' #old gredist.multisplits(plans, ia$region)
+#' #old redist.multisplits(plans, ia$region)
 #' splits_multi(plans, ia, region)
-gredist.multisplits <- function(plans, counties) {
+redist.multisplits <- function(plans, counties) {
     .Deprecated("splits_multi")
     if (missing(plans)) {
         cli_abort("Please provide an argument to {.arg plans}.")
@@ -871,7 +871,7 @@ gredist.multisplits <- function(plans, counties) {
         plans <- matrix(plans, ncol = 1)
     }
     if (any(class(plans) %in% c("numeric", "matrix"))) {
-        plans <- gredist.reorder(plans)
+        plans <- redist.reorder(plans)
     }
 
     if (missing(counties)) {
@@ -903,9 +903,9 @@ gredist.multisplits <- function(plans, counties) {
 #' ia <- redist_map(iowa, existing_plan = cd_2010, total_pop = pop, pop_tol = 0.01)
 #' plans <- redist_smc(ia, 50, silent = TRUE)
 #' ia$region[1:10] <- NA
-#' #old gredist.muni.splits(plans, ia$region)
+#' #old redist.muni.splits(plans, ia$region)
 #' splits_sub_admin(plans, ia, region)
-gredist.muni.splits <- function(plans, munis) {
+redist.muni.splits <- function(plans, munis) {
     .Deprecated("splits_sub_admin")
     redistmetrics::splits_sub_admin(plans = plans, shp = data.frame(),
         sub_admin = munis)

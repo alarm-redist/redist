@@ -18,7 +18,7 @@
 #include "wilson.h"
 #include "tree_op.h"
 #include "map_calc.h"
-#include "gredist_types.h"
+#include "redist_types.h"
 #include "base_plan_type.h"
 #include "tree_splitter_types.h"
 #include "splitting_schedule_types.h"

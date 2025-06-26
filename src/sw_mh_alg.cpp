@@ -11,7 +11,7 @@
 #include <RcppArmadilloExtensions/sample.h>
 #include <time.h>
 #include <R.h>
-#include "gredist_types.h"
+#include "redist_types.h"
 #include "sw_mh_helper.h"
 #include "make_swaps_helper.h"
 #include "constraint_calc_helper.h"

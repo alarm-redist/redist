@@ -270,7 +270,7 @@ redist_mergesplit <- function(
         parallel::clusterEvalQ(cl, {
             suppressPackageStartupMessages(library(foreach))
             suppressPackageStartupMessages(library(rngtools))
-            suppressPackageStartupMessages(library(gredist))
+            suppressPackageStartupMessages(library(redist))
         })
         # weird code, probably remove in production and find better way to ensure printing
         # but essentially makes it so only one process will print but if more runs then processes
@@ -289,7 +289,7 @@ redist_mergesplit <- function(
 
 
     t1 <- Sys.time()
-    out_par <- foreach(chain = seq_len(chains), .inorder = FALSE, .packages="gredist") %oper% {
+    out_par <- foreach(chain = seq_len(chains), .inorder = FALSE, .packages="redist") %oper% {
         if(chain == 1){
             is_chain1 <- T
         }
@@ -386,7 +386,7 @@ redist_mergesplit <- function(
                             constraints = constraints,
                             ndists = ndists,
                             mh_acceptance = mh,
-                            version = packageVersion("gredist"),
+                            version = packageVersion("redist"),
                             diagnostics = l_diag,
                             run_information = run_information,
                             internal_diagnostics = internal_diagnostics,

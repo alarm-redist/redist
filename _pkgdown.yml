@@ -12,11 +12,11 @@ home:
     summary statistics and plotting functionality, are also included.
   links:
   - text: ALARM Project
-    href: https://alarm-gredist.github.io/
+    href: https://alarm-redist.github.io/
 news:
  releases:
- - text: "gredist 3.0"
-   href: https://alarm-gredist.github.io/posts/2021-04-02-gredist-300/
+ - text: "redist 3.0"
+   href: https://alarm-redist.github.io/posts/2021-04-02-redist-300/
  cran_dates: false
 reference:
 - title: "Simulation Algorithm Implementations"
@@ -68,5 +68,5 @@ reference:
 - title: "Miscellaneous"
   desc: "Other functions"
 - contents:
-  - gredist-package
+  - redist-package
   - lacks_concepts(c("prepare", "simulate", "analyze", "plot", "enumerate", "data", "post"))

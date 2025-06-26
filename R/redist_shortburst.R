@@ -324,7 +324,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
             converged = converged,
             pareto_front = cur_best,
             pareto_scores = pareto_scores,
-            version = packageVersion("gredist"),
+            version = packageVersion("redist"),
             score_fn = deparse(substitute(score_fn)))
         score_mat = matrix(rep(scores[out_idx, ], each = ndists), ncol = dim_score)
         colnames(score_mat) = colnames(scores)
@@ -340,7 +340,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
                                 n_bursts = burst,
                                 backend = backend,
                                 converged = converged,
-                                version = packageVersion("gredist"),
+                                version = packageVersion("redist"),
                                 score_fn = deparse(substitute(score_fn)))
         score_mat = matrix(rep(t(cur_best_scores * rescale), each = ndists),
                            ncol = dim_score)

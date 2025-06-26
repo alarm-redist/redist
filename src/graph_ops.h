@@ -5,7 +5,7 @@
 #include <vector>
 #include <RcppArmadillo.h>
 #include <Rcpp.h>
-#include "gredist_types.h"
+#include "redist_types.h"
 
 
 // [[Rcpp::export]]

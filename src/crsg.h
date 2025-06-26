@@ -2,7 +2,7 @@
 #define CRSG_H
 
 #include <RcppArmadillo.h>
-#include "gredist_types.h"
+#include "redist_types.h"
 #include "distance_helpers.h"
 #include "make_swaps_helper.h"
 #include "constraint_calc_helper.h"

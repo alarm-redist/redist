@@ -14,13 +14,14 @@ redist_smc(
   runs = 1L,
   ncores = 0L,
   init_particles = NULL,
-  init_particles_nseats = NULL,
+  init_nseats = NULL,
   sampling_space = c("graph_plan_space", "spanning_forest_space", "linking_edge_space"),
-  splitting_method = c("naive_top_k", "uniform_valid_edge", "expo_bigger_abs_dev"),
+  split_method = c("naive_top_k", "uniform_valid_edge", "expo_bigger_abs_dev"),
   splitting_params = list(adapt_k_thresh = 0.99),
   mergesplit_params = list(),
   weight_type = c("optimal", "simple"),
   n_steps = NULL,
+  seq_alpha = 1L,
   truncate = (compactness != 1),
   trunc_fn = redist_quantile_trunc,
   pop_temper = 0,
@@ -79,12 +80,13 @@ plans to begin sampling from. For advanced use only. The matrix must have
 the existing districts meet contiguity and population constraints, or there
 may be major issues when sampling.}
 
-\item{init_particles_nseats}{A matrix of the number of seats per region of
+\item{init_nseats}{A matrix of the number of seats per region of
 the partial plans to begin sampling from. For advanced use only. The matrix
 must have \code{nsims} columns, as many rows as there are regions in \code{init_particles}
 and each column must sum to the total number of seats in the map. Not needed
 if \code{init_particles} is a \link{redist_plans} object. If \code{init_particles} are passed
-but not \code{init_particles_nseats}}
+but not \code{init_nseats} then the number of seats will be attempted
+to be inferred.}
 
 \item{sampling_space}{The space to sample the plans on. This does not affect
 the plans output by the function but the sample space used can have a large
@@ -96,7 +98,7 @@ right now are
 \item linking_edge_space : linking edge forest space
 }}
 
-\item{splitting_method}{The method used for splitting spanning trees in the
+\item{split_method}{The method used for splitting spanning trees in the
 sampling process. When sampling on the space of graph partitions it must be
 the naive top k method but any method is allowed for forest space sampling.}
 
@@ -114,8 +116,8 @@ into any two sizes (assuming the sizes can eventually be split into
 districts.) Currently this is only supported for single member districting.
 }
 }
-Parameters for \code{splitting_method} Any relevant parameters for the
-\code{splitting_method}. These include the following
+Parameters for \code{split_method} Any relevant parameters for the
+\code{split_method}. These include the following
 \itemize{
 \item naive_top_k parameters:
 \itemize{
@@ -165,6 +167,10 @@ computationally expensive, especially for computationally complex constraints.}
 \item{n_steps}{How many steps to run the SMC algorithm for.
 Each step splits off a new region. Defaults to all remaining districts.
 If fewer than the number of remaining splits, reference plans are disabled.}
+
+\item{seq_alpha}{The amount to adjust the weights by at each resampling step;
+higher values prefer exploitation, while lower values prefer exploration.
+Must be between 0 and 1.}
 
 \item{truncate}{Whether to truncate the importance sampling weights at the
 final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.

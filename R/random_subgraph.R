@@ -35,7 +35,7 @@ preproc.shp <- function(shp) {
 #' @noRd
 preproc.adj <- function(shp, adj) {
     if (is.null(adj)) {
-        adj <- gredist.adjacency(shp)
+        adj <- redist.adjacency(shp)
     } else if (nrow(shp) != length(adj)) {
         stop("Dimension of shp and adj do not match.")
     }
@@ -59,7 +59,7 @@ preproc.adj <- function(shp, adj) {
 #' @importFrom dplyr union setdiff slice %>%
 #'
 #'
-gredist.random.subgraph <- function(shp, n, adj = NULL) {
+redist.random.subgraph <- function(shp, n, adj = NULL) {
     # Check input:
     shp <- preproc.shp(shp)
     adj <- preproc.adj(shp, adj)

@@ -1,6 +1,6 @@
 #' Redistricting via Random Seed and Grow Algorithm
 #'
-#' \code{gredist.rsg} generates redistricting plans using a random seed a grow
+#' \code{redist.rsg} generates redistricting plans using a random seed a grow
 #' algorithm.  This is the non-compact districting algorithm described in Chen and
 #' Rodden (2013).  The algorithm can provide start values for the other
 #' redistricting routines in this package.
@@ -23,7 +23,7 @@
 #' @param maxiter  integer, indicating maximum number of iterations to attempt
 #' before convergence to population constraint fails.  If it fails once, it will
 #' use a different set of start values and try again.  If it fails again,
-#' gredist.rsg() returns an object of all NAs, indicating that use of more
+#' redist.rsg() returns an object of all NAs, indicating that use of more
 #' iterations may be advised.
 #'
 #' @return list, containing three objects containing the completed redistricting
@@ -61,12 +61,12 @@
 #' data(fl25)
 #' data(fl25_adj)
 #'
-#' res <- gredist.rsg(adj = fl25_adj, total_pop = fl25$pop,
+#' res <- redist.rsg(adj = fl25_adj, total_pop = fl25$pop,
 #'     ndists = 3, pop_tol = 0.05)
 #'
 #' @concept simulate
 #' @export
-gredist.rsg <- function(adj, total_pop, ndists, pop_tol,
+redist.rsg <- function(adj, total_pop, ndists, pop_tol,
                        verbose = TRUE, maxiter = 5000) {
 
     if (verbose) {
@@ -74,7 +74,7 @@ gredist.rsg <- function(adj, total_pop, ndists, pop_tol,
 
         cat("\n")
         cat(divider)
-        cat("gredist.rsg(): Automated Redistricting Starts\n\n")
+        cat("redist.rsg(): Automated Redistricting Starts\n\n")
     }
 
     target.pop <- sum(total_pop)/ndists
@@ -82,8 +82,8 @@ gredist.rsg <- function(adj, total_pop, ndists, pop_tol,
     ## Main Call to Computation - if returning NA, break.
     ## If returning districts but not contiguous, repeat
     ## First attempt
-    time <- system.time(ret <- .Call("_gredist_rsg",
-        PACKAGE = "gredist",
+    time <- system.time(ret <- .Call("_redist_rsg",
+        PACKAGE = "redist",
         adj,
         total_pop,
         ndists,
@@ -94,8 +94,8 @@ gredist.rsg <- function(adj, total_pop, ndists, pop_tol,
     ## Make another call if stuck, but only do one more try
     ## because maxiter might be too low
     if (is.na(ret$plan[1])) {
-        time <- system.time(ret <- .Call("_gredist_rsg",
-            PACKAGE = "gredist",
+        time <- system.time(ret <- .Call("_redist_rsg",
+            PACKAGE = "redist",
             adj,
             total_pop,
             ndists,
@@ -107,7 +107,7 @@ gredist.rsg <- function(adj, total_pop, ndists, pop_tol,
 
     if (is.na(ret$plan[1])) {
 
-        stop("gredist.rsg() failed to return a valid partition. Try increasing maxiterrsg")
+        stop("redist.rsg() failed to return a valid partition. Try increasing maxiterrsg")
 
     } else {
         ret$plan <- ret$plan + 1

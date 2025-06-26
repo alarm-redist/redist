@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>An R package for legislative redistricting • gredist</title>
+<title>An R package for legislative redistricting • redist</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
 <link rel="apple-touch-icon" type="image/png" sizes="180x180" href="apple-touch-icon.png">
@@ -40,7 +40,7 @@
         <span class="icon-bar"></span>
       </button>
       <span class="navbar-brand">
-        <a class="navbar-link" href="index.html">gredist</a>
+        <a class="navbar-link" href="index.html">redist</a>
         <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.2.0</span>
       </span>
     </div>
@@ -48,7 +48,7 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
 <li>
-  <a href="articles/gredist.html">Get started</a>
+  <a href="articles/redist.html">Get started</a>
 </li>
 <li>
   <a href="reference/index.html">Reference</a>
@@ -61,7 +61,7 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="articles/common_args.html">Common Arguments to `gredist` Functions</a>
+      <a href="articles/common_args.html">Common Arguments to `redist` Functions</a>
     </li>
     <li>
       <a href="articles/flip.html">Redistricting with Flip MCMC</a>
@@ -80,7 +80,7 @@
   <ul class="dropdown-menu" role="menu">
 <li class="dropdown-header">Releases</li>
     <li>
-      <a href="https://alarm-gredist.github.io/posts/2021-04-02-gredist-300/" class="external-link">gredist 3.0</a>
+      <a href="https://alarm-redist.github.io/posts/2021-04-02-redist-300/" class="external-link">redist 3.0</a>
     </li>
     <li class="divider">
     </li>
@@ -92,7 +92,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/alarm-gredist/gredist/" class="external-link">
+  <a href="https://github.com/alarm-redist/redist/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -110,8 +110,8 @@
       </header><div class="row">
   <div class="contents col-md-9">
 <div class="section level1">
-<div class="page-header"><h1 id="gredist-simulation-methods-for-legislative-redistricting">
-<strong>gredist</strong>: Simulation Methods for Legislative Redistricting<a class="anchor" aria-label="anchor" href="#gredist-simulation-methods-for-legislative-redistricting"></a>
+<div class="page-header"><h1 id="redist-simulation-methods-for-legislative-redistricting">
+<strong>redist</strong>: Simulation Methods for Legislative Redistricting<a class="anchor" aria-label="anchor" href="#redist-simulation-methods-for-legislative-redistricting"></a>
 </h1></div>
 <!-- badges: start -->
 
@@ -152,20 +152,20 @@
 <div class="section level2">
 <h2 id="installation-instructions">Installation Instructions<a class="anchor" aria-label="anchor" href="#installation-instructions"></a>
 </h2>
-<p><code>gredist</code> is available on CRAN and can be installed using:</p>
+<p><code>redist</code> is available on CRAN and can be installed using:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"gredist"</span><span class="op">)</span></span></code></pre></div>
-<p>You can also install the most recent development version of <code>gredist</code> (which is usually quite stable) using the <code>remotes</code> package.</p>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"redist"</span><span class="op">)</span></span></code></pre></div>
+<p>You can also install the most recent development version of <code>redist</code> (which is usually quite stable) using the <code>remotes</code> package.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="va"><a href="https://remotes.r-lib.org" class="external-link">remotes</a></span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"alarm-gredist/gredist@dev"</span>, dependencies<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"alarm-redist/redist@dev"</span>, dependencies<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="getting-started">Getting started<a class="anchor" aria-label="anchor" href="#getting-started"></a>
 </h2>
 <p>A basic analysis has two steps. First, you define a redistricting plan using <code>redist_map</code>. Then you simulate plans using one of the algorithm functions: <code>redist_smc</code>, <code>redist_flip</code>, and <code>redist_mergesplit</code>.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alarm-gredist.org/gredist/" class="external-link">gredist</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alarm-redist.org/redist/" class="external-link">redist</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span></span>
@@ -176,19 +176,19 @@
 <span><span class="va">iowa_plans</span> <span class="op">=</span> <span class="fu"><a href="reference/redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">iowa_map</span>, nsims<span class="op">=</span><span class="fl">500</span><span class="op">)</span></span>
 <span><span class="co">#&gt; SEQUENTIAL MONTE CARLO</span></span>
 <span><span class="co">#&gt; Sampling 500 99-unit maps with 4 districts and population between 760,827 and 762,350.</span></span></code></pre></div>
-<p>After generating plans, you can use <code>gredist</code>’s plotting functions to study the geographic and partisan characteristics of the simulated ensemble.</p>
+<p>After generating plans, you can use <code>redist</code>’s plotting functions to study the geographic and partisan characteristics of the simulated ensemble.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com" class="external-link">patchwork</a></span><span class="op">)</span> <span class="co"># for plotting</span></span>
 <span></span>
-<span><span class="fu"><a href="reference/gredist.plot.plans.html">gredist.plot.plans</a></span><span class="op">(</span><span class="va">iowa_plans</span>, draws<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cd_2010"</span>, <span class="st">"1"</span>, <span class="st">"2"</span>, <span class="st">"3"</span><span class="op">)</span>, shp<span class="op">=</span><span class="va">iowa_map</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="reference/redist.plot.plans.html">redist.plot.plans</a></span><span class="op">(</span><span class="va">iowa_plans</span>, draws<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cd_2010"</span>, <span class="st">"1"</span>, <span class="st">"2"</span>, <span class="st">"3"</span><span class="op">)</span>, shp<span class="op">=</span><span class="va">iowa_map</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-readme-plot-1.png"><!-- --></p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="va">iowa_plans</span> <span class="op">=</span> <span class="va">iowa_plans</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>Compactness <span class="op">=</span> <span class="fu"><a href="http://alarm-gredist.org/redistmetrics/reference/comp_polsby.html" class="external-link">comp_polsby</a></span><span class="op">(</span><span class="fu"><a href="reference/pl.html">pl</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">iowa_map</span><span class="op">)</span>,</span>
-<span>           `Population deviation` <span class="op">=</span> <span class="fu"><a href="reference/gredist.parity.html">plan_parity</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span>,</span>
-<span>           `Democratic vote` <span class="op">=</span> <span class="fu"><a href="reference/gredist.group.percent.html">group_frac</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">dem_08</span>, <span class="va">tot_08</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>Compactness <span class="op">=</span> <span class="fu"><a href="http://alarm-redist.org/redistmetrics/reference/comp_polsby.html" class="external-link">comp_polsby</a></span><span class="op">(</span><span class="fu"><a href="reference/pl.html">pl</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">iowa_map</span><span class="op">)</span>,</span>
+<span>           `Population deviation` <span class="op">=</span> <span class="fu"><a href="reference/redist.parity.html">plan_parity</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span>,</span>
+<span>           `Democratic vote` <span class="op">=</span> <span class="fu"><a href="reference/redist.group.percent.html">group_frac</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">dem_08</span>, <span class="va">tot_08</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Linking to GEOS 3.11.0, GDAL 3.5.3, PROJ 9.1.0; sf_use_s2() is TRUE</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">`Population deviation`</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">Compactness</span><span class="op">)</span> <span class="op">+</span></span>
@@ -196,7 +196,7 @@
 <span>    <span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_annotation.html" class="external-link">plot_annotation</a></span><span class="op">(</span>title<span class="op">=</span><span class="st">"Simulated plan characteristics"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-readme-plot-2.png"><!-- --></p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/gredist.plot.scatter.html">gredist.plot.scatter</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">`Population deviation`</span>, <span class="va">Compactness</span><span class="op">)</span> <span class="op">+</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="reference/redist.plot.scatter.html">redist.plot.scatter</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">`Population deviation`</span>, <span class="va">Compactness</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title<span class="op">=</span><span class="st">"Population deviation and compactness by plan"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-readme-plot-3.png"><!-- --></p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
@@ -205,7 +205,7 @@
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_color_manual</a></span><span class="op">(</span>values<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"black"</span>, <span class="st">"tomato2"</span>, <span class="st">"dodgerblue"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title<span class="op">=</span><span class="st">"Democratic vote share by district"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-readme-plot-4.png"><!-- --></p>
-<p>A more detailed introduction to redistricting methods and the package can be found in the <a href="https://alarm-gredist.org/gredist/articles/gredist.html" class="external-link">Get Started</a> page. The package <a href="https://alarm-gredist.org/gredist/articles/" class="external-link">vignettes</a> contain more detailed information and guides to specific workflows.</p>
+<p>A more detailed introduction to redistricting methods and the package can be found in the <a href="https://alarm-redist.org/redist/articles/redist.html" class="external-link">Get Started</a> page. The package <a href="https://alarm-redist.org/redist/articles/" class="external-link">vignettes</a> contain more detailed information and guides to specific workflows.</p>
 </div>
 </div>
   </div>
@@ -214,10 +214,10 @@
     <div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li><a href="https://cloud.r-project.org/package=gredist" class="external-link">View on CRAN</a></li>
-<li><a href="https://github.com/alarm-gredist/gredist/" class="external-link">Browse source code</a></li>
-<li><a href="https://github.com/alarm-gredist/gredist/issues" class="external-link">Report a bug</a></li>
-<li><a href="https://alarm-gredist.github.io/" class="external-link">ALARM Project</a></li>
+<li><a href="https://cloud.r-project.org/package=redist" class="external-link">View on CRAN</a></li>
+<li><a href="https://github.com/alarm-redist/redist/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/alarm-redist/redist/issues" class="external-link">Report a bug</a></li>
+<li><a href="https://alarm-redist.github.io/" class="external-link">ALARM Project</a></li>
 </ul>
 </div>
 
@@ -233,7 +233,7 @@
 <div class="citation">
 <h2 data-toc-skip>Citation</h2>
 <ul class="list-unstyled">
-<li><a href="authors.html#citation">Citing gredist</a></li>
+<li><a href="authors.html#citation">Citing redist</a></li>
 </ul>
 </div>
 
@@ -251,8 +251,8 @@
 <div class="dev-status">
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
-<li><a href="https://github.com/alarm-gredist/gredist/actions/workflows/check-standard.yaml" class="external-link"><img src="https://github.com/alarm-gredist/gredist/actions/workflows/check-standard.yaml/badge.svg" alt="R-CMD-check"></a></li>
-<li><a href="https://cran.r-project.org/package=gredist" class="external-link"><img src="https://www.r-pkg.org/badges/version-last-release/gredist" alt="CRAN_Status_Badge"></a></li>
+<li><a href="https://github.com/alarm-redist/redist/actions/workflows/check-standard.yaml" class="external-link"><img src="https://github.com/alarm-redist/redist/actions/workflows/check-standard.yaml/badge.svg" alt="R-CMD-check"></a></li>
+<li><a href="https://cran.r-project.org/package=redist" class="external-link"><img src="https://www.r-pkg.org/badges/version-last-release/redist" alt="CRAN_Status_Badge"></a></li>
 </ul>
 </div>
 

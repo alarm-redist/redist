@@ -29,7 +29,7 @@
 #'
 #' @importFrom dplyr row_number cur_group_id
 #'
-#' @seealso [gredist.plot.cores()] for a plotting function
+#' @seealso [redist.plot.cores()] for a plotting function
 #' @concept prepare
 #' @export
 #'
@@ -37,10 +37,10 @@
 #' data(fl250)
 #' fl250_map <- redist_map(fl250, ndists = 4, pop_tol = 0.01)
 #' plan <- as.matrix(redist_smc(fl250_map, 20, silent = TRUE))
-#' core <- gredist.identify.cores(adj = fl250_map$adj, plan = plan)
-#' gredist.plot.cores(shp = fl250, plan = plan, core = core)
+#' core <- redist.identify.cores(adj = fl250_map$adj, plan = plan)
+#' redist.plot.cores(shp = fl250, plan = plan, core = core)
 #'
-gredist.identify.cores <- function(adj, plan, boundary = 1, focus = NULL,
+redist.identify.cores <- function(adj, plan, boundary = 1, focus = NULL,
                                   simplify = TRUE) {
     if (!is.list(adj)) cli_abort("{.arg adj} must be a list.")
     if (is.matrix(plan)) {
@@ -94,7 +94,7 @@ gredist.identify.cores <- function(adj, plan, boundary = 1, focus = NULL,
 #'
 #' @concept post
 #' @export
-gredist.uncoarsen <- function(plans, group_index) {
+redist.uncoarsen <- function(plans, group_index) {
     uncoarse <- matrix(nrow = length(group_index),
         ncol = ncol(plans))
 

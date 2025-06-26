@@ -14,7 +14,7 @@
 #'
 #' @concept prepare
 #' @export
-gredist.find.target <- function(tgt_min, group_pop, total_pop, ndists, nmmd) {
+redist.find.target <- function(tgt_min, group_pop, total_pop, ndists, nmmd) {
     totpop <- sum(total_pop)
     targetpop <- totpop/ndists
     tmm <- nmmd*tgt_min*targetpop
@@ -39,7 +39,7 @@ gredist.find.target <- function(tgt_min, group_pop, total_pop, ndists, nmmd) {
 #'
 #' @concept prepare
 #' @export
-gredist.constraint.helper <- function(constraints = "vra", tgt_min = 0.55,
+redist.constraint.helper <- function(constraints = "vra", tgt_min = 0.55,
                                      group_pop, total_pop, ndists, nmmd,
                                      strength_vra = 2500, pow_vra = 1.5) {
     .Deprecated("redist_constr")
@@ -47,7 +47,7 @@ gredist.constraint.helper <- function(constraints = "vra", tgt_min = 0.55,
     ret <- list()
 
     if ("vra" %in% constraints) {
-        tgt_other <- gredist.find.target(tgt_min, group_pop, total_pop, ndists, nmmd)
+        tgt_other <- redist.find.target(tgt_min, group_pop, total_pop, ndists, nmmd)
 
         ret[["vra"]] <- list(strength = strength_vra,
             min_pop = group_pop,

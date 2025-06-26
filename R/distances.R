@@ -43,12 +43,12 @@
 #' data(fl25_enum)
 #'
 #' plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
-#' distances <- gredist.distances(plans_05)
+#' distances <- redist.distances(plans_05)
 #' distances$Hamming[1:5, 1:5]
 #'
 #' @concept analyze
 #' @export
-gredist.distances <- function(plans, measure = "Hamming",
+redist.distances <- function(plans, measure = "Hamming",
                              ncores = 1, total_pop = NULL) {
 
     supported <- c("all", "Hamming", "Manhattan", "Euclidean", "variation of information")
@@ -111,7 +111,7 @@ gredist.distances <- function(plans, measure = "Hamming",
     distances
 }
 
-#' @rdname gredist.distances
+#' @rdname redist.distances
 #' @order 1
 #'
 #' @param plans a \code{\link{redist_plans}} object.
@@ -127,7 +127,7 @@ plan_distances <- function(plans, measure = "variation of information", ncores =
     if (is.null(pop))
         stop("Precinct population must be stored in `prec_pop` attribute of `plans` object")
 
-    gredist.distances(get_plans_matrix(plans), measure, ncores = ncores, total_pop = pop)[[1]]
+    redist.distances(get_plans_matrix(plans), measure, ncores = ncores, total_pop = pop)[[1]]
 }
 
 #' Calculate the diversity of a set of plans
@@ -192,7 +192,7 @@ plans_diversity <- function(plans, chains = 1, n_max = 100,
     if (is.null(total_pop))
         cli_abort("Must provide {.arg total_pop} for this {.cls redist_plans} object.")
 
-    dists <- gredist.distances(m[, idx], "variation of information",
+    dists <- redist.distances(m[, idx], "variation of information",
         ncores = ncores, total_pop = total_pop)$VI
     0.5*dists[upper.tri(dists)]
 }

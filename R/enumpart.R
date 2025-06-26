@@ -1,7 +1,7 @@
 #' Initialize enumpart
 #'
 #' This ensures that the enumerate partitions programs is prepared to run.
-#' This must be run once per install of the gredist package.
+#' This must be run once per install of the redist package.
 #'
 #' @return 0 on success
 #' @export
@@ -12,17 +12,17 @@
 #'
 #' @concept enumerate
 #' @examples \dontrun{
-#' gredist.init.enumpart()
+#' redist.init.enumpart()
 #' }
-gredist.init.enumpart <- function() {
+redist.init.enumpart <- function() {
     # Update makefile to direct to library only if Windows
     if (Sys.info()[["sysname"]] == "Windows") {
-        makecontent <- readLines(system.file("enumpart/Makefile", package = "gredist"))
+        makecontent <- readLines(system.file("enumpart/Makefile", package = "redist"))
         makecontent[7] <- "\tg++ enumpart.cpp SAPPOROBDD/bddc.o SAPPOROBDD/BDD.o SAPPOROBDD/ZBDD.o -o enumpart -I$(TDZDD_DIR) -std=c++11 -O3 -DB_64 -DNDEBUG -lpsapi"
-        writeLines(text = makecontent, con = system.file("enumpart/Makefile", package = "gredist"))
+        writeLines(text = makecontent, con = system.file("enumpart/Makefile", package = "redist"))
     }
 
-    servr::make(dir = system.file("enumpart", package = "gredist"), verbose = FALSE)
+    servr::make(dir = system.file("enumpart", package = "redist"), verbose = FALSE)
 
     if (Sys.info()[["sysname"]] == "Windows") {
         sys::exec_wait("python", args = c("-m", "pip", "install", "networkx", "--user"))
@@ -33,9 +33,9 @@ gredist.init.enumpart <- function() {
 
     # Necessary to avoid bad CRAN submissions:
     if (Sys.info()[["sysname"]] == "Windows") {
-        makecontent <- readLines(system.file("enumpart/Makefile", package = "gredist"))
+        makecontent <- readLines(system.file("enumpart/Makefile", package = "redist"))
         makecontent[7] <- "\tg++ enumpart.cpp SAPPOROBDD/bddc.o SAPPOROBDD/BDD.o SAPPOROBDD/ZBDD.o -o enumpart -I$(TDZDD_DIR) -std=c++11 -O3 -DB_64 -DNDEBUG"
-        writeLines(text = makecontent, con = system.file("enumpart/Makefile", package = "gredist"))
+        writeLines(text = makecontent, con = system.file("enumpart/Makefile", package = "redist"))
     }
 
     0
@@ -64,11 +64,11 @@ gredist.init.enumpart <- function() {
 #' @examples \dontrun{
 #' temp <- tempdir()
 #' data(fl25)
-#' adj <- gredist.adjacency(fl25)
-#' gredist.prep.enumpart(adj = adj, unordered_path = paste0(temp, "/unordered"),
+#' adj <- redist.adjacency(fl25)
+#' redist.prep.enumpart(adj = adj, unordered_path = paste0(temp, "/unordered"),
 #'     ordered_path = paste0(temp, "/ordered"))
 #' }
-gredist.prep.enumpart <- function(adj, unordered_path, ordered_path,
+redist.prep.enumpart <- function(adj, unordered_path, ordered_path,
                                  weight_path = NULL, total_pop = NULL) {
 
     if (is.null(weight_path) + is.null(total_pop) == 1L) {
@@ -100,12 +100,12 @@ gredist.prep.enumpart <- function(adj, unordered_path, ordered_path,
 
     if (Sys.info()[["sysname"]] == "Windows") {
         res <- sys::exec_wait("python",
-            args = system.file("python/ndscut.py", package = "gredist"),
+            args = system.file("python/ndscut.py", package = "redist"),
             std_in = paste0(unordered_path, ".dat"),
             std_out = paste0(ordered_path, ".dat"))
     } else {
         res <- sys::exec_wait("python3",
-            args = system.file("python/ndscut.py", package = "gredist"),
+            args = system.file("python/ndscut.py", package = "redist"),
             std_in = paste0(unordered_path, ".dat"),
             std_out = paste0(ordered_path, ".dat"))
     }
@@ -120,7 +120,7 @@ gredist.prep.enumpart <- function(adj, unordered_path, ordered_path,
 
 #' Runs the enumpart algorithm
 #'
-#' @param ordered_path Path used in gredist.prep.enumpart (not including ".dat")
+#' @param ordered_path Path used in redist.prep.enumpart (not including ".dat")
 #' @param out_path Valid path to output the enumerated districts
 #' @param ndists number of districts to enumerate
 #' @param all boolean. TRUE outputs all districts. FALSE samples n districts.
@@ -143,10 +143,10 @@ gredist.prep.enumpart <- function(adj, unordered_path, ordered_path,
 #'
 #' @examples \dontrun{
 #' temp <- tempdir()
-#' gredist.run.enumpart(ordered_path = paste0(temp, "/ordered"),
+#' redist.run.enumpart(ordered_path = paste0(temp, "/ordered"),
 #'     out_path = paste0(temp, "/enumerated"))
 #' }
-gredist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
+redist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
                                 all = TRUE, n  = NULL, weight_path = NULL,
                                 lower = NULL, upper = NULL, options = NULL) {
     ndists <- as.integer(ndists)
@@ -178,7 +178,7 @@ gredist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
     }
 
     ## Run enumpart
-    res <- sys::exec_wait(paste0(system.file("enumpart", package = "gredist"), "/enumpart"),
+    res <- sys::exec_wait(paste0(system.file("enumpart", package = "redist"), "/enumpart"),
         args = options,
         std_out = paste0(out_path, ".dat"), std_err = TRUE)
 
@@ -190,7 +190,7 @@ gredist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
 
 #' Read Results from enumpart
 #'
-#' @param out_path out_path specified in gredist.run.enumpart
+#' @param out_path out_path specified in redist.run.enumpart
 #' @param skip number of lines to skip
 #' @param n_max max number of lines to read
 #'
@@ -204,9 +204,9 @@ gredist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
 #' @concept enumerate
 #' @examples \dontrun{
 #' temp <- tempdir()
-#' cds <- gredist.read.enumpart(out_path = paste0(temp, "/enumerated"))
+#' cds <- redist.read.enumpart(out_path = paste0(temp, "/enumerated"))
 #' }
-gredist.read.enumpart <- function(out_path, skip = 0,  n_max = -1L) {
+redist.read.enumpart <- function(out_path, skip = 0,  n_max = -1L) {
     sols <- readLines(paste0(out_path, ".dat"), n = n_max)
     if (skip > 0) sols <- sols[-seq_len(skip)]
     sols <- apply(do.call("cbind", strsplit(sols, " ")), 2, as.numeric)
@@ -237,7 +237,7 @@ is_last <- function(i, v, edges) {
 
 #' Calculate Frontier Size
 #'
-#' @param ordered_path path to ordered path created by gredist.prep.enumpart
+#' @param ordered_path path to ordered path created by redist.prep.enumpart
 #'
 #' @return List, four objects
 #'
@@ -252,11 +252,11 @@ is_last <- function(i, v, edges) {
 #' @importFrom stringr str_split
 #' @examples \dontrun{
 #' data(fl25)
-#' adj <- gredist.adjacency(fl25)
-#' gredist.prep.enumpart(adj, "unordered", "ordered")
-#' gredist.calc.frontier.size("ordered")
+#' adj <- redist.adjacency(fl25)
+#' redist.prep.enumpart(adj, "unordered", "ordered")
+#' redist.calc.frontier.size("ordered")
 #' }
-gredist.calc.frontier.size <- function(ordered_path) {
+redist.calc.frontier.size <- function(ordered_path) {
     lines_in <- readLines(paste0(ordered_path, ".dat"))
     n <- length(lines_in)
 
@@ -310,7 +310,7 @@ gredist.calc.frontier.size <- function(ordered_path) {
 #' vertex weights, to be used along with \code{lower} and \code{upper}.
 #' @param lower A lower bound on each partition's total weight, implemented by rejection sampling.
 #' @param upper An upper bound on each partition's total weight.
-#' @param init Runs gredist.init.enumpart. Defaults to false. Should be run on first use.
+#' @param init Runs redist.init.enumpart. Defaults to false. Should be run on first use.
 #' @param read boolean. Defaults to TRUE. reads
 #' @param total_pop the vector of precinct populations
 #'
@@ -323,21 +323,21 @@ gredist.calc.frontier.size <- function(ordered_path) {
 #'
 #' @concept enumerate
 #' @export
-gredist.enumpart <- function(adj, unordered_path, ordered_path,
+redist.enumpart <- function(adj, unordered_path, ordered_path,
                             out_path, ndists = 2, all = TRUE, n = NULL,
                             weight_path = NULL, lower = NULL, upper = NULL,
                             init = FALSE, read = TRUE, total_pop = NULL) {
     if (init) {
-        gredist.init.enumpart()
+        redist.init.enumpart()
     }
 
-    prep <- gredist.prep.enumpart(adj = adj,
+    prep <- redist.prep.enumpart(adj = adj,
         unordered_path = unordered_path,
         ordered_path = ordered_path,
         weight_path = weight_path,
         total_pop = total_pop)
     if (!prep) {
-        run <- gredist.run.enumpart(ordered_path = ordered_path,
+        run <- redist.run.enumpart(ordered_path = ordered_path,
             out_path = out_path,
             ndists = ndists,
             all = all,
@@ -348,9 +348,9 @@ gredist.enumpart <- function(adj, unordered_path, ordered_path,
     }
 
     if (read) {
-        cds <- gredist.read.enumpart(out_path = out_path)
+        cds <- redist.read.enumpart(out_path = out_path)
         if (!is.null(total_pop)) {
-            par <- gredist.parity(plans = cds, total_pop = total_pop)
+            par <- redist.parity(plans = cds, total_pop = total_pop)
         } else {
             par <- rep(NA_real_, ncol(cds))
         }
