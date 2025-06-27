@@ -714,6 +714,13 @@ List run_redist_gsmc(
                 verbosity, diagnostic_mode ? 3 : 0
             );
             if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Ran smc step %d!\n", smc_step_num);
+            if(smc_step_num == 0 && initial_num_regions == 1){
+                // For the first ancestor one make every ancestor themselves
+                std::iota(
+                    smc_diagnostics.parent_index_mat.column(0).begin(), 
+                    smc_diagnostics.parent_index_mat.column(0).end(), 
+                    0);
+            }
 
             
             // auto t2f = std::chrono::high_resolution_clock::now();
@@ -764,10 +771,24 @@ List run_redist_gsmc(
 
             // do seq_alpha if needed
             if(apply_weights_alpha){
+                // reindex first by making the log weight at index i the index of the parent
+                // we use unnormalized_sampling_weights to hold new values then swap later
+                for (size_t i = 0; i < nsims; i++)
+                {
+                    // REprintf("Sending %u to %d \n", i, smc_diagnostics.parent_index_mat(i, smc_step_num));
+                    unnormalized_sampling_weights[i] = log_weights[smc_diagnostics.parent_index_mat(i, smc_step_num)];
+                }
+                std::swap(unnormalized_sampling_weights, log_weights);
+                // add incremental weights to the current log weights 
+                log_weights = log_weights + smc_diagnostics.log_incremental_weights_mat.col(smc_step_num);
+
                 // if using seq_alpha then our sampling weights for next round are 
                 // proportional to exp(alpha* (prev_log_weights + incremental_weights))
-                unnormalized_sampling_weights = arma::exp(weights_alpha * (log_weights + smc_diagnostics.log_incremental_weights_mat.col(smc_step_num)));
-                log_weights = (1-weights_alpha) * log_weights + smc_diagnostics.log_incremental_weights_mat.col(smc_step_num);
+                unnormalized_sampling_weights = arma::exp(weights_alpha * log_weights);
+                if(!is_final_plans){
+                    // if not the end then multiply by 1-alpha
+                    log_weights = (1-weights_alpha) * log_weights;
+                }
             }else{
                 // if no seq alpha then log weights are just the incremental weights
                 // and sampling weights are just exp of exponential weights 
@@ -775,8 +796,6 @@ List run_redist_gsmc(
                 unnormalized_sampling_weights = arma::exp(log_weights);
             }
             normalized_cumulative_weights =  arma::cumsum(unnormalized_sampling_weights);
-
-
 
             // compute log weight sd
             smc_diagnostics.log_wgt_stddevs.at(smc_step_num) = arma::stddev(log_weights);
@@ -793,14 +812,6 @@ List run_redist_gsmc(
                       << std::setprecision(4)
                       << " Log Weight Standard Deviation: " 
                       << smc_diagnostics.log_wgt_stddevs.at(smc_step_num) << std::endl;
-            }
-
-            if(smc_step_num == 0 && initial_num_regions == 1){
-                // For the first ancestor one make every ancestor themselves
-                std::iota(
-                    smc_diagnostics.parent_index_mat.column(0).begin(), 
-                    smc_diagnostics.parent_index_mat.column(0).end(), 
-                    0);
             }
 
             // only increase if we have smc steps left else it will cause index issues

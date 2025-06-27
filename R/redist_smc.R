@@ -227,7 +227,7 @@ redist_smc <- function(
         split_method = c("naive_top_k","uniform_valid_edge", "expo_bigger_abs_dev"),
         split_params = list(adapt_k_thresh = .99),
         ms_params = list(),
-        n_steps = NULL, seq_alpha = .5,
+        n_steps = NULL, seq_alpha = 1L,
         truncate = (compactness != 1), trunc_fn = redist_quantile_trunc,
         pop_temper = 0, ref_name = NULL,
         verbose = FALSE, silent = FALSE, diagnostics = c("basic", "all"),
