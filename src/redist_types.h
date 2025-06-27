@@ -8,27 +8,28 @@
 #include <vector>
 #include <queue>
 #include <cstdint>
+#include <stdint.h>
 #include <RcppArmadillo.h>
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
 typedef uint16_t VertexID; // type for trees to save space from normal int
-constexpr uint MAX_SUPPORTED_NUM_VERTICES = static_cast<unsigned int>(
+constexpr unsigned int MAX_SUPPORTED_NUM_VERTICES = static_cast<unsigned int>(
     std::numeric_limits<VertexID>::max()
 ); 
 
 typedef std::uint_least8_t RegionID; // type for plan vectors to save space from normal int
-constexpr uint MAX_SUPPORTED_NUM_DISTRICTS = static_cast<unsigned int>(
+constexpr unsigned int MAX_SUPPORTED_NUM_DISTRICTS = static_cast<unsigned int>(
     std::numeric_limits<RegionID>::max()
 ); 
 
 typedef std::uint_least16_t CountyID; // type for county vectors to save space from normal int
-constexpr uint MAX_SUPPORTED_NUM_COUNTIES = static_cast<unsigned int>(
+constexpr unsigned int MAX_SUPPORTED_NUM_COUNTIES = static_cast<unsigned int>(
     std::numeric_limits<CountyID>::max()
 ); 
 
 typedef std::uint_least16_t CountyRegion; // type for region_intersect_county lookup
-constexpr uint MAX_SUPPORTED_COUNTYREGION_VALUE = static_cast<unsigned int>(
+constexpr unsigned int MAX_SUPPORTED_COUNTYREGION_VALUE = static_cast<unsigned int>(
     std::numeric_limits<CountyRegion>::max()
 ); 
 

@@ -89,6 +89,7 @@ constexpr bool DEBUG_GSMC_PLANS_VERBOSE = false; // Compile-time constant
  */ 
 void run_smc_step(
         const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+        ScoringFunction const &scoring_function,
         std::vector<RNGState> &rng_states, SamplingSpace const sampling_space,
         std::unique_ptr<PlanEnsemble> &old_plan_ensemble,
         std::unique_ptr<PlanEnsemble> &new_plan_ensemble,
@@ -703,7 +704,7 @@ List run_redist_gsmc(
             );
             if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("About to run smc step %d!\n", smc_step_num);
             // split the map
-            run_smc_step(map_params, *splitting_schedule_ptr,
+            run_smc_step(map_params, *splitting_schedule_ptr, scoring_function,
                 rng_states, sampling_space,
                 plan_ensemble_ptr, dummy_plan_ensemble_ptr, 
                 *tree_splitter_ptr,

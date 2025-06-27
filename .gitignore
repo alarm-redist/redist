@@ -20,3 +20,5 @@ vignettes/*_cache/*
 src-i386/
 inst/enumpart/enumpart.exe
 redist/tests/testthat/_snaps
+/doc/
+/Meta/
