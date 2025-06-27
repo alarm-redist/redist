@@ -68,10 +68,7 @@ arma::vec get_adj_pair_sampler(
 
 
 
-
-
-
-void compute_all_plans_simple_weights(
+void compute_all_plans_log_simple_incremental_weights(
     RcppThread::ThreadPool &pool,
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
     SamplingSpace const sampling_space,
@@ -81,11 +78,10 @@ void compute_all_plans_simple_weights(
     TreeSplitter const &tree_splitter, 
     bool compute_log_splitting_prob, bool is_final_plans,
     arma::subview_col<double> log_incremental_weights,
-    std::vector<double> &unnormalized_sampling_weights,
     int verbosity
 );
 
-double compute_log_optimal_weights(
+double compute_log_optimal_incremental_weights(
     Plan const &plan, PlanMultigraph &plan_multigraph,
     const SplittingSchedule &splitting_schedule, const TreeSplitter &edge_splitter,
     SamplingSpace const sampling_space,
@@ -93,7 +89,7 @@ double compute_log_optimal_weights(
     bool compute_log_splitting_prob, bool is_final_plan
 );
 
-void compute_all_plans_log_optimal_weights(
+void compute_all_plans_log_optimal_incremental_weights(
     RcppThread::ThreadPool &pool,
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
     SamplingSpace const sampling_space,
@@ -103,7 +99,6 @@ void compute_all_plans_log_optimal_weights(
     TreeSplitter const &tree_splitter,
     bool compute_log_splitting_prob, bool is_final_plans,
     arma::subview_col<double> log_incremental_weights,
-    std::vector<double> &unnormalized_sampling_weights,
     int verbosity
 );
 

@@ -17,9 +17,8 @@ redist_smc(
   init_nseats = NULL,
   sampling_space = c("graph_plan_space", "spanning_forest_space", "linking_edge_space"),
   split_method = c("naive_top_k", "uniform_valid_edge", "expo_bigger_abs_dev"),
-  splitting_params = list(adapt_k_thresh = 0.99),
+  split_params = list(adapt_k_thresh = 0.99),
   mergesplit_params = list(),
-  weight_type = c("optimal", "simple"),
   n_steps = NULL,
   seq_alpha = 1L,
   truncate = (compactness != 1),
@@ -29,7 +28,7 @@ redist_smc(
   verbose = FALSE,
   silent = FALSE,
   diagnostic_level = 0,
-  control = list()
+  control = list(weight_type = "optimal", nproc = 1L)
 )
 }
 \arguments{
@@ -72,7 +71,7 @@ process. The default, 0, will use the number of available cores on the machine
 as long as \code{nsims} and the number of units is large enough. If \code{runs>1}
 you will need to set this manually. If more than one core is used, the
 sampler output will not be fully reproducible with \code{set.seed()}. If full
-reproducibility is desired, set \code{ncores=1} and \code{num_processes=1}.}
+reproducibility is desired, set \code{ncores=1} and \code{nproc=1}.}
 
 \item{init_particles}{Either a \link{redist_plans} object or a matrix of partial
 plans to begin sampling from. For advanced use only. The matrix must have
@@ -102,7 +101,7 @@ right now are
 sampling process. When sampling on the space of graph partitions it must be
 the naive top k method but any method is allowed for forest space sampling.}
 
-\item{splitting_params}{A list of parameters related to splitting the plans.
+\item{split_params}{A list of parameters related to splitting the plans.
 Options include
 \itemize{
 \item \code{splitting_schedule} What rule to use for selecting splitting
@@ -160,10 +159,6 @@ total number of moves is \code{ceiling(ms_moves_multiplier * baseline_num_moves)
 in the mergesplit kernel. Defaults to giving all pairs equal probability.
 }}
 
-\item{weight_type}{The type of SMC weights to use. Optimal weights typically
-have lower variance and lead to faster convergence but can be more
-computationally expensive, especially for computationally complex constraints.}
-
 \item{n_steps}{How many steps to run the SMC algorithm for.
 Each step splits off a new region. Defaults to all remaining districts.
 If fewer than the number of remaining splits, reference plans are disabled.}
@@ -198,17 +193,15 @@ Recommended.}
 
 \item{control}{A list of optional advanced parameters.
 \itemize{
-\item \code{num_processes}: The number of processes (independent instances of R)
+\item \code{nproc}: The number of processes (independent instances of R)
 spawned to simulate the plans. The processes execute runs in parallel, each
-using \code{num_threads_per_process} threads. If more than one process is used, the
+using \code{ncores} threads. If more than one process is used, the
 sampler output will not be fully reproducible with \code{set.seed()}. If full
-reproducibility is desired, set \code{num_processes=1} and
-\code{num_threads_per_process = 1}. If missing defaults to the minimum of the
-number of cores on the machine and \code{runs}
-\item \code{num_threads_per_process} The number of threads assigned to each process.
-This is the number of threads used when performing a specific run. If simulations
-are memory constrained it can be better to lower the number of processes and increase
-the threads per process.
+reproducibility is desired, set \code{nproc=1} and
+\code{ncores = 1}. If missing defaults to a single process.
+\item \code{weight_type} The type of SMC weights to use. Optimal weights typically
+have lower variance and lead to faster convergence but can be more
+computationally expensive, especially for computationally complex constraints.
 }}
 }
 \value{
@@ -257,8 +250,8 @@ sampled_constr <- redist_smc(fl_map, 5000, constraints = constr)
 # Multiple parallel independent runs
 redist_smc(fl_map, 1000, runs = 2)
 
-# One run with multiple cores
-redist_smc(fl_map, 1000, num_processes = 2)
+# One run with multiple processes
+redist_smc(fl_map, 1000, nproc = 2)
 }
 
 }

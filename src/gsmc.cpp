@@ -556,6 +556,7 @@ List run_redist_gsmc(
     );
 
 
+    arma::vec log_weights(nsims, arma::fill::zeros);
     {
     // Ensemble of dummy plans for copying 
     std::unique_ptr<PlanEnsemble> dummy_plan_ensemble_ptr = get_plan_ensemble_ptr(
@@ -589,7 +590,9 @@ List run_redist_gsmc(
     // Define output variables that must always be created
 
     // Start off all the unnormalized weights at 1
-    std::vector<double> unnormalized_sampling_weights(nsims, 1.0);
+    arma::vec unnormalized_sampling_weights(nsims, arma::fill::ones);
+    arma::vec normalized_cumulative_weights(nsims, arma::fill::value(1.0 / nsims));
+    normalized_cumulative_weights = arma::cumsum(normalized_cumulative_weights);
     
 
 
@@ -696,12 +699,7 @@ List run_redist_gsmc(
 
             
             // auto t1f = high_resolution_clock::now();
-            arma::vec cumulative_weights = arma::cumsum(
-                arma::vec(unnormalized_sampling_weights)
-            );
-            arma::vec normalized_cumulative_weights = cumulative_weights / cumulative_weights(
-                cumulative_weights.size()-1
-            );
+
             if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("About to run smc step %d!\n", smc_step_num);
             // split the map
             run_smc_step(map_params, *splitting_schedule_ptr, scoring_function,
@@ -731,19 +729,18 @@ List run_redist_gsmc(
                 // TODO make more princicpal in the future 
                 // for now its just if not district only and not final round 
                 if (verbosity >= 3) Rprintf("Computing Optimal Weights:\n");
-                compute_all_plans_log_optimal_weights(
+                compute_all_plans_log_optimal_incremental_weights(
                     pool,
                     map_params, *splitting_schedule_ptr, sampling_space,
                     scoring_function, rho,
                     plan_ensemble_ptr->plan_ptr_vec, *tree_splitter_ptr,
                     compute_log_splitting_prob, is_final_plans,
                     smc_diagnostics.log_incremental_weights_mat.col(smc_step_num),
-                    unnormalized_sampling_weights,
                     verbosity
                 );
             }else if(wgt_type == "simple"){
                 if (verbosity >= 3) Rprintf("Computing Simple Backwards Kernel Weights:\n");
-                compute_all_plans_simple_weights(
+                compute_all_plans_log_simple_incremental_weights(
                     pool,
                     map_params, *splitting_schedule_ptr,
                     sampling_space,
@@ -751,7 +748,6 @@ List run_redist_gsmc(
                     plan_ensemble_ptr->plan_ptr_vec, *tree_splitter_ptr,
                     compute_log_splitting_prob, is_final_plans,
                     smc_diagnostics.log_incremental_weights_mat.col(smc_step_num),
-                    unnormalized_sampling_weights,
                     verbosity
                 );
             }else{
@@ -766,13 +762,30 @@ List run_redist_gsmc(
                 Rcout << "Calculating log weights took" << ms_double.count() << " ms, ";
             }
 
+            // do seq_alpha if needed
+            if(apply_weights_alpha){
+                // if using seq_alpha then our sampling weights for next round are 
+                // proportional to exp(alpha* (prev_log_weights + incremental_weights))
+                unnormalized_sampling_weights = arma::exp(weights_alpha * (log_weights + smc_diagnostics.log_incremental_weights_mat.col(smc_step_num)));
+                log_weights = (1-weights_alpha) * log_weights + smc_diagnostics.log_incremental_weights_mat.col(smc_step_num);
+            }else{
+                // if no seq alpha then log weights are just the incremental weights
+                // and sampling weights are just exp of exponential weights 
+                log_weights = smc_diagnostics.log_incremental_weights_mat.col(smc_step_num);
+                unnormalized_sampling_weights = arma::exp(log_weights);
+            }
+            normalized_cumulative_weights =  arma::cumsum(unnormalized_sampling_weights);
+
+
 
             // compute log weight sd
-            smc_diagnostics.log_wgt_stddevs.at(smc_step_num) = arma::stddev(
-                smc_diagnostics.log_incremental_weights_mat.col(smc_step_num));
+            smc_diagnostics.log_wgt_stddevs.at(smc_step_num) = arma::stddev(log_weights);
             // compute effective sample size
-            smc_diagnostics.n_eff.at(smc_step_num) = compute_n_eff(
-                smc_diagnostics.log_incremental_weights_mat.col(smc_step_num));
+            smc_diagnostics.n_eff.at(smc_step_num) = normalized_cumulative_weights[nsims-1] * normalized_cumulative_weights[nsims-1]  / arma::sum(arma::square(unnormalized_sampling_weights));
+            // Now normalize the weights 
+            normalized_cumulative_weights = normalized_cumulative_weights / normalized_cumulative_weights(
+                nsims-1
+            );
 
             if (verbosity >= 3) {
                 Rcout << "  " << std::setprecision(2) 
@@ -928,6 +941,7 @@ List run_redist_gsmc(
         _["plans_mat"] = plan_mat,
         _["region_sizes_mat"] = plan_sizes_mat.at(0),
         _["plan_sizes_saved"] = plan_sizes_saved,
+        _["log_weights"] = log_weights,
         _["ancestors"] = ancestors,
         _["step_types"] = step_types,
         _["merge_split_steps"] = merge_split_step_vec

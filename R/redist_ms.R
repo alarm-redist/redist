@@ -117,9 +117,9 @@ redist_mergesplit <- function(
     thin = 1L, chains = 1,
     init_plan = NULL,
     constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
-    sampling_space = c("graph_plan_space", "spanning_forest_space", "linking_edge_space"),
+    sampling_space = c("graph_plan", "spanning_forest", "linking_edge"),
     split_method = c("naive_top_k","uniform_valid_edge", "expo_bigger_abs_dev"),
-    splitting_params = list(adapt_k_thresh = .99),
+    split_params = list(adapt_k_thresh = .99),
     merge_prob_type = "uniform", compactness = 1,
     ncores = NULL,
     cl_type = "PSOCK", return_all = TRUE, init_name = NULL,
@@ -166,8 +166,8 @@ redist_mergesplit <- function(
         cli_abort("{.arg nsims} must be positive.")
 
     #validate the splitting method and params
-    splitting_params <- validate_sample_space_and_splitting_method(
-        sampling_space, split_method, splitting_params, num_splitting_steps
+    split_params <- validate_sample_space_and_splitting_method(
+        sampling_space, split_method, split_params, num_splitting_steps
     )
 
 
@@ -202,7 +202,7 @@ redist_mergesplit <- function(
 
         init_plans <- get_plans_matrix(
             redist_smc(map, n_smc_nsims, counties, compactness, constraints,
-                       resample = TRUE, splitting_params = splitting_params,
+                       resample = TRUE, split_params = split_params,
                        sampling_space = sampling_space, split_method = split_method,
                        ref_name = FALSE, verbose = verbose, silent = silent)
             )[, sample.int(n=n_smc_nsims, size=chains, replace=F), drop=FALSE]
@@ -242,7 +242,7 @@ redist_mergesplit <- function(
 
     # add the splitting parameters
     # need to do it like this because its a list
-    control <- c(control, splitting_params)
+    control <- c(control, split_params)
 
 
 
@@ -341,7 +341,7 @@ redist_mergesplit <- function(
             total_acceptances = (algout$warmup_acceptances + algout$post_warump_acceptances),
             accept_rate = (algout$warmup_acceptances + algout$post_warump_acceptances) / algout$total_steps,
             total_steps = algout$total_steps,
-            splitting_params=splitting_params
+            split_params=split_params
         )
 
         # Information about the run

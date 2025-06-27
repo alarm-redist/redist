@@ -68,7 +68,7 @@ DEBUG_MODE <- FALSE
 #' as long as `nsims` and the number of units is large enough. If `runs>1`
 #' you will need to set this manually. If more than one core is used, the
 #' sampler output will not be fully reproducible with `set.seed()`. If full
-#' reproducibility is desired, set `ncores=1` and `num_processes=1`.
+#' reproducibility is desired, set `ncores=1` and `nproc=1`.
 #' @param init_particles Either a [redist_plans] object or a matrix of partial
 #' plans to begin sampling from. For advanced use only. The matrix must have
 #' `nsims` columns and a row for every precinct. It is important to ensure that
@@ -91,7 +91,7 @@ DEBUG_MODE <- FALSE
 #' @param split_method The method used for splitting spanning trees in the
 #' sampling process. When sampling on the space of graph partitions it must be
 #' the naive top k method but any method is allowed for forest space sampling.
-#' @param splitting_params A list of parameters related to splitting the plans.
+#' @param split_params A list of parameters related to splitting the plans.
 #' Options include
 #' \itemize{
 #'  \item \code{splitting_schedule} What rule to use for selecting splitting
@@ -133,7 +133,7 @@ DEBUG_MODE <- FALSE
 #'          and larger values result in more unstable weights.
 #'      }
 #'  }
-#' @param mergesplit_params A list of mergesplit parameters.
+#' @param ms_params A list of mergesplit parameters.
 #' \itemize{
 #'  \item \code{ms_frequency}: How often to run merge steps. Should either be an integer
 #' (meaning run after every _ smc steps) or a vector of 1 indexed step numbers
@@ -147,9 +147,6 @@ DEBUG_MODE <- FALSE
 #' \item \code{merge_prob_type} What probability to use to select regions to merge
 #' in the mergesplit kernel. Defaults to giving all pairs equal probability.
 #' }
-#' @param weight_type The type of SMC weights to use. Optimal weights typically
-#' have lower variance and lead to faster convergence but can be more
-#' computationally expensive, especially for computationally complex constraints.
 #' @param n_steps How many steps to run the SMC algorithm for.
 #' Each step splits off a new region. Defaults to all remaining districts.
 #' If fewer than the number of remaining splits, reference plans are disabled.
@@ -172,20 +169,26 @@ DEBUG_MODE <- FALSE
 #' @param verbose Whether to print out intermediate information while sampling.
 #' Recommended.
 #' @param silent Whether to suppress all diagnostic information.
-#' @param diagnostic_level What level of diagnostic information to save
+#' @param diagnostics What amount of diagnostic information to save. Current
+#' options are
+#' \itemize{
+#'  \item \code{basic} Saves the final plans and for each step the
+#'  incremental weights and ancestors.
+#'  \item \code{all} Saves everything \code{basic} does in addition to the
+#'  intermediate plan and seat matrices after each splitting and mergesplit step.
+#'  Use with caution as this can use a lot of memory very quickly.
+#' }
 #' @param control A list of optional advanced parameters.
 #' \itemize{
-#'  \item \code{num_processes}: The number of processes (independent instances of R)
+#'  \item \code{nproc}: The number of processes (independent instances of R)
 #' spawned to simulate the plans. The processes execute runs in parallel, each
-#' using `num_threads_per_process` threads. If more than one process is used, the
+#' using `ncores` threads. If more than one process is used, the
 #' sampler output will not be fully reproducible with `set.seed()`. If full
-#' reproducibility is desired, set `num_processes=1` and
-#' `num_threads_per_process = 1`. If missing defaults to the minimum of the
-#' number of cores on the machine and `runs`
-#'  \item \code{num_threads_per_process} The number of threads assigned to each process.
-#' This is the number of threads used when performing a specific run. If simulations
-#' are memory constrained it can be better to lower the number of processes and increase
-#' the threads per process.
+#' reproducibility is desired, set `nproc=1` and
+#' `ncores = 1`. If missing defaults to a single process.
+#'  \item \code{weight_type} The type of SMC weights to use. Optimal weights typically
+#' have lower variance and lead to faster convergence but can be more
+#' computationally expensive, especially for computationally complex constraints.
 #' }
 #'
 #' @return `redist_smc` returns a [redist_plans] object containing the simulated
@@ -205,8 +208,8 @@ DEBUG_MODE <- FALSE
 #' # Multiple parallel independent runs
 #' redist_smc(fl_map, 1000, runs = 2)
 #'
-#' # One run with multiple cores
-#' redist_smc(fl_map, 1000, num_processes = 2)
+#' # One run with multiple processes
+#' redist_smc(fl_map, 1000, nproc = 2)
 #' }
 #'
 #' @concept simulate
@@ -220,16 +223,15 @@ redist_smc <- function(
         runs = 1L, ncores = 0L,
         init_particles = NULL,
         init_nseats = NULL,
-        sampling_space = c("graph_plan_space", "spanning_forest_space", "linking_edge_space"),
+        sampling_space = c("graph_plan", "spanning_forest", "linking_edge"),
         split_method = c("naive_top_k","uniform_valid_edge", "expo_bigger_abs_dev"),
-        splitting_params = list(adapt_k_thresh = .99),
-        mergesplit_params = list(),
-        weight_type = c("optimal", "simple"),
-        n_steps = NULL, seq_alpha = 1L,
+        split_params = list(adapt_k_thresh = .99),
+        ms_params = list(),
+        n_steps = NULL, seq_alpha = .5,
         truncate = (compactness != 1), trunc_fn = redist_quantile_trunc,
         pop_temper = 0, ref_name = NULL,
-        verbose = FALSE, silent = FALSE, diagnostic_level = 0,
-        control = list()
+        verbose = FALSE, silent = FALSE, diagnostics = c("basic", "all"),
+        control = list(weight_type = "optimal", nproc = 1L)
 )
 {
 
@@ -243,8 +245,13 @@ redist_smc <- function(
 
     # check default inputs
     sampling_space <- rlang::arg_match(sampling_space)
-    weight_type <- rlang::arg_match(weight_type)
     split_method <- rlang::arg_match(split_method)
+    diagnostics <- rlang::arg_match(diagnostics)
+    diagnostic_level <- case_when(
+        diagnostics == "basic" ~ 0,
+        diagnostics == "all" ~ 1,
+        .default = 0
+    )
 
 
     # come up with a better name for diagnostic level code
@@ -266,8 +273,8 @@ redist_smc <- function(
         if(missing(split_method)){
             split_method <- NAIVE_K_SPLITTING
         }
-        if(missing(splitting_params)){
-            splitting_params = list(
+        if(missing(split_params)){
+            split_params = list(
                 adapt_k_thresh=.99
             )
         }
@@ -303,8 +310,8 @@ redist_smc <- function(
     }
 
     # setting the splitting size regime
-    if("splitting_schedule" %in% names(splitting_params)){
-        splitting_schedule <- splitting_params[["splitting_schedule"]]
+    if("splitting_schedule" %in% names(split_params)){
+        splitting_schedule <- split_params[["splitting_schedule"]]
         if(splitting_schedule == "split_district_only"){
             if(districting_scheme == "SMD"){
                 splitting_size_regime = "split_district_only"
@@ -377,8 +384,8 @@ redist_smc <- function(
 
 
     #validate the splitting method and params
-    splitting_params <- validate_sample_space_and_splitting_method(
-        sampling_space, split_method, splitting_params, n_steps
+    split_params <- validate_sample_space_and_splitting_method(
+        sampling_space, split_method, split_params, n_steps
     )
     total_smc_steps <- n_steps
 
@@ -387,11 +394,11 @@ redist_smc <- function(
     ms_param_names <- c("ms_moves_multiplier", "ms_frequency", "merge_prob_type")
 
     # create merge split parameter information
-    if(is.list(mergesplit_params) && any(ms_param_names %in% names(mergesplit_params))){
+    if(is.list(ms_params) && any(ms_param_names %in% names(ms_params))){
         run_ms <- TRUE
         # check if ms_moves_multiplier was passed else default to 1
-        if("ms_moves_multiplier" %in% names(mergesplit_params)){
-            ms_moves_multiplier <- mergesplit_params[["ms_moves_multiplier"]]
+        if("ms_moves_multiplier" %in% names(ms_params)){
+            ms_moves_multiplier <- ms_params[["ms_moves_multiplier"]]
             # check that ms_moves_multiplier is positive
             if(!assertthat::is.scalar(ms_moves_multiplier) || !ms_moves_multiplier > 0){
                 cli::cli_abort("{.arg ms_moves_multiplier} must be a positive scalar")
@@ -401,16 +408,16 @@ redist_smc <- function(
         }
 
         # check if the frequency was passed else default to after every step
-        if("ms_frequency" %in% names(mergesplit_params)){
-            ms_frequency <- mergesplit_params[["ms_frequency"]]
+        if("ms_frequency" %in% names(ms_params)){
+            ms_frequency <- ms_params[["ms_frequency"]]
         }else{
             # else default to after every step
             ms_frequency <- 1L
         }
 
         # check merge probability
-        if("merge_prob_type" %in% names(mergesplit_params)){
-            merge_prob_type <- mergesplit_params[["merge_prob_type"]]
+        if("merge_prob_type" %in% names(ms_params)){
+            merge_prob_type <- ms_params[["merge_prob_type"]]
             if(!assertthat::is.scalar(merge_prob_type) || merge_prob_type != "uniform"){
                 cli::cli_abort("Only uniform merge probability is supported right now!")
             }
@@ -475,7 +482,6 @@ redist_smc <- function(
     # set up parallel processing stuff
     ncores_max <- parallel::detectCores()
 
-    control_param_names <- c("num_processes", "num_threads_per_process")
     # legacy, ncores is essentially the number of threads per process
     num_threads_per_process <- ncores
     if(!is.null(num_threads_per_process)){
@@ -492,37 +498,51 @@ redist_smc <- function(
 
 
 
-    if(is.list(control) && any("num_processes" %in% names(control))){
-        if("num_processes" %in% names(control)){
-            num_processes <- control[["num_processes"]]
-            if(!rlang::is_integerish(num_processes) || !assertthat::is.scalar(num_processes)){
-                cli::cli_abort("{.arg num_processes} in {.arg control} must be a single integer!")
-            }else if(num_processes <= 0){
-                cli::cli_abort("{.arg num_processes} in {.arg control} must be a positive integer!")
+    # Now handle control parameters
+    control_param_names <- c("nproc", "weight_type")
+
+    if(is.list(control) && any("nproc" %in% names(control))){
+        if("nproc" %in% names(control)){
+            nproc <- control[["nproc"]]
+            if(!rlang::is_integerish(nproc) || !assertthat::is.scalar(nproc)){
+                cli::cli_abort("{.arg nproc} in {.arg control} must be a single integer!")
+            }else if(nproc <= 0){
+                cli::cli_abort("{.arg nproc} in {.arg control} must be a positive integer!")
             }
         }else{
             # default to 1
-            num_processes <- 1L
+            nproc <- 1L
+        }
+
+        if("weight_type" %in% names(control)){
+            weight_type <- control[["weight_type"]]
+            weight_type <- rlang::arg_match(
+                arg = weight_type,
+                values = c("optimal", "simple")
+                )
+        }else{
+            # else default to optimal
+            weight_type <- "optimal"
         }
     }else{
-        num_processes <- 1L
-        num_threads_per_process <- ncores_max
+        nproc <- 1L
+        weight_type <- "optimal"
     }
 
-    multiprocess <- num_processes > 1
+    multiprocess <- nproc > 1
     # make sure we're not spawning more proccesses than runs
-    num_processes <- min(runs, num_processes)
+    nproc <- min(runs, nproc)
 
     # warn if more processes than cores
-    if(num_processes > ncores_max){
+    if(nproc > ncores_max){
         cli_warn("Inputted number of processes to spawn is greater than detected number of cores on machine")
     }
 
-    num_processes <- as.integer(num_processes)
+    nproc <- as.integer(nproc)
     num_threads_per_process <- as.integer(num_threads_per_process)
 
 
-    if (num_processes > 1 && runs > 1) {
+    if (nproc > 1 && runs > 1) {
         `%oper%` <- `%dorng%`
         of <- if (Sys.info()[["sysname"]] == "Windows") {
             tempfile(pattern = paste0("smc_", substr(Sys.time(), 1, 10)), fileext = ".txt")
@@ -532,10 +552,10 @@ redist_smc <- function(
 
         # this makes a cluster using socket (NOT FORK) with
         if (!silent)
-            cl <- makeCluster(num_processes, outfile = of, methods = FALSE,
+            cl <- makeCluster(nproc, outfile = of, methods = FALSE,
                               useXDR = .Platform$endian != "little")
         else
-            cl <- makeCluster(num_processes, methods = FALSE,
+            cl <- makeCluster(nproc, methods = FALSE,
                               useXDR = .Platform$endian != "little")
         # this makes it avoid printing the loading required package message each time
         parallel::clusterEvalQ(cl, {
@@ -551,9 +571,9 @@ redist_smc <- function(
             }
             NULL
         })
-        doParallel::registerDoParallel(cl, cores = num_processes)
+        doParallel::registerDoParallel(cl, cores = nproc)
         on.exit(stopCluster(cl))
-        cat("Spawning " , num_processes, " clusters \n")
+        cat("Spawning " , nproc, " clusters \n")
     } else {
         `%oper%` <- `%do%`
     }
@@ -574,7 +594,7 @@ redist_smc <- function(
     )
 
     # add the splitting parameters
-    cpp_control_list <- c(cpp_control_list, splitting_params)
+    cpp_control_list <- c(cpp_control_list, split_params)
 
 
     t1 <- Sys.time()
@@ -659,7 +679,7 @@ redist_smc <- function(
 
 
         # pull out the log weights
-        lr <- algout$log_incremental_weights_mat[,total_smc_steps]
+        lr <- algout$log_weights
 
         wgt <- exp(lr - mean(lr))
         n_eff <- length(wgt)*mean(wgt)^2/mean(wgt^2)
@@ -799,7 +819,7 @@ redist_smc <- function(
         # Information about the run
         algout$run_information <- list(
             weight_type=weight_type,
-            num_processes = num_processes,
+            nproc = nproc,
             num_threads = num_threads_per_process,
             custom_size_split_list=custom_size_split_list,
             valid_region_sizes_to_split_list=algout$valid_region_sizes_to_split_list,
@@ -820,15 +840,15 @@ redist_smc <- function(
         algout$l_diag <- list(
             n_eff = n_eff,
             step_n_eff = algout$step_n_eff,
-            adapt_k_thresh = splitting_params$adapt_k_thresh, # adapt_k_thresh, NEED TO DEAL WITH
+            adapt_k_thresh = split_params$adapt_k_thresh, # adapt_k_thresh, NEED TO DEAL WITH
             est_k = algout$est_k,
-            splitting_params=splitting_params,
+            split_params=split_params,
             accept_rate = algout$acceptance_rates,
             sd_lp = sd_lp,
             sd_temper = rep(NA, total_steps),
             unique_survive = nunique_parent_indices,
             ancestors = algout$ancestors,
-            seq_alpha = .99,
+            seq_alpha = seq_alpha,
             pop_temper = pop_temper,
             runtime = as.numeric(t2_run - t1_run, units = "secs"),
             nunique_original_ancestors = nunique_original_ancestors

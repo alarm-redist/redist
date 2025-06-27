@@ -211,11 +211,11 @@ std::array<double, 2> EdgeCut::compute_abs_pop_deviances(double target) const{
 // loads a sampling spaces type enum from a control string
 SamplingSpace get_sampling_space(std::string const &sampling_space_str){
     // find the type or throw an error 
-    if(sampling_space_str == "graph_plan_space"){
+    if(sampling_space_str == "graph_plan"){
         return SamplingSpace::GraphSpace;
-    }else if(sampling_space_str == "spanning_forest_space"){
+    }else if(sampling_space_str == "spanning_forest"){
         return SamplingSpace::ForestSpace;
-    }else if(sampling_space_str == "linking_edge_space"){
+    }else if(sampling_space_str == "linking_edge"){
         return SamplingSpace::LinkingEdgeSpace;
     }else{
         REprintf("Splitting Type %s is not a valid sampling space!\n", 

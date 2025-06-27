@@ -396,7 +396,7 @@ double compute_simple_log_incremental_weight(
 }
 
 
-void compute_all_plans_simple_weights(
+void compute_all_plans_log_simple_incremental_weights(
     RcppThread::ThreadPool &pool,
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
     SamplingSpace const sampling_space,
@@ -406,13 +406,14 @@ void compute_all_plans_simple_weights(
     TreeSplitter const &tree_splitter,
     bool compute_log_splitting_prob, bool is_final_plans,
     arma::subview_col<double> log_incremental_weights,
-    std::vector<double> &unnormalized_sampling_weights,
     int verbosity
 ){
     int const M = (int) plans_ptr_vec.size();
     int const num_regions = plans_ptr_vec[0]->num_regions;
+    const int check_int = 50; // check for interrupts every _ iterations
 
 
+    RcppThread::ProgressBar bar(M, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
         PlanMultigraph plan_multigraph(map_params);
@@ -426,8 +427,13 @@ void compute_all_plans_simple_weights(
             is_final_plans
         );
 
-        log_incremental_weights(i) = log_incr_weight;
-        unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
+        log_incremental_weights[i] = log_incr_weight;
+
+        if (verbosity >= 3) {
+            ++bar;
+        }
+
+        RcppThread::checkUserInterrupt(i % check_int == 0);
     });
 
     // Wait for all the threads to finish
@@ -524,7 +530,7 @@ Graph get_region_graph(const Graph &g, const Plan &plan) {
 //'
 //' @return the log of the incremental weight of the plan
 //'
-double compute_log_optimal_weights(
+double compute_log_optimal_incremental_weights(
     Plan const &plan, PlanMultigraph &plan_multigraph,
     const SplittingSchedule &splitting_schedule, const TreeSplitter &edge_splitter,
     SamplingSpace const sampling_space,
@@ -710,7 +716,7 @@ double compute_log_optimal_weights(
 //'    weights of the plans
 //'    - The `unnormalized_sampling_weights` is updated to contain the unnormalized
 //'    sampling weights of the plans for the next round
-void compute_all_plans_log_optimal_weights(
+void compute_all_plans_log_optimal_incremental_weights(
     RcppThread::ThreadPool &pool,
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
     SamplingSpace const sampling_space,
@@ -720,7 +726,6 @@ void compute_all_plans_log_optimal_weights(
     TreeSplitter const &tree_splitter,
     bool compute_log_splitting_prob, bool is_final_plans,
     arma::subview_col<double> log_incremental_weights,
-    std::vector<double> &unnormalized_sampling_weights,
     int verbosity
 ){
     const int nsims = static_cast<int>(plans_ptr_vec.size());
@@ -736,7 +741,7 @@ void compute_all_plans_log_optimal_weights(
 
 
         // REprintf("I=%d\n", i);
-        double log_incr_weight = compute_log_optimal_weights(
+        double log_incr_weight = compute_log_optimal_incremental_weights(
             *plans_ptr_vec[i], plan_multigraph, 
             splitting_schedule, tree_splitter,
             sampling_space, scoring_function, 
@@ -744,9 +749,7 @@ void compute_all_plans_log_optimal_weights(
             is_final_plans
         );
 
-
         log_incremental_weights[i] = log_incr_weight;
-        unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
 
         if (verbosity >= 3) {
             ++bar;

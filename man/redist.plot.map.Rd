@@ -6,7 +6,7 @@
 \usage{
 redist.plot.map(
   shp,
-  adj = NULL,
+  adj,
   plan = NULL,
   fill = NULL,
   fill_label = "",
