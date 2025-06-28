@@ -59,8 +59,8 @@ test_that("Not egregiously incorrect sampling accuracy (25-prec)", {
     ref_plans <- plans_10[, redist.parity(plans_10, pop) <= 0.01]
     log_st_ref <- round(log_st_map(adj, ref_plans, rep(1L, 25), 3L), 5)
 
-    out <- redist_smc(set_pop_tol(fl_map, 0.01), 6000, compactness = 0,
-        adapt_k_thresh = 1, seq_alpha = 0.5, resample = FALSE, silent = TRUE) %>%
+    out <- redist_smc(set_pop_tol(fl_map, 0.01), 6000, compactness=0,
+        adapt_k_thresh=0.99999, seq_alpha=0.5, resample=FALSE, silent=TRUE) %>%
         suppressWarnings() # efficiency
     log_st <- round(log_st_map(adj, as.matrix(out), rep(1L, 25), 3L), 5)
     types <- match(log_st, log_st_ref)
