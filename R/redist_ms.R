@@ -171,7 +171,7 @@ redist_mergesplit <- function(map, nsims,
             }
             counties = vctrs::vec_group_id(counties)
         } else {
-            component <- contiguity(adj, counties)
+            component <- contiguity(adj, vctrs::vec_group_id(counties))
             counties <- dplyr::if_else(component > 1,
                                        paste0(as.character(counties), "-", component),
                                        as.character(counties)) |>
