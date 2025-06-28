@@ -163,7 +163,8 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     }
 
     pop <- map[[attr(map, "pop_col")]]
-    if (any(pop >= get_target(map))) {
+    if ((backend == 'flip' && any(pop >= get_target(map))) ||
+        (backend == 'mergesplit' && any(pop >= pop_bounds[3]))) {
         too_big <- as.character(which(pop >= pop_bounds[3]))
         cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
                     population larger than the district target.",
