@@ -272,6 +272,7 @@ total_soft_constraints(0), num_hard_constraints(0){
 
     total_soft_constraints = num_non_final_soft_constraints+num_final_soft_constraints+all_rounds_soft_constraints;
     any_soft_constraints = total_soft_constraints != 0; 
+
 }
 
 

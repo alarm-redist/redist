@@ -69,36 +69,6 @@ get_merged_log_number_linking_edges <- function(adj_list, region_ids, region1_id
     .Call(`_redist_get_merged_log_number_linking_edges`, adj_list, region_ids, region1_id, region2_id)
 }
 
-#' Run Optimalgsmc with Merge Split
-#'
-#' Uses gsmc method with optimal weights and merge split steps to generate a sample of `M` plans in `c++` 
-#' 
-#' 
-#' Using the procedure outlined in <PAPER HERE> this function uses Sequential
-#' Monte Carlo (SMC) methods to generate a sample of `M` plans
-#'
-#'
-#' @param ndists The number of districts the final plans will have
-#' @param adj_list A 0-indexed adjacency list representing the undirected graph
-#' which represents the underlying map the plans are to be drawn on
-#' @param counties Vector of county labels of each vertex in `g`
-#' @param pop A vector of the population associated with each vertex in `g`
-#' @param target Ideal population of a valid district. This is what deviance is calculated
-#' relative to
-#' @param lower Acceptable lower bounds on a valid district's population
-#' @param upper Acceptable upper bounds on a valid district's population
-#' @param nsims The number of plans (samples) to draw
-#' @param k_param The k parameter from the SMC algorithm, you choose among the top k_param edges
-#' @param control Named list of additional parameters.
-#' @param num_threads The number of threads the threadpool should use
-#' @param verbosity What level of detail to print out while the algorithm is
-#' running <ADD OPTIONS>
-#' @export
-#' @keywords internal
-run_redist_gsmc <- function(nsims, total_seats, ndists, district_seat_sizes, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat) {
-    .Call(`_redist_run_redist_gsmc`, nsims, total_seats, ndists, district_seat_sizes, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat)
-}
-
 log_st_map <- function(g, districts, counties, n_distr) {
     .Call(`_redist_log_st_map`, g, districts, counties, n_distr)
 }
@@ -352,8 +322,34 @@ k_biggest <- function(x, k = 1L) {
     .Call(`_redist_k_biggest`, x, k)
 }
 
-smc_plans <- function(N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, constraints, control, verbosity = 1L) {
-    .Call(`_redist_smc_plans`, N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, constraints, control, verbosity)
+#' Run Optimalgsmc with Merge Split
+#'
+#' Uses gsmc method with optimal weights and merge split steps to generate a sample of `M` plans in `c++` 
+#' 
+#' 
+#' Using the procedure outlined in <PAPER HERE> this function uses Sequential
+#' Monte Carlo (SMC) methods to generate a sample of `M` plans
+#'
+#'
+#' @param ndists The number of districts the final plans will have
+#' @param adj_list A 0-indexed adjacency list representing the undirected graph
+#' which represents the underlying map the plans are to be drawn on
+#' @param counties Vector of county labels of each vertex in `g`
+#' @param pop A vector of the population associated with each vertex in `g`
+#' @param target Ideal population of a valid district. This is what deviance is calculated
+#' relative to
+#' @param lower Acceptable lower bounds on a valid district's population
+#' @param upper Acceptable upper bounds on a valid district's population
+#' @param nsims The number of plans (samples) to draw
+#' @param k_param The k parameter from the SMC algorithm, you choose among the top k_param edges
+#' @param control Named list of additional parameters.
+#' @param num_threads The number of threads the threadpool should use
+#' @param verbosity What level of detail to print out while the algorithm is
+#' running <ADD OPTIONS>
+#' @export
+#' @keywords internal
+run_redist_gsmc <- function(nsims, total_seats, ndists, district_seat_sizes, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat) {
+    .Call(`_redist_run_redist_gsmc`, nsims, total_seats, ndists, district_seat_sizes, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat)
 }
 
 splits <- function(dm, community, nd, max_split) {
