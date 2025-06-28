@@ -69,10 +69,10 @@ map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
 plans <- redist_smc(map, 50, silent = TRUE)
 plans$dem <- group_frac(map, dem_08, tot_08, plans)
 
-proj_distr(plans, dem) # a 99-by-50 matrix
+proj_distr(plans, dem)[ ,1] # a 99-by-50 matrix, just showing first column
 plot(map, proj_avg(plans, dem))
 plot(map, proj_contr(plans, dem))
-plot(map, proj_contr(plans, dem, comp="cd_2010"))
+plot(map, proj_contr(plans, dem, compare="cd_2010"))
 
 }
 \references{

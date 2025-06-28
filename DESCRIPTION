@@ -24,7 +24,7 @@ Description: Enables researchers to sample redistricting plans from a pre-specif
     and DeFord et al. (2021) <doi:10.1162/99608f92.eb30390f>, and the Short-burst 
     optimization algorithm of Cannon et al. (2020) <arXiv:2011.02288>.
 Depends:
-    R (>= 3.5.0),
+    R (>= 4.1.0),
     redistmetrics (>= 1.0.2) 
 Imports:
     Rcpp (>= 0.11.0),
@@ -64,7 +64,7 @@ NeedsCompilation: yes
 BugReports: https://github.com/alarm-redist/redist/issues
 URL: https://alarm-redist.org/redist/
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 VignetteBuilder: knitr
 Encoding: UTF-8
 Config/testthat/edition: 3
