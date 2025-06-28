@@ -137,8 +137,8 @@ redist.competitiveness <- function(plans, rvote, dvote, alpha = 1, beta = 1) {
 #' Becomes TRUE if ncol(district_membership > 8) and not manually set.
 #' @param perim_path it checks for an Rds, if no rds exists at the path,
 #' it creates an rds with borders and saves it.
-#' This can be created in advance with [prep_perims()].
-#' @param perim_df A dataframe output from [prep_perims()].
+#' This can be created in advance with [redistmetrics::prep_perims()].
+#' @param perim_df A dataframe output from [redistmetrics::prep_perims()].
 #'
 #' @details This function computes specified compactness scores for a map.  If
 #' there is more than one shape specified for a single district, it combines
