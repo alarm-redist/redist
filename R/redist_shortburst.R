@@ -507,7 +507,7 @@ scorer_multisplits <- function(map, counties) {
 #' @rdname scorers
 #' @order 6
 #'
-#' @param perim_df perimeter distance dataframe from [prep_perims()]
+#' @param perim_df perimeter distance dataframe from [redistmetrics::prep_perims()]
 #' @param areas area of each precinct (ie `st_area(map)`)
 #' @param m the m-th from the bottom Polsby Popper to return as the score. Defaults to 1,
 #' the minimum Polsby Popper score

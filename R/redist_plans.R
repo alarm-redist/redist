@@ -104,7 +104,7 @@ reconstruct.redist_plans <- function(data, old) {
 #' The first two columns of the data frame will be \code{draw}, a factor indexing
 #' the simulation draw, and \code{district}, an integer indexing the districts
 #' within a plan. The data frame will therefore have \code{n_sims*ndists} rows.
-#' As a data frame, the usual \code{\link{dplyr}} methods will work.
+#' As a data frame, the usual `dplyr` methods will work.
 #'
 #' Other useful methods for \code{redist_plans} objects:
 #' * \code{\link{summary.redist_plans}}
