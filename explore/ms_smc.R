@@ -16,9 +16,9 @@ pl_ms = redist_mergesplit_parallel(map, 25*2000+1000, warmup=1000, chains=4L,
 summary(pl_ms)
 redist.plot.trace(pl_ms, polsby)
 redist.plot.trace(pl_ms, e_dem)
-redist.plot.plans(pl_ms, 4000, map)
+# redist.plot.plans(pl_ms, 4000, map)
 
-pl_smc = redist_smc(map, 2000, ncores=2, runs=2, pop_temper=0.007, adapt_k_thresh=1) |>
+pl_smc = redist_smc(map, 4000, ncores=2, runs=2, pop_temper=0.007, adapt_k_thresh=1) |>
     mutate(polsby = comp_polsby(pl(), map, perim_df=perims, ncores=4),
            dem = group_frac(map, ndv, ndv + nrv)) |>
     subset_sampled() |>
@@ -29,8 +29,8 @@ summary(pl_smc)
 redist.plot.plans(pl_smc, 4000, map)
 
 qqplot(pl_smc$polsby, pl_ms$polsby, cex=0.1); abline(a=0, b=1, col='red');
-redist_ci(pl_smc, 4==e_dem) * 4e3
-redist_ci(pl_ms, 4==e_dem) * 4e3
+redist_ci(pl_smc, 4>=e_dem)
+redist_ci(pl_ms, 4>=e_dem)
 redist_ci(pl_smc, polsby)
 redist_ci(pl_ms, polsby)
 
