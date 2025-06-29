@@ -2,7 +2,7 @@
 ## Author: Philip O'Sullivan
 ## Institution: Harvard University
 ## Date Created: 2025/02/15
-## Purpose: Wrapper for running gsmc cpp code
+## Purpose: Wrapper for running smc cpp code
 ##############################################
 
 DEBUG_MODE <- FALSE
@@ -355,24 +355,24 @@ redist_smc <- function(
         init_num_regions <- 1L
     }else {
         if (inherits(init_particles, "redist_plans")){
+            if(is.null(init_nseats)){
+                init_nseats <- get_nseats_matrix(init_particles)
+            }
             init_particles <- get_plans_matrix(init_particles) - 1L
+
         }
         if(is.null(init_nseats)){
-            if (inherits(init_particles, "redist_plans")){
-                init_nseats <- get_nseats_matrix(init_particles)
-            }else{
-                # else infer
-                cli::cli_warning("{.arg init_nseats} was not passed in, attempting to infer number of seats per region.")
-                init_nseats <- infer_plan_nseats(
-                    init_particles, total_seats, pop,
-                    pop_bounds[1], pop_bounds[3]
-                )
-            }
+            # else infer
+            cli::cli_warn("{.arg init_nseats} was not passed in, attempting to infer number of seats per region.")
+            init_nseats <- infer_plan_nseats(
+                init_particles, total_seats, pop,
+                pop_bounds[1], pop_bounds[3]
+            )
         }
         # if user input then check its valid
         init_num_regions <- length(unique(init_particles[,1]))
-        validate_initial_region_id_mat(init_particles, V, nsims, init_num_regions)
-        validate_initial_region_sizes_mat(init_nseats, ndists, nsims, init_num_regions)
+        # validate_initial_region_id_mat(init_particles, V, nsims, init_num_regions)
+        # validate_initial_region_sizes_mat(init_nseats, ndists, nsims, init_num_regions)
     }
     if (is.null(n_steps)) {
         n_steps <- ndists - init_num_regions
@@ -501,7 +501,7 @@ redist_smc <- function(
     # Now handle control parameters
     control_param_names <- c("nproc", "weight_type")
 
-    if(is.list(control) && any("nproc" %in% names(control))){
+    if(is.list(control) && any("nproc" %in% control_param_names)){
         if("nproc" %in% names(control)){
             nproc <- control[["nproc"]]
             if(!rlang::is_integerish(nproc) || !assertthat::is.scalar(nproc)){
@@ -520,6 +520,7 @@ redist_smc <- function(
                 arg = weight_type,
                 values = c("optimal", "simple")
                 )
+
         }else{
             # else default to optimal
             weight_type <- "optimal"

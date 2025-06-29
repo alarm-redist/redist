@@ -104,7 +104,7 @@ Rcpp::IntegerMatrix get_canonical_plan_labelling(
 
 RcppThread::ThreadPool get_thread_pool(int const num_threads){
     if(num_threads == 1){
-        return RcppThread::ThreadPool(0);
+        return RcppThread::ThreadPool(1);
     }else if(num_threads > 1){
         return RcppThread::ThreadPool(num_threads);
     }else{
@@ -573,7 +573,7 @@ void SMCDiagnostics::add_full_step_diagnostics(
     // reorder the plans by oldest split if either we'vxe done any merge split or
     // its generalized region splits 
 
-    bool const split_district_only = splitting_schedule.schedule_type == SplittingSizeScheduleType::DistrictOnly;
+    bool const split_district_only = splitting_schedule.schedule_type == SplittingSizeScheduleType::DistrictOnlySMD;
     int const nsims = plan_ensemble.nsims;
 
     // if smc step update splitting step info

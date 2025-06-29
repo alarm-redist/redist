@@ -30,6 +30,14 @@ get_map_parameters <- function(map, counties=NULL){
     map <- validate_redist_map(map)
     V <- nrow(map)
     adj_list <- get_adj(map)
+    # get seat related values
+    ndists <- attr(map, "ndists")
+    total_seats <- attr(map, "total_seats")
+    district_seat_sizes <- attr(map, "district_seat_sizes")
+    storage.mode(district_seat_sizes) <- "integer"
+    districting_scheme <- attr(map, "districting_scheme")
+
+
     counties <- rlang::eval_tidy(rlang::enquo(counties), map)
 
     # validate the counties
@@ -62,11 +70,13 @@ get_map_parameters <- function(map, counties=NULL){
     }
 
 
+
     # get population stuff
     pop_bounds <- attr(map, "pop_bounds")
     pop <- map[[attr(map, "pop_col")]]
-    if (any(pop >= pop_bounds[3])) {
-        too_big <- as.character(which(pop >= pop_bounds[3]))
+    smallest_district_size <- attr(map, "district_seat_sizes") |> min()
+    if (any(pop >= pop_bounds[3] * smallest_district_size)) {
+        too_big <- as.character(which(pop >= pop_bounds[3] * smallest_district_size))
         cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
                 population larger than the district target.",
                     "x" = "Redistricting impossible."))
@@ -84,10 +94,15 @@ get_map_parameters <- function(map, counties=NULL){
         cli::cli_abort("The maximum number of supported districts in a map is {max_possible_sizes$max_districts}!")
     }
 
+
     return(list(
         map=map,
         adj_list=adj_list,
         V=V,
+        ndists=ndists,
+        total_seats=total_seats,
+        district_seat_sizes=district_seat_sizes,
+        districting_scheme=districting_scheme,
         counties=counties,
         pop=pop,
         pop_bounds=pop_bounds

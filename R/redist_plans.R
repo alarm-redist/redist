@@ -45,7 +45,6 @@ new_redist_plans <- function(
     # tally the population
     distr_pop <- pop_tally(plans, prec_pop, ndists)
 
-
     # check if partial or MMD then region sizes must not be null
     if(partial || districting_scheme == "MMD"){
         if(is.null(region_sizes)){
@@ -67,6 +66,7 @@ new_redist_plans <- function(
                 dim(region_sizes) <- NULL
             }
         }
+
         # also make sure its the same length as the pop tally
         if(length(region_sizes) != length(distr_pop)){
             cli::cli_abort("{.arg region_sizes} must have length equal to number of regions times number of plans!")
@@ -227,10 +227,12 @@ redist_plans <- function(plans, map, algorithm, wgt = NULL, region_nseats = NULL
         storage.mode(plans) <- "integer"
     }
 
+    n_regions <- length(unique(plans))
+
 
 
     obj <- new_redist_plans(plans, map, algorithm, wgt = wgt,
-                            region_sizes=region_nseats,
+                            region_sizes=region_nseats, ndists = n_regions,
         resampled = FALSE, ...)
     validate_redist_plans(obj)
 }

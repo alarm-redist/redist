@@ -279,11 +279,11 @@ std::string splitting_method_to_str(SplittingMethodType splitting_method){
 SplittingSizeScheduleType get_splitting_size_regime(std::string const &splitting_size_regime_str){
     // find the type or throw an error 
     if(splitting_size_regime_str == "split_district_only"){
-        return SplittingSizeScheduleType::DistrictOnly;
+        return SplittingSizeScheduleType::DistrictOnlySMD;
     }else if(splitting_size_regime_str == "any_valid_sizes"){
         return SplittingSizeScheduleType::AnyValidSizeSMD;
     }else if(splitting_size_regime_str == "split_district_only_mmd"){
-        return SplittingSizeScheduleType::DistrictOnlySMD;
+        return SplittingSizeScheduleType::DistrictOnlyMMD;
     }else if(splitting_size_regime_str == "any_valid_sizes_mmd"){
         return SplittingSizeScheduleType::AnyValidSizeMMD;
     }else if(splitting_size_regime_str == "one_custom_size"){

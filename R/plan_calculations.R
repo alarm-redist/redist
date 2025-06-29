@@ -241,6 +241,10 @@ compute_log_optimal_weights <- function(
     ndists <- attr(map, "ndists")
     total_seats <- attr(map, "total_seats")
     district_seat_sizes <- attr(map, "district_seat_sizes")
+    districting_scheme <- attr(map, "districting_scheme")
+    if(districting_scheme == "MMD"){
+        splitting_schedule <- "split_district_only_mmd"
+    }
     storage.mode(district_seat_sizes) <- "integer"
 
     if (inherits(plans, "redist_plans")){

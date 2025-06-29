@@ -254,7 +254,6 @@ arma::vec compute_plans_log_optimal_weights(
 
     // create thread pool
     if (num_threads <= 0) num_threads = std::thread::hardware_concurrency();
-    if (num_threads == 1) num_threads = 0;
     RcppThread::ThreadPool pool(num_threads);
 
     // create the map param object
@@ -288,12 +287,13 @@ arma::vec compute_plans_log_optimal_weights(
     splitting_schedule_ptr->set_potential_cut_sizes_for_each_valid_size(
         0, num_regions-1
     );
+    splitting_schedule_ptr->print_current_step_splitting_info();
 
 
     // create the splitter
     NaiveTopKSplitter tree_splitter(map_params.V, 1);
 
-    bool compute_log_splitting_prob = splitting_schedule_ptr->schedule_type != SplittingSizeScheduleType::DistrictOnly &&
+    bool compute_log_splitting_prob = splitting_schedule_ptr->schedule_type != SplittingSizeScheduleType::DistrictOnlySMD &&
     plan_ensemble.plan_ptr_vec[0]->num_regions != ndists;
     bool const counties_on = map_params.num_counties > 1;
 
@@ -310,13 +310,14 @@ arma::vec compute_plans_log_optimal_weights(
 
         // build the multigraph 
         plan_multigraph.build_plan_multigraph(*plan_ensemble.plan_ptr_vec[i]);
-        plan_multigraph.pair_map.Rprint();
-        // remove invalid hierarchical merges
-        plan_multigraph.remove_invalid_hierarchical_merge_pairs(*plan_ensemble.plan_ptr_vec[i]);
-        plan_multigraph.pair_map.Rprint();
-        // remove invalid size pairs 
-        plan_multigraph.remove_invalid_size_pairs(*plan_ensemble.plan_ptr_vec[i], *splitting_schedule_ptr);
-        plan_multigraph.pair_map.Rprint();
+        plan_multigraph.Rprint_detailed(*plan_ensemble.plan_ptr_vec[i]);
+        // plan_multigraph.pair_map.Rprint();
+        // // remove invalid hierarchical merges
+        // plan_multigraph.remove_invalid_hierarchical_merge_pairs(*plan_ensemble.plan_ptr_vec[i]);
+        // plan_multigraph.pair_map.Rprint();
+        // // remove invalid size pairs 
+        // plan_multigraph.remove_invalid_size_pairs(*plan_ensemble.plan_ptr_vec[i], *splitting_schedule_ptr);
+        // plan_multigraph.pair_map.Rprint();
         // now make the output vector 
         std::vector<std::tuple<RegionID, RegionID, double>> region_pairs_tuple_vec;
         region_pairs_tuple_vec.reserve(plan_multigraph.pair_map.num_hashed_pairs);
@@ -341,13 +342,13 @@ arma::vec compute_plans_log_optimal_weights(
                 std::exp(log_boundary_len));
         }
 
-        REprintf("I=%d\n", i);
-        log_weights(i) = compute_log_optimal_incremental_weights(
-            *plan_ensemble.plan_ptr_vec[i], plan_multigraph,
-            *splitting_schedule_ptr, tree_splitter,
-            sampling_space, scoring_function, 
-            rho, false, is_final
-        );
+        // REprintf("I=%d\n", i);
+        // log_weights(i) = compute_log_optimal_incremental_weights(
+        //     *plan_ensemble.plan_ptr_vec[i], plan_multigraph,
+        //     *splitting_schedule_ptr, tree_splitter,
+        //     sampling_space, scoring_function, 
+        //     rho, false, is_final
+        // );
 
 
         REprintf("%f vs %f \n", 

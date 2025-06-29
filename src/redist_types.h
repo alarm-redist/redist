@@ -335,9 +335,9 @@ std::string splitting_method_to_str(SplittingMethodType splitting_method);
 
 enum class SplittingSizeScheduleType : unsigned char
 {
-    DistrictOnly,
-    AnyValidSizeSMD,
     DistrictOnlySMD,
+    AnyValidSizeSMD,
+    DistrictOnlyMMD,
     AnyValidSizeMMD,
     OneCustomSize,
     PureMergeSplitSize,

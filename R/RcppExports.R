@@ -209,6 +209,10 @@ random_cpp_testing <- function() {
     .Call(`_redist_random_cpp_testing`)
 }
 
+split_schedule_testing <- function(num_presplit_regions) {
+    invisible(.Call(`_redist_split_schedule_testing`, num_presplit_regions))
+}
+
 matrix_reorder_testing <- function(test_mat, reorder_vec) {
     .Call(`_redist_matrix_reorder_testing`, test_mat, reorder_vec)
 }

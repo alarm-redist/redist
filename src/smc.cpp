@@ -103,7 +103,8 @@ void run_smc_step(
 ) {
     // important constants
     const int M = old_plan_ensemble->nsims;
-    bool const split_district_only = splitting_schedule.schedule_type == SplittingSizeScheduleType::DistrictOnly;
+    bool const split_district_only = splitting_schedule.schedule_type == SplittingSizeScheduleType::DistrictOnlySMD ||
+    splitting_schedule.schedule_type == SplittingSizeScheduleType::DistrictOnlyMMD;
 
     // PREVIOUS SMC CODE I DONT KNOW WHAT IT DOES
     const int dist_ctr = old_plan_ensemble->plan_ptr_vec.at(0)->num_regions;
@@ -510,7 +511,7 @@ List run_redist_gsmc(
     if (DEBUG_GSMC_PLANS_VERBOSE) REprintf("Splitting Schedule Obj created!\n");
 
     // Whether or not to only do district splits only 
-    bool split_district_only = splitting_size_regime == SplittingSizeScheduleType::DistrictOnly;
+    bool split_district_only = splitting_size_regime == SplittingSizeScheduleType::DistrictOnlySMD;
     bool use_graph_plan_space = sampling_space == SamplingSpace::GraphSpace;
 
     // Do some input checking 
@@ -615,7 +616,7 @@ List run_redist_gsmc(
               << lower << " and " << upper << " using " 
               << pool.getNumThreads() << " threads, "
               << total_ms_steps << " merge split steps, ";
-        if(splitting_size_regime == SplittingSizeScheduleType::DistrictOnly){
+        if(splitting_size_regime == SplittingSizeScheduleType::DistrictOnlySMD || splitting_size_regime == SplittingSizeScheduleType::DistrictOnlyMMD){
             Rcout << "and only performing 1-district splits.";
         }else if(splitting_size_regime == SplittingSizeScheduleType::AnyValidSizeSMD){
             Rcout << "and generalized region splits.";
@@ -650,6 +651,8 @@ List run_redist_gsmc(
                 Rprintf("Iteration %d: SMC Step %d of %d \n",  step_num+1, smc_step_num + 1, total_smc_steps);
             }
         }
+        // its the final splitting step if step_num + 1 == total_smc steps
+        bool const is_final_splitting_step = step_num + 1 == total_smc_steps;
         //  using std::chrono::high_resolution_clock;
         // using std::chrono::duration_cast;
         // using std::chrono::duration;
@@ -721,6 +724,7 @@ List run_redist_gsmc(
                     smc_diagnostics.parent_index_mat.column(0).end(), 
                     0);
             }
+            // plan_ensemble_ptr->plan_ptr_vec[0]->Rprint(true);
 
             
             // auto t2f = std::chrono::high_resolution_clock::now();
@@ -728,9 +732,9 @@ List run_redist_gsmc(
             // std::chrono::duration<double, std::milli> ms_doublef = t2f - t1f;
             // Rcout << "Running SMC " << ms_doublef.count() << " ms\n";
             auto t1 = std::chrono::high_resolution_clock::now();
-            bool compute_log_splitting_prob = splitting_schedule_ptr->schedule_type != SplittingSizeScheduleType::DistrictOnly &&
+            bool compute_log_splitting_prob = splitting_schedule_ptr->schedule_type != SplittingSizeScheduleType::DistrictOnlySMD &&
             (plan_ensemble_ptr->plan_ptr_vec[0]->num_regions != ndists || splitting_schedule_ptr->schedule_type == SplittingSizeScheduleType::AnyValidSizeMMD) ;
-            bool is_final_plans = plan_ensemble_ptr->plan_ptr_vec[0]->num_regions == ndists;
+
             
             if(wgt_type == "optimal"){
                 // TODO make more princicpal in the future 
@@ -741,7 +745,7 @@ List run_redist_gsmc(
                     map_params, *splitting_schedule_ptr, sampling_space,
                     scoring_function, rho,
                     plan_ensemble_ptr->plan_ptr_vec, *tree_splitter_ptr,
-                    compute_log_splitting_prob, is_final_plans,
+                    compute_log_splitting_prob, is_final_splitting_step,
                     smc_diagnostics.log_incremental_weights_mat.col(smc_step_num),
                     verbosity
                 );
@@ -753,7 +757,7 @@ List run_redist_gsmc(
                     sampling_space,
                     scoring_function, rho,
                     plan_ensemble_ptr->plan_ptr_vec, *tree_splitter_ptr,
-                    compute_log_splitting_prob, is_final_plans,
+                    compute_log_splitting_prob, is_final_splitting_step,
                     smc_diagnostics.log_incremental_weights_mat.col(smc_step_num),
                     verbosity
                 );
@@ -785,7 +789,7 @@ List run_redist_gsmc(
                 // if using seq_alpha then our sampling weights for next round are 
                 // proportional to exp(alpha* (prev_log_weights + incremental_weights))
                 unnormalized_sampling_weights = arma::exp(weights_alpha * log_weights);
-                if(!is_final_plans){
+                if(!is_final_splitting_step){
                     // if not the end then multiply by 1-alpha
                     log_weights = (1-weights_alpha) * log_weights;
                 }
@@ -840,7 +844,7 @@ List run_redist_gsmc(
                 smc_step_num, plan_ensemble_ptr->plan_ptr_vec[0]->num_regions
             );
 
-            bool is_final = plan_ensemble_ptr->plan_ptr_vec[0]->num_regions == ndists;
+
             // auto t1fm = high_resolution_clock::now();
             run_merge_split_step_on_all_plans(
                 pool,
@@ -850,7 +854,7 @@ List run_redist_gsmc(
                 plan_ensemble_ptr->plan_ptr_vec, dummy_plan_ensemble_ptr->plan_ptr_vec,
                 *tree_splitter_ptr,
                 merge_prob_type, 
-                rho, is_final,
+                rho, is_final_splitting_step,
                 nsteps_to_run,
                 merge_split_step_num, step_num,
                 smc_diagnostics,
@@ -933,8 +937,12 @@ List run_redist_gsmc(
 
     if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Plans saved!\n");
 
-    // if only sampling partial plans then return the size matrix
-    if(!splitting_all_the_way || splitting_schedule_ptr->schedule_type == SplittingSizeScheduleType::AnyValidSizeMMD){
+    // if only sampling partial plans or MMD plans then return the size matrix
+    if(
+        !splitting_all_the_way || 
+        splitting_schedule_ptr->schedule_type == SplittingSizeScheduleType::AnyValidSizeMMD ||
+        splitting_schedule_ptr->schedule_type == SplittingSizeScheduleType::DistrictOnlyMMD
+    ){
         if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Getting ready to save region sizes!\n");
         plan_sizes_mat.push_back(plan_ensemble_ptr->get_R_sizes_matrix(pool));
         plan_sizes_saved = true;

@@ -750,6 +750,16 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// split_schedule_testing
+void split_schedule_testing(int num_presplit_regions);
+RcppExport SEXP _redist_split_schedule_testing(SEXP num_presplit_regionsSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type num_presplit_regions(num_presplit_regionsSEXP);
+    split_schedule_testing(num_presplit_regions);
+    return R_NilValue;
+END_RCPP
+}
 // matrix_reorder_testing
 arma::imat matrix_reorder_testing(arma::imat& test_mat, arma::uvec const& reorder_vec);
 RcppExport SEXP _redist_matrix_reorder_testing(SEXP test_matSEXP, SEXP reorder_vecSEXP) {
@@ -1153,6 +1163,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_ms_plans", (DL_FUNC) &_redist_ms_plans, 21},
     {"_redist_pareto_dominated", (DL_FUNC) &_redist_pareto_dominated, 1},
     {"_redist_random_cpp_testing", (DL_FUNC) &_redist_random_cpp_testing, 0},
+    {"_redist_split_schedule_testing", (DL_FUNC) &_redist_split_schedule_testing, 1},
     {"_redist_matrix_reorder_testing", (DL_FUNC) &_redist_matrix_reorder_testing, 2},
     {"_redist_NEW_matrix_reorder_testing", (DL_FUNC) &_redist_NEW_matrix_reorder_testing, 2},
     {"_redist_more_random_cpp_testing", (DL_FUNC) &_redist_more_random_cpp_testing, 0},

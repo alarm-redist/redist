@@ -674,6 +674,7 @@ double compute_log_optimal_incremental_weights(
     }
     
     if (!std::isfinite(extra_log_terms-std::log(incremental_weight))) {
+        plan.Rprint(true);
         throw Rcpp::exception("log_of_sum_term is not finite!");
     }
 

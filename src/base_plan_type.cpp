@@ -317,8 +317,16 @@ void Plan::Rprint(bool verbose) const{
             if (i + 1 != region_ids.size())
                 REprintf(", ");
         }
+        REprintf(")\n Plan Sizes: c(");
+        for (size_t i = 0; i < num_regions; ++i) {
+            REprintf("%u", region_sizes[i]);
+            if (i + 1 != num_regions)
+                REprintf(", ");
+        }
         REprintf(")\n");
     }
+
+    
 }
 
 
@@ -974,6 +982,20 @@ PlanMultigraph::PlanMultigraph(MapParams const &map_params):
 
 void PlanMultigraph::Rprint() const{
     pair_map.Rprint();
+}
+
+
+void PlanMultigraph::Rprint_detailed(Plan const &plan){
+    REprintf("Pair Map has %d Elements:\n", pair_map.num_hashed_pairs);
+    for(auto const &a_pair: pair_map.hashed_pairs){
+        auto val = pair_map.get_value(a_pair.first, a_pair.second);
+        REprintf("    Regions: (%u, %u) | Sizes (%u, %u) | %s Hierarchically Adjacent | %d within county edges, %d across county edges\n",
+            a_pair.first, a_pair.second, 
+            plan.region_sizes[a_pair.first], plan.region_sizes[a_pair.second],
+            (val.second.admin_adjacent ? "YES" : "NOT"),
+            val.second.within_county_edges, val.second.across_county_edges 
+        );
+    }
 }
 
 

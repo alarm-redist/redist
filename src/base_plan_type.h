@@ -453,6 +453,7 @@ class PlanMultigraph{
 
         // Prints relevant info - for debugging
         void Rprint() const;
+        void Rprint_detailed(Plan const &plan);
 
 
         // Checks if the a plan is hierarchically connected, ie
