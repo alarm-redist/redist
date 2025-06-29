@@ -207,7 +207,7 @@ summary.redist_plans <- function(
     addl_cols <- addl_cols[!const_cols]
 
     # do nothing if no additional columns or no chain column
-    if(length(addl_cols) > 0 || "chain" %in% cols){
+    if(length(addl_cols) > 0 && "chain" %in% cols){
         rhats_computed <- TRUE
         split_rhat = algo %in% c(MCMC_ALG_TYPE, "flip")
 
