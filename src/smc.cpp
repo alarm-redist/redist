@@ -103,8 +103,7 @@ void run_smc_step(
 ) {
     // important constants
     const int M = old_plan_ensemble->nsims;
-    bool const split_district_only = splitting_schedule.schedule_type == SplittingSizeScheduleType::DistrictOnlySMD ||
-    splitting_schedule.schedule_type == SplittingSizeScheduleType::DistrictOnlyMMD;
+    bool const smd_split_district_only = splitting_schedule.schedule_type == SplittingSizeScheduleType::DistrictOnlySMD;
 
     // PREVIOUS SMC CODE I DONT KNOW WHAT IT DOES
     const int dist_ctr = old_plan_ensemble->plan_ptr_vec.at(0)->num_regions;
@@ -168,11 +167,11 @@ void run_smc_step(
             
             // Get region id the split
             int region_id_to_split;
-            if(split_district_only){
+            if(smd_split_district_only){
                 // if just doing district splits just use remainder region
                 // which is always the highest id
                 region_id_to_split = old_plan_ensemble->plan_ptr_vec[idx]->num_regions - 1;
-            }else{                
+            }else{ 
                 // if generalized split pick a region to try to split
                 region_id_to_split = old_plan_ensemble->plan_ptr_vec[idx]->choose_multidistrict_to_split(
                     splitting_schedule.valid_region_sizes_to_split, rng_states[thread_id]
@@ -337,8 +336,8 @@ void run_merge_split_step_on_all_plans(
             ust_sampler, tree_splitter,
             current_plan_multigraph, 
             proposed_plan_multigraph,
-            merge_prob_type, 
-            rho, is_final, 
+            merge_prob_type,
+            rho, is_final,
             nsteps_to_run,
             thread_tree_sizes[thread_id], thread_successful_tree_sizes[thread_id]
         );
@@ -491,7 +490,6 @@ List run_redist_gsmc(
         merge_prob_type = as<std::string>(control["merge_prob_type"]);
     }
 
-
     double tol = std::max(target - lower, upper - target) / target;
 
 
@@ -511,6 +509,10 @@ List run_redist_gsmc(
     if (DEBUG_GSMC_PLANS_VERBOSE) REprintf("Splitting Schedule Obj created!\n");
 
     // Whether or not to only do district splits only 
+    bool const multi_member_districting = (
+        splitting_size_regime == SplittingSizeScheduleType::DistrictOnlyMMD || 
+        splitting_size_regime == SplittingSizeScheduleType::AnyValidSizeMMD
+    );
     bool split_district_only = splitting_size_regime == SplittingSizeScheduleType::DistrictOnlySMD;
     bool use_graph_plan_space = sampling_space == SamplingSpace::GraphSpace;
 
@@ -732,9 +734,15 @@ List run_redist_gsmc(
             // std::chrono::duration<double, std::milli> ms_doublef = t2f - t1f;
             // Rcout << "Running SMC " << ms_doublef.count() << " ms\n";
             auto t1 = std::chrono::high_resolution_clock::now();
-            bool compute_log_splitting_prob = splitting_schedule_ptr->schedule_type != SplittingSizeScheduleType::DistrictOnlySMD &&
-            (plan_ensemble_ptr->plan_ptr_vec[0]->num_regions != ndists || splitting_schedule_ptr->schedule_type == SplittingSizeScheduleType::AnyValidSizeMMD) ;
 
+            // compute splitting probability if MMD or if Anysplits SMD and num regions isn't number of districts
+            bool compute_log_splitting_prob = (
+                multi_member_districting ||
+                (
+                splitting_schedule_ptr->schedule_type == SplittingSizeScheduleType::AnyValidSizeSMD &&
+                plan_ensemble_ptr->plan_ptr_vec[0]->num_regions != ndists
+                )
+            );
             
             if(wgt_type == "optimal"){
                 // TODO make more princicpal in the future 

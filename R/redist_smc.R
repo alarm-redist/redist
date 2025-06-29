@@ -247,7 +247,7 @@ redist_smc <- function(
     sampling_space <- rlang::arg_match(sampling_space)
     split_method <- rlang::arg_match(split_method)
     diagnostics <- rlang::arg_match(diagnostics)
-    diagnostic_level <- case_when(
+    diagnostic_level <- dplyr::case_when(
         diagnostics == "basic" ~ 0,
         diagnostics == "all" ~ 1,
         .default = 0
