@@ -206,7 +206,7 @@ redistricting algorithms to function properly.
 
 We can visualize the adjacency graph by plotting the `redist_map` object.
 ```{r iowa-adj, fig.width=8}
-plot(iowa_map, adj=T) + plot(iowa_map)
+plot(iowa_map, adj=TRUE) + plot(iowa_map)
 ```
 
 ## Pre-processing

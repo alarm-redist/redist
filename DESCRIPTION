@@ -20,9 +20,9 @@ Description: Enables researchers to sample redistricting plans from a pre-specif
     algorithm of McCartan and Imai (2023) <doi:10.1214/23-AOAS1763>, the enumeration 
     algorithm of Fifield, Imai, Kawahara, and Kenny (2020) <doi:10.1080/2330443X.2020.1791773>,
     the Flip MCMC algorithm of Fifield, Higgins, Imai and Tarr (2020) <doi:10.1080/10618600.2020.1739532>,
-    the Merge-split/Recombination algorithms of Carter et al. (2019) <arXiv:1911.01503> 
+    the Merge-split/Recombination algorithms of Carter et al. (2019) <doi:10.48550/arXiv.1911.01503> 
     and DeFord et al. (2021) <doi:10.1162/99608f92.eb30390f>, and the Short-burst 
-    optimization algorithm of Cannon et al. (2020) <arXiv:2011.02288>.
+    optimization algorithm of Cannon et al. (2020) <doi:10.48550/arXiv.2011.02288>.
 Depends:
     R (>= 4.1.0),
     redistmetrics (>= 1.0.2) 

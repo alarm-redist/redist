@@ -677,7 +677,7 @@ print.redist_constr <- function(x, header = TRUE, details = TRUE, ...) {
     print_constr <- function(x) {
         if (details) {
             idx_strength <- which(names(x) == "strength")
-            str(x[-idx_strength], no.list = T, comp.str = "   ", give.attr = FALSE)
+            str(x[-idx_strength], no.list = TRUE, comp.str = "   ", give.attr = FALSE)
         }
     }
 
