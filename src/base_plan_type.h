@@ -27,26 +27,6 @@
 
 
 
-
-/*
- * Custom Hash for hashing a pair of region ids 
- *
- * This class implements a hash function for a pair a region ids. 
- * Using the fact that all pair ids will be between 0 and 
- * `max_num_regions-1` (inclusive) it uses a simple grid id hash. 
- */
-struct bounded_hash {
-    int max_num_regions;
-    bounded_hash(int max_num_regions) : max_num_regions(max_num_regions) {}
-    std::size_t operator()(const std::pair<int, int>& p) const {
-        return p.first * (max_num_regions + 1) + p.second;
-    }
-    // DANGEROUS DO NOT ACTUALLY USE!!
-    // Should probably remove in the future, just needed it to be able to pass default 
-    // version to boundary length function
-    bounded_hash() : max_num_regions(0) {}
-};
-
 class USTSampler;
 class PlanMultigraph;
 

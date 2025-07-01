@@ -123,3 +123,387 @@ double GraphPlan::get_log_eff_boundary_len(
         return std::log(search_result.second.across_county_edges);
     }
 }
+
+
+
+
+
+/*
+ * Calculate the deviations for cutting at every edge in a spanning tree.
+ * and returns them ordered.
+//'
+//'
+//' For each edge it returns the larger of the two deviations associated with 
+//' the best region sizes assignment 
+ */
+std::vector<double> get_ordered_tree_cut_devs(Tree &ust, int root,
+                             std::vector<int> const &cut_below_pop, double const target,
+                             PlanVector const &region_ids,
+                             RegionID const region_id1, RegionID const region_id2, 
+                             int const region_size, int const region_pop,
+                             int const min_potential_cut_size, int const max_potential_cut_size,
+                             std::vector<int> const &smaller_cut_sizes_to_try
+                             ) {
+    int V = cut_below_pop.size();
+    // compile a list of candidate edges to cut
+    std::vector<double> devs; 
+    devs.reserve(V); // reserve V which is overkill but ok
+    // REprintf("Only looking for region id %d!\n", region_id);
+    // REprintf("Starting at %d and %2.f and ", region_pop, static_cast<double>(region_pop)*2.0);
+    for (int i = 0; i < V; i++) {
+        // ignore vertices not in the region
+        if (i == root || (region_ids[i] != region_id1 && region_ids[i] != region_id2)) continue;
+
+
+        // start at total pop since deviance will never be more than total_pop/2
+        double smallest_dev = static_cast<double>(region_pop)*2.0;
+        
+        int below_pop = cut_below_pop.at(i);
+        int above_pop = region_pop - below_pop;
+
+        // if one of the populations is zero just skip 
+        if(below_pop == 0 || above_pop == 0){
+            continue;
+        } 
+
+
+        // for each possible d value get the deviation above and below
+        for(auto const cut_region1_size: smaller_cut_sizes_to_try){
+            int cut_region2_size = region_size - cut_region1_size;
+            double cut_region1_target = target*cut_region1_size; 
+            double cut_region2_target = target*cut_region2_size;
+
+
+            // REprintf("Size 1=%d-Target %.2f, Size 2=%d-Target %.2f", cut_region1_size, cut_region1_target, cut_region2_size, cut_region2_target);
+            // find the larger deviation associated with assigning cut_region1_size to cutting below 
+            double max_below_dev = std::max(
+                std::fabs(below_pop - cut_region1_target) / cut_region1_target,
+                std::fabs(above_pop - cut_region2_target) / cut_region2_target
+            );
+            // find the larger deviation associated with assigning cut_region1_size to cutting above
+            double max_above_dev = std::max(
+                std::fabs(above_pop - cut_region1_target) / cut_region1_target,
+                std::fabs(below_pop - cut_region2_target) / cut_region2_target
+            );
+            // REprintf("pair dev %.2f, %.2f", max_below_dev, max_above_dev);
+
+            // take this minimum of this d value and all previous ones 
+            double min_dev = std::min(
+                max_below_dev,
+                max_above_dev
+            ) ;
+            smallest_dev = std::min(smallest_dev, min_dev);
+        }
+
+        devs.push_back(smallest_dev);
+    }
+
+    std::sort(devs.begin(), devs.end());
+    // legacy code expects devs to be length V-1 so just pad out the remainder with junk
+    devs.resize(V-1, 2.06);
+
+    return devs;
+}
+
+
+
+/*
+ * Choose k and multiplier for efficient, accurate sampling
+ * Assumes plan multigraph is already built 
+ */
+int estimate_mergesplit_cut_k(
+    Plan const &plan, PlanMultigraph const &plan_multigraph,  
+    SplittingSchedule const &splitting_schedule,
+    double const thresh, double const tol,
+    RNGState &rng_state) {
+
+    int k;
+    // sample some spanning trees and compute deviances
+    int V = plan_multigraph.map_params.g.size();
+    // IN FUTURE USE MY OWN FUNCTION THIS HAS INEXING ERRORS
+    // Graph dist_g = district_graph(g, region_ids, n_distr, true);
+    int k_max = std::min(20 + ((int) std::sqrt(V)), V - 1); // heuristic
+    int N_adapt = (int) std::floor(4000.0 / sqrt((double) V));
+    
+
+    double lower = plan_multigraph.map_params.target * (1 - tol);
+    double upper = plan_multigraph.map_params.target * (1 + tol);
+    
+    std::vector<std::vector<double>> devs;
+    vec distr_ok(k_max+1, fill::zeros);
+    int root;
+    int max_ok = 0;
+    std::vector<bool> ignore(V);
+    std::vector<bool> visited(V);
+    std::vector<int> cut_below_pop(V,0);
+    std::vector<int> parents(V);
+    int max_V = 0;
+    Tree ust = init_tree(V);
+    for (int i = 0; i < N_adapt; i++) {
+        double joint_pop = 0;
+        auto random_pair_index = rng_state.r_int(plan_multigraph.pair_map.hashed_pairs.size());
+        auto a_pair = plan_multigraph.pair_map.hashed_pairs[random_pair_index];
+        auto merged_size = plan.region_sizes[a_pair.first] + plan.region_sizes[a_pair.second];
+        auto merged_pop = plan.region_pops[a_pair.first] + plan.region_pops[a_pair.second];
+
+        int n_vtx = 0;
+        for (int j = 0; j < V; j++) {
+            if (plan.region_ids[j] == a_pair.first || plan.region_ids[j] == a_pair.second) {
+                joint_pop += plan_multigraph.map_params.pop(j);
+                ignore[j] = false;
+                n_vtx++;
+            } else {
+                ignore[j] = true;
+            }
+        }
+        if (n_vtx > max_V) max_V = n_vtx;
+
+        clear_tree(ust);
+        int result = sample_sub_ust(
+            plan_multigraph.map_params.g, ust, V, root, visited, ignore,
+            plan_multigraph.map_params.pop, lower, upper, 
+            plan_multigraph.map_params.counties, 
+            plan_multigraph.map_params.cg,
+            rng_state);
+        if (result != 0) {
+            i--;
+            continue;
+        }
+
+        // reset the cut below pop to zero
+        std::fill(cut_below_pop.begin(), cut_below_pop.end(), 0);
+        tree_pop(ust, root, plan_multigraph.map_params.pop, cut_below_pop, parents);
+
+        std::pair<int, int> min_and_max_possible_cut_sizes = splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_size];
+        int min_possible_cut_size = min_and_max_possible_cut_sizes.first;
+        int max_possible_cut_size = min_and_max_possible_cut_sizes.second;
+
+        devs.push_back(
+           get_ordered_tree_cut_devs(
+                ust, root, cut_below_pop, plan_multigraph.map_params.target, 
+                plan.region_ids,
+                a_pair.first, a_pair.second, merged_size, 
+                merged_pop,
+                min_possible_cut_size, max_possible_cut_size,
+                splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_size]
+            )
+        );
+        
+        int n_ok = 0;
+        // NOTE very hacky, not sure if need to change because MMD now
+        for (int j = 0; j < V-1; j++) {
+            // REprintf("i = %d, j = %d\n", i, j);
+            n_ok += devs.at(i).at(j) <= tol;
+        }
+
+        if (n_ok <= k_max)
+            distr_ok(n_ok) += 1.0 / N_adapt;
+        if (n_ok > max_ok && n_ok < k_max)
+            max_ok = n_ok;
+    }
+
+    // For each k, compute pr(selected edge within top k),
+    // among maps where valid edge was selected
+    for (k = 1; k <= k_max; k++) {
+        double sum_within = 0;
+        int n_ok = 0;
+        for (int i = 0; i < N_adapt; i++) {
+            int rand_index = rng_state.r_int(k);
+            double dev = devs.at(i).at(rand_index);
+            // REprintf("i = %d | Dev is %f", i, dev);
+            if (dev > tol) continue;
+            else n_ok++;
+            for (int j = 0; j < N_adapt; j++) {
+                sum_within += ((double) (dev <= devs.at(j).at(k-1))) / N_adapt;
+            }
+        }
+        if (sum_within / n_ok >= thresh) break;
+    }
+
+    if (k == k_max + 1) {
+        Rcerr << "Warning: maximum hit; falling back to naive k estimator.\n";
+        k = max_ok + 1;
+    }
+
+    k = std::min(k, max_V - 1);
+    return(k);
+}
+
+/*
+ * Choose k and multiplier for efficient, accurate sampling
+ */
+void estimate_cut_k(
+    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    RNGState &rng_state,
+    int &k, int const last_k, 
+    const arma::vec &unnormalized_weights, double thresh,
+    double tol, std::vector<std::unique_ptr<Plan>> const &plan_ptrs_vec, 
+    bool split_district_only,
+    int const verbosity) {
+    // sample some spanning trees and compute deviances
+    int V = map_params.V;
+    int k_max = std::min(10 + (int) (2.0 * V * tol), last_k + 4); // heuristic
+    int N_max = plan_ptrs_vec.size();
+    int N_adapt = std::min(60 + (int) std::floor(5000.0 / sqrt((double)V)), N_max);
+
+    double target = map_params.target;
+    double lower = target * (1 - tol);
+    double upper = target * (1 + tol);
+    int num_regions = plan_ptrs_vec[0]->num_regions;
+
+    std::vector<std::vector<double>> devs;
+    devs.reserve(N_adapt);
+    vec distr_ok(k_max+1, fill::zeros);
+    int root;
+    int max_ok = 0;
+    std::vector<bool> ignore(V);
+    std::vector<bool> visited(V);
+    std::vector<int> cut_below_pop(V,0);
+    std::vector<int> parents(V);
+
+    int idx = 0;
+    int max_V = 0;
+    Tree ust = init_tree(V);
+
+    bool any_size_split = splitting_schedule.schedule_type == SplittingSizeScheduleType::AnyValidSizeSMD;
+    
+    for (int i = 0; i < N_max && idx < N_adapt; i++, idx++) {
+        if (unnormalized_weights.at(i) == 0) { // skip if not valid
+            idx--;
+            continue;
+        }
+
+        int n_vtx = V;
+
+        // Get the index of the region with the largest dval
+        int biggest_region_id; int biggest_region_size; 
+
+        // if split district only just do remainder 
+        if(split_district_only){
+            biggest_region_id = plan_ptrs_vec.at(i)->num_regions-1;
+            biggest_region_size = plan_ptrs_vec.at(i)->region_sizes[biggest_region_id];
+        }else if(any_size_split){
+            // else get 
+            auto max_it = std::max_element(
+                plan_ptrs_vec.at(i)->region_sizes.begin(),
+                plan_ptrs_vec.at(i)->region_sizes.begin() + num_regions
+            );
+            biggest_region_id = std::distance(
+                plan_ptrs_vec.at(i)->region_sizes.begin(), 
+                max_it
+            );
+            biggest_region_size = plan_ptrs_vec.at(i)->region_sizes[biggest_region_id];
+        }else{// custom size 
+            biggest_region_size = -1; biggest_region_id = num_regions -1;
+            for (int j = 0; j < num_regions; j++)
+            {
+                int region_size = plan_ptrs_vec[i]->region_sizes[j];
+                // check if valid and bigger
+                if(splitting_schedule.valid_region_sizes_to_split[region_size] && 
+                   region_size > biggest_region_size){
+                    biggest_region_id = j;
+                    biggest_region_size = region_size;
+                }
+            }
+        }
+
+        
+
+        int biggest_size_region_pop = plan_ptrs_vec[i]->region_pops[biggest_region_id];
+        std::pair<int, int> min_and_max_possible_cut_sizes = splitting_schedule.all_regions_min_and_max_possible_cut_sizes[biggest_region_size];
+        int min_possible_cut_size = min_and_max_possible_cut_sizes.first;
+        int max_possible_cut_size = min_and_max_possible_cut_sizes.second;
+        
+        for (int j = 0; j < V; j++) {
+            // if not the biggest region mark as ignore
+            if (plan_ptrs_vec.at(i)->region_ids[j] != biggest_region_id) {
+                ignore[j] = true;
+                n_vtx--;
+            }
+        }
+        
+
+        // Rprintf("Tree on region %d of size %d has %d vertices and pop %d!\n",
+        // biggest_region_id,
+        //     biggest_region_size, n_vtx, plan_ptrs_vec.at(i)->region_pops.at(biggest_region_id));
+
+        // plan_ptrs_vec.at(i)->Rprint();
+        // Rprintf("\n\n");
+
+        if (n_vtx > max_V) max_V = n_vtx;
+
+        clear_tree(ust);
+        int result = sample_sub_ust(map_params.g, ust, V, root, visited, ignore,
+                                    map_params.pop, 
+                                    min_possible_cut_size*lower, max_possible_cut_size*upper, 
+                                    map_params.counties, map_params.cg, rng_state);
+        if (result != 0) {
+            idx--;
+            continue;
+        }
+
+        // reset the cut below pop to zero
+        std::fill(cut_below_pop.begin(), cut_below_pop.end(), 0);
+        tree_pop(ust, root, map_params.pop, cut_below_pop, parents);
+
+        
+        devs.push_back(
+            get_ordered_tree_cut_devs(ust, root, cut_below_pop, target, 
+                    plan_ptrs_vec.at(i)->region_ids,
+                    biggest_region_id, biggest_region_id, biggest_region_size, 
+                    biggest_size_region_pop,
+                    min_possible_cut_size, max_possible_cut_size,
+                    splitting_schedule.all_regions_smaller_cut_sizes_to_try[biggest_region_size]
+                )
+            );
+
+        int n_ok = 0;
+        for(const auto &a_dev : devs.at(idx)){
+            if (a_dev <= tol) { // sorted
+                n_ok++;
+            } else {
+                break;
+            }
+        }
+
+        if (n_ok <= k_max)
+            distr_ok(n_ok) += 1.0 / N_adapt;
+        if (n_ok > max_ok && n_ok < k_max){
+            max_ok = n_ok;
+        }
+            
+        Rcpp::checkUserInterrupt();
+    }
+
+    if (idx < N_adapt) N_adapt = idx; // if rejected too many in last step
+    // For each k, compute pr(selected edge within top k),
+    // among maps where valid edge was selected
+    for (k = 1; k <= k_max; k++) {
+        double sum_within = 0;
+        int n_ok = 0;
+        for (int i = 0; i < N_adapt; i++) {
+            int rand_index = rng_state.r_int(k);
+            double dev = devs.at(i).at(rand_index);
+            if (dev > tol) continue;
+            else n_ok++;
+            for (int j = 0; j < N_adapt; j++) {
+                sum_within += ((double) (dev <= devs.at(j).at(k-1))) / N_adapt;
+            }
+        }
+        if (sum_within / n_ok >= thresh) break;
+    }
+
+    if (k >= k_max) {
+        if (verbosity >= 3) {
+            Rcout << " [maximum hit; falling back to naive k estimator]";
+        }
+        k = max_ok;
+    }
+
+    if (last_k < k_max && k < last_k * 0.6) k = (int) (0.5*k + 0.5*last_k);
+
+    k = std::min(std::max(max_ok + 1, k) + 1 - (distr_ok(k) > 0.99) + (thresh == 1),
+                 max_V - 1);
+}
+
+

@@ -16,7 +16,6 @@
 #include <chrono>
 
 
-#include "splitting.h"
 #include "merging.h"
 #include "weights.h"
 #include "redist_alg_helpers.h"

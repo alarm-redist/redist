@@ -12,80 +12,7 @@ remove (splitting the tree)
 
 
 
-/*
- * Calculate the deviations for cutting at every edge in a spanning tree.
- * and returns them ordered.
-//'
-//'
-//' For each edge it returns the larger of the two deviations associated with 
-//' the best region sizes assignment 
- */
-std::vector<double> get_ordered_tree_cut_devs(Tree &ust, int root,
-                             std::vector<int> const &cut_below_pop, double const target,
-                             PlanVector const &region_ids,
-                             int const region_id, int const region_size, int const region_pop,
-                             int const min_potential_cut_size, int const max_potential_cut_size,
-                             std::vector<int> const &smaller_cut_sizes_to_try
-                             ) {
-    int V = cut_below_pop.size();
-    // compile a list of candidate edges to cut
-    std::vector<double> devs; 
-    devs.reserve(V); // reserve V which is overkill but ok
-    // REprintf("Only looking for region id %d!\n", region_id);
-    // REprintf("Starting at %d and %2.f and ", region_pop, static_cast<double>(region_pop)*2.0);
-    for (int i = 0; i < V; i++) {
-        // ignore vertices not in the region
-        if (i == root || region_ids[i] != region_id) continue;
 
-
-        // start at total pop since deviance will never be more than total_pop/2
-        double smallest_dev = static_cast<double>(region_pop)*2.0;
-        
-        int below_pop = cut_below_pop.at(i);
-        int above_pop = region_pop - below_pop;
-
-        // if one of the populations is zero give large deviance and continue
-        if(below_pop == 0 || above_pop == 0){
-            devs.push_back(smallest_dev);
-            continue;
-        } 
-
-
-        // for each possible d value get the deviation above and below
-        for(auto const cut_region1_size: smaller_cut_sizes_to_try){
-            int cut_region2_size = region_size - cut_region1_size;
-            double cut_region1_target = target*cut_region1_size; 
-            double cut_region2_target = target*cut_region2_size;
-
-
-            // REprintf("Size 1=%d-Target %.2f, Size 2=%d-Target %.2f", cut_region1_size, cut_region1_target, cut_region2_size, cut_region2_target);
-            // find the larger deviation associated with assigning cut_region1_size to cutting below 
-            double max_below_dev = std::max(
-                std::fabs(below_pop - cut_region1_target) / cut_region1_target,
-                std::fabs(above_pop - cut_region2_target) / cut_region2_target
-            );
-            // find the larger deviation associated with assigning cut_region1_size to cutting above
-            double max_above_dev = std::max(
-                std::fabs(above_pop - cut_region1_target) / cut_region1_target,
-                std::fabs(below_pop - cut_region2_target) / cut_region2_target
-            );
-            // REprintf("pair dev %.2f, %.2f", max_below_dev, max_above_dev);
-
-            // take this minimum of this d value and all previous ones 
-            double min_dev = std::min(
-                max_below_dev,
-                max_above_dev
-            ) ;
-            smallest_dev = std::min(smallest_dev, min_dev);
-        }
-        // REprintf("Max dev is %.3f\n", smallest_dev);
-        devs.push_back(smallest_dev);
-    }
-
-    std::sort(devs.begin(), devs.end());
-
-    return devs;
-}
 
 
 /*
@@ -779,6 +706,7 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
 
     return edge_across_valid_edge_cuts;
 }
+
 
 
 

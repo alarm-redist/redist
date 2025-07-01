@@ -38,35 +38,6 @@
 double compute_n_eff(const arma::subview_col<double> log_wgt);
 
 
-/*
- *  Returns a sampler over a vector of adjacent pairs where the probability 
- *  of a pair is decided according to `selection_type`
- * 
- *  Current supported options are
- *      - uniform - Every pair has equal probability
- *      - district_pair - double district pairs have weight 1000, one district is 10,
- *          and two multidistricts have 1/(1+sum of their dvals)
- * 
- *  @title Get Sampler over Adj Regions List
- * 
- *  @param plan A plan object
- *  @param adj_pairs_and_boundary_lens A vector where each pair is 
- *  (adj region1, adj region2, boundary length between 2 regions)
- *  @param selection_type A string controlling the function to use
- *  in assigning the unnormalized weight to each pair
- * 
- *  @details No modifications to inputs made
- * 
- *  @return A sampler where index i has probability proportional to the weight 
- *  given to that pair 
- */ 
-arma::vec get_adj_pair_sampler(
-    Plan const &plan,
-    std::vector<std::tuple<int, int, double>> const &adj_pairs_and_boundary_lens,
-    std::string const &selection_type
-);
-
-
 
 void compute_all_plans_log_simple_incremental_weights(
     RcppThread::ThreadPool &pool,

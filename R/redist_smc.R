@@ -231,7 +231,8 @@ redist_smc <- function(
         truncate = (compactness != 1), trunc_fn = redist_quantile_trunc,
         pop_temper = 0, ref_name = NULL,
         verbose = FALSE, silent = FALSE, diagnostics = c("basic", "all"),
-        control = list(weight_type = "optimal", nproc = 1L)
+        control = list(weight_type = "optimal", nproc = 1L),
+        adapt_k_thresh = .99
 )
 {
 

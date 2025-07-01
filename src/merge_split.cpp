@@ -10,110 +10,6 @@
 
 constexpr bool DEBUG_PURE_MS_VERBOSE = false; // Compile-time constant
 
-/*
- * Select a pair of neighboring districts i, j
- */
-void select_pair(int n_distr, const Graph &dist_g, int &i, int &j, RNGState &rng_state) {
-    i = rng_state.r_int(n_distr);
-    std::vector<int> nbors = dist_g[i];
-    j = nbors[rng_state.r_int(nbors.size())];
-}
-
-/*
- * Choose k and multiplier for efficient, accurate sampling
- */
-int adapt_ms_parameters(const Graph &g, int n_distr, double thresh,
-                         double tol, PlanVector const &region_ids, const uvec &counties,
-                         Multigraph const &cg, const uvec &pop, double target,
-                         RNGState &rng_state) {
-    if(DEBUG_PURE_MS_VERBOSE) Rprintf("Estimation checkpint 1!");
-    int k;
-    // sample some spanning trees and compute deviances
-    int V = g.size();
-    // IN FUTURE USE MY OWN FUNCTION THIS HAS INEXING ERRORS
-    Graph dist_g = district_graph(g, region_ids, n_distr, true);
-    int k_max = std::min(20 + ((int) std::sqrt(V)), V - 1); // heuristic
-    int N_adapt = (int) std::floor(4000.0 / sqrt((double) V));
-    
-
-    double lower = target * (1 - tol);
-    double upper = target * (1 + tol);
-    
-    std::vector<std::vector<double>> devs;
-    vec distr_ok(k_max+1, fill::zeros);
-    int root;
-    int max_ok = 0;
-    std::vector<bool> ignore(V);
-    std::vector<bool> visited(V);
-    int distr_1, distr_2;
-    int max_V = 0;
-    Tree ust = init_tree(V);
-    for (int i = 0; i < N_adapt; i++) {
-        double joint_pop = 0;
-        select_pair(n_distr, dist_g, distr_1, distr_2, rng_state);
-        int n_vtx = 0;
-        for (int j = 0; j < V; j++) {
-            if (region_ids[j] == distr_1 || region_ids[j] == distr_2) {
-                joint_pop += pop(j);
-                ignore[j] = false;
-                n_vtx++;
-            } else {
-                ignore[j] = true;
-            }
-        }
-        if (n_vtx > max_V) max_V = n_vtx;
-
-        clear_tree(ust);
-        int result = sample_sub_ust(g, ust, V, root, visited, ignore,
-                                    pop, lower, upper, counties, cg,
-                                    rng_state);
-        if (result != 0) {
-            i--;
-            continue;
-        }
-
-        devs.push_back(tree_dev(ust, root, pop, joint_pop, target));
-        int n_ok = 0;
-        for (int j = 0; j < V-1; j++) {
-            if (ignore[j]) devs.at(i).at(j) = 2; // force not to work
-            n_ok += devs.at(i).at(j) <= tol;
-        }
-
-        if (n_ok <= k_max)
-            distr_ok(n_ok) += 1.0 / N_adapt;
-        if (n_ok > max_ok && n_ok < k_max)
-            max_ok = n_ok;
-    }
-
-    // For each k, compute pr(selected edge within top k),
-    // among maps where valid edge was selected
-    uvec idxs(N_adapt);
-    for (k = 1; k <= k_max; k++) {
-        idxs = as<uvec>(Rcpp::sample(k, N_adapt, true, R_NilValue, false));
-        double sum_within = 0;
-        int n_ok = 0;
-        for (int i = 0; i < N_adapt; i++) {
-            double dev = devs.at(i).at(idxs[i]);
-            if (dev > tol) continue;
-            else n_ok++;
-            for (int j = 0; j < N_adapt; j++) {
-                sum_within += ((double) (dev <= devs.at(j).at(k-1))) / N_adapt;
-            }
-        }
-        if (sum_within / n_ok >= thresh) break;
-    }
-
-    if (k == k_max + 1) {
-        Rcerr << "Warning: maximum hit; falling back to naive k estimator.\n";
-        k = max_ok + 1;
-    }
-
-    k = std::min(k, max_V - 1);
-    return(k);
-}
-
-
-
 
 /*
  * Main entry point.
@@ -268,6 +164,33 @@ Rcpp::List ms_plans(
         map_params, splitting_method, control, nsims
     );
     if(DEBUG_PURE_MS_VERBOSE) Rprintf("Checkpoint 4!\n");
+    // sanity check make sure the plan is ok 
+    std::vector<bool> county_component_lookup(ndists * map_params.num_counties, false);
+    bool hierarchically_valid = current_plan_multigraph.is_hierarchically_valid(
+            *plan_ensemble.plan_ptr_vec[0], county_component_lookup
+    );
+    if(!hierarchically_valid){
+        throw Rcpp::exception("Initial Plan is not hierarchically valid. Either turn off counties or pass in a hierarchically valid plan\n");
+    }
+    // build multigraph on current plan and get pairs of adj districts to merge
+    auto build_result = plan_ensemble.plan_ptr_vec[0]->attempt_to_get_valid_mergesplit_pairs(
+        current_plan_multigraph, *splitting_schedule_ptr
+    );
+    // shouldn't be possible but just a sanity check
+    if (!build_result.first){
+        throw Rcpp::exception("BIG ERROR: Plan registered as hierarchically valid but we failed to build hierarchical multigraph!\n");
+    }
+    auto current_plan_adj_region_pairs = plan_ensemble.plan_ptr_vec[0]->attempt_to_get_valid_mergesplit_pairs(
+        current_plan_multigraph, *splitting_schedule_ptr
+    ).second;
+
+    // get weights 
+    arma::vec current_plan_pair_unnoramalized_wgts = get_adj_pair_unnormalized_weights(
+        *plan_ensemble.plan_ptr_vec[0],
+        current_plan_adj_region_pairs,
+        merge_prob_type
+    );
+
 
     // Set or estimate k if doing graph space sampling
     if(sampling_space == SamplingSpace::GraphSpace){
@@ -276,12 +199,15 @@ Rcpp::List ms_plans(
         if(try_to_estimate_cut_k){
             double thresh = (double) control["adapt_k_thresh"];
             double tol = std::max(target - lower, upper - target) / target;
-            cut_k = adapt_ms_parameters(
-                map_params.g, ndists, thresh, tol, 
-                plan_ensemble.plan_ptr_vec[0]->region_ids, 
-                counties, map_params.cg, pop, target, rng_state);
+
+            cut_k = estimate_mergesplit_cut_k(
+                    *plan_ensemble.plan_ptr_vec[0], current_plan_multigraph,  
+                    *splitting_schedule_ptr,
+                    thresh, tol, rng_state
+                );
+
             if(verbosity >= 3){
-                Rcout << " Using estimated k = " << cut_k << ")\n";
+                Rcout << " Using estimated k = " << cut_k << "\n";
             }
         }else{
             cut_k = as<int>(control["manual_k"]);
@@ -295,16 +221,7 @@ Rcpp::List ms_plans(
     }
 
     if(DEBUG_PURE_MS_VERBOSE) Rprintf("Checkpoint 5!\n");
-    // build multigraph on current plan and get pairs of adj districts to merge
-    auto current_plan_adj_region_pairs = plan_ensemble.plan_ptr_vec[0]->attempt_to_get_valid_mergesplit_pairs(
-        current_plan_multigraph, *splitting_schedule_ptr
-    ).second;
-    // get weights 
-    arma::vec current_plan_pair_unnoramalized_wgts = get_adj_pair_unnormalized_weights(
-        *plan_ensemble.plan_ptr_vec[0],
-        current_plan_adj_region_pairs,
-        merge_prob_type
-    );
+
 
     if(DEBUG_PURE_MS_VERBOSE){
         Rprintf("Adj regions are:");

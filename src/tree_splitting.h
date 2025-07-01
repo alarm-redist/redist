@@ -14,8 +14,8 @@
 
 
 
-// [[Rcpp::depends(RcppArmadillo)]]
 
+// [[Rcpp::depends(RcppArmadillo)]]
 
 
 /* 
@@ -68,14 +68,6 @@
 
 
 
-// Gets the deviance for each edge in a tree
-std::vector<double> get_ordered_tree_cut_devs(Tree &ust, int root,
-                             std::vector<int> const &cut_below_pop, double const target,
-                             PlanVector const &region_ids,
-                             int const region_id, int const region_size, int const region_pop,
-                             int const min_potential_cut_size, int const max_potential_cut_size,
-                             std::vector<int> const &smaller_cut_sizes_to_try
-                             );
 
 arma::vec compute_expo_prob_weights_on_edges(
         std::vector<EdgeCut> valid_edges, double alpha, double target);
@@ -123,7 +115,6 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
         std::vector<int> const &smaller_cut_sizes_to_try,
         const int total_merged_region_size
 );
-
 
 
 

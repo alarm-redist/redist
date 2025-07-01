@@ -36,4 +36,30 @@ public:
     ) const override;
 };
 
+
+/*
+ * Choose k and multiplier for efficient, accurate sampling
+ */
+void estimate_cut_k(
+    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    RNGState &rng_state,
+    int &k, int const last_k, 
+    const arma::vec &unnormalized_weights, double thresh,
+    double tol, std::vector<std::unique_ptr<Plan>> const &plan_ptrs_vec, 
+    bool split_district_only,
+    int const verbosity);
+
+
+
+/*
+ * Choose k and multiplier for efficient, accurate sampling
+ */
+int estimate_mergesplit_cut_k(
+    Plan const &plan, PlanMultigraph const &plan_multigraph,  
+    SplittingSchedule const &splitting_schedule,
+    double const thresh, double const tol,
+    RNGState &rng_state
+);
+
+
 #endif

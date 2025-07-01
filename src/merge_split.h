@@ -44,12 +44,4 @@ Rcpp::List ms_plans(
 );
 
 
-/*
- * Choose k and multiplier for efficient, accurate sampling
- */
-int adapt_ms_parameters(const Graph &g, int n_distr, double thresh,
-                         double tol, PlanVector const &region_ids, const uvec &counties,
-                         Multigraph const &cg, const uvec &pop, double target,
-                         RNGState &rng_state);
-
 #endif

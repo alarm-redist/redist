@@ -19,7 +19,6 @@
 #include "tree_op.h"
 #include "map_calc.h"
 #include "redist_types.h"
-#include "splitting.h"
 #include "weights.h"
 #include "ust_sampler.h"
 

@@ -9,6 +9,7 @@ constexpr bool DEBUG_GSMC_PLANS_VERBOSE = false; // Compile-time constant
 
 #include "smc.h"
 
+
 /* 
  *  Use SMC Sampler method to split a multidistrict in all of the plans
  * 
@@ -222,7 +223,7 @@ void run_smc_step(
                 ok = true;
             }else{ // else bad sample so try again
                  // check for user interrupt
-                 RcppThread::checkUserInterrupt(draw_tries_vec[i] % reject_check_int == 0);
+                 RcppThread::checkUserInterrupt(i % reject_check_int == 0);
                  // if diagnostic level 2 or higher get unsuccessful count 
                  if(diagnostic_level >= 0){
                      // not atomic so technically not thread safe but doesn't seem to differ in practice
