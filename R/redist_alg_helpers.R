@@ -151,11 +151,11 @@ validate_constraints <- function(map, constraints){
 validate_sample_space_and_splitting_method <- function(
         sampling_space, splitting_method, splitting_params, num_splitting_steps
     ){
+
     # first check its a valid sampling space
-    if(!sampling_space %in% VALID_SAMPLING_SPACES){
-        sampling_space_str <- paste0(VALID_SAMPLING_SPACES, collapse=", ")
-        cli_abort("{.arg sampling_space} must be one of the following: [{sampling_space_str}]")
-    }
+    sampling_space <- rlang::arg_match(sampling_space, values = VALID_SAMPLING_SPACES)
+    # check splitting method
+    splitting_method <- rlang::arg_match(splitting_method, values = VALID_FORWARD_KERNEL_TYPES)
 
     # create the
     cleaned_splitting_params <- list()

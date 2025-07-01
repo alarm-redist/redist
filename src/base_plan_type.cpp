@@ -828,10 +828,11 @@ std::pair<bool, std::vector<std::pair<RegionID,RegionID>>> Plan::attempt_to_get_
     bool const result = plan_multigraph.build_plan_multigraph(*this);
     // return false if not successful
     if(!result) return std::make_pair(false, std::vector<std::pair<RegionID,RegionID>>{}); 
-
+    // plan_multigraph.Rprint_detailed(*this);
     // else remove all the invalid size and mergesplit pairs 
     plan_multigraph.remove_invalid_size_pairs(*this, splitting_schedule);
     plan_multigraph.remove_invalid_mergesplit_pairs(*this);
+    // plan_multigraph.Rprint_detailed(*this);
 
     return std::make_pair(true, plan_multigraph.pair_map.hashed_pairs);
 
@@ -1325,13 +1326,12 @@ bool PlanMultigraph::build_plan_multigraph(
 void PlanMultigraph::remove_invalid_size_pairs(
     Plan const &plan, SplittingSchedule const &splitting_schedule
 ){
+    
     // remove invalid sizes 
     pair_map.hashed_pairs.erase(
         std::remove_if(pair_map.hashed_pairs.begin(), pair_map.hashed_pairs.end(), 
         [&](std::pair<RegionID, RegionID> a_pair) { 
             bool invalid_sizing = (
-                !splitting_schedule.valid_split_region_sizes[plan.region_sizes[a_pair.first]] ||
-                !splitting_schedule.valid_split_region_sizes[plan.region_sizes[a_pair.second]] ||
                 !splitting_schedule.valid_merge_pair_sizes[plan.region_sizes[a_pair.first]][plan.region_sizes[a_pair.second]]
             );
             // if invalid then reset data in pair map 
@@ -1347,6 +1347,7 @@ void PlanMultigraph::remove_invalid_size_pairs(
             return invalid_sizing;
         }
     ), pair_map.hashed_pairs.end());
+
 }
 
 

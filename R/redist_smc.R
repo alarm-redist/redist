@@ -224,8 +224,8 @@ redist_smc <- function(
         init_particles = NULL,
         init_nseats = NULL,
         sampling_space = c("graph_plan", "spanning_forest", "linking_edge"),
-        split_method = c("naive_top_k","uniform_valid_edge", "expo_bigger_abs_dev"),
-        split_params = list(adapt_k_thresh = .99),
+        split_method = NULL,
+        split_params = NULL,
         ms_params = list(),
         n_steps = NULL, seq_alpha = 1L,
         truncate = (compactness != 1), trunc_fn = redist_quantile_trunc,
@@ -245,7 +245,6 @@ redist_smc <- function(
 
     # check default inputs
     sampling_space <- rlang::arg_match(sampling_space)
-    split_method <- rlang::arg_match(split_method)
     diagnostics <- rlang::arg_match(diagnostics)
     diagnostic_level <- dplyr::case_when(
         diagnostics == "basic" ~ 0,
@@ -268,19 +267,19 @@ redist_smc <- function(
     if (seq_alpha <= 0 || seq_alpha > 1 || !assertthat::is.scalar(seq_alpha))
         cli_abort("{.arg seq_alpha} must lie in (0, 1].")
 
-    # if graph space default to k stuff
+    # if graph space default to k stuff else default to unif valid edge
     if(sampling_space == GRAPH_PLAN_SPACE_SAMPLING){
-        if(missing(split_method)){
+        if(is.null(split_method)){
             split_method <- NAIVE_K_SPLITTING
         }
-        if(missing(split_params)){
+        if(is.null(split_params)){
             split_params = list(
                 adapt_k_thresh=.99
             )
         }
     }else if(sampling_space == FOREST_SPACE_SAMPLING || sampling_space == LINKING_EDGE_SPACE_SAMPLING){
         # the others default to uniform
-        if(missing(split_method)){
+        if(is.null(split_method)){
             split_method <- UNIF_VALID_EDGE_SPLITTING
         }
     }
@@ -298,11 +297,10 @@ redist_smc <- function(
     pop_bounds <- map_params$pop_bounds
 
     # get the total number of districts
-    ndists <- attr(map, "ndists")
-    total_seats <- attr(map, "total_seats")
-    district_seat_sizes <- attr(map, "district_seat_sizes")
-    storage.mode(district_seat_sizes) <- "integer"
-    districting_scheme <- attr(map, "districting_scheme")
+    ndists <- map_params$ndists
+    total_seats <- map_params$total_seats
+    district_seat_sizes <- map_params$district_seat_sizes
+    districting_scheme <- map_params$districting_scheme
 
     # check that the seat sizes are a range
     if(any(district_seat_sizes != seq.int(from = min(district_seat_sizes), to = max(district_seat_sizes) ))){
@@ -532,7 +530,10 @@ redist_smc <- function(
 
     multiprocess <- nproc > 1
     # make sure we're not spawning more proccesses than runs
-    nproc <- min(runs, nproc)
+    if(multiprocess){
+        nproc <- min(runs, nproc)
+    }
+
 
     # warn if more processes than cores
     if(nproc > ncores_max){
@@ -659,7 +660,6 @@ redist_smc <- function(
             algout$merge_split_attempt_counts <- NULL
         }
 
-        gc()
         if(DEBUG_MODE) print("Checkpoint 2 - gc!")
 
         # turn it into a character vector

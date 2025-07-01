@@ -55,10 +55,10 @@ compute_log_target_density <- function(
     pop <- map_params$pop
     pop_bounds <- map_params$pop_bounds
 
-    ndists <- attr(map, "ndists")
-    total_seats <- attr(map, "total_seats")
-    district_seat_sizes <- attr(map, "district_seat_sizes")
-    storage.mode(district_seat_sizes) <- "integer"
+    ndists <- map_params$ndists
+    total_seats <- map_params$total_seats
+    district_seat_sizes <- map_params$district_seat_sizes
+    districting_scheme <- map_params$districting_scheme
 
     if (inherits(plans, "redist_plans")){
         sizes_matrix <- get_nseats_matrix(plans)
@@ -99,7 +99,6 @@ compute_log_target_density <- function(
 
     return(unnormalized_log_density)
 }
-
 
 
 #' Computes the unnormalized log target density contribution for each region in a plan
@@ -149,10 +148,10 @@ compute_log_target_density_by_region <- function(
     pop <- map_params$pop
     pop_bounds <- map_params$pop_bounds
 
-    ndists <- attr(map, "ndists")
-    total_seats <- attr(map, "total_seats")
-    district_seat_sizes <- attr(map, "district_seat_sizes")
-    storage.mode(district_seat_sizes) <- "integer"
+    ndists <- map_params$ndists
+    total_seats <- map_params$total_seats
+    district_seat_sizes <- map_params$district_seat_sizes
+    districting_scheme <- map_params$districting_scheme
 
     if (inherits(plans, "redist_plans")){
         sizes_matrix <- get_nseats_matrix(plans)
@@ -238,10 +237,10 @@ compute_log_optimal_weights <- function(
     pop <- map_params$pop
     pop_bounds <- map_params$pop_bounds
 
-    ndists <- attr(map, "ndists")
-    total_seats <- attr(map, "total_seats")
-    district_seat_sizes <- attr(map, "district_seat_sizes")
-    districting_scheme <- attr(map, "districting_scheme")
+    ndists <- map_params$ndists
+    total_seats <- map_params$total_seats
+    district_seat_sizes <- map_params$district_seat_sizes
+    districting_scheme <- map_params$districting_scheme
     if(districting_scheme == "MMD"){
         splitting_schedule <- "split_district_only_mmd"
     }

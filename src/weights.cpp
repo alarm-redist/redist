@@ -175,16 +175,16 @@ double get_log_retroactive_splitting_prob(
     double prob_sum = unioned_region_prob;
 
     // add the unioned region
-    if (DEBUG_WEIGHTS_VERBOSE) Rprintf(" (unioned) %d\n", unioned_region_size);
+    if (DEBUG_WEIGHTS_VERBOSE) Rprintf(" (unioned) %d | ", unioned_region_size);
 
     for(int region_id = 0 ; region_id < plan.num_regions; region_id++) {
         auto region_size = plan.region_sizes[region_id];
 
         // add if valid multidistrict and not the two we started with
         if(valid_region_sizes_to_split[region_size] &&
-            region_size > 1 && region_id != region1_id && 
+            region_id != region1_id && 
             region_id != region2_id){
-            if (DEBUG_WEIGHTS_VERBOSE) Rprintf(" %d ", region_size);
+            if (DEBUG_WEIGHTS_VERBOSE) Rprintf(" %d | ", region_size);
             // add the count and label to vector
             prob_sum += std::pow(region_size, selection_alpha);
         }
@@ -193,11 +193,13 @@ double get_log_retroactive_splitting_prob(
     // so prob of picking is weight of first over sum
     double log_prob = std::log(unioned_region_prob) - std::log(prob_sum);
 
-    // Rprintf("For regions (%d,%d), size (%d,%d) - Prob is %d/%d, so log is %.5f\n",
-    // region1_id, region2_id, 
-    // (int) plan.region_sizes[region1_id], (int) plan.region_sizes[region2_id],
-    // unioned_region_dnk, total_multi_ds,
-    // log_prob);
+    if (DEBUG_WEIGHTS_VERBOSE){
+    Rprintf("\nFor regions (%d,%d), size (%u,%u) - Prob is %.5f/%.5f, so log is %.5f\n",
+    region1_id, region2_id, 
+    plan.region_sizes[region1_id], plan.region_sizes[region2_id],
+    unioned_region_prob, prob_sum,
+    log_prob);
+    }
 
     return log_prob;
 
@@ -537,7 +539,7 @@ double compute_log_optimal_incremental_weights(
     ScoringFunction const &scoring_function, double const rho,
     bool compute_log_splitting_prob, bool is_final_plan
 ){
-
+    // plan.Rprint();
     // bool for whether we'll need to compute spanning tree count
     bool const compute_log_tau = rho != 1;
 
@@ -545,7 +547,7 @@ double compute_log_optimal_incremental_weights(
     // dont need to do when
     double incremental_weight = 0.0;
 
-    if(DEBUG_WEIGHTS_VERBOSE) Rprintf("Getting Pairs!");
+    if(DEBUG_WEIGHTS_VERBOSE) Rprintf("Getting Pairs!\n");
 
 
     // get region pair to effective boundary length map
@@ -582,7 +584,7 @@ double compute_log_optimal_incremental_weights(
         const double eff_log_boundary_len = std::get<2>(pair_tuple); // get the effective boundary length
 
         if(DEBUG_WEIGHTS_VERBOSE){
-            REprintf("(%d,%d) - %f\n", region1_id, region2_id, std::exp(eff_log_boundary_len));
+            REprintf("Pair (%d,%d) - %f\n", region1_id, region2_id, std::exp(eff_log_boundary_len));
         }
         
         // add to term
@@ -597,6 +599,7 @@ double compute_log_optimal_incremental_weights(
                 region1_id, region2_id
             );
             log_of_sum_term += log_splitting_prob;
+            if(DEBUG_WEIGHTS_VERBOSE) REprintf("\n");
         }
 
 
@@ -732,7 +735,7 @@ void compute_all_plans_log_optimal_incremental_weights(
     const int nsims = static_cast<int>(plans_ptr_vec.size());
     const int check_int = 50; // check for interrupts every _ iterations
     const int num_regions = plans_ptr_vec[0]->num_regions;
-    if(DEBUG_WEIGHTS_VERBOSE) Rprintf("About to start computing weights!");
+    if(DEBUG_WEIGHTS_VERBOSE) Rprintf("About to start computing weights!\n");
 
 
     RcppThread::ProgressBar bar(nsims, 1);

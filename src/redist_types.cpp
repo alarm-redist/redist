@@ -241,11 +241,11 @@ std::string sampling_space_to_str(SamplingSpace sampling_space){
 
 SplittingMethodType get_splitting_type(std::string const &splitting_type_str){
     // find the type or throw an error 
-    if(splitting_type_str == "naive_top_k"){
+    if(splitting_type_str == "top_k"){
         return SplittingMethodType::NaiveTopK;
-    }else if(splitting_type_str == "uniform_valid_edge"){
+    }else if(splitting_type_str == "unif_valid"){
         return SplittingMethodType::UnifValid;
-    }else if(splitting_type_str == "expo_bigger_abs_dev"){
+    }else if(splitting_type_str == "exp_abs_dev"){
         return SplittingMethodType::ExpBiggerAbsDev;
     }else if(splitting_type_str == "expo_smaller_abs_dev"){
         return SplittingMethodType::ExpSmallerAbsDev;

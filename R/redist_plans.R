@@ -65,6 +65,7 @@ new_redist_plans <- function(
                 # now flatten
                 dim(region_sizes) <- NULL
             }
+
         }
 
         # also make sure its the same length as the pop tally
@@ -227,9 +228,7 @@ redist_plans <- function(plans, map, algorithm, wgt = NULL, region_nseats = NULL
         storage.mode(plans) <- "integer"
     }
 
-    n_regions <- length(unique(plans))
-
-
+    n_regions <- length(unique(plans[,1]))
 
     obj <- new_redist_plans(plans, map, algorithm, wgt = wgt,
                             region_sizes=region_nseats, ndists = n_regions,
@@ -279,7 +278,9 @@ get_nseats_matrix <- function(x) {
     if (!inherits(x, "redist_plans")) cli_abort("Not a {.cls redist_plans}")
     # if not partial and SMD just return a matrix of ones
     if(attr(x, "districting_scheme") == "SMD" && isFALSE(attr(x, "partial"))){
-        return(matrix(1L, nrow = num_regions, ncol = nplans))
+        ndists <- attr(x, "ndists")
+        nplans <- ncol(get_plans_matrix(x))
+        return(matrix(1L, nrow = ndists, ncol = nplans))
     }
 
     if (!"nseats" %in% names(x)) cli_abort("{.cls redist_plans} does not have {.field nseats}!")
@@ -372,16 +373,22 @@ get_sampling_info <- function(plans) {
 #' renumbered to 1..\code{ndists}.
 #' @param name a human-readable name for the reference plan. Defaults to the
 #' name of \code{ref_plan}.
+#' @param ref_nseats an integer vector containing the number of seats for each
+#' of the districts. Only needed for MMD plans.
 #'
 #' @returns a modified \code{redist_plans} object containing the reference plan
 #' @concept analyze
 #' @export
-add_reference <- function(plans, ref_plan, name = NULL) {
+add_reference <- function(plans, ref_plan, name = NULL, ref_nseats = NULL) {
     if (!inherits(plans, "redist_plans")) cli_abort("{.arg plans} must be a {.cls redist_plans}")
     if (isTRUE(attr(plans, "partial")))
         cli_abort("Reference plans not supported for partial plans objects.")
-    if (!is.null(attr(plans, "districting_scheme")) && attr(plans, "districting_scheme") != "SMD")
-        cli::cli_abort("Reference plans not supported for multimember district plans objects.")
+    # if (!is.null(attr(plans, "districting_scheme")) && attr(plans, "districting_scheme") != "SMD"){
+    #     if(is.null(ref_nseats)){
+    #         cli::cli_abort("Reference plans for multimember district plans objects must have {.arg ref_nseats} passed in!")
+    #     }
+    # }
+
 
     plan_m <- get_plans_matrix(plans)
     if (!is.numeric(ref_plan)) cli_abort("{.arg ref_plan} must be numeric")
@@ -439,6 +446,10 @@ add_reference <- function(plans, ref_plan, name = NULL) {
         plans[, -match("draw", names(plans))]
     ) %>%
         dplyr::mutate(draw = new_draw, .before = "district")
+
+    # if (!is.null(attr(plans, "districting_scheme")) && attr(plans, "districting_scheme") != "SMD"){
+    #     x[1:ndists, "nseats"] <- ref_nseats
+    # }
 
     exist_wgts <- get_plans_weights(plans)
     if (!is.null(exist_wgts))

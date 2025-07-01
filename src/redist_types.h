@@ -222,7 +222,7 @@ class MapParams {
     double const upper; // upper bound on district population
     int const smallest_district_size; // smallest district size
     int const largest_district_size; // largest district size
-    std::vector<int> const &district_seat_sizes; // vector of all district seat sizes 
+    std::vector<int> const district_seat_sizes; // vector of all district seat sizes 
     std::vector<bool> is_district; // of length total_seats that says whether or not that size is a district
 
 };

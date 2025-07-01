@@ -743,6 +743,7 @@ List run_redist_gsmc(
                 plan_ensemble_ptr->plan_ptr_vec[0]->num_regions != ndists
                 )
             );
+
             
             if(wgt_type == "optimal"){
                 // TODO make more princicpal in the future 

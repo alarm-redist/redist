@@ -181,7 +181,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         if(DEBUG_MERGING_VERBOSE){
             Rprintf("Failed!\n");
         }
-        return std::make_tuple(false, false, -1*std::log(0.0), merged_region_size);
+        return std::make_tuple(false, false, std::log(0.0), merged_region_size);
     }
 
 
@@ -218,7 +218,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
                 proposed_plan_multigraph.num_county_region_components, plan.num_regions);
         }
         // return failure
-        return std::make_tuple(true, false, -1*std::log(0.0), merged_region_size);
+        return std::make_tuple(true, false, std::log(0.0), merged_region_size);
     }
     // get adj pairs 
     auto new_valid_adj_region_pairs = build_attempt.second;

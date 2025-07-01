@@ -43,6 +43,7 @@
 #' the reference map of the \code{map} object, or if none exists, will sample
 #' a random initial state using \code{\link{redist_smc}}. You can also request
 #' a random initial state by setting \code{init_plan="sample"}.
+#' @param init_nseats The initial number of seats for each district in `init_plan`.
 #' @param counties A vector containing county (or other administrative or
 #' geographic unit) labels for each unit, which may be integers ranging from 1
 #' to the number of counties, or a factor or character vector.  If provided,
@@ -115,11 +116,11 @@ redist_mergesplit <- function(
     map, nsims, counties = NULL,
     warmup = if (is.null(init_plan)) 10 else max(100, nsims %/% 5),
     thin = 1L, chains = 1,
-    init_plan = NULL,
+    init_plan = NULL, init_nseats = NULL,
     constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
     sampling_space = c("graph_plan", "spanning_forest", "linking_edge"),
-    split_method = c("naive_top_k","uniform_valid_edge", "expo_bigger_abs_dev"),
-    split_params = list(adapt_k_thresh = .99),
+    split_method = NULL,
+    split_params = NULL,
     merge_prob_type = "uniform", compactness = 1,
     ncores = NULL,
     cl_type = "PSOCK", return_all = TRUE, init_name = NULL,
@@ -130,7 +131,23 @@ redist_mergesplit <- function(
 
     # check default inputs
     sampling_space <- rlang::arg_match(sampling_space)
-    split_method <- rlang::arg_match(split_method)
+
+    # if graph space default to k stuff else default to unif valid edge
+    if(sampling_space == GRAPH_PLAN_SPACE_SAMPLING){
+        if(is.null(split_method)){
+            split_method <- NAIVE_K_SPLITTING
+        }
+        if(is.null(split_params)){
+            split_params = list(
+                adapt_k_thresh=.99
+            )
+        }
+    }else if(sampling_space == FOREST_SPACE_SAMPLING || sampling_space == LINKING_EDGE_SPACE_SAMPLING){
+        # the others default to uniform
+        if(is.null(split_method)){
+            split_method <- UNIF_VALID_EDGE_SPLITTING
+        }
+    }
 
 
     # validate constraints
@@ -148,10 +165,13 @@ redist_mergesplit <- function(
     pop <- map_params$pop
     pop_bounds <- map_params$pop_bounds
     # get the total number of districts
-    ndists <- attr(map, "ndists")
-    total_seats <- attr(map, "total_seats")
-    district_seat_sizes <- attr(map, "district_seat_sizes")
-    storage.mode(district_seat_sizes) <- "integer"
+    ndists <- map_params$ndists
+    total_seats <- map_params$total_seats
+    district_seat_sizes <- map_params$district_seat_sizes
+    districting_scheme <- map_params$districting_scheme
+
+
+
 
 
     thin <- as.integer(thin)
@@ -200,12 +220,20 @@ redist_mergesplit <- function(
         # heuristic. Do at least 50 plans to not get stuck
         n_smc_nsims <- max(chains, 50)
 
+        init_plans <- redist_smc(map, n_smc_nsims, counties, compactness, constraints,
+                   resample = TRUE, split_params = split_params,
+                   sampling_space = sampling_space, split_method = split_method,
+                   ref_name = FALSE, verbose = verbose, silent = silent)
+
+        sampled_inidices <- sample.int(n=n_smc_nsims, size=chains, replace=F)
+
+
+        init_nseats <- get_nseats_matrix(init_plans)[
+            , sampled_inidices, drop=FALSE]
+
         init_plans <- get_plans_matrix(
-            redist_smc(map, n_smc_nsims, counties, compactness, constraints,
-                       resample = TRUE, split_params = split_params,
-                       sampling_space = sampling_space, split_method = split_method,
-                       ref_name = FALSE, verbose = verbose, silent = silent)
-            )[, sample.int(n=n_smc_nsims, size=chains, replace=F), drop=FALSE]
+            init_plans
+            )[, sampled_inidices, drop=FALSE]
 
         if (is.null(init_name))
             init_names <- paste0("<init> ", seq_len(chains))
@@ -223,11 +251,12 @@ redist_mergesplit <- function(
     # check it satsifies population bounds
     # add one because we assume 1 indexed
     init_pop <- pop_tally(init_plans+1, pop, ndists)
-    if (any(init_pop < pop_bounds[1]) | any(init_pop > pop_bounds[3]))
-        cli_abort("Provided initialization does not meet population bounds.")
 
-    # TODO: add support for multimember district in future
-    init_sizes <- matrix(1L, nrow = ndists, ncol = ncol(init_plans))
+
+    if (any(init_pop < pop_bounds[1]*init_nseats) | any(init_pop > pop_bounds[3]*init_nseats)){
+        cli_abort("Provided initialization does not meet population bounds.")
+    }
+
 
 
 
@@ -287,7 +316,6 @@ redist_mergesplit <- function(
         `%oper%` <- `%do%`
     }
 
-
     t1 <- Sys.time()
     out_par <- foreach(chain = seq_len(chains), .inorder = FALSE, .packages="redist") %oper% {
         if(chain == 1){
@@ -309,15 +337,13 @@ redist_mergesplit <- function(
             target=pop_bounds[2], lower=pop_bounds[1], upper=pop_bounds[3],
             rho=compactness,
             initial_plan=init_plans[, chain, drop=FALSE],
-            initial_region_sizes=init_sizes[, chain, drop=FALSE],
+            initial_region_sizes=init_nseats[, chain, drop=FALSE],
             sampling_space_str = sampling_space,
             merge_prob_type = merge_prob_type,
             control=control, constraints=constraints,
             verbosity=run_verbosity, diagnostic_mode=diagnostic_mode
         )
         t2_run <- Sys.time()
-        # 1 index the plans
-        algout$plans <- algout$plans
 
         # Internal diagnostics,
         algout$internal_diagnostics <- list(
@@ -355,6 +381,9 @@ redist_mergesplit <- function(
             alg_name = "mergesplit"
         )
 
+        # flatten the region sizes by column
+        dim(algout$plan_sizes) <- NULL
+
         storage.mode(algout$plans) <- "integer"
 
         algout
@@ -367,6 +396,8 @@ redist_mergesplit <- function(
     })
     each_len <- ncol(plans[[1]])
     plans <- do.call(cbind, plans)
+
+    region_sizes <- do.call(c, lapply(out_par, function(x) x$plan_sizes))
 
     mh <- sapply(out_par, function(algout) {
         mean(as.logical(algout$mhdecisions))
@@ -382,6 +413,7 @@ redist_mergesplit <- function(
 
     out <- new_redist_plans(plans = plans, map = map, algorithm = "mergesplit",
                             wgt = NULL, resampled = FALSE,
+                            region_sizes = region_sizes,
                             compactness = compactness,
                             constraints = constraints,
                             ndists = ndists,

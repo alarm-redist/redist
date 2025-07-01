@@ -6,10 +6,12 @@
 ####################################################
 
 
-## SMC alg Splitting types
-NAIVE_K_SPLITTING <- "naive_top_k" # pick top k unif at random
-UNIF_VALID_EDGE_SPLITTING <- "uniform_valid_edge" # pick valid edge unif
-EXP_BIGGER_ABS_DEV_SPLITTING <- "expo_bigger_abs_dev"
+## Forward Kernel Splitting types
+NAIVE_K_SPLITTING <- "top_k" # pick top k unif at random
+UNIF_VALID_EDGE_SPLITTING <- "unif_valid" # pick valid edge unif
+EXP_BIGGER_ABS_DEV_SPLITTING <- "exp_abs_dev"
+
+VALID_FORWARD_KERNEL_TYPES <- c(NAIVE_K_SPLITTING, UNIF_VALID_EDGE_SPLITTING, EXP_BIGGER_ABS_DEV_SPLITTING)
 
 
 VALID_FOREST_SPLITTING_METHODS <- c(UNIF_VALID_EDGE_SPLITTING, EXP_BIGGER_ABS_DEV_SPLITTING)

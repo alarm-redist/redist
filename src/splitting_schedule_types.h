@@ -57,7 +57,7 @@ class SplittingSchedule {
         double multidistrict_alpha;
         int const smallest_district_size;
         int const largest_district_size;
-        std::vector<int> const &district_seat_sizes;
+        std::vector<int> const district_seat_sizes;
         std::vector<bool> is_district;
 
         /*

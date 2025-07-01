@@ -170,7 +170,8 @@ Rcpp::List ms_plans(
     SplittingSizeScheduleType splitting_size_regime = SplittingSizeScheduleType::PureMergeSplitSize;
 
     auto splitting_schedule_ptr = std::make_unique<PureMSSplittingSchedule>(ndists, total_seats, as<std::vector<int>>(district_seat_sizes));
-
+    // splitting_schedule_ptr->print_current_step_splitting_info();
+    bool const mmd_plans = splitting_schedule_ptr->district_seat_sizes.size() > 1;
 
     // Do some input checking 
 
@@ -193,15 +194,19 @@ Rcpp::List ms_plans(
     // Now create diagnostic information 
     Rcpp::NumericVector log_mh_ratios(nsims); // stores log mh ratio 
     Rcpp::IntegerMatrix saved_plans_mat(V, nsims);
+    Rcpp::IntegerMatrix saved_plan_sizes(
+        mmd_plans ? ndists : 1,
+        mmd_plans ? nsims : 1
+    );
     int current_plan_mat_col = 0;
-    std::vector<int> tree_sizes(ndists, 0);
-    std::vector<int> successful_tree_sizes(ndists, 0);
+    std::vector<int> tree_sizes(total_seats, 0);
+    std::vector<int> successful_tree_sizes(total_seats, 0);
 
     // Level 3 
     // Saves proposal plans 
     Rcpp::IntegerMatrix proposed_plans_mat(
-        diagnostic_mode ? V : 0, 
-        diagnostic_mode ? nsims: 0);
+        diagnostic_mode ? V : 1, 
+        diagnostic_mode ? nsims: 1);
 
     std::vector<std::vector<Graph>> all_steps_forests_adj_list;
     all_steps_forests_adj_list.resize(
@@ -210,14 +215,32 @@ Rcpp::List ms_plans(
 
     if(DEBUG_PURE_MS_VERBOSE) Rprintf("Checkpoint 3!\n");
 
-
-    bool split_district_only;
-
     // Create current plan and proposal
 
     int global_rng_seed2 = (int) Rcpp::sample(INT_MAX, 1)[0];
     std::vector<RNGState> rng_states;rng_states.reserve(1);
     rng_states.emplace_back(global_rng_seed2, 6);
+
+
+    
+
+    Rcpp::IntegerVector mh_decisions(nsims);
+    double mha;
+
+    int total_post_warmup_steps = nsims * thin;
+    int total_steps = total_post_warmup_steps + warmup;
+    int start = 1 - warmup;
+
+    // Track the total number of successes during the warmup 
+    int warmup_acceptances = 0;
+    // Track total number of successes after warmup
+    int post_warump_acceptances = 0;
+
+    {
+    USTSampler ust_sampler(map_params, *splitting_schedule_ptr);
+    PlanMultigraph current_plan_multigraph(map_params);
+    PlanMultigraph proposed_plan_multigraph(map_params);
+
 
 
     RcppThread::ThreadPool pool(1);
@@ -228,6 +251,7 @@ Rcpp::List ms_plans(
         initial_plan, initial_region_sizes,
         rng_states, pool, verbosity
     );
+    // plan_ensemble.plan_ptr_vec[0]->Rprint(true);
     // now get for proposal plan
     PlanEnsemble proposal_plan_ensemble = get_plan_ensemble(
         map_params, initial_num_regions,
@@ -235,6 +259,8 @@ Rcpp::List ms_plans(
         initial_plan, initial_region_sizes,
         rng_states, pool, verbosity
     );
+
+    
 
 
     // splitter
@@ -269,24 +295,6 @@ Rcpp::List ms_plans(
     }
 
     if(DEBUG_PURE_MS_VERBOSE) Rprintf("Checkpoint 5!\n");
-
-
-    Rcpp::IntegerVector mh_decisions(nsims);
-    double mha;
-
-    int total_post_warmup_steps = nsims * thin;
-    int total_steps = total_post_warmup_steps + warmup;
-    int start = 1 - warmup;
-
-    // Track the total number of successes during the warmup 
-    int warmup_acceptances = 0;
-    // Track total number of successes after warmup
-    int post_warump_acceptances = 0;
-
-    USTSampler ust_sampler(map_params, *splitting_schedule_ptr);
-    PlanMultigraph current_plan_multigraph(map_params);
-    PlanMultigraph proposed_plan_multigraph(map_params);
-
     // build multigraph on current plan and get pairs of adj districts to merge
     auto current_plan_adj_region_pairs = plan_ensemble.plan_ptr_vec[0]->attempt_to_get_valid_mergesplit_pairs(
         current_plan_multigraph, *splitting_schedule_ptr
@@ -364,6 +372,14 @@ Rcpp::List ms_plans(
                 plan_ensemble.flattened_all_plans.end(),
                 saved_plans_mat.column(current_plan_mat_col).begin() // Start of column in Rcpp::IntegerMatrix
             );
+            // if mmd copy sizes
+            if(mmd_plans){
+                std::copy(
+                    plan_ensemble.flattened_all_region_sizes.begin(), 
+                    plan_ensemble.flattened_all_region_sizes.end(),
+                    saved_plan_sizes.column(current_plan_mat_col).begin() // Start of column in Rcpp::IntegerMatrix
+                );
+            }
             if(diagnostic_mode){
                 std::copy(
                     proposal_plan_ensemble.plan_ptr_vec[0]->region_ids.begin(), 
@@ -401,6 +417,8 @@ Rcpp::List ms_plans(
  
     }
     cli_progress_done(bar);
+    if(DEBUG_PURE_MS_VERBOSE) REprintf("Done with main MCMC loop\n");
+    }
     
     if (verbosity >= 1) {
         Rcout << "Acceptance rate: " << std::setprecision(2) << 
@@ -414,8 +432,11 @@ Rcpp::List ms_plans(
         saved_plans_mat.begin(), 
         [](int x) { return x + 1; }
     );
+
+    if(DEBUG_PURE_MS_VERBOSE) REprintf("Added one to plans, now creating diagnostic list.\n");
     
     out["plans"] = saved_plans_mat;
+    out["plan_sizes"] = saved_plan_sizes;
     out["mhdecisions"] = mh_decisions;
     out["total_steps"] = total_steps;
     out["warmup_acceptances"] = warmup_acceptances;
@@ -432,6 +453,8 @@ Rcpp::List ms_plans(
         );
         out["proposed_plans"] = proposed_plans_mat;
     }
+
+    if(DEBUG_PURE_MS_VERBOSE) REprintf("Done now returning!\n");
 
     return out;
 }
