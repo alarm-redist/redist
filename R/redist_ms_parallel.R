@@ -49,6 +49,7 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
                                        constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
                                        adapt_k_thresh = 0.99, k = NULL, ncores = NULL,
                                        cl_type = "PSOCK", return_all = TRUE, init_name = NULL,
+                                       silly_adj_fix = FALSE,
                                        verbose = FALSE, silent = FALSE) {
     if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
 
@@ -124,13 +125,29 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
         if (any(is.na(counties)))
             cli_abort("{.arg counties} must not contain missing values.")
 
-        # handle discontinuous counties
-        component <- contiguity(adj, vctrs::vec_group_id(counties))
-        counties <- dplyr::if_else(component > 1,
-                                   paste0(as.character(counties), "-", component),
-                                   as.character(counties)) %>%
-            as.factor() %>%
-            as.integer()
+        if (silly_adj_fix) {
+            for (j in seq_len(ndists)) {
+                idx_distr <- which(init_plans[, 1] == j)
+                adj_distr <- redist.reduce.adjacency(adj, idx_distr)
+                component <- contiguity(adj_distr, vctrs::vec_group_id(counties[idx_distr]))
+                counties[idx_distr] <- paste0(
+                    j, ":",
+                    dplyr::if_else(component > 1,
+                                   paste0(as.character(counties[idx_distr]), "-", component),
+                                   as.character(counties[idx_distr]))
+                )
+            }
+            counties <- vctrs::vec_group_id(counties)
+        } else {
+            counties = vctrs::vec_group_id(counties)
+            # handle discontinuous counties
+            component <- contiguity(adj, vctrs::vec_group_id(counties))
+            counties <- dplyr::if_else(component > 1,
+                                       paste0(as.character(counties), "-", component),
+                                       as.character(counties)) %>%
+                as.factor() %>%
+                as.integer()
+        }
     }
 
     # Other constraints
@@ -166,19 +183,11 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
     }
 
     control = list(adapt_k_thresh=adapt_k_thresh, do_mh=TRUE)
-    # kind of hacky -- extract k=... from outupt
-    if (!requireNamespace("utils", quietly = TRUE)) stop()
-    out <- utils::capture.output({
-        x <- ms_plans(1, adj, init_plans[, 1], counties, pop, ndists, pop_bounds[2],
-                      pop_bounds[1], pop_bounds[3], compactness, list(), control,
-                      0L, 1L, verbosity = 3)
-    }, type = "output")
+    x <- ms_plans(1, adj, init_plans[, 1], counties, pop, ndists, pop_bounds[2],
+                  pop_bounds[1], pop_bounds[3], compactness,
+                  list(), control, 0L, 1L, verbosity = 0)
+    k <- x$est_k
     rm(x)
-    k <- as.integer(stats::na.omit(stringr::str_match(out, "Using k = (\\d+)")[, 2]))
-    if (length(k) == 0)
-        cli_abort(c("Adaptive {.var k} not found. This error should not happen.",
-            ">" = "Please file an issue at
-                        {.url https://github.com/alarm-redist/redist/issues/new}"))
 
     # set up parallel
     if (is.null(ncores)) ncores <- parallel::detectCores()
@@ -186,16 +195,18 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
     of <- ifelse(Sys.info()[['sysname']] == 'Windows',
                  tempfile(pattern = paste0('ms_', substr(Sys.time(), 1, 10)), fileext = '.txt'),
                  '')
-    if (!silent)
-        cl <- makeCluster(ncores, outfile = of, methods = FALSE,
-                          useXDR = .Platform$endian != "little")
-    else
-        cl <- makeCluster(ncores, methods = FALSE,
-                          useXDR = .Platform$endian != "little")
-    doParallel::registerDoParallel(cl)
-    on.exit(stopCluster(cl))
+    if (!silent) {
+        cl <- parallel::makeCluster(ncores, outfile = of, methods = FALSE,
+                                    useXDR = .Platform$endian != "little")
+    } else {
+        cl <- parallel::makeCluster(ncores, methods = FALSE,
+                                    useXDR = .Platform$endian != "little")
+    }
 
-    out_par <- foreach(chain = seq_len(chains), .inorder = FALSE, .packages="redist") %dorng% {
+    doParallel::registerDoParallel(cl)
+    on.exit(parallel::stopCluster(cl))
+
+    out_par <- foreach::foreach(chain = seq_len(chains), .inorder = FALSE, .packages="redist") %dorng% {
         if (!silent) cat("Starting chain ", chain, "\n", sep = "")
         run_verbosity <- if (chain == 1 || verbosity == 3) verbosity else 0
         t1_run <- Sys.time()
@@ -208,33 +219,41 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
             runtime = as.numeric(t2_run - t1_run, units = "secs")
         )
 
+        algout$mh <- mean(as.logical(algout$mhdecisions))
+
+        warmup_idx <- c(seq_len(1 + warmup %/% thin), nsims %/% thin + 2L)
+        if (return_all) {
+            algout$plans <- algout$plans[, -warmup_idx, drop = FALSE]
+        } else {
+            algout$plans <- algout$plans[, nsims + 1L, drop = FALSE]
+        }
+        storage.mode(algout$plans) <- "integer"
+
+        warmup_idx <- c(seq_len(warmup %/% thin), nsims %/% thin + 1L)
+        if (!return_all) {
+            algout$mhdecisions <- as.logical(algout$mhdecisions[nsims])
+        } else {
+            algout$mhdecisions <- as.logical(algout$mhdecisions[-warmup_idx])
+        }
+
         algout
     }
 
-    warmup_idx <- c(seq_len(1 + warmup %/% thin), nsims %/% thin + 2L)
+
     plans <- lapply(out_par, function(algout) {
-        if (return_all) {
-            algout$plans[, -warmup_idx, drop = FALSE]
-        } else {
-            algout$plans[, nsims + 1L, drop = FALSE]
-        }
+        algout$plans
     })
     each_len <- ncol(plans[[1]])
     plans <- do.call(cbind, plans)
     storage.mode(plans) <- "integer"
 
     mh <- sapply(out_par, function(algout) {
-        mean(as.logical(algout$mhdecisions))
+        algout$mh
     })
     l_diag <- lapply(out_par, function(algout) algout$l_diag)
 
-    warmup_idx <- c(seq_len(warmup %/% thin), nsims %/% thin + 1L)
     acceptances <- sapply(out_par, function(algout) {
-        if (!return_all) {
-            as.logical(algout$mhdecisions[nsims])
-        } else {
-            as.logical(algout$mhdecisions[-warmup_idx])
-        }
+        algout$mhdecisions
     })
 
 

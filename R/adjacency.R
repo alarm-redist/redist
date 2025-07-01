@@ -81,10 +81,8 @@ redist.reduce.adjacency <- function(adj, keep_rows) {
         cli_warn("{.arg adj} did not have typical values of 0:(length(adj)-1)")
     }
 
-    # Prep objects for Rcpp
-    prec_map <- rep(-1L, length(adj))
-    # prec_map[keep_rows] = order(keep_rows) - 1L
-    prec_map <- dplyr::coalesce(match(1:length(adj), keep_rows) - 1L, -1L)
+    prec_map <- match(seq_along(adj), keep_rows) - 1L
+    prec_map[is.na(prec_map)] = -1L
 
     # Reduce!
     reduce_adj(adj, prec_map, length(keep_rows))

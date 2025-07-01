@@ -30,12 +30,6 @@ Multigraph county_graph(const Graph &g, const uvec &counties);
 Graph district_graph(const Graph &g, const uvec &plan, int nd, bool zero=false);
 
 /*
- * Update the district adjacency graph for `plan` with one new district
- */
-// TESTED
-Graph update_district_graph(const Graph &g, Graph dist_g, const uvec &plan, int dist_ctr);
-
-/*
  * Initialize empty multigraph structure on graph with `V` vertices
  */
 // TESTED
@@ -46,6 +40,11 @@ Multigraph init_multigraph(int V);
  */
 // TESTED
 Tree init_tree(int V);
+
+/*
+ * Clear a tree
+ */
+void clear_tree(Tree &tree);
 
 /*
  * Convert R adjacency list to Graph object (vector of vectors of ints).

@@ -38,9 +38,9 @@ test_that("redist_mergesplit_parallel works", {
     pl1 <- redist_mergesplit_parallel(fl_map, nsims = N, warmup = N/2, chains = chains,
         ncores = 2, silent = TRUE)
     pl2 <- redist_mergesplit_parallel(fl_map, nsims = N, chains = chains,
-        ncores = 2, warmup = 0, init_name = F, silent = TRUE)
+        ncores = 2, warmup = 0, init_name = FALSE, silent = TRUE)
     pl3 <- redist_mergesplit_parallel(fl_map, nsims = N, warmup = N/2, chains = chains,
-        ncores = 2, return_all = F, init_name = F, silent = TRUE)
+        ncores = 2, return_all = FALSE, init_name = FALSE, silent = TRUE)
 
     expect_equal(get_n_ref(pl1), chains)
     expect_equal(get_n_ref(pl2), 0)

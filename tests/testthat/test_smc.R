@@ -59,8 +59,8 @@ test_that("Not egregiously incorrect sampling accuracy (25-prec)", {
     ref_plans <- plans_10[, redist.parity(plans_10, pop) <= 0.01]
     log_st_ref <- round(log_st_map(adj, ref_plans, rep(1L, 25), 3L), 5)
 
-    out <- redist_smc(set_pop_tol(fl_map, 0.01), 6000, compactness = 0,
-        adapt_k_thresh = 1, seq_alpha = 0.5, resample = FALSE, silent = TRUE) %>%
+    out <- redist_smc(set_pop_tol(fl_map, 0.01), 6000, compactness=0,
+        adapt_k_thresh=0.99999, seq_alpha=0.5, resample=FALSE, silent=TRUE) %>%
         suppressWarnings() # efficiency
     log_st <- round(log_st_map(adj, as.matrix(out), rep(1L, 25), 3L), 5)
     types <- match(log_st, log_st_ref)
@@ -73,6 +73,28 @@ test_that("Not egregiously incorrect sampling accuracy (25-prec)", {
     zscores <- (avgs - (1/length(log_st_ref)))/ses
     expect_true(all(abs(zscores) <= 5))
 })
+
+test_that("Labeling accounted for", {
+    skip_on_cran()
+    set.seed(1935)
+
+    g <- list(1:2, c(0L, 3L), c(0L, 3L, 4L), c(1L, 2L, 5L), c(2L, 5L, 6L),
+              c(3L, 4L, 7L), c(4L, 7L), 5:6)
+    map <- redist_map(pop = rep(1, 8), ndists = 4, pop_tol = 0.05, adj = g)
+    out <- redist_smc(map, 10e3, adapt_k_thresh = 1, resample = FALSE, silent = TRUE)
+    types = apply(as.matrix(out), 2, function(x) {
+        paste(vctrs::vec_group_id(x), collapse="")
+    }) |>
+        vctrs::vec_group_id()
+    wgts <- weights(out)
+    avgs <- sapply(1:5, function(i) weighted.mean(types == i, wgts))
+    ses <- sapply(1:5, function(i) {
+        sqrt(sum(((types == i) - 0.2)^2*(wgts/sum(wgts))^2))
+    })
+    zscores <- (avgs - 0.2) / ses
+    expect_true(all(abs(zscores) <= 3))
+})
+
 
 test_that("Partial sampling works accurately", {
     skip_on_cran()
@@ -87,7 +109,7 @@ test_that("Partial sampling works accurately", {
         suppressWarnings() # efficiency
     out2 <- redist_smc(set_pop_tol(fl_map, 0.01), 3000, compactness = 0,
         init_particles = as.matrix(out1),
-        adapt_k_thresh = 1, seq_alpha = 0.5, resample = F, silent = TRUE) %>%
+        adapt_k_thresh = 1, seq_alpha = 0.5, resample = FALSE, silent = TRUE) %>%
         suppressWarnings() # efficiency
     log_st <- round(log_st_map(adj, as.matrix(out2), rep(1L, 25), 3L), 5)
     types <- match(log_st, log_st_ref)

@@ -31,11 +31,11 @@ test_that("short bursts run and improve the score over time", {
     expect_true(all(diff(plans$score) >= 0))
 
     plans <- redist_shortburst(iowa_map, scorer_frac_kept(iowa_map),
-                               max_bursts = 20, maximize = F, verbose = F)
+                               max_bursts = 20, maximize = FALSE, verbose = FALSE)
     expect_true(all(diff(plans$score) <= 0))
 
     plans <- redist_shortburst(iowa_map, scorer_frac_kept(iowa_map),
-        max_bursts = 20, thin = 2, verbose = F)
+        max_bursts = 20, thin = 2, verbose = FALSE)
     expect_true(ncol(as.matrix(plans)) == 11)
 })
 
@@ -47,7 +47,7 @@ test_that("short bursts work with multiple scorers", {
         dem = scorer_group_pct(iowa_map, dem_08, tot_08, k=2)
     )
     plans <- redist_shortburst(iowa_map, scorer, maximize=c(comp=FALSE, dem=TRUE),
-                               max_bursts = 20, verbose = F)
+                               max_bursts = 20, verbose = FALSE)
 
     expect_true(inherits(plans, "redist_plans"))
     expect_equal(dim(get_plans_matrix(plans)), c(99, 21))

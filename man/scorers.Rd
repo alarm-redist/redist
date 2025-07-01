@@ -36,7 +36,7 @@ scorer_status_quo(map, existing_plan = get_existing(map))
 
 \item{counties}{A numeric vector with an integer from 1:n_counties}
 
-\item{perim_df}{perimeter distance dataframe from \code{\link[=prep_perims]{prep_perims()}}}
+\item{perim_df}{perimeter distance dataframe from \code{\link[redistmetrics:prep_perims]{redistmetrics::prep_perims()}}}
 
 \item{areas}{area of each precinct (ie \code{st_area(map)})}
 

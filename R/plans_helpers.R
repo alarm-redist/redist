@@ -1,6 +1,6 @@
 #' Pull back plans to unmerged units
 #'
-#' Merging map units through \code{\link{merge_by}} or \code{\link{summarize}}
+#' Merging map units through \code{\link{merge_by}} or [dplyr::summarize]
 #' changes the indexing of each unit.  Use this function to take a set of
 #' redistricting plans from a \code{redist} algorithm and re-index them to
 #' be compatible with the original set of units.
@@ -95,8 +95,9 @@ group_frac <- function(map, group_pop, total_pop = map[[attr(map, "pop_col")]],
 }
 
 
-#' Average a variable by precinct
+#' Average a variable by precinct (Deprecated)
 #'
+#' Deprecated in favor of [proj_avg()].
 #' Takes a column of a `redist_plans` object and averages it across a set of
 #' `draws` for each precinct.
 #'
@@ -109,44 +110,10 @@ group_frac <- function(map, group_pop, total_pop = map[[attr(map, "pop_col")]],
 #'
 #' @return a vector of length matching the number of precincts, containing the average.
 #'
-#' @concept analyze
 #' @export
 avg_by_prec <- function(plans, x, draws = NA) {
-    plans_m <- get_plans_matrix(plans)
-
-    n_ref <- 0
-    # copied from get_n_ref()
-    if (!is.null(colnames(plans_m))) {
-        refs <- which(nchar(colnames(plans_m)) > 0)
-        n_ref <- length(unique(colnames(plans_m)[refs]))
-    }
-
-    if (is.null(draws)) {
-        draw_idx <- seq_len(ncol(plans_m))
-    } else if (length(draws) == 1 && is.na(draws)) {
-        if (n_ref > 0) {
-            draw_idx <- seq_len(ncol(plans_m))[-seq_len(n_ref)]
-        } else {
-            draw_idx <- seq_len(ncol(plans_m))
-        }
-    } else if (is.logical(draws)) {
-        draw_idx <- which(draws)
-    } else {
-        draw_idx <- match(as.character(draws), levels(plans$draw))
-    }
-
-    plans <- arrange(plans, as.integer(.data$draw), .data$district)
-    n_distr <- max(plans_m[, draw_idx[1]])
-    m_val <- matrix(rlang::eval_tidy(rlang::enquo(x), plans), nrow = n_distr)
-
-    plans_m <- plans_m[, draw_idx, drop = FALSE]
-    m_val <- m_val[, draw_idx, drop = FALSE]
-    m_prec <- matrix(nrow = nrow(plans_m), ncol = ncol(plans_m))
-    for (i in seq_len(ncol(plans_m))) {
-        m_prec[, i] <- m_val[, i][plans_m[, i]]
-    }
-
-    rowMeans(m_prec)
+    .Deprecated("proj_avg")
+    proj_avg(plans, {{ x }}, draws)
 }
 
 

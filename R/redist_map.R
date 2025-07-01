@@ -106,13 +106,13 @@ reconstruct.redist_map <- function(data, old) {
     data
 }
 
-#' Create a \code{redist_map} object.
+#' Create a `redist_map` object.
 #'
 #' Sets up a redistricting problem.
 #'
-#' A \code{redist_map} object is a \code{\link{tibble}} which contains an
+#' A `redist_map` object is a [tibble::tibble] which contains an
 #' adjacency list and additional information about the number of districts and
-#' population bounds.  It supports all of the \code{dplyr} generics, and will
+#' population bounds.  It supports all of the `dplyr` generics, and will
 #' adjust the adjacency list and attributes according to these functions; i.e.,
 #' if we \code{filter} to a subset of units, the graph will change to subset to
 #' these units, and the population bounds will adjust accordingly.  If an
@@ -395,11 +395,13 @@ dplyr_row_slice.redist_map <- function(data, i, ...) {
     attr(y, "pop_bounds") <- bounds
     new_tgt <- sum(y[[attr(data, "pop_col")]])/new_distr
 
-    if (bounds[1] > new_tgt || bounds[3] < new_tgt) {
-        cli_warn(c("Your subset was not based on districts.",
-            ">" = "Please use {.fn set_pop_tol} to update your
+    if (new_distr > 0) {
+        if (bounds[1] > new_tgt || bounds[3] < new_tgt) {
+            cli_warn(c("Your subset was not based on districts.",
+                       ">" = "Please use {.fn set_pop_tol} to update your
                         {.cls redist_map} or create a new {.cls redist_map}
                         with the correct number of districts."))
+        }
     }
 
     y

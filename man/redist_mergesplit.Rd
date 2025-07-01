@@ -17,6 +17,7 @@ redist_mergesplit(
   adapt_k_thresh = 0.99,
   k = NULL,
   init_name = NULL,
+  silly_adj_fix = FALSE,
   verbose = FALSE,
   silent = FALSE
 )
@@ -68,6 +69,8 @@ tree. Should be selected automatically in nearly all cases.}
 \item{init_name}{a name for the initial plan, or \code{FALSE} to not include
 the initial plan in the output.  Defaults to the column name of the
 existing plan, or "\code{<init>}" if the initial plan is sampled.}
+
+\item{silly_adj_fix}{Heuristic for fixing weird inputs.}
 
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}

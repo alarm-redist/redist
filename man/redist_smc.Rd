@@ -21,7 +21,6 @@ redist_smc(
   trunc_fn = redist_quantile_trunc,
   pop_temper = 0,
   final_infl = 1,
-  est_label_mult = 1,
   ref_name = NULL,
   verbose = FALSE,
   silent = FALSE
@@ -105,11 +104,6 @@ splits.}
 iteration. Used to loosen the constraint when the sampler is getting stuck
 on the final split. \code{pop_temper} should be tried first, since using
 \code{final_infl} will actually change the target distribution.}
-
-\item{est_label_mult}{A multiplier for the number of importance samples to
-use in estimating the number of ways to sequentially label the districts.
-Lower values increase speed at the cost of accuracy.  Only applied when
-there are more than 13 districts.}
 
 \item{ref_name}{a name for the existing plan, which will be added as a
 reference plan, or \code{FALSE} to not include the initial plan in the

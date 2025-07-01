@@ -94,10 +94,6 @@
 #' iteration. Used to loosen the constraint when the sampler is getting stuck
 #' on the final split. `pop_temper` should be tried first, since using
 #' `final_infl` will actually change the target distribution.
-#' @param est_label_mult A multiplier for the number of importance samples to
-#' use in estimating the number of ways to sequentially label the districts.
-#' Lower values increase speed at the cost of accuracy.  Only applied when
-#' there are more than 13 districts.
 #' @param ref_name a name for the existing plan, which will be added as a
 #' reference plan, or `FALSE` to not include the initial plan in the
 #' output. Defaults to the column name of the existing plan.
@@ -139,7 +135,7 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
                        resample = TRUE, runs = 1L, ncores = 0L, init_particles = NULL,
                        n_steps = NULL, adapt_k_thresh = 0.99, seq_alpha = 0.5,
                        truncate = (compactness != 1), trunc_fn = redist_quantile_trunc,
-                       pop_temper = 0, final_infl = 1, est_label_mult = 1,
+                       pop_temper = 0, final_infl = 1,
                        ref_name = NULL, verbose = FALSE, silent = FALSE) {
     map <- validate_redist_map(map)
     V <- nrow(map)
@@ -236,8 +232,6 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
     lags <- 1 + unique(round((ndists - 1)^0.8*seq(0, 0.7, length.out = 4)^0.9))
     control <- list(adapt_k_thresh = adapt_k_thresh,
                     seq_alpha = seq_alpha,
-                    est_label_mult = est_label_mult,
-                    adjust_labels = isTRUE(getOption("redist.adjust_labels", TRUE)),
                     pop_temper = pop_temper,
                     final_infl = final_infl,
                     lags = lags,
@@ -313,7 +307,6 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
             rs_idx <- resample_lowvar(mod_wgt)
             n_unique <- dplyr::n_distinct(rs_idx)
             algout$plans <- algout$plans[, rs_idx, drop = FALSE]
-            # algout$log_labels = algout$log_labels[rs_idx]
             algout$ancestors <- algout$ancestors[rs_idx, , drop = FALSE]
             storage.mode(algout$ancestors) <- "integer"
         }
@@ -336,14 +329,10 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
             n_eff = n_eff,
             step_n_eff = algout$step_n_eff,
             adapt_k_thresh = adapt_k_thresh,
-            est_label_mult = est_label_mult,
             est_k = algout$est_k,
             accept_rate = algout$accept_rate,
-            sd_labels = algout$sd_labels,
             sd_lp = c(algout$sd_lp, sd(lr)),
             sd_temper = algout$sd_temper,
-            cor_labels = algout$cor_labels,
-            # log_labels = algout$log_labels,
             unique_survive = c(algout$unique_survive, n_unique),
             ancestors = algout$ancestors,
             seq_alpha = seq_alpha,

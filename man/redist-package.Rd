@@ -3,7 +3,6 @@
 \docType{package}
 \name{redist-package}
 \alias{redist-package}
-\alias{_PACKAGE}
 \alias{redist}
 \title{redist: Simulation Methods for Legislative Redistricting}
 \description{
