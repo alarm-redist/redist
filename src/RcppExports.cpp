@@ -740,87 +740,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// random_cpp_testing
-Rcpp::List random_cpp_testing();
-RcppExport SEXP _redist_random_cpp_testing() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(random_cpp_testing());
-    return rcpp_result_gen;
-END_RCPP
-}
-// split_schedule_testing
-void split_schedule_testing(int num_presplit_regions);
-RcppExport SEXP _redist_split_schedule_testing(SEXP num_presplit_regionsSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type num_presplit_regions(num_presplit_regionsSEXP);
-    split_schedule_testing(num_presplit_regions);
-    return R_NilValue;
-END_RCPP
-}
-// matrix_reorder_testing
-arma::imat matrix_reorder_testing(arma::imat& test_mat, arma::uvec const& reorder_vec);
-RcppExport SEXP _redist_matrix_reorder_testing(SEXP test_matSEXP, SEXP reorder_vecSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::imat& >::type test_mat(test_matSEXP);
-    Rcpp::traits::input_parameter< arma::uvec const& >::type reorder_vec(reorder_vecSEXP);
-    rcpp_result_gen = Rcpp::wrap(matrix_reorder_testing(test_mat, reorder_vec));
-    return rcpp_result_gen;
-END_RCPP
-}
-// NEW_matrix_reorder_testing
-void NEW_matrix_reorder_testing(Rcpp::IntegerMatrix& test_mat, arma::uvec const& reorder_vec);
-RcppExport SEXP _redist_NEW_matrix_reorder_testing(SEXP test_matSEXP, SEXP reorder_vecSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix& >::type test_mat(test_matSEXP);
-    Rcpp::traits::input_parameter< arma::uvec const& >::type reorder_vec(reorder_vecSEXP);
-    NEW_matrix_reorder_testing(test_mat, reorder_vec);
-    return R_NilValue;
-END_RCPP
-}
-// more_random_cpp_testing
-List more_random_cpp_testing();
-RcppExport SEXP _redist_more_random_cpp_testing() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(more_random_cpp_testing());
-    return rcpp_result_gen;
-END_RCPP
-}
-// calc_county_dist_test
-std::vector<std::set<int>> calc_county_dist_test(const arma::umat& districts_mat, const arma::uvec& counties, int n_cty, bool zero_ok);
-RcppExport SEXP _redist_calc_county_dist_test(SEXP districts_matSEXP, SEXP countiesSEXP, SEXP n_ctySEXP, SEXP zero_okSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::umat& >::type districts_mat(districts_matSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
-    Rcpp::traits::input_parameter< int >::type n_cty(n_ctySEXP);
-    Rcpp::traits::input_parameter< bool >::type zero_ok(zero_okSEXP);
-    rcpp_result_gen = Rcpp::wrap(calc_county_dist_test(districts_mat, counties, n_cty, zero_ok));
-    return rcpp_result_gen;
-END_RCPP
-}
-// calc_splits_test
-arma::uvec calc_splits_test(const arma::umat& districts_mat, const arma::uvec& counties, int n_cty, int num_threads);
-RcppExport SEXP _redist_calc_splits_test(SEXP districts_matSEXP, SEXP countiesSEXP, SEXP n_ctySEXP, SEXP num_threadsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::umat& >::type districts_mat(districts_matSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
-    Rcpp::traits::input_parameter< int >::type n_cty(n_ctySEXP);
-    Rcpp::traits::input_parameter< int >::type num_threads(num_threadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(calc_splits_test(districts_mat, counties, n_cty, num_threads));
-    return rcpp_result_gen;
-END_RCPP
-}
 // closest_adj_pop
 int closest_adj_pop(IntegerVector adj, int i_dist, NumericVector g_prop);
 RcppExport SEXP _redist_closest_adj_pop(SEXP adjSEXP, SEXP i_distSEXP, SEXP g_propSEXP) {
@@ -1162,13 +1081,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_parallel_polsbypopper", (DL_FUNC) &_redist_parallel_polsbypopper, 7},
     {"_redist_ms_plans", (DL_FUNC) &_redist_ms_plans, 21},
     {"_redist_pareto_dominated", (DL_FUNC) &_redist_pareto_dominated, 1},
-    {"_redist_random_cpp_testing", (DL_FUNC) &_redist_random_cpp_testing, 0},
-    {"_redist_split_schedule_testing", (DL_FUNC) &_redist_split_schedule_testing, 1},
-    {"_redist_matrix_reorder_testing", (DL_FUNC) &_redist_matrix_reorder_testing, 2},
-    {"_redist_NEW_matrix_reorder_testing", (DL_FUNC) &_redist_NEW_matrix_reorder_testing, 2},
-    {"_redist_more_random_cpp_testing", (DL_FUNC) &_redist_more_random_cpp_testing, 0},
-    {"_redist_calc_county_dist_test", (DL_FUNC) &_redist_calc_county_dist_test, 4},
-    {"_redist_calc_splits_test", (DL_FUNC) &_redist_calc_splits_test, 4},
     {"_redist_closest_adj_pop", (DL_FUNC) &_redist_closest_adj_pop, 3},
     {"_redist_rint1", (DL_FUNC) &_redist_rint1, 2},
     {"_redist_runif1", (DL_FUNC) &_redist_runif1, 2},

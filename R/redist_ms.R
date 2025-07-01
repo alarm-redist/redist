@@ -239,6 +239,12 @@ redist_mergesplit <- function(
             init_names <- paste0("<init> ", seq_len(chains))
         else
             init_names <- paste(init_name, seq_len(chains))
+    }else{
+        if(districting_scheme == "SMD"){
+            init_nseats <- matrix(1L, nrow = ndists, ncol = ncol(init_plans))
+        }else{
+            cli::cli_abort("MCMC with non-sampled initial plans not suppored for MMD right now.")
+        }
     }
 
 

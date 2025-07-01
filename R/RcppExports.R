@@ -205,34 +205,6 @@ pareto_dominated <- function(x) {
     .Call(`_redist_pareto_dominated`, x)
 }
 
-random_cpp_testing <- function() {
-    .Call(`_redist_random_cpp_testing`)
-}
-
-split_schedule_testing <- function(num_presplit_regions) {
-    invisible(.Call(`_redist_split_schedule_testing`, num_presplit_regions))
-}
-
-matrix_reorder_testing <- function(test_mat, reorder_vec) {
-    .Call(`_redist_matrix_reorder_testing`, test_mat, reorder_vec)
-}
-
-NEW_matrix_reorder_testing <- function(test_mat, reorder_vec) {
-    invisible(.Call(`_redist_NEW_matrix_reorder_testing`, test_mat, reorder_vec))
-}
-
-more_random_cpp_testing <- function() {
-    .Call(`_redist_more_random_cpp_testing`)
-}
-
-calc_county_dist_test <- function(districts_mat, counties, n_cty, zero_ok) {
-    .Call(`_redist_calc_county_dist_test`, districts_mat, counties, n_cty, zero_ok)
-}
-
-calc_splits_test <- function(districts_mat, counties, n_cty, num_threads) {
-    .Call(`_redist_calc_splits_test`, districts_mat, counties, n_cty, num_threads)
-}
-
 closest_adj_pop <- function(adj, i_dist, g_prop) {
     .Call(`_redist_closest_adj_pop`, adj, i_dist, g_prop)
 }

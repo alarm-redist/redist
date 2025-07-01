@@ -35,11 +35,11 @@ test_that("redist_mergesplit_parallel works", {
     N <- 20
     chains <- 2
 
-    pl1 <- redist_mergesplit_parallel(fl_map, nsims = N, warmup = N/2, chains = chains,
+    pl1 <- redist_mergesplit(fl_map, nsims = N, warmup = N/2, chains = chains,
         ncores = 2, silent = TRUE)
-    pl2 <- redist_mergesplit_parallel(fl_map, nsims = N, chains = chains,
+    pl2 <- redist_mergesplit(fl_map, nsims = N, chains = chains,
         ncores = 2, warmup = 0, init_name = F, silent = TRUE)
-    pl3 <- redist_mergesplit_parallel(fl_map, nsims = N, warmup = N/2, chains = chains,
+    pl3 <- redist_mergesplit(fl_map, nsims = N, warmup = N/2, chains = chains,
         ncores = 2, return_all = F, init_name = F, silent = TRUE)
 
     expect_equal(get_n_ref(pl1), chains)
@@ -53,9 +53,9 @@ test_that("redist_mergesplit_parallel works", {
 
 test_that("Parallel runs are reproducible", {
     set.seed(5118)
-    pl1 <- redist_mergesplit_parallel(fl_map, 100, warmup = 50, chains = 2, silent = TRUE)
+    pl1 <- redist_mergesplit(fl_map, 100, warmup = 50, chains = 2, silent = TRUE)
     set.seed(5118)
-    pl2 <- redist_mergesplit_parallel(fl_map, 100, warmup = 50, chains = 2, silent = TRUE)
+    pl2 <- redist_mergesplit(fl_map, 100, warmup = 50, chains = 2, silent = TRUE)
 
     # runtime is the only thing that shouldn't be identical
     for (i in 1:2) {
