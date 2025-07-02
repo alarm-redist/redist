@@ -95,8 +95,9 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
 
     log_tgt += add_constraint("incumbency", constraints, districts, psi_vec,
                               [&] (List l, int distr) -> double {
-                                  return eval_inc(plan, distr, as<uvec>(l["incumbents"]));
+                                  return eval_inc(plan, distr, distr, as<uvec>(l["incumbents"]));
                               });
+
 
 
     log_tgt += add_constraint("polsby", constraints, districts, psi_vec,

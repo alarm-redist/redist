@@ -383,7 +383,7 @@ add_constr_compet <- function(constr, strength, dvote, rvote, pow = 0.5,
 #' @rdname constraints
 #' @export
 add_constr_incumbency <- function(constr, strength, incumbents,
-                                  score_districts_only = TRUE) {
+                                  score_districts_only = FALSE) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
     if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
     data <- attr(constr, "data")

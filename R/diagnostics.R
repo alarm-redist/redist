@@ -74,6 +74,7 @@ summary.redist_plans <- function(
     plans_m <- get_plans_matrix(object)
     n_samp <- ncol(plans_m)
     n_distr <- attr(object, "ndists")
+    resampled <- attr(object, "resampled")
     if (is.null(n_distr)) n_distr <- max(plans_m[, 1])
 
     fmt_comma <- function(x) format(x, nsmall = 0, digits = 1, big.mark = ",")
@@ -158,6 +159,8 @@ summary.redist_plans <- function(
             # only display adapt k threshold if k values estimated
             if(split_params$estimate_cut_k){
                 cli::cli_text("Forward kernel parameters: {.arg adapt_k_thresh}={format(split_params$adapt_k_thresh, digits=3)}")
+            }else{
+                cli::cli_text("Forward kernel parameters: {.arg manual_k_params}={split_params$manual_k_params}")
             }
         }else if(split_method == UNIF_VALID_EDGE_SPLITTING){
 
@@ -177,6 +180,15 @@ summary.redist_plans <- function(
         "MCMC Parameters: {.arg warmup}={format(all_diagn[[1]]$warmup)}
         \u2022 {.arg thin}={format(all_diagn[[1]]$thin)}
         \u2022 {.arg thin}={format(all_diagn[[1]]$total_steps)}")
+    }
+
+    if(algo == MS_SMC_ALG_TYPE){
+        total_ms_steps <- sum(all_run_info[[i]]$step_types == "smc_ms")
+        cli::cli_text("
+        Mergesplit Parameters: {.arg total_ms_steps}={format(total_ms_steps, digits=2)}
+        \u2022 {.arg ms_moves_multiplier}={format(all_run_info[[1]]$ms_moves_multiplier, digits=2)}
+        \u2022 {.arg merge_prob_type}={format(all_run_info[[1]]$merge_prob_type, digits=2)}
+        ")
     }
 
 
@@ -211,7 +223,8 @@ summary.redist_plans <- function(
         rhats_computed <- TRUE
         split_rhat = algo %in% c(MCMC_ALG_TYPE, "flip")
 
-        if(1 <= district && district <= n_distr ){
+        # check if only computing for a specific district
+        if(1 <= district && district <= n_distr){
             rhat_df <- object |>
                 filter(!is.na(chain) & district == !!district) |>
                 pivot_longer(
@@ -289,26 +302,30 @@ summary.redist_plans <- function(
 
         for (i in seq_len(n_runs)) {
             diagn <- all_diagn[[i]]
-            n_samp <- nrow(diagn$ancestors)
+            n_samp <-  all_run_info[[i]]$nsims
+            run_i_sampling_space <- all_run_info[[i]]$sampling_space
 
-
-
-            # modified to deal with the fact I changed plan data at some point
-
-            # if new do nothing
-            if(length(diagn$sd_lp) == length(diagn$nunique_original_ancestors)){
-                a_unique_orig_ancestors <- diagn$nunique_original_ancestors
-            }else{
-                a_unique_orig_ancestors <- c(diagn$nunique_original_ancestors, NA)
-            }
 
             run_dfs[[i]] <- tibble(n_eff = c(diagn$step_n_eff, diagn$n_eff),
                                    eff = c(diagn$step_n_eff, diagn$n_eff)/n_samp,
                                    accept_rate = c(diagn$accept_rate, NA),
                                    sd_log_wgt = diagn$sd_lp,
-                                   max_unique = diagn$unique_survive,
-                                   est_k = c(diagn$est_k, NA),
-                                   unique_original = a_unique_orig_ancestors)
+                                   max_unique = diagn$unique_survive
+                                   )
+            run_i_tbl_names <- c("Eff. samples (%)", "Acc. rate",
+                           "Log wgt. sd", " Max. unique")
+            # if graph space then add the k
+            if(run_i_sampling_space == GRAPH_PLAN_SPACE_SAMPLING){
+                run_dfs[[i]]$est_k = c(diagn$est_k, NA)
+                if(diagn$split_params$estimate_cut_k){
+                    run_i_tbl_names <- c(run_i_tbl_names, "Est. k")
+                }else{
+                    run_i_tbl_names <- c(run_i_tbl_names, "Manual k")
+                }
+
+            }
+            run_i_tbl_names <- c(run_i_tbl_names, "")
+
 
             tbl_print <- as.data.frame(run_dfs[[i]])
             min_n <- max(0.05*n_samp, min(0.4*n_samp, 100))
@@ -323,10 +340,22 @@ summary.redist_plans <- function(
             tbl_print$max_unique <- with(tbl_print,
                                          str_glue("{fmt_comma(max_unique)} ({sprintf('%3.0f%%', 100*max_pct)})"))
 
-            names(tbl_print) <- c("Eff. samples (%)", "Acc. rate",
-                                  "Log wgt. sd", " Max. unique",
-                                  "Est. k", "Unique Original Ancestors" , "")
-            rownames(tbl_print) <- c(paste("Split", seq_len(nrow(tbl_print) - 1)), "Resample")
+            names(tbl_print) <- run_i_tbl_names
+            if(algo == SMC_ALG_TYPE){
+                new_row_names <- paste("Split", seq_len(nrow(tbl_print) - 1))
+            }else{
+                # numbers steps within each type
+                step_nums <- ave(seq_along(all_run_info[[i]]$step_types), all_run_info[[i]]$step_types, FUN = seq_along)
+                step_labels <- ifelse(all_run_info[[i]]$step_types == "smc", "Split", "MS Step")
+                new_row_names <- paste(step_labels, step_nums)
+            }
+
+            if(resampled){
+                new_row_names <- c(new_row_names, "Resample")
+            }
+
+            rownames(tbl_print) <- new_row_names
+
 
             if (i == 1 || isTRUE(all_runs)) {
                 cli_text("Sampling diagnostics for SMC run {i} of {n_runs} ({fmt_comma(n_samp)} samples)")

@@ -235,6 +235,18 @@ redist_smc <- function(
         adapt_k_thresh = .99
 )
 {
+    if(!missing(adapt_k_thresh)){
+        cli_warn("Passing {.arg adapt_k_thresh} directly is deprecated. Pass it in as an argument
+                 in {.arg split_params}")
+        if(is.list(split_params)){
+            split_params$adapt_k_thresh <- adapt_k_thresh
+            split_params$estimate_cut_k <- TRUE
+        }else{
+            split_params$list(adapt_k_thresh = adapt_k_thresh, estimate_cut_k=TRUE)
+        }
+    }
+
+
 
     # defunct code not used right now
     custom_size_split_list = list()

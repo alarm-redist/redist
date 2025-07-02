@@ -5,6 +5,7 @@
 #include "redist_types.h"
 #include "make_swaps_helper.h"
 #include "map_calc.h"
+#include "scoring.h"
 
 double add_constraint(const std::string& name, List constraints,
                       std::vector<int> districts, NumericVector &psi_vec,

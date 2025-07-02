@@ -5,6 +5,39 @@
 #include "base_plan_type.h"
 #include "redist_types.h"
 
+
+/* ***************
+ * Constraint Functions
+ * *******************
+ */
+
+/*
+ * Compute the incumbent-preserving penality  
+ */
+template <typename PlanID>
+double eval_inc(
+    PlanID const &region_ids, 
+    int const region1_id, int const region2_id,
+    const arma::uvec &incumbents
+){
+    int n_inc = incumbents.size();
+    double inc_in_distr = -1.0; // first incumbent doesn't count
+    for (int i = 0; i < n_inc; i++) {
+        if (region_ids[incumbents[i] - 1] == region1_id || region_ids[incumbents[i] - 1] == region2_id)
+            inc_in_distr++;
+    }
+
+    if (inc_in_distr < 0.0) {
+        inc_in_distr = 0.0;
+    }
+
+    return inc_in_distr;
+};
+
+
+/*
+ * Constraint Classes 
+ */
 class RegionConstraint {
     public:
         RegionConstraint(bool const score_districts_only): score_districts_only(score_districts_only) {};  
@@ -34,9 +67,9 @@ class PopTemperConstraint : public RegionConstraint {
             ndists(ndists),
             pop_temper(pop_temper) {}
     
-        double compute_region_constraint_score(const Plan &plan, int const region_id) const;
+        double compute_region_constraint_score(const Plan &plan, int const region_id) const override;
         // log constraint for region made by merging region 1 and 2
-        double compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const;
+        double compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
 };
 
 
@@ -57,11 +90,28 @@ class GroupHingeConstraint : public RegionConstraint {
             group_pop(group_pop), 
             total_pop(total_pop) {}
     
-        double compute_region_constraint_score(const Plan &plan, int const region_id) const;
+        double compute_region_constraint_score(const Plan &plan, int const region_id) const override;
         // log constraint for region made by merging region 1 and 2
-        double compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const;
+        double compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
 };
 
+
+
+class IncumbentConstraint : public RegionConstraint {
+    private:
+        double const strength;
+        arma::uvec const incumbents;
+
+    public:
+        IncumbentConstraint(double const strength, const arma::uvec &incumbents, bool const score_districts_only) :
+            RegionConstraint(score_districts_only),
+            strength(strength),
+            incumbents(incumbents) {}
+    
+        double compute_region_constraint_score(const Plan &plan, int const region_id) const override;
+        // log constraint for region made by merging region 1 and 2
+        double compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
+};
 
 // Hard plan constraint 
 // These constraints should take an entire plan and potentially return a value of infinity 

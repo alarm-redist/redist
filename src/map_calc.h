@@ -45,10 +45,8 @@ double eval_grp_pow(const subview_col<uword> &districts, int distr,
                     const uvec &grp_pop, const uvec &total_pop,
                     double tgt_grp, double tgt_other, double pow);
 
-/*
- * Compute the incumbent-preserving penalty for district `distr`
- */
-double eval_inc(const subview_col<uword> &districts, int distr, const uvec &incumbents);
+
+
 
 /*
  * Compute the county split penalty for district `distr`

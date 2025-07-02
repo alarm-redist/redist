@@ -146,23 +146,7 @@ double eval_grp_pow(const subview_col<uword> &districts, int distr,
     return std::pow(std::fabs(frac - tgt_grp) * std::fabs(frac - tgt_other), pow);
 }
 
-/*
- * Compute the incumbent-preserving penalty for district `distr`
- */
-double eval_inc(const subview_col<uword> &districts, int distr, const uvec &incumbents) {
-    int n_inc = incumbents.size();
-    double inc_in_distr = -1.0; // first incumbent doesn't count
-    for (int i = 0; i < n_inc; i++) {
-        if (districts[incumbents[i] - 1] == distr)
-            inc_in_distr++;
-    }
 
-    if (inc_in_distr < 0.0) {
-        inc_in_distr = 0.0;
-    }
-
-    return inc_in_distr;
-}
 
 
 // helper function

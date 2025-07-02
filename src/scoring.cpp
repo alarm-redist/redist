@@ -112,6 +112,24 @@ double GroupHingeConstraint::compute_merged_region_constraint_score(const Plan &
 
 
 
+double IncumbentConstraint::compute_region_constraint_score(const Plan &plan, int const region_id) const{
+    double raw_score = eval_inc(
+        plan.region_ids, 
+        region_id, region_id,
+        incumbents);
+
+    return strength * raw_score;
+}
+// log constraint for region made by merging region 1 and 2
+double IncumbentConstraint::compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
+    double raw_score = eval_inc(
+        plan.region_ids, 
+        region1_id, region2_id,
+        incumbents);
+    return strength * raw_score;
+}
+
+
 std::pair<bool, double> ValidDistrictsConstraint::compute_plan_constraint_score(const Plan &plan) const{
     // first check no region is smaller than the smallest district size 
     for (size_t i = 0; i < plan.num_regions; i++)
@@ -261,6 +279,26 @@ total_soft_constraints(0), num_hard_constraints(0){
             }
         }
     }
+    if (constraints.containsElementNamed("incumbency")) {
+        Rcpp::List constr = constraints["incumbency"];
+        for (int i = 0; i < constr.size(); i++) {
+            List constr_inst = constr[i];
+            double strength = constr_inst["strength"];
+            if (strength != 0) {
+                bool constr_score_districts_only = false;
+                if (constr_inst.containsElementNamed("score_districts_only")){
+                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                }
+                region_constraint_ptrs.emplace_back(
+                    std::make_unique<IncumbentConstraint>(
+                        strength, as<arma::uvec>(constr_inst["incumbents"]),
+                        constr_score_districts_only
+                    ));
+                // increase constraints applied at every split count
+                all_rounds_soft_constraints++;
+            }
+        }
+    }
 
     // Now add plan constraints 
     if (constraints.containsElementNamed("plan_valid_district_sizes")) {
@@ -277,11 +315,6 @@ total_soft_constraints(0), num_hard_constraints(0){
 
 
 
-
-// lp[i] += add_constraint("incumbency", constraints,
-// [&] (List l) -> double {
-// return eval_inc(districts.col(i), j, as<uvec>(l["incumbents"]));
-// });
 
 // lp[i] += add_constraint("splits", constraints,
 // [&] (List l) -> double {
