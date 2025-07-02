@@ -13,6 +13,7 @@
  *   - Population tempering (PopTemperConstraint)
  *      This one enoucrages smaller deviations 
  *   - Group Hinge (GroupHingeConstraint)
+ *   - Incumbency (IncumbentConstraint)
  *  
  ********************************************************/
 
@@ -50,63 +51,42 @@ double PopTemperConstraint::compute_merged_region_constraint_score(const Plan &p
 
 
 
-/*
- * Compute the new, hinge group penalty for district `distr`
- *
- * MODIFIED FROM eval_grp_hinge to just take idx instead of distr
- * idxs is  uvec idxs = find(region_ids == region_id);
- */
-double eval_grp_hinge_gsmc_version(
-    PlanVector const &region_ids, 
-    const arma::vec &tgts_grp, const arma::uvec &grp_pop, const arma::uvec &total_pop,
-    RegionID const &region1_id, RegionID const &possible_region2_id = -42) {
-    RegionID const region2_id = possible_region2_id < 0 ? region1_id : possible_region2_id;
-    double subsetted_grp_pop_sum = 0.0;
-    double subsetted_total_pop_sum = 0.0;
-    // get the sum of the two columns in region 1 or 2
-    for (size_t i = 0; i < region_ids.size(); i++)
-    {
-        auto const region_id = region_ids[i];
-        if(region_id == region1_id || region_id == region2_id){
-            subsetted_grp_pop_sum += grp_pop(i);
-            subsetted_total_pop_sum += total_pop(i);
-        }
-    }
-    // do subsetted_grp_pop_sum/subsetted_total_pop_sum
-    double frac = std::exp(
-        std::log(subsetted_grp_pop_sum) - std::log(subsetted_total_pop_sum)
+double PopDevConstraint::compute_region_constraint_score(const Plan &plan, int const region_id) const{
+    double raw_score = eval_pop_dev(
+        plan.region_ids, 
+        region_id, region_id,
+        total_pop, parity
     );
-    // figure out which to compare it to
-    double target;
-    double diff = 1;
-    int n_tgt = tgts_grp.size();
-    for (int i = 0; i < n_tgt; i++) {
-        double new_diff = std::fabs(tgts_grp[i] - frac);
-        if (new_diff <= diff) {
-            diff = new_diff;
-            target = tgts_grp[i];
-        }
-    }
 
-    return std::sqrt(std::max(0.0, target - frac));
+    return strength * raw_score;
+}
+// log constraint for region made by merging region 1 and 2
+double PopDevConstraint::compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
+    double raw_score = eval_pop_dev(
+        plan.region_ids, 
+        region1_id, region2_id,
+        total_pop, parity
+    );
+    return strength * raw_score;
 }
 
 
 
+
 double GroupHingeConstraint::compute_region_constraint_score(const Plan &plan, int const region_id) const{
-    double raw_score = eval_grp_hinge_gsmc_version(
-        plan.region_ids, 
-        tgts_group, group_pop, total_pop,
-        region_id);
+    double raw_score = eval_grp_hinge(
+        plan.region_ids, V, region_id, region_id,
+        tgts_group, group_pop, total_pop
+    );
 
     return strength * raw_score;
 }
 // log constraint for region made by merging region 1 and 2
 double GroupHingeConstraint::compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
-    double raw_score = eval_grp_hinge_gsmc_version(
-        plan.region_ids,  
-        tgts_group, group_pop, total_pop,
-        region1_id, region2_id);
+    double raw_score = eval_grp_hinge(
+        plan.region_ids, V, region1_id, region2_id,
+        tgts_group, group_pop, total_pop
+    );
     return strength * raw_score;
 }
 
@@ -129,6 +109,143 @@ double IncumbentConstraint::compute_merged_region_constraint_score(const Plan &p
     return strength * raw_score;
 }
 
+
+double StatusQuoConstraint::compute_region_constraint_score(const Plan &plan, int const region_id) const{
+    double raw_score = eval_sq_entropy(
+        plan.region_ids, current,
+        region_id, region_id,
+        pop, 
+        ndists, n_current, V
+    );
+
+    return strength * raw_score;
+}
+// log constraint for region made by merging region 1 and 2
+double StatusQuoConstraint::compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
+    double raw_score = eval_sq_entropy(
+        plan.region_ids, current,
+        region1_id, region2_id,
+        pop, 
+        ndists, n_current, V
+    );
+    return strength * raw_score;
+}
+
+
+double SplitsConstraint::compute_region_constraint_score(const Plan &plan, int const region_id) const{
+    double raw_score = eval_splits(
+        plan.region_ids, region_id,
+        admin_units, n_admin_units, smc
+    );
+
+    
+    return strength * raw_score;
+}
+// log constraint for region made by merging region 1 and 2
+double SplitsConstraint::compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
+    // make a copy of the plans 
+    std::vector<RegionID> dummy_merged_vec(
+        plan.region_ids.begin(),
+        plan.region_ids.end()
+    );
+    // now make all instance of region2 region1
+    for (size_t i = 0; i < dummy_merged_vec.size(); i++)
+    {
+        if(dummy_merged_vec[i] == region2_id){
+            dummy_merged_vec[i] = region1_id;
+        }
+    }
+    // very crude, if a bottleneck can probably just make eval splits support
+    // implicit merging 
+    double raw_score = eval_splits(
+        dummy_merged_vec, region1_id,
+        admin_units, n_admin_units, smc
+    );
+    return strength * raw_score;
+}
+
+double MultisplitsConstraint::compute_region_constraint_score(const Plan &plan, int const region_id) const{
+    double raw_score = eval_multisplits(
+        plan.region_ids, region_id,
+        admin_units, n_admin_units, smc
+    );
+
+    
+    return strength * raw_score;
+}
+// log constraint for region made by merging region 1 and 2
+double MultisplitsConstraint::compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
+    // make a copy of the plans 
+    std::vector<RegionID> dummy_merged_vec(
+        plan.region_ids.begin(),
+        plan.region_ids.end()
+    );
+    // now make all instance of region2 region1
+    for (size_t i = 0; i < dummy_merged_vec.size(); i++)
+    {
+        if(dummy_merged_vec[i] == region2_id){
+            dummy_merged_vec[i] = region1_id;
+        }
+    }
+    // very crude, if a bottleneck can probably just make eval splits support
+    // implicit merging 
+    double raw_score = eval_multisplits(
+        dummy_merged_vec, region1_id,
+        admin_units, n_admin_units, smc
+    );
+    return strength * raw_score;
+}
+
+
+double TotalSplitsConstraint::compute_region_constraint_score(const Plan &plan, int const region_id) const{
+    double raw_score = eval_total_splits(
+        plan.region_ids, region_id,
+        admin_units, n_admin_units, smc
+    );
+
+    return strength * raw_score;
+}
+// log constraint for region made by merging region 1 and 2
+double TotalSplitsConstraint::compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
+    // make a copy of the plans 
+    std::vector<RegionID> dummy_merged_vec(
+        plan.region_ids.begin(),
+        plan.region_ids.end()
+    );
+    // now make all instance of region2 region1
+    for (size_t i = 0; i < dummy_merged_vec.size(); i++)
+    {
+        if(dummy_merged_vec[i] == region2_id){
+            dummy_merged_vec[i] = region1_id;
+        }
+    }
+    // very crude, if a bottleneck can probably just make eval splits support
+    // implicit merging 
+    double raw_score = eval_total_splits(
+        dummy_merged_vec, region1_id,
+        admin_units, n_admin_units, smc
+    );
+    return strength * raw_score;
+}
+
+
+double PolsbyConstraint::compute_region_constraint_score(const Plan &plan, int const region_id) const{
+    double raw_score = eval_polsby(
+        plan.region_ids, region_id, region_id, V,
+        from, to, area, perimeter
+    );
+
+    return strength * raw_score;
+}
+// log constraint for region made by merging region 1 and 2
+double PolsbyConstraint::compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
+    double raw_score = eval_polsby(
+        plan.region_ids, region1_id, region2_id, V,
+        from, to, area, perimeter
+    );
+
+    return strength * raw_score;
+}
 
 std::pair<bool, double> ValidDistrictsConstraint::compute_plan_constraint_score(const Plan &plan) const{
     // first check no region is smaller than the smallest district size 
@@ -154,7 +271,7 @@ std::pair<bool, double> ValidDistrictsConstraint::compute_plan_constraint_score(
 // Scoring function
 ScoringFunction::ScoringFunction(
     MapParams const &map_params,
-    Rcpp::List const &constraints, double const pop_temper
+    Rcpp::List const &constraints, double const pop_temper, bool const smc
 ):
 map_params(map_params), num_non_final_soft_constraints(0), num_final_soft_constraints(0), all_rounds_soft_constraints(0), 
 total_soft_constraints(0), num_hard_constraints(0){
@@ -171,35 +288,47 @@ total_soft_constraints(0), num_hard_constraints(0){
 
     // add constraints if in the list 
     if (constraints.containsElementNamed("pop_dev")) {
-        Rcpp::stop("Error: 'pop_dev' constraint not implemented yet!");
         Rcpp::List constr = constraints["pop_dev"];
-
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
             double strength = constr_inst["strength"];
-            // check if the 
             if (strength != 0) {
-                // Add constraint here 
+                bool constr_score_districts_only = false;
+                if (constr_inst.containsElementNamed("score_districts_only")){
+                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                }
+                region_constraint_ptrs.emplace_back(
+                    std::make_unique<PopDevConstraint>(
+                        strength, 
+                        map_params.target, map_params.pop,
+                        constr_score_districts_only
+                    ));
+                // increase constraints applied at every split count
+                all_rounds_soft_constraints++;
             }
         }
-        // create here
-        // lp[i] += add_constraint("pop_dev", constraints,
-        //     [&] (List l) -> double {
-        //         return eval_pop_dev(districts.col(i), j,
-        //                                pop, parity);
-        //     });
-        // all_rounds_soft_constraints++;
     }
     if (constraints.containsElementNamed("status_quo")) {
-        throw Rcpp::exception("Error: 'status_quo' constraint not implemented yet!");
-        // create here
-        // lp[i] += add_constraint("status_quo", constraints,
-        // [&] (List l) -> double {
-        // return eval_sq_entropy(districts.col(i), as<uvec>(l["current"]),
-        //          j, pop, n_distr,
-        //          as<int>(l["n_current"]), V);
-        // });
-        // all_rounds_soft_constraints++;
+        Rcpp::List constr = constraints["status_quo"];
+        for (int i = 0; i < constr.size(); i++) {
+            List constr_inst = constr[i];
+            double strength = constr_inst["strength"];
+            if (strength != 0) {
+                bool constr_score_districts_only = false;
+                if (constr_inst.containsElementNamed("score_districts_only")){
+                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                }
+                region_constraint_ptrs.emplace_back(
+                    std::make_unique<StatusQuoConstraint>(
+                        strength, 
+                        as<arma::uvec>(constr_inst["current"]), map_params.pop,
+                        map_params.ndists, as<int>(constr_inst["n_current"]), map_params.V,
+                        constr_score_districts_only
+                    ));
+                // increase constraints applied at every split count
+                all_rounds_soft_constraints++;
+            }
+        }
     }
     if (constraints.containsElementNamed("segregation")) {
         throw Rcpp::exception("Error: 'segregation' constraint not implemented yet!");
@@ -246,7 +375,7 @@ total_soft_constraints(0), num_hard_constraints(0){
                 }
                 region_constraint_ptrs.emplace_back(
                     std::make_unique<GroupHingeConstraint>(
-                        strength, as<arma::vec>(constr_inst["tgts_group"]),
+                        strength, map_params.V, as<arma::vec>(constr_inst["tgts_group"]),
                         as<arma::uvec>(constr_inst["group_pop"]), as<arma::uvec>(constr_inst["total_pop"]),
                         constr_score_districts_only
                     ));
@@ -270,7 +399,7 @@ total_soft_constraints(0), num_hard_constraints(0){
                 }
                 region_constraint_ptrs.emplace_back(
                     std::make_unique<GroupHingeConstraint>(
-                        strength, as<arma::vec>(constr_inst["tgts_group"]),
+                        strength, map_params.V, as<arma::vec>(constr_inst["tgts_group"]),
                         as<arma::uvec>(constr_inst["group_pop"]), as<arma::uvec>(constr_inst["total_pop"]),
                         constr_score_districts_only
                     ));
@@ -299,6 +428,96 @@ total_soft_constraints(0), num_hard_constraints(0){
             }
         }
     }
+    if (constraints.containsElementNamed("splits")) {
+        Rcpp::List constr = constraints["splits"];
+        for (int i = 0; i < constr.size(); i++) {
+            List constr_inst = constr[i];
+            double strength = constr_inst["strength"];
+            if (strength != 0) {
+                bool constr_score_districts_only = false;
+                if (constr_inst.containsElementNamed("score_districts_only")){
+                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                }
+                region_constraint_ptrs.emplace_back(
+                    std::make_unique<SplitsConstraint>(
+                        strength, 
+                        as<arma::uvec>(constr_inst["admin"]), as<int>(constr_inst["n"]),
+                        smc,
+                        constr_score_districts_only
+                    ));
+                // increase constraints applied at every split count
+                all_rounds_soft_constraints++;
+            }
+        }
+    }
+    if (constraints.containsElementNamed("multisplits")) {
+        Rcpp::List constr = constraints["multisplits"];
+        for (int i = 0; i < constr.size(); i++) {
+            List constr_inst = constr[i];
+            double strength = constr_inst["strength"];
+            if (strength != 0) {
+                bool constr_score_districts_only = false;
+                if (constr_inst.containsElementNamed("score_districts_only")){
+                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                }
+                region_constraint_ptrs.emplace_back(
+                    std::make_unique<MultisplitsConstraint>(
+                        strength, 
+                        as<arma::uvec>(constr_inst["admin"]), as<int>(constr_inst["n"]),
+                        smc,
+                        constr_score_districts_only
+                    ));
+                // increase constraints applied at every split count
+                all_rounds_soft_constraints++;
+            }
+        }
+    }
+    if (constraints.containsElementNamed("total_splits")) {
+        Rcpp::List constr = constraints["total_splits"];
+        for (int i = 0; i < constr.size(); i++) {
+            List constr_inst = constr[i];
+            double strength = constr_inst["strength"];
+            if (strength != 0) {
+                bool constr_score_districts_only = false;
+                if (constr_inst.containsElementNamed("score_districts_only")){
+                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                }
+                region_constraint_ptrs.emplace_back(
+                    std::make_unique<TotalSplitsConstraint>(
+                        strength, 
+                        as<arma::uvec>(constr_inst["admin"]), as<int>(constr_inst["n"]),
+                        smc,
+                        constr_score_districts_only
+                    ));
+                // increase constraints applied at every split count
+                all_rounds_soft_constraints++;
+            }
+        }
+    }
+    if (constraints.containsElementNamed("polsby")) {
+        Rcpp::List constr = constraints["polsby"];
+        for (int i = 0; i < constr.size(); i++) {
+            List constr_inst = constr[i];
+            double strength = constr_inst["strength"];
+            if (strength != 0) {
+                bool constr_score_districts_only = false;
+                if (constr_inst.containsElementNamed("score_districts_only")){
+                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                }
+                region_constraint_ptrs.emplace_back(
+                    std::make_unique<PolsbyConstraint>(
+                        strength, map_params.V,
+                        as<arma::ivec>(constr_inst["from"]), 
+                        as<arma::ivec>(constr_inst["to"]),
+                        as<arma::vec>(constr_inst["area"]),
+                        as<arma::vec>(constr_inst["perimeter"]),
+                        constr_score_districts_only
+                    ));
+                // increase constraints applied at every split count
+                all_rounds_soft_constraints++;
+            }
+        }
+    }
 
     // Now add plan constraints 
     if (constraints.containsElementNamed("plan_valid_district_sizes")) {
@@ -315,29 +534,6 @@ total_soft_constraints(0), num_hard_constraints(0){
 
 
 
-
-// lp[i] += add_constraint("splits", constraints,
-// [&] (List l) -> double {
-// return eval_splits(districts.col(i), j, as<uvec>(l["admin"]), l["n"], true);
-// });
-
-// lp[i] += add_constraint("multisplits", constraints,
-// [&] (List l) -> double {
-// return eval_multisplits(districts.col(i), j, as<uvec>(l["admin"]), l["n"], true);
-// });
-
-// lp[i] += add_constraint("total_splits", constraints,
-// [&] (List l) -> double {
-// return eval_total_splits(districts.col(i), j, as<uvec>(l["admin"]), l["n"], true);
-// });
-
-// lp[i] += add_constraint("polsby", constraints,
-//     [&] (List l) -> double {
-//         return eval_polsby(districts.col(i), j,
-//                            as<ivec>(l["from"]),
-//                            as<ivec>(l["to"]), as<vec>(l["area"]),
-//                            as<vec>(l["perimeter"]));
-//     });
 
 // lp[i] += add_constraint("fry_hold", constraints,
 //     [&] (List l) -> double {

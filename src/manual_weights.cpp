@@ -30,7 +30,7 @@ Rcpp::NumericVector compute_log_unnormalized_plan_target_density(
     // Add hard constraints to scoring function 
     constraints["plan_valid_district_sizes"] = true;
     // Create the scoring function 
-    ScoringFunction scoring_function(map_params, constraints, pop_temper);
+    ScoringFunction scoring_function(map_params, constraints, pop_temper, true);
 
     // create thread pool
     RcppThread::ThreadPool pool = get_thread_pool(num_threads);
@@ -141,7 +141,7 @@ Rcpp::NumericMatrix compute_log_unnormalized_region_target_density(
     // Add hard constraints to scoring function 
     constraints["plan_valid_district_sizes"] = true;
     // Create the scoring function 
-    ScoringFunction scoring_function(map_params, constraints, pop_temper);
+    ScoringFunction scoring_function(map_params, constraints, pop_temper, true);
 
     // create thread pool
     RcppThread::ThreadPool pool = get_thread_pool(num_threads);
@@ -262,7 +262,7 @@ arma::vec compute_plans_log_optimal_weights(
         ndists, total_seats, as<std::vector<int>>(district_seat_sizes),
         lower, target, upper);
     // Create the scoring function 
-    ScoringFunction scoring_function(map_params, constraints, pop_temper);
+    ScoringFunction scoring_function(map_params, constraints, pop_temper, true);
 
 
     int global_rng_seed2 = (int) Rcpp::sample(INT_MAX, 1)[0];

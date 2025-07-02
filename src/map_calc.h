@@ -8,72 +8,9 @@
 #ifndef MAP_CALC_H
 #define MAP_CALC_H
 
-/*
- * Compute the logarithm of the graph theoretic length of the boundary between
- * `distr_root` and `distr_other`, where the root of `ust` is in `distr_root`
- * 
- * If county constraints are on then it won't count any boundaries in invalid counties
- */
-double log_graph_boundary(const Graph &g, const subview_col<uword> &region_ids,
-                    int const region1_id, int const region2_id, 
-                    int const num_counties, arma::uvec counties);
 
 
 
-/*
- * Compute the status quo penalty for district `distr`
- */
-double eval_sq_entropy(const subview_col<uword> &districts, const uvec &current,
-                       int distr, const uvec &pop, int n_distr, int n_current, int V);
-
-/*
- * Compute the new, hinge VRA penalty for district `distr`
- */
-double eval_grp_hinge(const subview_col<uword> &districts, int distr,
-                      const vec &tgts_grp, const uvec &grp_pop, const uvec &total_pop);
-
-/*
- * Compute the new, hinge VRA penalty for district `distr`
- */
-double eval_grp_inv_hinge(const subview_col<uword> &districts, int distr,
-                      const vec &tgts_grp, const uvec &grp_pop, const uvec &total_pop);
-
-/*
- * Compute the old VRA penalty for district `distr`
- */
-double eval_grp_pow(const subview_col<uword> &districts, int distr,
-                    const uvec &grp_pop, const uvec &total_pop,
-                    double tgt_grp, double tgt_other, double pow);
-
-
-
-
-/*
- * Compute the county split penalty for district `distr`
- */
-double eval_splits(const subview_col<uword> &districts, int distr,
-                   const uvec &counties, int n_cty, bool smc);
-
-/*
- * Compute the county fracture penalty for district `distr`
- */
-double eval_multisplits(const subview_col<uword> &districts, int distr,
-                        const uvec &counties, int n_cty, bool smc);
-
-/*
- * Compute the county split penalty for district `distr`
- */
-double eval_total_splits(const subview_col<uword> &districts, int distr,
-                   const uvec &counties, int n_cty, bool smc);
-
-/*
- * Compute the Polsby Popper penalty for district `distr`
- */
-double eval_polsby(const subview_col<uword> &districts, int distr,
-            const ivec &from,
-            const ivec &to,
-            const vec &area,
-            const vec &perimeter);
 
 /*
  * Compute the Fryer-Holden penalty for district `distr`
@@ -81,11 +18,7 @@ double eval_polsby(const subview_col<uword> &districts, int distr,
 double eval_fry_hold(const subview_col<uword> &districts, int distr,
                      const uvec &total_pop, mat ssdmat, double denominator);
 
-/*
- * Compute the population penalty for district `distr`
- */
-double eval_pop_dev(const subview_col<uword> &districts, int distr,
-                       const uvec &total_pop, double parity);
+
 
 /*
  * Compute the segregation penalty for district `distr`
@@ -154,11 +87,6 @@ Rcpp::IntegerMatrix infer_region_sizes(
 NumericVector max_dev(const IntegerMatrix &districts, const arma::vec &pop, int const n_distr,
                       int const num_threads = 0);
 
-/*
- * Calculate the deviation for cutting at every edge in a spanning tree.
- */
-std::vector<double> tree_dev(Tree &ust, int root, const uvec &pop,
-                             double const total_pop, double const target);
 
 
 // computes log number of spanning trees on region intersect county
@@ -166,7 +94,7 @@ std::vector<double> tree_dev(Tree &ust, int root, const uvec &pop,
 double compute_log_region_and_county_spanning_tree(
     Graph const &g, const uvec &counties, int const county,
     PlanVector const &region_ids,
-    int const region1_id, int const potential_region2_id = -42
+    int const region1_id, int const region2_id
 );
 
 
@@ -176,7 +104,7 @@ double compute_log_region_and_county_spanning_tree(
 double compute_log_county_level_spanning_tree(
     Graph const &g, const uvec &counties, int const n_cty,
     PlanVector const &region_ids,
-    int const region1_id, int const potential_region2_id = -42
+    int const region1_id, int const region2_id
 );
 
 // [[Rcpp::export]]

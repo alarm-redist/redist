@@ -544,7 +544,7 @@ List run_redist_gsmc(
     // Add scoring function (constraints)
     ScoringFunction const scoring_function(
         map_params, constraints, 
-        pop_temper);
+        pop_temper, true);
 
     // Create a threadpool
     RcppThread::ThreadPool pool(num_threads);

@@ -370,14 +370,14 @@ double Plan::compute_log_region_spanning_trees(MapParams const &map_params,
     for (int county_num = 1; county_num <= map_params.num_counties; county_num++) {
         log_st += compute_log_region_and_county_spanning_tree(
             map_params.g, map_params.counties, county_num,
-            region_ids, region_id
+            region_ids, region_id, region_id
         );
     }
     // Add county level multigraph tau
     log_st += compute_log_county_level_spanning_tree(
         map_params.g, map_params.counties, map_params.num_counties,
         region_ids,
-        region_id
+        region_id, region_id
     );
 
     return log_st;

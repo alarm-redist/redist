@@ -82,7 +82,7 @@ Rcpp::List ms_plans(
     // Add scoring function (constraints)
     // No population tempering
     ScoringFunction const scoring_function(
-        map_params, constraints, 0
+        map_params, constraints, 0, false
     );
 
 
