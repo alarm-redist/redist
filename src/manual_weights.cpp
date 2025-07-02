@@ -98,7 +98,7 @@ Rcpp::NumericVector compute_log_unnormalized_plan_target_density(
         }
 
         
-        log_unnormalized_density[i] = - hard_score.second;
+        log_unnormalized_density[i] = -hard_score.second;
         // compute the tau for the plan if we care about it
         if(rho != 0){
             log_unnormalized_density[i] += rho * plan_ensemble.plan_ptr_vec[i]->compute_log_plan_spanning_trees(map_params);

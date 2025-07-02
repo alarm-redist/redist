@@ -1047,6 +1047,8 @@ std::pair<bool, int> PlanMultigraph::is_hierarchically_connected(
         if(!component_lookup[current_component_lookup_index]){
             // increase number of connected components
             ++num_county_region_components;
+            // mark as true 
+            component_lookup[current_component_lookup_index] = true;
         }else{
             // else we have seen this before in which case its not hierarchically connected so immediately return false
             return std::make_pair(false, -1);
@@ -1068,7 +1070,7 @@ std::pair<bool, int> PlanMultigraph::is_hierarchically_connected(
                 // ignore if we already visited 
                 if(vertices_visited[child_vertex]) continue;
                 // Now only add if region and county are the same 
-                if(u_region = plan.region_ids[child_vertex] && 
+                if(u_region == plan.region_ids[child_vertex] && 
                    u_county == map_params.counties[child_vertex]){
                     // if same then same component mark as visited to avoid being added later  
                     vertices_visited[child_vertex] = true;
@@ -1457,6 +1459,7 @@ bool PlanMultigraph::is_hierarchically_valid(
     if(!result.first) return false;
     // if number of splits is greater than number of regions minus 1 reject
     if(result.second - map_params.num_counties >= plan.num_regions) return false;
+    
 
     // Now we know its hierarchically connected and has at most num_regions-1
     // splits so we just need to check for cycles in the administratively 

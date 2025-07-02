@@ -358,7 +358,6 @@ redist_smc <- function(
                 init_nseats <- get_nseats_matrix(init_particles)
             }
             init_particles <- get_plans_matrix(init_particles) - 1L
-
         }
         if(is.null(init_nseats)){
             # else infer

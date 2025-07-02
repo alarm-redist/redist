@@ -169,7 +169,9 @@ Rcpp::List ms_plans(
     bool hierarchically_valid = current_plan_multigraph.is_hierarchically_valid(
             *plan_ensemble.plan_ptr_vec[0], county_component_lookup
     );
+
     if(!hierarchically_valid){
+        plan_ensemble.plan_ptr_vec[0]->Rprint(true);
         throw Rcpp::exception("Initial Plan is not hierarchically valid. Either turn off counties or pass in a hierarchically valid plan\n");
     }
     // build multigraph on current plan and get pairs of adj districts to merge

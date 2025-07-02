@@ -194,7 +194,7 @@ redist_mergesplit <- function(
     exist_name <- attr(map, "existing_col")
     if (is.null(init_plan)) {
         if (!is.null(exist_name)) {
-            init_plans <- matrix(rep(vctrs::vec_group_id(get_existing(map)), chains), ncol = chains)
+            init_plan <- matrix(rep(vctrs::vec_group_id(get_existing(map)), chains), ncol = chains)
             if (is.null(init_name)) {
                 init_names <- rep(exist_name, chains)
             } else {
@@ -204,11 +204,16 @@ redist_mergesplit <- function(
             init_plan <- "sample"
         }
     } else if (!is.null(init_plan)) {
-        if (is.matrix(init_plan)) {
+        if (inherits(init_plan, "redist_plans")){
+            if(is.null(init_nseats)){
+                init_nseats <- get_nseats_matrix(init_plan)
+            }
+            init_plan <- get_plans_matrix(init_plan)
+        }else if (is.matrix(init_plan)) {
             stopifnot(ncol(init_plan) == chains)
-            init_plans <- init_plan
+            init_plan <- init_plan
         } else {
-            init_plans <- matrix(rep(as.integer(init_plan), chains), ncol = chains)
+            init_plan <- matrix(rep(as.integer(init_plan), chains), ncol = chains)
         }
         if (is.null(init_name))
             init_names <- paste0("<init> ", seq_len(chains))
@@ -220,7 +225,7 @@ redist_mergesplit <- function(
         # heuristic. Do at least 50 plans to not get stuck
         n_smc_nsims <- max(chains, 50)
 
-        init_plans <- redist_smc(map, n_smc_nsims, counties, compactness, constraints,
+        init_plan <- redist_smc(map, n_smc_nsims, counties, compactness, constraints,
                    resample = TRUE, split_params = split_params,
                    sampling_space = sampling_space, split_method = split_method,
                    ref_name = FALSE, verbose = verbose, silent = silent)
@@ -228,11 +233,11 @@ redist_mergesplit <- function(
         sampled_inidices <- sample.int(n=n_smc_nsims, size=chains, replace=F)
 
 
-        init_nseats <- get_nseats_matrix(init_plans)[
+        init_nseats <- get_nseats_matrix(init_plan)[
             , sampled_inidices, drop=FALSE]
 
-        init_plans <- get_plans_matrix(
-            init_plans
+        init_plan <- get_plans_matrix(
+            init_plan
             )[, sampled_inidices, drop=FALSE]
 
         if (is.null(init_name))
@@ -240,23 +245,26 @@ redist_mergesplit <- function(
         else
             init_names <- paste(init_name, seq_len(chains))
     }else{
-        if(districting_scheme == "SMD"){
-            init_nseats <- matrix(1L, nrow = ndists, ncol = ncol(init_plans))
-        }else{
-            cli::cli_abort("MCMC with non-sampled initial plans not suppored for MMD right now.")
+        if(is.null(init_nseats)){
+            if(districting_scheme == "SMD"){
+                init_nseats <- matrix(1L, nrow = ndists, ncol = ncol(init_plan))
+            }else{
+                cli::cli_abort("MCMC with non-sampled initial plans not suppored for MMD right now.")
+            }
         }
+
     }
 
 
 
     # subtract 1 to make it 0 indexed
-    init_plans <- init_plans - 1
+    init_plan <- init_plan - 1
     # validate initial plans
-    validate_initial_region_id_mat(init_plans, V, chains, ndists)
+    validate_initial_region_id_mat(init_plan, V, chains, ndists)
 
     # check it satsifies population bounds
     # add one because we assume 1 indexed
-    init_pop <- pop_tally(init_plans+1, pop, ndists)
+    init_pop <- pop_tally(init_plan+1, pop, ndists)
 
 
     if (any(init_pop < pop_bounds[1]*init_nseats) | any(init_pop > pop_bounds[3]*init_nseats)){
@@ -342,7 +350,7 @@ redist_mergesplit <- function(
             adj_list=adj_list, counties=counties, pop=pop,
             target=pop_bounds[2], lower=pop_bounds[1], upper=pop_bounds[3],
             rho=compactness,
-            initial_plan=init_plans[, chain, drop=FALSE],
+            initial_plan=init_plan[, chain, drop=FALSE],
             initial_region_sizes=init_nseats[, chain, drop=FALSE],
             sampling_space_str = sampling_space,
             merge_prob_type = merge_prob_type,
@@ -435,10 +443,10 @@ redist_mergesplit <- function(
 
     if (!is.null(init_names) && !isFALSE(init_name)) {
         if (all(init_names[1] == init_names)) {
-            out <- add_reference(out, init_plans[, 1], init_names[1])
+            out <- add_reference(out, init_plan[, 1], init_names[1])
         } else {
             out <- Reduce(function(cur, idx) {
-                add_reference(cur, init_plans[, idx], init_names[idx]) %>%
+                add_reference(cur, init_plan[, idx], init_names[idx]) %>%
                     mutate(chain = dplyr::coalesce(chain, idx))
             }, rev(seq_len(chains)), init = out)
         }
