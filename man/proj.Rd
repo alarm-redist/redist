@@ -77,6 +77,6 @@ plot(map, proj_contr(plans, dem, compare="cd_2010"))
 }
 \references{
 McCartan, C. (2024). Projective Averages for Summarizing Redistricting
-Ensembles. \emph{arXiv preprint}. Available at \url{https://arxiv.org/abs/}.
+Ensembles. \emph{arXiv preprint}. Available at \url{https://arxiv.org/pdf/2401.06381}.
 }
 \concept{analyze}

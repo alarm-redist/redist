@@ -127,7 +127,7 @@ reconstruct.redist_map <- function(data, old) {
 #'
 #' @param ... column elements to be bound into a \code{redist_map} object or a
 #' single \code{list} or \code{data.frame}.  These will be passed on to the
-#' \code{\link{tibble}} constructor.
+#' [tibble::tibble] constructor.
 #' @param existing_plan \code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the
 #' existing district assignment. Must be numeric or convertible to numeric.
 #' @param pop_tol \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the population tolerance.

@@ -26,7 +26,7 @@
 #'
 #' @references
 #' McCartan, C. (2024). Projective Averages for Summarizing Redistricting
-#' Ensembles. *arXiv preprint*. Available at <https://arxiv.org/abs/>.
+#' Ensembles. *arXiv preprint*. Available at <https://arxiv.org/pdf/2401.06381>.
 #'
 #' @examples
 #' data(iowa)
