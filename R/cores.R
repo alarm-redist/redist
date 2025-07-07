@@ -8,8 +8,7 @@
 #' but each of these is assigned a separate grouping id so that a call to
 #' \code{sf::st_union()} would produce only connected pieces.
 #'
-#' This is a loose interpretation of the
-#' \href{https://www.ncsl.org/elections-and-campaigns/redistricting-criteria}{NCSL's summary}
+#' This is a loose interpretation of the NCSL's summary
 #' of redistricting criteria to preserve the cores of prior districts. Using the
 #' adjacency graph for a given plan, it will locate the precincts on the
 #' boundary of the district, within \code{boundary} steps of the edge. Each of

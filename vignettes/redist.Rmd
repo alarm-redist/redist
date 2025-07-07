@@ -98,8 +98,8 @@ Other sources for precinct-level geographic and political information include
 the [MIT Election Lab](https://electionlab.mit.edu/data), 
 the [Census](https://www.census.gov/programs-surveys/decennial-census/about/rdo.html),
 the [Redistricting Data Hub](https://redistrictingdatahub.org/),
-the [Voting and Election Science Team](https://dataverse.harvard.edu/dataverse/electionscience),
-the [Harvard Election Data Archive](https://dataverse.harvard.edu/dataverse/eda),
+the [Voting and Election Science Team](https://x.com/vest_team),
+the Harvard Election Data Archive,
 the [Metric Geometry and Gerrymandering Group](https://github.com/mggg-states),
 and some state websites. 
 
