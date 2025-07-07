@@ -8,13 +8,9 @@
 * Windows-latest (on GitHub Actions), (release)
 * Windows-latest (on Winbuilder), (devel and release)
 
-
 ## R CMD check results
 
-0 errors | 0 warnings | 1 note
-
-This requires a change in maintainer email from `christopherkenny@fas.harvard.edu` to `ctkenny@proton.me`.
-An email was sent to CRAN maintainers on 2025-07-07 referring to this change.
+0 errors | 0 warnings | 0 notes
 
 ## Reverse Dependencies
 
