@@ -92,7 +92,8 @@ std::pair<bool, EdgeCut> USTSampler::try_to_sample_splittable_tree(
 
     std::pair<bool, EdgeCut> edge_search_result = tree_splitter.attempt_to_find_edge_to_cut(
         map_params, rng_state,
-        ust, root, pops_below_vertex, ignore,
+        ust, root, stack,
+        pops_below_vertex, ignore,
         region_populations, region_size,
         min_possible_cut_size, max_possible_cut_size,
         splitting_schedule.all_regions_smaller_cut_sizes_to_try[region_size],

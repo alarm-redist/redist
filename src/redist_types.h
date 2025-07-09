@@ -303,6 +303,56 @@ public:
 
 };
 
+
+// Stack where maximum size is known at runtime
+
+
+template<typename T>
+class FixedStack {
+private:
+    std::vector<T> buffer;
+    size_t capacity;
+    size_t count = 0;
+
+public:
+    explicit FixedStack(size_t max_size)
+        : buffer(max_size), capacity(max_size) {}
+
+    bool empty() const { return count == 0; }
+    bool full() const { return count == capacity; }
+    size_t size() const { return count; }
+    size_t max_size() const { return capacity; }
+
+    void push(const T& value) {
+        buffer[count++] = value;  // copy
+    }
+
+    void push(T&& value) {
+        buffer[count++] = std::move(value);  // move
+    }
+
+    T& top() {
+        return buffer[count - 1];
+    }
+
+    const T& top() const {
+        return buffer[count - 1];
+    }
+
+    T pop() {
+        return std::move(buffer[--count]);
+    }
+
+    void clear() {
+        count = 0;
+    }
+};
+
+// type for main splitting code
+typedef FixedStack<std::tuple<int, int, bool>> TreePopStack;
+
+
+
 // enum for sampling spaces
 enum class SamplingSpace : unsigned char
 {

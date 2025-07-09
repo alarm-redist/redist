@@ -368,7 +368,7 @@ arma::vec compute_almost_best_weights_on_smaller_dev_edges(
 std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
     const Tree &a_ust, 
     const int root,
-    const arma::uvec &pop,
+    const arma::uvec &pop, TreePopStack &stack,
     std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
     const int min_potential_cut_size, const int max_potential_cut_size,
     std::vector<int> const &smaller_cut_sizes_to_try,
@@ -390,7 +390,9 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
 
     // Stack for DFS
     // Elements are: vertex, parent, is_revisiting
-    std::stack<std::tuple<int, int, bool>> stack;
+    // std::stack<std::tuple<int, int, bool>> stack;
+    // Clear the stack now 
+    stack.clear();
 
     // Start by adding all the roots children to the stack 
     for(auto const &root_children: a_ust[root]){
@@ -401,8 +403,8 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
     // Loop until the stack is empty
     while (!stack.empty()) {
         // get the top of the stack
-        auto [vtx, parent, is_revisiting] = stack.top();
-        stack.pop();
+        auto [vtx, parent, is_revisiting] = stack.pop();
+
 
         if(!is_revisiting){ // This is the first time visiting the node 
 
@@ -504,7 +506,7 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
 std::vector<EdgeCut> get_all_valid_edges_in_undirected_tree(
     const VertexGraph &a_ust, 
     const int root,
-    const arma::uvec &pop,
+    const arma::uvec &pop, TreePopStack &stack,
     std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
     const int min_potential_cut_size, const int max_potential_cut_size,
     std::vector<int> const &smaller_cut_sizes_to_try,
@@ -526,7 +528,7 @@ std::vector<EdgeCut> get_all_valid_edges_in_undirected_tree(
 
     // Stack for DFS
     // Elements are: vertex, parent, is_revisiting
-    std::stack<std::tuple<int, int, bool>> stack;
+    stack.clear();
 
     // Start by adding all the roots children to the stack 
     for(auto const &root_children: a_ust[root]){
@@ -537,8 +539,7 @@ std::vector<EdgeCut> get_all_valid_edges_in_undirected_tree(
     // Loop until the stack is empty
     while (!stack.empty()) {
         // get the top of the stack
-        auto [vtx, parent, is_revisiting] = stack.top();
-        stack.pop();
+        auto [vtx, parent, is_revisiting] = stack.pop();
 
         if(!is_revisiting){ // This is the first time visiting the node 
 
@@ -614,7 +615,7 @@ std::vector<EdgeCut> get_all_valid_edges_in_undirected_tree(
 // THIS INCLUDES (region1_root, region2_root) as an edge!!
 std::vector<EdgeCut> get_valid_edges_in_joined_tree(
     MapParams const &map_params,
-    VertexGraph const &forest_graph, 
+    VertexGraph const &forest_graph, TreePopStack &stack,
     std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
     const int region1_root, const int region1_pop,
     const int region2_root, const int region2_pop,
@@ -633,7 +634,7 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
 
     // find the valid edges in this half of the tree 
     std::vector<EdgeCut> valid_tree1_edges = get_all_valid_edges_in_undirected_tree(
-        forest_graph, region1_root, map_params.pop, 
+        forest_graph, region1_root, map_params.pop, stack,
         pops_below_vertex, no_valid_edges_vertices,
         min_potential_cut_size, max_potential_cut_size,
         smaller_cut_sizes_to_try, 
@@ -650,7 +651,7 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
     
     // find the valid edges in this half of the tree 
     std::vector<EdgeCut> valid_tree2_edges = get_all_valid_edges_in_undirected_tree(
-        forest_graph, region2_root, map_params.pop, 
+        forest_graph, region2_root, map_params.pop, stack,
         pops_below_vertex, no_valid_edges_vertices,
         min_potential_cut_size, max_potential_cut_size,
         smaller_cut_sizes_to_try,

@@ -134,6 +134,34 @@ int tree_pop(Tree &ust, int vtx, const arma::uvec &pop,
 }
 
 
+void get_tree_pops_below_iterative(const Tree &ust, const int root, const arma::uvec &pop,
+                                   std::vector<int> &pop_below) {
+    int V = pop.n_elem;
+    TreePopStack stack(V+1);
+    // we don't care about parent here
+    stack.push({root, 0, false});
+
+    while (!stack.empty()) {
+        auto [vtx, parent, is_revisiting] = stack.pop();
+
+        if (is_revisiting) {
+            int total_pop = pop[vtx];
+            for (int child : ust[vtx]) {
+                total_pop += pop_below[child];
+            }
+            pop_below[vtx] = total_pop;
+        } else {
+            stack.push({vtx, 0, true});
+            for (int i = ust[vtx].size() - 1; i >= 0; --i) {
+                stack.push({ust[vtx][i], 0, false});
+            }
+        }
+    }
+
+    return;
+}
+
+
 /*
  * Just Count population below each node in tree 
  */

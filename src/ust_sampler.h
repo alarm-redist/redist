@@ -20,6 +20,7 @@ public:
     USTSampler(MapParams const &map_params, SplittingSchedule const &splitting_schedule) : 
         ust(init_tree(map_params.V)), pops_below_vertex(map_params.V, 0), 
         visited(map_params.V), ignore(map_params.V),
+        stack(map_params.V + 1),
         county_tree(init_tree(map_params.num_counties)),
         county_pop(map_params.num_counties, arma::fill::zeros),
         county_members(map_params.num_counties, std::vector<int>{}),
@@ -32,6 +33,7 @@ public:
     std::vector<int> pops_below_vertex;
     std::vector<bool> visited, ignore;
     int root;
+    TreePopStack stack;
     Tree county_tree;
     arma::uvec county_pop;
     std::vector<std::vector<int>> county_members;

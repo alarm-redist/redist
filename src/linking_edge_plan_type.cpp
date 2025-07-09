@@ -69,7 +69,7 @@ double LinkingEdgePlan::get_regions_log_splitting_prob(
 
     // get the log probability
     return tree_splitter.get_log_retroactive_splitting_prob_for_joined_tree(
-        ust_sampler.map_params, forest_graph, 
+        ust_sampler.map_params, forest_graph, ust_sampler.stack,
         ust_sampler.visited, ust_sampler.pops_below_vertex,
         region1_root, region2_root,
         region_pops[region1_id], region_pops[region2_id],

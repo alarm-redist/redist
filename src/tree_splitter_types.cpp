@@ -13,7 +13,7 @@ functions
 
 std::vector<EdgeCut> TreeSplitter::get_all_valid_pop_edge_cuts_in_directed_tree(
     const MapParams &map_params, 
-    Tree const &ust, const int root, 
+    Tree const &ust, const int root, TreePopStack &stack,
     std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
     int const region_population, int const region_size,
     const int min_potential_cut_size, const int max_potential_cut_size,
@@ -24,7 +24,7 @@ std::vector<EdgeCut> TreeSplitter::get_all_valid_pop_edge_cuts_in_directed_tree(
     std::fill(pops_below_vertex.begin(), pops_below_vertex.end(), 0);
     std::fill(no_valid_edges_vertices.begin(), no_valid_edges_vertices.end(), false);
     std::vector<EdgeCut> valid_edges = get_all_valid_edges_in_directed_tree(
-        ust, root, map_params.pop, 
+        ust, root, map_params.pop, stack,
         pops_below_vertex, no_valid_edges_vertices,
         min_potential_cut_size, max_potential_cut_size,
         smaller_cut_sizes_to_try,
@@ -38,7 +38,7 @@ std::vector<EdgeCut> TreeSplitter::get_all_valid_pop_edge_cuts_in_directed_tree(
 
 std::pair<bool, EdgeCut> TreeSplitter::attempt_to_find_edge_to_cut(
     const MapParams &map_params, RNGState &rng_state,
-    Tree const &ust, const int root, 
+    Tree const &ust, const int root, TreePopStack &stack,
     std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
     int const region_population, int const region_size,
     const int min_potential_cut_size, const int max_potential_cut_size,
@@ -48,7 +48,7 @@ std::pair<bool, EdgeCut> TreeSplitter::attempt_to_find_edge_to_cut(
     // get all the valid edges 
     std::vector<EdgeCut> valid_edges = get_all_valid_pop_edge_cuts_in_directed_tree(
         map_params, 
-        ust, root, 
+        ust, root, stack,
         pops_below_vertex, no_valid_edges_vertices,
         region_population, region_size,
         min_potential_cut_size, max_potential_cut_size,
@@ -136,7 +136,7 @@ double TreeSplitter::get_log_selection_prob(
 
 double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
     MapParams const &map_params,
-    VertexGraph const &forest_graph,
+    VertexGraph const &forest_graph, TreePopStack &stack,
     std::vector<bool> &visited, std::vector<int> &pops_below_vertex,
     const int region1_root, const int region2_root,
     const int region1_population, const int region2_population,
@@ -148,7 +148,7 @@ double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
 
     // Get all the valid edges in the joined tree 
     std::vector<EdgeCut> valid_edges = get_valid_edges_in_joined_tree(
-        map_params, forest_graph, 
+        map_params, forest_graph, stack,
         pops_below_vertex, visited,
         region1_root, region1_population,
         region2_root, region2_population,

@@ -319,7 +319,7 @@ List perform_a_valid_multidistrict_split(
         // Now try to select an edge to cut
         std::pair<bool, EdgeCut> edge_search_result = tree_splitter->attempt_to_find_edge_to_cut(
             map_params, rng_state, 
-            ust_sampler.ust, uncut_tree_root,
+            ust_sampler.ust, uncut_tree_root, ust_sampler.stack,
             pop_below, visited, 
             plan_ensemble.plan_ptr_vec[0]->region_pops[region_id_to_split],
             plan_ensemble.plan_ptr_vec[0]->region_sizes[region_id_to_split], 

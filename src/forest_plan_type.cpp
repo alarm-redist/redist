@@ -113,6 +113,7 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
 ){
     std::vector<bool> visited(plan_multigraph.map_params.V);
     std::vector<int> pops_below_vertex(plan_multigraph.map_params.V, 0);
+    TreePopStack stack(plan_multigraph.map_params.V+1);
     
     int const V = plan_multigraph.map_params.V;
 
@@ -169,7 +170,7 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
             auto max_possible_cut_size = cut_size_bounds.second;
 
             double log_edge_selection_prob = edge_splitter.get_log_retroactive_splitting_prob_for_joined_tree(
-                    plan_multigraph.map_params, forest_graph,
+                    plan_multigraph.map_params, forest_graph, stack,
                     visited, pops_below_vertex,
                     v, v_nbor,
                     plan.region_pops[plan.region_ids[v]], plan.region_pops[plan.region_ids[v_nbor]],
@@ -237,6 +238,7 @@ double ForestPlan::get_log_eff_boundary_len(
 
     std::vector<bool> visited(plan_multigraph.map_params.V);
     std::vector<int> pops_below_vertex(plan_multigraph.map_params.V);
+    TreePopStack stack(plan_multigraph.map_params.V+1);
 
     int const V = plan_multigraph.map_params.V;
     int const merged_region_size = region_sizes[region1_id]+ region_sizes[region2_id];
@@ -266,7 +268,7 @@ double ForestPlan::get_log_eff_boundary_len(
             if(v_county != plan_multigraph.map_params.counties[nbor] && !count_edges_across) continue;
 
             double log_edge_selection_prob = tree_splitter.get_log_retroactive_splitting_prob_for_joined_tree(
-                plan_multigraph.map_params, forest_graph,
+                plan_multigraph.map_params, forest_graph, stack,
                 visited, pops_below_vertex,
                 v, nbor,
                 region_pops[region_ids[v]], region_pops[region_ids[nbor]],
