@@ -237,6 +237,14 @@ int estimate_mergesplit_cut_k(
     std::vector<bool> visited(V);
     std::vector<int> cut_below_pop(V,0);
     std::vector<int> parents(V);
+    Tree county_tree = init_tree(plan_multigraph.map_params.num_counties);
+    arma::uvec county_pop(plan_multigraph.map_params.num_counties, arma::fill::zeros);
+    std::vector<std::vector<int>> county_members(plan_multigraph.map_params.num_counties, std::vector<int>{});
+    std::vector<bool> c_visited(plan_multigraph.map_params.num_counties, true);
+    std::vector<int> cty_pop_below(plan_multigraph.map_params.num_counties, 0);
+    std::vector<std::array<int, 3>> county_path;
+    std::vector<int> path;
+
     int max_V = 0;
     Tree ust = init_tree(V);
     for (int i = 0; i < N_adapt; i++) {
@@ -260,10 +268,10 @@ int estimate_mergesplit_cut_k(
 
         clear_tree(ust);
         int result = sample_sub_ust(
-            plan_multigraph.map_params.g, ust, V, root, visited, ignore,
-            plan_multigraph.map_params.pop, lower, upper, 
-            plan_multigraph.map_params.counties, 
-            plan_multigraph.map_params.cg,
+            plan_multigraph.map_params, ust, root, 
+            lower * merged_size, upper * merged_size,
+            visited, ignore, county_tree, county_pop, county_members, 
+            c_visited, cty_pop_below, county_path, path,
             rng_state);
         if (result != 0) {
             i--;
@@ -360,6 +368,13 @@ void estimate_cut_k(
     std::vector<bool> visited(V);
     std::vector<int> cut_below_pop(V,0);
     std::vector<int> parents(V);
+    Tree county_tree = init_tree(map_params.num_counties);
+    arma::uvec county_pop(map_params.num_counties, arma::fill::zeros);
+    std::vector<std::vector<int>> county_members(map_params.num_counties, std::vector<int>{});
+    std::vector<bool> c_visited(map_params.num_counties, true);
+    std::vector<int> cty_pop_below(map_params.num_counties, 0);
+    std::vector<std::array<int, 3>> county_path;
+    std::vector<int> path;
 
     int idx = 0;
     int max_V = 0;
@@ -433,10 +448,19 @@ void estimate_cut_k(
         if (n_vtx > max_V) max_V = n_vtx;
 
         clear_tree(ust);
-        int result = sample_sub_ust(map_params.g, ust, V, root, visited, ignore,
-                                    map_params.pop, 
-                                    min_possible_cut_size*lower, max_possible_cut_size*upper, 
-                                    map_params.counties, map_params.cg, rng_state);
+        int result = sample_sub_ust(
+            map_params, ust, root, 
+            lower * min_possible_cut_size, upper * min_possible_cut_size,
+            visited, ignore, county_tree, county_pop, county_members, 
+            c_visited, cty_pop_below, county_path, path,
+            rng_state
+        );
+
+
+        
+
+
+            
         if (result != 0) {
             idx--;
             continue;

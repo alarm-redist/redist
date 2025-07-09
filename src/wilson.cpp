@@ -40,10 +40,31 @@ Tree sample_ust(List l, const arma::uvec &pop, double lower, double upper,
     Graph g = list_to_graph(l);
     Multigraph cg = county_graph(g, counties);
     int V = g.size();
+
+    int FAKE_NDISTS = 6;
+    double FAKE_TARGET = 6.6;
+
+    MapParams map_params(
+        l, counties, pop, 
+        FAKE_NDISTS, FAKE_NDISTS, std::vector<int>{},
+        lower, FAKE_TARGET, upper);
+    
     Tree tree = init_tree(V);
     int root;
     std::vector<bool> visited(V);
-    sample_sub_ust(g, tree, V, root, visited, ignore, pop, lower, upper, counties, cg,
+    Tree county_tree = init_tree(map_params.num_counties);
+    arma::uvec county_pop(map_params.num_counties, arma::fill::zeros);
+    std::vector<std::vector<int>> county_members(map_params.num_counties, std::vector<int>{});
+    std::vector<bool> c_visited(map_params.num_counties, true);
+    std::vector<int> cty_pop_below(map_params.num_counties, 0);
+    std::vector<std::array<int, 3>> county_path;
+    std::vector<int> path;
+
+
+    sample_sub_ust(map_params, tree, root, 
+        lower, upper,
+        visited, ignore, county_tree, county_pop, county_members, 
+        c_visited, cty_pop_below, county_path, path,
         rng_state);
     return tree;
 }
@@ -52,31 +73,39 @@ Tree sample_ust(List l, const arma::uvec &pop, double lower, double upper,
  * Sample a uniform spanning subtree of unvisited nodes using Wilson's algorithm
  */
 // TESTED
-int sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
-                   std::vector<bool> &visited,
-                   const std::vector<bool> &ignore, const uvec &pop,
-                   double lower, double upper,
-                   const uvec &counties, const Multigraph &mg,
-                   RNGState &rng_state) {
-    int n_county = mg.size();
-    std::vector<bool> c_visited(n_county, true);
-    uvec county_pop(n_county, fill::zeros);
+int sample_sub_ust(
+    MapParams const &map_params, Tree &tree, int &root,
+    double const lower, double const upper,
+    std::vector<bool> &visited, const std::vector<bool> &ignore, 
+    Tree &cty_tree, arma::uvec &county_pop, std::vector<std::vector<int>> &county_members,
+    std::vector<bool> &c_visited, std::vector<int> &cty_pop_below,
+    std::vector<std::array<int, 3>> &county_path, std::vector<int> &path,
+    RNGState &rng_state) {
+    // auto t1_start = std::chrono::high_resolution_clock::now();
+    int const n_county = map_params.num_counties;
+    std::fill(c_visited.begin(), c_visited.end(), true);
+    // reset county pops to zero 
+    county_pop.zeros();
     int tot_pop = 0;
-    std::vector<std::vector<int>> county_members(n_county);
+    // reset the county members inner vectors 
+    for (size_t i = 0; i < map_params.num_counties; i++)
+    {
+        county_members[i].clear();
+    }
+    
     int remaining = 0;
+    int const V = map_params.V;
     for (int i = 0; i < V; i++) {
         if (ignore.at(i)) {
             visited[i] = true;
         } else {
             visited[i] = false;
             remaining++;
-            int county = counties(i) - 1;
-            tot_pop += pop(i);
-            county_pop(county) += pop[i];
+            int county = map_params.counties[i] - 1;
+            tot_pop += map_params.pop[i];
+            county_pop(county) += map_params.pop[i];
             if (c_visited[county]) {
                 c_visited[county] = false;
-                county_members[county] = std::vector<int>();
-                county_members[county].reserve(16);
             }
             county_members[county].push_back(i);
         }
@@ -93,39 +122,39 @@ int sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
     root = rvtx(visited, V, remaining, lower_i, rng_state); 
     visited[root] = true;
     remaining--;
-    c_visited.at(counties[root] - 1) = true;
+    c_visited.at(map_params.counties[root] - 1) = true;
     c_remaining--;
 
     // Connect counties
-    Tree cty_tree = init_tree(n_county);
-    std::vector<std::array<int, 3>> path;
+    // clear the tree
+    clear_tree(cty_tree);
+    county_path.clear();
     while (c_remaining > 0) {
         int add = rvtx(c_visited, n_county, c_remaining, lower_c, rng_state);
         // random walk from `add` until we hit the path
-        walk_until_cty(mg, add, path, c_visited, ignore, rng_state);
+        walk_until_cty(map_params.cg, add, county_path, c_visited, ignore, rng_state);
         // update visited list and constructed tree
-        int added = path.size();
+        int added = county_path.size();
         if (added == 0) { // bail
             return 1;
         }
         c_remaining -= added;
         c_visited.at(add) = true;
         for (int i = 0; i < added; i++) {
-            c_visited.at(path[i][0]) = true;
+            c_visited.at(county_path[i][0]) = true;
             // reverse path so that arrows point away from root
-            tree.at(path[i][2]).push_back(path[i][1]);
-            cty_tree.at(path[i][0]).push_back(counties(path[i][1])-1);
+            tree.at(county_path[i][2]).push_back(county_path[i][1]);
+            cty_tree.at(county_path[i][0]).push_back(map_params.counties(county_path[i][1])-1);
 
-            visited.at(path[i][1]) = true; // root for next district
+            visited.at(county_path[i][1]) = true; // root for next district
             remaining--;
         }
     }
 
     // figure out which counties will not need to be split
     if (n_county > 1) {
-    std::vector<int> cty_pop_below(n_county, -1);
-    std::vector<int> cty_parent(n_county);
-    tree_pop(cty_tree, counties[root] - 1, county_pop, cty_pop_below, cty_parent);
+    // don't need to fill pop below since it gets reset
+    get_tree_pops_below(cty_tree, map_params.counties[root] - 1, county_pop, cty_pop_below);
     for (int i = 0; i < n_county; i++) {
         int n_vtx = county_members[i].size();
         if (n_vtx <= 1) continue;
@@ -180,12 +209,12 @@ int sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
 
     // Generate tree within each county
     if (remaining > 0) {
-        std::vector<int> path(remaining + 2);
+        path.clear(); path.reserve(remaining + 2);
         int max_try = 50 * remaining * ((int) std::log(remaining));
         while (remaining > 0) {
             int add = rvtx(visited, V, remaining, lower_i, rng_state);
             // random walk from `add` until we hit the path
-            int added = walk_until(g, add, path, max_try, visited, ignore, counties, rng_state);
+            int added = walk_until(map_params.g, add, path, max_try, visited, ignore, map_params.counties, rng_state);
             // update visited list and constructed tree
             if (added == 0) { // bail
                 return 1;
@@ -198,7 +227,10 @@ int sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
             }
         }
     }
-
+    // auto t1_end = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<double, std::milli> t1 = t1_end - t1_start; 
+    // Rcout << "  " << std::setprecision(2) << "Total Time " 
+    //     << t1.count() << std::endl; 
     return 0;
 }
 

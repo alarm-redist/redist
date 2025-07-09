@@ -638,8 +638,18 @@ std::pair<bool, int> Plan::draw_tree_on_region(
     Tree &ust, std::vector<bool> &visited, std::vector<bool> &ignore, int &root,
     RNGState &rng_state, int const attempts_to_make) {
 
+    Tree county_tree = init_tree(map_params.num_counties);
+    arma::uvec county_pop(map_params.num_counties, arma::fill::zeros);
+    std::vector<std::vector<int>> county_members(map_params.num_counties, std::vector<int>{});
+    std::vector<bool> c_visited(map_params.num_counties, true);
+    std::vector<int> cty_pop_below(map_params.num_counties, 0);
+    std::vector<std::array<int, 3>> county_path;
+    std::vector<int> path;
+
+
     int num_attempts = 0;
     bool tree_drawn = false;
+    auto the_region_size = region_sizes[region_to_draw_tree_on];
     for (size_t attempt_num = 0; attempt_num < attempts_to_make; attempt_num++)
     {
         ++num_attempts;
@@ -652,11 +662,13 @@ std::pair<bool, int> Plan::draw_tree_on_region(
         // Get a uniform spanning tree drawn on that region
         clear_tree(ust);
         // Get a tree
-        int result = sample_sub_ust(map_params.g, ust, 
-            map_params.V, root, visited, ignore, 
-            map_params.pop, map_params.lower, map_params.upper, 
-            map_params.counties, map_params.cg,
-            rng_state);
+        int result = sample_sub_ust(
+            map_params, ust, root, 
+            map_params.lower * the_region_size, map_params.upper * the_region_size,
+            visited, ignore, county_tree, county_pop, county_members, 
+            c_visited, cty_pop_below, county_path, path,
+            rng_state
+        );            
 
         tree_drawn = result == 0;
 

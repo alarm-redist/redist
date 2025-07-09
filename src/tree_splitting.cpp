@@ -10,7 +10,7 @@ remove (splitting the tree)
 
 
 
-
+constexpr bool PRINT_PERFORANCE_TIMES = true; // Compile-time constant
 
 
 

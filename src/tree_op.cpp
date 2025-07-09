@@ -140,15 +140,14 @@ int tree_pop(Tree &ust, int vtx, const arma::uvec &pop,
 // TESTED
 int get_tree_pops_below(const Tree &ust, const int vtx, const arma::uvec &pop,
              std::vector<int> &pop_below) {
-    int pop_at = pop(vtx);
+    int pop_at = pop[vtx];
     const std::vector<int> *nbors = &ust[vtx];
     int length = nbors->size();
-    for (int j = 0; j < length; j++) {
-        int nbor = (*nbors)[j];
+    for (auto const nbor: ust[vtx]){
         pop_at += get_tree_pops_below(ust, nbor, pop, pop_below);
     }
 
-    pop_below.at(vtx) = pop_at;
+    pop_below[vtx] = pop_at;
     return pop_at;
 }
 

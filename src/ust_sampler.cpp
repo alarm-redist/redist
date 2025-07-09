@@ -26,12 +26,14 @@ bool USTSampler::attempt_to_draw_tree_on_region(
     // clear the tree
     clear_tree(ust);
     // Get a uniform spanning tree drawn on that region
-    int result = sample_sub_ust(map_params.g, ust, 
-        V, root, visited, ignore, 
-        map_params.pop, 
-        min_max_pair.first* map_params.lower, min_max_pair.second*map_params.upper, 
-        map_params.counties, map_params.cg,
+    int result = sample_sub_ust(
+        map_params, ust, root, 
+        min_max_pair.first* map_params.lower, min_max_pair.second*map_params.upper,
+        visited, ignore, 
+        county_tree, county_pop, county_members, 
+        c_visited, cty_pop_below, county_path, path,
         rng_state);
+
     // result == 0 means it was successful
     return(result == 0);
 }
@@ -57,12 +59,14 @@ bool USTSampler::attempt_to_draw_tree_on_merged_region(RNGState &rng_state,
     // clear the tree
     clear_tree(ust);
     // Get a uniform spanning tree drawn on that region
-    int result = sample_sub_ust(map_params.g, ust, 
-        V, root, visited, ignore, 
-        map_params.pop, 
+    int result = sample_sub_ust(
+        map_params, ust, root, 
         min_max_pair.first* map_params.lower, min_max_pair.second*map_params.upper,
-        map_params.counties, map_params.cg,
+        visited, ignore, 
+        county_tree, county_pop, county_members, 
+        c_visited, cty_pop_below, county_path, path,
         rng_state);
+
     // result == 0 means it was successful
     return(result == 0);
 }
