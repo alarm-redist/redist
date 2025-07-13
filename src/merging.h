@@ -42,7 +42,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     std::string const merge_prob_type, bool save_edge_selection_prob,
     std::vector<std::pair<RegionID, RegionID>> &adj_region_pairs,
     arma::vec &unnormalized_pair_wgts,
-    double const rho, bool const is_final
+    double const rho, bool const is_final, bool const do_mh
 );
 
 int run_merge_split_steps(

@@ -146,11 +146,13 @@ void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
     // update the vertex labels and the tree
     assign_region_id_and_forest_from_tree(
         ust_sampler.ust, region_ids, forest_graph,
-        split_region1_tree_root, split_region1_id);
+        split_region1_tree_root, split_region1_id,
+        ust_sampler.vertex_queue);
 
     assign_region_id_and_forest_from_tree(
         ust_sampler.ust, region_ids, forest_graph,
-        split_region2_tree_root, split_region2_id);
+        split_region2_tree_root, split_region2_id,
+        ust_sampler.vertex_queue);
 
     // TODO need to find the edge and update that stuff 
     // Now update the linking edge stuff 
@@ -211,10 +213,12 @@ double LinkingEdgePlan::get_log_eff_boundary_len(
 
 std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_adj_regions_and_eff_log_boundary_lens(
     PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
-    TreeSplitter const &tree_splitter
+    ScoringFunction const &scoring_function, TreeSplitter const &tree_splitter
 ) const{
     // build the multigraph 
     plan_multigraph.build_plan_multigraph(*this);
+    // remove invalid hard constraint merges 
+    plan_multigraph.remove_invalid_hard_constraint_pairs(*this, scoring_function);
 
     std::vector<std::tuple<RegionID, RegionID, double>> valid_adj_region_pairs_to_boundary_map;
     valid_adj_region_pairs_to_boundary_map.reserve(linking_edges.size());
@@ -251,10 +255,14 @@ std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_a
 
 
 std::vector<std::pair<RegionID,RegionID>> LinkingEdgePlan::get_valid_smc_merge_regions(
-    PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule
+    PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule,
+    ScoringFunction const &scoring_function
 ) const{
     // build the multigraph 
     plan_multigraph.build_plan_multigraph(*this);
+
+    // remove invalid hard constraint merges
+    plan_multigraph.remove_invalid_hard_constraint_pairs(*this, scoring_function);
 
     std::vector<std::pair<RegionID,RegionID>> valid_adj_region;
     valid_adj_region.reserve(linking_edges.size());
@@ -266,6 +274,7 @@ std::vector<std::pair<RegionID,RegionID>> LinkingEdgePlan::get_valid_smc_merge_r
         int edge_region2 = std::max(region_ids[std::get<0>(edge_pair)], region_ids[std::get<1>(edge_pair)]);
 
         int edge_region1_size = region_sizes[edge_region1]; int edge_region2_size = region_sizes[edge_region2];
+
         
         // Add if its ok to merge 
         if(splitting_schedule.valid_merge_pair_sizes[edge_region1_size][edge_region2_size]){
@@ -276,8 +285,9 @@ std::vector<std::pair<RegionID,RegionID>> LinkingEdgePlan::get_valid_smc_merge_r
                 throw Rcpp::exception("A pair of regions with linking edge is somehow hierarchically invalid now!\n");
             }
 
+            // add 
             valid_adj_region.push_back(
-                {edge_region1, edge_region2}
+                    {edge_region1, edge_region2}
             );
         }
     }
@@ -286,7 +296,8 @@ std::vector<std::pair<RegionID,RegionID>> LinkingEdgePlan::get_valid_smc_merge_r
 
 
 std::pair<bool, std::vector<std::pair<RegionID,RegionID>>> LinkingEdgePlan::attempt_to_get_valid_mergesplit_pairs(
-    PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule
+    PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule,
+    ScoringFunction const &scoring_function
 ) const{
     // attempt to build valid multigraph 
     bool const result = plan_multigraph.build_plan_multigraph(*this);
@@ -295,6 +306,7 @@ std::pair<bool, std::vector<std::pair<RegionID,RegionID>>> LinkingEdgePlan::atte
 
     // else remove all the invalid hierarchical merge pairs for multigraph computation later
     plan_multigraph.remove_invalid_hierarchical_merge_pairs(*this);
+    plan_multigraph.remove_invalid_hard_constraint_pairs(*this, scoring_function);
 
 
     std::vector<std::pair<RegionID,RegionID>> valid_adj_region;

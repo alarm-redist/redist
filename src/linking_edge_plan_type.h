@@ -49,7 +49,7 @@ class LinkingEdgePlan : public Plan {
 
         std::vector<std::tuple<RegionID, RegionID, double>> get_valid_adj_regions_and_eff_log_boundary_lens(
             PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
-            TreeSplitter const &tree_splitter
+            ScoringFunction const &scoring_function, TreeSplitter const &tree_splitter
         ) const override;
 
         // For a plan and edge across two regions it returns the log probability 
@@ -62,12 +62,14 @@ class LinkingEdgePlan : public Plan {
         // This builds a plan multigraph and 
         // This just returns pairs with a linking edge between them and valid size 
         std::pair<bool, std::vector<std::pair<RegionID,RegionID>>> attempt_to_get_valid_mergesplit_pairs(
-            PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule
+            PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule,
+            ScoringFunction const &scoring_function
         ) const override;
 
         // Get a vector of all valid adj region pairs for the backwards kernel
         std::vector<std::pair<RegionID,RegionID>> get_valid_smc_merge_regions(
-            PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule
+            PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule,
+            ScoringFunction const &scoring_function
         ) const override;
 
         std::vector<std::array<double, 3>> get_linking_edges() override{

@@ -10,6 +10,8 @@
  * Constraint Functions
  ********************/
 
+class Plan;
+
 /*
  * Compute the population penalty for district `distr`
  */
@@ -314,6 +316,41 @@ double eval_polsby(
 
 }
 
+
+template <typename PlanID>
+double NEW_eval_segregation(const PlanID &districts, int distr,
+                        const arma::uvec &grp_pop,
+                        const arma::uvec &total_pop) {
+    // Step 1: compute overall group share (pAll) and total population
+    double total_grp = arma::accu(grp_pop);
+    double total_pop_sum = arma::accu(total_pop);
+
+    if (total_pop_sum == 0.0) return 0.0;
+
+    double pAll = total_grp / total_pop_sum;
+    double denom = 2.0 * total_pop_sum * pAll * (1.0 - pAll);
+    if (denom == 0.0) return 0.0;
+
+    // Step 2: sum population and group population in the target district
+    double local_grp = 0.0;
+    double local_pop = 0.0;
+
+    size_t V = districts.size();
+    for (size_t i = 0; i < V; ++i) {
+        if (districts[i] == distr) {
+            local_grp += grp_pop[i];
+            local_pop += total_pop[i];
+        }
+    }
+
+    if (local_pop == 0.0) return 0.0;
+
+    // Step 3: compute and return segregation score
+    double local_frac = local_grp / local_pop;
+    return local_pop * std::abs(local_frac - pAll) / denom;
+}
+
+
 /****************
  * Constraint Classes
  ********************/
@@ -552,6 +589,57 @@ class PolsbyConstraint : public RegionConstraint {
         double compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
 };
 
+
+class CustomRegionConstraint : public RegionConstraint {
+    private:
+        double const strength;
+        Rcpp::Function const fn;        
+
+    public:
+        CustomRegionConstraint(
+            double const strength, Rcpp::Function fn,
+            bool const score_districts_only
+        ) :
+            RegionConstraint(score_districts_only),
+            strength(strength),
+            fn(Rcpp::clone(fn))
+            {}
+    
+        double compute_region_constraint_score(const Plan &plan, int const region_id) const override;
+        // log constraint for region made by merging region 1 and 2
+        double compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
+};
+
+
+// Soft plan constraint 
+// These constraints should take an entire plan and return a finite score  
+class SoftPlanConstraint {
+    public:
+        virtual ~SoftPlanConstraint() = default;
+        // computes score for a plan 
+        virtual double compute_plan_constraint_score(const Plan &plan) const = 0;
+        virtual double compute_merged_plan_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const = 0;
+
+};
+
+// custom plan constraint. Assumes an Rcpp::Function is passed in
+// which takes a vector 
+class CustomPlanConstraint : public SoftPlanConstraint {
+    private:
+        double const strength;
+        Rcpp::Function const fn; 
+
+    public:
+        CustomPlanConstraint(double const strength, Rcpp::Function fn):
+            strength(strength),
+            fn(Rcpp::clone(fn))
+            {};
+        // computes score for a plan 
+        virtual double compute_plan_constraint_score(const Plan &plan) const;
+        virtual double compute_merged_plan_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const;
+
+};
+
 // Hard plan constraint 
 // These constraints should take an entire plan and potentially return a value of infinity 
 // which means the plan has zero target probability  
@@ -561,7 +649,29 @@ class HardPlanConstraint {
         // computes score for a plan potentially allowing for infinity to be returned 
         // A value of false is equivalent to returning infinity so e^-score = 0
         virtual std::pair<bool, double> compute_plan_constraint_score(const Plan &plan) const = 0;
+        virtual std::pair<bool, double> compute_merged_plan_constraint_score(
+            const Plan &plan, int const region1_id, int const region2_id
+        ) const = 0;
 
+};
+
+
+// Custom hard constraint
+// Assumes that fn is a function which takes plan assignments and region sizes
+// and returns a boolean 
+class CustomHardPlanConstraint : public HardPlanConstraint {
+    private:
+        Rcpp::Function const fn;
+
+    public:
+        CustomHardPlanConstraint(Rcpp::Function fn):
+        fn(Rcpp::clone(fn))
+            {};
+
+        std::pair<bool, double> compute_plan_constraint_score(const Plan &plan) const override;
+        std::pair<bool, double> compute_merged_plan_constraint_score(
+            const Plan &plan, int const region1_id, int const region2_id
+        ) const override;
 };
 
 // Hard constraint which checks the plan has the correct number of valid sized districts
@@ -575,6 +685,9 @@ class ValidDistrictsConstraint : public HardPlanConstraint {
         map_params(map_params){};
 
         std::pair<bool, double> compute_plan_constraint_score(const Plan &plan) const override;
+        std::pair<bool, double> compute_merged_plan_constraint_score(
+            const Plan &plan, int const region1_id, int const region2_id
+        ) const {throw Rcpp::exception("ValidDistrictsConstraint Merged version Not implemented yet!\n");};
 };
 
 // scoring function 
@@ -582,26 +695,62 @@ class ScoringFunction {
     private:
         std::vector<std::unique_ptr<RegionConstraint>> region_constraint_ptrs; // These are constraints called on every split
         std::vector<std::unique_ptr<RegionConstraint>> non_final_region_constraint_ptrs; // these are constraints that are not called on the final round
+        std::vector<std::unique_ptr<SoftPlanConstraint>> plan_constraint_ptrs;
+        std::vector<std::unique_ptr<SoftPlanConstraint>> non_plan_constraint_ptrs;
         std::vector<std::unique_ptr<HardPlanConstraint>> hard_plan_constraint_ptrs; // These are hard constraints applied to an entire plan. Current not used in SMC code, only diagnostics  
     
     public:
+        // rho and district_rho_only help determine computing compactness
+        // we only compute log spanning tree if rho != 1 and if 
+        // district_rho_only is true 
         // the smc is a legacy flag needed for splits. 
         // Ideally update functions and remove in the future 
         ScoringFunction(
             const MapParams &map_params, Rcpp::List const &constraints, 
+            // double const rho, bool const district_rho_only,
             double const pop_temper, bool const smc);
 
         const MapParams &map_params;
-        int num_non_final_soft_constraints; // applied to all but final split
-        int num_final_soft_constraints; // applied to only final split
-        int all_rounds_soft_constraints; // applied to all splits
-        int total_soft_constraints; // total constraints 
-        bool any_soft_constraints;
-        int num_hard_constraints;
+        // 
+        // double const excess_rho;
+        // bool const any_excess_rho;
+        // bool const district_rho_only;
 
+        // counts region constraints
+        int num_non_final_soft_region_constraints; // applied to all but final split
+        int num_final_soft_region_constraints; // applied to only final split
+        int all_rounds_soft_region_constraints; // applied to all splits
+        int total_soft_region_constraints;
+        // counts plan constraints 
+        int num_non_final_soft_plan_constraints; // applied to all but final split
+        int num_final_soft_plan_constraints; // applied to only final split
+        int all_rounds_soft_plan_constraints; // applied to all splits
+        int total_soft_plan_constraints;
+        int num_hard_plan_constraints; //
+
+        int total_soft_constraints; // total constraints 
+        bool any_soft_region_constraints;
+        bool any_soft_plan_constraints;
+        bool any_hard_plan_constraints;
+
+        // Rcpp::Function objects are not thread safe so special care is needed
+        // For those. We make booleans to keep track of that 
+        bool any_soft_custom_constraints;
+        bool any_hard_custom_constraints;
+        
+
+        // scores individual regions
         double compute_region_score(const Plan &plan, int const region_id, bool const is_final) const;
         double compute_merged_region_score(const Plan &plan, int const region1_id, int const region2_id, bool const is_final) const;
+        // scores plans 
+        // soft score - ie always finite
+        double compute_plan_score(const Plan &plan, bool const is_final) const;
+        double compute_merged_plan_score(const Plan &plan, int const region1_id, int const region2_id, bool const is_final) const;
+        // hard score - ie possible to be infinity which means probability zero
         std::pair<bool, double> compute_hard_plan_constraints_score(const Plan &plan) const; // false if hard constraint failed 
+        std::pair<bool, double> compute_hard_merged_plan_constraints_score(
+            const Plan &plan, int const region1_id, int const region2_id
+        ) const; // false if hard constraint failed 
 };
 
 

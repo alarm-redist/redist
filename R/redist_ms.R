@@ -38,12 +38,12 @@
 #' @param warmup The number of warmup samples to discard. Recommended to be at
 #' least the first 20% of samples, and in any case no less than around 100
 #' samples, unless initializing from a random plan.
-#' @param thin Save every `thin`-th sample after running warump. Defaults to no thinning (1).
+#' @param thin Save every `thin`-th sample after running warump.
+#' Defaults to no thinning (1).
 #' @param init_plan The initial state of the map. If not provided, will default to
 #' the reference map of the \code{map} object, or if none exists, will sample
 #' a random initial state using \code{\link{redist_smc}}. You can also request
 #' a random initial state by setting \code{init_plan="sample"}.
-#' @param init_nseats The initial number of seats for each district in `init_plan`.
 #' @param counties A vector containing county (or other administrative or
 #' geographic unit) labels for each unit, which may be integers ranging from 1
 #' to the number of counties, or a factor or character vector.  If provided,
@@ -69,6 +69,7 @@
 #' @param init_name a name for the initial plan, or \code{FALSE} to not include
 #' the initial plan in the output.  Defaults to the column name of the
 #' existing plan, or "\code{<init>}" if the initial plan is sampled.
+#' @param init_nseats The initial number of seats for each district in `init_plan`.
 #' @param verbose Whether to print out intermediate information while sampling.
 #' Recommended.
 #' @param silent Whether to suppress all diagnostic information.
@@ -113,18 +114,18 @@
 #' @order 1
 #' @export
 redist_mergesplit <- function(
-    map, nsims, counties = NULL,
+    map, nsims,
     warmup = if (is.null(init_plan)) 10 else max(100, nsims %/% 5),
     thin = 1L, chains = 1,
-    init_plan = NULL, init_nseats = NULL,
+    init_plan = NULL, counties = NULL, compactness = 1,
     constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
     sampling_space = c("graph_plan", "spanning_forest", "linking_edge"),
-    split_method = NULL,
-    split_params = NULL,
-    merge_prob_type = "uniform", compactness = 1,
+    split_method = NULL, split_params = NULL,
+    merge_prob_type = "uniform", init_nseats = NULL,
     ncores = NULL,
     cl_type = "PSOCK", return_all = TRUE, init_name = NULL,
     verbose = FALSE, silent = FALSE, diagnostic_mode = FALSE,
+    control = list(),
     adapt_k_thresh = .99
 ) {
     if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
@@ -136,7 +137,7 @@ redist_mergesplit <- function(
             split_params$adapt_k_thresh <- adapt_k_thresh
             split_params$estimate_cut_k <- TRUE
         }else{
-            split_params$list(adapt_k_thresh = adapt_k_thresh, estimate_cut_k=TRUE)
+            split_params <- list(adapt_k_thresh = adapt_k_thresh, estimate_cut_k=TRUE)
         }
     }
 
@@ -151,7 +152,8 @@ redist_mergesplit <- function(
         }
         if(is.null(split_params)){
             split_params = list(
-                adapt_k_thresh=.99
+                adapt_k_thresh=.99,
+                estimate_cut_k=TRUE
             )
         }
     }else if(sampling_space == FOREST_SPACE_SAMPLING || sampling_space == LINKING_EDGE_SPACE_SAMPLING){
@@ -183,9 +185,6 @@ redist_mergesplit <- function(
     districting_scheme <- map_params$districting_scheme
 
 
-
-
-
     thin <- as.integer(thin)
 
     chains <- as.integer(chains)
@@ -201,7 +200,6 @@ redist_mergesplit <- function(
     split_params <- validate_sample_space_and_splitting_method(
         sampling_space, split_method, split_params, num_splitting_steps
     )
-
 
     exist_name <- attr(map, "existing_col")
     if (is.null(init_plan)) {
@@ -236,10 +234,17 @@ redist_mergesplit <- function(
         if (!silent) cat("Sampling initial plans with SMC\n")
         # heuristic. Do at least 50 plans to not get stuck
         n_smc_nsims <- max(chains, 50)
+        # get ncores if needed
+        if(is.list(control) && "init_ncores" %in% names(control)){
+            init_ncores <- control[["init_ncores"]]
+        }else{
+            init_ncores <- 0L
+        }
 
         init_plan <- redist_smc(map, n_smc_nsims, counties, compactness, constraints,
                    resample = TRUE, split_params = split_params,
                    sampling_space = sampling_space, split_method = split_method,
+                   ncores = init_ncores,
                    ref_name = FALSE, verbose = verbose, silent = silent)
 
         sampled_inidices <- sample.int(n=n_smc_nsims, size=chains, replace=F)
@@ -268,7 +273,6 @@ redist_mergesplit <- function(
     }
 
 
-
     # subtract 1 to make it 0 indexed
     init_plan <- init_plan - 1
     # validate initial plans
@@ -292,7 +296,8 @@ redist_mergesplit <- function(
 
 
     control = list(
-        splitting_method=split_method
+        splitting_method=split_method,
+        do_mh=TRUE
     )
 
     # add the splitting parameters
@@ -314,12 +319,18 @@ redist_mergesplit <- function(
                      tempfile(pattern = paste0('ms_', substr(Sys.time(), 1, 10)), fileext = '.txt'),
                      '')
         # this makes a cluster using socket (NOT FORK) with
-        if (!silent)
+        if (!silent){
             cl <- makeCluster(ncores, outfile = of, methods = FALSE,
                               useXDR = .Platform$endian != "little")
-        else
+        }
+        else{
             cl <- makeCluster(ncores, methods = FALSE,
                               useXDR = .Platform$endian != "little")
+        }
+
+
+        doParallel::registerDoParallel(cl, cores = ncores)
+        on.exit(stopCluster(cl))
 
         # this makes it avoid printing the loading required package message each time
         parallel::clusterEvalQ(cl, {
@@ -336,8 +347,7 @@ redist_mergesplit <- function(
             }
             NULL
         })
-        doParallel::registerDoParallel(cl, cores = ncores)
-        on.exit(stopCluster(cl))
+
     } else {
         `%oper%` <- `%do%`
     }

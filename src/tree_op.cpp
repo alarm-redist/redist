@@ -33,42 +33,6 @@ int rnbor(const Graph &g, int vtx, RNGState &rng_state) {
 
 
 
-/*
- * Make the district adjacency graph for `plan` from the overall precinct graph `g`
- */
-// TESTED
-Graph district_graph(const Graph &g, PlanVector const &region_ids, int nd, bool zero) {
-    int V = g.size();
-    std::vector<std::vector<bool>> gr_bool;
-    for (int i = 0; i < nd; i++) {
-        std::vector<bool> tmp(nd, false);
-        gr_bool.push_back(tmp);
-    }
-
-    for (int i = 0; i < V; i++) {
-        std::vector<int> nbors = g[i];
-        int dist_i = region_ids[i] - 1 + zero;
-        for (int nbor : nbors) {
-            int dist_j = region_ids[nbor] - 1 + zero;
-            if (dist_j != dist_i) {
-                gr_bool[dist_i][dist_j] = true;
-            }
-        }
-    }
-
-    Graph out;
-    for (int i = 0; i < nd; i++) {
-        std::vector<int> tmp;
-        for (int j = 0; j < nd; j++) {
-            if (gr_bool[i][j]) {
-                tmp.push_back(j);
-            }
-        }
-        out.push_back(tmp);
-    }
-
-    return out;
-}
 
 
 
@@ -134,16 +98,18 @@ int tree_pop(Tree &ust, int vtx, const arma::uvec &pop,
 }
 
 
-void get_tree_pops_below_iterative(const Tree &ust, const int root, const arma::uvec &pop,
-                                   std::vector<int> &pop_below) {
-    int V = pop.n_elem;
-    TreePopStack stack(V+1);
+void get_tree_pops_below(
+    const Tree &ust, const int root, TreePopStack &stack,
+    const arma::uvec &pop, std::vector<int> &pop_below) {
+    stack.clear();
+    // add the root 
     // we don't care about parent here
     stack.push({root, 0, false});
 
     while (!stack.empty()) {
         auto [vtx, parent, is_revisiting] = stack.pop();
 
+        // if visiting again then that means we've seen all the children 
         if (is_revisiting) {
             int total_pop = pop[vtx];
             for (int child : ust[vtx]) {
@@ -151,9 +117,10 @@ void get_tree_pops_below_iterative(const Tree &ust, const int root, const arma::
             }
             pop_below[vtx] = total_pop;
         } else {
+            // else push again and push the children
             stack.push({vtx, 0, true});
-            for (int i = ust[vtx].size() - 1; i >= 0; --i) {
-                stack.push({ust[vtx][i], 0, false});
+            for (const auto &child : ust[vtx]) {
+                stack.push({child, 0, false});
             }
         }
     }
@@ -182,44 +149,33 @@ int get_tree_pops_below(const Tree &ust, const int vtx, const arma::uvec &pop,
 
 
 
-/*
- * Assign `district` to all descendants of `root` in `ust`
- */
-// TESTED
-void assign_district(const Tree &ust, subview_col<uword> &districts,
-                     int root, int district) {
-    districts(root) = district;
-    int n_desc = ust.at(root).size();
-    for (int i = 0; i < n_desc; i++) {
-        assign_district(ust, districts, ust.at(root).at(i), district);
-    }
-}
-
 
 
 
 void assign_region_id_from_tree(
     Tree const &ust, PlanVector &region_ids,
-    int const root, const int new_region_id
+    int const root, const int new_region_id,
+    CircularQueue<std::pair<int,int>> &vertex_queue
 ){
-    // make a queue 
-    std::queue<int> vertex_queue;
+    // clear the queue
+    vertex_queue.clear();
+    
+
     // update root and add its children to queue 
     region_ids[root] = new_region_id;
     for(auto const &child_vertex: ust[root]){
-        vertex_queue.push(child_vertex);
+        vertex_queue.push({child_vertex, 0});
     }
 
     // update all the children
     while(!vertex_queue.empty()){
         // get and remove head of queue 
-        int vertex = vertex_queue.front();
-        vertex_queue.pop();
+        auto [vertex, dont_care] = vertex_queue.pop();
         // update region ids
         region_ids[vertex] = new_region_id;
         // add children 
         for(auto const &child_vertex: ust[vertex]){
-            vertex_queue.push(child_vertex);
+            vertex_queue.push({child_vertex, 0});
         }
     }
 
@@ -233,7 +189,11 @@ void assign_region_id_and_forest_from_tree(
     PlanVector &region_ids,
     VertexGraph &forest_graph,
     int root,
-    const int new_region_id){
+    const int new_region_id,
+    CircularQueue<std::pair<int,int>> &vertex_queue){
+
+    // clear the queue of vertex, parent 
+    vertex_queue.clear();
 
     // update root region id
     region_ids[root] = new_region_id;
@@ -242,8 +202,7 @@ void assign_region_id_and_forest_from_tree(
     // clear this vertices neighbors in the graph and reserve size for children
     forest_graph[root].clear(); forest_graph[root].reserve(n_desc);
 
-    // make a queue of vertex, parent 
-    std::queue<std::pair<int,int>> vertex_queue;
+    
     // add roots children to queue 
     for(auto const &child_vertex: ust[root]){
         vertex_queue.push({child_vertex, root});
@@ -253,10 +212,8 @@ void assign_region_id_and_forest_from_tree(
     // update all the children
     while(!vertex_queue.empty()){
         // get and remove head of queue 
-        auto queue_pair = vertex_queue.front();
-        int vertex = queue_pair.first;
-        int parent_vertex = queue_pair.second;
-        vertex_queue.pop();
+        auto [vertex, parent_vertex] = vertex_queue.pop();
+
         // update region ids
         region_ids[vertex] = new_region_id;
         // clear this vertices neighbors in the graph and reserve size for children and parent 
@@ -276,26 +233,6 @@ void assign_region_id_and_forest_from_tree(
     return;
 }
 
-
-/*
- * Find the root of a subtree.
- */
-// TESTED
-int find_subroot(const Tree &ust, const std::vector<bool> &ignore) {
-    int V = ust.size();
-    std::vector<bool> visited(V, false);
-    for (int j = 0; j < V; j++) {
-        const std::vector<int>* nbors = &ust[j];
-        for (int k = 0; k < nbors->size(); k++) {
-            visited[(*nbors)[k]] = true;
-        }
-    }
-    int root;
-    for (root = 0; root < V; root++) {
-        if (!visited[root] && !ignore.at(root)) break;
-    }
-    return root;
-}
 
 /*  
  *  Erases an edge from a tree

@@ -33,7 +33,9 @@ Rcpp::NumericVector compute_log_unnormalized_plan_target_density(
     ScoringFunction scoring_function(map_params, constraints, pop_temper, true);
 
     // create thread pool
-    RcppThread::ThreadPool pool = get_thread_pool(num_threads);
+    RcppThread::ThreadPool pool = get_thread_pool(
+        scoring_function.any_soft_custom_constraints || scoring_function.any_hard_custom_constraints ? 1 : num_threads
+    );
     // Create the plan objects
     int num_plans = region_ids.ncol();
 

@@ -427,131 +427,7 @@ double Plan::compute_log_linking_edge_count(
     );
 };
 
-// counts global number of county splits 
-// Definition accoridng to McCartarn & Imai
-int Plan::count_county_splits(MapParams const &map_params, std::vector<bool> &visited) const{
-    // if 1 county then its just num_regions - 1
-    if(map_params.num_counties == 1) return num_regions - 1;
-    // 
-    int num_splits = 0;
-    int num_connected_components = 0; // counts the total number of connected components in all county intersect region
-    // We iterate over all vertices. For each vertex we explore all
-    // connected neighbors with the same district and county 
 
-    // first reset visited
-    std::fill(visited.begin(), visited.end(), false);
-
-    for (int u = 0; u < map_params.V; u++)
-    {
-        // skip if we've already visited 
-        if(visited[u]) continue;
-        // else we've encountered a new component so increase the count
-        ++num_connected_components;
-        // Now we traverse all neighbors with the same county and region 
-        int current_county = map_params.counties(u);
-        int current_region = region_ids[u];
-        std::queue<int> vertex_queue;
-        vertex_queue.push(u);
-
-        while(!vertex_queue.empty()){
-            // get from queue
-            int v = vertex_queue.front(); vertex_queue.pop();
-            int v_region = region_ids[v];
-            int v_county = map_params.counties(v);
-
-            if(current_county != v_county || current_region != v_region){
-                REprintf("BIG TIME ERROR IN COUNT SPLITS!!\n");
-                throw Rcpp::exception("WOAHHHHH\n");
-            }
-            // mark this as visited 
-            visited[v] = true;
-            // go through children 
-            for(auto const child_vertex: map_params.g[v]){
-                // add the children if same region and county and not visited before 
-                if(map_params.counties(child_vertex) == current_county && 
-                   region_ids[child_vertex] == current_region &&
-                   !visited[child_vertex]){
-                    // mark as visited to avoid being added later  
-                    visited[child_vertex] = true;
-                    vertex_queue.push(child_vertex);
-                }                
-            }
-        }
-
-    }
-
-    // REprintf("%d components and %d regions = %d \n", num_connected_components, map_params.num_counties,
-    //     num_connected_components - map_params.num_counties);
-
-    return num_connected_components - map_params.num_counties;
-
-}
-
-
-int Plan::count_merged_county_splits(MapParams const &map_params, std::vector<bool> &visited,
-    int const region1_id, int const region2_id) const{
-        // if 1 county then its just num_regions - 2
-        if(map_params.num_counties == 1) return num_regions - 2;
-        // 
-        int num_splits = 0;
-        int num_connected_components = 0; // counts the total number of connected components in all county intersect region
-        // We iterate over all vertices. For each vertex we explore all
-        // connected neighbors with the same district and county 
-    
-        // first reset visited
-        std::fill(visited.begin(), visited.end(), false);
-    
-        for (int u = 0; u < map_params.V; u++)
-        {
-            // skip if we've already visited 
-            if(visited[u]) continue;
-            // else we've encountered a new component so increase the count
-            ++num_connected_components;
-            // Now we traverse all neighbors with the same county and region 
-            int current_county = map_params.counties(u);
-            int current_region = region_ids[u];
-            // If its region2 we pretend its region 1
-            if(current_region == region2_id) current_region = region1_id;
-            std::queue<int> vertex_queue;
-            vertex_queue.push(u);
-    
-            while(!vertex_queue.empty()){
-                // get from queue
-                int v = vertex_queue.front(); vertex_queue.pop();
-                int v_region = region_ids[v];
-                if(v_region == region2_id) v_region = region1_id;
-                int v_county = map_params.counties(v);
-    
-                if(current_county != v_county || current_region != v_region){
-                    REprintf("BIG TIME ERROR IN COUNT SPLITS!!\n");
-                    throw Rcpp::exception("Error in count merge county splits\n");
-                }
-                // mark this as visited 
-                visited[v] = true;
-                // go through children 
-                for(auto const child_vertex: map_params.county_restricted_graph[v]){
-                    int child_region = region_ids[child_vertex];
-                    // if its in the merged region we make it 1 by default 
-                    if(child_region == region2_id) child_region = region1_id;
-                    // add the children if same region and county and not visited before 
-                    if(map_params.counties[child_vertex] == current_county && 
-                       child_region == current_region &&
-                       !visited[child_vertex]){
-                        // mark as visited to avoid being added later  
-                        visited[child_vertex] = true;
-                        vertex_queue.push(child_vertex);
-                    }                
-                }
-            }
-    
-        }
-    
-        // REprintf("%d components and %d regions = %d \n", num_connected_components, map_params.num_counties,
-        //     num_connected_components - map_params.num_counties);
-    
-        return num_connected_components - map_params.num_counties;
-    
-    }
 
 //' Selects a valid multidistrict to split uniformly at random 
 //'
@@ -639,6 +515,7 @@ std::pair<bool, int> Plan::draw_tree_on_region(
     RNGState &rng_state, int const attempts_to_make) {
 
     Tree county_tree = init_tree(map_params.num_counties);
+    TreePopStack county_stack(map_params.num_counties);
     arma::uvec county_pop(map_params.num_counties, arma::fill::zeros);
     std::vector<std::vector<int>> county_members(map_params.num_counties, std::vector<int>{});
     std::vector<bool> c_visited(map_params.num_counties, true);
@@ -665,7 +542,7 @@ std::pair<bool, int> Plan::draw_tree_on_region(
         int result = sample_sub_ust(
             map_params, ust, root, 
             map_params.lower * the_region_size, map_params.upper * the_region_size,
-            visited, ignore, county_tree, county_pop, county_members, 
+            visited, ignore, county_tree, county_stack, county_pop, county_members, 
             c_visited, cty_pop_below, county_path, path,
             rng_state
         );            
@@ -835,14 +712,16 @@ void Plan::update_from_successful_split(
 // Attempts Gets valid pairs to merge for MCMC
 // Returns false if multigraph was not successfully built 
 std::pair<bool, std::vector<std::pair<RegionID,RegionID>>> Plan::attempt_to_get_valid_mergesplit_pairs(
-        PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule
+        PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule,
+        ScoringFunction const &scoring_function
 ) const{
     bool const result = plan_multigraph.build_plan_multigraph(*this);
     // return false if not successful
     if(!result) return std::make_pair(false, std::vector<std::pair<RegionID,RegionID>>{}); 
     // plan_multigraph.Rprint_detailed(*this);
-    // else remove all the invalid size and mergesplit pairs 
+    // else remove all the invalid size and mergesplit pairs and invalid hard constraint
     plan_multigraph.remove_invalid_size_pairs(*this, splitting_schedule);
+    plan_multigraph.remove_invalid_hard_constraint_pairs(*this, scoring_function);
     plan_multigraph.remove_invalid_mergesplit_pairs(*this);
     // plan_multigraph.Rprint_detailed(*this);
 
@@ -851,10 +730,12 @@ std::pair<bool, std::vector<std::pair<RegionID,RegionID>>> Plan::attempt_to_get_
 }
 
 std::vector<std::pair<RegionID,RegionID>> Plan::get_valid_smc_merge_regions(
-        PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule
+        PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule,
+        ScoringFunction const &scoring_function
 ) const{
     // build the multigraph 
     plan_multigraph.build_plan_multigraph(*this);
+    
 
     std::vector<std::pair<RegionID,RegionID>> output_pairs;
     output_pairs.reserve(plan_multigraph.pair_map.num_hier_smc_merge_valid_pairs);
@@ -867,16 +748,20 @@ std::vector<std::pair<RegionID,RegionID>> Plan::get_valid_smc_merge_regions(
             !splitting_schedule.valid_split_region_sizes[region_sizes[a_pair.second]] ||
             !splitting_schedule.valid_merge_pair_sizes[region_sizes[a_pair.first]][region_sizes[a_pair.second]]
         );
-
         if(invalid_sizing) continue;
 
         // now check hierarchical merge is ok 
-        auto result =  plan_multigraph.pair_map.get_value(a_pair.first, a_pair.second);
-        // if yes then add to output
-        if(result.second.merge_is_hier_valid){
-            // if yes then add to output 
-            output_pairs.emplace_back(a_pair);
-        }
+        auto result = plan_multigraph.pair_map.get_value(a_pair.first, a_pair.second);
+        if(!result.second.merge_is_hier_valid) continue;
+
+        // now check hard constraints are satisfied
+        bool const hard_constr_result = scoring_function.compute_hard_merged_plan_constraints_score(
+            *this, a_pair.first, a_pair.second
+        ).first;
+        if(!hard_constr_result) continue;
+
+        // we've passed all checks so now we can add 
+        output_pairs.emplace_back(a_pair);
     }
     
     return output_pairs;
@@ -1363,6 +1248,38 @@ void PlanMultigraph::remove_invalid_size_pairs(
     ), pair_map.hashed_pairs.end());
 
 }
+
+
+void PlanMultigraph::remove_invalid_hard_constraint_pairs(
+    Plan const &plan, ScoringFunction const &scoring_function 
+){
+    // do nothing if no hard constraints 
+    if (!scoring_function.any_hard_plan_constraints) return;
+
+    pair_map.hashed_pairs.erase(
+        std::remove_if(pair_map.hashed_pairs.begin(), pair_map.hashed_pairs.end(), 
+        [&](std::pair<RegionID, RegionID> a_pair) { 
+            bool failed_constraint = !scoring_function.compute_hard_merged_plan_constraints_score(
+                plan, a_pair.first, a_pair.second
+            ).first;
+
+            // if invalid then reset data in pair map 
+            if(failed_constraint){
+                auto hash_index = pair_map.pair_hash(a_pair.first, a_pair.second);
+                // else reset values and decrease hash table count 
+                --pair_map.num_hashed_pairs;
+                pair_map.hashed[hash_index] = false;
+                pair_map.values[hash_index] = PairHashData();
+            }
+
+            // remove if doesn't satisfy hard constraint 
+            return failed_constraint;
+        }
+    ), pair_map.hashed_pairs.end());
+
+}
+
+
 
 
 void PlanMultigraph::remove_invalid_hierarchical_merge_pairs(

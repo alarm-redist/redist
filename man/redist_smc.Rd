@@ -15,20 +15,21 @@ redist_smc(
   ncores = 0L,
   init_particles = NULL,
   init_nseats = NULL,
-  sampling_space = c("graph_plan_space", "spanning_forest_space", "linking_edge_space"),
-  split_method = c("naive_top_k", "uniform_valid_edge", "expo_bigger_abs_dev"),
-  split_params = list(adapt_k_thresh = 0.99),
-  mergesplit_params = list(),
+  sampling_space = c("graph_plan", "spanning_forest", "linking_edge"),
+  split_method = NULL,
+  split_params = NULL,
+  ms_params = list(),
   n_steps = NULL,
   seq_alpha = 1L,
-  truncate = (compactness != 1),
+  truncate = FALSE,
   trunc_fn = redist_quantile_trunc,
   pop_temper = 0,
   ref_name = NULL,
   verbose = FALSE,
   silent = FALSE,
-  diagnostic_level = 0,
-  control = list(weight_type = "optimal", nproc = 1L)
+  diagnostics = c("basic", "all"),
+  control = list(weight_type = "optimal", nproc = 1L),
+  adapt_k_thresh = 0.99
 )
 }
 \arguments{
@@ -92,9 +93,9 @@ the plans output by the function but the sample space used can have a large
 impact on computational cost/runtime and convergence. Current spaces supported
 right now are
 \itemize{
-\item graph_plan_space : graph partition space
-\item spanning_forest_space : spanning forest space
-\item linking_edge_space : linking edge forest space
+\item graph_plan : graph partition space
+\item spanning_forest : spanning forest space
+\item linking_edge : linking edge forest space
 }}
 
 \item{split_method}{The method used for splitting spanning trees in the
@@ -118,7 +119,7 @@ districts.) Currently this is only supported for single member districting.
 Parameters for \code{split_method} Any relevant parameters for the
 \code{split_method}. These include the following
 \itemize{
-\item naive_top_k parameters:
+\item top_k parameters:
 \itemize{
 \item \code{adapt_k_thresh} The threshold value used in the heuristic to
 select a value \code{k_i} for each splitting iteration for graph space
@@ -134,7 +135,7 @@ correctly and too large values will cause a drastic performance hit. The
 input must either be a single integer to use for each step or a vector
 of integers equal to the number of smc steps.
 }
-\item expo_bigger_abs_dev
+\item exp_abs_dev
 \itemize{
 \item \code{splitting_alpha} When selecting an edge to cut in the
 tree a valid edge is selected with probability proportional to
@@ -144,7 +145,7 @@ and larger values result in more unstable weights.
 }
 }}
 
-\item{mergesplit_params}{A list of mergesplit parameters.
+\item{ms_params}{A list of mergesplit parameters.
 \itemize{
 \item \code{ms_frequency}: How often to run merge steps. Should either be an integer
 (meaning run after every _ smc steps) or a vector of 1 indexed step numbers
@@ -189,7 +190,15 @@ Recommended.}
 
 \item{silent}{Whether to suppress all diagnostic information.}
 
-\item{diagnostic_level}{What level of diagnostic information to save}
+\item{diagnostics}{What amount of diagnostic information to save. Current
+options are
+\itemize{
+\item \code{basic} Saves the final plans and for each step the
+incremental weights and ancestors.
+\item \code{all} Saves everything \code{basic} does in addition to the
+intermediate plan and seat matrices after each splitting and mergesplit step.
+Use with caution as this can use a lot of memory very quickly.
+}}
 
 \item{control}{A list of optional advanced parameters.
 \itemize{

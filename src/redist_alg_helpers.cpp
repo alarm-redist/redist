@@ -505,7 +505,10 @@ cut_k_values(sampling_space == SamplingSpace::GraphSpace ? total_steps : 0)
     parent_index_mat = Rcpp::IntegerMatrix(nsims, total_smc_steps); // Entry [i][s] is the index of the parent of particle i at split s
     // This is a nsims by total_ms_steps matrix where [i][s] is the number of 
     // successful merge splits performed for plan i on merge split round s
-    merge_split_successes_mat = Rcpp::IntegerMatrix(nsims, total_ms_steps);
+    merge_split_successes_mat = Rcpp::IntegerMatrix(
+        total_ms_steps  > 0 ? nsims : 1, 
+        total_ms_steps
+    );
     // counts the size of the trees
     tree_sizes_mat = Rcpp::IntegerMatrix(total_seats, total_steps);
     successful_tree_sizes_mat = Rcpp::IntegerMatrix(total_seats, total_steps);

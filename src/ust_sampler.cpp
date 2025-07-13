@@ -30,7 +30,8 @@ bool USTSampler::attempt_to_draw_tree_on_region(
         map_params, ust, root, 
         min_max_pair.first* map_params.lower, min_max_pair.second*map_params.upper,
         visited, ignore, 
-        county_tree, county_pop, county_members, 
+        county_tree, county_stack,
+        county_pop, county_members, 
         c_visited, cty_pop_below, county_path, path,
         rng_state);
 
@@ -63,7 +64,8 @@ bool USTSampler::attempt_to_draw_tree_on_merged_region(RNGState &rng_state,
         map_params, ust, root, 
         min_max_pair.first* map_params.lower, min_max_pair.second*map_params.upper,
         visited, ignore, 
-        county_tree, county_pop, county_members, 
+        county_tree, county_stack,
+        county_pop, county_members, 
         c_visited, cty_pop_below, county_path, path,
         rng_state);
 

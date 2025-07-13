@@ -21,10 +21,12 @@ void GraphPlan::update_vertex_and_plan_specific_info_from_cut(
 
     // update the vertex labels
     assign_region_id_from_tree(ust_sampler.ust, region_ids,
-        split_region1_tree_root, split_region1_id);
+        split_region1_tree_root, split_region1_id,
+        ust_sampler.vertex_queue);
 
     assign_region_id_from_tree(ust_sampler.ust, region_ids,
-        split_region2_tree_root, split_region2_id);
+        split_region2_tree_root, split_region2_id,
+        ust_sampler.vertex_queue);
 
     return;
 }
@@ -71,7 +73,7 @@ void GraphPlan::update_vertex_and_plan_specific_info_from_cut(
 
 std::vector<std::tuple<RegionID, RegionID, double>> GraphPlan::get_valid_adj_regions_and_eff_log_boundary_lens(
     PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
-    TreeSplitter const &tree_splitter
+    ScoringFunction const &scoring_function, TreeSplitter const &tree_splitter
 ) const{
 
     // build the multigraph 
@@ -80,6 +82,8 @@ std::vector<std::tuple<RegionID, RegionID, double>> GraphPlan::get_valid_adj_reg
     plan_multigraph.remove_invalid_hierarchical_merge_pairs(*this);
     // remove invalid size pairs 
     plan_multigraph.remove_invalid_size_pairs(*this, splitting_schedule);
+    // remove invalid hard constraint pairs 
+    plan_multigraph.remove_invalid_hard_constraint_pairs(*this, scoring_function);
     // now make the output vector 
     std::vector<std::tuple<RegionID, RegionID, double>> region_pairs_tuple_vec;
     region_pairs_tuple_vec.reserve(plan_multigraph.pair_map.num_hashed_pairs);
@@ -236,8 +240,9 @@ int estimate_mergesplit_cut_k(
     std::vector<bool> ignore(V);
     std::vector<bool> visited(V);
     std::vector<int> cut_below_pop(V,0);
-    std::vector<int> parents(V);
+    TreePopStack pop_stack(V+1);
     Tree county_tree = init_tree(plan_multigraph.map_params.num_counties);
+    TreePopStack county_stack(plan_multigraph.map_params.num_counties);
     arma::uvec county_pop(plan_multigraph.map_params.num_counties, arma::fill::zeros);
     std::vector<std::vector<int>> county_members(plan_multigraph.map_params.num_counties, std::vector<int>{});
     std::vector<bool> c_visited(plan_multigraph.map_params.num_counties, true);
@@ -270,7 +275,7 @@ int estimate_mergesplit_cut_k(
         int result = sample_sub_ust(
             plan_multigraph.map_params, ust, root, 
             lower * merged_size, upper * merged_size,
-            visited, ignore, county_tree, county_pop, county_members, 
+            visited, ignore, county_tree, county_stack, county_pop, county_members, 
             c_visited, cty_pop_below, county_path, path,
             rng_state);
         if (result != 0) {
@@ -280,7 +285,7 @@ int estimate_mergesplit_cut_k(
 
         // reset the cut below pop to zero
         std::fill(cut_below_pop.begin(), cut_below_pop.end(), 0);
-        tree_pop(ust, root, plan_multigraph.map_params.pop, cut_below_pop, parents);
+        get_tree_pops_below(ust, root, pop_stack, plan_multigraph.map_params.pop, cut_below_pop);
 
         std::pair<int, int> min_and_max_possible_cut_sizes = splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_size];
         int min_possible_cut_size = min_and_max_possible_cut_sizes.first;
@@ -367,8 +372,9 @@ void estimate_cut_k(
     std::vector<bool> ignore(V);
     std::vector<bool> visited(V);
     std::vector<int> cut_below_pop(V,0);
-    std::vector<int> parents(V);
+    TreePopStack pop_stack(V+1);
     Tree county_tree = init_tree(map_params.num_counties);
+    TreePopStack county_stack(map_params.num_counties);
     arma::uvec county_pop(map_params.num_counties, arma::fill::zeros);
     std::vector<std::vector<int>> county_members(map_params.num_counties, std::vector<int>{});
     std::vector<bool> c_visited(map_params.num_counties, true);
@@ -451,7 +457,7 @@ void estimate_cut_k(
         int result = sample_sub_ust(
             map_params, ust, root, 
             lower * min_possible_cut_size, upper * min_possible_cut_size,
-            visited, ignore, county_tree, county_pop, county_members, 
+            visited, ignore, county_tree, county_stack, county_pop, county_members, 
             c_visited, cty_pop_below, county_path, path,
             rng_state
         );
@@ -468,8 +474,7 @@ void estimate_cut_k(
 
         // reset the cut below pop to zero
         std::fill(cut_below_pop.begin(), cut_below_pop.end(), 0);
-        tree_pop(ust, root, map_params.pop, cut_below_pop, parents);
-
+        get_tree_pops_below(ust, root, pop_stack, map_params.pop, cut_below_pop);
         
         devs.push_back(
             get_ordered_tree_cut_devs(ust, root, cut_below_pop, target, 

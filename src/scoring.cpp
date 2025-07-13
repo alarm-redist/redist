@@ -247,6 +247,147 @@ double PolsbyConstraint::compute_merged_region_constraint_score(const Plan &plan
     return strength * raw_score;
 }
 
+
+double CustomRegionConstraint::compute_region_constraint_score(const Plan &plan, int const region_id) const{
+    // Need to copy into Rcpp vector since no SEXP for current region ids
+    Rcpp::IntegerVector rcpp_plan_wrap(
+        plan.region_ids.begin(),
+        plan.region_ids.end()
+    );
+
+    
+    double raw_score = static_cast<double>(
+        as<NumericVector>(fn(rcpp_plan_wrap, region_id))[0]
+    );
+
+    return strength * raw_score;
+}
+// log constraint for region made by merging region 1 and 2
+double CustomRegionConstraint::compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
+    // Need to copy into Rcpp vector since no SEXP for current region ids
+    Rcpp::IntegerVector rcpp_plan_wrap(
+        plan.region_ids.begin(),
+        plan.region_ids.end()
+    );
+
+    // now make all instance of region2 region1
+    for (size_t i = 0; i < plan.region_ids.size(); i++)
+    {
+        if(rcpp_plan_wrap[i] == region2_id){
+            rcpp_plan_wrap[i] = region1_id;
+        }
+    }
+    
+    double raw_score = static_cast<double>(
+        as<NumericVector>(fn(rcpp_plan_wrap, region1_id))[0]
+    );
+
+    return strength * raw_score;
+}
+
+double CustomPlanConstraint::compute_plan_constraint_score(const Plan &plan) const{
+    // Need to copy into Rcpp vector since no SEXP for current region ids
+    Rcpp::IntegerVector rcpp_plan_wrap(
+        plan.region_ids.begin(),
+        plan.region_ids.end()
+    );
+
+    Rcpp::IntegerVector rcpp_sizes_wrap(
+        plan.region_sizes.begin(),
+        plan.region_sizes.end()
+    );
+    
+    double raw_score = static_cast<double>(
+        as<NumericVector>(fn(rcpp_plan_wrap, rcpp_sizes_wrap))[0]
+    );
+
+    return strength * raw_score;
+}
+// log constraint for region made by merging region 1 and 2
+double CustomPlanConstraint::compute_merged_plan_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
+    // Need to copy into Rcpp vector since no SEXP for current region ids
+    Rcpp::IntegerVector rcpp_plan_wrap(
+        plan.region_ids.begin(),
+        plan.region_ids.end()
+    );
+
+    Rcpp::IntegerVector rcpp_sizes_wrap(
+        plan.region_sizes.begin(),
+        plan.region_sizes.end()
+    );
+
+    // now make all instance of region2 region1
+    for (size_t i = 0; i < plan.region_ids.size(); i++)
+    {
+        if(rcpp_plan_wrap[i] == region2_id){
+            rcpp_plan_wrap[i] = region1_id;
+        }
+    }
+
+    // adjust the sizes as well so region 1 has all the sizes
+    rcpp_sizes_wrap[region1_id] += rcpp_sizes_wrap[region2_id];
+    rcpp_sizes_wrap[region2_id] = 0;
+    
+    double raw_score = static_cast<double>(
+        as<NumericVector>(fn(rcpp_plan_wrap, rcpp_sizes_wrap))[0]
+    );
+
+    return strength * raw_score;
+}
+
+
+std::pair<bool, double> CustomHardPlanConstraint::compute_plan_constraint_score(const Plan &plan) const{
+    // Need to copy into Rcpp vector since no SEXP for current region ids
+    Rcpp::IntegerVector rcpp_plan_wrap(
+        plan.region_ids.begin(),
+        plan.region_ids.end()
+    );
+
+    Rcpp::IntegerVector rcpp_sizes_wrap(
+        plan.region_sizes.begin(),
+        plan.region_sizes.end()
+    );
+
+    bool status = as<bool>(fn(rcpp_plan_wrap, rcpp_sizes_wrap));
+    
+    // Now return result
+    return std::make_pair(status, 0);
+}
+
+
+
+std::pair<bool, double> CustomHardPlanConstraint::compute_merged_plan_constraint_score(
+            const Plan &plan, int const region1_id, int const region2_id
+) const{
+    // Need to copy into Rcpp vector since no SEXP for current region ids
+    Rcpp::IntegerVector rcpp_plan_wrap(
+        plan.region_ids.begin(),
+        plan.region_ids.end()
+    );
+
+    Rcpp::IntegerVector rcpp_sizes_wrap(
+        plan.region_sizes.begin(),
+        plan.region_sizes.end()
+    );
+
+    // now make all instance of region2 region1
+    for (size_t i = 0; i < plan.region_ids.size(); i++)
+    {
+        if(rcpp_plan_wrap[i] == region2_id){
+            rcpp_plan_wrap[i] = region1_id;
+        }
+    }
+
+    // adjust the sizes as well so region 1 has all the sizes
+    rcpp_sizes_wrap[region1_id] += rcpp_sizes_wrap[region2_id];
+    rcpp_sizes_wrap[region2_id] = 0;
+
+    bool status = as<bool>(fn(rcpp_plan_wrap, rcpp_sizes_wrap));
+    
+    // Now return result
+    return std::make_pair(status, 0);
+}
+
 std::pair<bool, double> ValidDistrictsConstraint::compute_plan_constraint_score(const Plan &plan) const{
     // first check no region is smaller than the smallest district size 
     for (size_t i = 0; i < plan.num_regions; i++)
@@ -267,14 +408,16 @@ std::pair<bool, double> ValidDistrictsConstraint::compute_plan_constraint_score(
     
 }
 
-
 // Scoring function
 ScoringFunction::ScoringFunction(
     MapParams const &map_params,
     Rcpp::List const &constraints, double const pop_temper, bool const smc
 ):
-map_params(map_params), num_non_final_soft_constraints(0), num_final_soft_constraints(0), all_rounds_soft_constraints(0), 
-total_soft_constraints(0), num_hard_constraints(0){
+map_params(map_params), num_non_final_soft_region_constraints(0), num_final_soft_region_constraints(0), all_rounds_soft_region_constraints(0), 
+num_non_final_soft_plan_constraints(0), num_final_soft_plan_constraints(0), all_rounds_soft_plan_constraints(0), 
+num_hard_plan_constraints(0),
+total_soft_constraints(0),
+any_soft_custom_constraints(false), any_hard_custom_constraints(false){
     // First add region constraints 
     // add pop temper if doing that 
     if(pop_temper != 0){
@@ -283,9 +426,10 @@ total_soft_constraints(0), num_hard_constraints(0){
                 map_params.target, map_params.ndists, 
                 map_params, pop_temper
             ));
-        num_non_final_soft_constraints++;
+        num_non_final_soft_region_constraints++;
     }
 
+    // Add region constraints 
     // add constraints if in the list 
     if (constraints.containsElementNamed("pop_dev")) {
         Rcpp::List constr = constraints["pop_dev"];
@@ -304,7 +448,7 @@ total_soft_constraints(0), num_hard_constraints(0){
                         constr_score_districts_only
                     ));
                 // increase constraints applied at every split count
-                all_rounds_soft_constraints++;
+                all_rounds_soft_region_constraints++;
             }
         }
     }
@@ -326,7 +470,7 @@ total_soft_constraints(0), num_hard_constraints(0){
                         constr_score_districts_only
                     ));
                 // increase constraints applied at every split count
-                all_rounds_soft_constraints++;
+                all_rounds_soft_region_constraints++;
             }
         }
     }
@@ -381,7 +525,7 @@ total_soft_constraints(0), num_hard_constraints(0){
                     ));
                 // REprintf("Added and its %d!\n", region_constraint_ptrs[0]->score_districts_only);
                 // increase constraints applied at every split count
-                all_rounds_soft_constraints++;
+                all_rounds_soft_region_constraints++;
             }
         }
     }
@@ -404,7 +548,7 @@ total_soft_constraints(0), num_hard_constraints(0){
                         constr_score_districts_only
                     ));
                 // increase constraints applied at every split count
-                all_rounds_soft_constraints++;
+                all_rounds_soft_region_constraints++;
             }
         }
     }
@@ -424,7 +568,7 @@ total_soft_constraints(0), num_hard_constraints(0){
                         constr_score_districts_only
                     ));
                 // increase constraints applied at every split count
-                all_rounds_soft_constraints++;
+                all_rounds_soft_region_constraints++;
             }
         }
     }
@@ -446,7 +590,7 @@ total_soft_constraints(0), num_hard_constraints(0){
                         constr_score_districts_only
                     ));
                 // increase constraints applied at every split count
-                all_rounds_soft_constraints++;
+                all_rounds_soft_region_constraints++;
             }
         }
     }
@@ -468,7 +612,7 @@ total_soft_constraints(0), num_hard_constraints(0){
                         constr_score_districts_only
                     ));
                 // increase constraints applied at every split count
-                all_rounds_soft_constraints++;
+                all_rounds_soft_region_constraints++;
             }
         }
     }
@@ -490,7 +634,7 @@ total_soft_constraints(0), num_hard_constraints(0){
                         constr_score_districts_only
                     ));
                 // increase constraints applied at every split count
-                all_rounds_soft_constraints++;
+                all_rounds_soft_region_constraints++;
             }
         }
     }
@@ -514,21 +658,93 @@ total_soft_constraints(0), num_hard_constraints(0){
                         constr_score_districts_only
                     ));
                 // increase constraints applied at every split count
-                all_rounds_soft_constraints++;
+                all_rounds_soft_region_constraints++;
+            }
+        }
+    }
+
+    if (constraints.containsElementNamed("custom")) {
+        Rcpp::List constr = constraints["custom"];
+        for (int i = 0; i < constr.size(); i++) {
+            List constr_inst = constr[i];
+            double strength = constr_inst["strength"];
+            if (strength != 0) {
+                bool constr_score_districts_only = false;
+                if (constr_inst.containsElementNamed("score_districts_only")){
+                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                }
+                // Function fn = constr_inst["fn"];
+                region_constraint_ptrs.emplace_back(
+                    std::make_unique<CustomRegionConstraint>(
+                        strength, 
+                        as<Rcpp::Function>(constr_inst["fn"]), 
+                        constr_score_districts_only
+                    )
+                );
+                // increase constraints applied at every split count
+                all_rounds_soft_region_constraints++;
+                // mark custom R constraints as true 
+                any_soft_custom_constraints = true; 
             }
         }
     }
 
     // Now add plan constraints 
+    // Add soft plan constraints 
+    if (constraints.containsElementNamed("custom_plan")) {
+        Rcpp::List constr = constraints["custom_plan"];
+        for (int i = 0; i < constr.size(); i++) {
+            List constr_inst = constr[i];
+            double strength = constr_inst["strength"];
+            if (strength != 0) {
+                plan_constraint_ptrs.emplace_back(
+                    std::make_unique<CustomPlanConstraint>(
+                        strength, 
+                        as<Rcpp::Function>(constr_inst["fn"])
+                    )
+                );
+                // increase constraints applied at every split count
+                all_rounds_soft_plan_constraints++;
+                any_soft_custom_constraints = true; 
+            }
+        }
+    }
+
+    // Now add hard constraints 
+    if (constraints.containsElementNamed("custom_hard_plan")) {
+        Rcpp::List constr = constraints["custom_hard_plan"];
+        for (int i = 0; i < constr.size(); i++) {
+            List constr_inst = constr[i];
+            double strength = 1;
+            if (strength != 0) {
+                hard_plan_constraint_ptrs.emplace_back(
+                    std::make_unique<CustomHardPlanConstraint>(
+                        as<Rcpp::Function>(constr_inst["fn"])
+                    )
+                );
+                // increase constraints applied at every split count
+                num_hard_plan_constraints++;
+                any_hard_custom_constraints = true; 
+            }
+        }
+    }
+
     if (constraints.containsElementNamed("plan_valid_district_sizes")) {
         // Add this check 
         hard_plan_constraint_ptrs.emplace_back(
             std::make_unique<ValidDistrictsConstraint>(map_params)
         );
+        num_hard_plan_constraints++;
     }
 
-    total_soft_constraints = num_non_final_soft_constraints+num_final_soft_constraints+all_rounds_soft_constraints;
-    any_soft_constraints = total_soft_constraints != 0; 
+    total_soft_region_constraints = num_non_final_soft_region_constraints+num_final_soft_region_constraints+all_rounds_soft_region_constraints;
+    total_soft_plan_constraints = num_non_final_soft_plan_constraints + num_final_soft_plan_constraints + all_rounds_soft_plan_constraints;
+
+    total_soft_constraints = total_soft_region_constraints + total_soft_plan_constraints;
+
+    any_soft_region_constraints = total_soft_region_constraints > 0; 
+    any_soft_plan_constraints = total_soft_plan_constraints > 0;
+    any_hard_plan_constraints = num_hard_plan_constraints > 0;
 
 }
 
@@ -615,11 +831,72 @@ double ScoringFunction::compute_merged_region_score(const Plan &plan,
     return region_score;
 }
 
+
+
+double ScoringFunction::compute_plan_score(const Plan &plan, bool const is_final) const{
+    double plan_score = 0.0;
+
+    // add the score from each constraint 
+    for(auto const &constraint_ptr: plan_constraint_ptrs){
+        plan_score += constraint_ptr->compute_plan_constraint_score(plan);
+    }
+    // if final then return 
+    if(is_final) return plan_score;
+
+    // if not final then add those constraints (for now just pop_temper)
+    for(auto const &constraint_ptr: non_plan_constraint_ptrs){
+        plan_score += constraint_ptr->compute_plan_constraint_score(plan);
+    }
+
+    return plan_score;
+}
+
+
+double ScoringFunction::compute_merged_plan_score(const Plan &plan, int const region1_id, int const region2_id, bool const is_final) const{
+    double plan_score = 0.0;
+
+    // add the score from each constraint 
+    for(auto const &constraint_ptr: plan_constraint_ptrs){
+        plan_score += constraint_ptr->compute_merged_plan_constraint_score(plan, region1_id, region2_id);
+    }
+    // if final then return 
+    if(is_final) return plan_score;
+
+    // if not final then add those constraints (for now just pop_temper)
+    for(auto const &constraint_ptr: non_plan_constraint_ptrs){
+        plan_score += constraint_ptr->compute_merged_plan_constraint_score(plan, region1_id, region2_id);
+    }
+
+    return plan_score;
+}
+
 std::pair<bool, double> ScoringFunction::compute_hard_plan_constraints_score(const Plan &plan) const{
+    if(!any_hard_plan_constraints) return std::make_pair(true, 0.0);
     double plan_score = 0.0;
  
     for(auto const &constraint_ptr: hard_plan_constraint_ptrs){
         auto result = constraint_ptr->compute_plan_constraint_score(plan);
+        // if false then failed to satisfy constraint so return false
+        if(!result.first){
+            return std::make_pair(false, 0.0);
+        }else{
+            plan_score += result.second;
+        }
+    }
+
+    return std::make_pair(true, plan_score);
+}
+
+
+std::pair<bool, double> ScoringFunction::compute_hard_merged_plan_constraints_score(
+    const Plan &plan, int const region1_id, int const region2_id
+) const{
+    if(!any_hard_plan_constraints) return std::make_pair(true, 0.0);
+
+    double plan_score = 0.0;
+ 
+    for(auto const &constraint_ptr: hard_plan_constraint_ptrs){
+        auto result = constraint_ptr->compute_merged_plan_constraint_score(plan, region1_id, region2_id);
         // if false then failed to satisfy constraint so return false
         if(!result.first){
             return std::make_pair(false, 0.0);

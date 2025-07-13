@@ -12,11 +12,12 @@ redist_mergesplit(
   thin = 1L,
   chains = 1,
   init_plan = NULL,
+  init_nseats = NULL,
   constraints = list(),
   constraint_fn = function(m) rep(0, ncol(m)),
-  sampling_space = c("graph_plan_space", "spanning_forest_space", "linking_edge_space"),
-  split_method = c("naive_top_k", "uniform_valid_edge", "expo_bigger_abs_dev"),
-  split_params = list(adapt_k_thresh = 0.99),
+  sampling_space = c("graph_plan", "spanning_forest", "linking_edge"),
+  split_method = NULL,
+  split_params = NULL,
   merge_prob_type = "uniform",
   compactness = 1,
   ncores = NULL,
@@ -25,7 +26,9 @@ redist_mergesplit(
   init_name = NULL,
   verbose = FALSE,
   silent = FALSE,
-  diagnostic_mode = FALSE
+  diagnostic_mode = FALSE,
+  control = list(),
+  adapt_k_thresh = 0.99
 )
 }
 \arguments{
@@ -57,6 +60,8 @@ with its own sampled plan.}
 the reference map of the \code{map} object, or if none exists, will sample
 a random initial state using \code{\link{redist_smc}}. You can also request
 a random initial state by setting \code{init_plan="sample"}.}
+
+\item{init_nseats}{The initial number of seats for each district in \code{init_plan}.}
 
 \item{constraints}{A list containing information on constraints to implement.
 See the 'Details' section for more information.}

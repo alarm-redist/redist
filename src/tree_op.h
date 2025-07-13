@@ -31,15 +31,6 @@ int rvtx(const std::vector<bool> &visited, int size, int remaining, int &lower,
 // TESTED
 int rnbor(const Graph &g, int vtx, RNGState &rng_state);
 
-/*
- * Make the district adjacency graph for `plan` from the overall precinct graph `g`
- * if `zero`=false then ignore zeros, otherwise map them to `nd`
- */
-// TESTED
-Graph district_graph(const Graph &g, PlanVector const &region_ids, int nd, bool zero=false);
-
-
-
 
 /*
  * Initialize empty tree structure on graph with `V` vertices
@@ -68,18 +59,10 @@ int tree_pop(Tree &ust, int vtx, const arma::uvec &pop,
  * Just Count population below each node in tree
  */
 // TESTED
-int get_tree_pops_below(const Tree &ust, const int vtx, const arma::uvec &pop,
-             std::vector<int> &pop_below);
+void get_tree_pops_below(
+    const Tree &ust, const int root, TreePopStack &stack,
+    const arma::uvec &pop, std::vector<int> &pop_below);
 
-
-
-
-/*
- * Assign `district` to all descendants of `root` in `ust`
- */
-// TESTED
-void assign_district(const Tree &ust, arma::subview_col<arma::uword> &districts,
-                     int root, int district);
 
 
 
@@ -90,20 +73,17 @@ void assign_district(const Tree &ust, arma::subview_col<arma::uword> &districts,
 void assign_region_id_from_tree(const Tree &ust, 
                     PlanVector &region_ids,
                     int root,
-                    const int new_region_num_id);
+                    const int new_region_num_id,
+                    CircularQueue<std::pair<int,int>> &vertex_queue);
 
 
 void assign_region_id_and_forest_from_tree(const Tree &ust, 
                     PlanVector &region_ids,
                     VertexGraph &forest_graph,
                     int root,
-                    const int new_region_id);
+                    const int new_region_id,
+                    CircularQueue<std::pair<int,int>> &vertex_queue);
 
-/*
- * Find the root of a subtree.
- */
-// TESTED
-int find_subroot(const Tree &ust, const std::vector<bool> &ignore);
 
 
 /*  

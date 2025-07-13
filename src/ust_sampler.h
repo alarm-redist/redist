@@ -22,10 +22,12 @@ public:
         visited(map_params.V), ignore(map_params.V),
         stack(map_params.V + 1),
         county_tree(init_tree(map_params.num_counties)),
+        county_stack(map_params.num_counties + 1), 
         county_pop(map_params.num_counties, arma::fill::zeros),
         county_members(map_params.num_counties, std::vector<int>{}),
         c_visited(map_params.num_counties, true),
         cty_pop_below(map_params.num_counties, 0),
+        vertex_queue(map_params.V),
         map_params(map_params), splitting_schedule(splitting_schedule){};
 
 
@@ -35,12 +37,14 @@ public:
     int root;
     TreePopStack stack;
     Tree county_tree;
+    TreePopStack county_stack;
     arma::uvec county_pop;
     std::vector<std::vector<int>> county_members;
     std::vector<bool> c_visited;
     std::vector<int> cty_pop_below;
     std::vector<std::array<int, 3>> county_path;
     std::vector<int> path;
+    CircularQueue<std::pair<int,int>> vertex_queue;
     MapParams const &map_params;
     SplittingSchedule const &splitting_schedule;
     

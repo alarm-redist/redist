@@ -132,7 +132,9 @@ double compute_simple_log_incremental_weight(
     bool const use_linking_edge_space = sampling_space == SamplingSpace::LinkingEdgeSpace;
 
     // build the plan multigraph and get valid adj pairs 
-    auto valid_adj_pairs = plan.get_valid_smc_merge_regions(plan_multigraph, splitting_schedule);
+    auto valid_adj_pairs = plan.get_valid_smc_merge_regions(
+        plan_multigraph, splitting_schedule, scoring_function
+    );
 
 
     // compute forward and backwards kernel term 
@@ -152,9 +154,9 @@ double compute_simple_log_incremental_weight(
         );
         if(compute_log_tau){
             // do merged region tau if neccesary
-            log_tau_ratio_term -= (rho-1)*plan.compute_log_merged_region_spanning_trees(
-                plan_multigraph.map_params, region1_id, region2_id
-            );
+            // log_tau_ratio_term -= (rho-1)*plan.compute_log_merged_region_spanning_trees(
+            //     plan_multigraph.map_params, region1_id, region2_id
+            // );
         }
     }else if(sampling_space == SamplingSpace::ForestSpace || sampling_space == SamplingSpace::LinkingEdgeSpace){
         // sum of spanning trees 
@@ -201,6 +203,16 @@ double compute_simple_log_incremental_weight(
         }
     }
     if(compute_log_tau){
+        // if(plan.region_sizes[region1_id] == 1){
+        //     log_tau_ratio_term += (rho-1)*plan.compute_log_region_spanning_trees(
+        //         plan_multigraph.map_params, region1_id
+        //     );
+        // }
+        // if(plan.region_sizes[region2_id] == 1){
+        //     log_tau_ratio_term += (rho-1)*plan.compute_log_region_spanning_trees(
+        //         plan_multigraph.map_params, region2_id
+        //     );
+        // }
         log_tau_ratio_term += (rho-1)*plan.compute_log_region_spanning_trees(
             plan_multigraph.map_params, region1_id
         );
@@ -225,7 +237,7 @@ double compute_simple_log_incremental_weight(
     region1_score = region2_score = merged_region_score = 0;
 
     // compute if any constraints 
-    if(scoring_function.any_soft_constraints){
+    if(scoring_function.any_soft_region_constraints){
         // compute scoring functions
         region1_score = scoring_function.compute_region_score(
             plan, region1_id, is_final_plan
@@ -236,6 +248,22 @@ double compute_simple_log_incremental_weight(
         merged_region_score = scoring_function.compute_merged_region_score(
             plan, region1_id, region2_id, is_final_plan
         );
+        if(DEBUG_WEIGHTS_VERBOSE){
+            REprintf("Region 1,2 Scores (%f, %f) | Merged Score %f \n",
+            region1_score, region2_score, merged_region_score);
+        }
+    }
+
+    double plan_score, prev_plan_score;
+    plan_score = prev_plan_score = 0.0;
+
+    if(scoring_function.any_soft_plan_constraints){
+        plan_score = scoring_function.compute_plan_score(plan, is_final_plan);
+        prev_plan_score = scoring_function.compute_merged_plan_score(plan, region1_id, region2_id, is_final_plan);
+        if(DEBUG_WEIGHTS_VERBOSE){
+            REprintf("Entire Plan Score %f | Previous Plan Score %f \n",
+            plan_score, prev_plan_score);
+        }
     }
 
     double log_extra_plan_terms = 0.0;
@@ -257,14 +285,14 @@ double compute_simple_log_incremental_weight(
     }
 
     // The weight is 
-    //      - Numerator: backwards kernel * e^-(J(new_region1)+J(new_region2))
-    //      - Denominator: multid_selection_prob * forward kernel term * e^-J(old_region)
+    //      - Numerator: backwards kernel * e^-(J(new_region1)+J(new_region2)) * e^-J(new plan)
+    //      - Denominator: multid_selection_prob * forward kernel term * e^-J(old_region) * e^-J(old plan)
     // So
     //      - log numerator: backwards kernel -J(new_region1)+J(new_region2))
     //      - log Denominator: log(multid_selection_prob) + log(forward kernel) - J(old_region)
 
-    const double log_numerator = log_backwards_kernel_term - (region1_score + region2_score) + log_extra_plan_terms;
-    const double log_denom =  log_forward_kernel_term + log_splitting_prob - merged_region_score + log_extra_prev_plan_terms;
+    const double log_numerator = log_backwards_kernel_term - (region1_score + region2_score + plan_score) + log_extra_plan_terms;
+    const double log_denom =  log_forward_kernel_term + log_splitting_prob - (merged_region_score + prev_plan_score) + log_extra_prev_plan_terms;
 
 
     if(DEBUG_WEIGHTS_VERBOSE){
@@ -291,10 +319,15 @@ double compute_simple_log_incremental_weight(
     // DONT KNOW WHY BUT VALIDATION ONLY WORKS IF YOU SUBTRACT LOG TAU
     // THEORY SAYS IT SHOULD BE ADD SO NEED TO INVESTIGATE 
 
-    // Check its not - infinity
-    if(incremental_weight == -std::numeric_limits<double>::infinity()){
-        throw Rcpp::exception("Error! weight is negative infinity for some reason \n");
+    // Check its not infinity
+    if (!std::isfinite(incremental_weight)) {
+        plan.Rprint(true);
+        throw Rcpp::exception(
+            "One of the plan incremental weights is not finite!"
+            "Try checking if constraint strength is too large and causing overflow errors.\n"
+        );
     }
+
 
     return incremental_weight;
 }
@@ -320,7 +353,7 @@ void compute_all_plans_log_simple_incremental_weights(
     RcppThread::ProgressBar bar(M, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
-        PlanMultigraph plan_multigraph(map_params);
+        static thread_local PlanMultigraph plan_multigraph(map_params);
 
         double log_incr_weight = compute_simple_log_incremental_weight(
             *plans_ptr_vec[i], plan_multigraph,
@@ -392,7 +425,7 @@ double compute_log_optimal_incremental_weights(
 
     // get region pair to effective boundary length map
     auto region_pair_log_eff_boundary_map = plan.get_valid_adj_regions_and_eff_log_boundary_lens(
-        plan_multigraph, splitting_schedule, edge_splitter
+        plan_multigraph, splitting_schedule, scoring_function, edge_splitter
     );
 
     // get region multigraph if using linked edge 
@@ -412,6 +445,17 @@ double compute_log_optimal_incremental_weights(
         REprintf("There are %d adjacent pairs!\n",
             region_pair_log_eff_boundary_map.size()
         );
+    }
+
+    // compute plan score if needed 
+    double plan_score = 0.0;
+
+    if(scoring_function.any_soft_plan_constraints){
+        plan_score += scoring_function.compute_plan_score(plan, is_final_plan);
+        if(DEBUG_WEIGHTS_VERBOSE){
+            REprintf("Entire Plan Score %f \n",
+            plan_score);
+        }
     }
     
 
@@ -454,7 +498,7 @@ double compute_log_optimal_incremental_weights(
 
 
         // compute score ratio if any constraints 
-        if(scoring_function.any_soft_constraints){
+        if(scoring_function.any_soft_region_constraints){
             // compute scoring functions
             const double region1_score = scoring_function.compute_region_score(
                 plan, region1_id, is_final_plan
@@ -465,16 +509,35 @@ double compute_log_optimal_incremental_weights(
             const double merged_region_score = scoring_function.compute_merged_region_score(
                 plan, region1_id, region2_id, is_final_plan
             );
+            if(DEBUG_WEIGHTS_VERBOSE){
+                REprintf("Region 1,2 Scores (%f, %f) | Merged Score %f \n",
+                region1_score, region2_score, merged_region_score);
+            }
             // log ratio is (log region1 + log region2) - log score merged
             double const score_ratio = region1_score + region2_score - merged_region_score;
             log_of_sum_term += score_ratio;
         }
 
-        // int region1_size = plan.region_sizes[region1_id];
-        // int region2_size = plan.region_sizes[region2_id];
-        // Rprintf("Adding (%d,%d) - sizes (%d, %d): len %f, split prob %f, ratio %f!\n", 
-        //     region1_id, region2_id, region1_size, region2_size, std::exp(eff_log_boundary_len), 
-        //     std::exp(log_of_sum_term), std::exp(log_of_sum_term));
+        
+        if(scoring_function.any_soft_plan_constraints){
+            double merged_plan_score = scoring_function.compute_merged_plan_score(plan, region1_id, region2_id, is_final_plan);
+            if(DEBUG_WEIGHTS_VERBOSE){
+                REprintf(
+                    "For Regions (%u, %u) Merged Entire Plan Score %f \n",
+                    region1_id, region2_id, merged_plan_score
+                );
+            }
+            // term is e^- score(merged plan) so we subtract the log score 
+            log_of_sum_term -= merged_plan_score;
+        }
+
+        if(DEBUG_WEIGHTS_VERBOSE){
+        int region1_size = plan.region_sizes[region1_id];
+        int region2_size = plan.region_sizes[region2_id];
+        Rprintf("Adding (%d,%d) - sizes (%d, %d): len %f, split prob %f, ratio %f!\n", 
+            region1_id, region2_id, region1_size, region2_size, std::exp(eff_log_boundary_len), 
+            std::exp(log_of_sum_term), log_of_sum_term);
+        }
 
         
 
@@ -512,17 +575,24 @@ double compute_log_optimal_incremental_weights(
         extra_log_terms -= compute_log_region_multigraph_spanning_tree(region_multigraph);
     }
 
+    // Now add the log extra terms and subtract the plan score 
+    incremental_weight = extra_log_terms - std::log(incremental_weight) - plan_score;
+
     if(DEBUG_WEIGHTS_VERBOSE){
-        REprintf("Weight=%f, log weight = %f\n", incremental_weight, extra_log_terms-std::log(incremental_weight));
+        REprintf("Weight=%f, log weight = %f\n", std::exp(incremental_weight), incremental_weight);
     }
+
     
-    if (!std::isfinite(extra_log_terms-std::log(incremental_weight))) {
+    if (!std::isfinite(incremental_weight)) {
         plan.Rprint(true);
-        throw Rcpp::exception("log_of_sum_term is not finite!");
+        throw Rcpp::exception(
+            "One of the plan incremental weights is not finite!"
+            "Try checking if constraint strength is too large and causing overflow errors.\n"
+        );
     }
 
     // now return the log of the inverse of the sum
-    return extra_log_terms-std::log(incremental_weight);
+    return incremental_weight;
 
 }
 
@@ -581,7 +651,7 @@ void compute_all_plans_log_optimal_incremental_weights(
     RcppThread::ProgressBar bar(nsims, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, nsims, [&] (int i) {
-        PlanMultigraph plan_multigraph(map_params);
+        static thread_local PlanMultigraph plan_multigraph(map_params);
 
 
         // REprintf("I=%d\n", i);

@@ -31,11 +31,14 @@ Rcpp::List ms_plans(
     List const &constraints, // constraints 
     int const verbosity, bool const diagnostic_mode
 ) {
+    // whether or not to perform MH step
+    bool do_mh = (bool) control["do_mh"];
+
     if(DEBUG_PURE_MS_VERBOSE) Rprintf("Checkpoint 1!\n");
     Rcpp::List out; // return 
     // re-seed MT so that `set.seed()` works in R
     int global_rng_seed = (int) Rcpp::sample(INT_MAX, 1)[0];
-    RNGState rng_state(global_rng_seed, 42);
+    RNGState rng_state(global_rng_seed);
     // Set the sampling space 
     SamplingSpace sampling_space = get_sampling_space(sampling_space_str);
     bool save_edge_selection_prob = sampling_space == SamplingSpace::LinkingEdgeSpace;
@@ -176,14 +179,14 @@ Rcpp::List ms_plans(
     }
     // build multigraph on current plan and get pairs of adj districts to merge
     auto build_result = plan_ensemble.plan_ptr_vec[0]->attempt_to_get_valid_mergesplit_pairs(
-        current_plan_multigraph, *splitting_schedule_ptr
+        current_plan_multigraph, *splitting_schedule_ptr, scoring_function
     );
     // shouldn't be possible but just a sanity check
     if (!build_result.first){
         throw Rcpp::exception("BIG ERROR: Plan registered as hierarchically valid but we failed to build hierarchical multigraph!\n");
     }
     auto current_plan_adj_region_pairs = plan_ensemble.plan_ptr_vec[0]->attempt_to_get_valid_mergesplit_pairs(
-        current_plan_multigraph, *splitting_schedule_ptr
+        current_plan_multigraph, *splitting_schedule_ptr, scoring_function
     ).second;
 
     // get weights 
@@ -277,7 +280,7 @@ Rcpp::List ms_plans(
             merge_prob_type, save_edge_selection_prob,
             current_plan_adj_region_pairs,
             current_plan_pair_unnoramalized_wgts,
-            rho, true
+            rho, true, do_mh
         );
         // count size
         ++tree_sizes[std::get<3>(mergesplit_result)-1];

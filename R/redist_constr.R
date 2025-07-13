@@ -210,17 +210,48 @@ add_to_constr <- function(constr, name, new_constr) {
 #' users want to penalize an entire plan, they can have the penalty function
 #' return a scalar that does not depend on the district. It is important that
 #' `fn` not use information from precincts not included in `distr`, since in the
-#' case of SMC these precincts may not be assigned any district at all (`plan`
-#' will take the value of 0 for these precincts). The flexibility of this
-#' constraint comes with an additional computational cost, since the other
-#' constraints are written in C++ and so are more performant.
+#' case of SMC these precincts may not be assigned any district at all.
+#' The flexibility of this constraint comes with additional computational
+#' costs, since the other constraints are written in C++ and so are more performant.
+#' In addition to the cost of not being native C++ code, weights with custom
+#' R functions can not be computed in parallel and must be computed sequentially.
+#' This can especially slow down sampling on Spanning Forest or Linking Edge Space.
+#'
+#' The `custom_plan` constraint allows the user to specify their own constraint using
+#' a function which evaluates the entire plan. Unlike the `custom` constraint,
+#' this allows users to penalize an entire plan, not just specific districts.
+#' The provided function `fn` should take two arguments: a 1-indexed vector
+#' describing the current plan assignment for each unit as its first argument,
+#' and a 1-indexed vector mapping region ids to the number of seats in the region.
+#' The function must return a single scalar for each plan where a value of 0
+#' indicates no penalty is applied.
+#' The flexibility of this constraint comes with additional computational
+#' costs, since the other constraints are written in C++ and so are more performant.
+#' In addition to the cost of not being native C++ code, weights with custom
+#' R functions can not be computed in parallel and must be computed sequentially.
+#' This can especially slow down sampling on Spanning Forest or Linking Edge Space.
+#'
+#' The `custom_hard_plan` constraint allows the user to specify their own hard
+#' constraint using a function which evaluates the entire plan. This function
+#' must return either `TRUE` or `FALSE`, where a value of `TRUE` means a plan is
+#' valid and `FALSE` means it will be rejected.
+#' The provided function `fn` should take two arguments: a 1-indexed vector
+#' describing the current plan assignment for each unit as its first argument,
+#' and a 1-indexed vector mapping region ids to the number of seats in the region.
+#' The function must return a single scalar for each plan where a value of 0
+#' indicates no penalty is applied.
+#' The flexibility of this constraint comes with strong additional computational
+#' costs. `Rcpp::Function` objects cannot be made thread safe so both splitting
+#' and calculating weights must be done with only a single thread. These effects
+#' can be somewhat mitigated by by increasing the number of processes(`nproc`).
 #'
 #' @param constr A [redist_constr()] object
 #' @param strength The strength of the constraint. Higher values mean a more restrictive constraint.
 #' @param score_districts_only Whether or not to apply the constraints to
 #' districts only. If constraints are only applied to districts then it will
 #' likely cause a drop in efficiency in the final round. If splitting plans all
-#' the way this does not affect the final target distribution.
+#' the way this does not affect the final target distribution. This is not relevant
+#' for constraints that penalize the entire plan instead of specific districts.
 #'
 #' @examples
 #' data(iowa)
@@ -695,6 +726,105 @@ add_constr_custom <- function(constr, strength, fn, score_districts_only=FALSE) 
     add_to_constr(constr, "custom", new_constr)
 }
 
+#' @param fn A function
+#' @rdname constraints
+#' @export
+add_constr_custom_plan <- function(constr, strength, fn) {
+    if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
+    if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
+
+    args <- rlang::fn_fmls(fn)
+    if (length(args) != 2) cli_abort("Function must take exactly two arguments.")
+
+    constr_env = rlang::fn_env(fn)
+    constr_env <- rlang::env(constr_env)
+    # every symbol used in the function (except the 2 arguments)
+    var_names = setdiff(
+        all.names(rlang::fn_body(fn)),
+        names(args)
+    )
+
+    for (nm in var_names) {
+        found = find_env(nm, constr_env)
+        if (!is.null(found) &&
+            !identical(found, rlang::base_env()) &&
+            !identical(found, constr_env) &&
+            !identical(found, rlang::pkg_env("redist"))) {
+            constr_env[[nm]] = get(nm, envir=found)
+        }
+    }
+
+    if (!is.null(plan <- get_existing(attr(constr, "data")))) {
+        fake_sizes <- rep(1L, length(unique(plan)))
+        out <- tryCatch(fn(plan, fake_sizes), error = function(e) {
+            cli_abort(c("Ran into an error testing custom constraint
+                        on the existing plan:",
+                        "x" = e$message))
+        })
+        if (!is.numeric(out) || length(out) != 1 || !is.finite(out))
+            cli_abort(c("Evaluting custom constraint on the existing plan failed.",
+                        "*" = "The constraint function should return a single scalar value.",
+                        "*" = "Make sure that your constraint function tests all edge cases
+                             and never returns {.val {NA}} or {.val {Inf}}."))
+    }
+
+    rlang::fn_env(fn) <- constr_env
+
+    new_constr <- list(strength = strength,
+                       fn = fn)
+    add_to_constr(constr, "custom_plan", new_constr)
+}
+
+
+#' @param fn A function
+#' @rdname constraints
+#' @export
+add_hard_constr_custom_plan <- function(constr, fn) {
+    if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
+
+    args <- rlang::fn_fmls(fn)
+    if (length(args) != 2) cli_abort("Function must take exactly two arguments.")
+
+    constr_env = rlang::fn_env(fn)
+    constr_env <- rlang::env(constr_env)
+    # every symbol used in the function (except the 2 arguments)
+    var_names = setdiff(
+        all.names(rlang::fn_body(fn)),
+        names(args)
+    )
+
+    for (nm in var_names) {
+        found = find_env(nm, constr_env)
+        if (!is.null(found) &&
+            !identical(found, rlang::base_env()) &&
+            !identical(found, constr_env) &&
+            !identical(found, rlang::pkg_env("redist"))) {
+            constr_env[[nm]] = get(nm, envir=found)
+        }
+    }
+
+    if (!is.null(plan <- get_existing(attr(constr, "data")))) {
+        fake_sizes <- rep(1L, length(unique(plan)))
+        out <- tryCatch(fn(plan, fake_sizes), error = function(e) {
+            cli::cli_abort(c("Ran into an error testing custom constraint
+                        on the existing plan:",
+                        "x" = e$message))
+        })
+        if (!is.logical(out) || length(out) != 1 || !is.finite(out)){
+            cli::cli_abort(c("Evaluting custom hard constraint on the existing plan failed.",
+                             "*" = "The constraint function should return a single boolean value.",
+                             "*" = "Make sure that your constraint function tests all edge cases
+                             and never returns {.val {NA}} or {.val {Inf}}."))
+        }
+    }
+
+    rlang::fn_env(fn) <- constr_env
+
+    new_constr <- list(strength = 1,
+                       fn = fn)
+    add_to_constr(constr, "custom_hard_plan", new_constr)
+}
+
 #######################
 # generics
 
@@ -748,6 +878,12 @@ print.redist_constr <- function(x, header = TRUE, details = TRUE, ...) {
             cli::cli_bullets(c("*" = "A multisplits constraint of strength {x[[nm]]$strength} applied to {score_str}"))
         } else if (startsWith(nm, "total_splits")) {
             cli::cli_bullets(c("*" = "A total splits constraint of strength {x[[nm]]$strength} applied to {score_str}"))
+        } else if (startsWith(nm, "custom_hard_plan")) {
+            cli::cli_bullets(c("*" = "A custom hard plan constraint applied to {score_str}"))
+            print_constr(x[[nm]])
+        } else if (startsWith(nm, "custom_plan")) {
+            cli::cli_bullets(c("*" = "A custom plan constraint of strength {x[[nm]]$strength} applied to {score_str}"))
+            print_constr(x[[nm]])
         } else if (startsWith(nm, "custom")) {
             cli::cli_bullets(c("*" = "A custom constraint of strength {x[[nm]]$strength} applied to {score_str}"))
             print_constr(x[[nm]])

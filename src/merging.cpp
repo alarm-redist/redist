@@ -109,19 +109,25 @@ double get_log_mh_ratio(
     double const rho, bool const is_final
 ){
     double log_mh_ratio = 0.0;
-    // We add the scores of the current regions 
+    // We add the scores of the current regions and plan
     log_mh_ratio += scoring_function.compute_region_score(
         current_plan, region1_id, is_final
     );
     log_mh_ratio += scoring_function.compute_region_score(
         current_plan, region2_id, is_final
     );
-    // We subtract the scores of the proposed region
+    log_mh_ratio += scoring_function.compute_plan_score(
+        current_plan, is_final
+    );
+    // We subtract the scores of the proposed regions and plan
     log_mh_ratio -= scoring_function.compute_region_score(
         proposed_plan, region1_id, is_final
     );
     log_mh_ratio -= scoring_function.compute_region_score(
         proposed_plan, region2_id, is_final
+    );
+    log_mh_ratio -= scoring_function.compute_plan_score(
+        proposed_plan, is_final
     );
     // we compute taus if neccesary 
     if(rho != 1){
@@ -173,7 +179,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     std::string const merge_prob_type, bool save_edge_selection_prob,
     std::vector<std::pair<RegionID, RegionID>> &adj_region_pairs,
     arma::vec &unnormalized_pair_wgts,
-    double const rho, bool const is_final
+    double const rho, bool const is_final, bool const do_mh
 ){
     // sample a pair 
     int sampled_pair_index = rng_state.r_int_unnormalized_wgt(unnormalized_pair_wgts);
@@ -226,9 +232,11 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     }
     // check new plan is hierarchically valid if needed
     auto build_attempt = new_plan.attempt_to_get_valid_mergesplit_pairs(
-        proposed_plan_multigraph, splitting_schedule
+        proposed_plan_multigraph, splitting_schedule, scoring_function
     );
-    bool new_plan_valid = build_attempt.first;
+    // new plan is valid if build attempt successful and passes any hard constraints 
+    bool new_plan_valid = build_attempt.first && scoring_function.compute_hard_plan_constraints_score(new_plan).first;
+    
 
     if(DEBUG_MERGING_VERBOSE){
         Rprintf("%d county splits!\n", proposed_plan_multigraph.num_county_region_components);
@@ -249,92 +257,104 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         new_valid_adj_region_pairs,
         merge_prob_type
     );
-    int region_pair_proposal_index = -1;
-    // Find the index of the pair in the proposed plan
-    for (size_t i = 0; i < new_valid_adj_region_pairs.size(); i++)
-    {
 
-        if(new_valid_adj_region_pairs[i].first == region1_id 
-        && new_valid_adj_region_pairs[i].second == region2_id){
-            region_pair_proposal_index = i;
-            break;
+    // compute mh ratio if needed 
+    double log_mh_ratio;
+    bool proposal_accepted;
+
+    if(do_mh){
+        int region_pair_proposal_index = -1;
+        // Find the index of the pair in the proposed plan
+        for (size_t i = 0; i < new_valid_adj_region_pairs.size(); i++)
+        {
+
+            if(new_valid_adj_region_pairs[i].first == region1_id 
+            && new_valid_adj_region_pairs[i].second == region2_id){
+                region_pair_proposal_index = i;
+                break;
+            }
         }
-    }
-    // means disconnected thing glitch. If encountered just print and ignore
-    if(region_pair_proposal_index == -1){
-        REprintf("Merged and Split Regions %d and %d no longer adjacent!\n",
-            region1_id, region2_id);
-        REprintf("Current adj pairs: ");
-        for(const auto &a_pair: adj_region_pairs){
-            REprintf("(%d, %d), ", a_pair.first, a_pair.second);
+        // means disconnected thing glitch. If encountered just print and ignore
+        if(region_pair_proposal_index == -1){
+            REprintf("Merged and Split Regions %d and %d no longer adjacent!\n",
+                region1_id, region2_id);
+            REprintf("Current adj pairs: ");
+            for(const auto &a_pair: adj_region_pairs){
+                REprintf("(%d, %d), ", a_pair.first, a_pair.second);
+            }
+            REprintf("\nProposed adj pairs: ");
+            for(const auto &a_pair: new_valid_adj_region_pairs){
+                REprintf("(%d, %d), ", a_pair.first, a_pair.second);
+            }
+            REprintf("\nCurrent Plan is:\n");
+            for(const auto &id: plan.region_ids){
+                REprintf("%d;", id);
+            }
+            REprintf("\n\nProposed Plan is:\n");
+            for(const auto &id: new_plan.region_ids){
+                REprintf("%d;", id);
+            }
+            REprintf("\n\n");
+            throw Rcpp::exception("Error in merge split!\n");
         }
-        REprintf("\nProposed adj pairs: ");
-        for(const auto &a_pair: new_valid_adj_region_pairs){
-            REprintf("(%d, %d), ", a_pair.first, a_pair.second);
+        if(DEBUG_MERGING_VERBOSE){
+            Rprintf("selected new pair index is %d!\n", region_pair_proposal_index);
         }
-        REprintf("\nCurrent Plan is:\n");
-        for(const auto &id: plan.region_ids){
-            REprintf("%d;", id);
+        bool const using_linking_edge_space = sampling_space == SamplingSpace::LinkingEdgeSpace;
+        // compute the boundary length 
+        double current_log_eff_boundary = plan.get_log_eff_boundary_len(
+            current_plan_multigraph, splitting_schedule, tree_splitter, 
+            region1_id, region2_id
+        );
+        double proposed_log_eff_boundary = new_plan.get_log_eff_boundary_len(
+            proposed_plan_multigraph, splitting_schedule, tree_splitter,
+            region1_id, region2_id
+        );
+        // If linking edge space we need to subtract linking edge correction term
+        if(using_linking_edge_space){
+            // add instead of subtract bc its flipped in MH ratio
+            current_log_eff_boundary += plan.compute_log_linking_edge_count(current_plan_multigraph);
+            proposed_log_eff_boundary += new_plan.compute_log_linking_edge_count(proposed_plan_multigraph);
         }
-        REprintf("\n\nProposed Plan is:\n");
-        for(const auto &id: new_plan.region_ids){
-            REprintf("%d;", id);
+
+        if(DEBUG_MERGING_VERBOSE){
+            Rprintf("Finding Adjacent regions %d, %d!\n", region1_id, region2_id);
+            Rprintf(
+                "Current Plan: %d Adjacent Regions and I picked index %d ",
+                (int) adj_region_pairs.size(), sampled_pair_index
+            );
+            Rprintf(
+                "with probability %f\n",
+                std::exp(std::log(unnormalized_pair_wgts(sampled_pair_index)) - std::log(arma::sum(unnormalized_pair_wgts)))
+            );
+            Rprintf(
+                "Proposed Plan: %d Adjacent Regions and I picked index %d ",
+                (int) new_valid_adj_region_pairs.size(), region_pair_proposal_index
+            );
+            Rprintf(
+                "with probability %f\n",
+                std::exp(std::log(new_valid_pair_weights(region_pair_proposal_index)) - std::log(arma::sum(new_valid_pair_weights)))
+            );
         }
-        REprintf("\n\n");
-        throw Rcpp::exception("Error in merge split!\n");
-    }
-    if(DEBUG_MERGING_VERBOSE){
-        Rprintf("selected new pair index is %d!\n", region_pair_proposal_index);
-    }
-    bool using_linking_edge_space = sampling_space == SamplingSpace::LinkingEdgeSpace;
-    // compute the boundary length 
-    double current_log_eff_boundary = plan.get_log_eff_boundary_len(
-        current_plan_multigraph, splitting_schedule, tree_splitter, 
-        region1_id, region2_id
-    );
-    double proposed_log_eff_boundary = new_plan.get_log_eff_boundary_len(
-        proposed_plan_multigraph, splitting_schedule, tree_splitter,
-        region1_id, region2_id
-    );
-    // If linking edge space we need to subtract linking edge correction term
-    if(using_linking_edge_space){
-        // add instead of subtract bc its flipped in MH ratio
-        current_log_eff_boundary += plan.compute_log_linking_edge_count(current_plan_multigraph);
-        proposed_log_eff_boundary += new_plan.compute_log_linking_edge_count(proposed_plan_multigraph);
+
+        log_mh_ratio = get_log_mh_ratio(
+            map_params, scoring_function,
+            region1_id, region2_id,
+            current_log_eff_boundary, 
+            proposed_log_eff_boundary, 
+            std::log(unnormalized_pair_wgts(sampled_pair_index)) - std::log(arma::sum(unnormalized_pair_wgts)), 
+            std::log(new_valid_pair_weights(region_pair_proposal_index)) - std::log(arma::sum(new_valid_pair_weights)), 
+            plan, new_plan,
+            rho, is_final
+        );
+        proposal_accepted = rng_state.r_unif() <= std::exp(log_mh_ratio);
+        if(DEBUG_MERGING_VERBOSE) Rprintf("Ratio is %f and it is", std::exp(log_mh_ratio));
+    }else{
+        // always accept 
+        proposal_accepted = true;
+        log_mh_ratio = 0;
     }
 
-    if(DEBUG_MERGING_VERBOSE){
-        Rprintf("Finding Adjacent regions %d, %d!\n", region1_id, region2_id);
-        Rprintf(
-            "Current Plan: %d Adjacent Regions and I picked index %d ",
-            (int) adj_region_pairs.size(), sampled_pair_index
-        );
-        Rprintf(
-            "with probability %f\n",
-            std::exp(std::log(unnormalized_pair_wgts(sampled_pair_index)) - std::log(arma::sum(unnormalized_pair_wgts)))
-        );
-        Rprintf(
-            "Proposed Plan: %d Adjacent Regions and I picked index %d ",
-            (int) new_valid_adj_region_pairs.size(), region_pair_proposal_index
-        );
-        Rprintf(
-            "with probability %f\n",
-            std::exp(std::log(new_valid_pair_weights(region_pair_proposal_index)) - std::log(arma::sum(new_valid_pair_weights)))
-        );
-    }
-
-    double log_mh_ratio = get_log_mh_ratio(
-        map_params, scoring_function,
-        region1_id, region2_id,
-        current_log_eff_boundary, 
-        proposed_log_eff_boundary, 
-        std::log(unnormalized_pair_wgts(sampled_pair_index)) - std::log(arma::sum(unnormalized_pair_wgts)), 
-        std::log(new_valid_pair_weights(region_pair_proposal_index)) - std::log(arma::sum(new_valid_pair_weights)), 
-        plan, new_plan,
-        rho, is_final
-    );
-    bool proposal_accepted = rng_state.r_unif() <= std::exp(log_mh_ratio);
-    if(DEBUG_MERGING_VERBOSE) Rprintf("Ratio is %f and it is", std::exp(log_mh_ratio));
     if(proposal_accepted){
         if(DEBUG_MERGING_VERBOSE) Rprintf("ACCEPTED!! Now updating plans\n", std::exp(log_mh_ratio));
         // if successful then actually update
@@ -377,7 +397,7 @@ int run_merge_split_steps(
 
     // Build the multigraph and get pairs of adj districts
     auto current_plan_adj_region_pairs = plan.attempt_to_get_valid_mergesplit_pairs(
-        current_plan_multigraph, splitting_schedule
+        current_plan_multigraph, splitting_schedule, scoring_function
     ).second;
     arma::vec current_plan_pair_unnoramalized_wgts = get_adj_pair_unnormalized_weights(
         plan,
@@ -397,7 +417,7 @@ int run_merge_split_steps(
             merge_prob_type, save_edge_selection_prob,
             current_plan_adj_region_pairs,
             current_plan_pair_unnoramalized_wgts,
-            rho, is_final
+            rho, is_final, true
         );
         // count tree size
         ++tree_sizes[std::get<3>(mergesplit_result)-1];

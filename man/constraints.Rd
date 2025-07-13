@@ -18,6 +18,7 @@
 \alias{add_constr_log_st}
 \alias{add_constr_edges_rem}
 \alias{add_constr_custom}
+\alias{add_constr_custom_plan}
 \title{Sampling constraints}
 \usage{
 add_constr_status_quo(constr, strength, current, score_districts_only = TRUE)
@@ -64,7 +65,7 @@ add_constr_incumbency(
   constr,
   strength,
   incumbents,
-  score_districts_only = TRUE
+  score_districts_only = FALSE
 )
 
 add_constr_splits(constr, strength, admin, score_districts_only = TRUE)
@@ -104,6 +105,8 @@ add_constr_log_st(constr, strength, admin = NULL, score_districts_only = FALSE)
 add_constr_edges_rem(constr, strength, score_districts_only = FALSE)
 
 add_constr_custom(constr, strength, fn, score_districts_only = FALSE)
+
+add_constr_custom_plan(constr, strength, fn)
 }
 \arguments{
 \item{constr}{A \code{\link[=redist_constr]{redist_constr()}} object}
@@ -115,7 +118,8 @@ add_constr_custom(constr, strength, fn, score_districts_only = FALSE)
 \item{score_districts_only}{Whether or not to apply the constraints to
 districts only. If constraints are only applied to districts then it will
 likely cause a drop in efficiency in the final round. If splitting plans all
-the way this does not affect the final target distribution.}
+the way this does not affect the final target distribution. This is not relevant
+for constraints that penalize the entire plan instead of specific districts.}
 
 \item{group_pop}{A vector of group population}
 
@@ -242,6 +246,17 @@ case of SMC these precincts may not be assigned any district at all (\code{plan}
 will take the value of 0 for these precincts). The flexibility of this
 constraint comes with an additional computational cost, since the other
 constraints are written in C++ and so are more performant.
+
+The \code{custom_plan} constraint allows the user to specify their own constraint using
+a function which evaluates the entire plan. Unlike the \code{custom} constraint,
+this allows users to penalize an entire plan, not just specific districts.
+The provided function \code{fn} should take two arguments: a 0-indexed vector
+describing the current plan assignment for each unit as its first argument,
+and a 0-indexed vector mapping region ids to the number of seats in the region.
+The function must return a single scalar for each plan where a value of 0
+indicates no penalty is applied.
+The flexibility of this constraint comes with an additional computational
+cost, since the other constraints are written in C++ and so are more performant.
 }
 \examples{
 data(iowa)

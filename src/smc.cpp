@@ -89,7 +89,7 @@ constexpr bool DEBUG_GSMC_PLANS_VERBOSE = false; // Compile-time constant
  * 
  */ 
 void run_smc_step(
-        const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+        const MapParams &map_params, SplittingSchedule const &splitting_schedule,
         ScoringFunction const &scoring_function,
         std::vector<RNGState> &rng_states, SamplingSpace const sampling_space,
         std::unique_ptr<PlanEnsemble> &old_plan_ensemble,
@@ -154,15 +154,19 @@ void run_smc_step(
         static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
         static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
 
+        // ScoringFunction new_score(scoring_function);
+
         // REprintf("Thread ID %d\n", thread_id);
         // REprintf("Plan %d\n\n", i);
         bool ok = false;
         int idx;
         RcppThread::checkUserInterrupt(i % check_int == 0);
+        
 
         while (!ok) {
             // increase the number of tries for particle i by 1
             draw_tries_vec[i]++;
+            // REprintf("%d - Try %d!\n", i, draw_tries_vec[i]);
             // sample previous plan
             idx = rng_states[thread_id].r_int_wgt(normalized_cumulative_weights);
             
@@ -201,7 +205,7 @@ void run_smc_step(
                 save_edge_selection_prob
             );
         
-            // if successful update the new plan
+            // if successful update the new plan and check if satisfies any other hard constraints 
             if(std::get<0>(edge_search_result)){
                 if(DEBUG_GSMC_PLANS_VERBOSE){
                     Rprintf("Success, updating Plan %d\n", i);
@@ -209,18 +213,30 @@ void run_smc_step(
                 // make the new plan a copy of the old one 
                 new_plan_ensemble->plan_ptr_vec[i]->shallow_copy(*old_plan_ensemble->plan_ptr_vec[idx]);
                 // now split that region we found on the old one
+
                 new_plan_ensemble->plan_ptr_vec[i]->update_from_successful_split(
                     tree_splitters,
                     ust_sampler, std::get<1>(edge_search_result),
                     region_id_to_split, new_region_id, 
                     true
                 );
+
+                // check if there are any additional hard constraints 
+                if(!scoring_function.any_hard_plan_constraints){
+                    ok = true;
+                }else{
+                    // If custom hard constraints are used then 
+                    // the thread pool can only have a single thread or else everything will break
+                    ok = scoring_function.compute_hard_plan_constraints_score(*new_plan_ensemble->plan_ptr_vec[i]).first;
+                }
+            }
+
+            if(ok){
+                // means idx was ok 
                 // record index of new plan's parent
                 parent_index_vec[i] = idx;
                 // add as successful tree size 
                 ++thread_successful_tree_sizes[thread_id][region_to_split_size-1];
-                // make ok true to break out of loop
-                ok = true;
             }else{ // else bad sample so try again
                  // check for user interrupt
                  RcppThread::checkUserInterrupt(i % reject_check_int == 0);
@@ -230,7 +246,9 @@ void run_smc_step(
                      parent_unsuccessful_tries_vec[idx]++;
                  }
             }
+
         }
+
 
         // ORIGINAL SMC CODE I DONT KNOW WHAT THIS DOES
         // save ancestors/lags
@@ -419,6 +437,24 @@ List run_redist_gsmc(
     // set the number of threads
     int num_threads = (int) control["num_threads"];
     if (num_threads <= 0) num_threads = std::thread::hardware_concurrency();
+
+    // Create map level graph and county level multigraph
+    MapParams const map_params(
+        adj_list, counties, pop, 
+        ndists, total_seats, as<std::vector<int>>(district_seat_sizes),
+        lower, target, upper);
+    int V = map_params.g.size();
+
+    // Add scoring function (constraints)
+    ScoringFunction const scoring_function(
+        map_params, constraints, 
+        as<double>(control["pop_temper"]), true);
+
+    // if we have any custom hard constraints then we have to single thread everything 
+    if(scoring_function.any_hard_custom_constraints){
+        num_threads = 1;
+    };
+
     // get seq_alpha 
     double weights_alpha = as<double>(control["seq_alpha"]);
     bool const apply_weights_alpha = weights_alpha != 1;
@@ -431,6 +467,7 @@ List run_redist_gsmc(
     {
         // same seed with i*3 long_jumps for state
         rng_states.emplace_back(global_rng_seed, i*3);
+
     }
 
     // Set the sampling space 
@@ -447,8 +484,7 @@ List run_redist_gsmc(
     std::vector<int> lags = as<std::vector<int>>(control["lags"]); arma::umat ancestors(nsims, lags.size(), fill::zeros);
     // weight type
     std::string wgt_type = as<std::string>(control["weight_type"]);
-    // population tempering parameter 
-    double pop_temper = as<double>(control["pop_temper"]);
+
 
 
     // total number of steps to run 
@@ -524,12 +560,7 @@ List run_redist_gsmc(
     };
 
     
-    // Create map level graph and county level multigraph
-    MapParams const map_params(
-        adj_list, counties, pop, 
-        ndists, total_seats, as<std::vector<int>>(district_seat_sizes),
-        lower, target, upper);
-    int V = map_params.g.size();
+
 
     // Now create diagnostic information 
     SMCDiagnostics smc_diagnostics(
@@ -541,10 +572,7 @@ List run_redist_gsmc(
         diagnostic_level, splitting_all_the_way, split_district_only
     );
 
-    // Add scoring function (constraints)
-    ScoringFunction const scoring_function(
-        map_params, constraints, 
-        pop_temper, true);
+
 
     // Create a threadpool
     RcppThread::ThreadPool pool(num_threads);
@@ -633,7 +661,10 @@ List run_redist_gsmc(
                   << map_params.cg.size() << " administrative units.\n";
         }
         if(scoring_function.total_soft_constraints > 0){
-            Rcout << "Applying " << scoring_function.total_soft_constraints << " constraints.\n";
+            Rcout << "Applying " << scoring_function.total_soft_constraints << " soft constraints.\n";
+        }
+        if(scoring_function.num_hard_plan_constraints > 0){
+            Rcout << "Applying " << scoring_function.num_hard_plan_constraints << " hard constraints.\n";
         }
     }
 
@@ -656,6 +687,9 @@ List run_redist_gsmc(
         }
         // its the final splitting step if step_num + 1 == total_smc steps
         bool const is_final_splitting_step = step_num + 1 == total_smc_steps;
+        // If we have any custom hard constraints then must switch to single threading for everything 
+
+
         //  using std::chrono::high_resolution_clock;
         // using std::chrono::duration_cast;
         // using std::chrono::duration;
@@ -745,6 +779,10 @@ List run_redist_gsmc(
                 )
             );
 
+            // if soft custom constraints and no hard custom then temporarily switch to 1 thread
+            if(scoring_function.any_soft_custom_constraints && !scoring_function.any_hard_custom_constraints){
+                pool.setNumThreads(1);
+            }
             
             if(wgt_type == "optimal"){
                 // TODO make more princicpal in the future 
@@ -775,6 +813,11 @@ List run_redist_gsmc(
                 throw Rcpp::exception("invalid weight type!");
             }
             if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Done computing weights!\n");
+
+            // now swap back
+            if(scoring_function.any_soft_custom_constraints && !scoring_function.any_hard_custom_constraints){
+                pool.setNumThreads(num_threads);
+            }
             
             auto t2 = std::chrono::high_resolution_clock::now();
             /* Getting number of milliseconds as a double. */
@@ -854,6 +897,10 @@ List run_redist_gsmc(
                 smc_step_num, plan_ensemble_ptr->plan_ptr_vec[0]->num_regions
             );
 
+            // If only soft custom constraints then need to temporarily switch to single threading 
+            if(scoring_function.any_soft_custom_constraints && !scoring_function.any_hard_custom_constraints){
+                pool.setNumThreads(1);
+            }
 
             // auto t1fm = high_resolution_clock::now();
             run_merge_split_step_on_all_plans(
@@ -870,6 +917,11 @@ List run_redist_gsmc(
                 smc_diagnostics,
                 verbosity
             );
+
+            // now switch back 
+            if(scoring_function.any_soft_custom_constraints && !scoring_function.any_hard_custom_constraints){
+                pool.setNumThreads(num_threads);
+            }
 
             if(use_naive_k_splitter){
                 smc_diagnostics.cut_k_values.at(step_num) = tree_splitter_ptr->get_single_int_param();
@@ -927,8 +979,8 @@ List run_redist_gsmc(
     cli_progress_done(bar);
     
 
-    // if not diagnostic reorder the plans 
-    if(!diagnostic_mode){
+    // if not all diagnostic mode and split district only reorder the plans 
+    if(!diagnostic_mode && splitting_size_regime != SplittingSizeScheduleType::DistrictOnlySMD){
         reorder_all_plans(pool, plan_ensemble_ptr->plan_ptr_vec, dummy_plan_ensemble_ptr->plan_ptr_vec);
     }
     // end of scope

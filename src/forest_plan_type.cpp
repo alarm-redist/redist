@@ -64,11 +64,13 @@ void ForestPlan::update_vertex_and_plan_specific_info_from_cut(
     // update the vertex labels and the tree
     assign_region_id_and_forest_from_tree(
         ust_sampler.ust, region_ids, forest_graph,
-        split_region1_tree_root, split_region1_id);
+        split_region1_tree_root, split_region1_id,
+        ust_sampler.vertex_queue);
 
     assign_region_id_and_forest_from_tree(
         ust_sampler.ust, region_ids, forest_graph,
-        split_region2_tree_root, split_region2_id);
+        split_region2_tree_root, split_region2_id, 
+        ust_sampler.vertex_queue);
 
     return;
 }
@@ -208,7 +210,7 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
 
 std::vector<std::tuple<RegionID, RegionID, double>> ForestPlan::get_valid_adj_regions_and_eff_log_boundary_lens(
     PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
-    TreeSplitter const &tree_splitter
+    ScoringFunction const &scoring_function, TreeSplitter const &tree_splitter
 ) const{
     // build the multigraph 
     plan_multigraph.build_plan_multigraph(*this);
@@ -216,6 +218,9 @@ std::vector<std::tuple<RegionID, RegionID, double>> ForestPlan::get_valid_adj_re
     plan_multigraph.remove_invalid_hierarchical_merge_pairs(*this);
     // remove invalid size pairs 
     plan_multigraph.remove_invalid_size_pairs(*this, splitting_schedule);
+    // remove invalid hard constraint pairs 
+    plan_multigraph.remove_invalid_hard_constraint_pairs(*this, scoring_function);
+
     // get pairs and log tree effective boundary
     auto region_pairs_tuple_vec = compute_log_tree_eff_boundary_lens(
         *this, forest_graph,

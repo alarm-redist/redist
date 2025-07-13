@@ -174,20 +174,60 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     constraints <- as.list(constraints)
 
     if (backend == "mergesplit") {
-        control = list(adapt_k_thresh=adapt_k_thresh, do_mh=reversible)
+        # get map params
+        map_params <- get_map_parameters(map, !!rlang::enquo(counties))
+        map <- map_params$map
+        V <- map_params$V
+        adj_list <- map_params$adj_list
+        counties <- map_params$counties
+        num_admin_units <- length(unique(counties))
+        pop <- map_params$pop
+        pop_bounds <- map_params$pop_bounds
+        # get the total number of districts
+        ndists <- map_params$ndists
+        total_seats <- map_params$total_seats
+        district_seat_sizes <- map_params$district_seat_sizes
+        districting_scheme <- map_params$districting_scheme
+
+
         if (is.null(fixed_k)) {
-            x <- ms_plans(1, adj, init_plan, counties, pop, ndists, pop_bounds[2],
-                          pop_bounds[1], pop_bounds[3], compactness,
-                          list(), control, 0L, 1L, verbosity = 0)
-            k <- x$est_k
+            # if not passed then estimate
+            estimate_cut_k <- TRUE
+            k <- -1
         } else {
             k = fixed_k
+            estimate_cut_k <- FALSE
         }
 
+        control = list(
+            splitting_method=NAIVE_K_SPLITTING,
+            adapt_k_thresh=adapt_k_thresh,
+            estimate_cut_k=estimate_cut_k,
+            manual_k=k,
+            do_mh=reversible
+        )
+
+
+
         run_burst <- function(init, steps) {
-            ms_plans(steps, adj, init, counties, pop, ndists,
-                pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
-                constraints, control, k, 1L, verbosity = 0)$plans[, -1L]
+            init <- matrix(init, ncol = 1) - 1L
+            # just assume always SMD
+            init_sizes <- matrix(1L, ncol = 1, nrow = ndists)
+
+            ms_plans(
+                nsims=steps, warmup=0L, thin=1L,
+                ndists=ndists, total_seats=total_seats,
+                district_seat_sizes=district_seat_sizes,
+                adj_list=adj_list, counties=counties, pop=pop,
+                target=pop_bounds[2], lower=pop_bounds[1], upper=pop_bounds[3],
+                rho=compactness,
+                initial_plan=init,
+                initial_region_sizes=init_sizes,
+                sampling_space_str = GRAPH_PLAN_SPACE_SAMPLING,
+                merge_prob_type = "uniform",
+                control=control, constraints=constraints,
+                verbosity=0, diagnostic_mode=FALSE
+            )$plans
         }
     } else {
 

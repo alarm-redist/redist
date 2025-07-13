@@ -21,6 +21,7 @@
 #include "wilson.h"
 #include "map_calc.h"
 #include "ust_sampler.h"
+#include "scoring.h"
 #include "graph_ops.h"
 
 // [[Rcpp::depends(RcppArmadillo)]]
@@ -29,6 +30,7 @@
 
 class USTSampler;
 class PlanMultigraph;
+class ScoringFunction;
 
 
 
@@ -126,21 +128,16 @@ public:
     double compute_log_plan_spanning_trees(MapParams const &map_params) const;
 
     double compute_log_linking_edge_count(PlanMultigraph &plan_multigraph) const;
-
-    // count global number of county splits the map creates
-    int count_county_splits(MapParams const &map_params, std::vector<bool> &visited) const;
-
-    int count_merged_county_splits(MapParams const &map_params, std::vector<bool> &visited,
-        int const region1_id, int const region2_id) const;
-
     
     // attempts to build a plan multigraph and return valid merge split pairs 
     virtual std::pair<bool, std::vector<std::pair<RegionID,RegionID>>> attempt_to_get_valid_mergesplit_pairs(
-        PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule
+        PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule,
+        ScoringFunction const &scoring_function
     ) const;
 
     virtual std::vector<std::pair<RegionID,RegionID>> get_valid_smc_merge_regions(
-        PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule
+        PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule,
+        ScoringFunction const &scoring_function
     ) const;
 
 
@@ -193,7 +190,7 @@ public:
     // - for forest sampling its the effective tree boundary length
     virtual std::vector<std::tuple<RegionID, RegionID, double>> get_valid_adj_regions_and_eff_log_boundary_lens(
         PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
-        TreeSplitter const &tree_splitter
+        ScoringFunction const &scoring_function, TreeSplitter const &tree_splitter
     ) const = 0;  
 };
 
@@ -463,6 +460,12 @@ class PlanMultigraph{
         // from the hash map 
         void remove_invalid_size_pairs(
             Plan const &plan, const SplittingSchedule &splitting_schedule
+        );
+
+        // Removes pairs where merging them makes a plan that 
+        // doesn't satisfy hard constraints 
+        void remove_invalid_hard_constraint_pairs(
+            Plan const &plan, ScoringFunction const &scoring_function 
         );
 
         // Removes pairs where merging them would create a hierarchicall

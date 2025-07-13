@@ -120,6 +120,7 @@ List draw_a_tree_on_a_region(
     std::vector<int> pop_below(V, 0);
     std::vector<int> tree_vertex_parents(V, -2);
     Tree county_tree = init_tree(map_params.num_counties);
+    TreePopStack county_stack(map_params.num_counties);
     arma::uvec county_pop(map_params.num_counties, arma::fill::zeros);
     std::vector<std::vector<int>> county_members(map_params.num_counties, std::vector<int>{});
     std::vector<bool> c_visited(map_params.num_counties, true);
@@ -154,7 +155,8 @@ List draw_a_tree_on_a_region(
         // Get a uniform spanning tree drawn on that region
         int result = sample_sub_ust(map_params, ust, root, 
             lower, upper,
-            visited, ignore, county_tree, county_pop, county_members, 
+            visited, ignore, county_tree, county_stack,
+             county_pop, county_members, 
             c_visited, cty_pop_below, county_path, path,
             rng_state
             );
@@ -541,6 +543,7 @@ List draw_trees_on_a_region(
         static thread_local std::vector<bool> visited(map_params.V);
         static thread_local std::vector<bool> ignore(map_params.V, false);
         static thread_local Tree county_tree = init_tree(map_params.num_counties);
+        static thread_local TreePopStack county_stack(map_params.num_counties);
         static thread_local arma::uvec county_pop(map_params.num_counties, arma::fill::zeros);
         static thread_local std::vector<std::vector<int>> county_members(map_params.num_counties, std::vector<int>{});
         static thread_local std::vector<bool> c_visited(map_params.num_counties, true);
@@ -561,7 +564,7 @@ List draw_trees_on_a_region(
             // sample until successful
             result = sample_sub_ust(map_params, ust, root, 
                 lower, upper,
-                visited, ignore, county_tree, county_pop, county_members, 
+                visited, ignore, county_tree, county_stack, county_pop, county_members, 
                 c_visited, cty_pop_below, county_path, path,
                 rng_states[thread_id]
             );

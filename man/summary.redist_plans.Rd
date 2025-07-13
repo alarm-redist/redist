@@ -4,20 +4,31 @@
 \alias{summary.redist_plans}
 \title{Diagnostic information on sampled plans}
 \usage{
-\method{summary}{redist_plans}(object, district = 1L, all_runs = TRUE, vi_max = 100, ...)
+\method{summary}{redist_plans}(
+  object,
+  district = FALSE,
+  all_runs = TRUE,
+  vi_max = 100,
+  use_order_stats = TRUE,
+  ...
+)
 }
 \arguments{
 \item{object}{a \link{redist_plans} object}
 
 \item{district}{For R-hat values, which district to use for district-level
 summary statistics. We strongly recommend calling \code{match_numbers()} or
-\code{number_by()} before examining these district-level statistics.}
+\code{number_by()} before examining these district-level statistics. A value of
+\code{FALSE} indicates to compute the rhats for all districts}
 
 \item{all_runs}{When there are multiple SMC runs, show detailed summary
 statistics for all runs (the default), or only the first run?}
 
 \item{vi_max}{The maximum number of plans to sample in computing the pairwise
 variation of information distance (sample diversity).}
+
+\item{use_order_stats}{Whether or not to compute rhats on the ordered district
+statistics.}
 
 \item{\dots}{additional arguments (ignored)}
 }

@@ -17,9 +17,9 @@ the plans output by the function but the sample space used can have a large
 impact on computational cost/runtime and convergence. Current spaces supported
 right now are
 \itemize{
-\item graph_plan_space : graph partition space
-\item spanning_forest_space : spanning forest space
-\item linking_edge_space : linking edge forest space
+\item graph_plan : graph partition space
+\item spanning_forest : spanning forest space
+\item linking_edge : linking edge forest space
 }}
 }
 \value{

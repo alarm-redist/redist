@@ -10,8 +10,8 @@ remove (splitting the tree)
 
 
 
-constexpr bool PRINT_PERFORANCE_TIMES = true; // Compile-time constant
-
+constexpr bool PRINT_PERFORANCE_TIMES = false; // Compile-time constant
+constexpr bool FINDING_EDGE_CUTS_VERBOSE = false;
 
 
 
@@ -70,7 +70,7 @@ inline std::vector<EdgeCut> get_all_valid_edge_cuts_from_edge(
             double cut_region2_lb = lower*cut_region2_size; 
             double cut_region2_ub = upper*cut_region2_size;
 
-            if(TREE_SPLITTING_DEBUG_VERBOSE){
+            if(FINDING_EDGE_CUTS_VERBOSE){
             REprintf("\tFor (%d, %d): compare %f vs %f vs %f and %f vs %f vs %f \n", 
                 cut_region1_size, cut_region2_size,
                 cut_region1_lb, below_pop, cut_region1_ub,
@@ -96,7 +96,7 @@ inline std::vector<EdgeCut> get_all_valid_edge_cuts_from_edge(
             if(cut_region1_size == cut_region2_size) continue;
 
 
-            if(TREE_SPLITTING_DEBUG_VERBOSE){
+            if(FINDING_EDGE_CUTS_VERBOSE){
             REprintf("\tFor (%d, %d): compare %f vs %f vs %f and %f vs %f vs %f \n", 
                 cut_region2_size, cut_region1_size,
                 cut_region2_lb, below_pop, cut_region2_ub,
@@ -425,7 +425,7 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
         // if no valid edges is true we no there's no point in searching up this path anymore
 
             // All children of this vertex are processed; calculate its population below
-            int pop_below_vtx = pop(vtx); // Start with the vertex's own population
+            int pop_below_vtx = pop[vtx]; // Start with the vertex's own population
             // Add population below from each child 
             for (const auto &child : a_ust[vtx]) {
                 pop_below_vtx += pops_below_vertex[child]; // Add population from child vertices

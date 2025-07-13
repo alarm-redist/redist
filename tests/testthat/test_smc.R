@@ -110,14 +110,14 @@ test_that("Partial sampling works accurately", {
     log_st_ref <- round(log_st_map(adj, ref_plans, rep(1L, 25), 3L), 5)
 
     out1 <- redist_smc(set_pop_tol(fl_map, 0.01), 3000, compactness = 0,
-        n_steps = 1, split_params = list(adapt_k_thresh = .99), seq_alpha = 1L,
+        n_steps = 1, split_params = list(adapt_k_thresh = .9), seq_alpha = .5,
         ncores = 1L, control = list(weight_type = "simple"),
         resample = TRUE, silent = TRUE) %>%
         suppressWarnings() # efficiency
     out2 <- redist_smc(set_pop_tol(fl_map, 0.01), 3000, compactness = 0,
         init_particles = as.matrix(out1),
         ncores = 1L, control = list(weight_type = "simple"),
-        split_params = list(adapt_k_thresh = .99), seq_alpha = 1L, resample = T, silent = TRUE) %>%
+        split_params = list(adapt_k_thresh = .9), seq_alpha = .5, resample = F, silent = TRUE) %>%
         suppressWarnings() # efficiency
     log_st <- round(log_st_map(adj, as.matrix(out2), rep(1L, 25), 3L), 5)
     types <- match(log_st, log_st_ref)

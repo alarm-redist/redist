@@ -53,6 +53,7 @@ Tree sample_ust(List l, const arma::uvec &pop, double lower, double upper,
     int root;
     std::vector<bool> visited(V);
     Tree county_tree = init_tree(map_params.num_counties);
+    TreePopStack county_stack(map_params.num_counties + 1);
     arma::uvec county_pop(map_params.num_counties, arma::fill::zeros);
     std::vector<std::vector<int>> county_members(map_params.num_counties, std::vector<int>{});
     std::vector<bool> c_visited(map_params.num_counties, true);
@@ -63,7 +64,8 @@ Tree sample_ust(List l, const arma::uvec &pop, double lower, double upper,
 
     sample_sub_ust(map_params, tree, root, 
         lower, upper,
-        visited, ignore, county_tree, county_pop, county_members, 
+        visited, ignore, county_tree, county_stack, 
+        county_pop, county_members, 
         c_visited, cty_pop_below, county_path, path,
         rng_state);
     return tree;
@@ -77,7 +79,8 @@ int sample_sub_ust(
     MapParams const &map_params, Tree &tree, int &root,
     double const lower, double const upper,
     std::vector<bool> &visited, const std::vector<bool> &ignore, 
-    Tree &cty_tree, arma::uvec &county_pop, std::vector<std::vector<int>> &county_members,
+    Tree &cty_tree, TreePopStack &county_stack, 
+    arma::uvec &county_pop, std::vector<std::vector<int>> &county_members,
     std::vector<bool> &c_visited, std::vector<int> &cty_pop_below,
     std::vector<std::array<int, 3>> &county_path, std::vector<int> &path,
     RNGState &rng_state) {
@@ -154,7 +157,7 @@ int sample_sub_ust(
     // figure out which counties will not need to be split
     if (n_county > 1) {
     // don't need to fill pop below since it gets reset
-    get_tree_pops_below(cty_tree, map_params.counties[root] - 1, county_pop, cty_pop_below);
+    get_tree_pops_below(cty_tree, map_params.counties[root] - 1, county_stack, county_pop, cty_pop_below);
     for (int i = 0; i < n_county; i++) {
         int n_vtx = county_members[i].size();
         if (n_vtx <= 1) continue;

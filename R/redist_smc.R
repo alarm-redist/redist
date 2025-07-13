@@ -228,7 +228,7 @@ redist_smc <- function(
         split_params = NULL,
         ms_params = list(),
         n_steps = NULL, seq_alpha = 1L,
-        truncate = (compactness != 1), trunc_fn = redist_quantile_trunc,
+        truncate = FALSE, trunc_fn = redist_quantile_trunc,
         pop_temper = 0, ref_name = NULL,
         verbose = FALSE, silent = FALSE, diagnostics = c("basic", "all"),
         control = list(weight_type = "optimal", nproc = 1L),
@@ -242,9 +242,16 @@ redist_smc <- function(
             split_params$adapt_k_thresh <- adapt_k_thresh
             split_params$estimate_cut_k <- TRUE
         }else{
-            split_params$list(adapt_k_thresh = adapt_k_thresh, estimate_cut_k=TRUE)
+            split_params = list(adapt_k_thresh = adapt_k_thresh, estimate_cut_k=TRUE)
         }
     }
+
+    if (!assertthat::is.scalar(compactness) || compactness < 0)
+        cli::cli_abort("{.arg compactness} must be non-negative.")
+    if (seq_alpha <= 0 || seq_alpha > 1 || !assertthat::is.scalar(seq_alpha))
+        cli::cli_abort("{.arg seq_alpha} must lie in (0, 1].")
+    if (nsims < 1)
+        cli::cli_abort("{.arg nsims} must be positive.")
 
 
 
@@ -275,10 +282,7 @@ redist_smc <- function(
     #   - For mergesplit parallel put it back and then just have it call the
     #        other on
 
-    if (!assertthat::is.scalar(compactness) || compactness < 0)
-        cli_abort("{.arg compactness} must be non-negative.")
-    if (seq_alpha <= 0 || seq_alpha > 1 || !assertthat::is.scalar(seq_alpha))
-        cli_abort("{.arg seq_alpha} must lie in (0, 1].")
+
 
     # if graph space default to k stuff else default to unif valid edge
     if(sampling_space == GRAPH_PLAN_SPACE_SAMPLING){
@@ -347,9 +351,9 @@ redist_smc <- function(
             splitting_size_regime = "one_custom_size"
         }
     }else{
-        # default to any size if SMD and district if MMD
+        # default to  district
         if(districting_scheme == "SMD"){
-            splitting_size_regime = "any_valid_sizes"
+            splitting_size_regime = "split_district_only"
         }else if(districting_scheme == "MMD"){
             splitting_size_regime = "split_district_only_mmd"
         }else{
@@ -370,7 +374,20 @@ redist_smc <- function(
                 init_nseats <- get_nseats_matrix(init_particles)
             }
             init_particles <- get_plans_matrix(init_particles) - 1L
+        }else if(is.matrix(init_particles)){
+            if(is.null(init_nseats)){
+                # else infer
+                cli::cli_warn("{.arg init_nseats} was not passed in, attempting to infer number of seats per region.")
+                init_nseats <- infer_plan_nseats(
+                    init_particles, total_seats, pop,
+                    pop_bounds[1], pop_bounds[3]
+                )
+            }
+            init_particles <- init_particles - 1L
+        }else{
+            cli::cli_abort("{.arg init_particles} must be either a redist_plans object or a matrix")
         }
+
         if(is.null(init_nseats)){
             # else infer
             cli::cli_warn("{.arg init_nseats} was not passed in, attempting to infer number of seats per region.")
@@ -491,6 +508,7 @@ redist_smc <- function(
 
     # set up parallel processing stuff
     ncores_max <- parallel::detectCores()
+    if(ncores_max <= 0) ncores_max <- 1
 
     # legacy, ncores is essentially the number of threads per process
     num_threads_per_process <- ncores
@@ -587,7 +605,7 @@ redist_smc <- function(
         })
         doParallel::registerDoParallel(cl, cores = nproc)
         on.exit(stopCluster(cl))
-        cat("Spawning " , nproc, " clusters \n")
+        if (!silent) cat("Spawning " , nproc, " clusters \n")
     } else {
         `%oper%` <- `%do%`
     }
@@ -612,7 +630,7 @@ redist_smc <- function(
 
 
     t1 <- Sys.time()
-    all_out <- foreach(chain = seq_len(runs), .inorder = FALSE) %oper% {
+    all_out <- foreach(chain = seq_len(runs), .inorder = FALSE, .packages="redist") %oper% {
         if(chain == 1){
             is_chain1 <- T
         }
@@ -693,6 +711,8 @@ redist_smc <- function(
 
         # pull out the log weights
         lr <- algout$log_weights
+        # get the standard deviations
+        sd_lp <- algout$log_weight_stddev
 
         wgt <- exp(lr - mean(lr))
         n_eff <- length(wgt)*mean(wgt)^2/mean(wgt^2)
@@ -712,7 +732,6 @@ redist_smc <- function(
         }
 
         if (resample) {
-
             if (!truncate) {
                 normalized_wgts <- wgt/sum(wgt)
             } else if (requireNamespace("loo", quietly = TRUE) && is.null(trunc_fn)) {
@@ -749,58 +768,44 @@ redist_smc <- function(
             # do unique parents
             nunique_parent_indices <- c(
                 algout$nunique_parent_indices,
-                dplyr::n_distinct(rs_idx[1:length(rs_idx)]))
+                dplyr::n_distinct(rs_idx[1:length(rs_idx)])
+                )
+
+            # also add NA
+            sd_lp <- c(sd_lp, NA)
 
             #TODO probably need to adjust the rest of these as well
             storage.mode(algout$ancestors) <- "integer"
         }else{
             nunique_parent_indices <- algout$nunique_parent_indices
+            n_eff <- algout$step_n_eff[length(algout$step_n_eff)]
+
         }
         if(DEBUG_MODE) print("Checkpoint 4 - after resample!")
 
         t2_run <- Sys.time()
-        # get original ancestor matrix from parent index
-        algout$original_ancestors_mat <- get_original_ancestors_mat(
-            algout$parent_index
-        )
+
         if(DEBUG_MODE) print("Checkpoint 5 - after og anvestor mat!")
 
-
-        # now for the smc step only diagnostics make it so
-        # the merge split steps are just NA
-        dummy_vec <- rep(NA, length(algout$merge_split_steps))
-
-        # do effective sample size
-        dummy_vec[!algout$merge_split_steps] <- algout$step_n_eff
-        algout$step_n_eff <- dummy_vec
-        # do log weight sd
-        dummy_vec[!algout$merge_split_steps] <- algout$log_weight_stddev
-        sd_lp <- c(dummy_vec, sd(lr))
-
-        dummy_vec <- rep(NA, length(algout$merge_split_steps) + 1)
-        # do unique original ancestors
-        dummy_vec[!c(algout$merge_split_steps,FALSE)] <- apply(algout$original_ancestors_mat, 2, dplyr::n_distinct)
-        nunique_original_ancestors <- dummy_vec
-        # do unique parents
-        dummy_vec[!c(algout$merge_split_steps,FALSE)] <- nunique_parent_indices
-        nunique_parent_indices <- dummy_vec
-        if(DEBUG_MODE) print("Checkpoint 5.1 - got summary info!")
         # make sizes null if needed
         if(!algout$plan_sizes_saved){
             algout$region_sizes_mat <- NULL
         }
         if(DEBUG_MODE) print("Checkpoint 5.5 - got summary info!")
 
-
-        if (!is.nan(n_eff) && n_eff/nsims <= 0.05)
-            cli_warn(c("Less than 5% resampling efficiency.",
-                       "*" = "Increase the number of samples.",
-                       "*" = "Consider weakening or removing constraints.",
-                       "i" = "If sampling efficiency drops precipitously in the final
+        if (!is.nan(n_eff) && n_eff/nsims <= 0.05){
+            cli::cli_warn(c("Less than 5% resampling efficiency.",
+                            "*" = "Increase the number of samples.",
+                            "*" = "Consider weakening or removing constraints.",
+                            "i" = "If sampling efficiency drops precipitously in the final
                                 iterations, population balance is likely causing a bottleneck.
                                 Try increasing {.arg pop_temper} by 0.01.",
-                       "i" = "If sampling efficiency declines steadily across iterations,
+                            "i" = "If sampling efficiency declines steadily across iterations,
                                 adjusting {.arg seq_alpha} upward may help a bit."))
+        }
+
+
+        if(DEBUG_MODE) print("Checkpoint 5.8 - got summary info!")
 
         # add the numerically stable weights back
         algout$wgt <- wgt
@@ -808,14 +813,12 @@ redist_smc <- function(
         # flatten the region sizes by column
         dim(algout$region_sizes_mat) <- NULL
 
-        storage.mode(algout$original_ancestors_mat) <- "integer"
         storage.mode(algout$parent_index) <- "integer"
 
         if(DEBUG_MODE) print("Checkpoint 6 - before various diagnostics!")
         # Internal diagnostics,
         algout$internal_diagnostics <- list(
             parent_index_mat = algout$parent_index,
-            original_ancestors_mat = algout$original_ancestors_mat,
             log_incremental_weights_mat = algout$log_incremental_weights_mat,
             draw_tries_mat = algout$draw_tries_mat,
             tree_sizes = algout$tree_sizes,
@@ -848,23 +851,18 @@ redist_smc <- function(
         )
 
         # add high level diagnostic stuff
-        # DOUBLE CHECK ALL THE SAME
-        # Need to standardize with merge split
         algout$l_diag <- list(
             n_eff = n_eff,
             step_n_eff = algout$step_n_eff,
-            adapt_k_thresh = split_params$adapt_k_thresh, # adapt_k_thresh, NEED TO DEAL WITH
             est_k = algout$est_k,
             split_params=split_params,
             accept_rate = algout$acceptance_rates,
             sd_lp = sd_lp,
-            sd_temper = rep(NA, total_steps),
             unique_survive = nunique_parent_indices,
             ancestors = algout$ancestors,
             seq_alpha = seq_alpha,
             pop_temper = pop_temper,
-            runtime = as.numeric(t2_run - t1_run, units = "secs"),
-            nunique_original_ancestors = nunique_original_ancestors
+            runtime = as.numeric(t2_run - t1_run, units = "secs")
         )
 
         algout
@@ -878,6 +876,7 @@ redist_smc <- function(
     }
 
     if(DEBUG_MODE) print("Checkpoint 7 - Out of for loop!")
+
 
     # combine if needed
     if(runs > 1){
@@ -930,6 +929,7 @@ redist_smc <- function(
         ref_name <- if (!is.null(ref_name)) ref_name else exist_name
         out <- add_reference(out, map[[exist_name]], ref_name)
     }
+    if(DEBUG_MODE) print("Checkpoint 9 - Returning new plans!")
 
     out
 

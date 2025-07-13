@@ -353,6 +353,64 @@ typedef FixedStack<std::tuple<int, int, bool>> TreePopStack;
 
 
 
+template<typename T>
+class CircularQueue {
+private:
+    std::vector<T> buffer;
+    size_t head = 0;       // Points to the front item
+    size_t tail = 0;       // Points to the next write position
+    size_t const capacity;
+    size_t size = 0;
+
+public:
+    explicit CircularQueue(size_t max_size)
+        : buffer(max_size), capacity(max_size) {}
+
+    bool empty() const { return size == 0; }
+    bool full() const { return size == capacity; }
+    size_t get_size() const { return size; }
+    size_t max_size() const { return capacity; }
+
+    void push(const T& value) {
+        buffer[tail] = value;
+        tail = (tail + 1) % capacity;
+        ++size;
+    }
+
+    void push(T&& value) {
+        buffer[tail] = std::move(value);
+        tail = (tail + 1) % capacity;
+        ++size;
+    }
+
+    T pop() {
+        T value = std::move(buffer[head]);
+        head = (head + 1) % capacity;
+        --size;
+        return value;
+    }
+
+    T& front() {
+        return buffer[head];
+    }
+
+    const T& front() const {
+        return buffer[head];
+    }
+
+    T& back() {
+        return buffer[(tail + capacity - 1) % capacity];
+    }
+
+    const T& back() const {
+        return buffer[(tail + capacity - 1) % capacity];
+    }
+
+    void clear() {
+        head = tail = size = 0;
+    }
+};
+
 // enum for sampling spaces
 enum class SamplingSpace : unsigned char
 {
