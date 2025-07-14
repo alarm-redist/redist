@@ -54,7 +54,8 @@ void compute_all_plans_log_simple_incremental_weights(
 
 double compute_log_optimal_incremental_weights(
     Plan const &plan, PlanMultigraph &plan_multigraph,
-    const SplittingSchedule &splitting_schedule, const TreeSplitter &edge_splitter,
+    const SplittingSchedule &splitting_schedule, 
+    USTSampler &ust_sampler, const TreeSplitter &edge_splitter,
     SamplingSpace const sampling_space,
     ScoringFunction const &scoring_function, double const rho,
     bool compute_log_splitting_prob, bool is_final_plan

@@ -161,7 +161,15 @@ class MapParams {
     MapParams(Rcpp::List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
         int const ndists, int const total_seats, std::vector<int> const &district_seat_sizes,
         double const lower, double const target, double const upper) :
-        g(list_to_graph(adj_list)), counties(counties), num_counties(max(counties)),
+        g(list_to_graph(adj_list)), 
+        num_edges([this]() {
+              int total = 0;
+              for (const auto& vec : g) {
+                  total += vec.size();
+              }
+              return total / 2;
+          }()),
+        counties(counties), num_counties(max(counties)),
         cg(county_graph(g, counties)),
         county_restricted_graph(num_counties > 1 ? build_restricted_county_graph(g, counties) : Graph(0)),
         // silly but call function twice so attributes can be constant 
@@ -173,7 +181,25 @@ class MapParams {
         smallest_district_size(*min_element(district_seat_sizes.begin(), district_seat_sizes.end())),
         largest_district_size(*max_element(district_seat_sizes.begin(), district_seat_sizes.end())),
         district_seat_sizes(district_seat_sizes),
-        is_district(total_seats+1, false){
+        is_district([ndists, total_seats, &district_seat_sizes]() {
+            // vector where index i is true iff i seats is a district 
+            std::vector<bool> is_district_vec(total_seats + 1, false);
+            if(ndists > total_seats){
+                throw Rcpp::exception("The number of distrcts must be less than or equal to the total number of seats!\n");
+            }else if(ndists != total_seats){
+                for (auto const &a_size: district_seat_sizes){
+                    if(a_size < 0) throw Rcpp::exception("District Seat Sizes must be strictly positive!\n");
+                    if(a_size >= total_seats)  throw Rcpp::exception("District Seat Sizes must be less than total seats!\n");
+                    // mark this as a district size 
+                    is_district_vec[a_size] = true;
+                }
+                
+            }else{
+                is_district_vec[1] = true;
+            }
+            return is_district_vec;
+          }())
+          {
             // check the sizes are ok 
             if(ndists-1 > MAX_SUPPORTED_NUM_DISTRICTS || total_seats-1 > MAX_SUPPORTED_NUM_DISTRICTS){
                 REprintf("The maximum number of districts supported right now is %u!\n",
@@ -189,28 +215,15 @@ class MapParams {
                 REprintf("The maximum number of vertices supported right now is %u!\n",
                     MAX_SUPPORTED_NUM_VERTICES);
                 throw Rcpp::exception("Too many vertices in the map! This number of vertices isn't supported!\n");
-            }
-            if(ndists > total_seats){
-                throw Rcpp::exception("The number of distrcts must be less than or equal to the total number of seats!\n");
-            }else if(ndists != total_seats){
-                for (auto const &a_size: district_seat_sizes){
-                    if(a_size < 0) throw Rcpp::exception("District Seat Sizes must be strictly positive!\n");
-                    if(a_size >= total_seats)  throw Rcpp::exception("District Seat Sizes must be less than total seats!\n");
-                    // mark this as a district size 
-                    is_district[a_size] = true;
-                }
-                
-            }else{
-                is_district[1] = true;
-            }
-            
+            }            
         };
 
     Graph const g; // The graph as undirected adjacency list 
+    int const num_edges; // number of undirected edges in g 
     arma::uvec const counties; // county labels
     int const num_counties; // The number of distinct counties
     Multigraph const cg; // county multigraph
-    Graph county_restricted_graph; // g but with all edges crossing counties removed 
+    Graph const county_restricted_graph; // g but with all edges crossing counties removed 
     Tree const county_forest; // Spanning forest on the counties, ie each tree is a tree on a specific county
     std::vector<int> const county_forest_roots; // roots of each county tree, so [i] is root of tree on county[i+1]
     arma::uvec const pop; // population of each vertex
@@ -223,7 +236,7 @@ class MapParams {
     int const smallest_district_size; // smallest district size
     int const largest_district_size; // largest district size
     std::vector<int> const district_seat_sizes; // vector of all district seat sizes 
-    std::vector<bool> is_district; // of length total_seats that says whether or not that size is a district
+    std::vector<bool> const is_district; // of length total_seats that says whether or not that size is a district
 
 };
 

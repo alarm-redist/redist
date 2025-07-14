@@ -25,13 +25,14 @@ public:
 
     std::vector<std::tuple<RegionID, RegionID, double>> get_valid_adj_regions_and_eff_log_boundary_lens(
         PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
-        ScoringFunction const &scoring_function, TreeSplitter const &tree_splitter
+        ScoringFunction const &scoring_function, 
+        USTSampler &ust_sampler, TreeSplitter const &tree_splitter
     ) const override;
 
 
     double get_log_eff_boundary_len(
         PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
-        TreeSplitter const &tree_splitter, 
+        USTSampler &ust_sampler, TreeSplitter const &tree_splitter, 
         const int region1_id, int const region2_id
     ) const override;
 };

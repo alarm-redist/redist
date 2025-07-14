@@ -873,6 +873,9 @@ PlanMultigraph::PlanMultigraph(MapParams const &map_params):
     component_region_counts(counties_on ? map_params.ndists : 0, 0),
     region_overlap_counties(counties_on ? map_params.ndists : 0),
     num_county_region_components(0),
+    other_counties_vertices(map_params.num_edges+1),
+    current_county_diff_region_vertices(map_params.num_edges+1),
+    current_county_region_vertices(map_params.num_edges+1),
     pair_map(map_params.ndists){
 
 };
@@ -952,11 +955,11 @@ std::pair<bool, int> PlanMultigraph::is_hierarchically_connected(
         }
 
         // Now we traverse all neighbors in the same component 
-        std::queue<int> vertex_queue;
-        vertex_queue.push(v);
+        current_county_region_vertices.clear();
+        current_county_region_vertices.push(v);
 
-        while(!vertex_queue.empty()){
-            int u = vertex_queue.front(); vertex_queue.pop();
+        while(!current_county_region_vertices.empty()){
+            int u = current_county_region_vertices.pop();
             int u_region = plan.region_ids[u];
             int u_county = map_params.counties[u];
 
@@ -971,7 +974,7 @@ std::pair<bool, int> PlanMultigraph::is_hierarchically_connected(
                    u_county == map_params.counties[child_vertex]){
                     // if same then same component mark as visited to avoid being added later  
                     vertices_visited[child_vertex] = true;
-                    vertex_queue.push(child_vertex);
+                    current_county_region_vertices.push(child_vertex);
                 }
             }
         }
@@ -1030,6 +1033,11 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(
     // quotient graph
     int county_connected_component_counter = 0;
 
+    // clear the queues 
+    other_counties_vertices.clear();
+    current_county_diff_region_vertices.clear();
+    current_county_region_vertices.clear();
+
     // Now we walk through the graph 
     for (int w = 0; w < map_params.V; w++)
     {
@@ -1040,9 +1048,7 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(
         int num_current_county_region_components = 1;
         int num_current_counties = 1;
 
-        std::queue<int> other_counties_vertices;
-        std::queue<int> current_county_diff_region_vertices;
-        std::queue<int> current_county_region_vertices;
+
         // add this vertex and mark as visited 
         current_county_region_vertices.push(w);
         // assign this region to the component
@@ -1061,12 +1067,10 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(
 
             // first see if anything in this region and county 
             if (!current_county_region_vertices.empty()) {
-                v = current_county_region_vertices.front(); 
-                current_county_region_vertices.pop();
+                v = current_county_region_vertices.pop();
             } else if (!current_county_diff_region_vertices.empty()) {
                 // else we've got a vertex in a different region in the same county
-                v = current_county_diff_region_vertices.front(); 
-                current_county_diff_region_vertices.pop();
+                v = current_county_diff_region_vertices.pop();
                 // if we haven't visited this vertex yet that means we're reaching 
                 // this component for the first time 
                 if(!vertices_visited[v]){
@@ -1083,8 +1087,7 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(
                 }
             } else if (!other_counties_vertices.empty()) {
                 // else we've got a vertex in a different county
-                v = other_counties_vertices.front(); 
-                other_counties_vertices.pop();
+                v = other_counties_vertices.pop();
                 // if we haven't visited this vertex yet that means we're reaching 
                 // this county for the first time 
                 if(!vertices_visited[v]){

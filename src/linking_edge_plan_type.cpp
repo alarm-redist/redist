@@ -195,7 +195,7 @@ void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
 
 double LinkingEdgePlan::get_log_eff_boundary_len(
     PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
-    TreeSplitter const &tree_splitter, 
+    USTSampler &ust_sampler, TreeSplitter const &tree_splitter, 
     const int region1_id, int const region2_id
 ) const {
     // Go through and find that pair 
@@ -213,7 +213,8 @@ double LinkingEdgePlan::get_log_eff_boundary_len(
 
 std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_adj_regions_and_eff_log_boundary_lens(
     PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
-    ScoringFunction const &scoring_function, TreeSplitter const &tree_splitter
+    ScoringFunction const &scoring_function, 
+    USTSampler &ust_sampler, TreeSplitter const &tree_splitter
 ) const{
     // build the multigraph 
     plan_multigraph.build_plan_multigraph(*this);

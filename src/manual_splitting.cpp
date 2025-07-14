@@ -197,7 +197,7 @@ List draw_a_tree_on_a_region(
 //' a successful cut is made.
 //'
 //'
-//' @inheritParams run_redist_gsmc
+//' @inheritParams run_redist_smc
 //' @inheritParams get_edge_to_cut
 //'
 //' @returns A list with the following

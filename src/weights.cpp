@@ -112,7 +112,8 @@ double get_log_retroactive_splitting_prob(
 // the number of ancestors 
 double compute_simple_log_incremental_weight(
     Plan const &plan, PlanMultigraph &plan_multigraph,
-    const SplittingSchedule &splitting_schedule, const TreeSplitter &edge_splitter,
+    const SplittingSchedule &splitting_schedule, 
+    USTSampler &ust_sampler, TreeSplitter const &edge_splitter,
     SamplingSpace const sampling_space,
     ScoringFunction const &scoring_function, double rho,
     bool compute_log_splitting_prob, bool is_final_plan
@@ -149,7 +150,8 @@ double compute_simple_log_incremental_weight(
         );
         // taus cancel so just add the boundary length which we have from hash map 
         log_forward_kernel_term = plan.get_log_eff_boundary_len(
-            plan_multigraph, splitting_schedule, edge_splitter,
+            plan_multigraph, splitting_schedule, 
+            ust_sampler, edge_splitter,
             region1_id, region2_id
         );
         if(compute_log_tau){
@@ -194,7 +196,8 @@ double compute_simple_log_incremental_weight(
         log_forward_kernel_term -= last_split_merge_log_tau;
         // tree boundary length 
         log_forward_kernel_term += plan.get_log_eff_boundary_len(
-            plan_multigraph, splitting_schedule, edge_splitter,
+            plan_multigraph, splitting_schedule, 
+            ust_sampler, edge_splitter,
             region1_id, region2_id
         );
 
@@ -354,10 +357,11 @@ void compute_all_plans_log_simple_incremental_weights(
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
         static thread_local PlanMultigraph plan_multigraph(map_params);
+        static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
 
         double log_incr_weight = compute_simple_log_incremental_weight(
             *plans_ptr_vec[i], plan_multigraph,
-            splitting_schedule, tree_splitter, 
+            splitting_schedule, ust_sampler, tree_splitter, 
             sampling_space,
             scoring_function, rho,
             compute_log_splitting_prob, 
@@ -407,7 +411,8 @@ void compute_all_plans_log_simple_incremental_weights(
 //'
 double compute_log_optimal_incremental_weights(
     Plan const &plan, PlanMultigraph &plan_multigraph,
-    const SplittingSchedule &splitting_schedule, const TreeSplitter &edge_splitter,
+    const SplittingSchedule &splitting_schedule, 
+    USTSampler &ust_sampler, TreeSplitter const &edge_splitter,
     SamplingSpace const sampling_space,
     ScoringFunction const &scoring_function, double const rho,
     bool compute_log_splitting_prob, bool is_final_plan
@@ -425,7 +430,8 @@ double compute_log_optimal_incremental_weights(
 
     // get region pair to effective boundary length map
     auto region_pair_log_eff_boundary_map = plan.get_valid_adj_regions_and_eff_log_boundary_lens(
-        plan_multigraph, splitting_schedule, scoring_function, edge_splitter
+        plan_multigraph, splitting_schedule, scoring_function,
+        ust_sampler, edge_splitter
     );
 
     // get region multigraph if using linked edge 
@@ -652,12 +658,13 @@ void compute_all_plans_log_optimal_incremental_weights(
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, nsims, [&] (int i) {
         static thread_local PlanMultigraph plan_multigraph(map_params);
+        static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
 
 
         // REprintf("I=%d\n", i);
         double log_incr_weight = compute_log_optimal_incremental_weights(
             *plans_ptr_vec[i], plan_multigraph, 
-            splitting_schedule, tree_splitter,
+            splitting_schedule, ust_sampler, tree_splitter,
             sampling_space, scoring_function, 
             rho, compute_log_splitting_prob, 
             is_final_plans

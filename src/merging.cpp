@@ -303,11 +303,13 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         bool const using_linking_edge_space = sampling_space == SamplingSpace::LinkingEdgeSpace;
         // compute the boundary length 
         double current_log_eff_boundary = plan.get_log_eff_boundary_len(
-            current_plan_multigraph, splitting_schedule, tree_splitter, 
+            current_plan_multigraph, splitting_schedule,
+            ust_sampler, tree_splitter, 
             region1_id, region2_id
         );
         double proposed_log_eff_boundary = new_plan.get_log_eff_boundary_len(
-            proposed_plan_multigraph, splitting_schedule, tree_splitter,
+            proposed_plan_multigraph, splitting_schedule, 
+            ust_sampler, tree_splitter,
             region1_id, region2_id
         );
         // If linking edge space we need to subtract linking edge correction term

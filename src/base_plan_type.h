@@ -180,7 +180,7 @@ public:
     // assumes the muligraph was already generated 
     virtual double get_log_eff_boundary_len(
         PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
-        TreeSplitter const &tree_splitter, 
+        USTSampler &ust_sampler, TreeSplitter const &tree_splitter, 
         const int region1_id, int const region2_id
     ) const = 0;
 
@@ -190,7 +190,8 @@ public:
     // - for forest sampling its the effective tree boundary length
     virtual std::vector<std::tuple<RegionID, RegionID, double>> get_valid_adj_regions_and_eff_log_boundary_lens(
         PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
-        ScoringFunction const &scoring_function, TreeSplitter const &tree_splitter
+        ScoringFunction const &scoring_function, 
+        USTSampler &ust_sampler, TreeSplitter const &tree_splitter
     ) const = 0;  
 };
 
@@ -425,6 +426,11 @@ class PlanMultigraph{
         std::vector<std::unordered_set<CountyID>> region_overlap_counties; // Stores which counties a region overlaps in
         
         int num_county_region_components; // number of connected components 
+
+        // queues used when building multigraph  
+        CircularQueue<int> other_counties_vertices;
+        CircularQueue<int> current_county_diff_region_vertices;
+        CircularQueue<int> current_county_region_vertices;
 
         RegionPairHash pair_map; // used for tracking adj regions 
 
