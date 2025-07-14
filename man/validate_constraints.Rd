@@ -4,13 +4,18 @@
 \alias{validate_constraints}
 \title{Checks that a constraint input is valid and returns it as a list ready for c++}
 \usage{
-validate_constraints(map, constraints)
+validate_constraints(map, constraints, compactness = 1L)
 }
 \arguments{
 \item{map}{A \code{\link[=redist_map]{redist_map()}} object.}
 
 \item{constraints}{A \code{\link[=redist_constr]{redist_constr()}} object or a list containing
 information on sampling constraints. See \link{constraints} for more information.}
+
+\item{compactness}{Controls the compactness of the generated districts, with
+higher values preferring more compact districts. Must be nonnegative. See
+the 'Details' section for more information, and computational
+considerations.}
 }
 \value{
 A list of splitting parameters which is safe to pass into c++ code

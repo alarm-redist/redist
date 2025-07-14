@@ -107,7 +107,7 @@ summary.redist_plans <- function(
     revamped_alg <- algo %in% c(SMC_ALG_TYPE, MS_SMC_ALG_TYPE, MCMC_ALG_TYPE)
 
     # get the display name
-    alg_display_name <- case_when(
+    alg_display_name <- dplyr::case_when(
         algo == SMC_ALG_TYPE ~ "SMC",
         algo == MS_SMC_ALG_TYPE ~ "SMC with Merge-Split MCMC Steps",
         algo == MCMC_ALG_TYPE ~ "Merge-Split MCMC",
@@ -125,7 +125,7 @@ summary.redist_plans <- function(
             return(invisible(1))
         }
         sampling_space <- all_sampling_spaces[1]
-        display_sampling_space <- case_when(
+        display_sampling_space <- dplyr::case_when(
             sampling_space == GRAPH_PLAN_SPACE_SAMPLING ~ "Graph Space",
             sampling_space == FOREST_SPACE_SAMPLING ~ "Spanning Forest Space",
             sampling_space == LINKING_EDGE_SPACE_SAMPLING ~ "Linking Edge Forest Space"
@@ -137,7 +137,7 @@ summary.redist_plans <- function(
             return(invisible(1))
         }
         split_method <- all_splitting_methods[1]
-        display_splitting_method <- case_when(
+        display_splitting_method <- dplyr::case_when(
             split_method == NAIVE_K_SPLITTING ~ "Naive Top K",
             split_method == UNIF_VALID_EDGE_SPLITTING ~ "Uniform Valid Edge",
             split_method == EXP_BIGGER_ABS_DEV_SPLITTING ~ "Exponential Absolute Deviance"
@@ -218,6 +218,7 @@ summary.redist_plans <- function(
     }
     addl_cols <- addl_cols[!const_cols]
 
+    warn_converge <- FALSE
     # do nothing if no additional columns or no chain column
     if(length(addl_cols) > 0 && "chain" %in% cols){
         rhats_computed <- TRUE
@@ -227,7 +228,7 @@ summary.redist_plans <- function(
         if(1 <= district && district <= n_distr){
             rhat_df <- object |>
                 filter(!is.na(chain) & district == !!district) |>
-                pivot_longer(
+                tidyr::pivot_longer(
                     cols = all_of(addl_cols),
                     names_to = "variable",
                     values_to = "value"
@@ -241,7 +242,7 @@ summary.redist_plans <- function(
             # else compute the rhats on the order statistics
             rhat_df <- object |>
                 filter(!is.na(chain)) |>
-                pivot_longer(
+                tidyr::pivot_longer(
                     cols = all_of(addl_cols),
                     names_to = "variable",
                     values_to = "value"
@@ -257,7 +258,7 @@ summary.redist_plans <- function(
             # else compute rhats using existing district number
             rhat_df <- object |>
                 filter(!is.na(chain)) |>
-                pivot_longer(
+                tidyr::pivot_longer(
                     cols = all_of(addl_cols),
                     names_to = "variable",
                     values_to = "value"
@@ -286,7 +287,6 @@ summary.redist_plans <- function(
             cli::cli_alert_danger("{.strong WARNING:} Chains have not converged.")
         }
     }else{
-        warn_converge <- FALSE
         rhats_computed <- FALSE
     }
 

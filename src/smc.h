@@ -52,7 +52,7 @@
 //' @export
 //' @keywords internal
 // [[Rcpp::export]]
-List run_redist_gsmc(
+List run_redist_smc(
         int const nsims, 
         int const total_seats, int const ndists, Rcpp::IntegerVector const district_seat_sizes,
         int const initial_num_regions, 

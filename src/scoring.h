@@ -635,8 +635,8 @@ class CustomPlanConstraint : public SoftPlanConstraint {
             fn(Rcpp::clone(fn))
             {};
         // computes score for a plan 
-        virtual double compute_plan_constraint_score(const Plan &plan) const;
-        virtual double compute_merged_plan_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const;
+        double compute_plan_constraint_score(const Plan &plan) const override;
+        double compute_merged_plan_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
 
 };
 
@@ -687,7 +687,7 @@ class ValidDistrictsConstraint : public HardPlanConstraint {
         std::pair<bool, double> compute_plan_constraint_score(const Plan &plan) const override;
         std::pair<bool, double> compute_merged_plan_constraint_score(
             const Plan &plan, int const region1_id, int const region2_id
-        ) const {throw Rcpp::exception("ValidDistrictsConstraint Merged version Not implemented yet!\n");};
+        ) const override {throw Rcpp::exception("ValidDistrictsConstraint Merged version Not implemented yet!\n");};
 };
 
 // scoring function 

@@ -7,19 +7,19 @@
 redist_mergesplit(
   map,
   nsims,
-  counties = NULL,
   warmup = if (is.null(init_plan)) 10 else max(100, nsims\%/\%5),
   thin = 1L,
   chains = 1,
   init_plan = NULL,
-  init_nseats = NULL,
+  counties = NULL,
+  compactness = 1,
   constraints = list(),
   constraint_fn = function(m) rep(0, ncol(m)),
   sampling_space = c("graph_plan", "spanning_forest", "linking_edge"),
   split_method = NULL,
   split_params = NULL,
   merge_prob_type = "uniform",
-  compactness = 1,
+  init_nseats = NULL,
   ncores = NULL,
   cl_type = "PSOCK",
   return_all = TRUE,
@@ -37,20 +37,12 @@ redist_mergesplit(
 \item{nsims}{The number of samples to generate. The chain will run for
 \code{warmup+(nsims*thin)} steps.}
 
-\item{counties}{A vector containing county (or other administrative or
-geographic unit) labels for each unit, which may be integers ranging from 1
-to the number of counties, or a factor or character vector.  If provided,
-the algorithm will generate maps tend to follow county lines. There is no
-strength parameter associated with this constraint. To adjust the number of
-county splits further, or to constrain a second type of administrative
-split, consider using \code{add_constr_splits()}, \code{add_constr_multisplits()},
-and \code{add_constr_total_splits()}.}
-
 \item{warmup}{The number of warmup samples to discard. Recommended to be at
 least the first 20\% of samples, and in any case no less than around 100
 samples, unless initializing from a random plan.}
 
-\item{thin}{Save every \code{thin}-th sample after running warump. Defaults to no thinning (1).}
+\item{thin}{Save every \code{thin}-th sample after running warump.
+Defaults to no thinning (1).}
 
 \item{chains}{the number of parallel chains to run. Each chain will have
 \code{nsims} draws. If \code{init_plan} is sampled, each chain will be initialized
@@ -61,7 +53,18 @@ the reference map of the \code{map} object, or if none exists, will sample
 a random initial state using \code{\link{redist_smc}}. You can also request
 a random initial state by setting \code{init_plan="sample"}.}
 
-\item{init_nseats}{The initial number of seats for each district in \code{init_plan}.}
+\item{counties}{A vector containing county (or other administrative or
+geographic unit) labels for each unit, which may be integers ranging from 1
+to the number of counties, or a factor or character vector.  If provided,
+the algorithm will generate maps tend to follow county lines. There is no
+strength parameter associated with this constraint. To adjust the number of
+county splits further, or to constrain a second type of administrative
+split, consider using \code{add_constr_splits()}, \code{add_constr_multisplits()},
+and \code{add_constr_total_splits()}.}
+
+\item{compactness}{Controls the compactness of the generated districts, with
+higher values preferring more compact districts. Must be nonnegative. See the
+'Details' section for more information, and computational considerations.}
 
 \item{constraints}{A list containing information on constraints to implement.
 See the 'Details' section for more information.}
@@ -70,9 +73,7 @@ See the 'Details' section for more information.}
 a redistricting plan and outputs a vector of log-weights, which will be
 added the the final weights.}
 
-\item{compactness}{Controls the compactness of the generated districts, with
-higher values preferring more compact districts. Must be nonnegative. See the
-'Details' section for more information, and computational considerations.}
+\item{init_nseats}{The initial number of seats for each district in \code{init_plan}.}
 
 \item{ncores}{The number of clusters to spawn Defaults to the
 maximum available detected by \code{parallel::detectCores()}.}

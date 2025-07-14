@@ -39,6 +39,8 @@ Authors:
     (Maintainer)
 -   [Cory McCartan](https://corymccartan.com),
     [cmccartan\@g.harvard.edu](mailto:cmccartan@g.harvard.edu)
+-   [Philip O'Sullivan](https://statistics.fas.harvard.edu/people/philip-w-o%E2%80%99sullivan),
+    [posullivan\@fas.harvard.edu](mailto:posullivan@fas.harvard.edu)
 -   [Ben Fifield](https://www.benfifield.com),
     [benfifield\@gmail.com](mailto:benfifield@gmail.com)
 -   [Kosuke Imai](https://imai.fas.harvard.edu),

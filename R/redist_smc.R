@@ -318,6 +318,11 @@ redist_smc <- function(
     pop <- map_params$pop
     pop_bounds <- map_params$pop_bounds
 
+    # linking edge with counties not supported right now
+    if(num_admin_units > 1 && sampling_space == LINKING_EDGE_SPACE_SAMPLING){
+        cli::cli_abort("Linking Edge Sampling with counties is not supported right now")
+    }
+
     # get the total number of districts
     ndists <- map_params$ndists
     total_seats <- map_params$total_seats
@@ -685,7 +690,7 @@ redist_smc <- function(
         run_verbosity <- if (is_chain1 || !multiprocess) verbosity else 0
         t1_run <- Sys.time()
 
-        algout <- redist::run_redist_gsmc(
+        algout <- redist::run_redist_smc(
             nsims=nsims,
             ndists=ndists, total_seats=total_seats,
             district_seat_sizes = district_seat_sizes,
@@ -784,7 +789,6 @@ redist_smc <- function(
             } else if (requireNamespace("loo", quietly = TRUE) && is.null(trunc_fn)) {
                 cli::cli_abort("loo truncation not suppored right now!")
                 normalized_wgts <- wgt/sum(wgt)
-                truncated_
                 normalized_wgts <- loo::weights.importance_sampling(
                     loo::psis(log(mod_wgt), r_eff = NA), log = FALSE)
             } else {

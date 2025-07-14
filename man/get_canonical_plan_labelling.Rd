@@ -4,7 +4,7 @@
 \alias{get_canonical_plan_labelling}
 \title{Get canonically relabeled plans matrix}
 \usage{
-get_canonical_plan_labelling(plans_mat, num_regions, num_threads)
+get_canonical_plan_labelling(plans_mat, num_regions, num_threads = 0L)
 }
 \arguments{
 \item{plans_mat}{A matrix of 1-indexed plans}

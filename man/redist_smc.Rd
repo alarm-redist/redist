@@ -2,7 +2,7 @@
 % Please edit documentation in R/redist_smc.R
 \name{redist_smc}
 \alias{redist_smc}
-\title{Generalized SMCS Redistricting Sampler (O'Sullivan, McCartan and Imai ???)}
+\title{Generalized SMCS Redistricting Sampler (O'Sullivan, McCartan and Imai forthcoming)}
 \usage{
 redist_smc(
   map,
@@ -15,6 +15,7 @@ redist_smc(
   ncores = 0L,
   init_particles = NULL,
   init_nseats = NULL,
+  init_weights = NULL,
   sampling_space = c("graph_plan", "spanning_forest", "linking_edge"),
   split_method = NULL,
   split_params = NULL,
@@ -87,6 +88,12 @@ and each column must sum to the total number of seats in the map. Not needed
 if \code{init_particles} is a \link{redist_plans} object. If \code{init_particles} are passed
 but not \code{init_nseats} then the number of seats will be attempted
 to be inferred.}
+
+\item{init_weights}{A vector of length \code{nsims} of unnormalized plan weights
+associated with \code{init_particles}. The weights must all be strictly positive.
+If no weights are passed in then they will all be set to 1. If the
+\code{init_plans} were not resampled then it is recommended to pass their weights in.
+Not needed if \code{init_particles} is a \link{redist_plans} object.}
 
 \item{sampling_space}{The space to sample the plans on. This does not affect
 the plans output by the function but the sample space used can have a large
@@ -166,7 +173,8 @@ If fewer than the number of remaining splits, reference plans are disabled.}
 
 \item{seq_alpha}{The amount to adjust the weights by at each resampling step;
 higher values prefer exploitation, while lower values prefer exploration.
-Must be between 0 and 1.}
+Must be between 0 and 1. If any mergesplit steps are applied then it must be
+set to 1.}
 
 \item{truncate}{Whether to truncate the importance sampling weights at the
 final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.
@@ -219,7 +227,7 @@ plans.
 }
 \description{
 \code{redist_smc} uses a Sequential Monte Carlo Sampler algorithm
-(O'Sullivan, McCartan and Imai ???) to generate representative samples of
+(O'Sullivan, McCartan and Imai forthcoming) to generate representative samples of
 congressional or legislative redistricting plans according to
 contiguity, population, compactness, and administrative boundary constraints.
 }

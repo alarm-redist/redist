@@ -69,7 +69,6 @@ void get_tree_pops_below(
 /*
  * Assign `new_region_num_id` to all descendants of `root` in `ust`
  */
-// NOT TESTED BUT COPIED FROM `assign_district` so should be ok
 void assign_region_id_from_tree(const Tree &ust, 
                     PlanVector &region_ids,
                     int root,

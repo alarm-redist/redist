@@ -418,7 +418,7 @@ void run_merge_split_step_on_all_plans(
 //' @param verbosity What level of detail to print out while the algorithm is
 //' running <ADD OPTIONS>
 //' @export
-List run_redist_gsmc(
+List run_redist_smc(
     int const nsims, 
     int const total_seats, int const ndists, Rcpp::IntegerVector const district_seat_sizes,
     int const initial_num_regions, 

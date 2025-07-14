@@ -198,7 +198,7 @@ redist_mergesplit <- function(
 
     #validate the splitting method and params
     split_params <- validate_sample_space_and_splitting_method(
-        sampling_space, split_method, split_params, num_splitting_steps
+        sampling_space, split_method, split_params, 1
     )
 
     exist_name <- attr(map, "existing_col")
@@ -307,7 +307,10 @@ redist_mergesplit <- function(
 
 
     # set up parallel
-    if (is.null(ncores)) ncores <- parallel::detectCores()
+    if (is.null(ncores)){
+        ncores <- parallel::detectCores()
+        if(ncores <= 0) ncores <- 1
+    }
     ncores <- min(ncores, chains)
 
     multiprocess <- ncores > 1

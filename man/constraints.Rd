@@ -19,6 +19,7 @@
 \alias{add_constr_edges_rem}
 \alias{add_constr_custom}
 \alias{add_constr_custom_plan}
+\alias{add_hard_constr_custom_plan}
 \title{Sampling constraints}
 \usage{
 add_constr_status_quo(constr, strength, current, score_districts_only = TRUE)
@@ -107,6 +108,8 @@ add_constr_edges_rem(constr, strength, score_districts_only = FALSE)
 add_constr_custom(constr, strength, fn, score_districts_only = FALSE)
 
 add_constr_custom_plan(constr, strength, fn)
+
+add_hard_constr_custom_plan(constr, fn)
 }
 \arguments{
 \item{constr}{A \code{\link[=redist_constr]{redist_constr()}} object}
@@ -242,21 +245,40 @@ district combination, where a value of 0 indicates no penalty is applied. If
 users want to penalize an entire plan, they can have the penalty function
 return a scalar that does not depend on the district. It is important that
 \code{fn} not use information from precincts not included in \code{distr}, since in the
-case of SMC these precincts may not be assigned any district at all (\code{plan}
-will take the value of 0 for these precincts). The flexibility of this
-constraint comes with an additional computational cost, since the other
-constraints are written in C++ and so are more performant.
+case of SMC these precincts may not be assigned any district at all.
+The flexibility of this constraint comes with additional computational
+costs, since the other constraints are written in C++ and so are more performant.
+In addition to the cost of not being native C++ code, weights with custom
+R functions can not be computed in parallel and must be computed sequentially.
+This can especially slow down sampling on Spanning Forest or Linking Edge Space.
 
 The \code{custom_plan} constraint allows the user to specify their own constraint using
 a function which evaluates the entire plan. Unlike the \code{custom} constraint,
 this allows users to penalize an entire plan, not just specific districts.
-The provided function \code{fn} should take two arguments: a 0-indexed vector
+The provided function \code{fn} should take two arguments: a 1-indexed vector
 describing the current plan assignment for each unit as its first argument,
-and a 0-indexed vector mapping region ids to the number of seats in the region.
+and a 1-indexed vector mapping region ids to the number of seats in the region.
 The function must return a single scalar for each plan where a value of 0
 indicates no penalty is applied.
-The flexibility of this constraint comes with an additional computational
-cost, since the other constraints are written in C++ and so are more performant.
+The flexibility of this constraint comes with additional computational
+costs, since the other constraints are written in C++ and so are more performant.
+In addition to the cost of not being native C++ code, weights with custom
+R functions can not be computed in parallel and must be computed sequentially.
+This can especially slow down sampling on Spanning Forest or Linking Edge Space.
+
+The \code{custom_hard_plan} constraint allows the user to specify their own hard
+constraint using a function which evaluates the entire plan. This function
+must return either \code{TRUE} or \code{FALSE}, where a value of \code{TRUE} means a plan is
+valid and \code{FALSE} means it will be rejected.
+The provided function \code{fn} should take two arguments: a 1-indexed vector
+describing the current plan assignment for each unit as its first argument,
+and a 1-indexed vector mapping region ids to the number of seats in the region.
+The function must return a single scalar for each plan where a value of 0
+indicates no penalty is applied.
+The flexibility of this constraint comes with strong additional computational
+costs. \code{Rcpp::Function} objects cannot be made thread safe so both splitting
+and calculating weights must be done with only a single thread. These effects
+can be somewhat mitigated by by increasing the number of processes(\code{nproc}).
 }
 \examples{
 data(iowa)

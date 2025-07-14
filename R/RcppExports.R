@@ -104,7 +104,7 @@ draw_a_tree_on_a_region <- function(adj_list, counties, pop, ndists, num_regions
 #'
 #' @title Split a multidistrict into two regions
 #'
-#' @inheritParams run_redist_gsmc
+#' @inheritParams run_redist_smc
 perform_a_valid_multidistrict_split <- function(adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_split, target, lower, upper, region_ids, region_sizes, split_dval_min, split_dval_max, split_district_only, verbose = FALSE, k_param = 1L) {
     .Call(`_redist_perform_a_valid_multidistrict_split`, adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_split, target, lower, upper, region_ids, region_sizes, split_dval_min, split_dval_max, split_district_only, verbose, k_param)
 }
@@ -167,34 +167,6 @@ max_dev <- function(districts, pop, n_distr, num_threads = 0L) {
 
 order_district_stats <- function(district_stats, ndists, num_threads) {
     .Call(`_redist_order_district_stats`, district_stats, ndists, num_threads)
-}
-
-parallel_n_removed <- function(g, districts, n_distr, num_threads) {
-    .Call(`_redist_parallel_n_removed`, g, districts, n_distr, num_threads)
-}
-
-parallel_effgap <- function(dcounts, rcounts, totvote, num_threads) {
-    .Call(`_redist_parallel_effgap`, dcounts, rcounts, totvote, num_threads)
-}
-
-parallel_agg_p2d <- function(dm, vote, nd, num_threads) {
-    .Call(`_redist_parallel_agg_p2d`, dm, vote, nd, num_threads)
-}
-
-parallel_biasatv <- function(dvs, v, nd, num_threads) {
-    .Call(`_redist_parallel_biasatv`, dvs, v, nd, num_threads)
-}
-
-parallelDVS <- function(dcounts, rcounts, num_threads) {
-    .Call(`_redist_parallelDVS`, dcounts, rcounts, num_threads)
-}
-
-parallel_splits <- function(dm, community, nd, max_split, num_threads, skip_last) {
-    .Call(`_redist_parallel_splits`, dm, community, nd, max_split, num_threads, skip_last)
-}
-
-parallel_polsbypopper <- function(from, to, area, perimeter, dm, nd, num_threads) {
-    .Call(`_redist_parallel_polsbypopper`, from, to, area, perimeter, dm, nd, num_threads)
 }
 
 ms_plans <- function(nsims, warmup, thin, ndists, total_seats, district_seat_sizes, adj_list, counties, pop, target, lower, upper, rho, initial_plan, initial_region_sizes, sampling_space_str, merge_prob_type, control, constraints, verbosity = 3L, diagnostic_mode = FALSE) {
@@ -356,8 +328,8 @@ k_biggest <- function(x, k = 1L) {
 #' running <ADD OPTIONS>
 #' @export
 #' @keywords internal
-run_redist_gsmc <- function(nsims, total_seats, ndists, district_seat_sizes, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat, log_weights) {
-    .Call(`_redist_run_redist_gsmc`, nsims, total_seats, ndists, district_seat_sizes, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat, log_weights)
+run_redist_smc <- function(nsims, total_seats, ndists, district_seat_sizes, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat, log_weights) {
+    .Call(`_redist_run_redist_smc`, nsims, total_seats, ndists, district_seat_sizes, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat, log_weights)
 }
 
 splits <- function(dm, community, nd, max_split) {

@@ -59,7 +59,7 @@ new_redist_plans <- function(
         }else{
             # if its a matrix make sure dimensions match then flatten it
             if(is.matrix(region_sizes)){
-                if(any(dim(test_pop) != dim(test_pop))){
+                if(any(dim(region_sizes) != dim(distr_pop))){
                     cli::cli_abort("The dimensions of {.arg region_sizes} must be {.field num_regions} by {.field nsims}")
                 }
                 # now flatten

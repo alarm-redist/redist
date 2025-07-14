@@ -67,24 +67,24 @@ void SplittingSchedule::print_current_step_splitting_info(){
     }
 
     Rprintf("The following valid merge pairs are:\n");
-    std::cout << "_ |";
+    Rcpp::Rcout << "_ |";
     for (int i = 1; i <= total_seats; i++)
     {
         if(!valid_region_sizes_to_split[i] && !valid_split_region_sizes[i]) continue;
-        // std::cout << " " << i;
-        std::cout << " " << "\033[4m" << i << "\033[0m";
+        // Rcpp::Rcout << " " << i;
+        Rcpp::Rcout << " " << "\033[4m" << i << "\033[0m";
     }
-    std::cout << std::endl;
+    Rcpp::Rcout << std::endl;
     for (int i = 1; i <= total_seats; i++)
     {
         if(!valid_region_sizes_to_split[i] && !valid_split_region_sizes[i]) continue;
-        std::cout << i << " | ";
+        Rcpp::Rcout << i << " | ";
         for (int j = 1; j <= total_seats; j++)
         {
             if(!valid_region_sizes_to_split[j] && !valid_split_region_sizes[j]) continue;
-            std::cout << (valid_merge_pair_sizes[i][j] ? "1 " : "0 ");
+            Rcpp::Rcout << (valid_merge_pair_sizes[i][j] ? "1 " : "0 ");
         }
-        std::cout << std::endl;
+        Rcpp::Rcout << std::endl;
     }
     
     
@@ -95,16 +95,16 @@ void SplittingSchedule::print_current_step_splitting_info(){
     //         row_num++;
     //         continue;
     //     }
-    //     std::cout << row_num++ << " | ";
+    //     Rcpp::Rcout << row_num++ << " | ";
     //     int col_num = 0;
     //     for (bool val : row) {        // Iterate over elements in the row
     //         if(col_num == 0){
     //             col_num++;
     //             continue;
     //         }
-    //         std::cout << (val ? "1 " : "0 ");  // Print 1 for true, 0 for false
+    //         Rcpp::Rcout << (val ? "1 " : "0 ");  // Print 1 for true, 0 for false
     //     }
-    //     std::cout << "\n";  // Newline after each row
+    //     Rcpp::Rcout << "\n";  // Newline after each row
     // }
 }
 
