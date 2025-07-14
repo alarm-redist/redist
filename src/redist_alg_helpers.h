@@ -47,10 +47,46 @@ Rcpp::List maximum_input_sizes();
 // [[Rcpp::export]]
 Rcpp::IntegerMatrix get_canonical_plan_labelling(
     Rcpp::IntegerMatrix const &plans_mat,
-    int const num_regions,
-    int const num_threads
+    int const num_regions, 
+    int const num_threads = 0
 );
 
+
+
+//' Count how many times each plan appears in a plans matrix
+//'
+//' Given a matrix of 1-indexed plans (or partial plans) this function 
+//' returns a list mapping plan vectors as a giant concatened string to 
+//' the count of how many times the plan appears. 
+//'
+//' If `use_canonical_ordering` is set to true then the plans will be 
+//' reordered using the canonical reordering function 
+//' `get_canonical_plan_labelling`. This guarantees that the same plan
+//' will not be incorrectly counted if there are different permutations 
+//' of its labels. If `use_canonical_ordering` is not set to true then 
+//' its possible the count will be incorrect because of different 
+//' permutations of the same underlying plan.
+//'
+//'
+//' @param plans_mat A matrix of 1-indexed plans
+//' @param num_regions The number of regions in the plan
+//' @param use_canonical_ordering Whether or not to reorder the plans using the 
+//' canonical ordering on plans. 
+//' @param num_threads The number of threads to use. Defaults to number of machine threads.
+//'
+//' @details Modifications
+//'    - None
+//'
+//' @returns A list mapping plans (stored as a string concatened vector) to 
+//' how many times they appear in the matrix 
+//'
+//' @keywords internal
+// [[Rcpp::export]]
+Rcpp::DataFrame get_plan_counts(
+    Rcpp::IntegerMatrix const &input_plans_mat,
+    int const num_regions, bool const use_canonical_ordering = true,
+    int const num_threads = 0 
+);
 
 /*
  * Creates a Rcpp Threadpool

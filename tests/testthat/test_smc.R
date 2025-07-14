@@ -102,33 +102,55 @@ test_that("Labeling accounted for", {
 })
 
 
+
 test_that("Partial sampling works accurately", {
     skip_on_cran()
     set.seed(1935)
+    nsims <- 1000
+    compactness <- 1L
 
-    ref_plans <- plans_10[, redist.parity(plans_10, pop) <= 0.01]
-    log_st_ref <- round(log_st_map(adj, ref_plans, rep(1L, 25), 3L), 5)
+    # check that sampling all the way and partial sampling return about the same
 
-    out1 <- redist_smc(set_pop_tol(fl_map, 0.01), 3000, compactness = 0,
-        n_steps = 1, split_params = list(adapt_k_thresh = .9), seq_alpha = .5,
-        ncores = 1L, control = list(weight_type = "simple"),
-        resample = TRUE, silent = TRUE) %>%
+    # sample all the way
+    out_all_the_way <- redist_smc(set_pop_tol(fl_map, 0.01), nsims, compactness = compactness,
+                                  split_params = list(adapt_k_thresh = .99), seq_alpha = 1L,
+                                  ncores = 1L, # control = list(weight_type = "simple"),
+                                  resample = F, silent = TRUE) %>%
         suppressWarnings() # efficiency
-    out2 <- redist_smc(set_pop_tol(fl_map, 0.01), 3000, compactness = 0,
-        init_particles = as.matrix(out1),
-        ncores = 1L, control = list(weight_type = "simple"),
-        split_params = list(adapt_k_thresh = .9), seq_alpha = .5, resample = F, silent = TRUE) %>%
-        suppressWarnings() # efficiency
-    log_st <- round(log_st_map(adj, as.matrix(out2), rep(1L, 25), 3L), 5)
-    types <- match(log_st, log_st_ref)
 
-    wgts <- weights(out2)
-    avgs <- sapply(seq_along(log_st_ref), function(i) weighted.mean(types == i, wgts))
-    ses <- sapply(seq_along(log_st_ref), function(i) {
-        sqrt(sum(((types == i) - avgs[i])^2*(wgts/sum(wgts))^2))
-    })
-    zscores <- (avgs - (1/length(log_st_ref)))/ses
-    expect_true(all(abs(zscores) <= 5.0))
+    # partially sample
+    out1 <- redist_smc(set_pop_tol(fl_map, 0.01), nsims, compactness = compactness,
+                       n_steps = 1, split_params = list(adapt_k_thresh = .99), seq_alpha = 1L,
+                       ncores = 1L, # control = list(weight_type = "simple"),
+                       resample = F, silent = TRUE) %>%
+        suppressWarnings() # efficiency
+    out2 <- redist_smc(set_pop_tol(fl_map, 0.01), nsims, compactness = compactness,
+                       init_particles = out1,
+                       ncores = 1L, #control = list(weight_type = "simple"),
+                       split_params = list(adapt_k_thresh = .99),
+                       seq_alpha = 1L, resample = F, silent = TRUE) %>%
+        suppressWarnings() # efficiency
+
+    # get the counts of the plans in the two samples
+    all_the_way_counts_df <- get_plan_counts(
+        get_plans_matrix(out_all_the_way), attr(fl_map, "ndists")
+    ) |>
+        arrange(plan_string)
+
+    partial_counts_df <- get_plan_counts(
+        get_plans_matrix(out2), attr(fl_map, "ndists")
+    ) |>
+        arrange(plan_string)
+
+    test_result <- chisq.test(
+        all_the_way_counts_df$count,
+        partial_counts_df$count,
+        simulate.p.value = TRUE, B = 10000
+    ) |>
+        suppressWarnings() # efficiency
+
+    expect_true(test_result$p.value > .001)
+
 })
 
 

@@ -41,6 +41,7 @@ test_that("short bursts run and improve the score over time", {
 
 
 test_that("short bursts work with multiple scorers", {
+    set.seed(1935)
     iowa_map <- suppressWarnings(redist_map(iowa, ndists = 4, pop_tol = 0.2))
     scorer = cbind(
         comp = scorer_frac_kept(iowa_map),

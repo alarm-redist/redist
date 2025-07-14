@@ -160,6 +160,7 @@ void run_smc_step(
         // REprintf("Plan %d\n\n", i);
         bool ok = false;
         int idx;
+        int reject_ct = 0;
         RcppThread::checkUserInterrupt(i % check_int == 0);
         
 
@@ -232,6 +233,7 @@ void run_smc_step(
             }
 
             if(ok){
+                RcppThread::checkUserInterrupt(i % check_int == 0);
                 // means idx was ok 
                 // record index of new plan's parent
                 parent_index_vec[i] = idx;
@@ -239,7 +241,7 @@ void run_smc_step(
                 ++thread_successful_tree_sizes[thread_id][region_to_split_size-1];
             }else{ // else bad sample so try again
                  // check for user interrupt
-                 RcppThread::checkUserInterrupt(i % reject_check_int == 0);
+                 RcppThread::checkUserInterrupt(++reject_ct % reject_check_int == 0);
                  // if diagnostic level 2 or higher get unsuccessful count 
                  if(diagnostic_level >= 0){
                      // not atomic so technically not thread safe but doesn't seem to differ in practice
@@ -430,7 +432,8 @@ List run_redist_gsmc(
     List const &constraints, // constraints 
     int const verbosity, int const diagnostic_level,
     Rcpp::IntegerMatrix const &region_id_mat, 
-    Rcpp::IntegerMatrix const &region_sizes_mat
+    Rcpp::IntegerMatrix const &region_sizes_mat,
+    arma::vec &log_weights
 ){
     if (DEBUG_GSMC_PLANS_VERBOSE) REprintf("Inside c++ code!\n");
     bool diagnostic_mode = diagnostic_level == 1;
@@ -586,9 +589,7 @@ List run_redist_gsmc(
         region_id_mat, region_sizes_mat,
         rng_states, pool, verbosity 
     );
-
-
-    arma::vec log_weights(nsims, arma::fill::zeros);
+    
     {
     // Ensemble of dummy plans for copying 
     std::unique_ptr<PlanEnsemble> dummy_plan_ensemble_ptr = get_plan_ensemble_ptr(
@@ -619,12 +620,13 @@ List run_redist_gsmc(
             k_params = as<std::vector<int>>(control["manual_k_params"]);
         }
     }
-    // Define output variables that must always be created
+    
 
-    // Start off all the unnormalized weights at 1
-    arma::vec unnormalized_sampling_weights(nsims, arma::fill::ones);
-    arma::vec normalized_cumulative_weights(nsims, arma::fill::value(1.0 / nsims));
-    normalized_cumulative_weights = arma::cumsum(normalized_cumulative_weights);
+    // Start off all the unnormalized weights at at exp of log weights 
+    arma::vec unnormalized_sampling_weights = arma::exp(log_weights);
+    // now get initial normalized weights 
+    arma::vec normalized_cumulative_weights = arma::cumsum(unnormalized_sampling_weights);
+    normalized_cumulative_weights = normalized_cumulative_weights / normalized_cumulative_weights[nsims-1];
     
 
 
@@ -852,16 +854,14 @@ List run_redist_gsmc(
                 log_weights = smc_diagnostics.log_incremental_weights_mat.col(smc_step_num);
                 unnormalized_sampling_weights = arma::exp(log_weights);
             }
-            normalized_cumulative_weights =  arma::cumsum(unnormalized_sampling_weights);
+            normalized_cumulative_weights = arma::cumsum(unnormalized_sampling_weights);
 
             // compute log weight sd
             smc_diagnostics.log_wgt_stddevs.at(smc_step_num) = arma::stddev(log_weights);
             // compute effective sample size
             smc_diagnostics.n_eff.at(smc_step_num) = normalized_cumulative_weights[nsims-1] * normalized_cumulative_weights[nsims-1]  / arma::sum(arma::square(unnormalized_sampling_weights));
             // Now normalize the weights 
-            normalized_cumulative_weights = normalized_cumulative_weights / normalized_cumulative_weights(
-                nsims-1
-            );
+            normalized_cumulative_weights = normalized_cumulative_weights / normalized_cumulative_weights[nsims-1];
 
             if (verbosity >= 3) {
                 Rcout << "  " << std::setprecision(2) 

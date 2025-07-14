@@ -8,11 +8,11 @@
 DEBUG_MODE <- FALSE
 
 
-#' Generalized SMCS Redistricting Sampler (O'Sullivan, McCartan and Imai ???)
+#' Generalized SMCS Redistricting Sampler (O'Sullivan, McCartan and Imai forthcoming)
 #'
 #'
 #' `redist_smc` uses a Sequential Monte Carlo Sampler algorithm
-#' (O'Sullivan, McCartan and Imai ???) to generate representative samples of
+#' (O'Sullivan, McCartan and Imai forthcoming) to generate representative samples of
 #' congressional or legislative redistricting plans according to
 #' contiguity, population, compactness, and administrative boundary constraints.
 #'
@@ -81,6 +81,11 @@ DEBUG_MODE <- FALSE
 #' if `init_particles` is a [redist_plans] object. If `init_particles` are passed
 #' but not `init_nseats` then the number of seats will be attempted
 #' to be inferred.
+#' @param init_weights A vector of length `nsims` of unnormalized plan weights
+#' associated with `init_particles`. The weights must all be strictly positive.
+#' If no weights are passed in then they will all be set to 1. If the
+#' `init_plans` were not resampled then it is recommended to pass their weights in.
+#' Not needed if `init_particles` is a [redist_plans] object.
 #' @param sampling_space The space to sample the plans on. This does not affect
 #' the plans output by the function but the sample space used can have a large
 #' impact on computational cost/runtime and convergence. Current spaces supported
@@ -152,7 +157,8 @@ DEBUG_MODE <- FALSE
 #' If fewer than the number of remaining splits, reference plans are disabled.
 #' @param seq_alpha The amount to adjust the weights by at each resampling step;
 #' higher values prefer exploitation, while lower values prefer exploration.
-#' Must be between 0 and 1.
+#' Must be between 0 and 1. If any mergesplit steps are applied then it must be
+#' set to 1.
 #' @param truncate Whether to truncate the importance sampling weights at the
 #' final step by `trunc_fn`.  Recommended if `compactness` is not 1.
 #' Truncation only applied if `resample=TRUE`.
@@ -221,8 +227,7 @@ redist_smc <- function(
         compactness = 1, constraints = list(),
         resample = TRUE,
         runs = 1L, ncores = 0L,
-        init_particles = NULL,
-        init_nseats = NULL,
+        init_particles = NULL, init_nseats = NULL, init_weights = NULL,
         sampling_space = c("graph_plan", "spanning_forest", "linking_edge"),
         split_method = NULL,
         split_params = NULL,
@@ -373,6 +378,9 @@ redist_smc <- function(
             if(is.null(init_nseats)){
                 init_nseats <- get_nseats_matrix(init_particles)
             }
+            if(is.null(init_weights)){
+                init_weights <- redist::get_plans_weights(init_particles)
+            }
             init_particles <- get_plans_matrix(init_particles) - 1L
         }else if(is.matrix(init_particles)){
             if(is.null(init_nseats)){
@@ -401,6 +409,38 @@ redist_smc <- function(
         # validate_initial_region_id_mat(init_particles, V, nsims, init_num_regions)
         # validate_initial_region_sizes_mat(init_nseats, ndists, nsims, init_num_regions)
     }
+
+    # get init weights
+    if(!is.null(init_weights)){
+        # check its a vector or matrix
+        if(is.matrix(init_weights) && is.numeric(init_weights)){
+            # check 1 column and nsim rows
+            if(any(dim(init_weights) != c(nsims, 1))){
+                cli::cli_abort(
+                    "{.arg init_weights} must be of length {nsims}!"
+                )
+            }
+            # flatten
+            init_weights <- as.vector(init_weights)
+        }else if(is.vector(init_weights) && is.numeric(init_weights)){
+            if(length(init_weights) != nsims){
+                cli::cli_abort(
+                    "{.arg init_weights} must be of length {nsims}!"
+                )
+            }
+        }
+        # now check all positive
+        if(any(init_weights <= 0)){
+            cli::cli_abort(
+                "All elements of {.arg init_weights} must be of length positive!"
+            )
+        }
+    }else{
+        init_weights <- rep(1, nsims)
+    }
+    initial_log_weights <- log(init_weights)
+
+
     if (is.null(n_steps)) {
         n_steps <- ndists - init_num_regions
     }
@@ -481,6 +521,12 @@ redist_smc <- function(
         merge_split_step_vec <- c(
             merge_split_step_vec, TRUE
         )
+    }
+
+    # if run_ms is true then seq_alpha must be 1
+    if(run_ms && seq_alpha != 1){
+        seq_alpha <- 1L
+        cli::cli_warn("{.arg seq_alpha} must be set to 1 if any mergesplit steps are being run!")
     }
 
 
@@ -658,7 +704,8 @@ redist_smc <- function(
             verbosity=run_verbosity,
             diagnostic_level=diagnostic_level,
             region_id_mat = init_particles,
-            region_sizes_mat = init_nseats
+            region_sizes_mat = init_nseats,
+            log_weights = initial_log_weights
         )
 
         if (length(algout) == 0) {

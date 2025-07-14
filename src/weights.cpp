@@ -154,9 +154,9 @@ double compute_simple_log_incremental_weight(
         );
         if(compute_log_tau){
             // do merged region tau if neccesary
-            // log_tau_ratio_term -= (rho-1)*plan.compute_log_merged_region_spanning_trees(
-            //     plan_multigraph.map_params, region1_id, region2_id
-            // );
+            log_tau_ratio_term -= (rho-1)*plan.compute_log_merged_region_spanning_trees(
+                plan_multigraph.map_params, region1_id, region2_id
+            );
         }
     }else if(sampling_space == SamplingSpace::ForestSpace || sampling_space == SamplingSpace::LinkingEdgeSpace){
         // sum of spanning trees 

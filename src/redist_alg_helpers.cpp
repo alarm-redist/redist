@@ -59,15 +59,7 @@ Rcpp::IntegerMatrix get_canonical_plan_labelling(
     Rcpp::IntegerMatrix relabelled_plan_mat(V, nsims);
 
     // create thread pool
-    int actual_num_threads;
-    if(num_threads == 1){
-        actual_num_threads = 0;
-    }else if(num_threads > 1){
-        actual_num_threads = num_threads;
-    }else{
-        actual_num_threads = std::thread::hardware_concurrency();
-    }
-    RcppThread::ThreadPool pool(actual_num_threads);
+    RcppThread::ThreadPool pool(num_threads >= 1 ? num_threads : std::thread::hardware_concurrency());
 
     // now relabel 
     pool.parallelFor(0, nsims, [&] (int i) {
@@ -99,6 +91,97 @@ Rcpp::IntegerMatrix get_canonical_plan_labelling(
     pool.wait();
     
     return relabelled_plan_mat;
+}
+
+
+//' Count how many times each plan appears in a plans matrix
+//'
+//' Given a matrix of 1-indexed plans (or partial plans) this function 
+//' returns a list mapping plan vectors as a giant concatened string to 
+//' the count of how many times the plan appears. 
+//'
+//' If `use_canonical_ordering` is set to true then the plans will be 
+//' reordered using the canonical reordering function 
+//' `get_canonical_plan_labelling`. This guarantees that the same plan
+//' will not be incorrectly counted if there are different permutations 
+//' of its labels. If `use_canonical_ordering` is not set to true then 
+//' its possible the count will be incorrect because of different 
+//' permutations of the same underlying plan.
+//'
+//'
+//' @param plans_mat A matrix of 1-indexed plans
+//' @param num_regions The number of regions in the plan
+//' @param use_canonical_ordering Whether or not to reorder the plans using the 
+//' canonical ordering on plans. 
+//' @param num_threads The number of threads to use. Defaults to number of machine threads.
+//'
+//' @details Modifications
+//'    - None
+//'
+//' @returns A list mapping plans (stored as a string concatened vector) to 
+//' how many times they appear in the matrix 
+//'
+//' @keywords internal
+Rcpp::DataFrame get_plan_counts(
+    Rcpp::IntegerMatrix const &input_plans_mat,
+    int const num_regions, bool const use_canonical_ordering,
+    int const num_threads
+){
+    Rcpp::IntegerMatrix plans_mat = use_canonical_ordering ? get_canonical_plan_labelling(input_plans_mat, num_regions, num_threads) : input_plans_mat;
+
+    RcppThread::ThreadPool pool = get_thread_pool(num_threads);
+    int const V = plans_mat.nrow();
+    int const nsims = plans_mat.ncol();
+
+    std::vector<std::unordered_map<std::string, int>> plan_count_maps_vec(pool.getNumThreads());
+
+    // trick to give each thread a unique id
+    std::atomic<int> thread_id_counter{0};
+
+    
+
+    pool.parallelFor(0, nsims, [&] (int i) {
+        static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+        std::ostringstream oss;
+
+        for (int row = 0; row < V; ++row) {
+            oss << plans_mat(row, i);
+            if (row < V - 1) {
+                oss << ",";
+            }
+        }
+        auto key = oss.str();
+        plan_count_maps_vec[thread_id][key]++;
+
+    }); 
+
+    pool.wait();
+
+    // now combine into one map 
+    std::unordered_map<std::string, int> pattern_counts;
+    for (size_t i = 0; i < plan_count_maps_vec.size(); i++)
+    {
+        for (const auto& pair : plan_count_maps_vec[i]) {
+            pattern_counts[pair.first] += pair.second;
+        }
+    }
+    
+
+    // Convert to R named vector
+    // Fill vectors for DataFrame
+    std::vector<std::string> patterns;
+    std::vector<int> counts;
+
+    for (const auto &pair : pattern_counts) {
+        patterns.push_back(pair.first);
+        counts.push_back(pair.second);
+    }
+
+    return Rcpp::DataFrame::create(
+        Rcpp::Named("plan_string") = patterns,
+        Rcpp::Named("count") = counts
+    );
+
 }
 
 

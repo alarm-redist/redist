@@ -266,8 +266,40 @@ maximum_input_sizes <- function() {
 #' @returns A matrix of canonically labelled plans
 #'
 #' @keywords internal
-get_canonical_plan_labelling <- function(plans_mat, num_regions, num_threads) {
+get_canonical_plan_labelling <- function(plans_mat, num_regions, num_threads = 0L) {
     .Call(`_redist_get_canonical_plan_labelling`, plans_mat, num_regions, num_threads)
+}
+
+#' Count how many times each plan appears in a plans matrix
+#'
+#' Given a matrix of 1-indexed plans (or partial plans) this function 
+#' returns a list mapping plan vectors as a giant concatened string to 
+#' the count of how many times the plan appears. 
+#'
+#' If `use_canonical_ordering` is set to true then the plans will be 
+#' reordered using the canonical reordering function 
+#' `get_canonical_plan_labelling`. This guarantees that the same plan
+#' will not be incorrectly counted if there are different permutations 
+#' of its labels. If `use_canonical_ordering` is not set to true then 
+#' its possible the count will be incorrect because of different 
+#' permutations of the same underlying plan.
+#'
+#'
+#' @param plans_mat A matrix of 1-indexed plans
+#' @param num_regions The number of regions in the plan
+#' @param use_canonical_ordering Whether or not to reorder the plans using the 
+#' canonical ordering on plans. 
+#' @param num_threads The number of threads to use. Defaults to number of machine threads.
+#'
+#' @details Modifications
+#'    - None
+#'
+#' @returns A list mapping plans (stored as a string concatened vector) to 
+#' how many times they appear in the matrix 
+#'
+#' @keywords internal
+get_plan_counts <- function(input_plans_mat, num_regions, use_canonical_ordering = TRUE, num_threads = 0L) {
+    .Call(`_redist_get_plan_counts`, input_plans_mat, num_regions, use_canonical_ordering, num_threads)
 }
 
 resample_plans_lowvar <- function(normalized_weights, plans_mat, region_sizes_mat, reorder_sizes_mat) {
@@ -324,8 +356,8 @@ k_biggest <- function(x, k = 1L) {
 #' running <ADD OPTIONS>
 #' @export
 #' @keywords internal
-run_redist_gsmc <- function(nsims, total_seats, ndists, district_seat_sizes, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat) {
-    .Call(`_redist_run_redist_gsmc`, nsims, total_seats, ndists, district_seat_sizes, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat)
+run_redist_gsmc <- function(nsims, total_seats, ndists, district_seat_sizes, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat, log_weights) {
+    .Call(`_redist_run_redist_gsmc`, nsims, total_seats, ndists, district_seat_sizes, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat, log_weights)
 }
 
 splits <- function(dm, community, nd, max_split) {

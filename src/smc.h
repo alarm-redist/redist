@@ -66,7 +66,8 @@ List run_redist_gsmc(
         List const &constraints, // constraints 
         int const verbosity, int const diagnostic_level,
         Rcpp::IntegerMatrix const &region_id_mat, 
-        Rcpp::IntegerMatrix const &region_sizes_mat
+        Rcpp::IntegerMatrix const &region_sizes_mat,
+        arma::vec &log_weights
 );
 
 
