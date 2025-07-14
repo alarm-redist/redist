@@ -65,9 +65,9 @@ Becomes TRUE if ncol(district_membership > 8) and not manually set.}
 
 \item{perim_path}{it checks for an Rds, if no rds exists at the path,
 it creates an rds with borders and saves it.
-This can be created in advance with \code{\link[=prep_perims]{prep_perims()}}.}
+This can be created in advance with \code{\link[redistmetrics:prep_perims]{redistmetrics::prep_perims()}}.}
 
-\item{perim_df}{A dataframe output from \code{\link[=prep_perims]{prep_perims()}}.}
+\item{perim_df}{A dataframe output from \code{\link[redistmetrics:prep_perims]{redistmetrics::prep_perims()}}.}
 }
 \value{
 A tibble with a column that specifies the district, a column for

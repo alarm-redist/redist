@@ -1,6 +1,6 @@
 #' Pull back plans to unmerged units
 #'
-#' Merging map units through \code{\link{merge_by}} or \code{\link{summarize}}
+#' Merging map units through \code{\link{merge_by}} or [dplyr::summarize]
 #' changes the indexing of each unit.  Use this function to take a set of
 #' redistricting plans from a \code{redist} algorithm and re-index them to
 #' be compatible with the original set of units.

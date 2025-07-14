@@ -243,7 +243,7 @@ Rcpp::List ms_plans(
     // Loading Info
     if (verbosity >= 1) {
         Rcout.imbue(std::locale::classic());
-        Rcout << std::fixed << std::setprecision(4);
+        Rcout << std::fixed << std::setprecision(0);
         Rcout << "MERGE SPLIT MONTE CARLO" << std::endl;
         Rcout << "Using " << sampling_space_to_str(sampling_space);
         Rcout << " Sampling space to sample " << nsims << " " << V << "-unit ";

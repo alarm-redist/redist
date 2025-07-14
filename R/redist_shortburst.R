@@ -163,7 +163,8 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     }
 
     pop <- map[[attr(map, "pop_col")]]
-    if (any(pop >= get_target(map))) {
+    if ((backend == 'flip' && any(pop >= get_target(map))) ||
+        (backend == 'mergesplit' && any(pop >= pop_bounds[3]))) {
         too_big <- as.character(which(pop >= pop_bounds[3]))
         cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
                     population larger than the district target.",
@@ -355,15 +356,15 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         storage.mode(out_mat) <- "integer"
 
         pareto_scores = t(cur_best_scores * rescale)
-        pareto_scores = pareto_scores[order(pareto_scores[, 1]), , drop=FALSE]
+        ord = order(pareto_scores[, 1])
 
         out <- new_redist_plans(out_mat[, out_idx, drop = FALSE], map, "shortburst",
             wgt = NULL, resampled = FALSE,
             n_bursts = burst,
             backend = backend,
             converged = converged,
-            pareto_front = cur_best,
-            pareto_scores = pareto_scores,
+            pareto_front = cur_best[, ord, drop=FALSE],
+            pareto_scores = pareto_scores[ord, , drop=FALSE],
             version = packageVersion("redist"),
             score_fn = deparse(substitute(score_fn)))
         score_mat = matrix(rep(scores[out_idx, ], each = ndists), ncol = dim_score)
@@ -546,7 +547,7 @@ scorer_multisplits <- function(map, counties) {
 #' @rdname scorers
 #' @order 6
 #'
-#' @param perim_df perimeter distance dataframe from [prep_perims()]
+#' @param perim_df perimeter distance dataframe from [redistmetrics::prep_perims()]
 #' @param areas area of each precinct (ie `st_area(map)`)
 #' @param m the m-th from the bottom Polsby Popper to return as the score. Defaults to 1,
 #' the minimum Polsby Popper score

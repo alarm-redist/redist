@@ -273,6 +273,15 @@ redist_mergesplit <- function(
     }
 
 
+    # TODO: check init
+    # if (length(init_plan) != V)
+    #     cli_abort("{.arg init_plan} must be as long as the number of units as `map`.")
+    # if (max(init_plan) != ndists)
+    #     cli_abort("{.arg init_plan} must have the same number of districts as `map`.")
+    # if (any(contiguity(adj, init_plan) != 1))
+    #     cli_warn("{.arg init_plan} should have contiguous districts.")
+
+
     # subtract 1 to make it 0 indexed
     init_plan <- init_plan - 1
     # validate initial plans
@@ -283,7 +292,7 @@ redist_mergesplit <- function(
     init_pop <- pop_tally(init_plan+1, pop, ndists)
 
 
-    if (any(init_pop < pop_bounds[1]*init_nseats) | any(init_pop > pop_bounds[3]*init_nseats)){
+    if (any(init_pop < pop_bounds[1]*init_nseats) || any(init_pop > pop_bounds[3]*init_nseats)){
         cli_abort("Provided initialization does not meet population bounds.")
     }
 

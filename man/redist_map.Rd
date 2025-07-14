@@ -69,8 +69,8 @@ A redist_map object
 Sets up a redistricting problem.
 }
 \details{
-A \code{redist_map} object is a \code{\link{tibble}} which contains an
-adjacency list and additional information about the number of districts, seats, and
+A \code{redist_map} object is a \link[tibble:tibble]{tibble::tibble} which contains an
+adjacency list and additional information about the number of districts and
 population bounds.  It supports all of the \code{dplyr} generics, and will
 adjust the adjacency list and attributes according to these functions; i.e.,
 if we \code{filter} to a subset of units, the graph will change to subset to

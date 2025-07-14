@@ -63,7 +63,7 @@ test_that("Not egregiously incorrect sampling accuracy (25-prec)", {
 
     out <- redist_smc(set_pop_tol(fl_map, 0.01), 6000, compactness = 0,
                       ncores = 1L, control = list(weight_type = "simple"),
-                      split_params = list(adapt_k_thresh = .95), seq_alpha = 1L,
+                      split_params = list(adapt_k_thresh = .99999), seq_alpha = 1L,
                       resample = FALSE, silent = TRUE) %>%
         suppressWarnings() # efficiency
     log_st <- round(log_st_map(adj, as.matrix(out), rep(1L, 25), 3L), 5)

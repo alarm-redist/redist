@@ -34,10 +34,10 @@
 #' plans <- redist_smc(map, 50, silent = TRUE)
 #' plans$dem <- group_frac(map, dem_08, tot_08, plans)
 #'
-#' proj_distr(plans, dem) # a 99-by-50 matrix
+#' proj_distr(plans, dem)[ ,1] # a 99-by-50 matrix, just showing first column
 #' plot(map, proj_avg(plans, dem))
 #' plot(map, proj_contr(plans, dem))
-#' plot(map, proj_contr(plans, dem, comp="cd_2010"))
+#' plot(map, proj_contr(plans, dem, compare="cd_2010"))
 #'
 #' @concept analyze
 #' @name proj
@@ -125,7 +125,7 @@ proj_contr <- function(plans, x, compare=NA, draws=NA, norm=FALSE, pfdr=FALSE) {
     } else if (is.logical(compare)) {
         which(compare)
     } else {
-        match(as.character(draws), levels(plans$draw))
+        match(as.character(compare), levels(plans$draw))
     }
 
     draw_idx <- if (is.null(draws)) {
