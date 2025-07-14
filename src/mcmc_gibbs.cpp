@@ -57,7 +57,11 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
 
     log_tgt += add_constraint("segregation", constraints, districts, psi_vec,
                               [&] (List l, int distr) -> double {
-                                  return eval_segregation(plan, distr, as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"]));
+
+                                  return eval_segregation(
+                                    plan, distr, distr, V,
+                                     as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"])
+                                    );
                               });
 
     log_tgt += add_constraint("grp_pow", constraints, districts, psi_vec,

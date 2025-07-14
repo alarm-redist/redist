@@ -71,7 +71,63 @@ double PopDevConstraint::compute_merged_region_constraint_score(const Plan &plan
 }
 
 
+double StatusQuoConstraint::compute_region_constraint_score(const Plan &plan, int const region_id) const{
+    double raw_score = eval_sq_entropy(
+        plan.region_ids, current,
+        region_id, region_id,
+        pop, 
+        ndists, n_current, V
+    );
 
+    return strength * raw_score;
+}
+// log constraint for region made by merging region 1 and 2
+double StatusQuoConstraint::compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
+    double raw_score = eval_sq_entropy(
+        plan.region_ids, current,
+        region1_id, region2_id,
+        pop, 
+        ndists, n_current, V
+    );
+    return strength * raw_score;
+}
+
+double SegregationConstraint::compute_region_constraint_score(const Plan &plan, int const region_id) const{
+    double raw_score = eval_segregation(
+        plan.region_ids, region_id, region_id,
+        V, grp_pop, total_pop
+    );
+
+    return strength * raw_score;
+}
+// log constraint for region made by merging region 1 and 2
+double SegregationConstraint::compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
+    double raw_score = eval_segregation(
+        plan.region_ids, region1_id, region2_id,
+        V, grp_pop, total_pop
+    );
+    return strength * raw_score;
+}
+
+
+double GroupPowerConstraint::compute_region_constraint_score(const Plan &plan, int const region_id) const{
+    double raw_score = eval_grp_pow(
+        plan.region_ids, V, region_id, region_id,
+        grp_pop, total_pop,
+        tgt_grp, tgt_other, pow
+    );
+
+    return strength * raw_score;
+}
+// log constraint for region made by merging region 1 and 2
+double GroupPowerConstraint::compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
+    double raw_score = eval_grp_pow(
+        plan.region_ids, V, region1_id, region2_id,
+        grp_pop, total_pop,
+        tgt_grp, tgt_other, pow
+    );
+    return strength * raw_score;
+}
 
 double GroupHingeConstraint::compute_region_constraint_score(const Plan &plan, int const region_id) const{
     double raw_score = eval_grp_hinge(
@@ -110,26 +166,7 @@ double IncumbentConstraint::compute_merged_region_constraint_score(const Plan &p
 }
 
 
-double StatusQuoConstraint::compute_region_constraint_score(const Plan &plan, int const region_id) const{
-    double raw_score = eval_sq_entropy(
-        plan.region_ids, current,
-        region_id, region_id,
-        pop, 
-        ndists, n_current, V
-    );
 
-    return strength * raw_score;
-}
-// log constraint for region made by merging region 1 and 2
-double StatusQuoConstraint::compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
-    double raw_score = eval_sq_entropy(
-        plan.region_ids, current,
-        region1_id, region2_id,
-        pop, 
-        ndists, n_current, V
-    );
-    return strength * raw_score;
-}
 
 
 double SplitsConstraint::compute_region_constraint_score(const Plan &plan, int const region_id) const{
@@ -475,36 +512,78 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
         }
     }
     if (constraints.containsElementNamed("segregation")) {
-        throw Rcpp::exception("Error: 'segregation' constraint not implemented yet!");
-        // create here
-        // lp[i] += add_constraint("segregation", constraints,
-        //     [&] (List l) -> double {
-        //         return eval_segregation(districts.col(i), j,
-        //                                 as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"]));
-        //     });
-        // all_rounds_soft_constraints++;
+        Rcpp::List constr = constraints["segregation"];
+        for (int i = 0; i < constr.size(); i++) {
+            List constr_inst = constr[i];
+            double strength = constr_inst["strength"];
+            if (strength != 0) {
+                bool constr_score_districts_only = false;
+                if (constr_inst.containsElementNamed("score_districts_only")){
+                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                }
+                region_constraint_ptrs.emplace_back(
+                    std::make_unique<SegregationConstraint>(
+                        strength, 
+                        as<arma::uvec>(constr_inst["group_pop"]), 
+                        as<arma::uvec>(constr_inst["total_pop"]), 
+                        map_params.V, constr_score_districts_only
+                    ));
+                // increase constraints applied at every split count
+                all_rounds_soft_region_constraints++;
+            }
+        }
     }
     if (constraints.containsElementNamed("grp_pow")) {
-        throw Rcpp::exception("Error: 'grp_pow' constraint not implemented yet!");
-        // create here
-        // [&] (List l) -> double {
-        // return eval_grp_pow(districts.col(i), j,
-        //       as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"]),
-        //       as<double>(l["tgt_group"]), as<double>(l["tgt_other"]),
-        //       as<double>(l["pow"]));
-        // });
-        // all_rounds_soft_constraints++;
+        Rcpp::List constr = constraints["grp_pow"];
+        for (int i = 0; i < constr.size(); i++) {
+            List constr_inst = constr[i];
+            double strength = constr_inst["strength"];
+            if (strength != 0) {
+                bool constr_score_districts_only = false;
+                if (constr_inst.containsElementNamed("score_districts_only")){
+                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                }
+                region_constraint_ptrs.emplace_back(
+                    std::make_unique<GroupPowerConstraint>(
+                        strength, map_params.V,
+                        as<arma::uvec>(constr_inst["group_pop"]), 
+                        as<arma::uvec>(constr_inst["total_pop"]),
+                        as<double>(constr_inst["tgt_group"]),
+                        as<double>(constr_inst["tgt_other"]),
+                        as<double>(constr_inst["pow"]),
+                         constr_score_districts_only
+                    ));
+                // increase constraints applied at every split count
+                all_rounds_soft_region_constraints++;
+            }
+        }
     }
     if (constraints.containsElementNamed("compet")) {
-        throw Rcpp::exception("Error: 'compet' constraint not implemented yet!");
-        // lp[i] += add_constraint("compet", constraints,
-        // [&] (List l) -> double {
-        // uvec dvote = l["dvote"];
-        // uvec total = dvote + as<uvec>(l["rvote"]);
-        // return eval_grp_pow(districts.col(i), j,
-        //       dvote, total, 0.5, 0.5, as<double>(l["pow"]));
-        // });
-        // all_rounds_soft_constraints++;
+        Rcpp::List constr = constraints["grp_pow"];
+        for (int i = 0; i < constr.size(); i++) {
+            List constr_inst = constr[i];
+            double strength = constr_inst["strength"];
+            if (strength != 0) {
+                bool constr_score_districts_only = false;
+                if (constr_inst.containsElementNamed("score_districts_only")){
+                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                }
+                // Competition is just group power with group target and other target .5
+                arma::uvec dvote = constr_inst["dvote"];
+                arma::uvec total = dvote + as<arma::uvec>(constr_inst["rvote"]);
+
+                region_constraint_ptrs.emplace_back(
+                    std::make_unique<GroupPowerConstraint>(
+                        strength, map_params.V,
+                        dvote, total,
+                        .5, .5, 
+                        as<double>(constr_inst["pow"]),
+                         constr_score_districts_only
+                    ));
+                // increase constraints applied at every split count
+                all_rounds_soft_region_constraints++;
+            }
+        }
     }
     if (constraints.containsElementNamed("grp_hinge")) {
         // create constraint objects
@@ -523,7 +602,6 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
                         as<arma::uvec>(constr_inst["group_pop"]), as<arma::uvec>(constr_inst["total_pop"]),
                         constr_score_districts_only
                     ));
-                // REprintf("Added and its %d!\n", region_constraint_ptrs[0]->score_districts_only);
                 // increase constraints applied at every split count
                 all_rounds_soft_region_constraints++;
             }
@@ -663,6 +741,23 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
         }
     }
 
+// lp[i] += add_constraint("fry_hold", constraints,
+//     [&] (List l) -> double {
+//         return eval_fry_hold(districts.col(i), j,
+//                              as<uvec>(l["total_pop"]),
+//                              as<mat>(l["ssdmat"]),
+//                              as<double>(l["denominator"]));
+//     });
+
+// lp[i] += add_constraint("qps", constraints,
+//     [&] (List l) -> double {
+//         return eval_qps(districts.col(i), j,
+//                         as<uvec>(l["total_pop"]),
+//                         as<uvec>(l["cities"]), as<int>(l["n_city"]),
+//                         n_distr);
+//     });
+
+
     if (constraints.containsElementNamed("custom")) {
         Rcpp::List constr = constraints["custom"];
         for (int i = 0; i < constr.size(); i++) {
@@ -673,7 +768,6 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
                 if (constr_inst.containsElementNamed("score_districts_only")){
                     constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
                 }
-                // Function fn = constr_inst["fn"];
                 region_constraint_ptrs.emplace_back(
                     std::make_unique<CustomRegionConstraint>(
                         strength, 
@@ -748,30 +842,6 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
 
 }
 
-
-
-
-// lp[i] += add_constraint("fry_hold", constraints,
-//     [&] (List l) -> double {
-//         return eval_fry_hold(districts.col(i), j,
-//                              as<uvec>(l["total_pop"]),
-//                              as<mat>(l["ssdmat"]),
-//                              as<double>(l["denominator"]));
-//     });
-
-// lp[i] += add_constraint("qps", constraints,
-//     [&] (List l) -> double {
-//         return eval_qps(districts.col(i), j,
-//                         as<uvec>(l["total_pop"]),
-//                         as<uvec>(l["cities"]), as<int>(l["n_city"]),
-//                         n_distr);
-//     });
-
-// lp[i] += add_constraint("custom", constraints,
-// [&] (List l) -> double {
-// Function fn = l["fn"];
-// return as<NumericVector>(fn(districts.col(i), j))[0];
-// });
 
 
 

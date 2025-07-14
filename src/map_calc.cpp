@@ -28,24 +28,6 @@ double eval_fry_hold(const subview_col<uword> &districts, int distr,
 
 
 
-
-/*
- * Compute the segregation penalty for district `distr`
- */
-double eval_segregation(const subview_col<uword> &districts, int distr,
-                        const uvec &grp_pop, const uvec &total_pop) {
-
-    int T = sum(total_pop);
-    double pAll = (double) sum(grp_pop) / T;
-    double denom = (double) 2.0 * T * pAll * (1 - pAll);
-
-    uvec idxs = find(districts == distr);
-    double grp = sum(grp_pop(idxs));
-    double pop = sum(total_pop(idxs));
-
-    return (double)(pop * std::abs((grp / pop) - pAll) / denom);
-}
-
 /*
  * Compute the qps penalty for district `distr`
  */

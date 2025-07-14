@@ -20,11 +20,7 @@ double eval_fry_hold(const subview_col<uword> &districts, int distr,
 
 
 
-/*
- * Compute the segregation penalty for district `distr`
- */
-double eval_segregation(const subview_col<uword> &districts, int distr,
-                        const uvec &grp_pop, const uvec &total_pop);
+
 
 /*
  * Compute the qps penalty for district `distr`

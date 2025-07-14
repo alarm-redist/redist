@@ -38,16 +38,15 @@ double eval_pop_dev(const PlanID &region_ids,
  */
 template <typename PlanID>
 double eval_grp_pow(
-    const PlanID &districts, int const V,
+    const PlanID &region_ids, int const V,
     int const region1_id, int const region2_id,
-                    const arma::uvec &grp_pop,
-                    const arma::uvec &total_pop,
-                    double tgt_grp, double tgt_other, double pow) {
+    arma::uvec const &grp_pop, arma::uvec const &total_pop,
+    double const tgt_grp, double const tgt_other, double const pow) {
     double sum_grp = 0.0;
     double sum_total = 0.0;
 
     for (size_t i = 0; i < V; ++i) {
-        if (districts[i] == region1_id || districts[i] == region2_id) {
+        if (region_ids[i] == region1_id || region_ids[i] == region2_id) {
             sum_grp += grp_pop[i];
             sum_total += total_pop[i];
         }
@@ -317,13 +316,20 @@ double eval_polsby(
 }
 
 
+
+
+/*
+ * Compute the segregation penalty for district `distr`
+ */
 template <typename PlanID>
-double NEW_eval_segregation(const PlanID &districts, int distr,
-                        const arma::uvec &grp_pop,
-                        const arma::uvec &total_pop) {
+double eval_segregation(
+    const PlanID &region_ids, 
+    int const region1_id, int const region2_id,
+    int const V, 
+    const arma::uvec &grp_pop, const arma::uvec &total_pop) {
     // Step 1: compute overall group share (pAll) and total population
-    double total_grp = arma::accu(grp_pop);
-    double total_pop_sum = arma::accu(total_pop);
+    double total_grp = arma::sum(grp_pop);
+    double total_pop_sum = arma::sum(total_pop);
 
     if (total_pop_sum == 0.0) return 0.0;
 
@@ -335,9 +341,9 @@ double NEW_eval_segregation(const PlanID &districts, int distr,
     double local_grp = 0.0;
     double local_pop = 0.0;
 
-    size_t V = districts.size();
-    for (size_t i = 0; i < V; ++i) {
-        if (districts[i] == distr) {
+    for (int i = 0; i < V; ++i) {
+        // count if in either region
+        if (region_ids[i] == region1_id || region_ids[i] == region2_id) {
             local_grp += grp_pop[i];
             local_pop += total_pop[i];
         }
@@ -346,8 +352,7 @@ double NEW_eval_segregation(const PlanID &districts, int distr,
     if (local_pop == 0.0) return 0.0;
 
     // Step 3: compute and return segregation score
-    double local_frac = local_grp / local_pop;
-    return local_pop * std::abs(local_frac - pAll) / denom;
+    return local_pop * std::abs((local_grp / local_pop) - pAll) / denom;
 }
 
 
@@ -414,6 +419,96 @@ class PopDevConstraint : public RegionConstraint {
 };
 
 
+
+
+class StatusQuoConstraint : public RegionConstraint {
+    private:
+        double const strength;
+        arma::uvec const current;
+        arma::uvec const pop;
+        int const ndists;
+        int const n_current;
+        int const V;
+
+    public:
+        StatusQuoConstraint(
+            double const strength, 
+            arma::uvec const &current, arma::uvec const &pop,
+            int const ndists, int const n_current, int const V,
+            bool const score_districts_only
+        ) :
+            RegionConstraint(score_districts_only),
+            strength(strength),
+            current(current),
+            pop(pop),
+            ndists(ndists),
+            n_current(n_current),
+            V(V) {}
+    
+        double compute_region_constraint_score(const Plan &plan, int const region_id) const override;
+        // log constraint for region made by merging region 1 and 2
+        double compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
+};
+
+
+
+class SegregationConstraint : public RegionConstraint {
+    private:
+        double const strength;
+        const arma::uvec grp_pop;
+        const arma::uvec total_pop;
+        int const V;
+
+    public:
+        SegregationConstraint(
+            double const strength, 
+            arma::uvec const &grp_pop, arma::uvec const &total_pop,
+            int const V,
+            bool const score_districts_only
+        ) :
+            RegionConstraint(score_districts_only),
+            strength(strength),
+            grp_pop(grp_pop),
+            total_pop(total_pop),
+            V(V) {}
+    
+        double compute_region_constraint_score(const Plan &plan, int const region_id) const override;
+        // log constraint for region made by merging region 1 and 2
+        double compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
+};
+
+class GroupPowerConstraint : public RegionConstraint {
+    private:
+        double const strength;
+        int const V;
+        arma::uvec const grp_pop;
+        arma::uvec const total_pop;
+        double const tgt_grp;
+        double const tgt_other;
+        double const pow;
+
+
+    public:
+        GroupPowerConstraint(
+            double const strength, 
+            int const V,
+            arma::uvec const &grp_pop, arma::uvec const &total_pop,
+            double const tgt_grp, double const tgt_other, double const pow,
+            bool const score_districts_only
+        ) :
+            RegionConstraint(score_districts_only),
+            strength(strength),
+            V(V),
+            grp_pop(grp_pop),
+            total_pop(total_pop),
+            tgt_grp(tgt_grp), tgt_other(tgt_other), pow(pow)
+            {}
+    
+        double compute_region_constraint_score(const Plan &plan, int const region_id) const override;
+        // log constraint for region made by merging region 1 and 2
+        double compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
+};
+
 class GroupHingeConstraint : public RegionConstraint {
     private:
         double const strength;
@@ -455,35 +550,6 @@ class IncumbentConstraint : public RegionConstraint {
         double compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
 };
 
-
-class StatusQuoConstraint : public RegionConstraint {
-    private:
-        double const strength;
-        arma::uvec const current;
-        arma::uvec const pop;
-        int const ndists;
-        int const n_current;
-        int const V;
-
-    public:
-        StatusQuoConstraint(
-            double const strength, 
-            arma::uvec const &current, arma::uvec const &pop,
-            int const ndists, int const n_current, int const V,
-            bool const score_districts_only
-        ) :
-            RegionConstraint(score_districts_only),
-            strength(strength),
-            current(current),
-            pop(pop),
-            ndists(ndists),
-            n_current(n_current),
-            V(V) {}
-    
-        double compute_region_constraint_score(const Plan &plan, int const region_id) const override;
-        // log constraint for region made by merging region 1 and 2
-        double compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
-};
 
 
 class SplitsConstraint : public RegionConstraint {
