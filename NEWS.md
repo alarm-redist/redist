@@ -33,6 +33,8 @@ where for a newly split plan if either of the two new regions has a raw score
 greater than or equal to `thresh` then the plan will be automatically reject. 
 This amounts to giving plans where any region has a score above `thresh` a 
 probability of 0. 
+* Updates the target distribution when counties are turned on. For more details 
+see the forthcoming working paper. 
 
 
 # 4.3.0

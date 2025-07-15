@@ -55,6 +55,7 @@ Contributors:
 
 Papers:
 
+- O'Sullivan, P., McCartan, C., & Imai, K. (Working Paper Forthcoming). Generalized Sequential Monte Carlo Sampling for Larger-scale Redistricting Problems.
 - McCartan, C., & Imai, K. (Forthcoming). [Sequential Monte Carlo for sampling balanced and compact redistricting plans](https://arxiv.org/abs/2008.06131/). *Annals of Applied Statistics*.
 - Fifield, B., Higgins, M., Imai, K., & Tarr, A. (2020). 
 [Automated redistricting simulation using Markov chain Monte Carlo](https://doi.org/10.1080/10618600.2020.1739532). *Journal of Computational and Graphical Statistics*, 29(4), 715-728.
@@ -124,7 +125,3 @@ found in the [Get Started](https://alarm-redist.org/redist/articles/redist.html)
 page. The package [vignettes](https://alarm-redist.org/redist/articles/) 
 contain more detailed information and guides to specific workflows.
 
-
-## About This Branch
-
-Working on adding a more generalized SMC version. Added a PHIL_TESTING_FOLDER where I do my own stuff
