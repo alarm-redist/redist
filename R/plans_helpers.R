@@ -13,35 +13,41 @@
 #' @concept analyze
 #' @export
 pullback <- function(plans, map = NULL) {
-    if (!inherits(plans, "redist_plans")) cli_abort("{.arg plans} must be a {.cls redist_plans}")
+  if (!inherits(plans, "redist_plans")) {
+    cli_abort("{.arg plans} must be a {.cls redist_plans}")
+  }
 
-    merge_idx <- attr(plans, "merge_idx")
-    if (is.null(merge_idx)) {
-        cli_warn("No merged indexing found.")
-        return(plans)
-    }
+  merge_idx <- attr(plans, "merge_idx")
+  if (is.null(merge_idx)) {
+    cli_warn("No merged indexing found.")
+    return(plans)
+  }
 
-    attr(plans, "merge_idx") <- NULL
-    if (inherits(map, "redist_map")) {
-        attr(plans, "prec_pop") <- map[[attr(map, "pop_col")]]
-    } else {
-        attr(plans, "prec_pop") <- NULL
-    }
+  attr(plans, "merge_idx") <- NULL
+  if (inherits(map, "redist_map")) {
+    attr(plans, "prec_pop") <- map[[attr(map, "pop_col")]]
+  } else {
+    attr(plans, "prec_pop") <- NULL
+  }
 
-    set_plan_matrix(plans, get_plans_matrix(plans)[merge_idx, ])
+  set_plan_matrix(plans, get_plans_matrix(plans)[merge_idx, ])
 }
-
 
 
 #' Helper function to check types for tidy wrappers
 #' @noRd
 check_tidy_types <- function(map, .data) {
-    if (!is.null(map) && !inherits(map, "data.frame"))
-        cli_abort("{.arg map} must be a data frame")
-    if (is.null(.data))
-        cli_abort("Must provide {.arg .data} if not called within a {.pkg dplyr} verb")
-    if (!inherits(.data, "redist_plans"))
-        cli_abort("{.arg data} must be a {.cls redist_plans}")
+  if (!is.null(map) && !inherits(map, "data.frame")) {
+    cli_abort("{.arg map} must be a data frame")
+  }
+  if (is.null(.data)) {
+    cli_abort(
+      "Must provide {.arg .data} if not called within a {.pkg dplyr} verb"
+    )
+  }
+  if (!inherits(.data, "redist_plans")) {
+    cli_abort("{.arg data} must be a {.cls redist_plans}")
+  }
 }
 
 
@@ -50,20 +56,28 @@ check_tidy_types <- function(map, .data) {
 #' @param map a `redist_map` object
 #' @param x a variable to tally. Tidy-evaluated.
 #' @param .data a `redist_plans` object or matrix of plans
-#' @param num_threads The number of threads to use for the calculation. Can
-#' significantly speedup calculations for a large number of plans. 
+#' @param ncores The number of threads to use for the calculation. Can
+#' significantly speedup calculations for a large number of plans.
 #'
 #' @return a vector containing the tallied values by district and plan (column-major)
 #'
 #' @concept analyze
 #' @export
-tally_var <- function(map, x, .data = pl(), num_threads = 1) {
-    check_tidy_types(map, .data)
-    if (length(unique(diff(as.integer(.data$district)))) > 2)
-        cli_warn("Districts not sorted in ascending order; output may be incorrect.")
+tally_var <- function(map, x, .data = pl(), ncores = 1) {
+  check_tidy_types(map, .data)
+  if (length(unique(diff(as.integer(.data$district)))) > 2) {
+    cli_warn(
+      "Districts not sorted in ascending order; output may be incorrect."
+    )
+  }
 
-    x <- rlang::eval_tidy(rlang::enquo(x), map)
-    as.numeric(pop_tally(get_plans_matrix(.data), x, attr(.data, "ndists"), num_threads))
+  x <- rlang::eval_tidy(rlang::enquo(x), map)
+  as.numeric(pop_tally(
+    get_plans_matrix(.data),
+    x,
+    attr(.data, "ndists"),
+    ncores
+  ))
 }
 
 #' @rdname redist.group.percent
@@ -71,31 +85,52 @@ tally_var <- function(map, x, .data = pl(), num_threads = 1) {
 #'
 #' @param map a \code{\link{redist_map}} object
 #' @param .data a \code{\link{redist_plans}} object or matrix of plans
-#' @param num_threads The number of threads to use for the calculation. Can
+#' @param ncores The number of threads to use for the calculation. Can
 #' significantly speedup calculations for a large number of plans.
 #'
 #' @concept analyze
 #' @export
-group_frac <- function(map, group_pop, total_pop = map[[attr(map, "pop_col")]],
-                       .data = pl(), num_threads = 1) {
-    check_tidy_types(map, .data)
-    # districts not in ascending order
-    if (length(unique(diff(as.integer(.data$district)))) > 2)
-        cli_warn("Districts not sorted in ascending order; output may be incorrect.")
+group_frac <- function(
+  map,
+  group_pop,
+  total_pop = map[[attr(map, "pop_col")]],
+  .data = pl(),
+  ncores = 1
+) {
+  check_tidy_types(map, .data)
+  # districts not in ascending order
+  if (length(unique(diff(as.integer(.data$district)))) > 2) {
+    cli_warn(
+      "Districts not sorted in ascending order; output may be incorrect."
+    )
+  }
 
-    group_pop <- rlang::eval_tidy(rlang::enquo(group_pop), map)
-    total_pop <- rlang::eval_tidy(rlang::enquo(total_pop), map)
+  group_pop <- rlang::eval_tidy(rlang::enquo(group_pop), map)
+  total_pop <- rlang::eval_tidy(rlang::enquo(total_pop), map)
 
-    if (!is.numeric(group_pop) || !is.numeric(total_pop))
-        cli_abort("{.arg group_pop} and {.arg total_pop} must be numeric vectors.")
+  if (!is.numeric(group_pop) || !is.numeric(total_pop)) {
+    cli_abort("{.arg group_pop} and {.arg total_pop} must be numeric vectors.")
+  }
 
-    plans = get_plans_matrix(.data)
-    if (length(total_pop) != nrow(plans))
-        cli_abort("{.arg .data} and {.arg total_pop} must have the same number of precincts.")
-    if (length(group_pop) != nrow(plans))
-        cli_abort("{.arg .data} and {.arg group_pop} must have the same number of precincts.")
+  plans = get_plans_matrix(.data)
+  if (length(total_pop) != nrow(plans)) {
+    cli_abort(
+      "{.arg .data} and {.arg total_pop} must have the same number of precincts."
+    )
+  }
+  if (length(group_pop) != nrow(plans)) {
+    cli_abort(
+      "{.arg .data} and {.arg group_pop} must have the same number of precincts."
+    )
+  }
 
-    as.numeric(group_pct(plans, group_pop, total_pop, attr(.data, "ndists"), num_threads))
+  as.numeric(group_pct(
+    plans,
+    group_pop,
+    total_pop,
+    attr(.data, "ndists"),
+    ncores
+  ))
 }
 
 
@@ -116,8 +151,8 @@ group_frac <- function(map, group_pop, total_pop = map[[attr(map, "pop_col")]],
 #'
 #' @export
 avg_by_prec <- function(plans, x, draws = NA) {
-    .Deprecated("proj_avg")
-    proj_avg(plans, {{ x }}, draws)
+  .Deprecated("proj_avg")
+  proj_avg(plans, {{ x }}, draws)
 }
 
 
@@ -125,25 +160,25 @@ avg_by_prec <- function(plans, x, draws = NA) {
 #'
 #' @param map a \code{\link{redist_map}} object
 #' @param .data a \code{\link{redist_plans}} object
-#' @param num_threads The number of threads to use for the calculation. Can
+#' @param ncores The number of threads to use for the calculation. Can
 #' significantly speedup calculations for a large number of plans.
-#' @param rep_by_district Whether or not to return a duplicated value for each 
+#' @param rep_by_district Whether or not to return a duplicated value for each
 #' district (so size `nsims*districts`) or return a single value for each plan.
 #'
 #' @concept analyze
 #' @export
-plan_parity <- function(map, .data = pl(), num_threads = 1, rep_by_district = TRUE) {
-    check_tidy_types(map, .data)
-    ndists <- attr(map, "ndists")
-    total_pop <- map[[attr(map, "pop_col")]]
-    if (is.null(total_pop)) cli_abort("Population vector missing from {.arg map}")
+plan_parity <- function(map, .data = pl(), ncores = 1) {
+  check_tidy_types(map, .data)
+  ndists <- attr(map, "ndists")
+  total_pop <- map[[attr(map, "pop_col")]]
+  if (is.null(total_pop)) {
+    cli_abort("Population vector missing from {.arg map}")
+  }
 
-    if(rep_by_district){
-        return(rep(max_dev(get_plans_matrix(.data), total_pop, ndists, num_threads),
-                each = ndists))
-    }else{
-        return(max_dev(get_plans_matrix(.data), total_pop, ndists, num_threads))
-    }
+  return(rep(
+    max_dev(get_plans_matrix(.data), total_pop, ndists, ncores),
+    each = ndists
+  ))
 }
 
 
@@ -158,11 +193,11 @@ plan_parity <- function(map, .data = pl(), num_threads = 1, rep_by_district = TR
 #' @concept analyze
 #' @export
 is_county_split <- function(plan, counties) {
-    counties <- vctrs::vec_group_id(counties)
-    as.logical((tapply(plan, counties, FUN = function(y) length(unique(y))) > 1)[counties])
+  counties <- vctrs::vec_group_id(counties)
+  as.logical((tapply(plan, counties, FUN = function(y) length(unique(y))) > 1)[
+    counties
+  ])
 }
-
-
 
 
 #' Extract the last plan from a set of plans
@@ -174,8 +209,8 @@ is_county_split <- function(plan, counties) {
 #' @concept analyze
 #' @export
 last_plan <- function(plans) {
-    plan_m <- get_plans_matrix(plans)
-    plan_m[, ncol(plan_m)]
+  plan_m <- get_plans_matrix(plans)
+  plan_m[, ncol(plan_m)]
 }
 
 #' Extract the district assignments for a precinct across all simulated plans
@@ -188,24 +223,31 @@ last_plan <- function(plans) {
 #' @concept analyze
 #' @export
 prec_assignment <- function(prec, .data = pl()) {
-    check_tidy_types(NULL, .data)
+  check_tidy_types(NULL, .data)
 
-    m <- get_plans_matrix(.data)
-    if (is.integer(prec)) {
-        if (prec <= 0 || prec > nrow(m))
-            cli_abort(c("{.arg prec} out of bounds",
-                "i" = "There are {nrow(m)} precincts in these plans."))
-    } else {
-        cli_abort("{.arg prec} must be an integer index")
+  m <- get_plans_matrix(.data)
+  if (is.integer(prec)) {
+    if (prec <= 0 || prec > nrow(m)) {
+      cli_abort(c(
+        "{.arg prec} out of bounds",
+        "i" = "There are {nrow(m)} precincts in these plans."
+      ))
     }
+  } else {
+    cli_abort("{.arg prec} must be an integer index")
+  }
 
-    assignment <- m[prec, , drop = FALSE]
-    if ("district" %in% names(.data) && is.factor(.data$district)) {
-        lev <- levels(.data$district)
-        assignment <- factor(lev[assignment], lev, ordered = is.ordered(.data$district))
-    }
+  assignment <- m[prec, , drop = FALSE]
+  if ("district" %in% names(.data) && is.factor(.data$district)) {
+    lev <- levels(.data$district)
+    assignment <- factor(
+      lev[assignment],
+      lev,
+      ordered = is.ordered(.data$district)
+    )
+  }
 
-    assignment
+  assignment
 }
 
 #' Compute a matrix of precinct co-occurrences
@@ -225,12 +267,19 @@ prec_assignment <- function(prec, .data = pl()) {
 #' @concept analyze
 #' @md
 #' @export
-prec_cooccurrence <- function(plans, which = NULL, sampled_only = TRUE, ncores = 1) {
-    if (sampled_only)
-        plans <- subset_sampled(plans)
-    which <- eval_tidy(enquo(which), plans)
-    plan_m <- get_plans_matrix(plans)
-    if (is.null(which))
-        which <- seq_len(ncol(plan_m))
-    prec_cooccur(plan_m, which, ncores)
+prec_cooccurrence <- function(
+  plans,
+  which = NULL,
+  sampled_only = TRUE,
+  ncores = 1
+) {
+  if (sampled_only) {
+    plans <- subset_sampled(plans)
+  }
+  which <- eval_tidy(enquo(which), plans)
+  plan_m <- get_plans_matrix(plans)
+  if (is.null(which)) {
+    which <- seq_len(ncol(plan_m))
+  }
+  prec_cooccur(plan_m, which, ncores)
 }
