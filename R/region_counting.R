@@ -4,19 +4,19 @@
 # Only counts regions in district_nums. If null counts them all
 get_region_count_map <- function(plan_mat, num_regions, region_ids_to_count = NULL){
     # check region ids only go from 1:num_regions
-    assertthat::assert_that(
-        assertthat::are_equal(
-            1:num_regions,
-            sort(unique(plan_mat[,1]))
-        )
-    )
+    # assertthat::assert_that(
+    #     assertthat::are_equal(
+    #         1:num_regions,
+    #         sort(unique(plan_mat[,1]))
+    #     )
+    # )
 
     region_ids_to_count <- unique(region_ids_to_count)
 
     # check not counting an invalid region id
-    assertthat::assert_that(
-        all(region_ids_to_count %in% 1:num_regions)
-    )
+    # assertthat::assert_that(
+    #     all(region_ids_to_count %in% 1:num_regions)
+    # )
 
     region_to_count_vec <- rep(FALSE, num_regions)
 

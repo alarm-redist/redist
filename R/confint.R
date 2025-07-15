@@ -117,7 +117,7 @@ redist_smc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE)
 
 #' @describeIn redist_ci Compute confidence intervals for MCMC output.
 #' @export
-redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE, use_coda_std_errors = FALSE) {
+redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE, use_coda = FALSE) {
     plans <- subset_sampled(plans)
     x_orig <- enquo(x)
     x <- as.numeric(eval_tidy(enquo(x), plans))
@@ -142,7 +142,7 @@ redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE
                    ">" = "Increase the number of samples."))
     }
 
-    if(use_coda_std_errors){
+    if(use_coda){
         rlang::check_installed("coda", "to calculate MCMC standard errors.")
         mcmc = coda::mcmc.list(tapply(x, chain, coda::mcmc, thin=thin))
         std_err <- summary(mcmc)$statistics["Time-series SE"]

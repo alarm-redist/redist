@@ -24,6 +24,7 @@ Useful links:
 Authors:
 \itemize{
   \item Cory McCartan \email{corymccartan@nyu.edu}
+  \item Philip O'Sullivan \email{posullivan@fas.harvard.edu}
   \item Ben Fifield \email{benfifield@gmail.com}
   \item Kosuke Imai \email{imai@harvard.edu}
 }

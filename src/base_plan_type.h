@@ -395,14 +395,6 @@ class RegionPairHash{
         void Rprint() const;
 
 
-        RegionMultigraphCount get_multigraph_counts(int const num_regions) const;
-        RegionMultigraphCount get_merged_multigraph_counts(
-            int const num_regions, std::vector<RegionID> &merge_index_reshuffle,
-            RegionID const region1_id, RegionID const region2_id 
-        ) const;
-
-
-
 };
 
 
@@ -493,6 +485,14 @@ class PlanMultigraph{
         bool is_hierarchically_valid(
             Plan const &plan, std::vector<bool> component_lookup
         );
+
+
+        // gets multigraph counts for linking edge calculations 
+        RegionMultigraphCount get_multigraph_counts(int const num_regions) const;
+        RegionMultigraphCount get_merged_multigraph_counts(
+            int const num_regions, std::vector<RegionID> &merge_index_reshuffle,
+            RegionID const region1_id, RegionID const region2_id 
+        ) const;
 };
 
 // swap function 

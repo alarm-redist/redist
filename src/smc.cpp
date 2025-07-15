@@ -633,7 +633,7 @@ List run_redist_smc(
     // Loading Info
     if (verbosity >= 1) {
         Rcout.imbue(std::locale::classic());
-        Rcout << std::fixed << std::setprecision(4);
+        Rcout << std::fixed << std::setprecision(0);
         if(!split_district_only){
             Rcout << "GENERALIZED SEQUENTIAL MONTE CARLO";
         }else{
@@ -642,31 +642,33 @@ List run_redist_smc(
         if(total_ms_steps > 0){
             Rcout << " WITH MERGE SPLIT";
         }
-        Rcout << "\n";
+        Rcout << std::endl;
         Rcout << "Using " << sampling_space_to_str(sampling_space);
         Rcout << " Sampling space to sample " << nsims << " " << V << "-unit ";
         Rcout << "maps with " << ndists << " districts and population between "
-              << lower << " and " << upper << " using " 
-              << pool.getNumThreads() << " threads, "
-              << total_ms_steps << " merge split steps, ";
-        if(splitting_size_regime == SplittingSizeScheduleType::DistrictOnlySMD || splitting_size_regime == SplittingSizeScheduleType::DistrictOnlyMMD){
-            Rcout << "and only performing 1-district splits.";
-        }else if(splitting_size_regime == SplittingSizeScheduleType::AnyValidSizeSMD){
-            Rcout << "and generalized region splits.";
-        }else if(splitting_size_regime == SplittingSizeScheduleType::OneCustomSize){
-            Rcout << "and custom size region splits.";
-        }
-        Rcout << " Using " << splitting_method_to_str(splitting_method) << " with " <<
-        (wgt_type == "optimal" ? "Optimal" : "Simple") << " Weights!\n";
-        if (map_params.cg.size() > 1){
-            Rcout << "Ensuring no more than " << ndists - 1 << " splits of the "
-                  << map_params.cg.size() << " administrative units.\n";
-        }
-        if(scoring_function.total_soft_constraints > 0){
-            Rcout << "Applying " << scoring_function.total_soft_constraints << " soft constraints.\n";
-        }
-        if(scoring_function.num_hard_plan_constraints > 0){
-            Rcout << "Applying " << scoring_function.num_hard_plan_constraints << " hard constraints.\n";
+              << lower << " and " << upper << "." << std::endl;
+        if(verbosity >= 3){
+            Rcout << "Using " << pool.getNumThreads() << " threads, "
+                << total_ms_steps << " merge split steps, ";
+            if(splitting_size_regime == SplittingSizeScheduleType::DistrictOnlySMD || splitting_size_regime == SplittingSizeScheduleType::DistrictOnlyMMD){
+                Rcout << "and only performing 1-district splits.";
+            }else if(splitting_size_regime == SplittingSizeScheduleType::AnyValidSizeSMD){
+                Rcout << "and generalized region splits.";
+            }else if(splitting_size_regime == SplittingSizeScheduleType::OneCustomSize){
+                Rcout << "and custom size region splits.";
+            }
+            Rcout << " Using " << splitting_method_to_str(splitting_method) << " with " <<
+            (wgt_type == "optimal" ? "Optimal" : "Simple") << " Weights!\n";
+            if (map_params.cg.size() > 1){
+                Rcout << "Ensuring no more than " << ndists - 1 << " splits of the "
+                    << map_params.cg.size() << " administrative units.\n";
+            }
+            if(scoring_function.total_soft_constraints > 0){
+                Rcout << "Applying " << scoring_function.total_soft_constraints << " soft constraints.\n";
+            }
+            if(scoring_function.num_hard_plan_constraints > 0){
+                Rcout << "Applying " << scoring_function.num_hard_plan_constraints << " hard constraints.\n";
+            }
         }
     }
 

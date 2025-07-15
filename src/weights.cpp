@@ -273,7 +273,7 @@ double compute_simple_log_incremental_weight(
     double log_extra_prev_plan_terms = 0.0;
     // if linking edge space we also need to correct for that
     if(sampling_space == SamplingSpace::LinkingEdgeSpace){
-        auto region_multigraph = plan_multigraph.pair_map.get_multigraph_counts(
+        auto region_multigraph = plan_multigraph.get_multigraph_counts(
             plan.num_regions
         );
         // we divide target by number of linking edges so 
@@ -443,7 +443,7 @@ double compute_log_optimal_incremental_weights(
         use_linked_edge_space ? plan.num_regions : 0
     );
     if(use_linked_edge_space){
-        region_multigraph = plan_multigraph.pair_map.get_multigraph_counts(plan.num_regions);
+        region_multigraph = plan_multigraph.get_multigraph_counts(plan.num_regions);
     }
 
     // iterate over the pairs 
@@ -652,7 +652,6 @@ void compute_all_plans_log_optimal_incremental_weights(
     const int check_int = 50; // check for interrupts every _ iterations
     const int num_regions = plans_ptr_vec[0]->num_regions;
     if(DEBUG_WEIGHTS_VERBOSE) Rprintf("About to start computing weights!\n");
-
 
     RcppThread::ProgressBar bar(nsims, 1);
     // Parallel thread pool where all objects in memory shared by default

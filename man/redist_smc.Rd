@@ -22,8 +22,6 @@ redist_smc(
   ms_params = list(),
   n_steps = NULL,
   seq_alpha = 1L,
-  truncate = FALSE,
-  trunc_fn = redist_quantile_trunc,
   pop_temper = 0,
   ref_name = NULL,
   verbose = FALSE,
@@ -176,15 +174,6 @@ higher values prefer exploitation, while lower values prefer exploration.
 Must be between 0 and 1. If any mergesplit steps are applied then it must be
 set to 1.}
 
-\item{truncate}{Whether to truncate the importance sampling weights at the
-final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.
-Truncation only applied if \code{resample=TRUE}.}
-
-\item{trunc_fn}{A function which takes in a vector of weights and returns a
-truncated vector. If the \link[loo:loo]{loo} package is installed (strongly
-recommended), will default to Pareto-smoothed Importance Sampling (PSIS)
-rather than naive truncation.}
-
 \item{pop_temper}{The strength of the automatic population tempering. Try
 values of 0.01-0.05 to start if the algorithm gets stuck on the final few
 splits.}
@@ -218,7 +207,8 @@ reproducibility is desired, set \code{nproc=1} and
 \code{ncores = 1}. If missing defaults to a single process.
 \item \code{weight_type} The type of SMC weights to use. Optimal weights typically
 have lower variance and lead to faster convergence but can be more
-computationally expensive, especially for computationally complex constraints.
+computationally expensive, especially for computationally complex constraints
+or when \code{compactness} is not set to 1.
 }}
 }
 \value{
@@ -247,10 +237,7 @@ Users should also check diagnostics of the sample by running
 Higher values of \code{compactness} sample more compact districts;
 setting this parameter to 1 is computationally efficient and generates nicely
 compact districts.  Values of other than 1 may lead to highly variable
-importance sampling weights.  In these cases, these weights are by default
-truncated using \code{\link[=redist_quantile_trunc]{redist_quantile_trunc()}} to stabilize the resulting
-estimates, but if truncation is used, a specific truncation function should
-probably be chosen by the user.
+importance sampling weights.
 }
 \examples{
 \donttest{

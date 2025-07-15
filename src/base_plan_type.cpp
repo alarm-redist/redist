@@ -423,7 +423,7 @@ double Plan::compute_log_linking_edge_count(
     PlanMultigraph &plan_multigraph
 ) const{
     return compute_log_region_multigraph_spanning_tree(
-        plan_multigraph.pair_map.get_multigraph_counts(num_regions)
+        plan_multigraph.get_multigraph_counts(num_regions)
     );
 };
 
@@ -782,11 +782,11 @@ void RegionPairHash::Rprint() const{
 
 // Returns multigraph counts for a pair map that 
 // has been built on a plan
-RegionMultigraphCount RegionPairHash::get_multigraph_counts(int const num_regions)
+RegionMultigraphCount PlanMultigraph::get_multigraph_counts(int const num_regions)
 const{
     RegionMultigraphCount region_multigraph(num_regions);
     // iterate over all pairs and add the proper counts 
-    for(auto const key_val_pair: get_all_values()){
+    for(auto const key_val_pair: pair_map.get_all_values()){
         // skip if not hierarchically valid merge 
         if(!key_val_pair.second.merge_is_hier_valid) continue;
         int boundary_len;
@@ -809,7 +809,7 @@ const{
 
 // Need to take care because some previously inelgible hier merge pairs now 
 // become ok to merge 
-RegionMultigraphCount RegionPairHash::get_merged_multigraph_counts(
+RegionMultigraphCount PlanMultigraph::get_merged_multigraph_counts(
             int const num_regions, std::vector<RegionID> &merge_index_reshuffle,
             RegionID const region1_id, RegionID const region2_id 
 ) const{
