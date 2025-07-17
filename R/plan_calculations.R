@@ -56,12 +56,12 @@ compute_log_target_density <- function(
     pop_bounds <- map_params$pop_bounds
 
     ndists <- map_params$ndists
-    total_seats <- map_params$total_seats
-    district_seat_sizes <- map_params$district_seat_sizes
+    total_seats <- map_params$nseats
+    district_seat_sizes <- map_params$seats_range
     districting_scheme <- map_params$districting_scheme
 
     if (inherits(plans, "redist_plans")){
-        sizes_matrix <- get_nseats_matrix(plans)
+        sizes_matrix <- get_seats_matrix(plans)
     }else if(is.null(sizes_matrix)){
         # infer
         prec_pop <- map[[attr(map, "pop_col")]]
@@ -149,12 +149,12 @@ compute_log_target_density_by_region <- function(
     pop_bounds <- map_params$pop_bounds
 
     ndists <- map_params$ndists
-    total_seats <- map_params$total_seats
-    district_seat_sizes <- map_params$district_seat_sizes
+    total_seats <- map_params$nseats
+    district_seat_sizes <- map_params$seats_range
     districting_scheme <- map_params$districting_scheme
 
     if (inherits(plans, "redist_plans")){
-        sizes_matrix <- get_nseats_matrix(plans)
+        sizes_matrix <- get_seats_matrix(plans)
     }else if(is.null(sizes_matrix)){
         # infer
         prec_pop <- map[[attr(map, "pop_col")]]
@@ -238,8 +238,8 @@ compute_log_optimal_weights <- function(
     pop_bounds <- map_params$pop_bounds
 
     ndists <- map_params$ndists
-    total_seats <- map_params$total_seats
-    district_seat_sizes <- map_params$district_seat_sizes
+    total_seats <- map_params$nseats
+    district_seat_sizes <- map_params$seats_range
     districting_scheme <- map_params$districting_scheme
     if(districting_scheme == "MMD"){
         splitting_schedule <- "split_district_only_mmd"
@@ -247,7 +247,7 @@ compute_log_optimal_weights <- function(
     storage.mode(district_seat_sizes) <- "integer"
 
     if (inherits(plans, "redist_plans")){
-        sizes_matrix <- get_nseats_matrix(plans)
+        sizes_matrix <- get_seats_matrix(plans)
     }else if(is.null(sizes_matrix)){
         # infer
         prec_pop <- map[[attr(map, "pop_col")]]

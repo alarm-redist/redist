@@ -7,7 +7,7 @@
 \usage{
 redist.parity(plans, total_pop)
 
-plan_parity(map, .data = pl(), num_threads = 1, rep_by_district = TRUE)
+plan_parity(map, .data = pl(), ncores = 1)
 }
 \arguments{
 \item{plans}{A matrix with one row for each precinct and one column for each
@@ -19,7 +19,7 @@ map. Required.}
 
 \item{.data}{a \code{\link{redist_plans}} object}
 
-\item{num_threads}{The number of threads to use for the calculation. Can
+\item{ncores}{The number of threads to use for the calculation. Can
 significantly speedup calculations for a large number of plans.}
 
 \item{rep_by_district}{Whether or not to return a duplicated value for each

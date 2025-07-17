@@ -264,8 +264,6 @@ redist_smc <- function(
     cli::cli_abort("{.arg nsims} must be positive.")
   }
 
-  # defunct code not used right now
-  custom_size_split_list = list()
 
 
   # check default inputs
@@ -319,20 +317,28 @@ redist_smc <- function(
 
   # get the total number of districts
   ndists <- map_params$ndists
-  total_seats <- map_params$total_seats
-  district_seat_sizes <- map_params$district_seat_sizes
+  nseats <- map_params$nseats
+  seats_range <- map_params$seats_range
   districting_scheme <- map_params$districting_scheme
 
   # check that the seat sizes are a range
   if (
     any(
-      district_seat_sizes !=
-        seq.int(from = min(district_seat_sizes), to = max(district_seat_sizes))
+        seats_range !=
+        seq.int(from = min(seats_range), to = max(seats_range))
     )
   ) {
     cli::cli_abort(
-      "For {.arg district_seat_sizes} only a continuous range of district seat sizes are allowed!"
+      "For {.arg seats_range} only a continuous range of district seat sizes are allowed!"
     )
+  }
+  # check that no district is the sum of two other
+  for (d_size1 in seats_range) {
+      for (d_size2 in seats_range) {
+        if((d_size1 + d_size2) %in% seats_range){
+            cli_abort("SMC does not support {.arg seats_range} where one district's seats is equal to the sum of two others")
+        }
+      }
   }
 
   # get the splitting size regime
@@ -340,7 +346,7 @@ redist_smc <- function(
 
   # get initial plan parameters
   initial_plan_params <- get_init_plan_params(
-        nsims, total_seats, pop, pop_bounds,
+        nsims, nseats, pop, pop_bounds,
         init_particles, init_seats, init_weights
   )
   init_particles <- initial_plan_params$init_particles
@@ -513,7 +519,7 @@ redist_smc <- function(
     num_threads = as.integer(ncores),
     splitting_method = split_method,
     splitting_size_regime = splitting_size_regime,
-    custom_size_split_list = custom_size_split_list,
+    custom_size_split_list = list(),
     merge_split_step_vec = merge_split_step_vec,
     ms_moves_multiplier = ms_moves_multiplier,
     merge_prob_type = merge_prob_type
@@ -542,8 +548,8 @@ redist_smc <- function(
       algout <- redist::run_redist_smc(
         nsims = nsims,
         ndists = ndists,
-        total_seats = total_seats,
-        district_seat_sizes = district_seat_sizes,
+        total_seats = nseats,
+        district_seat_sizes = seats_range,
         initial_num_regions = init_num_regions,
         adj_list = adj_list,
         counties = counties,
@@ -715,7 +721,7 @@ redist_smc <- function(
         weight_type = weight_type,
         nproc = nproc,
         ncores = ncores,
-        custom_size_split_list = custom_size_split_list,
+        custom_size_split_list = list(),
         valid_region_sizes_to_split_list = algout$valid_region_sizes_to_split_list,
         valid_split_region_sizes_list = algout$valid_split_region_sizes_list,
         sampling_space = sampling_space,
@@ -836,6 +842,7 @@ redist_smc <- function(
 #'
 #' @returns A list with the following
 #'     - `splitting_schedule`: The splitting schedule for SMC
+#' @noRd
 get_splitting_schedule <- function(split_params, districting_scheme){
 
     # setting the splitting size regime
@@ -895,8 +902,9 @@ get_splitting_schedule <- function(split_params, districting_scheme){
 #'     - `init_seats`: A matrix of region seat counts
 #'     - `initial_log_weights`: A vector of initial log weights
 #'     - `init_num_regions`: The number of initial regions
+#' @noRd
 get_init_plan_params <- function(
-        nsims, total_seats, pop, pop_bounds,
+        nsims, nseats, pop, pop_bounds,
         init_particles, init_seats, init_weights
 ){
     # handle particle, seats, and weights inits
@@ -908,7 +916,7 @@ get_init_plan_params <- function(
     } else {
         if (inherits(init_particles, "redist_plans")) {
             if (is.null(init_seats)) {
-                init_seats <- get_nseats_matrix(init_particles)
+                init_seats <- get_seats_matrix(init_particles)
             }
             if (is.null(init_weights)) {
                 # get weights if not resampled, else just set all equal to 1
@@ -928,7 +936,7 @@ get_init_plan_params <- function(
                 )
                 init_seats <- infer_plan_nseats(
                     init_particles,
-                    total_seats,
+                    nseats,
                     pop,
                     pop_bounds[1],
                     pop_bounds[3]
@@ -995,6 +1003,7 @@ get_init_plan_params <- function(
 #' @returns A list with the following
 #'     - `nproc`: The number of parallel R processes to spawn. Defaults to 1.
 #'     - `weight_type`: Must be either simple or optimal. Defaults to optimal
+#' @noRd
 extract_control_params <- function(control){
 
     control_param_names <- c("nproc", "weight_type")
@@ -1055,6 +1064,7 @@ extract_control_params <- function(control){
 #'     - `ms_frequency`: How oftent to run mergesplit steps
 #'     - `merge_split_step_vec`: vector whose length is the total number of steps
 #'     and a value of true indicates that step is a mergesplit step.
+#' @noRd
 extract_ms_params <- function(ms_params, total_smc_steps){
     ms_param_names <- c("ms_moves_multiplier", "ms_frequency", "merge_prob_type")
 

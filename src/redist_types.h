@@ -198,7 +198,8 @@ class MapParams {
                 is_district_vec[1] = true;
             }
             return is_district_vec;
-          }())
+          }()),
+        is_mmd(ndists != total_seats)
           {
             // check the sizes are ok 
             if(ndists-1 > MAX_SUPPORTED_NUM_DISTRICTS || total_seats-1 > MAX_SUPPORTED_NUM_DISTRICTS){
@@ -237,6 +238,7 @@ class MapParams {
     int const largest_district_size; // largest district size
     std::vector<int> const district_seat_sizes; // vector of all district seat sizes 
     std::vector<bool> const is_district; // of length total_seats that says whether or not that size is a district
+    bool const is_mmd; // Whether or not multimember districting 
 
 };
 

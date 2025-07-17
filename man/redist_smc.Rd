@@ -14,7 +14,7 @@ redist_smc(
   runs = 1L,
   ncores = 0L,
   init_particles = NULL,
-  init_nseats = NULL,
+  init_seats = NULL,
   init_weights = NULL,
   sampling_space = c("graph_plan", "spanning_forest", "linking_edge"),
   split_method = NULL,
@@ -79,12 +79,12 @@ plans to begin sampling from. For advanced use only. The matrix must have
 the existing districts meet contiguity and population constraints, or there
 may be major issues when sampling.}
 
-\item{init_nseats}{A matrix of the number of seats per region of
+\item{init_seats}{A matrix of the number of seats per region of
 the partial plans to begin sampling from. For advanced use only. The matrix
 must have \code{nsims} columns, as many rows as there are regions in \code{init_particles}
 and each column must sum to the total number of seats in the map. Not needed
 if \code{init_particles} is a \link{redist_plans} object. If \code{init_particles} are passed
-but not \code{init_nseats} then the number of seats will be attempted
+but not \code{init_seats} then the number of seats will be attempted
 to be inferred.}
 
 \item{init_weights}{A vector of length \code{nsims} of unnormalized plan weights
@@ -254,8 +254,8 @@ sampled_constr <- redist_smc(fl_map, 5000, constraints = constr)
 # Multiple parallel independent runs
 redist_smc(fl_map, 1000, runs = 2)
 
-# One run with multiple processes
-redist_smc(fl_map, 1000, nproc = 2)
+# Two runs with multiple processes
+redist_smc(fl_map, 1000, runs = 2, control = list(nproc = 2))
 }
 
 }

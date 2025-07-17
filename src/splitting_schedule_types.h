@@ -34,7 +34,25 @@ class SplittingSchedule {
             smallest_district_size(*min_element(district_seat_sizes.begin(), district_seat_sizes.end())),
             largest_district_size(*max_element(district_seat_sizes.begin(), district_seat_sizes.end())),
             district_seat_sizes(district_seat_sizes),
-            is_district(total_seats + 1, false),
+            is_district([ndists, total_seats, &district_seat_sizes]() {
+                // vector where index i is true iff i seats is a district 
+                std::vector<bool> is_district_vec(total_seats + 1, false);
+                if(ndists > total_seats){
+                    throw Rcpp::exception("The number of distrcts must be less than or equal to the total number of seats!\n");
+                }else if(ndists != total_seats){
+                    for (auto const &a_size: district_seat_sizes){
+                        if(a_size < 0) throw Rcpp::exception("District Seat Sizes must be strictly positive!\n");
+                        if(a_size >= total_seats)  throw Rcpp::exception("District Seat Sizes must be less than total seats!\n");
+                        // mark this as a district size 
+                        is_district_vec[a_size] = true;
+                    }
+                    
+                }else{
+                    is_district_vec[1] = true;
+                }
+                return is_district_vec;
+            }()),
+            is_mmd(ndists != total_seats),
             all_regions_smaller_cut_sizes_to_try(total_seats+1),
             all_regions_min_and_max_possible_cut_sizes(total_seats+1),
             valid_region_sizes_to_split(total_seats+1),
@@ -42,13 +60,6 @@ class SplittingSchedule {
             check_adj_to_regions(total_seats+1),
             valid_merge_pair_sizes(total_seats+1, std::vector<bool>(total_seats+1, false)
             ){
-                // make sure the district sizes are ok 
-                for (auto const &a_size: district_seat_sizes){
-                    if(a_size < 0) throw Rcpp::exception("District Seat Sizes must be strictly positive!\n");
-                    if(a_size >= total_seats)  throw Rcpp::exception("District Seat Sizes must be less than total seats!\n");
-                    // mark this as a district size 
-                    is_district[a_size] = true;
-                }
             };
     
         SplittingSizeScheduleType schedule_type; // the splitting type 
@@ -58,7 +69,8 @@ class SplittingSchedule {
         int const smallest_district_size;
         int const largest_district_size;
         std::vector<int> const district_seat_sizes;
-        std::vector<bool> is_district;
+        std::vector<bool> const is_district;
+        bool const is_mmd;
 
         /*
          * This is a vector of vectors where entry for index `r` it is a vector

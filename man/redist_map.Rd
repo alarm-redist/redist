@@ -12,7 +12,7 @@ redist_map(
   total_pop = c("pop", "population", "total_pop", "POP100"),
   ndists = NULL,
   total_seats = NULL,
-  district_seat_sizes = NULL,
+  seats_range = NULL,
   pop_bounds = NULL,
   adj = NULL,
   adj_col = "adj",
@@ -45,9 +45,8 @@ districts to partition the map into. Must be specified if \code{existing_plan} i
 legislative seats in the map. For single-member districting schemes this is equal to \code{ndists}.
 If not provided then defaults to \code{ndists}.}
 
-\item{district_seat_sizes}{Sizes that a valid district is allowed to be. Sizes
-here refers to the number of seats contained in a district. For single member
-districting schemes this is always 1.}
+\item{seats_range}{The number of seats a district is allowed to have.For
+single member districting schemes this is always 1.}
 
 \item{pop_bounds}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} more specific
 population bounds, in the form of \code{c(lower, target, upper)}.}

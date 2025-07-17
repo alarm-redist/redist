@@ -186,8 +186,8 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         pop_bounds <- map_params$pop_bounds
         # get the total number of districts
         ndists <- map_params$ndists
-        total_seats <- map_params$total_seats
-        district_seat_sizes <- map_params$district_seat_sizes
+        nseats <- map_params$nseats
+        seats_range <- map_params$seats_range
         districting_scheme <- map_params$districting_scheme
 
 
@@ -208,8 +208,6 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
             do_mh=reversible
         )
 
-
-
         run_burst <- function(init, steps) {
             init <- matrix(init, ncol = 1) - 1L
             # just assume always SMD
@@ -217,8 +215,8 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
 
             ms_plans(
                 nsims=steps, warmup=0L, thin=1L,
-                ndists=ndists, total_seats=total_seats,
-                district_seat_sizes=district_seat_sizes,
+                ndists=ndists, total_seats=nseats,
+                district_seat_sizes=seats_range,
                 adj_list=adj_list, counties=counties, pop=pop,
                 target=pop_bounds[2], lower=pop_bounds[1], upper=pop_bounds[3],
                 rho=compactness,

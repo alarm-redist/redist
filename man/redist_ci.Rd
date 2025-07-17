@@ -16,7 +16,7 @@ redist_mcmc_ci(
   district = 1L,
   conf = 0.9,
   by_chain = FALSE,
-  use_coda_std_errors = FALSE
+  use_coda = FALSE
 )
 }
 \arguments{

@@ -50,6 +50,14 @@ Rcpp::List ms_plans(
         throw Rcpp::exception("Error!\n");
     }
 
+    // Create map level graph and county level multigraph
+    MapParams const map_params(
+        adj_list, counties, pop, 
+        ndists, total_seats, as<std::vector<int>>(district_seat_sizes),
+        lower, target, upper
+    );
+    int V = map_params.g.size();
+
 
     int initial_num_regions = static_cast<int>(ndists);
     if(initial_region_sizes.nrow() != initial_num_regions){
@@ -70,17 +78,8 @@ Rcpp::List ms_plans(
 
     auto splitting_schedule_ptr = std::make_unique<PureMSSplittingSchedule>(ndists, total_seats, as<std::vector<int>>(district_seat_sizes));
     // splitting_schedule_ptr->print_current_step_splitting_info();
-    bool const mmd_plans = splitting_schedule_ptr->district_seat_sizes.size() > 1;
+    bool const mmd_plans = map_params.is_mmd;
 
-    // Do some input checking 
-
-    // Create map level graph and county level multigraph
-    MapParams const map_params(
-        adj_list, counties, pop, 
-        ndists, total_seats, as<std::vector<int>>(district_seat_sizes),
-        lower, target, upper
-    );
-    int V = map_params.g.size();
 
     // Add scoring function (constraints)
     // No population tempering

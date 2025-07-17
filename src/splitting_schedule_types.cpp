@@ -228,13 +228,6 @@ DistrictOnlyMMDSplittingSchedule::DistrictOnlyMMDSplittingSchedule(
             const int total_seats, std::vector<int> const &district_seat_sizes
 ):
     SplittingSchedule(SplittingSizeScheduleType::DistrictOnlyMMD, ndists, total_seats, district_seat_sizes){
-    // make sure the district sizes are ok 
-    for (auto const &a_size: district_seat_sizes){
-        if(a_size < 0) throw Rcpp::exception("District Seat Sizes must be strictly positive!\n");
-        if(a_size >= total_seats)  throw Rcpp::exception("District Seat Sizes must be less than total seats!\n");
-        // mark this as a district size 
-        is_district[a_size] = true;
-    }
 
     // right now only ranges are supported 
     int cur_index = 0;

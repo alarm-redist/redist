@@ -68,7 +68,7 @@
 #' @param init_name a name for the initial plan, or \code{FALSE} to not include
 #' the initial plan in the output.  Defaults to the column name of the
 #' existing plan, or "\code{<init>}" if the initial plan is sampled.
-#' @param init_nseats The initial number of seats for each district in `init_plan`.
+#' @param init_seats The initial number of seats for each district in `init_plan`.
 #' @param verbose Whether to print out intermediate information while sampling.
 #' Recommended.
 #' @param silent Whether to suppress all diagnostic information.
@@ -127,7 +127,7 @@ redist_mergesplit <- function(
   split_method = NULL,
   split_params = NULL,
   merge_prob_type = "uniform",
-  init_nseats = NULL,
+  init_seats = NULL,
   ncores = NULL,
   cl_type = "PSOCK",
   return_all = TRUE,
@@ -199,12 +199,21 @@ redist_mergesplit <- function(
   pop_bounds <- map_params$pop_bounds
   # get the total number of districts
   ndists <- map_params$ndists
-  total_seats <- map_params$total_seats
-  district_seat_sizes <- map_params$district_seat_sizes
+  nseats <- map_params$nseats
+  seats_range <- map_params$seats_range
   districting_scheme <- map_params$districting_scheme
 
-  thin <- as.integer(thin)
+    # check that no district is the sum of two others
+    for (d_size1 in seats_range) {
+      for (d_size2 in seats_range) {
+          if((d_size1 + d_size2) %in% seats_range){
+              cli_abort("SMC does not support {.arg seats_range} where one district's seats is equal to the sum of two others")
+          }
+      }
+    }
 
+
+  thin <- as.integer(thin)
   chains <- as.integer(chains)
 
   if (compactness < 0) {
@@ -226,11 +235,13 @@ redist_mergesplit <- function(
   )
 
   exist_name <- attr(map, "existing_col")
+  exist_seats <- attr(map, "existing_col_seats")
   if (is.null(init_plan)) {
     if (!is.null(exist_name)) {
       init_plan <- matrix(
         rep(vctrs::vec_group_id(get_existing(map)), chains),
-        ncol = chains
+        ncol = chains,
+        nrow = length(get_existing(map))
       )
       if (is.null(init_name)) {
         init_names <- rep(exist_name, chains)
@@ -242,8 +253,8 @@ redist_mergesplit <- function(
     }
   } else if (!is.null(init_plan)) {
     if (inherits(init_plan, "redist_plans")) {
-      if (is.null(init_nseats)) {
-        init_nseats <- get_nseats_matrix(init_plan)
+      if (is.null(init_seats)) {
+        init_seats <- get_seats_matrix(init_plan)
       }
       init_plan <- get_plans_matrix(init_plan)
     } else if (is.matrix(init_plan)) {
@@ -258,6 +269,7 @@ redist_mergesplit <- function(
       init_names <- rep(init_name, chains)
     }
   }
+
   if (isTRUE(init_plan == "sample")) {
     if (!silent) {
       cat("Sampling initial plans with SMC\n")
@@ -289,7 +301,7 @@ redist_mergesplit <- function(
 
     sampled_inidices <- sample.int(n = n_smc_nsims, size = chains, replace = F)
 
-    init_nseats <- get_nseats_matrix(init_plan)[,
+    init_seats <- get_seats_matrix(init_plan)[,
       sampled_inidices,
       drop = FALSE
     ]
@@ -304,13 +316,11 @@ redist_mergesplit <- function(
       init_names <- paste(init_name, seq_len(chains))
     }
   } else {
-    if (is.null(init_nseats)) {
+    if (is.null(init_seats)) {
       if (districting_scheme == "SMD") {
-        init_nseats <- matrix(1L, nrow = ndists, ncol = ncol(init_plan))
+        init_seats <- matrix(1L, nrow = ndists, ncol = ncol(init_plan))
       } else {
-        cli::cli_abort(
-          "MCMC with non-sampled initial plans not suppored for MMD right now."
-        )
+          init_seats <- replicate(chains, exist_seats)
       }
     }
   }
@@ -323,19 +333,26 @@ redist_mergesplit <- function(
   # if (any(contiguity(adj, init_plan) != 1))
   #     cli_warn("{.arg init_plan} should have contiguous districts.")
 
+  # check it satsifies population bounds
+  # add one because we assume 1 indexed
+  init_pop <- pop_tally(init_plan, pop, ndists)
+
+
   # subtract 1 to make it 0 indexed
   init_plan <- init_plan - 1
   # validate initial plans
   validate_initial_region_id_mat(init_plan, V, chains, ndists)
 
-  # check it satsifies population bounds
-  # add one because we assume 1 indexed
-  init_pop <- pop_tally(init_plan + 1, pop, ndists)
 
-  if (
-    any(init_pop < pop_bounds[1] * init_nseats) ||
-      any(init_pop > pop_bounds[3] * init_nseats)
-  ) {
+  bad_pops <- sapply(seq_len(chains),
+         function(i){
+             any(init_pop[,i] < pop_bounds[1] * init_seats[,i]) ||
+                 any(init_pop[,i] > pop_bounds[3] * init_seats[,i])
+         }
+         ) |>
+    any()
+
+  if (bad_pops) {
     cli_abort("Provided initialization does not meet population bounds.")
   }
 
@@ -436,8 +453,8 @@ redist_mergesplit <- function(
         warmup = warmup,
         thin = thin,
         ndists = ndists,
-        total_seats = total_seats,
-        district_seat_sizes = district_seat_sizes,
+        total_seats = nseats,
+        district_seat_sizes = seats_range,
         adj_list = adj_list,
         counties = counties,
         pop = pop,
@@ -446,7 +463,7 @@ redist_mergesplit <- function(
         upper = pop_bounds[3],
         rho = compactness,
         initial_plan = init_plan[, chain, drop = FALSE],
-        initial_region_sizes = init_nseats[, chain, drop = FALSE],
+        initial_region_sizes = init_seats[, chain, drop = FALSE],
         sampling_space_str = sampling_space,
         merge_prob_type = merge_prob_type,
         control = control,
@@ -498,7 +515,6 @@ redist_mergesplit <- function(
 
       # flatten the region sizes by column
       dim(algout$plan_sizes) <- NULL
-
       storage.mode(algout$plans) <- "integer"
 
       algout
@@ -549,11 +565,17 @@ redist_mergesplit <- function(
 
   if (!is.null(init_names) && !isFALSE(init_name)) {
     if (all(init_names[1] == init_names)) {
-      out <- add_reference(out, init_plan[, 1], init_names[1])
+      out <- add_reference(
+          plans = out,
+          ref_plan = init_plan[, 1],
+          name = init_names[1],
+          ref_seats = init_seats[, 1]
+          )
     } else {
       out <- Reduce(
         function(cur, idx) {
-          add_reference(cur, init_plan[, idx], init_names[idx]) %>%
+          add_reference(plans = cur, ref_plan = init_plan[, idx],
+                        name = init_names[idx], ref_seats = init_seats[, idx]) %>%
             mutate(chain = dplyr::coalesce(chain, idx))
         },
         rev(seq_len(chains)),

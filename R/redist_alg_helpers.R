@@ -8,7 +8,10 @@
 
 
 
-
+# simple but common arg checking functions
+is_scalar <- function(x){
+    return(length(x) == 1)
+}
 
 
 
@@ -32,9 +35,9 @@ get_map_parameters <- function(map, counties=NULL){
     adj_list <- get_adj(map)
     # get seat related values
     ndists <- attr(map, "ndists")
-    total_seats <- attr(map, "total_seats")
-    district_seat_sizes <- attr(map, "district_seat_sizes")
-    storage.mode(district_seat_sizes) <- "integer"
+    nseats <- attr(map, "nseats")
+    seats_range <- attr(map, "seats_range")
+    storage.mode(seats_range) <- "integer"
     districting_scheme <- attr(map, "districting_scheme")
 
 
@@ -74,7 +77,7 @@ get_map_parameters <- function(map, counties=NULL){
     # get population stuff
     pop_bounds <- attr(map, "pop_bounds")
     pop <- map[[attr(map, "pop_col")]]
-    smallest_district_size <- attr(map, "district_seat_sizes") |> min()
+    smallest_district_size <- attr(map, "seats_range") |> min()
     if (any(pop >= pop_bounds[3] * smallest_district_size)) {
         too_big <- as.character(which(pop >= pop_bounds[3] * smallest_district_size))
         cli::cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
@@ -100,8 +103,8 @@ get_map_parameters <- function(map, counties=NULL){
         adj_list=adj_list,
         V=V,
         ndists=ndists,
-        total_seats=total_seats,
-        district_seat_sizes=district_seat_sizes,
+        nseats=nseats,
+        seats_range=seats_range,
         districting_scheme=districting_scheme,
         counties=counties,
         pop=pop,
@@ -606,7 +609,7 @@ validate_custom_size_split_list <- function(
 #' matrix.
 #'
 #' @param plans Either a [redist_plans] object or a 1-indexed plans matrix
-#' @param total_seats The total number of seats in the plan
+#' @param nseats The total number of seats in the plan
 #' @param precint_pops A vector of precinct population assignments with same
 #' number of rows as the plans matrix.
 #' @param lower_pop_bound The minimum population bounds for a single seat
@@ -617,7 +620,7 @@ validate_custom_size_split_list <- function(
 #'
 #' @returns A matrix of the number of seats for each region in `plans`
 infer_plan_nseats <- function(
-        plans, total_seats, precint_pops,
+        plans, nseats, precint_pops,
         lower_pop_bound, upper_pop_bound,
         num_threads = 0L){
 
@@ -636,7 +639,7 @@ infer_plan_nseats <- function(
     sizes_matrix <- infer_region_sizes(
         distr_pop,
         lower_pop_bound, upper_pop_bound,
-        total_seats, num_threads
+        nseats, num_threads
     )
     return(sizes_matrix)
 
