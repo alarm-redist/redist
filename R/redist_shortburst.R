@@ -45,15 +45,8 @@
 #' @param compactness Controls the compactness of the generated districts, with
 #' higher values preferring more compact districts. Must be non-negative. See
 #' \code{\link{redist_mergesplit}} for more information.
-#' @param adapt_k_thresh The threshold value used in the heuristic to select a
-#' value `k_i` for each splitting iteration.
 #' @param reversible If `FALSE` and `backend="mergesplit"`, the Markov chain
 #' used will not be reversible. This may speed up optimization.
-#' @param fixed_k If not `NULL`, will be used to set the `k` parameter for the
-#'   `mergesplit` backend. If e.g. `k=1` then the best edge in each spanning
-#'   tree will be used.  Lower values may speed up optimization at the
-#'   cost of the Markov chain no longer targeting a known distribution.
-#'   Recommended only in conjunction with `reversible=FALSE`.
 #' @param return_all Whether to return all the burst results or just the best
 #' one (generally, the Pareto frontier). Recommended for monitoring purposes.
 #' @param thin Save every `thin`-th sample. Defaults to no thinning (1). Ignored
@@ -113,8 +106,6 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
 
     if (compactness < 0)
         cli_abort("{.arg compactness} must be non-negative.")
-    if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
-        cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
 
     if (burst_size(1) < 1 || max_bursts < 1)
         cli_abort("{.arg burst_size} and {.arg max_bursts} must be positive.")
@@ -191,20 +182,8 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         districting_scheme <- map_params$districting_scheme
 
 
-        if (is.null(fixed_k)) {
-            # if not passed then estimate
-            estimate_cut_k <- TRUE
-            k <- -1
-        } else {
-            k = fixed_k
-            estimate_cut_k <- FALSE
-        }
-
         control = list(
-            splitting_method=NAIVE_K_SPLITTING,
-            adapt_k_thresh=adapt_k_thresh,
-            estimate_cut_k=estimate_cut_k,
-            manual_k=k,
+            splitting_method=UNIF_VALID_EDGE_SPLITTING,
             do_mh=reversible
         )
 
@@ -222,7 +201,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
                 rho=compactness,
                 initial_plan=init,
                 initial_region_sizes=init_sizes,
-                sampling_space_str = GRAPH_PLAN_SPACE_SAMPLING,
+                sampling_space_str = FOREST_SPACE_SAMPLING,
                 merge_prob_type = "uniform",
                 control=control, constraints=constraints,
                 verbosity=0, diagnostic_mode=FALSE

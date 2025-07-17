@@ -35,6 +35,9 @@ This amounts to giving plans where any region has a score above `thresh` a
 probability of 0. 
 * Updates the target distribution when counties are turned on. For more details 
 see the forthcoming working paper. 
+* The mergesplit backend for `redist_shortburst` now uses uniform edge sampling 
+with forest space for the backend instead of sampling with graph space and all
+`k` related parameters have been removed. 
 
 
 # 4.3.0
