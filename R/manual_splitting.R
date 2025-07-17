@@ -125,7 +125,9 @@ draw_tree_on_region <- function(
             matrix(0L, nrow = ndists - nrow(region_sizes), ncol = ncol(region_sizes))
             )
     }
-    validate_initial_region_sizes_mat(region_sizes, ndists, 1, num_regions)
+    region_sizes <- validate_init_seats(
+        region_sizes, ndists, c(1L),
+        1, num_regions, F, 1)
     num_districts <- sum(region_sizes[,1] == 1)
 
 
@@ -239,7 +241,11 @@ manually_split_a_multidistrict <- function(
             matrix(0L, nrow = ndists - nrow(region_sizes), ncol = ncol(region_sizes))
         )
     }
-    validate_initial_region_sizes_mat(region_sizes, ndists, 1, num_regions)
+
+    region_sizes <- validate_init_seats(
+        region_sizes, ndists, c(1L),
+        1, num_regions, F, 1)
+
     num_districts <- sum(region_sizes[,1] == 1)
 
     if(is.null(split_dval_max)){

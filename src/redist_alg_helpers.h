@@ -23,6 +23,35 @@ Rcpp::List maximum_input_sizes();
 
 
 
+//' Checks a matrix of seat counts is valid
+//'
+//' Checks that a matrix of seat counts associated with a plan is valid
+//' meaning that every region has a positive seat value and for each plan
+//' the sum of seats is equal to the total number of seats (`nseats`). 
+//' If anything is not correct an error will be thrown.
+//'
+//' @param init_seats A matrix of 1-indexed plans
+//' @param num_regions The number of regions in the plan.
+//' @param nseats The total number of seats in the map 
+//' @param seats_range Vector of number of seats a district is allowed to have
+//' @param split_districts_only Whether or not to check that all but the last region are
+//' districts or not. (Allows for the possibility the last region is a district too).
+//' @param num_threads The number of threads to use. Defaults to number of machine threads.
+//'
+//' @details Modifications
+//'    - None
+//'
+//' @keywords internal
+//' @noRd
+// [[Rcpp::export]]
+void validate_init_seats_cpp(
+    Rcpp::IntegerMatrix const &init_seats, int const num_regions, 
+    int const nseats, Rcpp::IntegerVector const &seats_range, 
+    bool const split_districts_only,
+    int const num_threads = 1
+);
+
+
 //' Get canonically relabeled plans matrix
 //'
 //' Given a matrix of 1-indexed plans (or partial plans) this function 
@@ -44,6 +73,7 @@ Rcpp::List maximum_input_sizes();
 //' @returns A matrix of canonically labelled plans
 //'
 //' @keywords internal
+//' @noRd
 // [[Rcpp::export]]
 Rcpp::IntegerMatrix get_canonical_plan_labelling(
     Rcpp::IntegerMatrix const &plans_mat,

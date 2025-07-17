@@ -934,7 +934,7 @@ get_init_plan_params <- function(
                 cli::cli_warn(
                     "{.arg init_seats} was not passed in, attempting to infer number of seats per region."
                 )
-                init_seats <- infer_plan_nseats(
+                init_seats <- infer_plan_seats(
                     init_particles,
                     nseats,
                     pop,

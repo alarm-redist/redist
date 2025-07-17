@@ -169,8 +169,8 @@ order_district_stats <- function(district_stats, ndists, num_threads) {
     .Call(`_redist_order_district_stats`, district_stats, ndists, num_threads)
 }
 
-ms_plans <- function(nsims, warmup, thin, ndists, total_seats, district_seat_sizes, adj_list, counties, pop, target, lower, upper, rho, initial_plan, initial_region_sizes, sampling_space_str, merge_prob_type, control, constraints, verbosity = 3L, diagnostic_mode = FALSE) {
-    .Call(`_redist_ms_plans`, nsims, warmup, thin, ndists, total_seats, district_seat_sizes, adj_list, counties, pop, target, lower, upper, rho, initial_plan, initial_region_sizes, sampling_space_str, merge_prob_type, control, constraints, verbosity, diagnostic_mode)
+ms_plans <- function(nsims, warmup, thin, ndists, total_seats, district_seat_sizes, adj_list, counties, pop, target, lower, upper, rho, init_plan, init_seats, sampling_space_str, merge_prob_type, control, constraints, verbosity = 3L, diagnostic_mode = FALSE) {
+    .Call(`_redist_ms_plans`, nsims, warmup, thin, ndists, total_seats, district_seat_sizes, adj_list, counties, pop, target, lower, upper, rho, init_plan, init_seats, sampling_space_str, merge_prob_type, control, constraints, verbosity, diagnostic_mode)
 }
 
 pareto_dominated <- function(x) {
@@ -217,6 +217,30 @@ maximum_input_sizes <- function() {
     .Call(`_redist_maximum_input_sizes`)
 }
 
+#' Checks a matrix of seat counts is valid
+#'
+#' Checks that a matrix of seat counts associated with a plan is valid
+#' meaning that every region has a positive seat value and for each plan
+#' the sum of seats is equal to the total number of seats (`nseats`). 
+#' If anything is not correct an error will be thrown.
+#'
+#' @param init_seats A matrix of 1-indexed plans
+#' @param num_regions The number of regions in the plan.
+#' @param nseats The total number of seats in the map 
+#' @param seats_range Vector of number of seats a district is allowed to have
+#' @param split_districts_only Whether or not to check that all but the last region are
+#' districts or not. (Allows for the possibility the last region is a district too).
+#' @param num_threads The number of threads to use. Defaults to number of machine threads.
+#'
+#' @details Modifications
+#'    - None
+#'
+#' @keywords internal
+#' @noRd
+validate_init_seats_cpp <- function(init_seats, num_regions, nseats, seats_range, split_districts_only, num_threads = 1L) {
+    invisible(.Call(`_redist_validate_init_seats_cpp`, init_seats, num_regions, nseats, seats_range, split_districts_only, num_threads))
+}
+
 #' Get canonically relabeled plans matrix
 #'
 #' Given a matrix of 1-indexed plans (or partial plans) this function 
@@ -238,6 +262,7 @@ maximum_input_sizes <- function() {
 #' @returns A matrix of canonically labelled plans
 #'
 #' @keywords internal
+#' @noRd
 get_canonical_plan_labelling <- function(plans_mat, num_regions, num_threads = 0L) {
     .Call(`_redist_get_canonical_plan_labelling`, plans_mat, num_regions, num_threads)
 }

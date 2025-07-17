@@ -495,11 +495,6 @@ add_reference <- function(plans, ref_plan, name = NULL, ref_seats = NULL) {
             dplyr::mutate(draw = new_draw, .before = "district")
     }
 
-
-    # if (!is.null(attr(plans, "districting_scheme")) && attr(plans, "districting_scheme") != "SMD"){
-    #     x[1:ndists, "seats"] <- ref_seats
-    # }
-
     exist_wgts <- get_plans_weights(plans)
     if (!is.null(exist_wgts))
         attr(plans, "wgt") <- c(0, exist_wgts)

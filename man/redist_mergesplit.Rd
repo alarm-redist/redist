@@ -19,7 +19,7 @@ redist_mergesplit(
   split_method = NULL,
   split_params = NULL,
   merge_prob_type = "uniform",
-  init_nseats = NULL,
+  init_seats = NULL,
   ncores = NULL,
   cl_type = "PSOCK",
   return_all = TRUE,
@@ -73,7 +73,7 @@ See the 'Details' section for more information.}
 a redistricting plan and outputs a vector of log-weights, which will be
 added the the final weights.}
 
-\item{init_nseats}{The initial number of seats for each district in \code{init_plan}.}
+\item{init_seats}{The initial number of seats for each district in \code{init_plan}.}
 
 \item{ncores}{The number of clusters to spawn Defaults to the
 maximum available detected by \code{parallel::detectCores()}.}

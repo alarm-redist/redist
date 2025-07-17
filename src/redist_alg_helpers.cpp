@@ -20,6 +20,94 @@ Rcpp::List maximum_input_sizes(){
 }
 
 
+//' Checks a matrix of seat counts is valid
+//'
+//' Checks that a matrix of seat counts associated with a plan is valid
+//' meaning that every region has a positive seat value and for each plan
+//' the sum of seats is equal to the total number of seats (`nseats`). 
+//' If anything is not correct an error will be thrown.
+//'
+//' @param init_seats A matrix of 1-indexed plans
+//' @param num_regions The number of regions in the plan.
+//' @param nseats The total number of seats in the map 
+//' @param seats_range Vector of number of seats a district is allowed to have
+//' @param split_districts_only Whether or not to check that all but the last region are
+//' districts or not. (Allows for the possibility the last region is a district too).
+//' @param num_threads The number of threads to use. Defaults to number of machine threads.
+//'
+//' @details Modifications
+//'    - None
+//'
+//' @keywords internal
+//' @noRd
+void validate_init_seats_cpp(
+    Rcpp::IntegerMatrix const &init_seats, int const num_regions, 
+    int const nseats, Rcpp::IntegerVector const &seats_range,
+    bool const split_districts_only,
+    int const num_threads
+){
+    // create thread pool
+    RcppThread::ThreadPool pool = get_thread_pool(num_threads);
+    
+    // check matrix dimensions 
+    if(init_seats.nrow() != num_regions){
+        REprintf("Expected init_seats to have %d rows but actually had %u!\n",
+            num_regions, init_seats.nrow());
+        throw Rcpp::exception("`init_seats` matrix did not have `num_regions` rows!\n");
+    }
+
+    int num_cols = init_seats.ncol();
+
+    // get minimum district size 
+    int min_district_size = *std::min_element(seats_range.begin(), seats_range.end());
+    std::vector<bool> is_district(nseats + 1, false);
+    for (auto const a_size: seats_range){
+        is_district[a_size] = true;
+    }
+
+    
+
+    // now check each column  
+    pool.parallelFor(0, num_cols, [&] (int i) {
+        // check each value is positive and sums to nseats
+        int seat_sum = 0;
+        for (size_t j = 0; j < num_regions; j++)
+        {
+            if(init_seats(i,j) <= 0){
+                REprintf("Region %u of plan %i does not have a positive seat count (%d)!\n",
+                j+1, i+1, init_seats(i,j));
+                throw Rcpp::exception("Non-positive seat values in `init_seats`!\n");
+            }else if(init_seats(i,j) < min_district_size){
+                REprintf("Region %u of plan %i has a seat size smaller than the smallest district seat size!\n",
+                j+1, i+1);
+                throw Rcpp::exception("Seat values in `init_seats` smaller than smallest district seat size!\n");
+            }else if(init_seats(i,j) > nseats){
+                REprintf("Region %u of plan %i has %d seats, more than `nseats` (%d) number of seats!\n",
+                j+1, i+1, init_seats(i,j), nseats);
+                throw Rcpp::exception("Seat values greater than `nseats` in `init_seats`!\n");
+            }
+
+            if(split_districts_only){
+                if(j+1 != num_regions && !is_district[init_seats(i,j)]){
+                    throw Rcpp::exception("Non-remainder region is not a district!\n");
+                }
+            }
+            seat_sum += init_seats(i,j);
+        }
+
+        if(seat_sum != nseats){
+            REprintf("The sum of seats in plan %i is %d, which is not equal to `nseats` values %d\n",
+                i+1, seat_sum, nseats);
+            throw Rcpp::exception("Sum of seat values in a plan is not equal to `nseats` in `init_seats`!\n");
+        }
+    });
+
+    pool.wait();
+
+    return;
+    
+}
+
 //' Get canonically relabeled plans matrix
 //'
 //' Given a matrix of 1-indexed plans (or partial plans) this function 

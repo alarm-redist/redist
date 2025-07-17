@@ -35,7 +35,7 @@ Rcpp::List ms_plans(
     List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
     double const target, double const lower, double const upper,
     double const rho, // compactness 
-    Rcpp::IntegerMatrix const &initial_plan, Rcpp::IntegerMatrix const &initial_region_sizes,
+    Rcpp::IntegerMatrix const &init_plan, Rcpp::IntegerMatrix const &init_seats,
     std::string const &sampling_space_str, // sampling space (graphs, forest, etc)
     std::string const &merge_prob_type, // method for setting probability of picking a pair to merge
     List const &control, // control has pop temper, and k parameter value, and whether only district splits are allowed

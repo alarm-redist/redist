@@ -24,7 +24,7 @@ Rcpp::List ms_plans(
     List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
     double const target, double const lower, double const upper,
     double const rho, // compactness 
-    Rcpp::IntegerMatrix const &initial_plan, Rcpp::IntegerMatrix const &initial_region_sizes,
+    Rcpp::IntegerMatrix const &init_plan, Rcpp::IntegerMatrix const &init_seats,
     std::string const &sampling_space_str, // sampling space (graphs, forest, etc)
     std::string const &merge_prob_type, // method for setting probability of picking a pair to merge
     List const &control, // control has pop temper, and k parameter value, and whether only district splits are allowed
@@ -46,7 +46,7 @@ Rcpp::List ms_plans(
     global_seed_rng((int) Rcpp::sample(INT_MAX, 1)[0]);
 
     // make sure both are 1 column matrix
-    if(initial_plan.ncol() > 1 || initial_region_sizes.ncol() > 1){
+    if(init_plan.ncol() > 1 || init_seats.ncol() > 1){
         throw Rcpp::exception("Error!\n");
     }
 
@@ -60,9 +60,9 @@ Rcpp::List ms_plans(
 
 
     int initial_num_regions = static_cast<int>(ndists);
-    if(initial_region_sizes.nrow() != initial_num_regions){
+    if(init_seats.nrow() != initial_num_regions){
         REprintf("Inferred %d Initial Regions but Region Sizes Matrix has %u columns!\n",
-            initial_num_regions, initial_region_sizes.nrow());
+            initial_num_regions, init_seats.nrow());
         throw Rcpp::exception("Initial plan region sizes should match number of regions");
     }
     if(DEBUG_PURE_MS_VERBOSE) Rprintf("Checkpoint 2!\n");
@@ -146,7 +146,7 @@ Rcpp::List ms_plans(
     PlanEnsemble plan_ensemble = get_plan_ensemble(
         map_params, initial_num_regions,
         1, sampling_space,
-        initial_plan, initial_region_sizes,
+        init_plan, init_seats,
         rng_states, pool, verbosity
     );
     // plan_ensemble.plan_ptr_vec[0]->Rprint(true);
@@ -154,7 +154,7 @@ Rcpp::List ms_plans(
     PlanEnsemble proposal_plan_ensemble = get_plan_ensemble(
         map_params, initial_num_regions,
         1, sampling_space,
-        initial_plan, initial_region_sizes,
+        init_plan, init_seats,
         rng_states, pool, verbosity
     );
 
