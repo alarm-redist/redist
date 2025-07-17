@@ -822,7 +822,7 @@ void SMCDiagnostics::add_diagnostics_to_out_list(Rcpp::List &out){
     out["tree_sizes"] = tree_sizes_mat;
     out["successful_tree_sizes"] = successful_tree_sizes_mat;
     out["log_weight_stddev"] = log_wgt_stddevs;
-    out["est_k"] = cut_k_values;
+    out["cut_k_vals"] = cut_k_values;
     out["log_incremental_weights_mat"] = log_incremental_weights_mat;
     out["merge_split_attempt_counts"] = num_merge_split_attempts_vec;
     out["merge_split_success_mat"] = merge_split_successes_mat;

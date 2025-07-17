@@ -264,37 +264,13 @@ redist_smc <- function(
     cli::cli_abort("{.arg nsims} must be positive.")
   }
 
-
-
   # check default inputs
-  sampling_space <- rlang::arg_match(sampling_space)
   diagnostics <- rlang::arg_match(diagnostics)
   diagnostic_level <- dplyr::case_when(
     diagnostics == "basic" ~ 0,
     diagnostics == "all" ~ 1,
     .default = 0
   )
-
-
-  # if graph space default to k stuff else default to unif valid edge
-  if (sampling_space == GRAPH_PLAN_SPACE_SAMPLING) {
-    if (is.null(split_method)) {
-      split_method <- NAIVE_K_SPLITTING
-    }
-    if (is.null(split_params)) {
-      split_params = list(
-        adapt_k_thresh = .99
-      )
-    }
-  } else if (
-    sampling_space == FOREST_SPACE_SAMPLING ||
-      sampling_space == LINKING_EDGE_SPACE_SAMPLING
-  ) {
-    # the others default to uniform
-    if (is.null(split_method)) {
-      split_method <- UNIF_VALID_EDGE_SPLITTING
-    }
-  }
 
   # validate constraints
   constraints <- validate_constraints(map, rlang::enquo(constraints))
@@ -307,13 +283,6 @@ redist_smc <- function(
   num_admin_units <- length(unique(counties))
   pop <- map_params$pop
   pop_bounds <- map_params$pop_bounds
-
-  # linking edge with counties not supported right now
-  if (num_admin_units > 1 && sampling_space == LINKING_EDGE_SPACE_SAMPLING) {
-    cli::cli_abort(
-      "Linking Edge Sampling with counties is not supported right now"
-    )
-  }
 
   # get the total number of districts
   ndists <- map_params$ndists
@@ -364,14 +333,28 @@ redist_smc <- function(
   }
 
   #validate the splitting method and params
-  split_params <- validate_sample_space_and_splitting_method(
-    sampling_space,
-    split_method,
-    split_params,
-    n_steps
+  split_stuff_list <- validate_sample_space_and_splitting_method(
+      sampling_space,
+      split_method,
+      split_params,
+      n_steps
   )
-  total_smc_steps <- n_steps
 
+  sampling_space <- split_stuff_list$sampling_space
+  split_method <- split_stuff_list$split_method
+  forward_kernel_params <- split_stuff_list$forward_kernel_params
+
+
+  # linking edge with counties not supported right now
+  if (num_admin_units > 1 && sampling_space == LINKING_EDGE_SPACE_SAMPLING) {
+      cli::cli_abort(
+          "Linking Edge Sampling with counties is not supported right now"
+      )
+  }
+
+
+
+  total_smc_steps <- n_steps
 
   # get merge split parameter information
   ms_params_list <- extract_ms_params(ms_params, total_smc_steps)
@@ -526,7 +509,7 @@ redist_smc <- function(
   )
 
   # add the splitting parameters
-  cpp_control_list <- c(cpp_control_list, split_params)
+  cpp_control_list <- c(cpp_control_list, forward_kernel_params)
 
   t1 <- Sys.time()
   all_out <- foreach(
@@ -734,13 +717,17 @@ redist_smc <- function(
         nsims = nsims
       )
 
+      # add cut k for graph space
+      run_forward_kernel_params <- forward_kernel_params
+      if(sampling_space == GRAPH_PLAN_SPACE_SAMPLING){
+          run_forward_kernel_params$cut_k_used <- algout$cut_k_vals
+      }
 
       # add high level diagnostic stuff
       algout$l_diag <- list(
         n_eff = n_eff,
         step_n_eff = algout$step_n_eff,
-        est_k = algout$est_k,
-        split_params = split_params,
+        forward_kernel_params = run_forward_kernel_params,
         accept_rate = algout$acceptance_rates,
         sd_lp = sd_lp,
         unique_survive = nunique_parent_indices,

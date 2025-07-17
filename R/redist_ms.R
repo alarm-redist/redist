@@ -158,29 +158,6 @@ redist_mergesplit <- function(
     }
   }
 
-  # check default inputs
-  sampling_space <- rlang::arg_match(sampling_space)
-
-  # if graph space default to k stuff else default to unif valid edge
-  if (sampling_space == GRAPH_PLAN_SPACE_SAMPLING) {
-    if (is.null(split_method)) {
-      split_method <- NAIVE_K_SPLITTING
-    }
-    if (is.null(split_params)) {
-      split_params = list(
-        adapt_k_thresh = .99,
-        estimate_cut_k = TRUE
-      )
-    }
-  } else if (
-    sampling_space == FOREST_SPACE_SAMPLING ||
-      sampling_space == LINKING_EDGE_SPACE_SAMPLING
-  ) {
-    # the others default to uniform
-    if (is.null(split_method)) {
-      split_method <- UNIF_VALID_EDGE_SPLITTING
-    }
-  }
 
   # validate constraints
   constraints <- validate_constraints(
@@ -227,12 +204,21 @@ redist_mergesplit <- function(
   }
 
   #validate the splitting method and params
-  split_params <- validate_sample_space_and_splitting_method(
-    sampling_space,
-    split_method,
-    split_params,
-    1
+
+
+  #validate the splitting method and params
+  split_stuff_list <- validate_sample_space_and_splitting_method(
+      sampling_space,
+      split_method,
+      split_params,
+      1
   )
+
+  sampling_space <- split_stuff_list$sampling_space
+  split_method <- split_stuff_list$split_method
+  forward_kernel_params <- split_stuff_list$forward_kernel_params
+
+
 
   exist_name <- attr(map, "existing_col")
   exist_seats <- attr(map, "existing_col_seats")
@@ -371,7 +357,7 @@ redist_mergesplit <- function(
 
   # add the splitting parameters
   # need to do it like this because its a list
-  control <- c(control, split_params)
+  control <- c(control, forward_kernel_params)
 
   # set up parallel
   if (is.null(ncores)) {
@@ -487,8 +473,13 @@ redist_mergesplit <- function(
         proposed_plans = algout$proposed_plans
       )
 
+      # add cut k for graph space
+      run_forward_kernel_params <- forward_kernel_params
+      if(sampling_space == GRAPH_PLAN_SPACE_SAMPLING){
+          run_forward_kernel_params$cut_k_used <- algout$cut_k
+      }
+
       algout$l_diag <- list(
-        est_k = algout$est_k,
         runtime = as.numeric(t2_run - t1_run, units = "secs"),
         nsims = nsims,
         thin = thin,
@@ -499,7 +490,7 @@ redist_mergesplit <- function(
           algout$post_warump_acceptances) /
           algout$total_steps,
         total_steps = algout$total_steps,
-        split_params = split_params
+        forward_kernel_params = run_forward_kernel_params
       )
 
       # Information about the run

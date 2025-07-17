@@ -221,7 +221,7 @@ Rcpp::List ms_plans(
         }
         // update the tree splitter
         tree_splitter_ptr->update_single_int_param(cut_k);
-        out["est_k"] = cut_k;
+        out["cut_k"] = cut_k;
     }
 
     if(DEBUG_PURE_MS_VERBOSE) Rprintf("Checkpoint 5!\n");
