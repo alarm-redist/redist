@@ -157,8 +157,8 @@ pop_tally <- function(districts, pop, n_distr, num_threads = 0L) {
     .Call(`_redist_pop_tally`, districts, pop, n_distr, num_threads)
 }
 
-infer_region_sizes <- function(region_pops, lower, upper, total_seats, num_threads = 0L) {
-    .Call(`_redist_infer_region_sizes`, region_pops, lower, upper, total_seats, num_threads)
+infer_region_seats <- function(region_pops, lower, upper, total_seats, num_threads = 0L) {
+    .Call(`_redist_infer_region_seats`, region_pops, lower, upper, total_seats, num_threads)
 }
 
 max_dev <- function(districts, pop, n_distr, num_threads = 0L) {

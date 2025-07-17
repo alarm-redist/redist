@@ -351,7 +351,7 @@ redist_map <- function(..., existing_plan = NULL, pop_tol = NULL,
                 as.matrix(x[[existing_col]], ncol = 1L) ,
                 x[[pop_col]],
                 ndists, 1)
-            existing_col_seats <- infer_region_sizes(
+            existing_col_seats <- infer_region_seats(
                 existing_plan_pop,
                 pop_bounds[1], pop_bounds[3],
                 nseats

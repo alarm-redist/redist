@@ -1022,8 +1022,8 @@ List run_redist_smc(
     // Return results
     List out = List::create(
         _["plans_mat"] = plan_mat,
-        _["region_sizes_mat"] = plan_sizes_mat.at(0),
-        _["plan_sizes_saved"] = plan_sizes_saved,
+        _["seats"] = plan_sizes_mat.at(0),
+        _["plan_seats_saved"] = plan_sizes_saved,
         _["log_weights"] = log_weights,
         _["ancestors"] = ancestors,
         _["step_types"] = step_types,

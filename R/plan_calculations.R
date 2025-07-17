@@ -66,7 +66,7 @@ compute_log_target_density <- function(
         # infer
         prec_pop <- map[[attr(map, "pop_col")]]
         distr_pop <- pop_tally(plan_matrix, prec_pop, num_regions)
-        sizes_matrix <- infer_region_sizes(
+        sizes_matrix <- infer_region_seats(
             distr_pop,
             attr(map, "pop_bounds")[1], attr(map, "pop_bounds")[3],
             total_seats
@@ -159,7 +159,7 @@ compute_log_target_density_by_region <- function(
         # infer
         prec_pop <- map[[attr(map, "pop_col")]]
         distr_pop <- pop_tally(plan_matrix, prec_pop, num_regions)
-        sizes_matrix <- infer_region_sizes(
+        sizes_matrix <- infer_region_seats(
             distr_pop,
             attr(map, "pop_bounds")[1], attr(map, "pop_bounds")[3],
             total_seats
@@ -252,7 +252,7 @@ compute_log_optimal_weights <- function(
         # infer
         prec_pop <- map[[attr(map, "pop_col")]]
         distr_pop <- pop_tally(plan_matrix, prec_pop, num_regions)
-        sizes_matrix <- infer_region_sizes(
+        sizes_matrix <- infer_region_seats(
             distr_pop,
             attr(map, "pop_bounds")[1], attr(map, "pop_bounds")[3],
             total_seats

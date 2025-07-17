@@ -357,7 +357,7 @@ Rcpp::List ms_plans(
     if(DEBUG_PURE_MS_VERBOSE) REprintf("Added one to plans, now creating diagnostic list.\n");
     
     out["plans"] = saved_plans_mat;
-    out["plan_sizes"] = saved_plan_sizes;
+    out["seats"] = saved_plan_sizes;
     out["mhdecisions"] = mh_decisions;
     out["total_steps"] = total_steps;
     out["warmup_acceptances"] = warmup_acceptances;

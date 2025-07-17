@@ -17,7 +17,7 @@
 new_redist_plans <- function(
         plans, map, algorithm, wgt,
         resampled = TRUE, ndists = attr(map, "ndists"),
-        region_sizes = NULL, ...) {
+        seats = NULL, ...) {
     n_sims <- ncol(plans)
     if (n_sims < 1) cli_abort("Need at least one simulation draw.")
 
@@ -47,30 +47,30 @@ new_redist_plans <- function(
 
     # check if partial or MMD then region sizes must not be null
     if(partial || districting_scheme == "MMD"){
-        if(is.null(region_sizes)){
+        if(is.null(seats)){
             # try to infer
-            region_sizes <- infer_region_sizes(
+            seats <- infer_region_seats(
                 distr_pop,
                 attr(map, "pop_bounds")[1], attr(map, "pop_bounds")[3],
                 nseats
             )
             # now flatten
-            dim(region_sizes) <- NULL
+            dim(seats) <- NULL
         }else{
             # if its a matrix make sure dimensions match then flatten it
-            if(is.matrix(region_sizes)){
-                if(any(dim(region_sizes) != dim(distr_pop))){
-                    cli::cli_abort("The dimensions of {.arg region_sizes} must be {.field num_regions} by {.field nsims}")
+            if(is.matrix(seats)){
+                if(any(dim(seats) != dim(distr_pop))){
+                    cli::cli_abort("The dimensions of {.arg seats} must be {.field num_regions} by {.field nsims}")
                 }
                 # now flatten
-                dim(region_sizes) <- NULL
+                dim(seats) <- NULL
             }
 
         }
 
         # also make sure its the same length as the pop tally
-        if(length(region_sizes) != length(distr_pop)){
-            cli::cli_abort("{.arg region_sizes} must have length equal to number of regions times number of plans!")
+        if(length(seats) != length(distr_pop)){
+            cli::cli_abort("{.arg seats} must have length equal to number of regions times number of plans!")
         }
     }
 
@@ -96,7 +96,7 @@ new_redist_plans <- function(
         plan_tibble <- tibble(draw = rep(draw_fac, each = ndists),
                               district = rep(distr_range, n_sims),
                               total_pop = as.numeric(distr_pop),
-                              seats = region_sizes)
+                              seats = seats)
     }else{
         plan_tibble <- tibble(draw = rep(draw_fac, each = ndists),
                               district = rep(distr_range, n_sims),
@@ -199,7 +199,8 @@ reconstruct.redist_plans <- function(data, old) {
 #' @param map a \code{\link{redist_map}} object
 #' @param algorithm the algorithm used to generate the plans (usually "smc" or "mcmc")
 #' @param wgt the weights to use, if any.
-#' @param region_nseats The number of seats in each region (if they are not all the same).
+#' @param seats A matrix of the number of seats in each region. This is only
+#' needed for partial or multimember district plans.
 #' @param ... Other named attributes to set
 #'
 #' @returns a new \code{redist_plans} object.
@@ -214,7 +215,7 @@ reconstruct.redist_plans <- function(data, old) {
 #' @md
 #' @concept analyze
 #' @export
-redist_plans <- function(plans, map, algorithm, wgt = NULL, region_nseats = NULL, ...) {
+redist_plans <- function(plans, map, algorithm, wgt = NULL, seats = NULL, ...) {
     if (is.numeric(plans) && length(plans) == nrow(map)) {
         plans <- matrix(as.integer(plans), ncol = 1)
     }
@@ -232,7 +233,7 @@ redist_plans <- function(plans, map, algorithm, wgt = NULL, region_nseats = NULL
     n_regions <- length(unique(plans[,1]))
 
     obj <- new_redist_plans(plans, map, algorithm, wgt = wgt,
-                            region_sizes=region_nseats, ndists = n_regions,
+                            seats=seats, ndists = n_regions,
         resampled = FALSE, ...)
     validate_redist_plans(obj)
 }
@@ -438,7 +439,7 @@ add_reference <- function(plans, ref_plan, name = NULL, ref_seats = NULL) {
         if(is.null(ref_seats)){
             # try to infer seat sizes
             pop_bounds <- attr(plans, "pop_bounds")
-            ref_seats <- infer_region_sizes(
+            ref_seats <- infer_region_seats(
                 distr_pop,
                 pop_bounds[1], pop_bounds[3],
                 attr(plans, "nseats")

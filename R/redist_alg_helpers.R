@@ -636,7 +636,7 @@ infer_plan_nseats <- function(
 
     num_regions <- length(unique(plan_matrix[,1]))
     distr_pop <- pop_tally(plan_matrix, precint_pops, num_regions)
-    sizes_matrix <- infer_region_sizes(
+    sizes_matrix <- infer_region_seats(
         distr_pop,
         lower_pop_bound, upper_pop_bound,
         nseats, num_threads

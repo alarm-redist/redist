@@ -66,10 +66,10 @@ NumericMatrix pop_tally(IntegerMatrix const &districts, arma::vec const &pop, in
 
 
 /*
- * Infer the sizes of the regions 
+ * Infer the number of seats of the regions 
  */
 // [[Rcpp::export]]
-Rcpp::IntegerMatrix infer_region_sizes(
+Rcpp::IntegerMatrix infer_region_seats(
     Rcpp::IntegerMatrix const &region_pops,
     double const lower, double const upper,
     int const total_seats,

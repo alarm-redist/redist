@@ -560,9 +560,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// infer_region_sizes
-Rcpp::IntegerMatrix infer_region_sizes(Rcpp::IntegerMatrix const& region_pops, double const lower, double const upper, int const total_seats, int const num_threads);
-RcppExport SEXP _redist_infer_region_sizes(SEXP region_popsSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP total_seatsSEXP, SEXP num_threadsSEXP) {
+// infer_region_seats
+Rcpp::IntegerMatrix infer_region_seats(Rcpp::IntegerMatrix const& region_pops, double const lower, double const upper, int const total_seats, int const num_threads);
+RcppExport SEXP _redist_infer_region_seats(SEXP region_popsSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP total_seatsSEXP, SEXP num_threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -571,7 +571,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double const >::type upper(upperSEXP);
     Rcpp::traits::input_parameter< int const >::type total_seats(total_seatsSEXP);
     Rcpp::traits::input_parameter< int const >::type num_threads(num_threadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(infer_region_sizes(region_pops, lower, upper, total_seats, num_threads));
+    rcpp_result_gen = Rcpp::wrap(infer_region_seats(region_pops, lower, upper, total_seats, num_threads));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -988,7 +988,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_prec_cooccur", (DL_FUNC) &_redist_prec_cooccur, 3},
     {"_redist_group_pct", (DL_FUNC) &_redist_group_pct, 5},
     {"_redist_pop_tally", (DL_FUNC) &_redist_pop_tally, 4},
-    {"_redist_infer_region_sizes", (DL_FUNC) &_redist_infer_region_sizes, 5},
+    {"_redist_infer_region_seats", (DL_FUNC) &_redist_infer_region_seats, 5},
     {"_redist_max_dev", (DL_FUNC) &_redist_max_dev, 4},
     {"_redist_order_district_stats", (DL_FUNC) &_redist_order_district_stats, 3},
     {"_redist_ms_plans", (DL_FUNC) &_redist_ms_plans, 21},

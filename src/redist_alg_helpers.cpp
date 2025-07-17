@@ -739,7 +739,7 @@ void SMCDiagnostics::add_diagnostics_to_out_list(Rcpp::List &out){
     out["merge_split_attempt_counts"] = num_merge_split_attempts_vec;
     out["merge_split_success_mat"] = merge_split_successes_mat;
     out["region_ids_mat_list"] = all_steps_plan_region_ids_list;
-    out["region_sizes_mat_list"] = region_sizes_mat_list;
+    out["region_seats_mat_list"] = region_sizes_mat_list;
     out["forest_adjs_list"] = all_steps_forests_adj_list;
     out["linking_edges_list"] = all_steps_linking_edge_list;
     out["valid_split_region_sizes_list"] = all_steps_valid_split_region_sizes;

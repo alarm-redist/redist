@@ -583,7 +583,7 @@ redist_smc <- function(
         # if not diagnostic mode
         # make the region_ids_mat_list input just null since there's nothing else
         algout$region_ids_mat_list <- NULL
-        algout$region_sizes_mat_list <- NULL
+        algout$region_seats_mat_list <- NULL
       }
 
       # if no merge split was run them remove those attributes
@@ -637,8 +637,8 @@ redist_smc <- function(
         rs_idx <- resample_plans_lowvar(
           normalized_wgts,
           algout$plans_mat,
-          algout$region_sizes_mat,
-          algout$plan_sizes_saved
+          algout$seats,
+          algout$plan_seats_saved
         )
 
         # rs_idx maps plan i to its new plan index
@@ -673,8 +673,8 @@ redist_smc <- function(
 
 
       # make sizes null if needed
-      if (!algout$plan_sizes_saved) {
-        algout$region_sizes_mat <- NULL
+      if (!algout$plan_seats_saved) {
+        algout$seats <- NULL
       }
 
 
@@ -696,7 +696,7 @@ redist_smc <- function(
       algout$wgt <- wgt
 
       # flatten the region sizes by column into a long vector
-      dim(algout$region_sizes_mat) <- NULL
+      dim(algout$seats) <- NULL
 
 
 
@@ -709,7 +709,7 @@ redist_smc <- function(
         successful_tree_sizes = algout$successful_tree_sizes,
         parent_unsuccessful_tries_mat = algout$parent_unsuccessful_tries_mat,
         region_ids_mat_list = algout$region_ids_mat_list,
-        region_sizes_mat_list = algout$region_sizes_mat_list,
+        region_seats_mat_list = algout$region_seats_mat_list,
         merge_split_success_mat = algout$merge_split_success_mat,
         merge_split_attempt_counts = algout$merge_split_attempt_counts,
         forest_adjs_list = algout$forest_adjs_list,
@@ -772,7 +772,7 @@ redist_smc <- function(
   # combine if needed
   if (runs > 1) {
     plans <- do.call(cbind, lapply(all_out, function(x) x$plans))
-    region_sizes <- do.call(c, lapply(all_out, function(x) x$region_sizes_mat))
+    seats <- do.call(c, lapply(all_out, function(x) x$seats))
     wgt <- do.call(c, lapply(all_out, function(x) x$wgt))
     l_diag <- lapply(all_out, function(x) x$l_diag)
     run_information <- lapply(all_out, function(x) x$run_information)
@@ -780,7 +780,7 @@ redist_smc <- function(
   } else {
     # else if just one run extract directly
     plans <- all_out[[1]]$plans
-    region_sizes <- all_out[[1]]$region_sizes_mat
+    seats <- all_out[[1]]$seats
     wgt <- all_out[[1]]$wgt
     l_diag <- list(all_out[[1]]$l_diag)
     run_information <- list(all_out[[1]]$run_information)
@@ -800,7 +800,7 @@ redist_smc <- function(
     wgt,
     resample,
     ndists = n_dist_act,
-    region_sizes = region_sizes,
+    seats = seats,
     n_eff = all_out[[1]]$n_eff,
     compactness = compactness,
     constraints = constraints,

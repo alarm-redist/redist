@@ -200,7 +200,7 @@ NumericMatrix pop_tally(IntegerMatrix const &districts, vec const &pop, int cons
 
 // We assume that the population deviations are less than 1
 // If they are 1 or greater then you cannot uniquely infer sizes
-Rcpp::IntegerMatrix infer_region_sizes(
+Rcpp::IntegerMatrix infer_region_seats(
     Rcpp::IntegerMatrix const &region_pops,
     double const lower, double const upper,
     int const total_seats,

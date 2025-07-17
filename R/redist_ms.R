@@ -514,8 +514,7 @@ redist_mergesplit <- function(
       )
 
       # flatten the region sizes by column
-      dim(algout$plan_sizes) <- NULL
-      storage.mode(algout$plans) <- "integer"
+      dim(algout$seats) <- NULL
 
       algout
     }
@@ -527,7 +526,7 @@ redist_mergesplit <- function(
   each_len <- ncol(plans[[1]])
   plans <- do.call(cbind, plans)
 
-  region_sizes <- do.call(c, lapply(out_par, function(x) x$plan_sizes))
+  seats <- do.call(c, lapply(out_par, function(x) x$seats))
 
   mh <- sapply(out_par, function(algout) {
     mean(as.logical(algout$mhdecisions))
@@ -546,7 +545,7 @@ redist_mergesplit <- function(
     algorithm = "mergesplit",
     wgt = NULL,
     resampled = FALSE,
-    region_sizes = region_sizes,
+    seats = seats,
     compactness = compactness,
     constraints = constraints,
     ndists = ndists,
