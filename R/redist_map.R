@@ -25,7 +25,7 @@ new_redist_map <- function(
     if (!is.numeric(pop_bounds) || length(pop_bounds) != 3)
         cli_abort("{.arg pop_bounds} must be a numeric vector of length 3.")
     if(ndists > nseats){
-        cli::cli_abort("{.arg ndists} must be less than or equal to {.arg nseats}")
+        cli_abort("{.arg ndists} must be less than or equal to {.arg nseats}")
     }
 
 
@@ -289,20 +289,20 @@ redist_map <- function(..., existing_plan = NULL, pop_tol = NULL,
         if(ndists == nseats){
             seats_range <- 1L
         }else{
-            cli::cli_abort("Must specify {.arg seats_range} if multi-member districting scheme is being used.")
+            cli_abort("Must specify {.arg seats_range} if multi-member districting scheme is being used.")
         }
     }else{
         # check the district sizes are integers
         if(!rlang::is_integerish(seats_range)){
-            cli::cli_abort("{.arg seats_range} must be integers.")
+            cli_abort("{.arg seats_range} must be integers.")
         }
         # check they are all positive
         if(any(seats_range <= 0)){
-            cli::cli_abort("{.arg seats_range} must be positive.")
+            cli_abort("{.arg seats_range} must be positive.")
         }
         # check its not bigger than the total number of seats
         if(any(seats_range >= nseats)){
-            cli::cli_abort("All values in {.arg seats_range} must be less than the total number of seats.")
+            cli_abort("All values in {.arg seats_range} must be less than the total number of seats.")
         }
         # remove duplicates
         seats_range <- unique(seats_range)

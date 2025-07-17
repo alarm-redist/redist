@@ -255,13 +255,13 @@ redist_smc <- function(
   }
 
   if (!is_scalar(compactness) || compactness < 0) {
-    cli::cli_abort("{.arg compactness} must be non-negative.")
+    cli_abort("{.arg compactness} must be non-negative.")
   }
   if (seq_alpha <= 0 || seq_alpha > 1 || !is_scalar(seq_alpha)) {
-    cli::cli_abort("{.arg seq_alpha} must lie in (0, 1].")
+    cli_abort("{.arg seq_alpha} must lie in (0, 1].")
   }
   if (nsims < 1) {
-    cli::cli_abort("{.arg nsims} must be positive.")
+    cli_abort("{.arg nsims} must be positive.")
   }
 
   # check default inputs
@@ -297,7 +297,7 @@ redist_smc <- function(
         seq.int(from = min(seats_range), to = max(seats_range))
     )
   ) {
-    cli::cli_abort(
+    cli_abort(
       "For {.arg seats_range} only a continuous range of district seat sizes are allowed!"
     )
   }
@@ -347,7 +347,7 @@ redist_smc <- function(
 
   # linking edge with counties not supported right now
   if (num_admin_units > 1 && sampling_space == LINKING_EDGE_SPACE_SAMPLING) {
-      cli::cli_abort(
+      cli_abort(
           "Linking Edge Sampling with counties is not supported right now"
       )
   }
@@ -382,7 +382,7 @@ redist_smc <- function(
   # if run_ms is true then seq_alpha must be 1
   if (run_ms && seq_alpha != 1) {
       seq_alpha <- 1L
-      cli::cli_warn(
+      cli_warn(
           "{.arg seq_alpha} must be set to 1 if any mergesplit steps are being run!"
       )
   }
@@ -414,11 +414,11 @@ redist_smc <- function(
       !rlang::is_integerish(ncores) ||
         !is_scalar(ncores)
     ) {
-      cli::cli_abort("{.arg ncores} must be a single integer!")
+      cli_abort("{.arg ncores} must be a single integer!")
     } else if (ncores == 0) {
       ncores <- ncores_max
     } else if (ncores < 0) {
-      cli::cli_abort(
+      cli_abort(
         "{.arg ncores} can't be negative!"
       )
     }
@@ -662,7 +662,7 @@ redist_smc <- function(
 
 
       if (!is.nan(n_eff) && n_eff / nsims <= 0.05) {
-        cli::cli_warn(c(
+        cli_warn(c(
           "Less than 5% resampling efficiency.",
           "*" = "Increase the number of samples.",
           "*" = "Consider weakening or removing constraints.",
@@ -841,7 +841,7 @@ get_splitting_schedule <- function(split_params, districting_scheme){
             } else if (districting_scheme == "MMD") {
                 splitting_size_regime = "split_district_only_mmd"
             } else {
-                cli::cli_abort(
+                cli_abort(
                     "Districting scheme {districting_scheme} is not supported!"
                 )
             }
@@ -849,17 +849,17 @@ get_splitting_schedule <- function(split_params, districting_scheme){
             if (districting_scheme == "SMD") {
                 splitting_size_regime = "any_valid_sizes"
             } else if (districting_scheme == "MMD") {
-                cli::cli_abort(
+                cli_abort(
                     "Generaliezd region splits are not supported for Multi-member districting!"
                 )
             } else {
-                cli::cli_abort(
+                cli_abort(
                     "Districting scheme {districting_scheme} is not supported!"
                 )
             }
         } else {
             # else its custom
-            cli::cli_abort("Custom splitting schedules are not supported right now!")
+            cli_abort("Custom splitting schedules are not supported right now!")
         }
     } else {
         # default to  district
@@ -868,7 +868,7 @@ get_splitting_schedule <- function(split_params, districting_scheme){
         } else if (districting_scheme == "MMD") {
             splitting_size_regime = "split_district_only_mmd"
         } else {
-            cli::cli_abort(
+            cli_abort(
                 "Districting scheme {districting_scheme} is not supported!"
             )
         }
@@ -918,7 +918,7 @@ get_init_plan_params <- function(
         } else if (is.matrix(init_particles)) {
             if (is.null(init_seats)) {
                 # else infer
-                cli::cli_warn(
+                cli_warn(
                     "{.arg init_seats} was not passed in, attempting to infer number of seats per region."
                 )
                 init_seats <- infer_plan_seats(
@@ -934,7 +934,7 @@ get_init_plan_params <- function(
                 init_particles <- init_particles - 1L
             }
         } else {
-            cli::cli_abort(
+            cli_abort(
                 "{.arg init_particles} must be either a redist_plans object or a matrix"
             )
         }
@@ -947,7 +947,7 @@ get_init_plan_params <- function(
         if (is.matrix(init_weights) && is.numeric(init_weights)) {
             # check 1 column and nsim rows
             if (any(dim(init_weights) != c(nsims, 1))) {
-                cli::cli_abort(
+                cli_abort(
                     "{.arg init_weights} must have only {nsims} elements!"
                 )
             }
@@ -955,14 +955,14 @@ get_init_plan_params <- function(
             init_weights <- as.vector(init_weights)
         } else if (is.vector(init_weights) && is.numeric(init_weights)) {
             if (length(init_weights) != nsims) {
-                cli::cli_abort(
+                cli_abort(
                     "{.arg init_weights} must be of length {nsims}!"
                 )
             }
         }
         # now check all positive
         if (any(init_weights <= 0)) {
-            cli::cli_abort(
+            cli_abort(
                 "All elements of {.arg init_weights} must be of length positive!"
             )
         }
@@ -999,11 +999,11 @@ extract_control_params <- function(control){
         if ("nproc" %in% names(control)) {
             nproc <- control[["nproc"]]
             if (!rlang::is_integerish(nproc) || !is_scalar(nproc)) {
-                cli::cli_abort(
+                cli_abort(
                     "{.arg nproc} in {.arg control} must be a single integer!"
                 )
             } else if (nproc <= 0) {
-                cli::cli_abort(
+                cli_abort(
                     "{.arg nproc} in {.arg control} must be a positive integer!"
                 )
             }
@@ -1065,7 +1065,7 @@ extract_ms_params <- function(ms_params, total_smc_steps){
             if (
                 !is_scalar(ms_moves_multiplier) || !ms_moves_multiplier > 0
             ) {
-                cli::cli_abort("{.arg ms_moves_multiplier} must be a positive scalar")
+                cli_abort("{.arg ms_moves_multiplier} must be a positive scalar")
             }
         } else {
             ms_moves_multiplier <- 1L
@@ -1085,7 +1085,7 @@ extract_ms_params <- function(ms_params, total_smc_steps){
             if (
                 !is_scalar(merge_prob_type) || merge_prob_type != "uniform"
             ) {
-                cli::cli_abort("Only uniform merge probability is supported right now!")
+                cli_abort("Only uniform merge probability is supported right now!")
             }
         } else {
             # else default to after every step

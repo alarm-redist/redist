@@ -806,12 +806,12 @@ add_hard_constr_custom_plan <- function(constr, fn) {
     if (!is.null(plan <- get_existing(attr(constr, "data")))) {
         fake_sizes <- rep(1L, length(unique(plan)))
         out <- tryCatch(fn(plan, fake_sizes), error = function(e) {
-            cli::cli_abort(c("Ran into an error testing custom constraint
+            cli_abort(c("Ran into an error testing custom constraint
                         on the existing plan:",
                         "x" = e$message))
         })
         if (!is.logical(out) || length(out) != 1 || !is.finite(out)){
-            cli::cli_abort(c("Evaluting custom hard constraint on the existing plan failed.",
+            cli_abort(c("Evaluting custom hard constraint on the existing plan failed.",
                              "*" = "The constraint function should return a single boolean value.",
                              "*" = "Make sure that your constraint function tests all edge cases
                              and never returns {.val {NA}} or {.val {Inf}}."))

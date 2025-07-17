@@ -121,7 +121,7 @@ summary.redist_plans <- function(
         # check same sampling space
         all_sampling_spaces <- sapply(all_run_info, function(x) x$sampling_space)
         if(length(unique(all_sampling_spaces)) != 1){
-            cli::cli_abort("{.fn summary} is not supported for plans sampled using different sampling spaces.")
+            cli_abort("{.fn summary} is not supported for plans sampled using different sampling spaces.")
             return(invisible(1))
         }
         sampling_space <- all_sampling_spaces[1]
@@ -133,7 +133,7 @@ summary.redist_plans <- function(
         # check same splitting method
         all_splitting_methods <- sapply(all_run_info, function(x) x$split_method)
         if(length(unique(all_splitting_methods)) != 1){
-            cli::cli_abort("{.fn summary} is not supported for plans sampled using different splitting methods")
+            cli_abort("{.fn summary} is not supported for plans sampled using different splitting methods")
             return(invisible(1))
         }
         split_method <- all_splitting_methods[1]
@@ -147,7 +147,7 @@ summary.redist_plans <- function(
         all_split_params <- lapply(all_diagn, function(x) x$split_params)
         for (i in seq_len(length(all_split_params))) {
             if(!identical(all_split_params[[1]], all_split_params[[i]])){
-                cli::cli_abort("{.fn summary} is not supported for plans sampled using different splitting parameters")
+                cli_abort("{.fn summary} is not supported for plans sampled using different splitting parameters")
                 return(invisible(1))
             }
         }

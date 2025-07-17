@@ -41,7 +41,7 @@ compute_log_target_density <- function(
     }else if(is.vector(plans) && is.numeric(plans)){
         plan_matrix <- as.matrix(plans, cols = 1)
     }else{
-        cli::cli_abort("{.arg plans} must be a matrix or {.cls redist_plans} type!")
+        cli_abort("{.arg plans} must be a matrix or {.cls redist_plans} type!")
     }
     num_regions <- dplyr::n_distinct(plan_matrix[,1])
 
@@ -94,7 +94,7 @@ compute_log_target_density <- function(
     num_prob_zero <- sum(!is.finite(unnormalized_log_density))
 
     if(num_prob_zero > 0){
-        cli::cli_warn("{num_prob_zero} of the {length(unnormalized_log_density)} plans have probability 0!")
+        cli_warn("{num_prob_zero} of the {length(unnormalized_log_density)} plans have probability 0!")
     }
 
     return(unnormalized_log_density)
@@ -134,7 +134,7 @@ compute_log_target_density_by_region <- function(
     }else if(is.vector(plans) && is.numeric(plans)){
         plan_matrix <- as.matrix(plans, cols = 1)
     }else{
-        cli::cli_abort("{.arg plans} must be a matrix or {.cls redist_plans} type!")
+        cli_abort("{.arg plans} must be a matrix or {.cls redist_plans} type!")
     }
     num_regions <- dplyr::n_distinct(plan_matrix[,1])
 
@@ -187,7 +187,7 @@ compute_log_target_density_by_region <- function(
     num_prob_zero <- sum(!is.finite(unnormalized_log_region_densities))
 
     if(num_prob_zero > 0){
-        cli::cli_warn("{num_prob_zero} of the {prod(dim(unnormalized_log_region_densities))} regions have probability 0!")
+        cli_warn("{num_prob_zero} of the {prod(dim(unnormalized_log_region_densities))} regions have probability 0!")
     }
 
     return(unnormalized_log_region_densities)
@@ -223,7 +223,7 @@ compute_log_optimal_weights <- function(
     }else if(is.vector(plans) && is.numeric(plans)){
         plan_matrix <- as.matrix(plans, cols = 1)
     }else{
-        cli::cli_abort("{.arg plans} must be a matrix or {.cls redist_plans} type!")
+        cli_abort("{.arg plans} must be a matrix or {.cls redist_plans} type!")
     }
     num_regions <- dplyr::n_distinct(plan_matrix[,1])
 
@@ -280,7 +280,7 @@ compute_log_optimal_weights <- function(
     num_prob_zero <- sum(!is.finite(unnormalized_log_density))
 
     if(num_prob_zero > 0){
-        cli::cli_warn("{num_prob_zero} of the plans have probability 0!")
+        cli_warn("{num_prob_zero} of the plans have probability 0!")
     }
 
     return(unnormalized_log_density)

@@ -60,7 +60,7 @@ new_redist_plans <- function(
             # if its a matrix make sure dimensions match then flatten it
             if(is.matrix(seats)){
                 if(any(dim(seats) != dim(distr_pop))){
-                    cli::cli_abort("The dimensions of {.arg seats} must be {.field num_regions} by {.field nsims}")
+                    cli_abort("The dimensions of {.arg seats} must be {.field num_regions} by {.field nsims}")
                 }
                 # now flatten
                 dim(seats) <- NULL
@@ -70,7 +70,7 @@ new_redist_plans <- function(
 
         # also make sure its the same length as the pop tally
         if(length(seats) != length(distr_pop)){
-            cli::cli_abort("{.arg seats} must have length equal to number of regions times number of plans!")
+            cli_abort("{.arg seats} must have length equal to number of regions times number of plans!")
         }
     }
 
@@ -135,7 +135,7 @@ validate_redist_plans <- function(x) {
     # check if its not SMD then nseats is present
     if (!is.null(attr(x, "districting_scheme")) && attr(x, "districting_scheme") != "SMD"){
         if(!"seats" %in% names(x)){
-            cli::cli_abort("Multi-member district plans must have a {.field seats} column")
+            cli_abort("Multi-member district plans must have a {.field seats} column")
         }
     }
 
@@ -300,7 +300,7 @@ get_seats_matrix <- function(x) {
         )
     }else{
         # check if any reindexing needs to be done
-        cli::cli_abort("Not implemented for shuffled district plans!")
+        cli_abort("Not implemented for shuffled district plans!")
     }
     return(sizes_matrix)
 }
@@ -415,15 +415,15 @@ add_reference <- function(plans, ref_plan, name = NULL, ref_seats = NULL) {
         ref_seats <- rep(1L, ndists)
     }else if(!is.null(ref_seats)){
         if(!rlang::is_integerish(ref_seats)){
-            cli::cli_abort("{.arg ref_seats} must be integers.")
+            cli_abort("{.arg ref_seats} must be integers.")
         }
         # check they are all positive
         if(any(ref_seats <= 0)){
-            cli::cli_abort("{.arg ref_seats} must be positive.")
+            cli_abort("{.arg ref_seats} must be positive.")
         }
         # check its not bigger than the total number of seats
         if(sum(ref_seats) != attr(plans, "nseats")){
-            cli::cli_abort("The sum of {.arg ref_seats} must be equal to {.arg nseats}.")
+            cli_abort("The sum of {.arg ref_seats} must be equal to {.arg nseats}.")
         }
     }
 
