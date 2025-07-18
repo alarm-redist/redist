@@ -22,13 +22,14 @@
 #' can indicate a bottleneck and may lead to a lack of diversity.
 #' * **Standard deviation of the log weights**: More variable weights (larger s.d.)
 #' indicate less efficient sampling. Values greater than 3 are likely problematic.
-#' * **Maximum unique plans:** an upper bound on the number of unique redistricting
+#' * **Maximum unique plans:** The number of unique redistricting
 #' plans that survive each stage. The percentage in parentheses is the ratio of
 #' this number to the total number of samples. Small values (< 100) indicate a
 #' bottleneck, which leads to a loss of sample diversity and a higher variance.
-#' * **Estimated `k` parameter**: How many spanning tree edges were considered for
-#' cutting at each split. Mostly informational, though large jumps may indicate
-#' a need to increase `adapt_k_thresh`.
+#' * **Estimated `k` parameter**: For graph space plans displays how many
+#' spanning tree edges were considered for cutting at each split. Mostly
+#' informational, though large jumps may indicate a need to increase
+#' `adapt_k_thresh`.
 #' * **Bottleneck**: An asterisk will appear in the right column if a bottleneck
 #' appears likely, based on the values of the other statistics.
 #'
@@ -44,7 +45,7 @@
 #' statistics for all runs (the default), or only the first run?
 #' @param vi_max The maximum number of plans to sample in computing the pairwise
 #' variation of information distance (sample diversity).
-#' @param use_order_stats Whether or not to compute rhats on the ordered district
+#' @param order_stats Whether or not to compute rhats on the ordered district
 #' statistics.
 #' @param \dots additional arguments (ignored)
 #'
@@ -62,7 +63,9 @@
 #' @export
 summary.redist_plans <- function(
         object, district = FALSE, all_runs = TRUE, vi_max = 100,
-        use_order_stats = TRUE,...) {
+        order_stats = TRUE,
+        rhat_thresh = getOption("redist.rhat_thresh", c(q99=1.05, max=1.1)),
+        ...) {
     cli::cli_process_done(done_class = "") # in case an earlier
 
     algo <- attr(object, "algorithm")
@@ -77,7 +80,7 @@ summary.redist_plans <- function(
     resampled <- attr(object, "resampled")
     if (is.null(n_distr)) n_distr <- max(plans_m[, 1])
 
-    fmt_comma <- function(x) format(x, nsmall = 0, digits = 1, big.mark = ",")
+
     if (n_distr == 1 || nrow(plans_m) == 1) {
         cli_text("{fmt_comma(n_samp)}{cli::qty(n_samp)} sampled plan{?s} of
                  {n_distr} district{?s} on
@@ -144,14 +147,16 @@ summary.redist_plans <- function(
         )
 
         # check the splitting parameters are all the same
-        all_split_params <- lapply(all_diagn, function(x) x$split_params)
-        for (i in seq_len(length(all_split_params))) {
-            if(!identical(all_split_params[[1]], all_split_params[[i]])){
+        all_forward_kernel_params <- lapply(all_diagn, function(x) x$forward_kernel_params)
+        for (i in seq_len(length(all_forward_kernel_params))) {
+            # don't want to compare cut k used since won't be the same
+            all_forward_kernel_params[[i]]$cut_k_used <- NULL
+            if(!identical(all_forward_kernel_params[[1]], all_forward_kernel_params[[i]])){
                 cli_abort("{.fn summary} is not supported for plans sampled using different splitting parameters")
                 return(invisible(1))
             }
         }
-        split_params <- all_split_params[[1]]
+        split_params <- all_forward_kernel_params[[1]]
 
         cli::cli_text("Plans sampled on {display_sampling_space} using the {display_splitting_method} forward kernel.")
 
@@ -171,35 +176,15 @@ summary.redist_plans <- function(
 
 
     # print algorithm specific parameters
-    if (algo %in% c(SMC_ALG_TYPE, MS_SMC_ALG_TYPE)) {
-        cli::cli_text("SMC Parameters: {.arg weight_type}={format(all_run_info[[1]]$weight_type, digits=2)}
-        \u2022 {.arg seq_alpha}={format(all_diagn[[1]]$seq_alpha, digits=2)}
-        \u2022 {.arg pop_temper}={format(all_diagn[[1]]$pop_temper, digits=3)}")
-    }else if(algo == MCMC_ALG_TYPE){
-        cli::cli_text(
-        "MCMC Parameters: {.arg warmup}={format(all_diagn[[1]]$warmup)}
-        \u2022 {.arg thin}={format(all_diagn[[1]]$thin)}
-        \u2022 {.arg thin}={format(all_diagn[[1]]$total_steps)}")
-    }
-
-    if(algo == MS_SMC_ALG_TYPE){
-        total_ms_steps <- sum(all_run_info[[i]]$step_types == "smc_ms")
-        cli::cli_text("
-        Mergesplit Parameters: {.arg total_ms_steps}={format(total_ms_steps, digits=2)}
-        \u2022 {.arg ms_moves_multiplier}={format(all_run_info[[1]]$ms_moves_multiplier, digits=2)}
-        \u2022 {.arg merge_prob_type}={format(all_run_info[[1]]$merge_prob_type, digits=2)}
-        ")
-    }
-
+    print_algo_specific_params(algo, all_diagn, all_run_info)
 
     cli_text("Plan diversity 80% range: {div_rg[1]} to {div_rg[2]}")
     if (div_bad) cli::cli_alert_danger("{.strong WARNING:} Low plan diversity")
 
-
     # now compute rhats if more than 1 chain
     one_district_only <- 1 <= district && district <= n_distr
     cols <- names(object)
-    addl_cols <- setdiff(cols, c("chain", "draw", "district", "total_pop", "nseats", "mcmc_accept"))
+    addl_cols <- setdiff(cols, c("chain", "draw", "district", "total_pop", "seats", "mcmc_accept"))
     if(one_district_only){
         idx <- seq_len(n_samp)
         if ("district" %in% cols) idx <- as.integer(district) + (idx - 1)*n_distr
@@ -221,68 +206,81 @@ summary.redist_plans <- function(
     warn_converge <- FALSE
     # do nothing if no additional columns or no chain column
     if(length(addl_cols) > 0 && "chain" %in% cols){
+        # check district input
+        if(!isFALSE(district)){
+            # check integer
+            if(!rlang::is_integerish(district)){
+                cli_abort("{.arg district} must be an integer!")
+            }else{
+                district <- as.integer(district)
+            }
+            # check between 1 and ndists
+            if(!all(1 <= district && district <= n_distr)){
+                cli_abort("{.arg district} must be between 1 and {.arg ndists}!")
+            }
+        }
         rhats_computed <- TRUE
         split_rhat = algo %in% c(MCMC_ALG_TYPE, "flip")
 
-        # check if only computing for a specific district
-        if(1 <= district && district <= n_distr){
-            rhat_df <- object |>
-                filter(!is.na(chain) & district == !!district) |>
-                tidyr::pivot_longer(
-                    cols = all_of(addl_cols),
-                    names_to = "variable",
-                    values_to = "value"
-                ) |>
-                filter(!is.na(value)) |>
-                select(variable, chain, district, value) |>
-                group_by(variable, district) |>
-                summarise(rhat = diag_rhat(value, chain, split=split_rhat), .groups = "drop")
-        }
-        if(use_order_stats){
-            # else compute the rhats on the order statistics
-            rhat_df <- object |>
-                filter(!is.na(chain)) |>
-                tidyr::pivot_longer(
-                    cols = all_of(addl_cols),
-                    names_to = "variable",
-                    values_to = "value"
-                ) |>
-                filter(!is.na(value)) |>
-                group_by(variable, chain, draw) |>
-                mutate(district = row_number(value)) |>
-                ungroup() |>
-                select(variable, chain, district, value) |>
-                group_by(variable, district) |>
-                summarise(rhat = diag_rhat(value, chain, split=split_rhat), .groups = "drop")
-        }else{
-            # else compute rhats using existing district number
-            rhat_df <- object |>
-                filter(!is.na(chain)) |>
-                tidyr::pivot_longer(
-                    cols = all_of(addl_cols),
-                    names_to = "variable",
-                    values_to = "value"
-                ) |>
-                filter(!is.na(value)) |>
-                select(variable, chain, district, value) |>
-                group_by(variable, district) |>
-                summarise(rhat = diag_rhat(value, chain, split=split_rhat), .groups = "drop")
-        }
-        ordered_str <- ifelse(use_order_stats, "ordered ", "")
-        cli::cli_text("Largest R-hat values for {ordered_str}summary statistics:\n")
-        max_rhats_df <- rhat_df |>
-            group_by(variable) |>
-            summarise(max_rhat = max(rhat))
-        max_rhats <- max_rhats_df |>
-            pull(max_rhat)
-        names(max_rhats) <- max_rhats_df |>
-            pull(variable)
+        # get rhats
+        rhats_df <- compute_all_rhats(
+            # drop everything but the columns to save size
+            as.data.frame(object)[c("chain", "district", addl_cols)],
+            addl_cols,
+            order_stats,
+            district,
+            n_distr,
+            split_rhat)
+
+        # get thresholds
+        q99_rhat_thresh <- ifelse("q99" %in% rhat_thresh, rhat_thresh[["q99"]], 1.05)
+        rhat_max_thresh <- ifelse("max" %in% rhat_thresh, rhat_thresh[["max"]], 1.1)
+
+
+        ordered_str <- ifelse(order_stats, "ordered ", "")
+        cli_text("Largest R-hat values for {ordered_str}summary statistics:\n")
+        # get maximum rhats for each statistic
+        max_rhats <- tapply(rhats_df$rhat, rhats_df$stat_name, max)
+
         rhats_p <- vapply(max_rhats, function(x){
-            ifelse(x < 1.05, sprintf('%.3f', x), paste0('\U274C', round(x, 3)))
+            ifelse(x <= q99_rhat_thresh, sprintf('%.3f', x), paste0('\U274C', round(x, 3)))
         }, FUN.VALUE = character(1))
         print(noquote(rhats_p))
 
-        if (any(rhat_df$rhat >= 1.05)){
+        # print counts
+        rhat_vals <- rhats_df$rhat
+
+
+
+        cli::cli_ul()
+        cli::cli_li("R-hat ≤ {format(q99_rhat_thresh, digits=3)}: {sum(rhat_vals <= q99_rhat_thresh)}")
+        cli::cli_li("{format(q99_rhat_thresh, digits=3)} < R-hat ≤ {format(rhat_max_thresh, digits=3)}:
+                    {sum(rhat_vals > q99_rhat_thresh & rhat_vals <= rhat_max_thresh)}")
+        cli::cli_li("R-hat > {format(rhat_max_thresh, digits=3)}: {sum(rhat_vals > rhat_max_thresh)}")
+        cli::cli_li("Total R-hats: {length(rhat_vals)}")
+        cli::cli_end()
+
+
+        # cat("Rhat Breakdown:\n")
+        # cat("R-hat ≤ 1.05:      ", sum(rhat_vals <= 1.05), "\n")
+        # cat("1.05 < R-hat ≤ 1.1:", sum(rhat_vals > 1.05 & rhat_vals <= 1.1), "\n")
+        # cat("R-hat > 1.1:       ", sum(rhat_vals > 1.1), "\n")
+
+
+        # get 99th quantile
+        q99_rhat <- quantile(x = rhats_df$rhat, probs = .99) |>
+            unname()
+
+        # check converge
+        # - weak convergence: all rhats <= 1.1 and 99th quantile <= 1.05
+        # - strong covergence: all rhats <= 1.05
+        if(all(rhat_vals <= 1.05)){
+            convergence_status <- "strong"
+        }else if(q99_rhat <= 1.05 && all(rhat_vals <= 1.1)){
+            convergence_status <- "weak"
+            cli::cli_alert_info("{.strong ALERT:} Chains have weakly converged.")
+        }else{
+            convergence_status <- "not_converged"
             warn_converge <- TRUE
             cli::cli_alert_danger("{.strong WARNING:} Chains have not converged.")
         }
@@ -291,79 +289,49 @@ summary.redist_plans <- function(
     }
 
 
-
-
     # Now print algorithm specific diagnostics
     if (algo %in% c(SMC_ALG_TYPE, MS_SMC_ALG_TYPE)) {
-
-        run_dfs <- list()
+        smc_run_dfs <- list()
+        smc_ms_run_dfs <- list()
         n_runs <- length(all_diagn)
         warn_bottlenecks <- FALSE
 
         for (i in seq_len(n_runs)) {
-            diagn <- all_diagn[[i]]
-            n_samp <-  all_run_info[[i]]$nsims
-            run_i_sampling_space <- all_run_info[[i]]$sampling_space
 
+            smc_summary_result_list <- get_smc_summary_df(
+                all_diagn[[i]], all_run_info[[i]],
+                resampled, warn_bottlenecks
+            )
 
-            run_dfs[[i]] <- tibble(n_eff = c(diagn$step_n_eff, diagn$n_eff),
-                                   eff = c(diagn$step_n_eff, diagn$n_eff)/n_samp,
-                                   accept_rate = c(diagn$accept_rate, NA),
-                                   sd_log_wgt = diagn$sd_lp,
-                                   max_unique = diagn$unique_survive
-                                   )
-            run_i_tbl_names <- c("Eff. samples (%)", "Acc. rate",
-                           "Log wgt. sd", " Max. unique")
-            # if graph space then add the k
-            if(run_i_sampling_space == GRAPH_PLAN_SPACE_SAMPLING){
-                run_dfs[[i]]$est_k = c(diagn$est_k, NA)
-                if(diagn$split_params$estimate_cut_k){
-                    run_i_tbl_names <- c(run_i_tbl_names, "Est. k")
-                }else{
-                    run_i_tbl_names <- c(run_i_tbl_names, "Manual k")
-                }
-
-            }
-            run_i_tbl_names <- c(run_i_tbl_names, "")
-
-
-            tbl_print <- as.data.frame(run_dfs[[i]])
-            min_n <- max(0.05*n_samp, min(0.4*n_samp, 100))
-            bottlenecks <- dplyr::coalesce(with(tbl_print, pmin(max_unique, n_eff) < min_n), FALSE)
-            warn_bottlenecks <- warn_bottlenecks || any(bottlenecks)
-            tbl_print$bottleneck <- ifelse(bottlenecks, " * ", "")
-            tbl_print$n_eff <- with(tbl_print,
-                                    str_glue("{fmt_comma(n_eff)} ({sprintf('%0.1f%%', 100*eff)})"))
-            tbl_print$eff <- NULL
-            tbl_print$accept_rate <- with(tbl_print, sprintf("%0.1f%%", 100*accept_rate))
-            max_pct <- with(tbl_print, max_unique/(-n_samp * expm1(-1)))
-            tbl_print$max_unique <- with(tbl_print,
-                                         str_glue("{fmt_comma(max_unique)} ({sprintf('%3.0f%%', 100*max_pct)})"))
-
-            names(tbl_print) <- run_i_tbl_names
-            if(algo == SMC_ALG_TYPE){
-                new_row_names <- paste("Split", seq_len(nrow(tbl_print) - 1))
-            }else{
-                # numbers steps within each type
-                step_nums <- ave(seq_along(all_run_info[[i]]$step_types), all_run_info[[i]]$step_types, FUN = seq_along)
-                step_labels <- ifelse(all_run_info[[i]]$step_types == "smc", "Split", "MS Step")
-                new_row_names <- paste(step_labels, step_nums)
-            }
-
-            if(resampled){
-                new_row_names <- c(new_row_names, "Resample")
-            }
-
-            rownames(tbl_print) <- new_row_names
-
+            smc_run_dfs[[i]] <- smc_summary_result_list$smc_summary_df
+            smc_tbl_print <- smc_summary_result_list$smc_print_tbl
+            warn_bottlenecks <- smc_summary_result_list$warn_bottlenecks
 
             if (i == 1 || isTRUE(all_runs)) {
                 cli_text("Sampling diagnostics for SMC run {i} of {n_runs} ({fmt_comma(n_samp)} samples)")
-                print(tbl_print, digits = 2)
+                print(smc_tbl_print, digits = 2)
                 cat("\n")
             }
+
+            if(algo == MS_SMC_ALG_TYPE){
+                smc_ms_summary_result_list <- get_smc_ms_summary_df(
+                    all_diagn[[i]], all_run_info[[i]],
+                    resampled
+                )
+                smc_ms_run_dfs[[i]] <- smc_ms_summary_result_list$smc_ms_summary_df
+                smc_ms_tbl_print <- smc_ms_summary_result_list$smc_ms_print_tbl
+
+                if (i == 1 || isTRUE(all_runs)) {
+                    cli_text("Sampling diagnostics for Mergesplit Steps of SMC run {i} of {n_runs} ({fmt_comma(n_samp)} samples)")
+                    print(smc_ms_tbl_print, digits = 2)
+                    cat("\n")
+                }
+            }
+
         }
-        out <- bind_rows(run_dfs)
+        out <- bind_rows(smc_ms_run_dfs)
+
+        #step_nums <- ave(seq_along(all_run_info[[i]]$step_types), all_run_info[[i]]$step_types, FUN = seq_along)
 
         cli::cli_li(cli::col_grey("
             Watch out for low effective samples, very low acceptance rates (less than 1%),
@@ -406,7 +374,7 @@ summary.redist_plans <- function(
         cli_text("Chain acceptance rate{?s}: {accept_rate}")
 
         if(rhats_computed){
-            out <- max_rhats_df
+            out <- rhats_df
         }else{
             out <- tibble(accept_rate = attr(object, "mh_acceptance"),
                           div_q10 = div_rg[1],
@@ -439,6 +407,168 @@ summary.redist_plans <- function(
 }
 
 
+fmt_comma <- function(x){
+    format(x, nsmall = 0, digits = 1, big.mark = ",")
+    }
+
+
+#' Pretty prints relevant parameters for an algorithm type
+#'
+#' Given a dataframe with `chain` and `district` columns and all other columns
+#' being statistics of interest this computes the rhats for each of the districts.
+#' If `order_stats` is true then computes the rhats on the order statistics for
+#' each plan ie `district == 1` represents the smallest value for a plan.
+#'
+#' @param algo The algorithm type
+#' @param all_diagn List of `diagnostics` for each run of the plan.
+#' @param all_run_info The list of `run_information` outputs for each run of
+#' the plan.
+#'
+#' @returns A long dataframe of rhats
+#' @noRd
+print_algo_specific_params <- function(algo, all_diagn, all_run_info){
+
+    if (algo %in% c(SMC_ALG_TYPE, MS_SMC_ALG_TYPE)) {
+        cli::cli_bullets(c(
+            "SMC Parameters:",
+            "*"="{.arg weight_type} = {format(all_run_info[[1]]$weight_type, digits=2)}",
+            "*"="{.arg seq_alpha} = {format(all_diagn[[1]]$seq_alpha, digits=2)}",
+            "*"="{.arg pop_temper} = {format(all_diagn[[1]]$pop_temper, digits=3)}"
+        )
+        )
+    }else if(algo == MCMC_ALG_TYPE){
+        cli::cli_bullets(c(
+            "MCMC Parameters:",
+            "*"="{.arg warmup} = {format(all_diagn[[1]]$warmup)}",
+            "*"="{.arg thin} = {format(all_diagn[[1]]$thin)}",
+            "*"="{.arg total_steps} = {format(all_diagn[[1]]$total_steps)}"
+        )
+        )
+    }
+    if(algo == MS_SMC_ALG_TYPE){
+        total_ms_steps <- sum(all_run_info[[1]]$step_types == "ms")
+
+        cli::cli_bullets(c(
+            "Mergesplit Parameters:",
+            "*"="{.arg total_ms_steps} = {format(total_ms_steps, digits=2)}",
+            "*"="{.arg ms_moves_multiplier} = {format(all_run_info[[1]]$ms_moves_multiplier, digits=2)}",
+            "*"="{.arg merge_prob_type} = {format(all_run_info[[1]]$merge_prob_type, digits=2)}"
+        )
+        )
+    }
+}
+
+
+
+#' Get Summary and Print Dataframe for SMC steps
+#'
+#' @noRd
+get_smc_summary_df <- function(diagn, run_info, resampled, warn_bottlenecks){
+    n_samp <- run_info$nsims
+    run_sampling_space <- run_info$sampling_space
+
+    smc_accept_rate <- diagn$accept_rate[run_info$step_types == "smc"]
+
+    run_summary_df <- tibble(
+        n_eff = diagn$step_n_eff,
+        eff = diagn$step_n_eff/n_samp,
+        accept_rate = smc_accept_rate,
+        sd_log_wgt = diagn$sd_lp,
+        max_unique = diagn$unique_survive[seq_len(length(smc_accept_rate))]
+    )
+
+    run_summary_names <- c("Eff. samples (%)", "Acc. rate",
+                           "Log wgt. sd", " Max. unique")
+
+    # if graph space then add the k
+    if(run_sampling_space == GRAPH_PLAN_SPACE_SAMPLING){
+        run_summary_df$est_k <- diagn$forward_kernel_params$cut_k_used
+        if(diagn$forward_kernel_params$estimate_cut_k){
+            run_summary_names <- c(run_summary_names, "Est. k")
+        }else{
+            run_summary_names <- c(run_summary_names, "Manual k")
+        }
+    }
+
+    # add row if resampled
+    if(resampled){
+        run_summary_df[nrow(run_summary_df) + 1, ] <- NA
+        # add eff sample size and how many survived resample
+        run_summary_df[nrow(run_summary_df), "n_eff"] <- diagn$n_eff
+        run_summary_df[nrow(run_summary_df), "eff"] <- diagn$n_eff/n_samp
+        run_summary_df[nrow(run_summary_df), "max_unique"] <- tail(diagn$unique_survive, 1)
+    }
+
+    # add extra column name for asterisk
+    run_summary_names <- c(run_summary_names, "")
+
+
+    tbl_print <- as.data.frame(run_summary_df)
+    min_n <- max(0.05*n_samp, min(0.4*n_samp, 100))
+    bottlenecks <- dplyr::coalesce(with(tbl_print, pmin(max_unique, n_eff) < min_n), FALSE)
+    warn_bottlenecks <- warn_bottlenecks || any(bottlenecks)
+    tbl_print$bottleneck <- ifelse(bottlenecks, " * ", "")
+    tbl_print$n_eff <- with(tbl_print,
+                            str_glue("{fmt_comma(n_eff)} ({sprintf('%0.1f%%', 100*eff)})"))
+    tbl_print$eff <- NULL
+    tbl_print$accept_rate <- with(tbl_print, sprintf("%0.1f%%", 100*accept_rate))
+    max_pct <- with(tbl_print, max_unique/(-n_samp * expm1(-1)))
+    tbl_print$max_unique <- with(tbl_print,
+                                 str_glue("{fmt_comma(max_unique)} ({sprintf('%3.0f%%', 100*max_pct)})"))
+
+    names(tbl_print) <- run_summary_names
+    new_row_names <- paste("Split", seq_len(nrow(tbl_print) - 1))
+
+    if(resampled){
+        new_row_names <- c(new_row_names, "Resample")
+    }
+
+    rownames(tbl_print) <- new_row_names
+
+    list(
+        smc_summary_df = run_summary_df,
+        smc_print_tbl = tbl_print,
+        warn_bottlenecks = warn_bottlenecks
+    )
+
+}
+
+
+#' Get Summary and Print Dataframe for Mergesplit within SMC steps
+#'
+#' @noRd
+get_smc_ms_summary_df <- function(diagn, run_info, resampled){
+    n_samp <- run_info$nsims
+    run_sampling_space <- run_info$sampling_space
+
+    ms_accept_rate <- diagn$accept_rate[run_info$step_types == "ms"]
+    ms_moves_per_plan <- diagn$ms_move_counts
+
+    run_summary_df <- tibble(
+        accept_rate = ms_accept_rate,
+        ms_moves = ms_moves_per_plan
+    )
+
+    run_summary_names <- c("Acc. rate", "MS Moves per Plan")
+
+    tbl_print <- as.data.frame(run_summary_df)
+
+    tbl_print$accept_rate <- with(tbl_print, sprintf("%0.1f%%", 100*accept_rate))
+
+    names(tbl_print) <- run_summary_names
+    new_row_names <- paste("MS Step", seq_len(nrow(tbl_print)))
+
+
+    rownames(tbl_print) <- new_row_names
+
+
+    list(
+        smc_ms_summary_df = run_summary_df,
+        smc_ms_print_tbl = tbl_print
+    )
+
+}
+
 diag_fold <- function(x) {
     abs(x - median(x))
 }
@@ -466,6 +596,60 @@ diag_rhat <- function(x, grp, split = FALSE) {
 
 
 
+#' Computes all rhats for a dataframe of summary statistics
+#'
+#' Given a dataframe with `chain` and `district` columns and all other columns
+#' being statistics of interest this computes the rhats for each of the districts.
+#' If `order_stats` is true then computes the rhats on the order statistics for
+#' each plan ie `district == 1` represents the smallest value for a plan.
+#'
+#' @param stats_df A dataframe with `chain` and `district` columns along with
+#' all of the `rhat_cols`
+#' @param rhat_cols Vector of names of columns to compute rhats for
+#' @param split_rhat Whether or not to split the chains in rhat calculations
+#' @inheritParams summary.redist_plans
+#'
+#' @returns A long dataframe of rhats
+compute_all_rhats <- function(stats_df, rhat_cols, order_stats, district, ndists, split_rhat){
+
+    # order values if needed
+    if(order_stats){
+        stats_df <- order_columns_by_district(
+            stats_df |> filter(!is.na(chain)),
+            rhat_cols, ndists
+        )
+    }
+    # filter district if needed
+    if(!isFALSE(district)){
+        stats_df <- stats_df[stats_df$district %in% district,]
+    }
+    # now compute rhats for each column and district
+    rhat_results <- lapply(rhat_cols, function(col_name) {
+        # Split data by district
+        # For each district, compute rhat for the column
+        sapply(split(stats_df, stats_df$district), function(df) {
+            diag_rhat(x = df[[col_name]], grp = df$chain, split = split_rhat)
+        })
+    })
+    names(rhat_results) <- rhat_cols
+
+    rhats_df <- do.call(
+        rbind,
+        lapply(rhat_cols,
+               function(col_name) data.frame(
+                   district = rhat_results[[col_name]] |> names() |> as.integer(),
+                   stat_name = col_name,
+                   rhat = rhat_results[[col_name]],
+                   row.names = NULL
+               ))
+    )
+
+    rhats_df
+
+}
+
+
+
 #' Get k-step Ancestors of particles
 #'
 #' Tells you for a given index what its original ancestor was.
@@ -478,8 +662,7 @@ diag_rhat <- function(x, grp, split = FALSE) {
 #' @param start_col Which column to start at. Defaults to the last column
 #'
 #' @returns indices of k-step ancestors for particles at iteration `start_col`
-#' @md
-#' @export
+#' @noRd
 get_k_step_ancestors <- function(parent_mat, steps_back = NULL, start_col = NULL){
     # check the matrix is not zero indexed
     assertthat::assert_that(
@@ -536,15 +719,14 @@ Input must be between 1 and the start_col value (you input %d)",
 #' Get Original Ancestor Matrix of particles
 #'
 #' Gets a matrix of the original ancestors (ie first splits) of the particles
-#' at each steo,
+#' at each step.
 #'
 #' @param parent_mat Ancestor matrix where entry [i,j] equals the index of the
 #' parent of particle i after step j
 #'
 #' @returns indices of originals ancestors for particles at every iteration. So
 #' entry [s,j] is the original ancestor of particle j after step s
-#' @md
-#' @export
+#' @noRd
 get_original_ancestors_mat <- function(parent_mat){
 
     #if the matrix has one column then its just itself

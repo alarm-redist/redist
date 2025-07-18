@@ -102,6 +102,7 @@
 #' sampled_basic <- redist_mergesplit(fl_map, 10000, chains = 10)
 #'
 #' sampled_constr <- redist_mergesplit(fl_map, 10000, chains = 10,
+#'     ncores = 2,
 #'     constraints = list(
 #'     incumbency = list(strength = 1000, incumbents = c(3, 6, 25))
 #'     )
@@ -117,7 +118,7 @@ redist_mergesplit <- function(
   nsims,
   warmup = if (is.null(init_plan)) 10 else max(100, nsims %/% 5),
   thin = 1L,
-  chains = 1,
+  chains = 1L,
   init_plan = NULL,
   counties = NULL,
   compactness = 1,
@@ -546,7 +547,7 @@ redist_mergesplit <- function(
     run_information = run_information,
     internal_diagnostics = internal_diagnostics,
     pop_bounds = pop_bounds,
-    entire_runtime = t2 - t1
+    total_runtime = t2 - t1
   ) %>%
     mutate(
       chain = rep(seq_len(chains), each = each_len * ndists),

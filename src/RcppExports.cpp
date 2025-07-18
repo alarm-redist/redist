@@ -602,6 +602,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// order_columns_by_district
+Rcpp::DataFrame order_columns_by_district(Rcpp::DataFrame const& df, Rcpp::CharacterVector const& columns, int const ndists, int const num_threads);
+RcppExport SEXP _redist_order_columns_by_district(SEXP dfSEXP, SEXP columnsSEXP, SEXP ndistsSEXP, SEXP num_threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::DataFrame const& >::type df(dfSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector const& >::type columns(columnsSEXP);
+    Rcpp::traits::input_parameter< int const >::type ndists(ndistsSEXP);
+    Rcpp::traits::input_parameter< int const >::type num_threads(num_threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(order_columns_by_district(df, columns, ndists, num_threads));
+    return rcpp_result_gen;
+END_RCPP
+}
 // ms_plans
 Rcpp::List ms_plans(int const nsims, int const warmup, int const thin, int const ndists, int const total_seats, Rcpp::IntegerVector const& district_seat_sizes, List const& adj_list, const arma::uvec& counties, const arma::uvec& pop, double const target, double const lower, double const upper, double const rho, Rcpp::IntegerMatrix const& init_plan, Rcpp::IntegerMatrix const& init_seats, std::string const& sampling_space_str, std::string const& merge_prob_type, List const& control, List const& constraints, int const verbosity, bool const diagnostic_mode);
 RcppExport SEXP _redist_ms_plans(SEXP nsimsSEXP, SEXP warmupSEXP, SEXP thinSEXP, SEXP ndistsSEXP, SEXP total_seatsSEXP, SEXP district_seat_sizesSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP init_planSEXP, SEXP init_seatsSEXP, SEXP sampling_space_strSEXP, SEXP merge_prob_typeSEXP, SEXP controlSEXP, SEXP constraintsSEXP, SEXP verbositySEXP, SEXP diagnostic_modeSEXP) {
@@ -1006,6 +1020,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_infer_region_seats", (DL_FUNC) &_redist_infer_region_seats, 5},
     {"_redist_max_dev", (DL_FUNC) &_redist_max_dev, 4},
     {"_redist_order_district_stats", (DL_FUNC) &_redist_order_district_stats, 3},
+    {"_redist_order_columns_by_district", (DL_FUNC) &_redist_order_columns_by_district, 4},
     {"_redist_ms_plans", (DL_FUNC) &_redist_ms_plans, 21},
     {"_redist_pareto_dominated", (DL_FUNC) &_redist_pareto_dominated, 1},
     {"_redist_closest_adj_pop", (DL_FUNC) &_redist_closest_adj_pop, 3},

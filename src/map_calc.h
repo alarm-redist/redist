@@ -10,8 +10,6 @@
 
 
 
-
-
 /*
  * Compute the Fryer-Holden penalty for district `distr`
  */
@@ -110,5 +108,13 @@ Rcpp::NumericVector order_district_stats(
     int const num_threads
 );
 
+
+
+// [[Rcpp::export]]
+Rcpp::DataFrame order_columns_by_district(
+    Rcpp::DataFrame const &df,
+    Rcpp::CharacterVector const &columns,
+    int const ndists,
+    int const num_threads = 0);
 
 #endif

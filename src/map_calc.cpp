@@ -485,3 +485,39 @@ Rcpp::NumericVector order_district_stats(
     return ordered_district_stats;
 }
 
+
+Rcpp::DataFrame order_columns_by_district(
+    Rcpp::DataFrame const &df,
+    Rcpp::CharacterVector const &columns,
+    int const ndists,
+    int const num_threads) {
+
+    Rcpp::List out(df.size());            // same number of columns
+    Rcpp::CharacterVector names = df.names();
+
+    RcppThread::parallelFor(0, df.size(), [&] (unsigned int i) {
+        Rcpp::String colname = names[i];
+        bool should_process = false;
+
+        // check if this column is in the selected set
+        for (int j = 0; j < columns.size(); ++j) {
+            if (columns[j] == colname) {
+                should_process = true;
+                break;
+            }
+        }
+
+        if (should_process) {
+            Rcpp::NumericVector col = df[i];
+            out[i] = order_district_stats(col, ndists, 1);
+        } else {
+            out[i] = df[i];  // leave unchanged
+        }
+    }, num_threads > 0 ? num_threads : 0);
+
+    out.attr("names") = names;
+    out.attr("class") = df.attr("class");
+    out.attr("row.names") = df.attr("row.names");
+
+    return out;
+}

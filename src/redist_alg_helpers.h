@@ -111,6 +111,7 @@ Rcpp::IntegerMatrix get_canonical_plan_labelling(
 //' how many times they appear in the matrix 
 //'
 //' @keywords internal
+//' @noRd
 // [[Rcpp::export]]
 Rcpp::DataFrame get_plan_counts(
     Rcpp::IntegerMatrix const &input_plans_mat,

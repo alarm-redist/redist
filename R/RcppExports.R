@@ -169,6 +169,10 @@ order_district_stats <- function(district_stats, ndists, num_threads) {
     .Call(`_redist_order_district_stats`, district_stats, ndists, num_threads)
 }
 
+order_columns_by_district <- function(df, columns, ndists, num_threads = 0L) {
+    .Call(`_redist_order_columns_by_district`, df, columns, ndists, num_threads)
+}
+
 ms_plans <- function(nsims, warmup, thin, ndists, total_seats, district_seat_sizes, adj_list, counties, pop, target, lower, upper, rho, init_plan, init_seats, sampling_space_str, merge_prob_type, control, constraints, verbosity = 3L, diagnostic_mode = FALSE) {
     .Call(`_redist_ms_plans`, nsims, warmup, thin, ndists, total_seats, district_seat_sizes, adj_list, counties, pop, target, lower, upper, rho, init_plan, init_seats, sampling_space_str, merge_prob_type, control, constraints, verbosity, diagnostic_mode)
 }
@@ -295,6 +299,7 @@ get_canonical_plan_labelling <- function(plans_mat, num_regions, num_threads = 0
 #' how many times they appear in the matrix 
 #'
 #' @keywords internal
+#' @noRd
 get_plan_counts <- function(input_plans_mat, num_regions, use_canonical_ordering = TRUE, num_threads = 0L) {
     .Call(`_redist_get_plan_counts`, input_plans_mat, num_regions, use_canonical_ordering, num_threads)
 }

@@ -694,7 +694,6 @@ redist_smc <- function(
         region_ids_mat_list = algout$region_ids_mat_list,
         region_seats_mat_list = algout$region_seats_mat_list,
         merge_split_success_mat = algout$merge_split_success_mat,
-        merge_split_attempt_counts = algout$merge_split_attempt_counts,
         forest_adjs_list = algout$forest_adjs_list,
         linking_edges_list = algout$linking_edges_list
       )
@@ -731,6 +730,7 @@ redist_smc <- function(
         accept_rate = algout$acceptance_rates,
         sd_lp = sd_lp,
         unique_survive = nunique_parent_indices,
+        ms_move_counts = algout$ms_move_counts,
         ancestors = algout$ancestors,
         seq_alpha = seq_alpha,
         pop_temper = pop_temper,
@@ -796,7 +796,7 @@ redist_smc <- function(
     run_information = run_information,
     internal_diagnostics = internal_diagnostics,
     num_admin_units = num_admin_units,
-    entire_runtime = t2 - t1
+    total_runtime = t2 - t1
   )
 
   if (runs > 1) {
