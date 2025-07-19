@@ -99,7 +99,7 @@
 #'
 #' fl_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1)
 #'
-#' sampled_basic <- redist_mergesplit(fl_map, 10000, chains = 10)
+#' sampled_basic <- redist_mergesplit(fl_map, 10000)
 #'
 #' sampled_constr <- redist_mergesplit(fl_map, 10000, chains = 10,
 #'     ncores = 2,
@@ -158,6 +158,14 @@ redist_mergesplit <- function(
       )
     }
   }
+
+    # get parallel related params
+    if (is.null(ncores)) {
+        ncores <- parallel::detectCores()
+        if (ncores <= 0) ncores <- 1
+    }
+    default_smc_ncores <- ncores
+    ncores <- min(ncores, chains)
 
 
   # validate constraints
@@ -267,7 +275,8 @@ redist_mergesplit <- function(
     if (is.list(control) && "init_ncores" %in% names(control)) {
       init_ncores <- control[["init_ncores"]]
     } else {
-      init_ncores <- 0L
+        # else default to default smc ncores from earlier
+      init_ncores <- default_smc_ncores
     }
 
     init_plan <- redist_smc(
@@ -312,13 +321,6 @@ redist_mergesplit <- function(
     }
   }
 
-  # TODO: check init
-  # if (length(init_plan) != V)
-  #     cli_abort("{.arg init_plan} must be as long as the number of units as `map`.")
-  # if (max(init_plan) != ndists)
-  #     cli_abort("{.arg init_plan} must have the same number of districts as `map`.")
-  # if (any(contiguity(adj, init_plan) != 1))
-  #     cli_warn("{.arg init_plan} should have contiguous districts.")
 
   # check it satsifies population bounds
   # add one because we assume 1 indexed
@@ -360,13 +362,6 @@ redist_mergesplit <- function(
   # need to do it like this because its a list
   control <- c(control, forward_kernel_params)
 
-  # set up parallel
-  if (is.null(ncores)) {
-    ncores <- parallel::detectCores()
-    if (ncores <= 0) ncores <- 1
-  }
-  ncores <- min(ncores, chains)
-
   multiprocess <- ncores > 1
 
   if (multiprocess) {
@@ -405,9 +400,9 @@ redist_mergesplit <- function(
       suppressPackageStartupMessages(library(rngtools))
       suppressPackageStartupMessages(library(redist))
     })
-    # weird code, probably remove in production and find better way to ensure printing
-    # but essentially makes it so only one process will print but if more runs then processes
-    # it doesn't just print once
+
+    # Ensures only one process will print when there's multiple processes
+    # to avoid cluttering output
     parallel::clusterEvalQ(cl, {
       if (!exists("is_chain1", envir = .GlobalEnv)) {
         is_chain1 <- FALSE

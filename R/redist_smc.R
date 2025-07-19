@@ -528,7 +528,7 @@ redist_smc <- function(
       run_verbosity <- if (is_chain1 || !multiprocess) verbosity else 0
       t1_run <- Sys.time()
 
-      algout <- redist::run_redist_smc(
+      algout <- run_redist_smc(
         nsims = nsims,
         ndists = ndists,
         total_seats = nseats,

@@ -22,7 +22,7 @@
 \alias{add_hard_constr_custom_plan}
 \title{Sampling constraints}
 \usage{
-add_constr_status_quo(constr, strength, current, score_districts_only = TRUE)
+add_constr_status_quo(constr, strength, current, only_districts = TRUE)
 
 add_constr_grp_pow(
   constr,
@@ -32,7 +32,7 @@ add_constr_grp_pow(
   tgt_group = 0.5,
   tgt_other = 0.5,
   pow = 1,
-  score_districts_only = FALSE
+  only_districts = FALSE
 )
 
 add_constr_grp_hinge(
@@ -41,7 +41,7 @@ add_constr_grp_hinge(
   group_pop,
   total_pop = NULL,
   tgts_group = c(0.55),
-  score_districts_only = FALSE
+  only_districts = FALSE
 )
 
 add_constr_grp_inv_hinge(
@@ -50,7 +50,7 @@ add_constr_grp_inv_hinge(
   group_pop,
   total_pop = NULL,
   tgts_group = c(0.55),
-  score_districts_only = FALSE
+  only_districts = FALSE
 )
 
 add_constr_compet(
@@ -59,38 +59,28 @@ add_constr_compet(
   dvote,
   rvote,
   pow = 0.5,
-  score_districts_only = FALSE
+  only_districts = FALSE
 )
 
-add_constr_incumbency(
-  constr,
-  strength,
-  incumbents,
-  score_districts_only = FALSE
-)
+add_constr_incumbency(constr, strength, incumbents, only_districts = FALSE)
 
-add_constr_splits(constr, strength, admin, score_districts_only = TRUE)
+add_constr_splits(constr, strength, admin, only_districts = TRUE)
 
-add_constr_multisplits(constr, strength, admin, score_districts_only = FALSE)
+add_constr_multisplits(constr, strength, admin, only_districts = FALSE)
 
-add_constr_total_splits(constr, strength, admin, score_districts_only = FALSE)
+add_constr_total_splits(constr, strength, admin, only_districts = FALSE)
 
-add_constr_pop_dev(constr, strength, score_districts_only = FALSE)
+add_constr_pop_dev(constr, strength, only_districts = FALSE)
 
 add_constr_segregation(
   constr,
   strength,
   group_pop,
   total_pop = NULL,
-  score_districts_only = FALSE
+  only_districts = FALSE
 )
 
-add_constr_polsby(
-  constr,
-  strength,
-  perim_df = NULL,
-  score_districts_only = FALSE
-)
+add_constr_polsby(constr, strength, perim_df = NULL, only_districts = FALSE)
 
 add_constr_fry_hold(
   constr,
@@ -98,14 +88,14 @@ add_constr_fry_hold(
   total_pop = NULL,
   ssdmat = NULL,
   denominator = 1,
-  score_districts_only = FALSE
+  only_districts = FALSE
 )
 
-add_constr_log_st(constr, strength, admin = NULL, score_districts_only = FALSE)
+add_constr_log_st(constr, strength, admin = NULL, only_districts = FALSE)
 
-add_constr_edges_rem(constr, strength, score_districts_only = FALSE)
+add_constr_edges_rem(constr, strength, only_districts = FALSE)
 
-add_constr_custom(constr, strength, fn, score_districts_only = FALSE)
+add_constr_custom(constr, strength, fn, only_districts = FALSE)
 
 add_constr_custom_plan(constr, strength, fn)
 
@@ -118,7 +108,7 @@ add_hard_constr_custom_plan(constr, fn)
 
 \item{current}{The reference map for the status quo constraint.}
 
-\item{score_districts_only}{Whether or not to apply the constraints to
+\item{only_districts}{Whether or not to apply the constraints to
 districts only. If constraints are only applied to districts then it will
 likely cause a drop in efficiency in the final round. If splitting plans all
 the way this does not affect the final target distribution. This is not relevant
@@ -165,6 +155,13 @@ The strength can be any real number, with zero corresponding to no constraint.
 Higher and higher \code{strength} values will eventually cause the algorithm's
 accuracy and efficiency to suffer. Whenever you use constraints, be sure to
 check all sampling diagnostics.
+
+An optional \code{thresh} value can also be set as well to incorporate hard
+thresholding. When the output of a constraint is greater than or equal to
+\code{thresh} the plan will automatically be rejected at the splitting stage. This
+ensures that in the final sample there will be no plans with scores at or above
+\code{thresh}. Lower \code{thresh} values will eventually cause the algorithms efficiency
+to suffer.
 
 The \code{status_quo} constraint adds a term measuring the variation of
 information distance between the plan and the reference, rescaled to [0, 1].

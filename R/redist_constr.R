@@ -131,6 +131,14 @@ add_to_constr <- function(constr, name, new_constr) {
 #' accuracy and efficiency to suffer. Whenever you use constraints, be sure to
 #' check all sampling diagnostics.
 #'
+#' An optional `thresh` value can also be set as well to incorporate hard
+#' thresholding. When the output of a constraint is greater than or equal to
+#' `thresh` the plan will automatically be rejected at the splitting stage. This
+#' ensures that in the final sample there will be no plans with scores at or above
+#' `thresh`. Lower `thresh` values will eventually cause the algorithms efficiency
+#' to suffer.
+#'
+#'
 #' The `status_quo` constraint adds a term measuring the variation of
 #' information distance between the plan and the reference, rescaled to \[0, 1\].
 #'
@@ -247,7 +255,7 @@ add_to_constr <- function(constr, name, new_constr) {
 #'
 #' @param constr A [redist_constr()] object
 #' @param strength The strength of the constraint. Higher values mean a more restrictive constraint.
-#' @param score_districts_only Whether or not to apply the constraints to
+#' @param only_districts Whether or not to apply the constraints to
 #' districts only. If constraints are only applied to districts then it will
 #' likely cause a drop in efficiency in the final round. If splitting plans all
 #' the way this does not affect the final target distribution. This is not relevant
@@ -276,16 +284,16 @@ NULL
 #' @rdname constraints
 #' @export
 add_constr_status_quo <- function(constr, strength, current,
-                                  score_districts_only = TRUE ) {
+                                  only_districts = TRUE ) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
     if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
-    is.logical(score_districts_only)
+    is.logical(only_districts)
     data <- attr(constr, "data")
     if (missing(current)) current <- get_existing(data)
 
     new_constr <- list(strength = strength,
         current = eval_tidy(enquo(current), data),
-        score_districts_only = score_districts_only)
+        only_districts = only_districts)
     if (is.null(current) || length(new_constr$current) != nrow(data))
         cli_abort("{.arg current} must be provided, and must have as many
                   precincts as the {.cls redist_map}")
@@ -303,13 +311,13 @@ add_constr_status_quo <- function(constr, strength, current,
 #' @export
 add_constr_grp_pow <- function(constr, strength, group_pop, total_pop = NULL,
                                tgt_group = 0.5, tgt_other = 0.5, pow = 1.0,
-                               score_districts_only = FALSE) {
+                               only_districts = FALSE) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
     if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
-    is.logical(score_districts_only)
+    is.logical(only_districts)
     data <- attr(constr, "data")
 
-    new_constr <- list(strength = strength, score_districts_only=score_districts_only,
+    new_constr <- list(strength = strength, only_districts=only_districts,
         group_pop = eval_tidy(enquo(group_pop), data),
         total_pop = eval_tidy(enquo(total_pop), data),
         tgt_group = tgt_group, tgt_other = tgt_other, pow = pow)
@@ -332,14 +340,14 @@ add_constr_grp_pow <- function(constr, strength, group_pop, total_pop = NULL,
 #' @export
 add_constr_grp_hinge <- function(constr, strength, group_pop, total_pop = NULL,
                                  tgts_group = c(0.55),
-                                 score_districts_only = FALSE) {
+                                 only_districts = FALSE) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
     # if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
-    is.logical(score_districts_only)
+    is.logical(only_districts)
     data <- attr(constr, "data")
 
     new_constr <- list(strength = strength,
-                       score_districts_only=score_districts_only,
+                       only_districts=only_districts,
         group_pop = eval_tidy(enquo(group_pop), data),
         total_pop = eval_tidy(enquo(total_pop), data),
         tgts_group = tgts_group
@@ -364,13 +372,13 @@ add_constr_grp_hinge <- function(constr, strength, group_pop, total_pop = NULL,
 #' @export
 add_constr_grp_inv_hinge <- function(constr, strength, group_pop, total_pop = NULL,
                                      tgts_group = c(0.55),
-                                     score_districts_only = FALSE) {
+                                     only_districts = FALSE) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
     # if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
     data <- attr(constr, "data")
 
     new_constr <- list(strength = strength,
-                       score_districts_only = score_districts_only,
+                       only_districts = only_districts,
         group_pop = eval_tidy(enquo(total_pop), data) - eval_tidy(enquo(group_pop), data),
         total_pop = eval_tidy(enquo(total_pop), data),
         tgts_group = tgts_group)
@@ -391,13 +399,13 @@ add_constr_grp_inv_hinge <- function(constr, strength, group_pop, total_pop = NU
 #' @rdname constraints
 #' @export
 add_constr_compet <- function(constr, strength, dvote, rvote, pow = 0.5,
-                              score_districts_only = FALSE) {
+                              only_districts = FALSE) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
     if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
     data <- attr(constr, "data")
 
     new_constr <- list(strength = strength,
-                       score_districts_only = score_districts_only,
+                       only_districts = only_districts,
         dvote = eval_tidy(enquo(dvote), data),
         rvote = eval_tidy(enquo(rvote), data),
         pow = pow)
@@ -414,13 +422,13 @@ add_constr_compet <- function(constr, strength, dvote, rvote, pow = 0.5,
 #' @rdname constraints
 #' @export
 add_constr_incumbency <- function(constr, strength, incumbents,
-                                  score_districts_only = FALSE) {
+                                  only_districts = FALSE) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
     if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
     data <- attr(constr, "data")
 
     new_constr <- list(strength = strength,
-                       score_districts_only=score_districts_only,
+                       only_districts=only_districts,
         incumbents = eval_tidy(enquo(incumbents), data))
 
     add_to_constr(constr, "incumbency", new_constr)
@@ -429,7 +437,7 @@ add_constr_incumbency <- function(constr, strength, incumbents,
 #' @param admin A vector indicating administrative unit membership
 #' @rdname constraints
 #' @export
-add_constr_splits <- function(constr, strength, admin, score_districts_only=TRUE) {
+add_constr_splits <- function(constr, strength, admin, only_districts=TRUE) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
     if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
     data <- attr(constr, "data")
@@ -444,7 +452,7 @@ add_constr_splits <- function(constr, strength, admin, score_districts_only=TRUE
     admin <- vctrs::vec_group_id(admin)
 
     new_constr <- list(strength = strength,
-                       score_districts_only=score_districts_only,
+                       only_districts=only_districts,
         admin = admin,
         n = length(unique(admin)))
 
@@ -454,7 +462,7 @@ add_constr_splits <- function(constr, strength, admin, score_districts_only=TRUE
 #' @rdname constraints
 #' @export
 add_constr_multisplits <- function(constr, strength, admin,
-                                   score_districts_only=FALSE) {
+                                   only_districts=FALSE) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
     if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
     data <- attr(constr, "data")
@@ -470,7 +478,7 @@ add_constr_multisplits <- function(constr, strength, admin,
     admin <- vctrs::vec_group_id(admin)
 
     new_constr <- list(strength = strength,
-                       score_districts_only=score_districts_only,
+                       only_districts=only_districts,
         admin = admin,
         n = length(unique(admin)))
     add_to_constr(constr, "multisplits", new_constr)
@@ -479,7 +487,7 @@ add_constr_multisplits <- function(constr, strength, admin,
 #' @rdname constraints
 #' @export
 add_constr_total_splits <- function(constr, strength, admin,
-                                    score_districts_only=FALSE) {
+                                    only_districts=FALSE) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
     if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
     data <- attr(constr, "data")
@@ -495,7 +503,7 @@ add_constr_total_splits <- function(constr, strength, admin,
     admin <- vctrs::vec_group_id(admin)
 
     new_constr <- list(strength = strength,
-                       score_districts_only=score_districts_only,
+                       only_districts=only_districts,
         admin = admin,
         n = length(unique(admin)))
     add_to_constr(constr, "total_splits", new_constr)
@@ -503,26 +511,26 @@ add_constr_total_splits <- function(constr, strength, admin,
 
 #' @rdname constraints
 #' @export
-add_constr_pop_dev <- function(constr, strength, score_districts_only=FALSE) {
+add_constr_pop_dev <- function(constr, strength, only_districts=FALSE) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
     if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results.")
     data <- attr(constr, "data")
 
     new_constr <- list(strength = strength,
-                       score_districts_only=score_districts_only)
+                       only_districts=only_districts)
     add_to_constr(constr, "pop_dev", new_constr)
 }
 
 #' @rdname constraints
 #' @export
 add_constr_segregation <- function(constr, strength, group_pop, total_pop = NULL,
-                                   score_districts_only=FALSE) {
+                                   only_districts=FALSE) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
     if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results.")
     data <- attr(constr, "data")
 
     new_constr <- list(strength = strength,
-                       score_districts_only=score_districts_only,
+                       only_districts=only_districts,
         group_pop = eval_tidy(enquo(group_pop), data),
         total_pop = eval_tidy(enquo(total_pop), data))
     if (is.null(new_constr$total_pop)) {
@@ -545,7 +553,7 @@ add_constr_segregation <- function(constr, strength, group_pop, total_pop = NULL
 #' @rdname constraints
 #' @export
 add_constr_polsby <- function(constr, strength, perim_df = NULL,
-                              score_districts_only=FALSE) {
+                              only_districts=FALSE) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
     if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results.")
     data <- attr(constr, "data")
@@ -561,7 +569,7 @@ add_constr_polsby <- function(constr, strength, perim_df = NULL,
     }
 
     new_constr <- list(strength = strength,
-                       score_districts_only=score_districts_only,
+                       only_districts=only_districts,
         from = perim_df$origin,
         to = perim_df$touching,
         area = areas,
@@ -575,7 +583,7 @@ add_constr_polsby <- function(constr, strength, perim_df = NULL,
 #' @param denominator Fryer Holden minimum value to normalize by. Default is 1 (no normalization).
 #' @export
 add_constr_fry_hold <- function(constr, strength, total_pop = NULL, ssdmat = NULL, denominator = 1,
-                                score_districts_only=FALSE) {
+                                only_districts=FALSE) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
     if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results.")
     data <- attr(constr, "data")
@@ -593,7 +601,7 @@ add_constr_fry_hold <- function(constr, strength, total_pop = NULL, ssdmat = NUL
     }
 
     new_constr <- list(strength = strength,
-                       score_districts_only=score_districts_only,
+                       only_districts=only_districts,
         total_pop = total_pop,
         ssdmat = ssdmat,
         denominator = denominator)
@@ -605,7 +613,7 @@ add_constr_fry_hold <- function(constr, strength, total_pop = NULL, ssdmat = NUL
 #' @rdname constraints
 #' @export
 add_constr_log_st <- function(constr, strength, admin = NULL,
-                              score_districts_only = FALSE) {
+                              only_districts = FALSE) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
     if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results.")
     data <- attr(constr, "data")
@@ -621,7 +629,7 @@ add_constr_log_st <- function(constr, strength, admin = NULL,
     admin <- vctrs::vec_group_id(admin)
 
     new_constr <- list(strength = strength,
-                       score_districts_only=score_districts_only,
+                       only_districts=only_districts,
         admin = admin)
 
     add_to_constr(constr, "log_st", new_constr)
@@ -629,12 +637,12 @@ add_constr_log_st <- function(constr, strength, admin = NULL,
 
 #' @rdname constraints
 #' @export
-add_constr_edges_rem <- function(constr, strength, score_districts_only=FALSE) {
+add_constr_edges_rem <- function(constr, strength, only_districts=FALSE) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
     if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results.")
     data <- attr(constr, "data")
 
-    new_constr <- list(strength = strength, score_districts_only=FALSE)
+    new_constr <- list(strength = strength, only_districts=FALSE)
 
     add_to_constr(constr, "edges_removed", new_constr)
 }
@@ -642,13 +650,13 @@ add_constr_edges_rem <- function(constr, strength, score_districts_only=FALSE) {
 #' @param cities A vector containing zero entries for non-cities and non-zero entries for each city for `qps`.
 #' @noRd
 add_constr_qps <- function(constr, strength, cities, total_pop = NULL,
-                           score_districts_only=FALSE) {
+                           only_districts=FALSE) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
     if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results.")
     data <- attr(constr, "data")
 
     new_constr <- list(strength = strength,
-                       score_districts_only=score_districts_only,
+                       only_districts=only_districts,
         cities = eval_tidy(enquo(cities), data))
     new_constr$n_cty <- max(new_constr$cities) + 1
 
@@ -681,7 +689,7 @@ extract_vars = function(expr) {
 #' @param fn A function
 #' @rdname constraints
 #' @export
-add_constr_custom <- function(constr, strength, fn, score_districts_only=FALSE) {
+add_constr_custom <- function(constr, strength, fn, only_districts=FALSE) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
     if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
 
@@ -721,7 +729,7 @@ add_constr_custom <- function(constr, strength, fn, score_districts_only=FALSE) 
 
     rlang::fn_env(fn) <- constr_env
 
-    new_constr <- list(strength = strength, score_districts_only=score_districts_only,
+    new_constr <- list(strength = strength, only_districts=only_districts,
                        fn = fn)
     add_to_constr(constr, "custom", new_constr)
 }
@@ -849,7 +857,7 @@ print.redist_constr <- function(x, header = TRUE, details = TRUE, ...) {
 
     x <- unlist(x, recursive = FALSE)
     for (nm in names(x)) {
-        if("score_districts_only" %in% x[[nm]] && x[[nm]]$score_districts_only){
+        if("only_districts" %in% x[[nm]] && x[[nm]]$only_districts){
             score_str <- "districts only"
         }else{
             score_str <- "all regions"

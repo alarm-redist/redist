@@ -665,10 +665,10 @@ compute_all_rhats <- function(stats_df, rhat_cols, order_stats, district, ndists
 #' @noRd
 get_k_step_ancestors <- function(parent_mat, steps_back = NULL, start_col = NULL){
     # check the matrix is not zero indexed
-    assertthat::assert_that(
-        ! 0 %in% parent_mat,
-        msg = "parent_mat must be 1-indexed, not 0 indexed!"
-    )
+    if(0 %in% parent_mat){
+        cli_abort("parent_mat must be 1-indexed, not 0 indexed!")
+    }
+
 
     nparent_cols <- ncol(parent_mat)
 
@@ -677,29 +677,24 @@ get_k_step_ancestors <- function(parent_mat, steps_back = NULL, start_col = NULL
         start_col <- nparent_cols
     }else{
         # else assert starting column is between 1 and number of cols
-        assertthat::assert_that(
-            assertthat::is.scalar(start_col) &&
-                start_col <= nparent_cols &&
-                start_col > 1,
-            msg = sprintf("Error!\nInput start_col=`%s` is not valid.
-                          Input must be a number between 1 and %d",
-                          toString(start_col), nparent_cols)
-        )
+        if(!(is_scalar(start_col) &&
+             start_col <= nparent_cols &&
+             start_col > 1)){
+            cli_abort("Input start_col={start_col} is not valid.
+                          Input must be a number between 1 and {nparent_cols}")
+        }
     }
 
     # check steps back is between [1, nnparent_cols -1]
     if(is.null(steps_back)){
         steps_back <- nparent_cols-1
     }else{
-        assertthat::assert_that(
-            assertthat::is.scalar(steps_back) &&
-                steps_back <= start_col-1 &&
-                steps_back >= 1,
-            msg = sprintf(
-                "Error!\nInput steps_back=`%s` is not valid.
-Input must be between 1 and the start_col value (you input %d)",
-                toString(steps_back), steps_back)
-        )
+        if(!(is_scalar(steps_back) &&
+             steps_back <= start_col-1 &&
+             steps_back >= 1)){
+            cli_abort("Input steps_back={steps_back} is not valid.
+Input must be between 1 and the start_col value (you input {steps_back})")
+        }
     }
 
     # vector where index i maps to the index of its ancestor
@@ -711,7 +706,7 @@ Input must be between 1 and the start_col value (you input %d)",
     for (j in start_col:(start_col - steps_back + 1)) {
         ancestor <- parent_mat[ancestor, j]
     }
-    return(ancestor)
+    ancestor
 }
 
 
@@ -737,14 +732,13 @@ get_original_ancestors_mat <- function(parent_mat){
     # get the original ancestors at every step from the parent matrix
     original_ancestor_mat <- sapply(
         2:ncol(parent_mat),
-        function(col_num) redist::get_k_step_ancestors(parent_mat, steps_back = col_num-1, start_col = col_num)
+        function(col_num) get_k_step_ancestors(parent_mat, steps_back = col_num-1, start_col = col_num)
     )
 
     # add the first column where every particles ancestor is iteslf
-    original_ancestor_mat <- cbind(
+    cbind(
         1:nrow(parent_mat),
         original_ancestor_mat
     )
 
-    return(original_ancestor_mat)
 }

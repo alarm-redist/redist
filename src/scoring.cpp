@@ -475,8 +475,8 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
             double strength = constr_inst["strength"];
             if (strength != 0) {
                 bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("score_districts_only")){
-                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                if (constr_inst.containsElementNamed("only_districts")){
+                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
                 }
                 region_constraint_ptrs.emplace_back(
                     std::make_unique<PopDevConstraint>(
@@ -496,8 +496,8 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
             double strength = constr_inst["strength"];
             if (strength != 0) {
                 bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("score_districts_only")){
-                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                if (constr_inst.containsElementNamed("only_districts")){
+                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
                 }
                 region_constraint_ptrs.emplace_back(
                     std::make_unique<StatusQuoConstraint>(
@@ -518,8 +518,8 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
             double strength = constr_inst["strength"];
             if (strength != 0) {
                 bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("score_districts_only")){
-                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                if (constr_inst.containsElementNamed("only_districts")){
+                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
                 }
                 region_constraint_ptrs.emplace_back(
                     std::make_unique<SegregationConstraint>(
@@ -540,8 +540,8 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
             double strength = constr_inst["strength"];
             if (strength != 0) {
                 bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("score_districts_only")){
-                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                if (constr_inst.containsElementNamed("only_districts")){
+                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
                 }
                 region_constraint_ptrs.emplace_back(
                     std::make_unique<GroupPowerConstraint>(
@@ -565,8 +565,8 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
             double strength = constr_inst["strength"];
             if (strength != 0) {
                 bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("score_districts_only")){
-                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                if (constr_inst.containsElementNamed("only_districts")){
+                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
                 }
                 // Competition is just group power with group target and other target .5
                 arma::uvec dvote = constr_inst["dvote"];
@@ -593,8 +593,8 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
             double strength = constr_inst["strength"];
             if (strength != 0) {
                 bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("score_districts_only")){
-                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                if (constr_inst.containsElementNamed("only_districts")){
+                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
                 }
                 region_constraint_ptrs.emplace_back(
                     std::make_unique<GroupHingeConstraint>(
@@ -616,8 +616,8 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
             double strength = constr_inst["strength"];
             if (strength != 0) {
                 bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("score_districts_only")){
-                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                if (constr_inst.containsElementNamed("only_districts")){
+                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
                 }
                 region_constraint_ptrs.emplace_back(
                     std::make_unique<GroupHingeConstraint>(
@@ -637,8 +637,8 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
             double strength = constr_inst["strength"];
             if (strength != 0) {
                 bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("score_districts_only")){
-                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                if (constr_inst.containsElementNamed("only_districts")){
+                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
                 }
                 region_constraint_ptrs.emplace_back(
                     std::make_unique<IncumbentConstraint>(
@@ -657,8 +657,8 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
             double strength = constr_inst["strength"];
             if (strength != 0) {
                 bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("score_districts_only")){
-                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                if (constr_inst.containsElementNamed("only_districts")){
+                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
                 }
                 region_constraint_ptrs.emplace_back(
                     std::make_unique<SplitsConstraint>(
@@ -679,8 +679,8 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
             double strength = constr_inst["strength"];
             if (strength != 0) {
                 bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("score_districts_only")){
-                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                if (constr_inst.containsElementNamed("only_districts")){
+                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
                 }
                 region_constraint_ptrs.emplace_back(
                     std::make_unique<MultisplitsConstraint>(
@@ -701,8 +701,8 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
             double strength = constr_inst["strength"];
             if (strength != 0) {
                 bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("score_districts_only")){
-                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                if (constr_inst.containsElementNamed("only_districts")){
+                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
                 }
                 region_constraint_ptrs.emplace_back(
                     std::make_unique<TotalSplitsConstraint>(
@@ -723,8 +723,8 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
             double strength = constr_inst["strength"];
             if (strength != 0) {
                 bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("score_districts_only")){
-                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                if (constr_inst.containsElementNamed("only_districts")){
+                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
                 }
                 region_constraint_ptrs.emplace_back(
                     std::make_unique<PolsbyConstraint>(
@@ -765,8 +765,8 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
             double strength = constr_inst["strength"];
             if (strength != 0) {
                 bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("score_districts_only")){
-                    constr_score_districts_only = as<bool>(constr_inst["score_districts_only"]);
+                if (constr_inst.containsElementNamed("only_districts")){
+                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
                 }
                 region_constraint_ptrs.emplace_back(
                     std::make_unique<CustomRegionConstraint>(

@@ -9,7 +9,8 @@
   district = FALSE,
   all_runs = TRUE,
   vi_max = 100,
-  use_order_stats = TRUE,
+  order_stats = TRUE,
+  rhat_thresh = getOption("redist.rhat_thresh", c(q99 = 1.05, max = 1.1)),
   ...
 )
 }
@@ -27,7 +28,7 @@ statistics for all runs (the default), or only the first run?}
 \item{vi_max}{The maximum number of plans to sample in computing the pairwise
 variation of information distance (sample diversity).}
 
-\item{use_order_stats}{Whether or not to compute rhats on the ordered district
+\item{order_stats}{Whether or not to compute rhats on the ordered district
 statistics.}
 
 \item{\dots}{additional arguments (ignored)}
@@ -58,13 +59,14 @@ redistricting plan within the population tolerance. Very small values (< 1\%)
 can indicate a bottleneck and may lead to a lack of diversity.
 \item \strong{Standard deviation of the log weights}: More variable weights (larger s.d.)
 indicate less efficient sampling. Values greater than 3 are likely problematic.
-\item \strong{Maximum unique plans:} an upper bound on the number of unique redistricting
+\item \strong{Maximum unique plans:} The number of unique redistricting
 plans that survive each stage. The percentage in parentheses is the ratio of
 this number to the total number of samples. Small values (< 100) indicate a
 bottleneck, which leads to a loss of sample diversity and a higher variance.
-\item \strong{Estimated \code{k} parameter}: How many spanning tree edges were considered for
-cutting at each split. Mostly informational, though large jumps may indicate
-a need to increase \code{adapt_k_thresh}.
+\item \strong{Estimated \code{k} parameter}: For graph space plans displays how many
+spanning tree edges were considered for cutting at each split. Mostly
+informational, though large jumps may indicate a need to increase
+\code{adapt_k_thresh}.
 \item \strong{Bottleneck}: An asterisk will appear in the right column if a bottleneck
 appears likely, based on the values of the other statistics.
 }

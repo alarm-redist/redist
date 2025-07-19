@@ -7,11 +7,15 @@
 
 # simple but common arg checking functions
 is_scalar <- function(x) {
-  return(length(x) == 1)
+  length(x) == 1
 }
 
 is_bool <- function(x) {
-  return(isFALSE(x) || isTRUE(x))
+  isFALSE(x) || isTRUE(x)
+}
+
+is_string <- function(x) {
+    is.character(x) && length(x) == 1
 }
 
 #' Takes a map and possibly a county label and returns map parameters for redist algorithms
@@ -46,7 +50,7 @@ get_map_parameters <- function(map, counties = NULL) {
     counties <- rep(1, V)
   } else {
     # check if just the column name was passed in
-    if (assertthat::is.scalar(counties) && assertthat::is.string(counties)) {
+    if (is_scalar(counties) && is_string(counties)) {
       if (!counties %in% names(map)) {
         cli_abort("{counties} is not in the map!")
       } else {

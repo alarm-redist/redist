@@ -408,17 +408,16 @@ split_entire_map_into_plan <- function(
             new_region2_id <- split_output$new_region2_id+1
 
             # check new region 1 has same id as old split id
-            assertthat::assert_that(
-                old_split_region_id == new_region1_id,
-                msg = "Splitting procedure was changed. We expected the new region 1
-            id to be the same as the id of the old split region."
-            )
+            if(old_split_region_id != new_region1_id){
+                cli_abort("Splitting procedure was changed. We expected the new region 1
+            id to be the same as the id of the old split region.")
+            }
+
             # check new region 2 is just the end of the list
-            assertthat::assert_that(
-                split_num+1 == new_region2_id,
-                msg = "Splitting procedure was changed. We expected the new region 2
-            id to be the number of regions minus 1, so the split number"
-            )
+            if(split_num+1 == new_region2_id){
+                cli_abort("Splitting procedure was changed. We expected the new region 2
+            id to be the number of regions minus 1, so the split number")
+            }
 
             # copy over all the trees from regions that didn't change
             unchanged_old_regions <- unique(

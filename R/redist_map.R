@@ -40,7 +40,7 @@ new_redist_map <- function(
     attr(data, "existing_col") <- existing_col
     attr(data, "existing_col_seats") <- existing_col_seats
     # set the districting scheme
-    if(assertthat::is.scalar(seats_range) && seats_range == 1){
+    if(is_scalar(seats_range) && seats_range == 1){
         attr(data, "districting_scheme") <- "SMD"
     }else{
         attr(data, "districting_scheme") <- "MMD"
@@ -83,7 +83,7 @@ validate_redist_map <- function(data, check_contig = TRUE, call = parent.frame()
 
     if(is.null(attr(data, "districting_scheme"))){
         # set the districting scheme
-        if(assertthat::is.scalar(seats_range) && seats_range == 1){
+        if(is_scalar(seats_range) && seats_range == 1){
             attr(data, "districting_scheme") <- "SMD"
         }else{
             attr(data, "districting_scheme") <- "MMD"
@@ -190,7 +190,7 @@ reconstruct.redist_map <- function(data, old) {
 #' @param nseats \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the total number of
 #' legislative seats in the map. For single-member districting schemes this is equal to `ndists`.
 #' If not provided then defaults to `ndists`.
-#' @param seats_range The number of seats a district is allowed to have.For
+#' @param seats_range The number of seats a district is allowed to have. For
 #' single member districting schemes this is always 1.
 #' @param pop_bounds \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} more specific
 #' population bounds, in the form of \code{c(lower, target, upper)}.
