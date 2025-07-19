@@ -15,7 +15,7 @@ is_bool <- function(x) {
 }
 
 is_string <- function(x) {
-    is.character(x) && length(x) == 1
+  is.character(x) && length(x) == 1
 }
 
 #' Takes a map and possibly a county label and returns map parameters for redist algorithms
