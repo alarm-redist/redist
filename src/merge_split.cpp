@@ -92,6 +92,7 @@ Rcpp::List ms_plans(
     // Now create diagnostic information 
     Rcpp::NumericVector log_mh_ratios(nsims); // stores log mh ratio 
     Rcpp::IntegerMatrix saved_plans_mat(V, nsims);
+    Rcpp::IntegerMatrix saved_district_pops_mat(ndists, nsims);
     Rcpp::IntegerMatrix saved_plan_sizes(
         mmd_plans ? ndists : 1,
         mmd_plans ? nsims : 1
@@ -293,6 +294,12 @@ Rcpp::List ms_plans(
                 plan_ensemble.flattened_all_plans.end(),
                 saved_plans_mat.column(current_plan_mat_col).begin() // Start of column in Rcpp::IntegerMatrix
             );
+            // copy region populations
+            std::copy(
+                plan_ensemble.flattened_all_region_pops.begin(), 
+                plan_ensemble.flattened_all_region_pops.end(),
+                saved_district_pops_mat.column(current_plan_mat_col).begin() // Start of column in Rcpp::IntegerMatrix
+            );
             // if mmd copy sizes
             if(mmd_plans){
                 std::copy(
@@ -357,6 +364,7 @@ Rcpp::List ms_plans(
     if(DEBUG_PURE_MS_VERBOSE) REprintf("Added one to plans, now creating diagnostic list.\n");
     
     out["plans"] = saved_plans_mat;
+    out["region_pops"] = saved_district_pops_mat;
     out["seats"] = saved_plan_sizes;
     out["mhdecisions"] = mh_decisions;
     out["total_steps"] = total_steps;

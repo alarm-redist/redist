@@ -198,8 +198,8 @@ test_that("Parallel runs are reproducible", {
     for (i in 1:2) {
         attr(pl1, "diagnostics")[[i]]$runtime <- NULL
         attr(pl2, "diagnostics")[[i]]$runtime <- NULL
-        attr(pl1, "entire_runtime") <- NULL
-        attr(pl2, "entire_runtime") <- NULL
+        attr(pl1, "total_runtime") <- NULL
+        attr(pl2, "total_runtime") <- NULL
     }
 
     expect_identical(pl1, pl2)

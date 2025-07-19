@@ -515,6 +515,36 @@ Rcpp::IntegerMatrix PlanEnsemble::get_R_sizes_matrix(
     return sizes_mat;
 }
 
+
+Rcpp::IntegerMatrix PlanEnsemble::get_region_pops_matrix(
+    RcppThread::ThreadPool &pool
+){
+    int const num_regions = plan_ptr_vec[0]->num_regions;
+    // make the sizes matrix 
+    Rcpp::IntegerMatrix pops_mat(num_regions, nsims);
+    // to avoid wasting space if not ndists we don't copy all 
+    if(num_regions < ndists){
+        // copy over the non-zero sizes for each plan
+        pool.parallelFor(0, nsims, [&] (int i){
+            std::copy(
+                plan_ptr_vec[i]->region_pops.begin(),
+                plan_ptr_vec[i]->region_pops.begin() + num_regions,
+                pops_mat.column(i).begin() // Start of column in Rcpp::IntegerMatrix
+            );
+        });
+        pool.wait();
+    }else{
+        // else we can just copy the entire vector
+        std::copy(
+            flattened_all_region_pops.begin(),
+            flattened_all_region_pops.end(),
+            pops_mat.begin()
+        );
+    }
+
+    return pops_mat;
+}
+
 PlanEnsemble get_plan_ensemble(
     MapParams const &map_params,
     int const num_regions, int const nsims,

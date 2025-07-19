@@ -678,9 +678,9 @@ redist_smc <- function(
       # add the numerically stable weights back
       algout$wgt <- wgt
 
-      # flatten the region sizes by column into a long vector
+      # flatten the region sizes pops by column into a long vector
       dim(algout$seats) <- NULL
-
+      dim(algout$region_pops) <- NULL
 
 
       # Internal diagnostics,
@@ -708,7 +708,7 @@ redist_smc <- function(
         valid_split_region_sizes_list = algout$valid_split_region_sizes_list,
         sampling_space = sampling_space,
         split_method = split_method,
-        splitting_size_regime = splitting_size_regime,
+        splitting_schedule = splitting_size_regime,
         merge_split_step_vec = merge_split_step_vec,
         ms_moves_multiplier = ms_moves_multiplier,
         merge_prob_type = merge_prob_type,
@@ -759,6 +759,7 @@ redist_smc <- function(
   # combine if needed
   if (runs > 1) {
     plans <- do.call(cbind, lapply(all_out, function(x) x$plans))
+    region_pops <- do.call(cbind, lapply(all_out, function(x) x$region_pops))
     seats <- do.call(c, lapply(all_out, function(x) x$seats))
     wgt <- do.call(c, lapply(all_out, function(x) x$wgt))
     l_diag <- lapply(all_out, function(x) x$l_diag)
@@ -767,6 +768,7 @@ redist_smc <- function(
   } else {
     # else if just one run extract directly
     plans <- all_out[[1]]$plans
+    region_pops <- all_out[[1]]$region_pops
     seats <- all_out[[1]]$seats
     wgt <- all_out[[1]]$wgt
     l_diag <- list(all_out[[1]]$l_diag)
@@ -774,18 +776,19 @@ redist_smc <- function(
     internal_diagnostics <- list(all_out[[1]]$internal_diagnostics)
   }
 
-
-
   n_dist_act <- dplyr::n_distinct(plans[, 1]) # actual number (for partial plans)
 
   alg_type <- ifelse(run_ms, "smc_ms", "smc")
 
+
   out <- new_redist_plans(
-    plans,
-    map,
-    alg_type,
-    wgt,
-    resample,
+      plans = plans,
+      map = map,
+      algorithm = alg_type,
+    wgt =wgt,
+    inputs_safe = TRUE,
+    resampled = resample,
+    distr_pop = region_pops,
     ndists = n_dist_act,
     seats = seats,
     n_eff = all_out[[1]]$n_eff,
@@ -798,6 +801,7 @@ redist_smc <- function(
     num_admin_units = num_admin_units,
     total_runtime = t2 - t1
   )
+
 
   if (runs > 1) {
     out <- mutate(
@@ -858,8 +862,7 @@ get_splitting_schedule <- function(split_params, districting_scheme){
                 )
             }
         } else {
-            # else its custom
-            cli_abort("Custom splitting schedules are not supported right now!")
+            cli_abort("{.arg splitting_schedule} must be either {.arg any_valid_sizes} or {.arg split_district_only}")
         }
     } else {
         # default to  district

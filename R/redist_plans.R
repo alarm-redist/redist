@@ -14,10 +14,14 @@
 # algorithm is one of "smc" or "mcmc" or "gsmc_ms
 # wgt is the weights before any resampling or truncation
 # ... will depend on the algorithm
+# inputs_safe is a boolean. If true means don't check the input
+# which we don't need to do if calling directly inside `redist_smc`
+# or `redist_mergesplit`
 new_redist_plans <- function(
         plans, map, algorithm, wgt,
         resampled = TRUE, ndists = attr(map, "ndists"),
-        seats = NULL, ...) {
+        inputs_safe = FALSE,
+        seats = NULL, distr_pop = NULL, ...) {
     n_sims <- ncol(plans)
     if (n_sims < 1) cli_abort("Need at least one simulation draw.")
 
@@ -34,16 +38,24 @@ new_redist_plans <- function(
     nseats <- attr(map, "nseats")
     seats_range <- attr(map, "seats_range")
     pop_bounds <- attr(map, "pop_bounds")
+    distr_range <- 1:ndists
 
 
     prec_pop <- map[[attr(map, "pop_col")]]
+
     # if plans are 0 indexed then add 1
-    if(min(plans) == 0){
+    if(!inputs_safe && min(plans) == 0){
         plans <- plans + 1L
     }
-    distr_range <- 1:ndists
-    # tally the population
-    distr_pop <- pop_tally(plans, prec_pop, ndists)
+
+    if(is.null(distr_pop)){
+        # tally the population if needed
+        distr_pop <- pop_tally(plans, prec_pop, ndists)
+    }else if(!inputs_safe){
+        if(length(distr_pop) != ndists * n_sims){
+            cli_abort("{.arg distr_pop} must be a vector of length `ndists` * `nsims`")
+        }
+    }
 
     # check if partial or MMD then region sizes must not be null
     if(partial || districting_scheme == "MMD"){
@@ -233,6 +245,7 @@ redist_plans <- function(plans, map, algorithm, wgt = NULL, seats = NULL, ...) {
     n_regions <- length(unique(plans[,1]))
 
     obj <- new_redist_plans(plans, map, algorithm, wgt = wgt,
+                            inputs_safe = FALSE,
                             seats=seats, ndists = n_regions,
         resampled = FALSE, ...)
     validate_redist_plans(obj)

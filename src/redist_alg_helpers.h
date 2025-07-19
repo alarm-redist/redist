@@ -200,6 +200,10 @@ class PlanEnsemble {
         Rcpp::IntegerMatrix get_R_sizes_matrix(
             RcppThread::ThreadPool &pool
         );
+        // export current region populations to Rcpp matrix
+        Rcpp::IntegerMatrix get_region_pops_matrix(
+            RcppThread::ThreadPool &pool
+        );
     
 };
 

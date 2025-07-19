@@ -6,11 +6,26 @@
 #include "redist_types.h"
 
 
+class Plan;
+
+/****************
+ * Simply Hard Constraint Functions
+ ********************/
+
+// Checks if plan is connected and if not returns first disconnected region
+template <typename PlanID>
+std::pair<bool, int> is_plan_connected(
+    Graph const &g, CircularQueue<int> &vertex_queue,
+    std::vector<bool> &regions_visited, 
+    const PlanID &region_ids
+) {
+
+    return std::make_pair(true, -1);
+}
+
 /****************
  * Constraint Functions
  ********************/
-
-class Plan;
 
 /*
  * Compute the population penalty for district `distr`

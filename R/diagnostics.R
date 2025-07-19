@@ -156,21 +156,21 @@ summary.redist_plans <- function(
                 return(invisible(1))
             }
         }
-        split_params <- all_forward_kernel_params[[1]]
+        forward_kernel_params <- all_forward_kernel_params[[1]]
 
         cli::cli_text("Plans sampled on {display_sampling_space} using the {display_splitting_method} forward kernel.")
 
         if(split_method == NAIVE_K_SPLITTING){
             # only display adapt k threshold if k values estimated
-            if(split_params$estimate_cut_k){
-                cli::cli_text("Forward kernel parameters: {.arg adapt_k_thresh}={format(split_params$adapt_k_thresh, digits=3)}")
+            if(forward_kernel_params$estimate_cut_k){
+                cli::cli_text("Forward kernel parameters: {.arg adapt_k_thresh}={format(forward_kernel_params$adapt_k_thresh, digits=3)}")
             }else{
-                cli::cli_text("Forward kernel parameters: {.arg manual_k_params}={split_params$manual_k_params}")
+                cli::cli_text("Forward kernel parameters: {.arg manual_k_params}={forward_kernel_params$manual_k_params}")
             }
         }else if(split_method == UNIF_VALID_EDGE_SPLITTING){
 
         }else if(split_method == EXP_BIGGER_ABS_DEV_SPLITTING){
-            cli::cli_text("Forward Kernel Parameters: {.arg splitting_alpha}={format(split_params$splitting_alpha, digits=2)}")
+            cli::cli_text("Forward Kernel Parameters: {.arg splitting_alpha}={format(forward_kernel_params$splitting_alpha, digits=2)}")
         }
     }
 

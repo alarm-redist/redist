@@ -1023,6 +1023,7 @@ List run_redist_smc(
     List out = List::create(
         _["plans_mat"] = plan_mat,
         _["seats"] = plan_sizes_mat.at(0),
+        _["region_pops"] = plan_ensemble_ptr->get_region_pops_matrix(pool),
         _["plan_seats_saved"] = plan_sizes_saved,
         _["log_weights"] = log_weights,
         _["ancestors"] = ancestors,
