@@ -285,7 +285,6 @@ set_plan_matrix <- function(x, mat) {
 #' seats this returns a `ndists` by `M` matrix where each column sums to `S`.
 #'
 #' @param x the \code{redist_plans} object
-#' @param ... ignored
 #' @return matrix
 #' @concept analyze
 #' @export

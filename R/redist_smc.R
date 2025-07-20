@@ -186,6 +186,11 @@
 #' computationally expensive, especially for computationally complex constraints
 #' or when `compactness` is not set to 1.
 #' }
+#' @param adapt_k_thresh Deprecated. Pass in through the `split_params` arg.
+#' The threshold value used in the heuristic to select a
+#' value `k_i` for each splitting iteration. Higher values are more accurate
+#' but may require more computation. Set to 1 for the most conservative
+#' sampling. Must be between 0 and 1.
 #'
 #' @return `redist_smc` returns a [redist_plans] object containing the simulated
 #' plans.

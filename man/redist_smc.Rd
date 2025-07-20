@@ -210,6 +210,12 @@ have lower variance and lead to faster convergence but can be more
 computationally expensive, especially for computationally complex constraints
 or when \code{compactness} is not set to 1.
 }}
+
+\item{adapt_k_thresh}{Deprecated. Pass in through the \code{split_params} arg.
+The threshold value used in the heuristic to select a
+value \code{k_i} for each splitting iteration. Higher values are more accurate
+but may require more computation. Set to 1 for the most conservative
+sampling. Must be between 0 and 1.}
 }
 \value{
 \code{redist_smc} returns a \link{redist_plans} object containing the simulated

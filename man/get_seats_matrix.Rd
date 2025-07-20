@@ -8,8 +8,6 @@ get_seats_matrix(x)
 }
 \arguments{
 \item{x}{the \code{redist_plans} object}
-
-\item{...}{ignored}
 }
 \value{
 matrix

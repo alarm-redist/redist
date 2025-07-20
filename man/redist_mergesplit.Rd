@@ -73,6 +73,63 @@ See the 'Details' section for more information.}
 a redistricting plan and outputs a vector of log-weights, which will be
 added the the final weights.}
 
+\item{sampling_space}{The space to sample the plans on. This does not affect
+the plans output by the function but the sample space used can have a large
+impact on computational cost/runtime and convergence. Current spaces supported
+right now are
+\itemize{
+\item graph_plan : graph partition space
+\item spanning_forest : spanning forest space
+\item linking_edge : linking edge forest space
+}}
+
+\item{split_method}{The method used for splitting spanning trees in the
+sampling process. When sampling on the space of graph partitions it must be
+the naive top k method but any method is allowed for forest space sampling.}
+
+\item{split_params}{A list of parameters related to splitting the plans.
+Options include
+\itemize{
+\item \code{splitting_schedule} What rule to use for selecting splitting
+sizes. The final target distribution is the same regardless of splitting
+schedule but the intermediate distributions can change. Current options
+include
+\itemize{
+\item \code{split_district_only} At each step split off a single district.
+\item \code{any_valid_sizes} At each step allow for regions to be split
+into any two sizes (assuming the sizes can eventually be split into
+districts.) Currently this is only supported for single member districting.
+}
+}
+Parameters for \code{split_method} Any relevant parameters for the
+\code{split_method}. These include the following
+\itemize{
+\item top_k parameters:
+\itemize{
+\item \code{adapt_k_thresh} The threshold value used in the heuristic to
+select a value \code{k_i} for each splitting iteration for graph space
+sampling if estimation is desired (the \code{k_i} can also be manually passed in.)
+Higher values are more accurate but may require more
+computation. Set to 1 for the most conservative sampling.
+Must be between 0 and 1.
+\item \code{manual_k_params} The \code{k_i} values to be used for each splitting
+iteration for graph space sampling. Beware when specifying manual values
+it is crucial they are close to the true values as too small \code{k_i} values
+will cause the algorithm to fail to sample from the target distribution
+correctly and too large values will cause a drastic performance hit. The
+input must either be a single integer to use for each step or a vector
+of integers equal to the number of smc steps.
+}
+\item exp_abs_dev
+\itemize{
+\item \code{splitting_alpha} When selecting an edge to cut in the
+tree a valid edge is selected with probability proportional to
+\code{exp(-splitting_alpha * max_dev)}. \code{splitting_alpha} can
+be any real number. Values closer to zero result in more stable weights
+and larger values result in more unstable weights.
+}
+}}
+
 \item{init_seats}{The initial number of seats for each district in \code{init_plan}.}
 
 \item{ncores}{The number of clusters to spawn Defaults to the
@@ -93,13 +150,24 @@ Recommended.}
 
 \item{silent}{Whether to suppress all diagnostic information.}
 
+\item{control}{A list of optional advanced parameters.
+\itemize{
+\item \code{nproc}: The number of processes (independent instances of R)
+spawned to simulate the plans. The processes execute runs in parallel, each
+using \code{ncores} threads. If more than one process is used, the
+sampler output will not be fully reproducible with \code{set.seed()}. If full
+reproducibility is desired, set \code{nproc=1} and
+\code{ncores = 1}. If missing defaults to a single process.
+\item \code{weight_type} The type of SMC weights to use. Optimal weights typically
+have lower variance and lead to faster convergence but can be more
+computationally expensive, especially for computationally complex constraints
+or when \code{compactness} is not set to 1.
+}}
+
 \item{adapt_k_thresh}{The threshold value used in the heuristic to select a
 value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if
 the algorithm does not appear to be sampling from the target distribution.
 Must be between 0 and 1.}
-
-\item{k}{The number of edges to consider cutting after drawing a spanning
-tree. Should be selected automatically in nearly all cases.}
 }
 \value{
 A \code{\link{redist_plans}} object with all of the simulated plans, and an

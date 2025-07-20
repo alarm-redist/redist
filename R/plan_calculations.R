@@ -26,7 +26,7 @@
 #'
 #' @md
 #' @order 1
-#' @export
+#' @noRd
 compute_log_target_density <- function(
         map, plans, counties = NULL,
         sizes_matrix = NULL, compactness = 1L,
@@ -120,7 +120,7 @@ compute_log_target_density <- function(
 #'
 #' @md
 #' @order 1
-#' @export
+#' @noRd
 compute_log_target_density_by_region <- function(
         map, plans, counties = NULL,
         sizes_matrix = NULL, compactness = 1L,
@@ -209,7 +209,7 @@ compute_log_target_density_by_region <- function(
 #'
 #' @md
 #' @order 1
-#' @export
+#' @noRd
 compute_log_optimal_weights <- function(
         map, plans, counties = NULL,
         sizes_matrix = NULL, constraints = list(),

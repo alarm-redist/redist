@@ -521,3 +521,21 @@ Rcpp::DataFrame order_columns_by_district(
 
     return out;
 }
+
+
+
+double compute_log_pop_temper(
+    double const target, double const pop_temper, int const ndists,
+    int const region_pop, int const region_size
+){
+    double region_target = target*region_size;
+    // get population deviation 
+    double const pop_dev = std::fabs(
+        static_cast<double>(region_pop) - region_target
+    )/region_target;
+
+    double const pop_pen = std::sqrt(static_cast<double>(ndists) - 2) * std::log(1e-12 + pop_dev);
+
+    // now return the values for the old region minus the two new ones
+    return pop_pen * pop_temper;
+}

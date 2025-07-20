@@ -28,6 +28,7 @@
 #' setting this parameter to 1 is computationally efficient and generates nicely
 #' compact districts.
 #'
+#' @inheritParams redist_smc
 #' @param map A \code{\link{redist_map}} object.
 #' @param nsims The number of samples to generate. The chain will run for
 #' `warmup+(nsims*thin)` steps.
@@ -59,12 +60,6 @@
 #' @param constraint_fn A function which takes in a matrix where each column is
 #' a redistricting plan and outputs a vector of log-weights, which will be
 #' added the the final weights.
-#' @param adapt_k_thresh The threshold value used in the heuristic to select a
-#' value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if
-#' the algorithm does not appear to be sampling from the target distribution.
-#' Must be between 0 and 1.
-#' @param k The number of edges to consider cutting after drawing a spanning
-#' tree. Should be selected automatically in nearly all cases.
 #' @param init_name a name for the initial plan, or \code{FALSE} to not include
 #' the initial plan in the output.  Defaults to the column name of the
 #' existing plan, or "\code{<init>}" if the initial plan is sampled.
@@ -78,6 +73,10 @@
 #' but `"FORK"` may be appropriate in some settings.
 #' @param return_all if `TRUE` return all sampled plans; otherwise, just return
 #' the final plan from each chain.
+#' @param adapt_k_thresh The threshold value used in the heuristic to select a
+#' value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if
+#' the algorithm does not appear to be sampling from the target distribution.
+#' Must be between 0 and 1.
 #'
 #' @returns A [`redist_plans`] object with all of the simulated plans, and an
 #' additional `chain` column indicating the chain the plan was drawn from.

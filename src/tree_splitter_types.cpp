@@ -249,6 +249,21 @@ double ExpoWeightedSmallerDevSplitter::compute_unnormalized_edge_cut_weight(
 }
 
 
+double PopTemperSplitter::compute_unnormalized_edge_cut_weight(
+    EdgeCut const &edge_cut
+) const{
+    double region1_pop_temper = compute_log_pop_temper(target, pop_temper, ndists,
+        edge_cut.cut_above_pop, edge_cut.cut_above_region_size
+    );
+    double region2_pop_temper = compute_log_pop_temper(target, pop_temper, ndists,
+        edge_cut.cut_below_pop, edge_cut.cut_below_region_size
+    );
+    // larger population deviation means bigger pop temper but we want smaller 
+    // so we add then do exp(- sum) 
+    return std::exp(-(region1_pop_temper +region2_pop_temper));
+
+}
+
 
 std::pair<bool, EdgeCut> ExperimentalSplitter::select_edge_to_cut(
         RNGState &rng_state,std::vector<EdgeCut> const &valid_edges,

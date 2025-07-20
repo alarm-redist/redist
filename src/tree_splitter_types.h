@@ -6,6 +6,7 @@
 #include "redist_types.h"
 #include "tree_op.h"
 #include "tree_splitting.h"
+#include "map_calc.h"
 
 
 // [[Rcpp::depends(RcppArmadillo)]]
@@ -158,7 +159,7 @@ public:
     double alpha;
     double target;
 
-    virtual double compute_unnormalized_edge_cut_weight(
+    double compute_unnormalized_edge_cut_weight(
         EdgeCut const &edge_cut
     ) const override;
 };
@@ -183,6 +184,30 @@ public:
     ) const override;
 };
 
+
+
+// Splitting method that just tries to pick one of the top k edges unif 
+class PopTemperSplitter : public TreeSplitter{
+
+public:
+    // implementation of the pure virtual function
+    PopTemperSplitter(
+        int V, double const target, double const pop_temper, int const ndists
+        )
+        : TreeSplitter(V),
+        target(target),
+        pop_temper(pop_temper),
+        ndists(ndists){};
+
+    double const target;
+    double const pop_temper;
+    int const ndists;
+
+    // since uniform log prob is just -log(# of candidates)
+    double compute_unnormalized_edge_cut_weight(
+        EdgeCut const &edge_cut
+    ) const override;
+};
 
 class ExperimentalSplitter : public TreeSplitter{
 
