@@ -19,6 +19,7 @@
 #' @return The subtree created by traversing the tree only starting from `root`
 #'
 #'
+#' @noRd
 get_subtree_from_root <- function(tree_adj_list, root) {
     # Initialize variables
     visited <- rep(FALSE, length(tree_adj_list))
@@ -82,7 +83,6 @@ get_subtree_from_root <- function(tree_adj_list, root) {
 #'    the tree. A value of -1 means that vertex is the root and -2 means that
 #'    vertex is not in the tree.
 #'
-#' @export
 draw_tree_on_region <- function(
         map, counties, partial_plan_labels, region_sizes,
         region_id_to_draw_tree_on, verbose
@@ -206,7 +206,7 @@ draw_tree_on_region <- function(
 #' * `cut_edge` - The two zero-indexed vertices making up the edge that
 #'   was cut from `uncut_tree`.
 #'
-#' @export
+#' @noRd
 manually_split_a_multidistrict <- function(
         map, counties, partial_plan_labels, region_sizes,
         region_id_to_split, split_dval_min=1, split_dval_max=NULL,
@@ -325,7 +325,7 @@ manually_split_a_multidistrict <- function(
 #' create the two new regions
 #' * `spanning_forest` - The spanning forest of the cut spanning trees drawn up
 #' to that point.
-#' @export
+#' @noRd
 split_entire_map_into_plan <- function(
         map, counties,
         min_region_cut_sizes = NULL, max_region_cut_sizes = NULL,
@@ -346,7 +346,7 @@ split_entire_map_into_plan <- function(
     }
 
     # validate the cut sizes
-    validate_cut_sizes(ndists, ndists-1, min_region_cut_sizes, max_region_cut_sizes)
+    # validate_cut_sizes(ndists, ndists-1, min_region_cut_sizes, max_region_cut_sizes)
 
     partial_plan_labels <- matrix(0L, ncol = 1, nrow = nrow(map))
     region_sizes <- matrix(0L, ncol = 1, nrow = ndists)

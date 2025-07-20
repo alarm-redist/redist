@@ -162,8 +162,6 @@ avg_by_prec <- function(plans, x, draws = NA) {
 #' @param .data a \code{\link{redist_plans}} object
 #' @param ncores The number of threads to use for the calculation. Can
 #' significantly speedup calculations for a large number of plans.
-#' @param rep_by_district Whether or not to return a duplicated value for each
-#' district (so size `nsims*districts`) or return a single value for each plan.
 #'
 #' @concept analyze
 #' @export

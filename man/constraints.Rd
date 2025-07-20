@@ -19,10 +19,15 @@
 \alias{add_constr_edges_rem}
 \alias{add_constr_custom}
 \alias{add_constr_custom_plan}
-\alias{add_hard_constr_custom_plan}
 \title{Sampling constraints}
 \usage{
-add_constr_status_quo(constr, strength, current, only_districts = TRUE)
+add_constr_status_quo(
+  constr,
+  strength,
+  current,
+  only_districts = TRUE,
+  thresh = Inf
+)
 
 add_constr_grp_pow(
   constr,
@@ -32,7 +37,8 @@ add_constr_grp_pow(
   tgt_group = 0.5,
   tgt_other = 0.5,
   pow = 1,
-  only_districts = FALSE
+  only_districts = FALSE,
+  thresh = Inf
 )
 
 add_constr_grp_hinge(
@@ -41,7 +47,8 @@ add_constr_grp_hinge(
   group_pop,
   total_pop = NULL,
   tgts_group = c(0.55),
-  only_districts = FALSE
+  only_districts = FALSE,
+  thresh = Inf
 )
 
 add_constr_grp_inv_hinge(
@@ -50,7 +57,8 @@ add_constr_grp_inv_hinge(
   group_pop,
   total_pop = NULL,
   tgts_group = c(0.55),
-  only_districts = FALSE
+  only_districts = FALSE,
+  thresh = Inf
 )
 
 add_constr_compet(
@@ -59,28 +67,54 @@ add_constr_compet(
   dvote,
   rvote,
   pow = 0.5,
-  only_districts = FALSE
+  only_districts = FALSE,
+  thresh = Inf
 )
 
-add_constr_incumbency(constr, strength, incumbents, only_districts = FALSE)
+add_constr_incumbency(
+  constr,
+  strength,
+  incumbents,
+  only_districts = FALSE,
+  thresh = Inf
+)
 
-add_constr_splits(constr, strength, admin, only_districts = TRUE)
+add_constr_splits(constr, strength, admin, only_districts = TRUE, thresh = Inf)
 
-add_constr_multisplits(constr, strength, admin, only_districts = FALSE)
+add_constr_multisplits(
+  constr,
+  strength,
+  admin,
+  only_districts = FALSE,
+  thresh = Inf
+)
 
-add_constr_total_splits(constr, strength, admin, only_districts = FALSE)
+add_constr_total_splits(
+  constr,
+  strength,
+  admin,
+  only_districts = FALSE,
+  thresh = Inf
+)
 
-add_constr_pop_dev(constr, strength, only_districts = FALSE)
+add_constr_pop_dev(constr, strength, only_districts = FALSE, thresh = Inf)
 
 add_constr_segregation(
   constr,
   strength,
   group_pop,
   total_pop = NULL,
-  only_districts = FALSE
+  only_districts = FALSE,
+  thresh = Inf
 )
 
-add_constr_polsby(constr, strength, perim_df = NULL, only_districts = FALSE)
+add_constr_polsby(
+  constr,
+  strength,
+  perim_df = NULL,
+  only_districts = FALSE,
+  thresh = Inf
+)
 
 add_constr_fry_hold(
   constr,
@@ -88,18 +122,23 @@ add_constr_fry_hold(
   total_pop = NULL,
   ssdmat = NULL,
   denominator = 1,
-  only_districts = FALSE
+  only_districts = FALSE,
+  thresh = Inf
 )
 
-add_constr_log_st(constr, strength, admin = NULL, only_districts = FALSE)
+add_constr_log_st(
+  constr,
+  strength,
+  admin = NULL,
+  only_districts = FALSE,
+  thresh = Inf
+)
 
-add_constr_edges_rem(constr, strength, only_districts = FALSE)
+add_constr_edges_rem(constr, strength, only_districts = FALSE, thresh = Inf)
 
-add_constr_custom(constr, strength, fn, only_districts = FALSE)
+add_constr_custom(constr, strength, fn, only_districts = FALSE, thresh = Inf)
 
-add_constr_custom_plan(constr, strength, fn)
-
-add_hard_constr_custom_plan(constr, fn)
+add_constr_custom_plan(constr, strength, fn, thresh = Inf)
 }
 \arguments{
 \item{constr}{A \code{\link[=redist_constr]{redist_constr()}} object}
@@ -113,6 +152,11 @@ districts only. If constraints are only applied to districts then it will
 likely cause a drop in efficiency in the final round. If splitting plans all
 the way this does not affect the final target distribution. This is not relevant
 for constraints that penalize the entire plan instead of specific districts.}
+
+\item{thresh}{Thresholding value for constraints. If set then any plan where
+the constraints score is greater than or equal to \code{thresh} will be rejected
+at the splitting stage, ensuring that none of those plans will be in the final
+sample.}
 
 \item{group_pop}{A vector of group population}
 

@@ -270,6 +270,10 @@ add_to_constr <- function(constr, name, new_constr) {
 #' likely cause a drop in efficiency in the final round. If splitting plans all
 #' the way this does not affect the final target distribution. This is not relevant
 #' for constraints that penalize the entire plan instead of specific districts.
+#' @param thresh Thresholding value for constraints. If set then any plan where
+#' the constraints score is greater than or equal to `thresh` will be rejected
+#' at the splitting stage, ensuring that none of those plans will be in the final
+#' sample.
 #'
 #' @examples
 #' data(iowa)
@@ -845,7 +849,7 @@ add_constr_pop_dev <- function(
     strength = strength,
     only_districts = only_districts,
     hard_constraint = hard_constraint,
-    hard_threshold = hard_threshold,
+    hard_threshold = hard_threshold
   )
   add_to_constr(constr, "pop_dev", new_constr)
 }
@@ -1305,9 +1309,6 @@ add_constr_custom_plan <- function(constr, strength, fn, thresh = Inf) {
   }
   if (strength <= 0) {
     cli_warn("Nonpositive strength may lead to unexpected results")
-  }
-  if (!is_bool(only_districts)) {
-    cli_abort("{.arg only_districts} must be a boolean.")
   }
 
   if (!is_scalar(thresh)) {

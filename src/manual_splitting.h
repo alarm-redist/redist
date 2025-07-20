@@ -51,6 +51,7 @@
 //'     - `num_attempts`: The number of attempts it took to draw the tree.
 //' 
 //' @keywords internal
+//' @noRd
 // [[Rcpp::export]]
 List draw_a_tree_on_a_region(
     List adj_list, const arma::uvec &counties, const arma::uvec &pop,
@@ -72,6 +73,7 @@ List draw_a_tree_on_a_region(
 //' @title Split a multidistrict into two regions
 //'
 //' @inheritParams run_redist_smc
+//' @noRd
 // [[Rcpp::export]]
 List perform_a_valid_multidistrict_split(
     List adj_list, const arma::uvec &counties, const arma::uvec &pop,

@@ -610,6 +610,7 @@ diag_rhat <- function(x, grp, split = FALSE) {
 #' @inheritParams summary.redist_plans
 #'
 #' @returns A long dataframe of rhats
+#' @noRd
 compute_all_rhats <- function(stats_df, rhat_cols, order_stats, district, ndists, split_rhat){
 
     # order values if needed

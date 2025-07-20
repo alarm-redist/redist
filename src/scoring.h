@@ -832,6 +832,9 @@ class ScoringFunction {
         std::pair<bool, double> compute_hard_merged_plan_constraints_score(
             const Plan &plan, int const region1_id, int const region2_id
         ) const; // false if hard constraint failed 
+
+        // check if the two new regions or the plan trigger any hard constraints 
+        bool new_split_ok(Plan const &plan, RegionID const region1_id, RegionID const region2_id);
 };
 
 

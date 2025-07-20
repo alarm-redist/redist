@@ -104,7 +104,7 @@
 #' sampled_constr <- redist_mergesplit(fl_map, 10000, chains = 10,
 #'     ncores = 2,
 #'     constraints = list(
-#'     incumbency = list(strength = 1000, incumbents = c(3, 6, 25))
+#'     incumbency = list(strength = 100, incumbents = c(3, 6, 25))
 #'     )
 #' )
 #' }

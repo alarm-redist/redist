@@ -38,7 +38,7 @@
 #' data(iowa)
 #'
 #' iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05)
-#' plans <- redist_mergesplit_parallel(iowa_map, nsims = 200, chains = 2, silent = TRUE) %>%
+#' plans <- redist_mergesplit(iowa_map, nsims = 200, chains = 2, silent = TRUE) %>%
 #'     mutate(dem = group_frac(iowa_map, dem_08, dem_08 + rep_08)) %>%
 #'     number_by(dem)
 #' redist_smc_ci(plans, dem)
@@ -116,6 +116,7 @@ redist_smc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE)
 }
 
 #' @describeIn redist_ci Compute confidence intervals for MCMC output.
+#' @param use_coda Whether or not to use the coda package to compute standard errors
 #' @export
 redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE, use_coda = FALSE) {
     plans <- subset_sampled(plans)

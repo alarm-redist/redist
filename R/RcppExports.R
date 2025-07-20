@@ -92,6 +92,7 @@ calcPWDh <- function(x) {
 #'     - `num_attempts`: The number of attempts it took to draw the tree.
 #' 
 #' @keywords internal
+#' @noRd
 draw_a_tree_on_a_region <- function(adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_draw_tree_on, lower, upper, region_ids, region_sizes, verbose) {
     .Call(`_redist_draw_a_tree_on_a_region`, adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_draw_tree_on, lower, upper, region_ids, region_sizes, verbose)
 }
@@ -105,6 +106,7 @@ draw_a_tree_on_a_region <- function(adj_list, counties, pop, ndists, num_regions
 #' @title Split a multidistrict into two regions
 #'
 #' @inheritParams run_redist_smc
+#' @noRd
 perform_a_valid_multidistrict_split <- function(adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_split, target, lower, upper, region_ids, region_sizes, split_dval_min, split_dval_max, split_district_only, verbose = FALSE, k_param = 1L) {
     .Call(`_redist_perform_a_valid_multidistrict_split`, adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_split, target, lower, upper, region_ids, region_sizes, split_dval_min, split_dval_max, split_district_only, verbose, k_param)
 }
@@ -332,9 +334,9 @@ k_biggest <- function(x, k = 1L) {
     .Call(`_redist_k_biggest`, x, k)
 }
 
-#' Run Optimalgsmc with Merge Split
+#' Run SMC (optionally with Merge Split steps too)
 #'
-#' Uses gsmc method with optimal weights and merge split steps to generate a sample of `M` plans in `c++` 
+#' Uses smc method with optimal weights and merge split steps to generate a sample of `nsims` plans in `c++` 
 #' 
 #' 
 #' Using the procedure outlined in <PAPER HERE> this function uses Sequential
@@ -356,8 +358,8 @@ k_biggest <- function(x, k = 1L) {
 #' @param num_threads The number of threads the threadpool should use
 #' @param verbosity What level of detail to print out while the algorithm is
 #' running <ADD OPTIONS>
-#' @export
 #' @keywords internal
+#' @noRd
 run_redist_smc <- function(nsims, total_seats, ndists, district_seat_sizes, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat, log_weights) {
     .Call(`_redist_run_redist_smc`, nsims, total_seats, ndists, district_seat_sizes, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat, log_weights)
 }

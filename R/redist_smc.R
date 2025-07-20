@@ -542,7 +542,7 @@ redist_smc <- function(
         lower = pop_bounds[1],
         upper = pop_bounds[3],
         rho = compactness,
-        sampling_space = sampling_space,
+        sampling_space_str = sampling_space,
         control = cpp_control_list,
         constraints = constraints,
         verbosity = run_verbosity,

@@ -25,9 +25,9 @@
 
 
 
-//' Run Optimalgsmc with Merge Split
+//' Run SMC (optionally with Merge Split steps too)
 //'
-//' Uses gsmc method with optimal weights and merge split steps to generate a sample of `M` plans in `c++` 
+//' Uses smc method with optimal weights and merge split steps to generate a sample of `nsims` plans in `c++` 
 //' 
 //' 
 //' Using the procedure outlined in <PAPER HERE> this function uses Sequential
@@ -49,8 +49,8 @@
 //' @param num_threads The number of threads the threadpool should use
 //' @param verbosity What level of detail to print out while the algorithm is
 //' running <ADD OPTIONS>
-//' @export
 //' @keywords internal
+//' @noRd
 // [[Rcpp::export]]
 List run_redist_smc(
         int const nsims, 
