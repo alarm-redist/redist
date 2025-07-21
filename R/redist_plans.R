@@ -16,7 +16,7 @@
 # ... will depend on the algorithm
 new_redist_plans <- function(plans, map, algorithm, wgt, resampled = TRUE, ndists = attr(map, "ndists"), ...) {
     n_sims <- ncol(plans)
-    if (n_sims < 1) cli_abort("Need at least one simulation draw.")
+    if (n_sims < 1) cli::cli_abort("Need at least one simulation draw.")
 
     n_prec <- nrow(plans)
     map_dists <- attr(map, "ndists")
@@ -57,16 +57,16 @@ new_redist_plans <- function(plans, map, algorithm, wgt, resampled = TRUE, ndist
 }
 
 validate_redist_plans <- function(x) {
-    if (names(x)[1] != "draw") cli_abort("First column must be named \"{.field draw}\"")
-    if (!is.factor(x$draw)) cli_abort("{.field draw} column must be a factor")
+    if (names(x)[1] != "draw") cli::cli_abort("First column must be named \"{.field draw}\"")
+    if (!is.factor(x$draw)) cli::cli_abort("{.field draw} column must be a factor")
 
     plan_m <- attr(x, "plans")
-    if (is.null(plan_m)) cli_abort("Missing plans matrix")
+    if (is.null(plan_m)) cli::cli_abort("Missing plans matrix")
 
     min_distr <- colmin(plan_m)
     max_distr <- colmax(plan_m)
     if (any(min_distr != 1) || any(diff(max_distr) != 0))
-        cli_abort("District numbers must start at 1 and run sequentially to the number of districts.")
+        cli::cli_abort("District numbers must start at 1 and run sequentially to the number of districts.")
 
     x
 }
@@ -146,9 +146,9 @@ redist_plans <- function(plans, map, algorithm, wgt = NULL, ...) {
     if (is.numeric(plans) && length(plans) == nrow(map)) {
         plans <- matrix(as.integer(plans), ncol = 1)
     }
-    if (!is.matrix(plans)) cli_abort("{.arg plans} must be a matrix.")
-    if (nrow(plans) != nrow(map)) cli_abort("{.arg plans} matrix must have as many rows as {.arg map} has precincts.")
-    if (!inherits(map, "redist_map")) cli_abort("{.arg map} must be a {.cls redist_map}")
+    if (!is.matrix(plans)) cli::cli_abort("{.arg plans} must be a matrix.")
+    if (nrow(plans) != nrow(map)) cli::cli_abort("{.arg plans} matrix must have as many rows as {.arg map} has precincts.")
+    if (!inherits(map, "redist_map")) cli::cli_abort("{.arg map} must be a {.cls redist_map}")
 
     if (min(plans) == 0L) plans <- plans + 1L
     storage.mode(plans) <- "integer"
@@ -170,7 +170,7 @@ redist_plans <- function(plans, map, algorithm, wgt = NULL, ...) {
 #' @concept analyze
 #' @export
 get_plans_matrix <- function(x) {
-    if (!inherits(x, "redist_plans")) cli_abort("Not a {.cls redist_plans}")
+    if (!inherits(x, "redist_plans")) cli::cli_abort("Not a {.cls redist_plans}")
     attr(x, "plans")
 }
 #' @rdname get_plans_matrix
@@ -199,7 +199,7 @@ set_plan_matrix <- function(x, mat) {
 #' @concept analyze
 #' @export
 get_plans_weights <- function(plans) {
-    if (!inherits(plans, "redist_plans")) cli_abort("Not a {.cls redist_plans}")
+    if (!inherits(plans, "redist_plans")) cli::cli_abort("Not a {.cls redist_plans}")
     wgt <- attr(plans, "wgt")
     if (!is.null(wgt))
         attr(wgt, "resampled") <- attr(plans, "resampled")
@@ -217,7 +217,7 @@ weights.redist_plans <- function(object, ...) {
 }
 
 get_n_ref <- function(x) {
-    if (!inherits(x, "redist_plans")) cli_abort("Not a {.cls redist_plans}")
+    if (!inherits(x, "redist_plans")) cli::cli_abort("Not a {.cls redist_plans}")
     plans_m <- get_plans_matrix(x)
     if (is.null(colnames(plans_m))) return(0)
     sum(nchar(colnames(plans_m)) > 0)
@@ -232,7 +232,7 @@ get_n_ref <- function(x) {
 #' @concept analysis
 #' @export
 get_sampling_info <- function(plans) {
-    if (!inherits(plans, "redist_plans")) cli_abort("Not a {.cls redist_plans}")
+    if (!inherits(plans, "redist_plans")) cli::cli_abort("Not a {.cls redist_plans}")
     all_attr <- attributes(plans)
 
     all_attr$names <- NULL
@@ -260,14 +260,14 @@ get_sampling_info <- function(plans) {
 #' @concept analyze
 #' @export
 add_reference <- function(plans, ref_plan, name = NULL) {
-    if (!inherits(plans, "redist_plans")) cli_abort("{.arg plans} must be a {.cls redist_plans}")
+    if (!inherits(plans, "redist_plans")) cli::cli_abort("{.arg plans} must be a {.cls redist_plans}")
     if (isTRUE(attr(plans, "partial")))
-        cli_abort("Reference plans not supported for partial plans objects.")
+        cli::cli_abort("Reference plans not supported for partial plans objects.")
 
     plan_m <- get_plans_matrix(plans)
-    if (!is.numeric(ref_plan)) cli_abort("{.arg ref_plan} must be numeric")
+    if (!is.numeric(ref_plan)) cli::cli_abort("{.arg ref_plan} must be numeric")
     if (length(ref_plan) != nrow(plan_m))
-        cli_abort("{.arg ref_plan} must have the same number of precincts as {.arg plans}")
+        cli::cli_abort("{.arg ref_plan} must have the same number of precincts as {.arg plans}")
 
     if (is.null(name)) {
         ref_str <- deparse(substitute(ref_plan))
@@ -276,13 +276,13 @@ add_reference <- function(plans, ref_plan, name = NULL) {
         else
             name <- ref_str
     } else {
-        if (!is.character(name)) cli_abort("{.arg name} must be a {.cls chr}")
+        if (!is.character(name)) cli::cli_abort("{.arg name} must be a {.cls chr}")
     }
 
     ref_plan <- vctrs::vec_group_id(ref_plan)
     ndists <- max(ref_plan)
     if (ndists != max(plan_m[, 1]))
-        cli_abort("{.arg ref_plan} has a different number of districts than {.arg plans}")
+        cli::cli_abort("{.arg ref_plan} has a different number of districts than {.arg plans}")
 
     # first the matrix
     plan_m <- cbind(ref_plan, plan_m)
@@ -298,7 +298,7 @@ add_reference <- function(plans, ref_plan, name = NULL) {
     if (is.ordered(plans$district)) {
         rg_labels = range(as.integer(as.character(levels(plans$district))))
         if (any(rg_labels != c(1L, attr(plans, "ndists")))) {
-            cli_abort(c("Cannot add a reference plan to a set of plans which
+            cli::cli_abort(c("Cannot add a reference plan to a set of plans which
                         have relabeled district numbers that don't start at 1.",
                         ">"="Match the district labels on the unmatched plans with
                             {.fn match_numbers}")
@@ -307,11 +307,11 @@ add_reference <- function(plans, ref_plan, name = NULL) {
 
         # good to go
         plans$district = as.integer(plans$district)
-        cli_inform(c("Coercing {.val district} column to integers.",
+        cli::cli_inform(c("Coercing {.val district} column to integers.",
                      "i"="You may want to run {.fn match_numbers} again to fix district labels.\n"))
     }
 
-    if (name %in% levels(plans$draw)) cli_abort("Reference plan name already exists")
+    if (name %in% levels(plans$draw)) cli::cli_abort("Reference plan name already exists")
     fct_levels <- c(name, levels(plans$draw))
     new_draw <- rep(factor(fct_levels, levels = fct_levels), each = ndists)
     x <- dplyr::bind_rows(
@@ -388,7 +388,7 @@ subset_ref <- function(plans, matrix = TRUE) {
 #' @concept analysis
 #' @export
 get_mh_acceptance_rate <- function(plans) {
-    if (!inherits(plans, "redist_plans")) cli_abort("Not a {.cls redist_plans}")
+    if (!inherits(plans, "redist_plans")) cli::cli_abort("Not a {.cls redist_plans}")
     alg <- attr(plans, "algorithm")
 
     if (alg %in% c("flip", "mergesplit")) {
@@ -418,7 +418,7 @@ dplyr_row_slice.redist_plans <- function(data, i, ...) {
         distrs <- table(as.integer(y$district))
         ndists <- max(plans_m[, 1])
         if (any(distrs != distrs[1]) || length(distrs) != ndists)
-            cli_warn(c("Some districts may have been dropped. This will prevent summary statistics from working correctly.",
+            cli::cli_warn(c("Some districts may have been dropped. This will prevent summary statistics from working correctly.",
                 ">" = "To avoid this message, coerce using {.fun as_tibble}."))
     }
 
@@ -472,30 +472,30 @@ rbind.redist_plans <- function(..., deparse.level = 1) {
     distr_ord <- is.ordered(objs[[1]]$district)
     for (i in 2:n_obj) {
         if (nrow(get_plans_matrix(objs[[i]])) != n_prec)
-            cli_abort("Number of precincts must match for all sets of plans.")
+            cli::cli_abort("Number of precincts must match for all sets of plans.")
         if (!identical(attr(objs[[i]], "prec_pop"), prec_pop))
-            cli_abort("Precinct populations must match for all sets of plans.")
+            cli::cli_abort("Precinct populations must match for all sets of plans.")
         if (!identical(attr(objs[[i]], "ndists"), ndists))
-            cli_abort("Number of districts must match for all sets of plans.")
+            cli::cli_abort("Number of districts must match for all sets of plans.")
         if (attr(objs[[i]], "resampled") != resamp)
-            cli_abort("Some sets of plans are resampled while others are not.")
+            cli::cli_abort("Some sets of plans are resampled while others are not.")
         if (!is.null(comp)) {
             if (attr(objs[[i]], "compactness") != comp) {
-                cli_warn("Compactness values differ across sets of plans.")
+                cli::cli_warn("Compactness values differ across sets of plans.")
                 comp <- NA
             }
         } else {
             if (!is.null(attr(objs[[i]], "compactness"))) {
-                cli_warn("Some compactness values were non-NULL. Set to {.val NA}.")
+                cli::cli_warn("Some compactness values were non-NULL. Set to {.val NA}.")
                 comp <- NA
             }
         }
         if (!identical(attr(objs[[i]], "constraints"), constr)) {
-            cli_inform("Constraints may not match for all sets of plans.")
+            cli::cli_inform("Constraints may not match for all sets of plans.")
             constr <- NA
         }
         if (is.ordered(objs[[i]]$district) != distr_ord) {
-            cli_abort(c("Some sets of plans have had district numbers matched to a reference plan,
+            cli::cli_abort(c("Some sets of plans have had district numbers matched to a reference plan,
                          while others have not. This may cause problems in analysis.",
                         "i"="Do one of the following:",
                         ">"="Match the district labels on the unmatched plans with
@@ -549,10 +549,10 @@ print.redist_plans <- function(x, ...) {
 
     fmt_comma <- function(x) format(x, nsmall = 0, digits = 1, big.mark = ",")
     if (n_ref > 0)
-        cli_text("A {.cls redist_plans} containing {fmt_comma(n_samp)}{cli::qty(n_samp)}
+        cli::cli_text("A {.cls redist_plans} containing {fmt_comma(n_samp)}{cli::qty(n_samp)}
                  sampled plan{?s} and {n_ref} reference plan{?s}")
     else
-        cli_text("A {.cls redist_plans} containing
+        cli::cli_text("A {.cls redist_plans} containing
                  {fmt_comma(n_samp)}{cli::qty(n_samp)} sampled plan{?s}")
 
     if (ncol(plans_m) == 0) return(invisible(x))
@@ -567,7 +567,7 @@ print.redist_plans <- function(x, ...) {
         none = "a custom collection")[attr(x, "algorithm")]
     if (is.na(alg_name)) alg_name <- "an unknown algorithm"
 
-    cli_text("Plans have {nd} district{?s} from a
+    cli::cli_text("Plans have {nd} district{?s} from a
              {fmt_comma(nrow(plans_m))}{cli::qty(nrow(plans_m))}-unit map,
              and were drawn using {alg_name}.")
 

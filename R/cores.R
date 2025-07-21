@@ -41,7 +41,7 @@
 #'
 redist.identify.cores <- function(adj, plan, boundary = 1, focus = NULL,
                                   simplify = TRUE) {
-    if (!is.list(adj)) cli_abort("{.arg adj} must be a list.")
+    if (!is.list(adj)) cli::cli_abort("{.arg adj} must be a list.")
     if (is.matrix(plan)) {
         plan <- plan[, 1]
     }

@@ -72,7 +72,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
 
     fmt_comma <- function(x) format(x, nsmall = 0, digits = 1, big.mark = ",")
     if (n_distr == 1 || nrow(plans_m) == 1) {
-        cli_text("{fmt_comma(n_samp)}{cli::qty(n_samp)} sampled plan{?s} of
+        cli::cli_text("{fmt_comma(n_samp)}{cli::qty(n_samp)} sampled plan{?s} of
                  {n_distr} district{?s} on
                  {fmt_comma(nrow(plans_m))}{cli::qty(nrow(plans_m))} unit{?s}")
         return(invisible(1))
@@ -80,7 +80,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
 
     prec_pop <- attr(object, "prec_pop")
     if (is.null(prec_pop)) {
-        cli_warn(c("Precinct population missing; plan diversity estimates may be misleading.",
+        cli::cli_warn(c("Precinct population missing; plan diversity estimates may be misleading.",
             ">" = 'Run `attr({name}, "prec_pop") <- <map object>$<pop column>` to fix.'))
         prec_pop <- rep(1, nrow(plans_m))
     }
@@ -89,14 +89,14 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
     div_bad <- (mean(est_div) <= 0.35) || (mean(est_div <= 0.25) > 0.1)
 
     if (algo == "smc") {
-        cli_text("{.strong SMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
+        cli::cli_text("{.strong SMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
                  districts on {fmt_comma(nrow(plans_m))} units")
-        cli_text("{.arg adapt_k_thresh}={format(all_diagn[[1]]$adapt_k_thresh, digits=3)} \u2022
+        cli::cli_text("{.arg adapt_k_thresh}={format(all_diagn[[1]]$adapt_k_thresh, digits=3)} \u2022
                  {.arg seq_alpha}={format(all_diagn[[1]]$seq_alpha, digits=2)}")
-        cli_text("{.arg pop_temper}={format(all_diagn[[1]]$pop_temper, digits=3)}")
+        cli::cli_text("{.arg pop_temper}={format(all_diagn[[1]]$pop_temper, digits=3)}")
         cat("\n")
 
-        cli_text("Plan diversity 80% range: {div_rg[1]} to {div_rg[2]}")
+        cli::cli_text("Plan diversity 80% range: {div_rg[1]} to {div_rg[2]}")
         if (div_bad) cli::cli_alert_danger("{.strong WARNING:} Low plan diversity")
         cat("\n")
 
@@ -168,7 +168,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
             rownames(tbl_print) <- c(paste("Split", seq_len(nrow(tbl_print) - 1)), "Resample")
 
             if (i == 1 || isTRUE(all_runs)) {
-                cli_text("Sampling diagnostics for SMC run {i} of {n_runs} ({fmt_comma(n_samp)} samples)")
+                cli::cli_text("Sampling diagnostics for SMC run {i} of {n_runs} ({fmt_comma(n_samp)} samples)")
                 print(tbl_print, digits = 2)
                 cat("\n")
             }
@@ -213,18 +213,18 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
     } else if (algo %in% c("mergesplit", 'flip')) {
 
         if (algo == 'mergesplit') {
-            cli_text("{.strong Merge-Split MCMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
+            cli::cli_text("{.strong Merge-Split MCMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
                  districts on {fmt_comma(nrow(plans_m))} units")
         } else {
-            cli_text("{.strong Flip MCMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
+            cli::cli_text("{.strong Flip MCMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
                  districts on {fmt_comma(nrow(plans_m))} units")
         }
 
 
         accept_rate <- sprintf("%0.1f%%", 100*attr(object, "mh_acceptance"))
-        cli_text("Chain acceptance rate{?s}: {accept_rate}")
+        cli::cli_text("Chain acceptance rate{?s}: {accept_rate}")
 
-        cli_text("Plan diversity 80% range: {div_rg[1]} to {div_rg[2]}")
+        cli::cli_text("Plan diversity 80% range: {div_rg[1]} to {div_rg[2]}")
         if (div_bad) cli::cli_alert_danger("{.strong WARNING:} Low plan diversity")
         cat("\n")
 
@@ -289,7 +289,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
                         If you are experiencing low plan diversity, address that issue first.")
         }
     } else {
-        cli_abort("{.fn summary} is not supported for the {toupper(algo)} algorithm.")
+        cli::cli_abort("{.fn summary} is not supported for the {toupper(algo)} algorithm.")
     }
 
     invisible(out)

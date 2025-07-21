@@ -40,8 +40,8 @@ find_numbering <- function(plan, ref, pop, tot_pop) {
 #' @concept analyze
 #' @export
 match_numbers <- function(data, plan, total_pop = attr(data, "prec_pop"), col = "pop_overlap") {
-    if (!inherits(data, "redist_plans")) cli_abort("{.arg data} must be a {.cls redist_plans}")
-    if (!"district" %in% names(data)) cli_abort("Missing {.field district} column in {.arg data}")
+    if (!inherits(data, "redist_plans")) cli::cli_abort("{.arg data} must be a {.cls redist_plans}")
+    if (!"district" %in% names(data)) cli::cli_abort("Missing {.field district} column in {.arg data}")
 
     plan_mat <- get_plans_matrix(data)
     if (is.character(plan)) plan <- plan_mat[, plan]
@@ -50,11 +50,11 @@ match_numbers <- function(data, plan, total_pop = attr(data, "prec_pop"), col = 
 
 
     if (is.null(total_pop))
-        cli_abort("Must provide {.arg total_pop} for this {.cls redist_plans} object.")
+        cli::cli_abort("Must provide {.arg total_pop} for this {.cls redist_plans} object.")
     if (max(plan_mat[, 1]) != ndists)
-        cli_abort("Can't match numbers on a subset of a {.cls redist_plans}")
+        cli::cli_abort("Can't match numbers on a subset of a {.cls redist_plans}")
     if (length(plan) != nrow(plan_mat))
-        cli_abort(c("{.arg plan} doesn't have the right length.",
+        cli::cli_abort(c("{.arg plan} doesn't have the right length.",
                     "i"="{.code length(plan)} should match the number of precincts,
                     i.e., {.code nrow(get_plans_matrix(data))}."))
 
@@ -96,8 +96,8 @@ match_numbers <- function(data, plan, total_pop = attr(data, "prec_pop"), col = 
 #' @concept analyze
 #' @export
 number_by <- function(data, x, desc = FALSE) {
-    if (!inherits(data, "redist_plans")) cli_abort("{.arg data} must be a {.cls redist_plans}")
-    if (!"district" %in% names(data)) cli_abort("Missing {.field district} column in {.arg data}")
+    if (!inherits(data, "redist_plans")) cli::cli_abort("{.arg data} must be a {.cls redist_plans}")
+    if (!"district" %in% names(data)) cli::cli_abort("Missing {.field district} column in {.arg data}")
 
     ord <- 1 - 2*desc
     m <- get_plans_matrix(data)

@@ -27,7 +27,7 @@ redist.plot.wted.adj <- function(shp, plans, counties = NULL,
     if ("SpatialPolygonsDataFrame" %in% class(shp)) {
         shp <- shp %>% st_as_sf()
     } else if (!inherits(shp, "sf")) {
-        cli_abort("{.arg shp} must be a {.cls SpatialPolygonsDataFrame} or {.cls sf} object.")
+        cli::cli_abort("{.arg shp} must be a {.cls SpatialPolygonsDataFrame} or {.cls sf} object.")
     }
 
     check_tidy_types(NULL, plans)

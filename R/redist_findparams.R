@@ -323,36 +323,36 @@ redist.findparams <- function(map,
     names <- names(params)
     if (sum(names %in% valid_names) < length(names)) {
         invalid_name <- names[!(names %in% valid_names)]
-        cli_abort(paste(invalid_name, "is not a valid params input. Please see documentation.\n", sep = " "))
+        cli::cli_abort(paste(invalid_name, "is not a valid params input. Please see documentation.\n", sep = " "))
     }
 
     ## Check ndists, init_plan
     if (sum("lambda" %in% names & adapt_lambda) > 0) {
-        cli_warn("You have specified a grid of lambda values to search and set `adapt_lambda` to TRUE. Setting `adapt_lambda` to FALSE.")
+        cli::cli_warn("You have specified a grid of lambda values to search and set `adapt_lambda` to TRUE. Setting `adapt_lambda` to FALSE.")
         adapt_lambda <- FALSE
     }
     if (sum("eprob" %in% names & adapt_eprob) > 0) {
-        cli_warn("You have specified a grid of eprob values to search and set `adapt_eprob` to TRUE. Setting `adapt_eprob` to FALSE.")
+        cli::cli_warn("You have specified a grid of eprob values to search and set `adapt_eprob` to TRUE. Setting `adapt_eprob` to FALSE.")
         adapt_eprob <- FALSE
     }
     if ("weight_segregation" %in% names & is.null(group_pop)) {
-        cli_abort("If constraining on segregation, please provide a vector of group population.")
+        cli::cli_abort("If constraining on segregation, please provide a vector of group population.")
     }
     if ("weight_compact" %in% names & is.null(ssdmat)) {
-        cli_abort("If constraining on compactness, please provide a distances matrix.")
+        cli::cli_abort("If constraining on compactness, please provide a distances matrix.")
     }
     if ("weight_similarity" %in% names & is.null(init_plan)) {
-        cli_abort("If constraining on similarity, please provide a vector of initial congressional district assignments.")
+        cli::cli_abort("If constraining on similarity, please provide a vector of initial congressional district assignments.")
     }
     if ("weight_countysplit" %in% names & is.null(counties)) {
-        cli_abort("If constraining the number of county splits, please provide a vector of county assignments.")
+        cli::cli_abort("If constraining the number of county splits, please provide a vector of county assignments.")
     }
 
     if (parallel) { ## Parallel
 
         ## Check to see if threads declared
         if (is.null(ncores)) {
-            cli_abort("If parallelizing, please declare the number of threads")
+            cli::cli_abort("If parallelizing, please declare the number of threads")
         }
 
         ## Statement initializing parallelization

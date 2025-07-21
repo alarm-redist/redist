@@ -112,21 +112,21 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     stopifnot(is.function(score_fn))
 
     if (compactness < 0)
-        cli_abort("{.arg compactness} must be non-negative.")
+        cli::cli_abort("{.arg compactness} must be non-negative.")
     if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
-        cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
+        cli::cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
 
     if (burst_size(1) < 1 || max_bursts < 1)
-        cli_abort("{.arg burst_size} and {.arg max_bursts} must be positive.")
+        cli::cli_abort("{.arg burst_size} and {.arg max_bursts} must be positive.")
     if (thin < 1 || thin > max_bursts)
-        cli_abort("{.arg thin} must be a positive integer, and no larger than {.arg max_bursts}.")
+        cli::cli_abort("{.arg thin} must be a positive integer, and no larger than {.arg max_bursts}.")
 
     counties <- rlang::eval_tidy(rlang::enquo(counties), map)
     if (is.null(counties)) {
         counties <- rep(1, V)
     } else {
         if (any(is.na(counties)))
-            cli_abort("County vector must not contain missing values.")
+            cli::cli_abort("County vector must not contain missing values.")
 
         # handle discontinuous counties
         component <- contiguity(adj, vctrs::vec_group_id(counties))
@@ -137,7 +137,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
             as.integer()
 
         if (any(component > 1)) {
-            cli_warn("Counties were not contiguous; expect additional splits.")
+            cli::cli_warn("Counties were not contiguous; expect additional splits.")
         }
     }
 
@@ -149,11 +149,11 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
 
     # check init
     if (length(init_plan) != V)
-        cli_abort("{.arg init_plan} must be as long as the number of units as `map`.")
+        cli::cli_abort("{.arg init_plan} must be as long as the number of units as `map`.")
     if (max(init_plan) != ndists)
-        cli_abort("{.arg init_plan} must have the same number of districts as `map`.")
+        cli::cli_abort("{.arg init_plan} must have the same number of districts as `map`.")
     if (any(contiguity(adj, init_plan) != 1))
-        cli_warn("{.arg init_plan} should have contiguous districts.")
+        cli::cli_warn("{.arg init_plan} should have contiguous districts.")
 
 
     if (backend == "mergesplit") {
@@ -166,12 +166,12 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     if ((backend == 'flip' && any(pop >= get_target(map))) ||
         (backend == 'mergesplit' && any(pop >= pop_bounds[3]))) {
         too_big <- as.character(which(pop >= pop_bounds[3]))
-        cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
+        cli::cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
                     population larger than the district target.",
             "x" = "Redistricting impossible."))
     }
 
-    if (!inherits(constraints, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
+    if (!inherits(constraints, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
     constraints <- as.list(constraints)
 
     if (backend == "mergesplit") {
@@ -193,10 +193,10 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     } else {
 
         if (flip_eprob <= 0 || flip_eprob >= 1) {
-            cli_abort("{.arg flip_eprob} must be in the interval (0, 1).")
+            cli::cli_abort("{.arg flip_eprob} must be in the interval (0, 1).")
         }
         if (flip_lambda < 0) {
-            cli_abort("{.arg flip_lambda} must be a nonnegative integer.")
+            cli::cli_abort("{.arg flip_lambda} must be a nonnegative integer.")
         }
 
         run_burst <- function(init, steps) {
@@ -266,7 +266,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         this_burst_size <- burst_size(burst)
         burst_sizes[burst] <- this_burst_size
         if (this_burst_size <= 0) {
-            cli_abort(c("Burst size must be at least 1.",
+            cli::cli_abort(c("Burst size must be at least 1.",
                         "x"="Found {this_burst_size} on iteration {burst}."))
         }
         keep <- seq_len(this_burst_size)

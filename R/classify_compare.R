@@ -74,7 +74,7 @@ compare_plans <- function(plans, set1, set2, shp = NULL, plot = "fill", thresh =
         if (is.logical(set1)) set1 <- unique(as.integer(plans$draw[set1]))
         if (is.logical(set2)) set2 <- unique(as.integer(plans$draw[set2]))
         if (length(intersect(set1, set2)) > 0)
-            cli_abort("{.arg set1} and {.arg set2} must be mutually exclusive.")
+            cli::cli_abort("{.arg set1} and {.arg set2} must be mutually exclusive.")
         n1 <- length(set1)
         n2 <- length(set2)
         stopifnot(n1 > 0 && n2 > 0)
@@ -83,7 +83,7 @@ compare_plans <- function(plans, set1, set2, shp = NULL, plot = "fill", thresh =
         pm2 <- pm1
     } else  {
         if (!inherits(set1, "redist_plans"))
-            cli_abort("Must provide both {.arg set1} and {.arg set2} or
+            cli::cli_abort("Must provide both {.arg set1} and {.arg set2} or
                       provide {.arg set1} as a {.cls redist_plans} object.")
 
 
@@ -95,7 +95,7 @@ compare_plans <- function(plans, set1, set2, shp = NULL, plot = "fill", thresh =
         set2 <- seq_len(n2)
 
         if (nrow(pm1) != nrow(pm2))
-            cli_abort("Both sets of plans must use the same number of precincts.")
+            cli::cli_abort("Both sets of plans must use the same number of precincts.")
     }
 
     base_co <- 1/max(pm1[, 1]) # baseline coccurence

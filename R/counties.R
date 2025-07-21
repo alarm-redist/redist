@@ -20,7 +20,7 @@
 #'
 redist.county.relabel <- function(adj, counties,  simplify = TRUE) {
     if (length(adj) != length(counties)) {
-        cli_abort("{.arg adj} and {.arg counties} must have the same length.")
+        cli::cli_abort("{.arg adj} and {.arg counties} must have the same length.")
     }
 
     if ("numeric" %in% class(counties) || "integer" %in% class(counties)) {
@@ -66,7 +66,7 @@ redist.county.id <- function(counties) {
             county_id[i] <- which(uc == counties[i])
         }
     } else {
-        cli_abort("{.arg counties} must be a character, numeric, or integer vector.")
+        cli::cli_abort("{.arg counties} must be a character, numeric, or integer vector.")
     }
 
     county_id

@@ -114,13 +114,13 @@ proj_contr <- function(plans, x, compare=NA, draws=NA, norm=FALSE, pfdr=FALSE) {
     }
 
     if (length(compare) != 1) {
-        cli_abort("{.arg compare} must refer to a single plan")
+        cli::cli_abort("{.arg compare} must refer to a single plan")
     }
     comp_idx <- if (is.na(compare)) {
         if (n_ref > 0) {
             1
         } else {
-            cli_abort("If there are no reference plans, {.arg comp} must be specified and not NA.")
+            cli::cli_abort("If there are no reference plans, {.arg comp} must be specified and not NA.")
         }
     } else if (is.logical(compare)) {
         which(compare)
@@ -224,13 +224,13 @@ qvalues <- function(ests, p) {
 #' @export
 redist.plot.contr_pfdr <- function(map, contr, level=0.05, density=0.2, spacing=0.015) {
     if (is.null(attr(contr, "q"))) {
-        cli_abort("Must provide {.arg pfdr=TRUE} to {.fn proj_contr} to use {.fn redist.plot.contr_pfdr}.")
+        cli::cli_abort("Must provide {.arg pfdr=TRUE} to {.fn proj_contr} to use {.fn redist.plot.contr_pfdr}.")
     }
 
     p = plot(map, contr)
     q = attr(contr, "q")
     if (!is.numeric(level) || level < 0 || level > 1) {
-        cli_abort("{.arg level} must be a number between 0 and 1.")
+        cli::cli_abort("{.arg level} must be a number between 0 and 1.")
     }
     if (!any(q <= level)) return(p)
     rlang::check_installed("ggpattern", "for pFDR-controlling projective contrast plots.")

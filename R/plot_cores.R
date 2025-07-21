@@ -17,13 +17,13 @@ redist.plot.cores <- function(shp, plan = NULL, core = NULL, lwd = 2) {
         if (inherits(shp, "redist_map")) {
             plan <- get_existing(shp)
         } else {
-            cli_abort("{.arg plan} is required if {.arg shp} is not a {.cls redist_map}.")
+            cli::cli_abort("{.arg plan} is required if {.arg shp} is not a {.cls redist_map}.")
         }
     }
 
     core <- eval_tidy(enquo(core), shp)
     if (missing(core)) {
-        cli_abort("{.arg core} is required.")
+        cli::cli_abort("{.arg core} is required.")
     }
 
     shp$plan <- plan

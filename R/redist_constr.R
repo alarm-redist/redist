@@ -14,13 +14,13 @@ new_redist_constr <- function(constr = list(), data = tibble()) {
     constr <- reconstruct.redist_constr(constr, NULL)
 
     if (length(constr) > 0) {
-        if (is.null(names(constr))) cli_abort("Null names.")
-        if (any(names(constr) == "")) cli_abort("Empty names.")
+        if (is.null(names(constr))) cli::cli_abort("Null names.")
+        if (any(names(constr) == "")) cli::cli_abort("Empty names.")
         for (el in constr) {
-            if (!is.list(el)) cli_abort("Not a nested list")
+            if (!is.list(el)) cli::cli_abort("Not a nested list")
             classes <- vapply(el, class, character(1))
             if (length(classes) == 0 || any(classes != "list"))
-                cli_abort("Not a nested list")
+                cli::cli_abort("Not a nested list")
         }
     }
 
@@ -31,8 +31,8 @@ new_redist_constr <- function(constr = list(), data = tibble()) {
 }
 
 validate_redist_constr <- function(constr) {
-    if (!is.list(constr)) cli_abort("Not a list")
-    if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
+    if (!is.list(constr)) cli::cli_abort("Not a list")
+    if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
 
     constr
 }
@@ -241,15 +241,15 @@ NULL
 #' @rdname constraints
 #' @export
 add_constr_status_quo <- function(constr, strength, current) {
-    if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
-    if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
+    if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
+    if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results")
     data <- attr(constr, "data")
     if (missing(current)) current <- get_existing(data)
 
     new_constr <- list(strength = strength,
         current = eval_tidy(enquo(current), data))
     if (is.null(current) || length(new_constr$current) != nrow(data))
-        cli_abort("{.arg current} must be provided, and must have as many
+        cli::cli_abort("{.arg current} must be provided, and must have as many
                   precincts as the {.cls redist_map}")
     new_constr$n_current <- max(new_constr$current)
 
@@ -265,8 +265,8 @@ add_constr_status_quo <- function(constr, strength, current) {
 #' @export
 add_constr_grp_pow <- function(constr, strength, group_pop, total_pop = NULL,
                                tgt_group = 0.5, tgt_other = 0.5, pow = 1.0) {
-    if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
-    if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
+    if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
+    if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results")
     data <- attr(constr, "data")
 
     new_constr <- list(strength = strength,
@@ -277,7 +277,7 @@ add_constr_grp_pow <- function(constr, strength, group_pop, total_pop = NULL,
         if (!is.null(attr(data, "pop_col"))) {
             new_constr$total_pop <- data[[attr(data, "pop_col")]]
         } else {
-            cli_abort("{.arg total_pop} missing.")
+            cli::cli_abort("{.arg total_pop} missing.")
         }
     }
 
@@ -292,8 +292,8 @@ add_constr_grp_pow <- function(constr, strength, group_pop, total_pop = NULL,
 #' @export
 add_constr_grp_hinge <- function(constr, strength, group_pop, total_pop = NULL,
                                  tgts_group = c(0.55)) {
-    if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
-    # if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
+    if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
+    # if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results")
     data <- attr(constr, "data")
 
     new_constr <- list(strength = strength,
@@ -304,7 +304,7 @@ add_constr_grp_hinge <- function(constr, strength, group_pop, total_pop = NULL,
         if (!is.null(attr(data, "pop_col"))) {
             new_constr$total_pop <- data[[attr(data, "pop_col")]]
         } else {
-            cli_abort("{.arg total_pop} missing.")
+            cli::cli_abort("{.arg total_pop} missing.")
         }
     }
 
@@ -320,8 +320,8 @@ add_constr_grp_hinge <- function(constr, strength, group_pop, total_pop = NULL,
 #' @export
 add_constr_grp_inv_hinge <- function(constr, strength, group_pop, total_pop = NULL,
                                      tgts_group = c(0.55)) {
-    if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
-    # if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
+    if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
+    # if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results")
     data <- attr(constr, "data")
 
     new_constr <- list(strength = strength,
@@ -332,7 +332,7 @@ add_constr_grp_inv_hinge <- function(constr, strength, group_pop, total_pop = NU
         if (!is.null(attr(data, "pop_col"))) {
             new_constr$total_pop <- data[[attr(data, "pop_col")]]
         } else {
-            cli_abort("{.arg total_pop} missing.")
+            cli::cli_abort("{.arg total_pop} missing.")
         }
     }
 
@@ -345,8 +345,8 @@ add_constr_grp_inv_hinge <- function(constr, strength, group_pop, total_pop = NU
 #' @rdname constraints
 #' @export
 add_constr_compet <- function(constr, strength, dvote, rvote, pow = 0.5) {
-    if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
-    if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
+    if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
+    if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results")
     data <- attr(constr, "data")
 
     new_constr <- list(strength = strength,
@@ -366,8 +366,8 @@ add_constr_compet <- function(constr, strength, dvote, rvote, pow = 0.5) {
 #' @rdname constraints
 #' @export
 add_constr_incumbency <- function(constr, strength, incumbents) {
-    if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
-    if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
+    if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
+    if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results")
     data <- attr(constr, "data")
 
     new_constr <- list(strength = strength,
@@ -380,16 +380,16 @@ add_constr_incumbency <- function(constr, strength, incumbents) {
 #' @rdname constraints
 #' @export
 add_constr_splits <- function(constr, strength, admin) {
-    if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
-    if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
+    if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
+    if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results")
     data <- attr(constr, "data")
 
     admin <- eval_tidy(enquo(admin), data)
     if (is.null(admin)) {
-        cli_abort("{.arg admin} may not be {.val NULL}.")
+        cli::cli_abort("{.arg admin} may not be {.val NULL}.")
     }
     if (any(is.na(admin))) {
-        cli_abort("{.arg admin} many not contain {.val NA}s.")
+        cli::cli_abort("{.arg admin} many not contain {.val NA}s.")
     }
     admin <- vctrs::vec_group_id(admin)
 
@@ -403,16 +403,16 @@ add_constr_splits <- function(constr, strength, admin) {
 #' @rdname constraints
 #' @export
 add_constr_multisplits <- function(constr, strength, admin) {
-    if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
-    if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
+    if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
+    if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results")
     data <- attr(constr, "data")
 
     admin <- eval_tidy(enquo(admin), data)
     if (is.null(admin)) {
-        cli_abort("{.arg admin} may not be {.val NULL}.")
+        cli::cli_abort("{.arg admin} may not be {.val NULL}.")
     }
     if (any(is.na(admin))) {
-        cli_abort("{.arg admin} many not contain {.val NA}s.")
+        cli::cli_abort("{.arg admin} many not contain {.val NA}s.")
     }
 
     admin <- vctrs::vec_group_id(admin)
@@ -426,16 +426,16 @@ add_constr_multisplits <- function(constr, strength, admin) {
 #' @rdname constraints
 #' @export
 add_constr_total_splits <- function(constr, strength, admin) {
-    if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
-    if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
+    if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
+    if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results")
     data <- attr(constr, "data")
 
     admin <- eval_tidy(enquo(admin), data)
     if (is.null(admin)) {
-        cli_abort("{.arg admin} may not be {.val NULL}.")
+        cli::cli_abort("{.arg admin} may not be {.val NULL}.")
     }
     if (any(is.na(admin))) {
-        cli_abort("{.arg admin} many not contain {.val NA}s.")
+        cli::cli_abort("{.arg admin} many not contain {.val NA}s.")
     }
 
     admin <- vctrs::vec_group_id(admin)
@@ -449,8 +449,8 @@ add_constr_total_splits <- function(constr, strength, admin) {
 #' @rdname constraints
 #' @export
 add_constr_pop_dev <- function(constr, strength) {
-    if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
-    if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results.")
+    if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
+    if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results.")
     data <- attr(constr, "data")
 
     new_constr <- list(strength = strength)
@@ -460,8 +460,8 @@ add_constr_pop_dev <- function(constr, strength) {
 #' @rdname constraints
 #' @export
 add_constr_segregation <- function(constr, strength, group_pop, total_pop = NULL) {
-    if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
-    if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results.")
+    if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
+    if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results.")
     data <- attr(constr, "data")
 
     new_constr <- list(strength = strength,
@@ -471,11 +471,11 @@ add_constr_segregation <- function(constr, strength, group_pop, total_pop = NULL
         if (!is.null(attr(data, "pop_col"))) {
             new_constr$total_pop <- data[[attr(data, "pop_col")]]
         } else {
-            cli_abort("{.arg total_pop} missing.")
+            cli::cli_abort("{.arg total_pop} missing.")
         }
     }
     if (is.null(new_constr$group_pop)) {
-        cli_abort("{.arg group_pop} missing.")
+        cli::cli_abort("{.arg group_pop} missing.")
     }
 
     stopifnot(length(new_constr$group_pop) == nrow(data))
@@ -487,12 +487,12 @@ add_constr_segregation <- function(constr, strength, group_pop, total_pop = NULL
 #' @rdname constraints
 #' @export
 add_constr_polsby <- function(constr, strength, perim_df = NULL) {
-    if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
-    if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results.")
+    if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
+    if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results.")
     data <- attr(constr, "data")
 
     if (!inherits(data, "sf")) {
-        cli_abort("Input to {.fun redist_constr} must be a {.cls sf} object.")
+        cli::cli_abort("Input to {.fun redist_constr} must be a {.cls sf} object.")
     }
 
     areas <- sf::st_area(data)
@@ -515,8 +515,8 @@ add_constr_polsby <- function(constr, strength, perim_df = NULL) {
 #' @param denominator Fryer Holden minimum value to normalize by. Default is 1 (no normalization).
 #' @export
 add_constr_fry_hold <- function(constr, strength, total_pop = NULL, ssdmat = NULL, denominator = 1) {
-    if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
-    if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results.")
+    if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
+    if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results.")
     data <- attr(constr, "data")
 
     total_pop <- eval_tidy(enquo(total_pop), data)
@@ -524,7 +524,7 @@ add_constr_fry_hold <- function(constr, strength, total_pop = NULL, ssdmat = NUL
         if (!is.null(attr(data, "pop_col"))) {
             total_pop <- data[[attr(data, "pop_col")]]
         } else {
-            cli_abort("{.arg total_pop} missing.")
+            cli::cli_abort("{.arg total_pop} missing.")
         }
     }
     if (is.null(ssdmat)) {
@@ -543,8 +543,8 @@ add_constr_fry_hold <- function(constr, strength, total_pop = NULL, ssdmat = NUL
 #' @rdname constraints
 #' @export
 add_constr_log_st <- function(constr, strength, admin = NULL) {
-    if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
-    if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results.")
+    if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
+    if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results.")
     data <- attr(constr, "data")
 
     admin <- eval_tidy(enquo(admin), data)
@@ -552,7 +552,7 @@ add_constr_log_st <- function(constr, strength, admin = NULL) {
         admin <- rep(1, nrow(data))
     }
     if (any(is.na(admin))) {
-        cli_abort("{.arg admin} many not contain {.val NA}s.")
+        cli::cli_abort("{.arg admin} many not contain {.val NA}s.")
     }
 
     admin <- vctrs::vec_group_id(admin)
@@ -566,8 +566,8 @@ add_constr_log_st <- function(constr, strength, admin = NULL) {
 #' @rdname constraints
 #' @export
 add_constr_edges_rem <- function(constr, strength) {
-    if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
-    if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results.")
+    if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
+    if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results.")
     data <- attr(constr, "data")
 
     new_constr <- list(strength = strength)
@@ -578,8 +578,8 @@ add_constr_edges_rem <- function(constr, strength) {
 #' @param cities A vector containing zero entries for non-cities and non-zero entries for each city for `qps`.
 #' @noRd
 add_constr_qps <- function(constr, strength, cities, total_pop = NULL) {
-    if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
-    if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results.")
+    if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
+    if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results.")
     data <- attr(constr, "data")
 
     new_constr <- list(strength = strength,
@@ -616,11 +616,11 @@ extract_vars = function(expr) {
 #' @rdname constraints
 #' @export
 add_constr_custom <- function(constr, strength, fn) {
-    if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
-    if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
+    if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
+    if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results")
 
     args <- rlang::fn_fmls(fn)
-    if (length(args) != 2) cli_abort("Function must take exactly two arguments.")
+    if (length(args) != 2) cli::cli_abort("Function must take exactly two arguments.")
 
     constr_env = rlang::fn_env(fn)
     constr_env <- rlang::env(constr_env)
@@ -642,12 +642,12 @@ add_constr_custom <- function(constr, strength, fn) {
 
     if (!is.null(plan <- get_existing(attr(constr, "data")))) {
         out <- tryCatch(fn(plan, min(plan)), error = function(e) {
-            cli_abort(c("Ran into an error testing custom constraint
+            cli::cli_abort(c("Ran into an error testing custom constraint
                         on the existing plan:",
                 "x" = e$message))
         })
         if (!is.numeric(out) || length(out) != 1 || !is.finite(out))
-            cli_abort(c("Evaluting custom constraint on the existing plan failed.",
+            cli::cli_abort(c("Evaluting custom constraint on the existing plan failed.",
                 "*" = "The constraint function should return a single scalar value.",
                 "*" = "Make sure that your constraint function tests all edge cases
                              and never returns {.val {NA}} or {.val {Inf}}."))
@@ -672,7 +672,7 @@ add_constr_custom <- function(constr, strength, fn) {
 #' @export
 print.redist_constr <- function(x, header = TRUE, details = TRUE, ...) {
     if (header)
-        cli_text("A {.cls redist_constr} with {length(x)} constraint{?s}")
+        cli::cli_text("A {.cls redist_constr} with {length(x)} constraint{?s}")
 
     print_constr <- function(x) {
         if (details) {
@@ -765,7 +765,7 @@ print.redist_constr <- function(x, header = TRUE, details = TRUE, ...) {
 #' @concept prepare
 #' @export
 plot.redist_constr <- function(x, y, type="group", xlim=c(0, 1), ...) {
-    if (type != "group") cli_abort("Only {.arg type = \"group\"} is currently supported.")
+    if (type != "group") cli::cli_abort("Only {.arg type = \"group\"} is currently supported.")
 
     out <- tibble(share = seq(xlim[1], xlim[2], by = .001),
                   penalty = 0)
@@ -794,7 +794,7 @@ plot.redist_constr <- function(x, y, type="group", xlim=c(0, 1), ...) {
     }
 
     if (warn_multiple) {
-        cli_warn("Multiple group-share targets found; only plotting first.")
+        cli::cli_warn("Multiple group-share targets found; only plotting first.")
     }
 
     ggplot(out, aes(x=.data$share, y=.data$penalty)) +

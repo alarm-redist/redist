@@ -27,15 +27,15 @@
 #'
 redist.freeze <- function(adj, freeze_row, plan = rep(1, length(adj))) {
     if (missing(adj)) {
-        cli_abort("Please provide an object to {.arg adj}.")
+        cli::cli_abort("Please provide an object to {.arg adj}.")
     }
 
     if (!"list" %in% class(adj)) {
-        cli_abort("{.arg adj} must be an adjacency list.")
+        cli::cli_abort("{.arg adj} must be an adjacency list.")
     }
 
     if (missing(freeze_row)) {
-        cli_abort("Please provide a vector to {.arg freeze_row}.")
+        cli::cli_abort("Please provide a vector to {.arg freeze_row}.")
     }
 
     if (is.numeric(freeze_row)) {
@@ -44,7 +44,7 @@ redist.freeze <- function(adj, freeze_row, plan = rep(1, length(adj))) {
         }
     } else if (is.logical(freeze_row)) {
         if (length(freeze_row) != length(adj)) {
-            cli_abort("{.arg freeze_row} is logical but does not match {.arg adj} length.")
+            cli::cli_abort("{.arg freeze_row} is logical but does not match {.arg adj} length.")
         }
     } else {
         stop("{.arg freeze_row} must be a logical vector or have numeric/integer indices.")
@@ -75,11 +75,11 @@ redist.freeze <- function(adj, freeze_row, plan = rep(1, length(adj))) {
 #' @export
 freeze <- function(freeze_row, plan, .data = cur_map()) {
     if (is.null(.data))
-        cli_abort("Must provide {.arg .data} if not called within a {.pkg dplyr} verb")
+        cli::cli_abort("Must provide {.arg .data} if not called within a {.pkg dplyr} verb")
     if (!inherits(.data, "redist_map"))
-        cli_abort("{.arg .data} must be a {.cls redist_map}")
+        cli::cli_abort("{.arg .data} must be a {.cls redist_map}")
     if (missing(freeze_row))
-        cli_abort("{.arg freeze_row} cannot be missing.")
+        cli::cli_abort("{.arg freeze_row} cannot be missing.")
 
     adj <- get_adj(.data)
     if (missing(plan))
