@@ -126,8 +126,6 @@ public:
 
     // Compute the log number of spanning trees on the entire plan
     double compute_log_plan_spanning_trees(MapParams const &map_params) const;
-
-    double compute_log_linking_edge_count(PlanMultigraph &plan_multigraph) const;
     
     // attempts to build a plan multigraph and return valid merge split pairs 
     virtual std::pair<bool, std::vector<std::pair<RegionID,RegionID>>> attempt_to_get_valid_mergesplit_pairs(
@@ -330,7 +328,7 @@ class RegionPairHash{
 
         std::vector<std::pair<
             std::pair<RegionID, RegionID>, PairHashData
-        >> get_all_values() const{
+        >> get_all_values(bool const filter_invalid_hier_merges = false) const{
             std::vector<std::pair<
             std::pair<RegionID, RegionID>, 
             PairHashData
@@ -339,6 +337,9 @@ class RegionPairHash{
 
             for(auto const a_pair: hashed_pairs){
                 auto val = get_value(a_pair.first, a_pair.second);
+                // skip if invalid hier merge and we don't care
+                if(filter_invalid_hier_merges && !val.second.merge_is_hier_valid) continue;
+
                 all_data.push_back({a_pair, val.second});
             }
 
@@ -424,6 +425,7 @@ class PlanMultigraph{
         std::vector<std::unordered_set<CountyID>> region_overlap_counties; // Stores which counties a region overlaps in
         
         int num_county_region_components; // number of connected components 
+        int num_county_connected_components; // Number of different county adj components 
 
         // queues used when building multigraph  
         CircularQueue<int> other_counties_vertices;
@@ -500,14 +502,32 @@ class PlanMultigraph{
         );
 
 
-        // gets multigraph counts for linking edge calculations 
-        RegionMultigraphCount get_multigraph_counts(int const num_regions) const;
-
-        double get_log_multigraph_tau(
+        // Computes log linking edges for non-hierarchical plans
+        double compute_non_hierarchical_log_multigraph_tau(
             int const num_regions, ScoringFunction const &scoring_function
         );
 
-        double get_log_merged_multigraph_tau(
+        double compute_non_hierarchical_merged_log_multigraph_tau(
+            int const num_regions, std::vector<int> &merge_index_reshuffle,
+            RegionID const region1_id, RegionID const region2_id,
+            ScoringFunction const &scoring_function
+        );
+
+        double compute_hierarchical_log_multigraph_tau(
+            int const num_regions, ScoringFunction const &scoring_function
+        );
+
+        double compute_hierarchical_merged_log_multigraph_tau(
+            int const num_regions, std::vector<int> &merge_index_reshuffle,
+            RegionID const region1_id, RegionID const region2_id,
+            ScoringFunction const &scoring_function
+        );
+
+        double compute_log_multigraph_tau(
+            int const num_regions, ScoringFunction const &scoring_function
+        );
+
+        double compute_merged_log_multigraph_tau(
             int const num_regions, std::vector<int> &merge_index_reshuffle,
             RegionID const region1_id, RegionID const region2_id,
             ScoringFunction const &scoring_function

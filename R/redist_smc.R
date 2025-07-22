@@ -350,11 +350,11 @@ redist_smc <- function(
   forward_kernel_params <- split_stuff_list$forward_kernel_params
 
   # linking edge with counties not supported right now
-  if (num_admin_units > 1 && sampling_space == LINKING_EDGE_SPACE_SAMPLING) {
-      cli_abort(
-          "Linking Edge Sampling with counties is not supported right now"
-      )
-  }
+  # if (num_admin_units > 1 && sampling_space == LINKING_EDGE_SPACE_SAMPLING) {
+  #     cli_abort(
+  #         "Linking Edge Sampling with counties is not supported right now"
+  #     )
+  # }
 
   total_smc_steps <- n_steps
 
