@@ -8,6 +8,7 @@
 #include <vector>
 #include <queue>
 #include <cstdint>
+#include <memory>
 #include <stdint.h>
 #include <RcppArmadillo.h>
 

@@ -98,8 +98,17 @@ List draw_a_tree_on_a_region(
     rng_states.emplace_back(global_rng_seed2, 6);
     // Create a plan object via size 1 ensemble
     RcppThread::ThreadPool pool(0);
+
+    // fake splitting schedule, don't actually use
+    // Just need for constructor 
+    int const fake_ndists = ndists;
+    std::vector<int> wat{1};
+    auto splitting_schedule_ptr = std::make_unique<PureMSSplittingSchedule>(fake_ndists, fake_ndists, wat);
+
+
     PlanEnsemble plan_ensemble(
-        map_params, num_regions,
+        map_params, *splitting_schedule_ptr,
+        num_regions,
         1, SamplingSpace::GraphSpace,
         region_ids, 
         region_sizes, rng_states,
@@ -234,8 +243,15 @@ List perform_a_valid_multidistrict_split(
     rng_states.emplace_back(global_rng_seed2, 6);
     // Create a plan object via size 1 ensemble
     RcppThread::ThreadPool pool(0);
+
+    // fake splitting schedule, don't actually use
+    // Just need for constructor 
+    auto splitting_schedule_ptr = std::make_unique<PureMSSplittingSchedule>(ndists, ndists, std::vector<int>{1});
+
+
     PlanEnsemble plan_ensemble(
-        map_params, num_regions,
+        map_params, *splitting_schedule_ptr,
+        num_regions,
         1, SamplingSpace::GraphSpace,
         region_ids, 
         region_sizes, rng_states,
@@ -251,7 +267,7 @@ List perform_a_valid_multidistrict_split(
         plan_ensemble.plan_ptr_vec[0]->Rprint();
     }
 
-    auto splitting_schedule_ptr = std::make_unique<PureMSSplittingSchedule>(ndists, ndists, std::vector<int>{1});
+    
 
     // Create tree related stuff
     int uncut_tree_root;
@@ -678,9 +694,13 @@ List attempt_splits_on_a_region(
     if (num_threads <= 0) num_threads = std::thread::hardware_concurrency();
     RcppThread::ThreadPool pool(num_threads);
 
+    std::vector<int> wat{1};
+    auto splitting_schedule_ptr = std::make_unique<PureMSSplittingSchedule>(ndists, ndists, wat);
+
     // create the plan
     PlanEnsemble plan_ensemble(
-        map_params, init_num_regions,
+        map_params, *splitting_schedule_ptr,
+        init_num_regions,
         1, SamplingSpace::GraphSpace,
         region_ids, 
         region_sizes, rng_states,

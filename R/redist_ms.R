@@ -393,12 +393,6 @@ redist_mergesplit <- function(
     doParallel::registerDoParallel(cl, cores = ncores)
     on.exit(stopCluster(cl))
 
-    # this makes it avoid printing the loading required package message each time
-    parallel::clusterEvalQ(cl, {
-      suppressPackageStartupMessages(library(foreach))
-      suppressPackageStartupMessages(library(rngtools))
-      suppressPackageStartupMessages(library(redist))
-    })
 
     # Ensures only one process will print when there's multiple processes
     # to avoid cluttering output

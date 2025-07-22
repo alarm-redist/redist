@@ -204,6 +204,7 @@ struct PairHashData{
     // default constructor 
     PairHashData():
         admin_adjacent(false),
+        same_admin_component(false),
         shared_county(-1),
         within_county_edges(0),
         across_county_edges(0),
@@ -214,12 +215,14 @@ struct PairHashData{
 
     // specific constructor
     PairHashData(
-        bool const admin_adjacent, int const shared_county,
+        bool const admin_adjacent, bool const same_admin_component,
+        int const shared_county,
         int const within_county_edges, int const across_county_edges,
         bool const merge_is_hier_valid,
         bool const count_pair, double const eff_boundary_len
     ): 
         admin_adjacent(admin_adjacent),
+        same_admin_component(same_admin_component),
         shared_county(shared_county),
         within_county_edges(within_county_edges),
         across_county_edges(across_county_edges),
@@ -230,6 +233,8 @@ struct PairHashData{
 
 
     bool admin_adjacent; // whether or not adjacent within a county
+    bool same_admin_component; // whether or not two regions are in the same administrative connected component. 
+    // Default to false because in build hier aware we only update if in the same component 
     int shared_county; // -1 if the two regions do not share a county, 0 indexed counties otherwise
     int within_county_edges;
     int across_county_edges;
@@ -362,6 +367,7 @@ class RegionPairHash{
                 // if edges in the same county increase within county count
                 // and mark as administratively adjacent 
                 values[hash_index].admin_adjacent = true;
+                values[hash_index].same_admin_component = true;
                 values[hash_index].shared_county = county;
                 values[hash_index].within_county_edges++;
             }else{
@@ -405,7 +411,7 @@ void swap_pair_maps(RegionPairHash &a, RegionPairHash &b);
 class PlanMultigraph{
     public:
 
-        PlanMultigraph(MapParams const &map_params);
+        PlanMultigraph(MapParams const &map_params, bool const need_to_compute_multigraph_taus = false);
 
         MapParams const &map_params;
         bool const counties_on;
@@ -426,6 +432,13 @@ class PlanMultigraph{
 
         RegionPairHash pair_map; // used for tracking adj regions 
 
+        bool const need_to_compute_multigraph_taus;
+        arma::mat WAIT_laplacian_minor; // Minor of laplacian used for computing log spanning trees for plan
+        arma::mat WAIT_merged_laplacian_minor; // minor of laplacian used for computing log spanning trees for merged plan
+
+        // Resizes minor matrices if multigraph taus will need to be computed 
+        void prep_for_calculations(int const num_regions);
+
         // Prints relevant info - for debugging
         void Rprint() const;
         void Rprint_detailed(Plan const &plan);
@@ -441,17 +454,17 @@ class PlanMultigraph{
 
 
         bool build_plan_hierarchical_multigraph(
-            Plan const &plan
+            PlanVector const &region_ids, int const num_regions
         );
 
         // builds the multigraph ignoring counties 
         void build_plan_non_hierarchical_multigraph(
-            Plan const &plan
+            PlanVector const &region_ids
         );
 
 
         bool build_plan_multigraph(
-            Plan const &plan
+            PlanVector const &region_ids, int const num_regions
         );
 
         // Removes the pairs with invalid merge sizes 
@@ -489,10 +502,16 @@ class PlanMultigraph{
 
         // gets multigraph counts for linking edge calculations 
         RegionMultigraphCount get_multigraph_counts(int const num_regions) const;
-        RegionMultigraphCount get_merged_multigraph_counts(
-            int const num_regions, std::vector<RegionID> &merge_index_reshuffle,
-            RegionID const region1_id, RegionID const region2_id 
-        ) const;
+
+        double get_log_multigraph_tau(
+            int const num_regions, ScoringFunction const &scoring_function
+        );
+
+        double get_log_merged_multigraph_tau(
+            int const num_regions, std::vector<int> &merge_index_reshuffle,
+            RegionID const region1_id, RegionID const region2_id,
+            ScoringFunction const &scoring_function
+        );
 };
 
 // swap function 

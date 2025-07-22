@@ -78,7 +78,7 @@ std::vector<std::tuple<RegionID, RegionID, double>> GraphPlan::get_valid_adj_reg
 ) const{
 
     // build the multigraph 
-    plan_multigraph.build_plan_multigraph(*this);
+    plan_multigraph.build_plan_multigraph(region_ids, num_regions);
     // remove invalid hierarchical merges if needed
     plan_multigraph.remove_invalid_hierarchical_merge_pairs(*this);
     // remove invalid size pairs 

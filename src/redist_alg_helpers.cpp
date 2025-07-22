@@ -352,7 +352,7 @@ PlanEnsemble::PlanEnsemble(
 
 // creates plan ensemble of partial plans
 PlanEnsemble::PlanEnsemble(
-    MapParams const &map_params,
+    MapParams const &map_params, SplittingSchedule const &splitting_schedule,
     int const num_regions, int const nsims,
     SamplingSpace const sampling_space,
     Rcpp::IntegerMatrix const &plans_mat, 
@@ -422,6 +422,7 @@ PlanEnsemble::PlanEnsemble(
     std::atomic<int> thread_id_counter{0};
 
 
+    auto tree_ptr = std::make_unique<UniformValidSplitter>(map_params.V);
     
     RcppThread::ProgressBar bar(nsims, 1);
     pool.parallelFor(0, nsims, [&] (int i) {
@@ -429,6 +430,9 @@ PlanEnsemble::PlanEnsemble(
         static thread_local Tree ust(V);
         static thread_local std::vector<bool> visited(V);
         static thread_local std::vector<bool> ignore(V);
+        static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
+        static thread_local PlanMultigraph plan_multigraph(map_params);
+        static thread_local Graph region_graph(num_regions);
         // create the plan attributes for this specific plan
         PlanVector plan_region_ids(flattened_all_plans, V * i, V * (i+1));
         RegionSizes plan_sizes(flattened_all_region_sizes, ndists * i, ndists * (i+1));
@@ -455,6 +459,14 @@ PlanEnsemble::PlanEnsemble(
                 plan_region_ids, plan_sizes,
                 plan_pops, plan_region_order_added,
                 map_params, ust, visited, ignore, rng_states[thread_id]
+            );
+        }else if(use_linking_edge_space){
+            plan_ptr_vec[i] = std::make_unique<LinkingEdgePlan>(
+                ndists, num_regions, map_params.pop, 
+                plan_region_ids, plan_sizes,
+                plan_pops, plan_region_order_added,
+                *tree_ptr, ust_sampler, plan_multigraph, region_graph,
+                rng_states[thread_id]
             );
         }else{
             throw Rcpp::exception("This plan type not supported!\n");
@@ -546,7 +558,7 @@ Rcpp::IntegerMatrix PlanEnsemble::get_region_pops_matrix(
 }
 
 PlanEnsemble get_plan_ensemble(
-    MapParams const &map_params,
+    MapParams const &map_params, SplittingSchedule const &splitting_schedule,
     int const num_regions, int const nsims,
     SamplingSpace const sampling_space,
     Rcpp::IntegerMatrix const &plans_mat, 
@@ -563,7 +575,7 @@ PlanEnsemble get_plan_ensemble(
         );
     }else{
         return PlanEnsemble(
-            map_params, 
+            map_params, splitting_schedule,
             num_regions, nsims,
             sampling_space, plans_mat, region_sizes_mat, 
             rng_states, pool, verbosity);
@@ -572,7 +584,7 @@ PlanEnsemble get_plan_ensemble(
 
 
 std::unique_ptr<PlanEnsemble> get_plan_ensemble_ptr(
-    MapParams const &map_params,
+    MapParams const &map_params, SplittingSchedule const &splitting_schedule,
     int const num_regions, int const nsims,
     SamplingSpace const sampling_space,
     Rcpp::IntegerMatrix const &plans_mat, 
@@ -588,7 +600,7 @@ std::unique_ptr<PlanEnsemble> get_plan_ensemble_ptr(
         );
     }else{
         return std::make_unique<PlanEnsemble>(
-            map_params, 
+            map_params, splitting_schedule,
             num_regions, nsims,
             sampling_space, plans_mat, region_sizes_mat, 
             rng_states, pool, verbosity

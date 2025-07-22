@@ -11,6 +11,8 @@
 #include <functional>
 #include <cli/progress.h>
 #include <RcppThread.h>
+#include <memory>
+
 
 #include <kirchhoff_inline.h>
 #include "wilson.h"
@@ -18,6 +20,7 @@
 #include "map_calc.h"
 #include "merging.h"
 #include "redist_alg_helpers.h"
+#include "splitting_schedule_types.h"
 
 
 

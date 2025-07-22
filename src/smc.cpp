@@ -546,6 +546,12 @@ List run_redist_smc(
         total_smc_steps, ndists, total_seats, as<std::vector<int>>(district_seat_sizes),
         splitting_size_regime, control
     );
+    // it wants presplit number of regions so make initial regions - 1
+    // Needed for initializing linking edge plans
+    splitting_schedule_ptr->set_potential_cut_sizes_for_each_valid_size(
+        0, initial_num_regions - 1
+    );
+
     if (DEBUG_GSMC_PLANS_VERBOSE) REprintf("Splitting Schedule Obj created!\n");
 
     // Whether or not to only do district splits only 
@@ -583,7 +589,7 @@ List run_redist_smc(
     // Now we add everything here to a scope since it won't be needed for the end
     // create the ensemble 
     std::unique_ptr<PlanEnsemble> plan_ensemble_ptr = get_plan_ensemble_ptr(
-        map_params,
+        map_params, *splitting_schedule_ptr,
         initial_num_regions,
         nsims, sampling_space,
         region_id_mat, region_sizes_mat,
@@ -593,7 +599,7 @@ List run_redist_smc(
     {
     // Ensemble of dummy plans for copying 
     std::unique_ptr<PlanEnsemble> dummy_plan_ensemble_ptr = get_plan_ensemble_ptr(
-        map_params,
+        map_params, *splitting_schedule_ptr,
         initial_num_regions,
         nsims, sampling_space,
         region_id_mat, region_sizes_mat,

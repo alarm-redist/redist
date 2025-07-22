@@ -43,8 +43,14 @@ Rcpp::NumericVector compute_log_unnormalized_plan_target_density(
     std::vector<RNGState> rng_states;rng_states.reserve(1);
     rng_states.emplace_back(global_rng_seed2, 6);
 
+    // fake splitting schedule, don't actually use
+    // Just need for constructor 
+    auto splitting_schedule_ptr = std::make_unique<PureMSSplittingSchedule>(ndists, total_seats, as<std::vector<int>>(district_seat_sizes));
+
+
     PlanEnsemble plan_ensemble(
-        map_params, num_regions,
+        map_params, *splitting_schedule_ptr,
+        num_regions,
         num_plans,
         SamplingSpace::GraphSpace,
         region_ids, 
@@ -154,8 +160,15 @@ Rcpp::NumericMatrix compute_log_unnormalized_region_target_density(
     int global_rng_seed2 = (int) Rcpp::sample(INT_MAX, 1)[0];
     std::vector<RNGState> rng_states;rng_states.reserve(1);
     rng_states.emplace_back(global_rng_seed2, 6);
+
+    // fake splitting schedule, don't actually use
+    // Just need for constructor 
+    auto splitting_schedule_ptr = std::make_unique<PureMSSplittingSchedule>(ndists, total_seats, as<std::vector<int>>(district_seat_sizes));
+
+
     PlanEnsemble plan_ensemble(
-        map_params, num_regions,
+        map_params, *splitting_schedule_ptr,
+         num_regions,
         num_plans,
         SamplingSpace::GraphSpace,
         region_ids, 
@@ -270,14 +283,7 @@ arma::vec compute_plans_log_optimal_weights(
     int global_rng_seed2 = (int) Rcpp::sample(INT_MAX, 1)[0];
     std::vector<RNGState> rng_states;rng_states.reserve(1);
     rng_states.emplace_back(global_rng_seed2, 6);
-    PlanEnsemble plan_ensemble(
-        map_params, num_regions,
-        num_plans,
-        SamplingSpace::GraphSpace,
-        region_ids, 
-        region_sizes, rng_states,
-        pool 
-    );
+
 
     // get splitting schedule 
     Rcpp::List control;
@@ -290,6 +296,17 @@ arma::vec compute_plans_log_optimal_weights(
         0, num_regions-1
     );
     splitting_schedule_ptr->print_current_step_splitting_info();
+
+
+    PlanEnsemble plan_ensemble(
+        map_params, *splitting_schedule_ptr,
+        num_regions,
+        num_plans,
+        SamplingSpace::GraphSpace,
+        region_ids, 
+        region_sizes, rng_states,
+        pool 
+    );
 
 
     // create the splitter
@@ -311,7 +328,7 @@ arma::vec compute_plans_log_optimal_weights(
         static thread_local PlanMultigraph plan_multigraph(map_params);
 
         // build the multigraph 
-        plan_multigraph.build_plan_multigraph(*plan_ensemble.plan_ptr_vec[i]);
+        plan_multigraph.build_plan_multigraph(plan_ensemble.plan_ptr_vec[i]->region_ids, plan_ensemble.plan_ptr_vec[i]->num_regions);
         plan_multigraph.Rprint_detailed(*plan_ensemble.plan_ptr_vec[i]);
         // plan_multigraph.pair_map.Rprint();
         // // remove invalid hierarchical merges

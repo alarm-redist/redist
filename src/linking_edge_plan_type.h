@@ -19,14 +19,19 @@ class LinkingEdgePlan : public Plan {
 
    // constructor for partial plan (more than 1 region)
    LinkingEdgePlan(    
-    int const ndists, int const num_regions,
-    const arma::uvec &pop,
-    PlanVector &this_plan_region_ids, 
-    RegionSizes &this_plan_region_sizes,
-    IntPlanAttribute &this_plan_region_pops,
-    IntPlanAttribute &this_plan_order_added,
-    const std::vector<std::array<double, 3>> &linking_edges,
-    const Rcpp::List &initial_forest_adj_list
+        int const ndists, int const num_regions,
+        const arma::uvec &pop,
+        PlanVector &this_plan_region_ids, 
+        RegionSizes &this_plan_region_sizes,
+        IntPlanAttribute &this_plan_region_pops,
+        IntPlanAttribute &this_plan_order_added,
+        TreeSplitter const &tree_splitter,
+        USTSampler &ust_sampler,
+        PlanMultigraph &plan_multigraph,
+        Graph &region_graph,
+        RNGState &rng_state, 
+        const Rcpp::List &initial_forest_adj_list = {},
+        const std::vector<std::array<double, 3>> &input_initial_linking_edges = {}
     );
 
 

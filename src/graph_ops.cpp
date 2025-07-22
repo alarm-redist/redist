@@ -106,10 +106,12 @@ double get_log_merged_region_multigraph_spanning_tree(
     
     // laplacian_mat.print();
     
-    double lst, sign;
-    arma::log_det(lst, sign, laplacian_mat);
+    // double lst, sign;
+    // arma::log_det(lst, sign, laplacian_mat);
 
-    return lst;
+    // return lst;
+
+    return arma::log_det_sympd(laplacian_mat);
 
 }
 

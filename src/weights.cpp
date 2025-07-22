@@ -279,12 +279,23 @@ double compute_simple_log_incremental_weight(
         // we divide target by number of linking edges so 
         // subtract log linking edges from denominator 
         log_extra_plan_terms -= compute_log_region_multigraph_spanning_tree(region_multigraph);
+
+        double old_code_val = compute_log_region_multigraph_spanning_tree(region_multigraph);
+        double new_code_val = plan_multigraph.get_log_multigraph_tau(plan.num_regions, scoring_function);
+
+        if(old_code_val != new_code_val){
+            REprintf("Whole Plan - Old Code - %f, New Code - %f and Equality Check = %s\n",
+            old_code_val, new_code_val, 
+            (old_code_val == new_code_val) ? "TRUE" : "FALSE" );
+        }
+
         std::vector<int> merge_index_reshuffle(plan.num_regions);
-        log_extra_prev_plan_terms -= get_log_merged_region_multigraph_spanning_tree(
-                region_multigraph,
-                merge_index_reshuffle,
-                region1_id, region2_id
+        log_extra_prev_plan_terms -= plan_multigraph.get_log_merged_multigraph_tau(
+                plan.num_regions, merge_index_reshuffle,
+                region1_id, region2_id, scoring_function
             );
+
+            
     }
 
     // The weight is 
@@ -495,11 +506,55 @@ double compute_log_optimal_incremental_weights(
 
         // If using linked edge add multigraph tau
         if(use_linked_edge_space){
-            log_of_sum_term -= get_log_merged_region_multigraph_spanning_tree(
-                region_multigraph,
-                merge_index_reshuffle,
-                region1_id, region2_id
+            log_of_sum_term -= plan_multigraph.get_log_merged_multigraph_tau(
+                plan.num_regions, merge_index_reshuffle,
+                region1_id, region2_id, scoring_function
             );
+
+            if(plan.num_regions != 2){ 
+
+
+            // TEMP just rebuild the multigraph 
+            std::vector<RegionID> flattened_all_plans(plan_multigraph.map_params.V);
+            PlanVector plan_region_ids(flattened_all_plans, 0, plan_multigraph.map_params.V);
+            // REprintf("Size is %u!\n", plan_region_ids.size());
+
+            // set merge reindex 
+            int const merged_reindex = plan.num_regions-2;
+            for (int current_reindex = 0, i = 0; i < plan.num_regions; i++){
+                if(i == region1_id || i == region2_id){
+                    merge_index_reshuffle[i] = merged_reindex;
+                }else{
+                    merge_index_reshuffle[i] = current_reindex;
+                    ++current_reindex;
+                }
+                // REprintf("Mapping %d to %d!\n", i, merge_index_reshuffle[i]);
+            }
+
+            // REprintf("Merging (%u, %u)\n", region1_id, region2_id);
+            for (size_t i = 0; i < plan.region_ids.size(); i++)
+            {
+                plan_region_ids[i] = merge_index_reshuffle[plan.region_ids[i]];
+                // REprintf("Plan %u | Merged %u \n", plan.region_ids[i], plan_region_ids[i]);
+            }
+
+            PlanMultigraph temp_multi(plan_multigraph.map_params);
+            temp_multi.build_plan_multigraph(plan_region_ids, plan.num_regions -1);
+
+            double merged_tau = plan_multigraph.get_log_merged_multigraph_tau(
+                plan.num_regions, merge_index_reshuffle,
+                region1_id, region2_id, scoring_function
+            );
+            double temp_tau = temp_multi.get_log_multigraph_tau(plan.num_regions-1, scoring_function);
+
+            if(merged_tau != temp_tau){
+                REprintf("Merged Plan - Old Code - %f, New Code - %f and Equality Check = %s\n",
+                merged_tau, temp_tau, 
+                (merged_tau == temp_tau) ? "TRUE" : "FALSE" );
+            }
+
+            }
+            
         }
 
 
@@ -579,6 +634,20 @@ double compute_log_optimal_incremental_weights(
     if(use_linked_edge_space){
         // need number of linking edges for current plan
         extra_log_terms -= compute_log_region_multigraph_spanning_tree(region_multigraph);
+
+        double old_code_val = compute_log_region_multigraph_spanning_tree(
+            region_multigraph
+        );
+        double new_code_val = plan_multigraph.get_log_multigraph_tau(
+            plan.num_regions, scoring_function
+        );
+
+        if(old_code_val != new_code_val){
+            REprintf("Whole Plan - Old Code - %f, New Code - %f and Equality Check = %s\n",
+            old_code_val, new_code_val, 
+            (old_code_val == new_code_val) ? "TRUE" : "FALSE" );
+        }
+
     }
 
     // Now add the log extra terms and subtract the plan score 

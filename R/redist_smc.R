@@ -349,15 +349,12 @@ redist_smc <- function(
   split_method <- split_stuff_list$split_method
   forward_kernel_params <- split_stuff_list$forward_kernel_params
 
-
   # linking edge with counties not supported right now
   if (num_admin_units > 1 && sampling_space == LINKING_EDGE_SPACE_SAMPLING) {
       cli_abort(
           "Linking Edge Sampling with counties is not supported right now"
       )
   }
-
-
 
   total_smc_steps <- n_steps
 
@@ -478,12 +475,6 @@ redist_smc <- function(
         useXDR = .Platform$endian != "little"
       )
     }
-    # this makes it avoid printing the loading required package message each time
-    parallel::clusterEvalQ(cl, {
-      suppressPackageStartupMessages(library(foreach))
-      suppressPackageStartupMessages(library(rngtools))
-      suppressPackageStartupMessages(library(redist))
-    })
     # Makes it so only one process will print but if more runs then processes
     # it doesn't just print once
     parallel::clusterEvalQ(cl, {

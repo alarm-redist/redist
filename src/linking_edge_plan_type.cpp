@@ -10,6 +10,84 @@
 constexpr bool DEBUG_L_EDGE_PLANS_VERBOSE = false; // Compile-time constant
 
 
+// randomly initalize a set of linking edges 
+std::vector<std::pair<int, int>> get_intial_linking_edges(
+    PlanMultigraph &plan_multigraph, PlanVector const &region_ids,
+    int const num_regions, Graph &region_graph
+){
+    // First clear the region graph 
+    for (size_t i = 0; i < region_graph.size(); i++)
+    {
+        region_graph[i].clear();
+    }
+
+    // Now build the plan multigraph 
+    plan_multigraph.build_plan_multigraph(region_ids, num_regions);
+
+    // Now iterate over the pairs and build the region graph 
+    // Where two regions are adjacent iff they are a valid merge 
+    for (auto const a_pair: plan_multigraph.pair_map.hashed_pairs){
+        // Get the value 
+        auto val = plan_multigraph.pair_map.get_value(a_pair.first, a_pair.second).second;
+        // continue if not a valid hierarchical merge
+        if(!val.merge_is_hier_valid) continue;
+        // else add edge to the graph 
+        region_graph[a_pair.first].push_back(a_pair.second);
+        region_graph[a_pair.second].push_back(a_pair.first);
+    }
+    
+    // Now we're going to make a random walk through the graph to make
+    // a spanning tree. 
+    std::vector<bool> visited(num_regions, false);
+    std::vector<std::pair<int, int>> tree_edges;
+    tree_edges.reserve(num_regions - 1);
+
+    // DFS helper
+    std::function<void(int)> dfs = [&](int v) {
+        visited[v] = true;
+        for (int u : region_graph[v]) {
+            if (!visited[u]) {
+                tree_edges.emplace_back(v, u);  // record tree edge
+                dfs(u);
+            }
+        }
+    };
+
+    dfs(0);  // start from node 0
+
+    std::vector<std::pair<int, int>> initial_edges;
+    initial_edges.reserve(num_regions-1);
+
+    // Now for each pair walk through the graph and find the first edge 
+    // in those regions 
+    for (auto const a_pair: tree_edges){
+        // REprintf("(%d, %d)\n", a_pair.first, a_pair.second);
+        bool pair_found = false;
+        for (size_t v = 0; v < plan_multigraph.map_params.V; v++)
+        {
+            auto v_region = region_ids[v];
+            // REprintf("%d in region %d\n", v, v_region);
+            if(v_region != a_pair.first) continue;
+
+            for(auto const u: plan_multigraph.map_params.g[v]){
+                auto u_region = region_ids[u];
+                if(u_region == a_pair.second){
+                    // means we found edge between (region1, region2) so push back
+                    initial_edges.push_back({v, u});
+                    pair_found = true;
+                    break;
+                }
+            }
+            if(pair_found) break;
+        }
+        if(!pair_found) REprintf("ERROR! No edge found!\n");
+    }
+
+
+    return initial_edges;
+
+}
+
 VertexGraph LinkingEdgePlan::get_forest_adj(){
     return forest_graph;
 }
@@ -32,27 +110,67 @@ LinkingEdgePlan::LinkingEdgePlan(
 };
 
 LinkingEdgePlan::LinkingEdgePlan(
-    int const ndists, int const num_regions,
-    const arma::uvec &pop,
-    PlanVector &this_plan_region_ids, 
-    RegionSizes &this_plan_region_sizes,
-    IntPlanAttribute &this_plan_region_pops,
-    IntPlanAttribute &this_plan_order_added,
-    const std::vector<std::array<double, 3>> &linking_edges,
-    const Rcpp::List &initial_forest_adj_list
+        int const ndists, int const num_regions,
+        const arma::uvec &pop,
+        PlanVector &this_plan_region_ids, 
+        RegionSizes &this_plan_region_sizes,
+        IntPlanAttribute &this_plan_region_pops,
+        IntPlanAttribute &this_plan_order_added,
+        TreeSplitter const &tree_splitter,
+        USTSampler &ust_sampler,
+        PlanMultigraph &plan_multigraph,
+        Graph &region_graph,
+        RNGState &rng_state, 
+        const Rcpp::List &initial_forest_adj_list,
+        const std::vector<std::array<double, 3>> &input_initial_linking_edges 
 ):
 Plan(num_regions, pop, 
     this_plan_region_ids, this_plan_region_sizes, this_plan_region_pops, this_plan_order_added
 ){
-    throw Rcpp::exception("Custom linking edges not ready yet!");
-    if(num_regions == 1 || num_regions == ndists){
-        forest_graph.resize(region_ids.size());
-        // complete hueristic        
-    }else if(num_regions > 1){
-        throw Rcpp::exception("Custom forests not ready yet!");
-        // forest_graph = list_to_graph(initial_forest_adj_list);
-    }    
+    // resize the forest graph 
+    forest_graph.resize(region_ids.size());
+
+
+    if(initial_forest_adj_list.size() > 1){
+        throw Rcpp::exception("Input Forest list not supported right now\n");
+    }else{
+        // else just build a forest at random 
+        for (size_t region_id = 0; region_id < num_regions; region_id++)
+        {
+            int root;
+            auto result = draw_tree_on_region(
+                ust_sampler.map_params, region_id, 
+                ust_sampler.ust, ust_sampler.visited, ust_sampler.ignore,
+                root, rng_state, 1000000
+            );
+
+            if(!result.first){
+                throw Rcpp::exception("Could not draw a tree on a region after 1000000 attempts");
+            } 
+        }
+    
+    }
+
+    auto initial_linking_edges = get_intial_linking_edges(
+        plan_multigraph, region_ids, num_regions, region_graph
+    );
+
+    // reserve space for ndists - 1 linking edges 
+    linking_edges.reserve(ndists-1);
+
+    for (auto const a_pair: initial_linking_edges){
+        // REprintf("(%d, %d)\n", a_pair.first, a_pair.second);
+        double log_prob = get_regions_log_splitting_prob(
+            tree_splitter,  ust_sampler,
+            a_pair.first, a_pair.second
+        );
+        linking_edges.push_back({a_pair.first, a_pair.second, log_prob});
+    }
+    
 }
+
+
+
 
 
 // NOTE: This really only belongs to Forest and linking edge class, not graph 
@@ -217,7 +335,7 @@ std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_a
     USTSampler &ust_sampler, TreeSplitter const &tree_splitter
 ) const{
     // build the multigraph 
-    plan_multigraph.build_plan_multigraph(*this);
+    plan_multigraph.build_plan_multigraph(region_ids, num_regions);
     // remove invalid hard constraint merges 
     plan_multigraph.remove_invalid_hard_constraint_pairs(*this, scoring_function);
 
@@ -260,7 +378,7 @@ std::vector<std::pair<RegionID,RegionID>> LinkingEdgePlan::get_valid_smc_merge_r
     ScoringFunction const &scoring_function
 ) const{
     // build the multigraph 
-    plan_multigraph.build_plan_multigraph(*this);
+    plan_multigraph.build_plan_multigraph(region_ids, num_regions);
 
     // remove invalid hard constraint merges
     plan_multigraph.remove_invalid_hard_constraint_pairs(*this, scoring_function);
@@ -301,12 +419,12 @@ std::pair<bool, std::vector<std::pair<RegionID,RegionID>>> LinkingEdgePlan::atte
     ScoringFunction const &scoring_function
 ) const{
     // attempt to build valid multigraph 
-    bool const result = plan_multigraph.build_plan_multigraph(*this);
+    bool const result = plan_multigraph.build_plan_multigraph(region_ids, num_regions);
     // return false if not successful
     if(!result) return std::make_pair(false, std::vector<std::pair<RegionID,RegionID>>{}); 
 
     // else remove all the invalid hierarchical merge pairs for multigraph computation later
-    plan_multigraph.remove_invalid_hierarchical_merge_pairs(*this);
+    // plan_multigraph.remove_invalid_hierarchical_merge_pairs(*this);
     plan_multigraph.remove_invalid_hard_constraint_pairs(*this, scoring_function);
 
 

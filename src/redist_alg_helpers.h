@@ -172,7 +172,7 @@ class PlanEnsemble {
         );
         // constructor for non-empty starting plans 
         PlanEnsemble(
-            MapParams const &map_params,
+            MapParams const &map_params, SplittingSchedule const &splitting_schedule,
             int const num_regions, int const nsims, 
             SamplingSpace const sampling_space,
             Rcpp::IntegerMatrix const &plans_mat, 
@@ -208,7 +208,7 @@ class PlanEnsemble {
 };
 
 PlanEnsemble get_plan_ensemble(
-    MapParams const &map_params,
+    MapParams const &map_params, SplittingSchedule const &splitting_schedule,
     int const num_regions, int const nsims,
     SamplingSpace const sampling_space,
     Rcpp::IntegerMatrix const &plans_mat, 
@@ -220,7 +220,7 @@ PlanEnsemble get_plan_ensemble(
 
 
 std::unique_ptr<PlanEnsemble> get_plan_ensemble_ptr(
-    MapParams const &map_params,
+    MapParams const &map_params, SplittingSchedule const &splitting_schedule,
     int const num_regions, int const nsims, 
     SamplingSpace const sampling_space,
     Rcpp::IntegerMatrix const &plans_mat, 

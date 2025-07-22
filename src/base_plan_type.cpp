@@ -715,7 +715,7 @@ std::pair<bool, std::vector<std::pair<RegionID,RegionID>>> Plan::attempt_to_get_
         PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule,
         ScoringFunction const &scoring_function
 ) const{
-    bool const result = plan_multigraph.build_plan_multigraph(*this);
+    bool const result = plan_multigraph.build_plan_multigraph(region_ids, num_regions);
     // return false if not successful
     if(!result) return std::make_pair(false, std::vector<std::pair<RegionID,RegionID>>{}); 
     // plan_multigraph.Rprint_detailed(*this);
@@ -734,7 +734,7 @@ std::vector<std::pair<RegionID,RegionID>> Plan::get_valid_smc_merge_regions(
         ScoringFunction const &scoring_function
 ) const{
     // build the multigraph 
-    plan_multigraph.build_plan_multigraph(*this);
+    plan_multigraph.build_plan_multigraph(region_ids, num_regions);
     
 
     std::vector<std::pair<RegionID,RegionID>> output_pairs;
@@ -807,16 +807,99 @@ const{
 }
 
 
+
+double PlanMultigraph::get_log_multigraph_tau(
+    int const num_regions, ScoringFunction const &scoring_function
+){
+    // if two regions then its just the log(boundary length) between
+    // Since any minor of laplacian is just the degree of vertex 0 or 1
+    if(num_regions == 2){
+        // Get the value 
+        auto val = pair_map.get_value(0, 1).second;
+        if(val.admin_adjacent){
+            return std::log(static_cast<double>(val.within_county_edges));
+        }else{
+            return std::log(static_cast<double>(val.across_county_edges));
+        }
+    }
+
+    // else go through and build the laplacian for regions 0 through num_regions-1
+    arma::mat laplacian_minor(num_regions-1, num_regions-1, arma::fill::zeros);
+
+    // Now we iterate through the pairs 
+    for (auto const a_pair: pair_map.hashed_pairs){
+        // Get the value 
+        auto val = pair_map.get_value(a_pair.first, a_pair.second).second;
+
+        // if not hierarchically valid then ignore
+        if(!val.merge_is_hier_valid) continue;
+
+        int edges = 0;
+        // else valid merge so get edges we count
+        if(val.admin_adjacent){
+            edges = val.within_county_edges;
+        }else{
+            edges = val.across_county_edges;
+        }
+
+        // Now for both pairs we need to 
+        // 1. Update the degree of the vertex
+        // 2. Increase the count of edges between the regions 
+
+        // But if either region has index num_regions-1
+        // we don't count its degree or care about edge count
+
+        // Check if neither pair is id num_regions-1
+        if(a_pair.first != num_regions-1 && a_pair.second != num_regions-1){
+            // increase the degree of both vertices 
+            laplacian_minor(a_pair.first, a_pair.first) += edges;
+            laplacian_minor(a_pair.second, a_pair.second) += edges;
+            // subtract edges between them 
+            laplacian_minor(a_pair.first, a_pair.second) -= edges;
+            laplacian_minor(a_pair.second, a_pair.first) -= edges;
+        }else if(a_pair.first != num_regions-1){
+            // increase the degree 
+            laplacian_minor(a_pair.first, a_pair.first) += edges;
+            // because other region is merged one ignore 
+        }else if(a_pair.second != num_regions-1){
+            // increase the degree 
+            laplacian_minor(a_pair.second, a_pair.second) += edges;
+            // because other region is merged one ignore 
+        }
+
+    }
+
+    return arma::log_det_sympd(laplacian_minor);
+}
+
+
 // Need to take care because some previously inelgible hier merge pairs now 
 // become ok to merge 
-RegionMultigraphCount PlanMultigraph::get_merged_multigraph_counts(
-            int const num_regions, std::vector<RegionID> &merge_index_reshuffle,
-            RegionID const region1_id, RegionID const region2_id 
-) const{
+double PlanMultigraph::get_log_merged_multigraph_tau(
+            int const num_regions, std::vector<int> &merge_index_reshuffle,
+            RegionID const region1_id, RegionID const region2_id,
+            ScoringFunction const &scoring_function
+){
+    // If 2 regions then merged is 1 region and there's exactly 1 way to draw
+    // linking edges (since its empty set) so log(1) = 0
+    if(num_regions == 2) return 0.0;
 
-    RegionMultigraphCount merged_region_multigraph(num_regions-1);
 
-    int merged_reindex = num_regions-2;
+
+
+    // get_multigraph_counts(
+    //         int const num_regions, ScoringFunction const &scoring_function
+    //     )
+
+
+
+    /* 
+    we make merged reindex which essentially just reindexes all the regions to 
+    the two merged regions are the new largest value and everything else gets
+    potentially shifted down. For example imagine 5 regions
+    and we merge 1 and 3 so the reindex vector is [0,3,1,3,2]
+     */
+    int const merged_reindex = num_regions-2;
     for (int current_reindex = 0, i = 0; i < num_regions; i++){
         if(i == region1_id || i == region2_id){
             merge_index_reshuffle[i] = merged_reindex;
@@ -824,35 +907,133 @@ RegionMultigraphCount PlanMultigraph::get_merged_multigraph_counts(
             merge_index_reshuffle[i] = current_reindex;
             ++current_reindex;
         }
+        // REprintf("Mapping %d to %d!\n", i, merge_index_reshuffle[i]);
     }
 
-    return(merged_region_multigraph);
+    
+
+    /*
+    Recall the graph laplacian for a multigraph with V vertices is a VxV matric
+    where
+        - v_ii is the degree of the vertex (ie the total number of edges where 
+        v_ii is a vertex)
+        - v_ij is -m_ij where m_ij is the number of edges between vertex i and j
+    
+    Kirchenoff's theorem says the determinant of any minor of laplcacian is number
+    of spanning trees. A minor is laplacian with any row and column deleted. 
+
+    So for the merged plan it has num_regions-1 vertices and since we only compute 
+    determinant of the minor we actually have a num_regions-2 x num_regions-2 matrix
+    where we delete the row and column corresponding to the merged region. 
+     */
+    arma::mat merged_laplacian_minor(num_regions-2, num_regions-2, arma::fill::zeros);
+
+    // reset the laplacian 
+    // merged_laplacian_minor.zeros();
 
 
-    // for(auto const key_val_pair: get_all_values()){
-    //     // get the regions in the pair 
-    //     auto reindexed_region1_id = merge_index_reshuffle[key_val_pair.first.first];
-    //     auto reindexed_region2_id = merge_index_reshuffle[key_val_pair.first.second];
-    //     // Skip if the same region since that means its the merged pair itself 
-    //     if(reindexed_region1_id == reindexed_region2_id) continue;
-    //     // swap if out of order 
-    //     if(reindexed_region2_id < reindexed_region1_id) std::swap(reindexed_region1_id, reindexed_region2_id);
-    //     //
-    //     // skip if not hierarchically valid merge 
-    //     if(!key_val_pair.second.merge_is_hier_valid) continue;
-    //     int boundary_len;
-    //     if(key_val_pair.second.admin_adjacent){
-    //         // if administratively adjacent only count within same county
-    //         boundary_len = key_val_pair.second.within_county_edges;
-    //     }else{
-    //         // else only count across county 
-    //         boundary_len = key_val_pair.second.across_county_edges;
-    //     }
+    // Get the component ids for the two merge regions 
+    auto region1_component = county_component[region1_id];
+    auto region2_component = county_component[region2_id];
 
-    //     // we increase the count of edges
-    //     merged_region_multigraph[key_val_pair.first.first][key_val_pair.first.second] = boundary_len;
-    //     merged_region_multigraph[key_val_pair.first.second][key_val_pair.first.first] = boundary_len;
-    // }
+    // check if this is an across component merge or not 
+    bool const across_component_merge = region1_component != region2_component;
+
+
+
+    // REprintf("Pair is (%u, %u)\n", region1_id, region2_id);
+
+    // Now we iterate through the pairs 
+    for (auto const a_pair: pair_map.hashed_pairs){
+        // Get the value 
+        auto val = pair_map.get_value(a_pair.first, a_pair.second).second;
+
+        auto reshuffled_pair1 = merge_index_reshuffle[a_pair.first];
+        auto reshuffled_pair2 = merge_index_reshuffle[a_pair.second];
+
+        // If its (region1, region2) then skip because merged 
+        // if(reshuffled_pair1 == reshuffled_pair2) REprintf("Skipping (%u, %u)\n", a_pair.first, a_pair.second);
+        if(reshuffled_pair1 == reshuffled_pair2) continue;
+
+        // See if this pair crosses component boundaries 
+        bool const across_component_pair = county_component[a_pair.first] != county_component[a_pair.second];
+        
+        bool merge_ok;
+        int edges = 0;
+
+        // Now check if hierarchically adjacent 
+        if(val.admin_adjacent){
+            // If administratively adjacent a merge is always ok
+            merge_ok = true;
+            // count witihn county edges
+            edges = val.within_county_edges;
+        }else if(!val.same_admin_component){
+            // Else if pair in original plan is in different admin components
+            // Then we need to check if the merge has put them in the same component
+            // Because if same component but not admin adjacent then the merge is 
+            // no longer valid 
+
+
+            // Get the pairs components under the merge
+            // Where we treat any region2 component as region1 component 
+            auto first_pair_val_component = county_component[a_pair.first];
+            if(first_pair_val_component == region2_component){
+                first_pair_val_component = region1_component;
+            } 
+            auto second_pair_val_component = county_component[a_pair.second];
+            if(second_pair_val_component == region2_component){
+                second_pair_val_component = region1_component;
+            } 
+
+            // if now the same component not ok to merge
+            if(first_pair_val_component == second_pair_val_component){
+                merge_ok = false;
+            }else{
+                // If still different components then merge is ok
+                merge_ok = true;
+                // count across county edges
+                edges = val.across_county_edges;
+            }
+        }else{
+            // else means not admin adjacent but the same component 
+            // even if the merge makes them admin adjcent the edges must be coming from the other region 
+            // so ignore this pair.
+            merge_ok = false;
+        }
+
+        // now continue if merge not ok
+        if(!merge_ok) continue;
+
+
+        // Now for both pairs we need to 
+        // 1. Update the degree of the vertex
+        // 2. Increase the count of edges between the regions 
+
+        // But if either region is part of the merged region then 
+        // we don't count its degree or care about edge count
+
+        // Check if neither pair is merged region
+        if(reshuffled_pair1 != merged_reindex && reshuffled_pair2 != merged_reindex){
+            // increase the degree of both vertices 
+            merged_laplacian_minor(reshuffled_pair1, reshuffled_pair1) += edges;
+            merged_laplacian_minor(reshuffled_pair2, reshuffled_pair2) += edges;
+            // subtract edges between them 
+            merged_laplacian_minor(reshuffled_pair1, reshuffled_pair2) -= edges;
+            merged_laplacian_minor(reshuffled_pair2, reshuffled_pair1) -= edges;
+        }else if(reshuffled_pair1 != merged_reindex){
+            // increase the degree 
+            merged_laplacian_minor(reshuffled_pair1, reshuffled_pair1) += edges;
+            // because other region is merged one ignore 
+        }else if(reshuffled_pair2 != merged_reindex){
+            // increase the degree 
+            merged_laplacian_minor(reshuffled_pair2, reshuffled_pair2) += edges;
+            // because other region is merged one ignore 
+        }
+
+    }
+
+    return arma::log_det_sympd(merged_laplacian_minor); 
+
 }
 
 void swap_pair_maps(RegionPairHash &a, RegionPairHash &b) {
@@ -864,11 +1045,11 @@ void swap_pair_maps(RegionPairHash &a, RegionPairHash &b) {
 
 
 
-PlanMultigraph::PlanMultigraph(MapParams const &map_params):
+PlanMultigraph::PlanMultigraph(MapParams const &map_params, bool const need_to_compute_multigraph_taus):
     map_params(map_params),
     counties_on(map_params.num_counties > 1),
     vertices_visited(map_params.V),
-    county_component(counties_on ? map_params.ndists : 0, 0), 
+    county_component(map_params.ndists, 0), 
     component_split_counts(counties_on ? map_params.ndists : 0, 0),
     component_region_counts(counties_on ? map_params.ndists : 0, 0),
     region_overlap_counties(counties_on ? map_params.ndists : 0),
@@ -876,9 +1057,24 @@ PlanMultigraph::PlanMultigraph(MapParams const &map_params):
     other_counties_vertices(map_params.num_edges+1),
     current_county_diff_region_vertices(map_params.num_edges+1),
     current_county_region_vertices(map_params.num_edges+1),
-    pair_map(map_params.ndists){
+    pair_map(map_params.ndists),
+    need_to_compute_multigraph_taus(need_to_compute_multigraph_taus),
+    WAIT_laplacian_minor(0,0),
+    WAIT_merged_laplacian_minor(0,0){
 
 };
+
+void PlanMultigraph::prep_for_calculations(int const num_regions){
+    // if no multigraph tau needed or two regions just return
+    if(!need_to_compute_multigraph_taus || num_regions <= 2){
+        return;
+    }else{
+        // else resize the minor matrices 
+        WAIT_laplacian_minor = arma::mat(num_regions-1, num_regions-1, arma::fill::none);
+        WAIT_merged_laplacian_minor = arma::mat(num_regions-2, num_regions-2, arma::fill::none);
+        return;
+    }
+}
 
 
 void PlanMultigraph::Rprint() const{
@@ -987,18 +1183,18 @@ std::pair<bool, int> PlanMultigraph::is_hierarchically_connected(
 
 
 void PlanMultigraph::build_plan_non_hierarchical_multigraph(
-    Plan const &plan
+    PlanVector const &region_ids
 ){
     // reset the hash map 
     pair_map.reset();
 
     for (int v = 0; v < map_params.V; v++)
     {
-        auto v_region = plan.region_ids[v];
+        auto v_region = region_ids[v];
 
         for (auto const u: map_params.g[v])
         {
-            auto u_region = plan.region_ids[u];
+            auto u_region = region_ids[u];
             if(v_region < u_region){
                 // if true then count 
                   pair_map.count_graph_edge(
@@ -1015,7 +1211,7 @@ void PlanMultigraph::build_plan_non_hierarchical_multigraph(
 
 
 bool PlanMultigraph::build_plan_hierarchical_multigraph(
-    Plan const &plan
+    PlanVector const &region_ids, int const num_regions
 ){
     // reset the hash map 
     pair_map.reset();
@@ -1052,10 +1248,10 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(
         // add this vertex and mark as visited 
         current_county_region_vertices.push(w);
         // assign this region to the component
-        county_component[plan.region_ids[w]] = county_connected_component_counter;
+        county_component[region_ids[w]] = county_connected_component_counter;
 
         auto current_county = map_params.counties[w];
-        auto current_region = plan.region_ids[w];
+        auto current_region = region_ids[w];
 
         while(
             !current_county_region_vertices.empty() ||
@@ -1075,12 +1271,12 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(
                 // this component for the first time 
                 if(!vertices_visited[v]){
                     // then change the current region and increase the count 
-                    current_region = plan.region_ids[v];
+                    current_region = region_ids[v];
                     num_current_county_region_components++;
                     // increase global count 
                     num_county_region_components++;
                     // mark the region as being in current component
-                    county_component[plan.region_ids[v]] = county_connected_component_counter;
+                    county_component[region_ids[v]] = county_connected_component_counter;
                     // REprintf("Assigned Region %u to component %d\n",
                     //     plan.region_ids[v]+1, 
                     // county_connected_component_counter);
@@ -1098,7 +1294,7 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(
                     // increase global count 
                     num_county_region_components++;
                     // mark the region as being in current component
-                    county_component[plan.region_ids[v]] = county_connected_component_counter;
+                    county_component[region_ids[v]] = county_connected_component_counter;
                     // REprintf("Assigned Region %u to component %d\n",
                     //     plan.region_ids[v]+1, 
                     // county_connected_component_counter);
@@ -1111,12 +1307,12 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(
             vertices_visited[v] = true;
 
 
-            auto v_region = plan.region_ids[v];
+            auto v_region = region_ids[v];
             auto v_county = map_params.counties[v];
 
             for (int u : map_params.g[v]) {
                 // get region and county 
-                auto u_region = plan.region_ids[u];
+                auto u_region = region_ids[u];
                 auto u_county = map_params.counties[u];
                 bool same_county = u_county == v_county;
 
@@ -1163,13 +1359,13 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(
         county_connected_component_counter++;
 
         // if too many global splits then auto reject
-        if(num_county_region_components - map_params.num_counties >= plan.num_regions){
+        if(num_county_region_components - map_params.num_counties >= num_regions){
             return false;
         }
     }
 
     // now for each component add up the number of regions in the component
-    for (size_t region_id = 0; region_id < plan.num_regions; region_id++)
+    for (size_t region_id = 0; region_id < num_regions; region_id++)
     {
         ++component_region_counts[county_component[region_id]];
     }
@@ -1202,6 +1398,8 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(
 
         // else if they're the same component check if admin adjacent
         auto hash_index = pair_map.pair_hash(a_pair.first, a_pair.second);
+        // update to say same componet 
+        pair_map.values[hash_index].same_admin_component = true;
         // if admin adjacent do nothing 
         if(pair_map.values[hash_index].admin_adjacent) continue;
         // else reset values mark merge as false 
@@ -1214,12 +1412,12 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(
 }
 
 bool PlanMultigraph::build_plan_multigraph(
-    Plan const &plan
+    PlanVector const &region_ids, int const num_regions
 ){
     if(counties_on){
-        return build_plan_hierarchical_multigraph(plan);
+        return build_plan_hierarchical_multigraph(region_ids, num_regions);
     }else{
-        build_plan_non_hierarchical_multigraph(plan);
+        build_plan_non_hierarchical_multigraph(region_ids);
         return true;
     }
 }
@@ -1396,7 +1594,7 @@ bool PlanMultigraph::is_hierarchically_valid(
     // Now we know its hierarchically connected and has at most num_regions-1
     // splits so we just need to check for cycles in the administratively 
     // adjacent quotient graph 
-    return build_plan_hierarchical_multigraph(plan);
+    return build_plan_hierarchical_multigraph(plan.region_ids, plan.num_regions);
 }
 
 

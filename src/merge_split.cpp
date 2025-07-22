@@ -145,7 +145,8 @@ Rcpp::List ms_plans(
     RcppThread::ThreadPool pool(1);
     // underlying vector from plan    
     PlanEnsemble plan_ensemble = get_plan_ensemble(
-        map_params, initial_num_regions,
+        map_params, *splitting_schedule_ptr,
+        initial_num_regions, 
         1, sampling_space,
         init_plan, init_seats,
         rng_states, pool, verbosity
@@ -153,7 +154,8 @@ Rcpp::List ms_plans(
     // plan_ensemble.plan_ptr_vec[0]->Rprint(true);
     // now get for proposal plan
     PlanEnsemble proposal_plan_ensemble = get_plan_ensemble(
-        map_params, initial_num_regions,
+        map_params, *splitting_schedule_ptr,
+        initial_num_regions, 
         1, sampling_space,
         init_plan, init_seats,
         rng_states, pool, verbosity

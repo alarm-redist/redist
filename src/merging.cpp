@@ -315,8 +315,8 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         // If linking edge space we need to subtract linking edge correction term
         if(using_linking_edge_space){
             // add instead of subtract bc its flipped in MH ratio
-            current_log_eff_boundary += plan.compute_log_linking_edge_count(current_plan_multigraph);
-            proposed_log_eff_boundary += new_plan.compute_log_linking_edge_count(proposed_plan_multigraph);
+            current_log_eff_boundary += current_plan_multigraph.get_log_multigraph_tau(plan.num_regions, scoring_function);
+            proposed_log_eff_boundary += proposed_plan_multigraph.get_log_multigraph_tau(new_plan.num_regions, scoring_function);
         }
 
         if(DEBUG_MERGING_VERBOSE){
