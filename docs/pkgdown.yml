@@ -1,9 +1,0 @@
-pandoc: '3.4'
-pkgdown: 2.1.3
-pkgdown_sha: ~
-articles:
-  common_args: common_args.html
-  flip: flip.html
-  map-preproc: map-preproc.html
-  redist: redist.html
-last_built: 2025-07-22T00:55Z
