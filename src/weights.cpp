@@ -273,11 +273,12 @@ double compute_simple_log_incremental_weight(
     double log_extra_prev_plan_terms = 0.0;
     // if linking edge space we also need to correct for that
     if(sampling_space == SamplingSpace::LinkingEdgeSpace){
+        std::vector<int> merge_index_reshuffle(plan.num_regions);
         // we divide target by number of linking edges so 
         // subtract log linking edges from denominator 
-        log_extra_plan_terms -= plan_multigraph.compute_log_multigraph_tau(plan.num_regions, scoring_function);
+        log_extra_plan_terms -= plan_multigraph.compute_log_multigraph_tau(plan.num_regions, merge_index_reshuffle, scoring_function);
 
-        std::vector<int> merge_index_reshuffle(plan.num_regions);
+        
 
             if(plan.num_regions > 2){ 
 
@@ -313,7 +314,7 @@ double compute_simple_log_incremental_weight(
             //     plan.num_regions, merge_index_reshuffle,
             //     region1_id, region2_id, scoring_function
             // );
-            double temp_tau = temp_multi.compute_log_multigraph_tau(plan.num_regions-1, scoring_function);
+            double temp_tau = temp_multi.compute_log_multigraph_tau(plan.num_regions-1, merge_index_reshuffle, scoring_function);
 
             log_extra_prev_plan_terms -= temp_tau;
 
@@ -574,7 +575,7 @@ double compute_log_optimal_incremental_weights(
             //     plan.num_regions, merge_index_reshuffle,
             //     region1_id, region2_id, scoring_function
             // );
-            double temp_tau = temp_multi.compute_log_multigraph_tau(plan.num_regions-1, scoring_function);
+            double temp_tau = temp_multi.compute_log_multigraph_tau(plan.num_regions-1, merge_index_reshuffle, scoring_function);
 
             log_of_sum_term -= temp_tau;
 
@@ -665,7 +666,7 @@ double compute_log_optimal_incremental_weights(
     if(use_linked_edge_space){
         // need number of linking edges for current plan
         extra_log_terms -= plan_multigraph.compute_log_multigraph_tau(
-            plan.num_regions, scoring_function
+            plan.num_regions, merge_index_reshuffle, scoring_function
         );
     }
 

@@ -924,11 +924,12 @@ double PlanMultigraph::compute_non_hierarchical_merged_log_multigraph_tau(
 
 
 double PlanMultigraph::compute_log_multigraph_tau(
-    int const num_regions, ScoringFunction const &scoring_function
+    int const num_regions, std::vector<int> &index_reshuffle_vec,
+    ScoringFunction const &scoring_function
 ){
     if(counties_on){
         return compute_hierarchical_log_multigraph_tau(
-            num_regions, scoring_function
+            num_regions, index_reshuffle_vec, scoring_function
         );
     }else{
         return compute_non_hierarchical_log_multigraph_tau(
@@ -959,7 +960,8 @@ double PlanMultigraph::compute_merged_log_multigraph_tau(
 }
 
 double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
-    int const num_regions, ScoringFunction const &scoring_function
+    int const num_regions, std::vector<int> &index_reshuffle_vec,
+    ScoringFunction const &scoring_function
 ) const{
     // if two regions then its just the log(boundary length) between
     // Since any minor of laplacian is just the degree of vertex 0 or 1
@@ -1031,8 +1033,6 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
     }
 
 
-    std::vector<int> index_reshuffle(map_params.ndists);
-
     double log_tau = 0.0;
 
     // current index through all_pairs
@@ -1073,10 +1073,10 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
             for (int current_reindex = 0, a_region_id = 0; a_region_id < num_regions; a_region_id++){
                 // if in the component then reindex that region
                 if(county_component[a_region_id] == component_id){
-                    index_reshuffle[a_region_id] = current_reindex;
+                    index_reshuffle_vec[a_region_id] = current_reindex;
                     ++current_reindex;
                     if(DEBUG_LOG_LINK_EDGE_VERBOSE){
-                    REprintf("Mapping %d to %d!\n", a_region_id, index_reshuffle[a_region_id]);
+                    REprintf("Mapping %d to %d!\n", a_region_id, index_reshuffle_vec[a_region_id]);
                     }
                 }
 
@@ -1123,21 +1123,21 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
                 // we don't count its degree or care about edge count
 
                 // Check if neither pair is id num_regions-1
-                if(index_reshuffle[pair_region1] != num_component_regions-1 && 
-                   index_reshuffle[pair_region2] != num_component_regions-1){
+                if(index_reshuffle_vec[pair_region1] != num_component_regions-1 && 
+                   index_reshuffle_vec[pair_region2] != num_component_regions-1){
                     // increase the degree of both vertices 
-                    laplacian_minor(index_reshuffle[pair_region1], index_reshuffle[pair_region1]) += edges;
-                    laplacian_minor(index_reshuffle[pair_region2], index_reshuffle[pair_region2]) += edges;
+                    laplacian_minor(index_reshuffle_vec[pair_region1], index_reshuffle_vec[pair_region1]) += edges;
+                    laplacian_minor(index_reshuffle_vec[pair_region2], index_reshuffle_vec[pair_region2]) += edges;
                     // subtract edges between them 
-                    laplacian_minor(index_reshuffle[pair_region1], index_reshuffle[pair_region2]) -= edges;
-                    laplacian_minor(index_reshuffle[pair_region2], index_reshuffle[pair_region1]) -= edges;
-                }else if(index_reshuffle[pair_region1] != num_component_regions-1){
+                    laplacian_minor(index_reshuffle_vec[pair_region1], index_reshuffle_vec[pair_region2]) -= edges;
+                    laplacian_minor(index_reshuffle_vec[pair_region2], index_reshuffle_vec[pair_region1]) -= edges;
+                }else if(index_reshuffle_vec[pair_region1] != num_component_regions-1){
                     // increase the degree 
-                    laplacian_minor(index_reshuffle[pair_region1], index_reshuffle[pair_region1]) += edges;
+                    laplacian_minor(index_reshuffle_vec[pair_region1], index_reshuffle_vec[pair_region1]) += edges;
                     // because other region is merged one ignore 
-                }else if(index_reshuffle[pair_region2] != num_component_regions-1){
+                }else if(index_reshuffle_vec[pair_region2] != num_component_regions-1){
                     // increase the degree 
-                    laplacian_minor(index_reshuffle[pair_region2], index_reshuffle[pair_region2]) += edges;
+                    laplacian_minor(index_reshuffle_vec[pair_region2], index_reshuffle_vec[pair_region2]) += edges;
                     // because other region is merged one ignore 
                 }
                 // increase current index by 1

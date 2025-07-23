@@ -514,7 +514,8 @@ class PlanMultigraph{
         );
 
         double compute_hierarchical_log_multigraph_tau(
-            int const num_regions, ScoringFunction const &scoring_function
+            int const num_regions, std::vector<int> &index_reshuffle_vec,
+            ScoringFunction const &scoring_function
         ) const;
 
         double compute_hierarchical_merged_log_multigraph_tau(
@@ -524,7 +525,8 @@ class PlanMultigraph{
         );
 
         double compute_log_multigraph_tau(
-            int const num_regions, ScoringFunction const &scoring_function
+            int const num_regions, std::vector<int> &index_reshuffle_vec,
+            ScoringFunction const &scoring_function
         );
 
         double compute_merged_log_multigraph_tau(
