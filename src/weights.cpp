@@ -279,7 +279,7 @@ double compute_simple_log_incremental_weight(
 
         std::vector<int> merge_index_reshuffle(plan.num_regions);
 
-            if(plan.num_regions != 2 && false){ 
+            if(plan.num_regions > 2){ 
 
 
             // TEMP just rebuild the multigraph 
@@ -540,7 +540,7 @@ double compute_log_optimal_incremental_weights(
             //     region1_id, region2_id, scoring_function
             // );
 
-            if(plan.num_regions != 2 && false){ 
+            if(plan.num_regions > 2){ 
 
 
             // TEMP just rebuild the multigraph 

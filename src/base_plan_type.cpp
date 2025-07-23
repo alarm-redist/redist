@@ -926,7 +926,6 @@ double PlanMultigraph::compute_non_hierarchical_merged_log_multigraph_tau(
 double PlanMultigraph::compute_log_multigraph_tau(
     int const num_regions, ScoringFunction const &scoring_function
 ){
-    return 0.0;
     if(counties_on){
         return compute_hierarchical_log_multigraph_tau(
             num_regions, scoring_function
@@ -1088,9 +1087,9 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
 
             // now we iterate through all pairs where both are in this component
             while(
+                curr_index < all_pairs.size() &&
                 county_component[all_pairs[curr_index].first.first] == component_id && 
-                county_component[all_pairs[curr_index].first.second] == component_id &&
-                curr_index < all_pairs.size()
+                county_component[all_pairs[curr_index].first.second] == component_id 
             ){
 
                 const auto &[pair_region1, pair_region2] = all_pairs[curr_index].first;
