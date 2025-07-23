@@ -36,8 +36,7 @@ but each of these is assigned a separate grouping id so that a call to
 \code{sf::st_union()} would produce only connected pieces.
 }
 \details{
-This is a loose interpretation of the
-\href{https://www.ncsl.org/redistricting-and-census/redistricting-criteria}{NCSL's summary}
+This is a loose interpretation of the NCSL's summary
 of redistricting criteria to preserve the cores of prior districts. Using the
 adjacency graph for a given plan, it will locate the precincts on the
 boundary of the district, within \code{boundary} steps of the edge. Each of

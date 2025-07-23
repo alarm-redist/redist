@@ -91,11 +91,11 @@ redist.distances <- function(plans, measure = "Hamming",
 
     if ("variation of information" %in% measure) {
         if (is.null(total_pop)) {
-            cli_warn("{.arg total_pop} not provided, using default of equal population.")
+            cli::cli_warn("{.arg total_pop} not provided, using default of equal population.")
             total_pop <- rep(1, nrow(plans))
         }
         if (length(total_pop) != nrow(plans))
-            cli_abort("Mismatch: length of {.arg total_pop} does not match the number of precincts in {.arg plans}.")
+            cli::cli_abort("Mismatch: length of {.arg total_pop} does not match the number of precincts in {.arg plans}.")
 
         # 1-index in preparation
         if (min(plans) == 0)
@@ -181,7 +181,7 @@ plans_diversity <- function(plans, chains = 1, n_max = 100,
             }
             n_pl = length(i_ok) / denom
         } else {
-            cli_abort("{.arg chains} must be an integer or the value \"all\".")
+            cli::cli_abort("{.arg chains} must be an integer or the value \"all\".")
         }
     }
 
@@ -190,7 +190,7 @@ plans_diversity <- function(plans, chains = 1, n_max = 100,
 
 
     if (is.null(total_pop))
-        cli_abort("Must provide {.arg total_pop} for this {.cls redist_plans} object.")
+        cli::cli_abort("Must provide {.arg total_pop} for this {.cls redist_plans} object.")
 
     dists <- redist.distances(m[, idx], "variation of information",
         ncores = ncores, total_pop = total_pop)$VI

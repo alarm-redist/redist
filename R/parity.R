@@ -22,17 +22,17 @@
 #' @export
 redist.parity <- function(plans, total_pop) {
     if (!is.numeric(total_pop)) {
-        cli_abort("{.arg total_pop} must be a numeric vector")
+        cli::cli_abort("{.arg total_pop} must be a numeric vector")
     }
     if (!is.matrix(plans)) {
         plans <- matrix(plans, ncol = 1)
     }
     if (!is.matrix(plans)) {
-        cli_abort("{.arg plans} must be a matrix")
+        cli::cli_abort("{.arg plans} must be a matrix")
     }
 
     if (length(total_pop) != nrow(plans)) {
-        cli_abort(".arg plans} and {.arg total_pop} must have same number of precincts.")
+        cli::cli_abort(".arg plans} and {.arg total_pop} must have same number of precincts.")
     }
 
     rg <- range(plans[, 1])
@@ -84,7 +84,7 @@ min_move_parity <- function(map, plan, counties = NULL, penalty = 0.2) {
 
     plan <- eval_tidy(enquo(plan), map)
     if (!is.numeric(plan) && all(plan > 0) && length(plan) == V)
-        cli_abort("{.arg plan} must be a positive integer vector with one entry per precinct.")
+        cli::cli_abort("{.arg plan} must be a positive integer vector with one entry per precinct.")
 
     if (missing(counties)) {
         counties <- rep(1L, V)

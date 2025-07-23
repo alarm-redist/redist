@@ -12,7 +12,7 @@
 redist.adjacency <- function(shp, plan) {
     # Check input
     if (!any(c("sf", "SpatialPolygonsDataFrame") %in% class(shp))) {
-        cli_abort("{.arg shp} must be a {.cls sf} or {.cls sp} object")
+        cli::cli_abort("{.arg shp} must be a {.cls sf} or {.cls sp} object")
     }
 
     # Create the adjacency with spdep function
@@ -36,16 +36,16 @@ redist.adjacency <- function(shp, plan) {
     correct_n <- nrow(shp) == length(unique(unlist(adj)))
 
     if (!correct_n) {
-        cli_warn("At least one precinct had no adjacent precincts.")
+        cli::cli_warn("At least one precinct had no adjacent precincts.")
     } else if (any(contiguity(adj = adj, group = rep(1, length(adj))) > 1)) {
-        cli_warn("All precincts have at least one neighbor, but the graph is disconnected.")
+        cli::cli_warn("All precincts have at least one neighbor, but the graph is disconnected.")
     }
 
 
     if (!missing(plan)) {
         cont <- contiguity(adj, plan)
         if (any(cont > 1)) {
-            cli_warn("District {unique(plan[cont>1])} was not contiguous.")
+            cli::cli_warn("District {unique(plan[cont>1])} was not contiguous.")
         }
     }
 
@@ -72,13 +72,13 @@ redist.adjacency <- function(shp, plan) {
 redist.reduce.adjacency <- function(adj, keep_rows) {
     # Check inputs:
     if (!(class(keep_rows) %in% c("numeric", "integer"))) {
-        cli_warn("{.arg keep_rows} must be a numeric or integer vector.")
+        cli::cli_warn("{.arg keep_rows} must be a numeric or integer vector.")
     }
     if (min(unlist(adj)) != 0) {
-        cli_abort("{.arg adj} must be a 0-indexed list.")
+        cli::cli_abort("{.arg adj} must be a 0-indexed list.")
     }
     if (max(unlist(adj)) != (length(adj) - 1)) {
-        cli_warn("{.arg adj} did not have typical values of 0:(length(adj)-1)")
+        cli::cli_warn("{.arg adj} did not have typical values of 0:(length(adj)-1)")
     }
 
     prec_map <- match(seq_along(adj), keep_rows) - 1L
@@ -100,13 +100,13 @@ redist.reduce.adjacency <- function(adj, keep_rows) {
 #' @export
 redist.coarsen.adjacency <- function(adj, groups) {
     if (min(unlist(adj)) != 0) {
-        cli_abort("{.arg adj} must be a 0-indexed list.")
+        cli::cli_abort("{.arg adj} must be a 0-indexed list.")
     }
     if (max(unlist(adj)) != (length(adj) - 1)) {
-        cli_warn("{.arg adj} did not have typical values of 0:(length(adj)-1)")
+        cli::cli_warn("{.arg adj} did not have typical values of 0:(length(adj)-1)")
     }
     if (length(groups) != length(adj)) {
-        cli_abort("{.arg groups} and {.arg adj} have different sizes.")
+        cli::cli_abort("{.arg groups} and {.arg adj} have different sizes.")
     }
     if (min(groups) != 0) {
         groups <- groups - min(groups)
@@ -144,11 +144,11 @@ redist.coarsen.adjacency <- function(adj, groups) {
 redist.subset <- function(shp, adj, keep_rows, total_pop, ndists,
                           pop_tol, sub_ndists) {
     if (missing(shp)) {
-        cli_abort(c("{.arg shp} is required.",
+        cli::cli_abort(c("{.arg shp} is required.",
             "i" = "Use {.fn redist.reduce.adjacency} to subset adjacency lists."))
     }
     if (!inherits(shp, "sf")) {
-        cli_abort("{.arg shp} must be an {.cls sf} object.")
+        cli::cli_abort("{.arg shp} must be an {.cls sf} object.")
     }
 
     if (missing(adj)) {

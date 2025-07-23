@@ -72,7 +72,7 @@ redist.prep.enumpart <- function(adj, unordered_path, ordered_path,
                                  weight_path = NULL, total_pop = NULL) {
 
     if (is.null(weight_path) + is.null(total_pop) == 1L) {
-        cli_abort("You must provide both of {.arg weight_path} and {.arg total_pop} or neither.")
+        cli::cli_abort("You must provide both of {.arg weight_path} and {.arg total_pop} or neither.")
     }
 
     # Return the list to 1 indexing
@@ -158,7 +158,7 @@ redist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
             options <- c("-k", ndists, "-comp", "-allsols")
         } else {
             if (is.null(n)) {
-                cli_abort("{.arg n} must be specified when all is {.code FALSE}.")
+                cli::cli_abort("{.arg n} must be specified when all is {.code FALSE}.")
             }
             options <- c("-k", ndists, "-comp", "-sample", n)
         }

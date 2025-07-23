@@ -82,7 +82,7 @@ summary.redist_plans <- function(
 
 
     if (n_distr == 1 || nrow(plans_m) == 1) {
-        cli_text("{fmt_comma(n_samp)}{cli::qty(n_samp)} sampled plan{?s} of
+        cli::cli_text("{fmt_comma(n_samp)}{cli::qty(n_samp)} sampled plan{?s} of
                  {n_distr} district{?s} on
                  {fmt_comma(nrow(plans_m))}{cli::qty(nrow(plans_m))} unit{?s}")
         return(invisible(1))
@@ -371,7 +371,7 @@ summary.redist_plans <- function(
     }else if (algo %in% c("mergesplit", 'flip')) {
 
         accept_rate <- sprintf("%0.1f%%", 100*attr(object, "mh_acceptance"))
-        cli_text("Chain acceptance rate{?s}: {accept_rate}")
+        cli::cli_text("Chain acceptance rate{?s}: {accept_rate}")
 
         if(rhats_computed){
             out <- rhats_df
@@ -400,7 +400,7 @@ summary.redist_plans <- function(
                         If you are experiencing low plan diversity, address that issue first.")
         }
     } else {
-        cli_abort("{.fn summary} is not supported for the {toupper(algo)} algorithm.")
+        cli::cli_abort("{.fn summary} is not supported for the {toupper(algo)} algorithm.")
     }
 
     invisible(out)

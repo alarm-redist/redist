@@ -14,7 +14,7 @@ distr_compactness <- function(map, measure = "FracKept", .data = cur_plans(), ..
 
     # districts not in ascending order
     if (length(unique(diff(as.integer(.data$district)))) > 2)
-        cli_warn("Districts not sorted in ascending order; output may be incorrect.")
+        cli::cli_warn("Districts not sorted in ascending order; output may be incorrect.")
 
     redist.compactness(shp = map, plans = get_plans_matrix(.data),
         measure = measure, total_pop = map[[attr(map, "pop_col")]],
@@ -56,7 +56,7 @@ partisan_metrics <- function(map, measure, rvote, dvote, ...,
     check_tidy_types(map, .data)
     # districts not in ascending order
     if (length(unique(diff(as.integer(.data$district)))) > 2)
-        cli_warn("Districts not sorted in ascending order; output may be incorrect.")
+        cli::cli_warn("Districts not sorted in ascending order; output may be incorrect.")
 
     rvote <- rlang::eval_tidy(rlang::enquo(rvote), map)
     dvote <- rlang::eval_tidy(rlang::enquo(dvote), map)

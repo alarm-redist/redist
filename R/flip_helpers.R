@@ -106,20 +106,20 @@ redist.ipw <- function(plans,
 
     ## Warnings:
     if (missing(plans) | !inherits(plans, "redist_plans")) {
-        cli_abort("Please provide {.arg plans} as a {.cls redist_plans}.")
+        cli::cli_abort("Please provide {.arg plans} as a {.cls redist_plans}.")
     }
 
     plans_ref <- subset_ref(plans)
     plans <- subset_sampled(plans)
 
     if (length(resampleconstraint) != 1) {
-        cli_abort("We currently only support one resamplingconstraint at a time.")
+        cli::cli_abort("We currently only support one resamplingconstraint at a time.")
     }
     if (!(resampleconstraint %in% c("pop_dev", "edges_removed", "segregation", "status_quo"))) {
-        cli_abort("We do not provide support for that constraint at this time")
+        cli::cli_abort("We do not provide support for that constraint at this time")
     }
     if (missing(targetbeta)) {
-        cli_abort("Please specify the target beta value")
+        cli::cli_abort("Please specify the target beta value")
     }
 
     ## Get indices drawn under target beta if tempering

@@ -54,7 +54,7 @@ redist.segcalc <- function(plans, group_pop, total_pop) {
     if (!((nrow(plans) == length(group_pop)) &
         (length(group_pop) == length(total_pop)) &
         (length(total_pop) == nrow(plans)))) {
-        cli_abort("Please make sure there is a population entry for each geographic unit")
+        cli::cli_abort("Please make sure there is a population entry for each geographic unit")
     }
 
     nd <- dplyr::n_distinct((plans[, 1]))
@@ -265,14 +265,14 @@ redist.compactness <- function(shp = NULL,
 
     # Check Inputs
     if (is.null(shp) & is.null(adj)) {
-        cli_abort("Please provide a {.arg shp} or {.arg adj} argument.")
+        cli::cli_abort("Please provide a {.arg shp} or {.arg adj} argument.")
     }
 
     if (!is.null(shp)) {
         if ("SpatialPolygonsDataFrame" %in% class(shp)) {
             shp <- sf::st_as_sf(shp)
         } else if (!inherits(shp, "sf")) {
-            cli_abort("Please provide {.arg shp} as a SpatialPolygonsDataFrame or sf object.")
+            cli::cli_abort("Please provide {.arg shp} as a SpatialPolygonsDataFrame or sf object.")
         }
 
 
@@ -293,7 +293,7 @@ redist.compactness <- function(shp = NULL,
     }
 
     if (!is.numeric(plans)) {
-        cli_abort("Please provide {.arg plans} as a numeric vector, matrix, or {.cls redist_plans}.")
+        cli::cli_abort("Please provide {.arg plans} as a numeric vector, matrix, or {.cls redist_plans}.")
     }
 
 
@@ -312,24 +312,24 @@ redist.compactness <- function(shp = NULL,
     )
 
     if ("FryerHolden" %in% measure & is.null(total_pop)) {
-        cli_abort("Please provide a {.arg total_pop} argument when FryerHolden is specified.")
+        cli::cli_abort("Please provide a {.arg total_pop} argument when FryerHolden is specified.")
     }
 
     if ("FryerHolden" %in% measure) {
         if (!any(class(total_pop) %in% c("numeric", "integer"))) {
-            cli_abort("Please provide {.arg total_pop} as a numeric or integer.")
+            cli::cli_abort("Please provide {.arg total_pop} as a numeric or integer.")
         }
     }
 
     if (!is.numeric(draw) & !is.factor(draw)) {
-        cli_abort("Please provide {.arg draw} as a numeric or factor.")
+        cli::cli_abort("Please provide {.arg draw} as a numeric or factor.")
     }
 
     if (!is.numeric(ncores)) {
-        cli_abort('Please provide "ncores" as a numeric.')
+        cli::cli_abort('Please provide "ncores" as a numeric.')
     }
     if (("logSpanningTree" %in% measure) & is.null(counties)) {
-        cli_abort("Please provide {.arg counties}.")
+        cli::cli_abort("Please provide {.arg counties}.")
     }
 
 
@@ -499,18 +499,18 @@ redist.compactness <- function(shp = NULL,
 redist.group.percent <- function(plans, group_pop, total_pop, ncores = 1) {
     .Deprecated("group_frac()")
     if (!is.numeric(group_pop) || !is.numeric(total_pop))
-        cli_abort("{.arg group_pop} and {.arg total_pop} must be numeric vectors.")
+        cli::cli_abort("{.arg group_pop} and {.arg total_pop} must be numeric vectors.")
     if (!is.matrix(plans))
-        cli_abort("{.arg plans} must be a matrix.")
+        cli::cli_abort("{.arg plans} must be a matrix.")
 
     if (!is.matrix(plans)) {
         plans <- as.matrix(plans)
     }
 
     if (length(total_pop) != nrow(plans))
-        cli_abort("{.arg plans} and {.arg total_pop} must have the same number of precincts.")
+        cli::cli_abort("{.arg plans} and {.arg total_pop} must have the same number of precincts.")
     if (length(group_pop) != nrow(plans))
-        cli_abort("{.arg plans} and {.arg group_pop} must have the same number of precincts.")
+        cli::cli_abort("{.arg plans} and {.arg group_pop} must have the same number of precincts.")
 
     ndists <- max(plans[, 1])
     if (ndists ==  length(unique(plans[, 1])) - 1) {
@@ -632,39 +632,39 @@ redist.metrics <- function(plans, measure = "DSeats", rvote, dvote,
     }
 
     if (!is.numeric(plans)) {
-        cli_abort("Please provide {.arg plans} as a numeric vector, matrix, or {.cls redist_plans}.")
+        cli::cli_abort("Please provide {.arg plans} as a numeric vector, matrix, or {.cls redist_plans}.")
     }
     if (!is.matrix(plans)) {
         plans <- as.matrix(plans)
     }
     if (any(is.na(plans))) {
-        cli_abort("{.val NA} in argument to {.arg plans}.")
+        cli::cli_abort("{.val NA} in argument to {.arg plans}.")
     }
 
     if (any(is.na(rvote))) {
-        cli_abort("{.val NA} value in argument to {.arg rvote}.")
+        cli::cli_abort("{.val NA} value in argument to {.arg rvote}.")
     }
     if (any(is.na(dvote))) {
-        cli_abort("{.val NA} value in argument to {.arg dvote}.")
+        cli::cli_abort("{.val NA} value in argument to {.arg dvote}.")
     }
     if (!is.numeric(rvote)) {
-        cli_abort("Please provide {.arg rvote} as a numeric or integer vector.")
+        cli::cli_abort("Please provide {.arg rvote} as a numeric or integer vector.")
     }
     if (!is.numeric(dvote)) {
-        cli_abort("Please provide {.arg dvote} as a numeric or integer vector.")
+        cli::cli_abort("Please provide {.arg dvote} as a numeric or integer vector.")
     }
 
     rvote <- as.integer(rvote)
     dvote <- as.integer(dvote)
     if (length(rvote) != nrow(plans)) {
-        cli_abort("{.arg rvote} length and {.arg plans} row dimension are not equal.")
+        cli::cli_abort("{.arg rvote} length and {.arg plans} row dimension are not equal.")
     }
     if (length(dvote) != nrow(plans)) {
-        cli_abort("{.arg dvote} length and {.arg plans} row dimension are not equal.")
+        cli::cli_abort("{.arg dvote} length and {.arg plans} row dimension are not equal.")
     }
 
     if (!is.numeric(draw) & !is.factor(draw)) {
-        cli_abort('Please provide "draw" as a numeric or factor.')
+        cli::cli_abort('Please provide "draw" as a numeric or factor.')
     }
 
     # Precompute a few useful variables
@@ -769,7 +769,7 @@ redist.metrics <- function(plans, measure = "DSeats", rvote, dvote,
 redist.splits <- function(plans, counties) {
     .Deprecated("splits_admin")
     if (missing(plans)) {
-        cli_abort("Please provide an argument to {.arg plans}.")
+        cli::cli_abort("Please provide an argument to {.arg plans}.")
     }
     if (inherits(plans, "redist_plans")) {
         plans <- get_plans_matrix(plans)
@@ -782,7 +782,7 @@ redist.splits <- function(plans, counties) {
     }
 
     if (missing(counties)) {
-        cli_abort("Please provide an argument to {.arg counties}.")
+        cli::cli_abort("Please provide an argument to {.arg counties}.")
     }
 
 
@@ -862,7 +862,7 @@ redist.district.splits <- function(plans, counties) {
 redist.multisplits <- function(plans, counties) {
     .Deprecated("splits_multi")
     if (missing(plans)) {
-        cli_abort("Please provide an argument to {.arg plans}.")
+        cli::cli_abort("Please provide an argument to {.arg plans}.")
     }
     if (inherits(plans, "redist_plans")) {
         plans <- get_plans_matrix(plans)
@@ -875,7 +875,7 @@ redist.multisplits <- function(plans, counties) {
     }
 
     if (missing(counties)) {
-        cli_abort("Please provide an argument to {.arg counties}.")
+        cli::cli_abort("Please provide an argument to {.arg counties}.")
     }
 
     redistmetrics::splits_multi(plans = plans, shp = data.frame(),

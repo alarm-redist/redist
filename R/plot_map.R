@@ -47,16 +47,16 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = "",
     if (inherits(shp, "SpatialPolygonsDataFrame")) {
         shp <- shp %>% st_as_sf()
     } else if (!inherits(shp, "sf")) {
-        cli_abort("{.arg shp} must be a {.cls SpatialPolygonsDataFrame} or {.cls sf} object.")
+        cli::cli_abort("{.arg shp} must be a {.cls SpatialPolygonsDataFrame} or {.cls sf} object.")
     }
 
     plan <- eval_tidy(enquo(plan), shp)
     if (!is.null(plan)) {
         if (!is.numeric(plan)) {
-            cli_abort("{.arg} plan must be a numeric vector.")
+            cli::cli_abort("{.arg} plan must be a numeric vector.")
         }
         if (nrow(shp) != length(plan)) {
-            cli_abort("{.arg plan} and {.arg shp} must have same number of precincts.")
+            cli::cli_abort("{.arg plan} and {.arg shp} must have same number of precincts.")
         }
     }
     fill <- eval_tidy(enquo(fill), shp)
@@ -207,17 +207,17 @@ redist.plot.adj <- function(shp, adj = NULL, plan = NULL, centroids = TRUE,
     if (inherits(shp, "SpatialPolygonsDataFrame")) {
         shp <- shp %>% st_as_sf()
     } else if (!inherits(shp, "sf")) {
-        cli_abort("{.arg shp} must be a {.cls SpatialPolygonsDataFrame} or {.cls sf} object.")
+        cli::cli_abort("{.arg shp} must be a {.cls SpatialPolygonsDataFrame} or {.cls sf} object.")
     }
 
 
     plan_to_plot <- eval_tidy(enquo(plan), shp)
     if (!is.null(plan_to_plot)) {
         if (!is.numeric(plan_to_plot)) {
-            cli_abort("{.arg plan} must be a numeric vector.")
+            cli::cli_abort("{.arg plan} must be a numeric vector.")
         }
         if (nrow(shp) != length(plan_to_plot)) {
-            cli_abort("{.arg plan} and {.arg shp} must have same number of precincts.")
+            cli::cli_abort("{.arg plan} and {.arg shp} must have same number of precincts.")
         }
     }
 
@@ -231,7 +231,7 @@ redist.plot.adj <- function(shp, adj = NULL, plan = NULL, centroids = TRUE,
 
 
     if (drop & is.null(plan)) {
-        cli_abort("{.arg drop} is {.code TRUE} but no plan supplied.")
+        cli::cli_abort("{.arg drop} is {.code TRUE} but no plan supplied.")
     }
 
     edge_cntr <- edge_center_df(shp, adj)

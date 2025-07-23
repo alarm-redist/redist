@@ -77,21 +77,21 @@ redist.diagplot <- function(sumstat, plot = c("trace", "autocorr", "densplot",
                                 "mean", "gelmanrubin"),
                             logit = FALSE, savename = NULL) {
     if (!requireNamespace("coda", quietly = TRUE))
-        cli_abort(c("{.fn redist.diagplot} requires the {.pkg coda} package.",
+        cli::cli_abort(c("{.fn redist.diagplot} requires the {.pkg coda} package.",
             ">" = 'Install it with {.code install.packages("coda")}'))
 
     ##############
     ## Warnings ##
     ##############
     if (!inherits(sumstat, c("integer", "numeric", "list", "mcmc", "mcmc.list"))) {
-        cli_abort("{.arg sumstat} should be either a numeric vector, list, or {.cls mcmc} object.")
+        cli::cli_abort("{.arg sumstat} should be either a numeric vector, list, or {.cls mcmc} object.")
     }
     if (!(plot %in% c("trace", "autocorr", "densplot",
         "mean", "gelmanrubin"))) {
-        cli_abort("Sorry. We don't currently support the {.value {plot}} diagnostic.")
+        cli::cli_abort("Sorry. We don't currently support the {.value {plot}} diagnostic.")
     }
     if (plot == "gelmanrubin" & !inherits(sumstat, c("list", "mcmc.list"))) {
-        cli_abort("If generating a Gelman-Rubin plot, please provide an object of class list or mcmc.list")
+        cli::cli_abort("If generating a Gelman-Rubin plot, please provide an object of class list or mcmc.list")
     }
 
     ########################

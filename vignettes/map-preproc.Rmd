@@ -8,9 +8,16 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
+try({
+  data_url <- "https://github.com/alarm-redist/redist-data/raw/main/data/king_county.rds"
+  data_path <- tempfile()
+  download.file(data_url, data_path)
+})
+
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  eval = file.exists(data_path)
 )
 set.seed(5118)
 ```
@@ -37,7 +44,7 @@ much as possible.
 The precinct data are available online, and contain population, presidential
 vote, city, and existing district information.
 
-```{r setup, message=F}
+```{r setup, message=FALSE}
 library(dplyr)
 library(ggplot2)
 library(scales)
@@ -45,19 +52,19 @@ library(patchwork)
 
 library(redist)
 
-data_url = "https://github.com/alarm-redist/redist-data/raw/main/data/king_county.rds"
-data_path = tempfile()
+data_url <- "https://github.com/alarm-redist/redist-data/raw/main/data/king_county.rds"
+data_path <- tempfile()
 download.file(data_url, data_path)
-king_shp = readRDS(data_path)
+king_shp <- readRDS(data_path)
 print(king_shp)
 ```
 
-```{r include=F}
-n_city = length(unique(king_shp$city)) - 1
-tot_area = as.numeric(sum(sf::st_area(king_shp)))
-tot_pop = sum(king_shp$pop)
-unincorp_area = as.numeric(sum(sf::st_area(king_shp[king_shp$city == "UNINCORP", ])))
-unincorp_pop = sum(king_shp$pop[king_shp$city == "UNINCORP"])
+```{r include= FALSE}
+n_city <- length(unique(king_shp$city)) - 1
+tot_area <- as.numeric(sum(sf::st_area(king_shp)))
+tot_pop <- sum(king_shp$pop)
+unincorp_area <- as.numeric(sum(sf::st_area(king_shp[king_shp$city == "UNINCORP", ])))
+unincorp_pop <- sum(king_shp$pop[king_shp$city == "UNINCORP"])
 ```
 
 There are `r n_city` incorporated cities in King County,
@@ -68,47 +75,51 @@ amount of water, too, which complicates the drawing of districts; Vashon Island
 in the southwest part of the county is not connected to the rest of the county
 by land.
 
-We'll start by looking at some maps of the county and the districts.
+We"ll start by looking at some maps of the county and the districts.
 
-```{r water-plot, fig.width=8, echo=F}
-areas = as.numeric(units::set_units(sf::st_area(king_shp), mi^2))
-pop_plot = ggplot(king_shp, aes(fill=pop/areas)) +
-    geom_sf(size=0) +
-    scale_fill_viridis_c(trans="sqrt", labels=comma, limits=c(0, 25e3), oob=squish) +
-    labs(title="Population Density") +
-    theme_void() + theme(legend.position="bottom")
-water_plot = ggplot(king_shp, aes(fill=pct_water)) +
-    geom_sf(size=0) +
-    scale_fill_viridis_c(labels=percent) +
-    labs(title="Water") +
-    theme_void() + theme(legend.position="bottom")
+```{r water-plot, fig.width=8, echo= FALSE}
+areas <- as.numeric(units::set_units(sf::st_area(king_shp), mi^2))
+pop_plot <- ggplot(king_shp, aes(fill = pop / areas)) +
+  geom_sf(size = 0) +
+  scale_fill_viridis_c(trans = "sqrt", labels = comma, limits = c(0, 25e3), oob = squish) +
+  labs(title = "Population Density") +
+  theme_void() +
+  theme(legend.position = "bottom")
+water_plot <- ggplot(king_shp, aes(fill = pct_water)) +
+  geom_sf(size = 0) +
+  scale_fill_viridis_c(labels = percent) +
+  labs(title = "Water") +
+  theme_void() +
+  theme(legend.position = "bottom")
 water_plot + pop_plot
 ```
 
-```{r city-distr-plot, echo=F}
-cities = summarize(group_by(king_shp, city, distr), .groups="drop")
-districts = summarize(group_by(king_shp, distr))
+```{r city-distr-plot, echo= FALSE}
+cities <- summarize(group_by(king_shp, city, distr), .groups = "drop")
+districts <- summarize(group_by(king_shp, distr))
 ggplot(cities) +
-    geom_sf(aes(fill=city, alpha=city!="UNINCORP"), color="#444444") +
-    geom_sf(color="black", size=1, data=districts, fill="#00000000") +
-    geom_sf_text(aes(label=distr), size=10, fontface="bold", color="#000000aa",
-                 data=districts) +
-    scale_alpha_manual(values=c(0, 0.8)) +
-    guides(fill="none", alpha="none") +
-    labs(title="Cities with Council District Overlays") + 
-    theme_void()
+  geom_sf(aes(fill = city, alpha = city != "UNINCORP"), color = "#444444") +
+  geom_sf(color = "black", size = 1, data = districts, fill = "#00000000") +
+  geom_sf_text(aes(label = distr),
+    size = 10, fontface = "bold", color = "#000000aa",
+    data = districts
+  ) +
+  scale_alpha_manual(values = c(0, 0.8)) +
+  guides(fill = "none", alpha = "none") +
+  labs(title = "Cities with Council District Overlays") +
+  theme_void()
 ```
 
 # Creating the `redist_map` object
 The first step one in a `redist` analysis is creating the `redist_map` object,
 which stores the basic parameters of the redistricting problem.  Among these 
-parameters is the desired level of population parity.  Here, we'll compute
+parameters is the desired level of population parity.  Here, we"ll compute
 the parity of the current set of districts, and ensure that all of our
 simulations do no worse.
 
 ```{r}
-existing_parity = redist.parity(king_shp$distr, king_shp$pop)
-king = redist_map(king_shp, existing_plan=distr, pop_tol=existing_parity)
+existing_parity <- redist.parity(king_shp$distr, king_shp$pop)
+king <- redist_map(king_shp, existing_plan = distr, pop_tol = existing_parity)
 print(king)
 ```
 
@@ -117,14 +128,14 @@ can explore this graph, and zoom in on the city of Seattle, using
 `plot()`.
 
 ```{r king-adj, fig.height=6}
-plot(king, adj=T, centroids=F, zoom_to=(city == "SEA"))
+plot(king, adj = TRUE, centroids = FALSE, zoom_to = (city == "SEA"))
 ```
 
 
 # Subsetting
 Often, we wish to restrict our analysis to a part of a map or only a few of 
 the districts.  This is supported in `redist` using the `filter()` function
-from [`dplyr`](https://dplyr.tidyverse.org/).  The package's version of `filter()`
+from [`dplyr`](https://dplyr.tidyverse.org/).  The package"s version of `filter()`
 will automatically update the adjacency graph, the number of districts, and
 the relevant population bounds.
 
@@ -143,13 +154,13 @@ adjacency graph to reflect the new geometry of the map.
 
 ## Dealing with water and islands
 Another way we might want to subset would be to cut out the precincts which are
-just water, so that districts won't unnecessarily cross bodies of water. Of
-course, we'll have to ensure that Vashon Island is still connected to the
-mainland by at least one precinct. We'll start by subsetting to the water
+just water, so that districts won"t unnecessarily cross bodies of water. Of
+course, we"ll have to ensure that Vashon Island is still connected to the
+mainland by at least one precinct. We"ll start by subsetting to the water
 precincts and plotting labels.
 
 ```{r king-water}
-plot(filter(king, pct_water >= 0.99, pop == 0)) + geom_sf_text(aes(label=id))
+plot(filter(king, pct_water >= 0.99, pop == 0)) + geom_sf_text(aes(label = id))
 ```
 
 We see that by removing all water precincts except WVPS34 and WVSP34, we can
@@ -157,9 +168,9 @@ maintain a connection between the island and the mainland (incidentally, the
 state ferry connecting the island to Seattle runs through these precincts).
 
 ```{r king-land}
-water_prec = filter(king, pct_water >= 0.99, pop == 0) %>% pull(id)
-water_prec = setdiff(water_prec, c("WVPS34", "WVSP34"))
-king_land = filter(king, !(id %in% water_prec))
+water_prec <- filter(king, pct_water >= 0.99, pop == 0) %>% pull(id)
+water_prec <- setdiff(water_prec, c("WVPS34", "WVSP34"))
+king_land <- filter(king, !(id %in% water_prec))
 plot(king_land)
 ```
 
@@ -167,7 +178,7 @@ Zooming in again to view the adjacency graph in the city of Seattle, we see that
 the graph has been appropriately edited to remove the water precincts.
 
 ```{r seattle-land-adj, fig.height=6}
-plot(king_land, adj=T, centroids=F, zoom_to=(city == "SEA"))
+plot(king_land, adj = TRUE, centroids = FALSE, zoom_to = (city == "SEA"))
 ```
 
 # Merging
@@ -202,8 +213,8 @@ un-merge objects and restore plotting capability.  However, should you want
 to preserve the geometry through merging, you can simply set `drop_geom=FALSE`.
 
 ```{r merged-city}
-king_merged = merge_by(king_land, city, drop_geom=FALSE)
-plot(king_merged, adj=T)
+king_merged <- merge_by(king_land, city, drop_geom = FALSE)
+plot(king_merged, adj = TRUE)
 ```
 
 We will see more uses of `merge_by()` in the sections below.
@@ -234,12 +245,12 @@ split municipalities.
 cat(splits_admin(king_land$distr, king_land, city), "split cities\n")
 
 king_land %>%
-    mutate(is_unsplit = !is_county_split(distr, city)) %>%
-plot(is_unsplit)
+  mutate(is_unsplit = !is_county_split(distr, city)) %>%
+  plot(is_unsplit)
 
-king_unsplit = king_land %>%
-    mutate(unsplit_id = freeze(!is_county_split(distr, city))) %>%
-    merge_by(unsplit_id, city, collapse_chr=FALSE)
+king_unsplit <- king_land %>%
+  mutate(unsplit_id = freeze(!is_county_split(distr, city))) %>%
+  merge_by(unsplit_id, city, collapse_chr = FALSE)
 print(king_unsplit)
 ```
 
@@ -249,16 +260,16 @@ that adjacent unsplit cities are not merged together. We also set
 `collapse_chr=FALSE` to drop the `id` and `precinct` columns, which become
 slightly unwieldy after a large merge.
 
-To see this in action, we'll sample 100 redistricting plans using `redist_smc()`
-on this partially frozen map.  We'll use `pullback()` to then reconstruct
+To see this in action, we"ll sample 100 redistricting plans using `redist_smc()`
+on this partially frozen map.  We"ll use `pullback()` to then reconstruct
 the plan output of `redist_smc()` so that it is congruous with the original
 geometry object, `king_land`.
 
 ```{r unsplit-plan, fig.width=8}
-plans = redist_smc(king_unsplit, 100, silent=T)
+plans <- redist_smc(king_unsplit, 100, silent = TRUE)
 print(plans)
 print(pullback(plans))
-redist.plot.plans(pullback(plans), draws=1:4, shp=king_land)
+redist.plot.plans(pullback(plans), draws = 1:4, shp = king_land)
 ```
 
 Notice how the `Merged from another map...` line disappears and the number of
@@ -269,7 +280,7 @@ and `merge_by()`.
 # District Cores
 A common requirement in redistricting is that districts after redistricting
 resemble the original districts, or 
-["preserve the cores" of previous districts](https://www.ncsl.org/redistricting-and-census/redistricting-criteria),
+["preserve the cores" of previous districts](https://www.ncsl.org/redistricting-and-census),
 to ensure relative continuity of representation. The `redist` package
 operationalizes this idea by explicitly constructing the cores of a set of
 districts with  `make_cores()`, and merging them together with `merge_by()`.
@@ -291,25 +302,26 @@ For example, if we set `boundary=1` in King county, 82% of the population lives
 inside a district core, while with `boundary=2` that number drops to 58%.
 
 ```{r}
-pop_inside_cores = function(boundary) {
-    king_land %>%
-        mutate(core = make_cores(boundary=boundary)) %>%
-        as_tibble() %>%
-        group_by(core) %>%
-        filter(n() > 2) %>% # filter to cores only
-        pull(pop) %>% sum
+pop_inside_cores <- function(boundary) {
+  king_land %>%
+    mutate(core = make_cores(boundary = boundary)) %>%
+    as_tibble() %>%
+    group_by(core) %>%
+    filter(n() > 2) %>% # filter to cores only
+    pull(pop) %>%
+    sum()
 }
 pop_inside_cores(1) / sum(king_land$pop)
 pop_inside_cores(2) / sum(king_land$pop)
 ```
 
-Here, we'll use `boundary=1`. We can see how large areas inside each district
+Here, we"ll use `boundary=1`. We can see how large areas inside each district
 are merged together after applying `merge_by()` to the generated cores.
 
 ```{r cores}
-king_cores = king_land %>%
-    mutate(core = make_cores(boundary=1)) %>%
-    merge_by(core, drop_geom=F)
+king_cores <- king_land %>%
+  mutate(core = make_cores(boundary = 1)) %>%
+  merge_by(core, drop_geom = FALSE)
 plot(king_cores)
 ```
 
@@ -318,7 +330,6 @@ simulated plans generally follow the same location and shape as the original
 plan. Sampling is also faster, since there are fewer units in the map.
 
 ```{r core-plans}
-plans = redist_smc(king_cores, 100, silent=T)
-redist.plot.plans(plans, draws=1:4, shp=king_cores)
+plans <- redist_smc(king_cores, 100, silent = TRUE)
+redist.plot.plans(plans, draws = 1:4, shp = king_cores)
 ```
-

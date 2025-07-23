@@ -43,7 +43,7 @@ The package contains a variety of redistricting simulation and enumeration
 algorithms.  Generally you will use one of the following three algorithms:
 
 - `redist_smc()`, the recommended algorithm for most purposes.^[from 
-[Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans](https://arxiv.org/pdf/2008.06131.pdf)]
+[Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans](http://arxiv.org/pdf/2008.06131)]
 - `redist_mergesplit()`, a MCMC version of the SMC proposal.^[based on Carter,
 D., Herschlag, G., Hunter, Z., and Mattingly, J. (2019). A merge-split proposal
 for reversible Monte Carlo Markov chain sampling of redistricting plans. arXiv
@@ -98,8 +98,8 @@ Other sources for precinct-level geographic and political information include
 the [MIT Election Lab](https://electionlab.mit.edu/data), 
 the [Census](https://www.census.gov/programs-surveys/decennial-census/about/rdo.html),
 the [Redistricting Data Hub](https://redistrictingdatahub.org/),
-the [Voting and Election Science Team](https://dataverse.harvard.edu/dataverse/electionscience),
-the [Harvard Election Data Archive](https://dataverse.harvard.edu/dataverse/eda),
+the [Voting and Election Science Team](https://x.com/vest_team),
+the Harvard Election Data Archive,
 the [Metric Geometry and Gerrymandering Group](https://github.com/mggg-states),
 and some state websites. 
 
@@ -206,7 +206,7 @@ redistricting algorithms to function properly.
 
 We can visualize the adjacency graph by plotting the `redist_map` object.
 ```{r iowa-adj, fig.width=8}
-plot(iowa_map, adj=T) + plot(iowa_map)
+plot(iowa_map, adj=TRUE) + plot(iowa_map)
 ```
 
 ## Pre-processing

@@ -69,9 +69,9 @@ plot.redist_plans <- function(x, ..., type = "distr_qtys") {
 #' @concept plot
 #' @export
 redist.plot.hist <- function(plans, qty, bins = NULL, ...) {
-    if (!inherits(plans, "redist_plans")) cli_abort("{.arg plans} must be a {.cls redist_plans}")
+    if (!inherits(plans, "redist_plans")) cli::cli_abort("{.arg plans} must be a {.cls redist_plans}")
     if (missing(qty))
-        cli_abort("Must provide a {.arg qty} to make the histogram from.")
+        cli::cli_abort("Must provide a {.arg qty} to make the histogram from.")
 
     val <- rlang::eval_tidy(rlang::enquo(qty), plans)
     rg <- diff(range(val, na.rm = TRUE))
@@ -107,7 +107,7 @@ redist.plot.hist <- function(plans, qty, bins = NULL, ...) {
 #' @export
 hist.redist_plans <- function(x, qty, ...) {
     if (missing(qty))
-        cli_abort("Must provide a {.arg qty} to make the histogram from.")
+        cli::cli_abort("Must provide a {.arg qty} to make the histogram from.")
     qty <- rlang::enquo(qty)
     redist.plot.hist(x, !!qty, ...)
 }
@@ -142,7 +142,7 @@ hist.redist_plans <- function(x, qty, ...) {
 #' @concept plot
 #' @export
 redist.plot.scatter <- function(plans, x, y, ..., bigger = TRUE) {
-    if (!inherits(plans, "redist_plans")) cli_abort("{.arg plans} must be a {.cls redist_plans}")
+    if (!inherits(plans, "redist_plans")) cli::cli_abort("{.arg plans} must be a {.cls redist_plans}")
 
     p <- ggplot(subset_sampled(plans, matrix = FALSE), aes(x = {{ x }}, y = {{ y }})) +
         ggplot2::geom_point(...)
@@ -238,14 +238,14 @@ redist.plot.scatter <- function(plans, x, y, ..., bigger = TRUE) {
 redist.plot.distr_qtys <- function(plans, qty, sort = "asc", geom = "jitter",
                                    color_thresh = NULL, size = 0.1, ref_geom,
                                    ref_label, ...) {
-    if (!inherits(plans, "redist_plans")) cli_abort("{.arg plans} must be a {.cls redist_plans}")
+    if (!inherits(plans, "redist_plans")) cli::cli_abort("{.arg plans} must be a {.cls redist_plans}")
 
     if (isFALSE(sort) || sort == "none") {
         plans <- dplyr::group_by(plans, .data$draw) %>%
             dplyr::mutate(.distr_no = as.factor(.data$district))
     } else {
         ord <- if (sort == "asc") 1  else if (sort == "desc") -1 else
-            cli_abort("{.arg sort} not recognized: {.code {sort}}")
+            cli::cli_abort("{.arg sort} not recognized: {.code {sort}}")
         plans <- dplyr::group_by(plans, .data$draw) %>%
             dplyr::mutate(.distr_no = as.factor(rank(ord*{{ qty }},
                 ties.method = "first")))
@@ -253,7 +253,7 @@ redist.plot.distr_qtys <- function(plans, qty, sort = "asc", geom = "jitter",
 
     val <- eval_tidy(enquo(qty), plans)
     if (is_const_num(val, plans$draw)) {
-        cli_warn(c("{.arg {rlang::as_label(enquo(qty))}} is constant across districts. ",
+        cli::cli_warn(c("{.arg {rlang::as_label(enquo(qty))}} is constant across districts. ",
             "Consider using {.fun hist} instead."))
     }
 
@@ -261,7 +261,7 @@ redist.plot.distr_qtys <- function(plans, qty, sort = "asc", geom = "jitter",
     if (is.null(color_thresh)) {
         p <- ggplot(pl_samp, aes(.data$.distr_no, {{ qty }}))
     } else {
-        if (!is.numeric(color_thresh)) cli_abort("{.arg color_thresh} must be numeric.")
+        if (!is.numeric(color_thresh)) cli::cli_abort("{.arg color_thresh} must be numeric.")
         p <- ggplot(pl_samp, aes(.data$.distr_no, {{ qty }},
             color = {{ qty }} >= color_thresh)) +
             ggplot2::guides(color = "none")
@@ -315,7 +315,7 @@ redist.plot.distr_qtys <- function(plans, qty, sort = "asc", geom = "jitter",
                }
            }
         } else {
-            cli_abort("{.arg geom} must be either \"jitter\" or \"boxplot\"")
+            cli::cli_abort("{.arg geom} must be either \"jitter\" or \"boxplot\"")
         }
     }
 
@@ -366,10 +366,10 @@ redist.plot.plans <- function(plans, draws, shp, qty = NULL, interactive = FALSE
         .Deprecated("shp", old = "geom")
         if (missing(shp)) shp <- geom
     }
-    if (!inherits(plans, "redist_plans")) cli_abort("{.arg plans} must be a {.cls redist_plans}")
+    if (!inherits(plans, "redist_plans")) cli::cli_abort("{.arg plans} must be a {.cls redist_plans}")
     m <- get_plans_matrix(plans)
     if (nrow(shp) != nrow(m))
-        cli_abort("{.arg plans} and {.arg shp} must have the same number of precincts.")
+        cli::cli_abort("{.arg plans} and {.arg shp} must have the same number of precincts.")
 
     if (interactive) {
         .Deprecated("interactive", msg = "Interactive editing is no longer supported within redist.")
