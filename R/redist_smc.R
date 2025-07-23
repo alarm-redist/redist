@@ -244,7 +244,7 @@ redist_smc <- function(
   adapt_k_thresh = .99
 ) {
   if (!missing(adapt_k_thresh)) {
-    cli_warn(
+    cli::cli_warn(
       "Passing {.arg adapt_k_thresh} directly is deprecated. Pass it in as an argument
                  in {.arg split_params}"
     )
@@ -260,13 +260,13 @@ redist_smc <- function(
   }
 
   if (!is_scalar(compactness) || compactness < 0) {
-    cli_abort("{.arg compactness} must be non-negative.")
+    cli::cli_abort("{.arg compactness} must be non-negative.")
   }
   if (seq_alpha <= 0 || seq_alpha > 1 || !is_scalar(seq_alpha)) {
-    cli_abort("{.arg seq_alpha} must lie in (0, 1].")
+    cli::cli_abort("{.arg seq_alpha} must lie in (0, 1].")
   }
   if (nsims < 1) {
-    cli_abort("{.arg nsims} must be positive.")
+    cli::cli_abort("{.arg nsims} must be positive.")
   }
 
   # check default inputs
@@ -302,7 +302,7 @@ redist_smc <- function(
         seq.int(from = min(seats_range), to = max(seats_range))
     )
   ) {
-    cli_abort(
+    cli::cli_abort(
       "For {.arg seats_range} only a continuous range of district seat sizes are allowed!"
     )
   }
@@ -310,7 +310,7 @@ redist_smc <- function(
   for (d_size1 in seats_range) {
       for (d_size2 in seats_range) {
         if((d_size1 + d_size2) %in% seats_range){
-            cli_abort("SMC does not support {.arg seats_range} where one district's seats is equal to the sum of two others")
+            cli::cli_abort("SMC does not support {.arg seats_range} where one district's seats is equal to the sum of two others")
         }
       }
   }
@@ -334,7 +334,7 @@ redist_smc <- function(
   }
   final_dists <- init_num_regions + n_steps
   if (final_dists > ndists) {
-    cli_abort("Too many districts already drawn to take {n_steps} steps.")
+    cli::cli_abort("Too many districts already drawn to take {n_steps} steps.")
   }
 
   #validate the splitting method and params
@@ -351,7 +351,7 @@ redist_smc <- function(
 
   # linking edge with counties not supported right now
   # if (num_admin_units > 1 && sampling_space == LINKING_EDGE_SPACE_SAMPLING) {
-  #     cli_abort(
+  #     cli::cli_abort(
   #         "Linking Edge Sampling with counties is not supported right now"
   #     )
   # }
@@ -370,11 +370,11 @@ redist_smc <- function(
   # get the step types
   step_types <- ifelse(merge_split_step_vec, "ms", "smc")
   if(sum(!merge_split_step_vec) != total_smc_steps){
-    cli_abort("In {.field step_types} the number of smc steps must be equal to {.field total_smc_steps}")
+    cli::cli_abort("In {.field step_types} the number of smc steps must be equal to {.field total_smc_steps}")
   }
   # assert first step is not smc
   if(merge_split_step_vec[1]){
-      cli_abort("The first step cannot be mergesplit! An SMC step must be run first!")
+      cli::cli_abort("The first step cannot be mergesplit! An SMC step must be run first!")
   }
   total_ms_steps <- sum(merge_split_step_vec)
   # total number of steps to run
@@ -384,7 +384,7 @@ redist_smc <- function(
   # if run_ms is true then seq_alpha must be 1
   if (run_ms && seq_alpha != 1) {
       seq_alpha <- 1L
-      cli_warn(
+      cli::cli_warn(
           "{.arg seq_alpha} must be set to 1 if any mergesplit steps are being run!"
       )
   }
@@ -416,11 +416,11 @@ redist_smc <- function(
       !rlang::is_integerish(ncores) ||
         !is_scalar(ncores)
     ) {
-      cli_abort("{.arg ncores} must be a single integer!")
+      cli::cli_abort("{.arg ncores} must be a single integer!")
     } else if (ncores == 0) {
       ncores <- ncores_max
     } else if (ncores < 0) {
-      cli_abort(
+      cli::cli_abort(
         "{.arg ncores} can't be negative!"
       )
     }
@@ -441,7 +441,7 @@ redist_smc <- function(
 
   # warn if more processes than cores
   if (nproc > ncores_max) {
-    cli_warn(
+    cli::cli_warn(
       "Inputted number of processes to spawn is greater than detected number of cores on machine"
     )
   }
@@ -594,7 +594,7 @@ redist_smc <- function(
       n_eff <- length(wgt) * mean(wgt)^2 / mean(wgt^2)
 
       if (any(is.na(lr))) {
-        cli_abort(c(
+        cli::cli_abort(c(
           "Sampling probabilities have been corrupted.",
           "*" = "Check that none of your constraint weights are too large.
                                  The output of constraint functions multiplied by the weight
@@ -658,7 +658,7 @@ redist_smc <- function(
 
 
       if (!is.nan(n_eff) && n_eff / nsims <= 0.05) {
-        cli_warn(c(
+        cli::cli_warn(c(
           "Less than 5% resampling efficiency.",
           "*" = "Increase the number of samples.",
           "*" = "Consider weakening or removing constraints.",
@@ -734,7 +734,7 @@ redist_smc <- function(
       )
 
       if (verbosity >= 1 && runs > 1) {
-          cli_text(
+          cli::cli_text(
               "Chain {chain}: {format(nsims, big.mark=',')} plans sampled in
                  {format(t2_run - t1_run, digits=2)}"
           )
@@ -745,7 +745,7 @@ redist_smc <- function(
   t2 <- Sys.time()
 
   if (verbosity >= 1) {
-    cli_text(
+    cli::cli_text(
       "{format(nsims*runs, big.mark=',')} plans sampled in
                  {format(t2-t1, digits=2)}"
     )
@@ -841,7 +841,7 @@ get_splitting_schedule <- function(split_params, districting_scheme){
             } else if (districting_scheme == "MMD") {
                 splitting_size_regime = "split_district_only_mmd"
             } else {
-                cli_abort(
+                cli::cli_abort(
                     "Districting scheme {districting_scheme} is not supported!"
                 )
             }
@@ -849,16 +849,16 @@ get_splitting_schedule <- function(split_params, districting_scheme){
             if (districting_scheme == "SMD") {
                 splitting_size_regime = "any_valid_sizes"
             } else if (districting_scheme == "MMD") {
-                cli_abort(
+                cli::cli_abort(
                     "Generaliezd region splits are not supported for Multi-member districting!"
                 )
             } else {
-                cli_abort(
+                cli::cli_abort(
                     "Districting scheme {districting_scheme} is not supported!"
                 )
             }
         } else {
-            cli_abort("{.arg splitting_schedule} must be either {.arg any_valid_sizes} or {.arg split_district_only}")
+            cli::cli_abort("{.arg splitting_schedule} must be either {.arg any_valid_sizes} or {.arg split_district_only}")
         }
     } else {
         # default to  district
@@ -867,7 +867,7 @@ get_splitting_schedule <- function(split_params, districting_scheme){
         } else if (districting_scheme == "MMD") {
             splitting_size_regime = "split_district_only_mmd"
         } else {
-            cli_abort(
+            cli::cli_abort(
                 "Districting scheme {districting_scheme} is not supported!"
             )
         }
@@ -917,7 +917,7 @@ get_init_plan_params <- function(
         } else if (is.matrix(init_particles)) {
             if (is.null(init_seats)) {
                 # else infer
-                cli_warn(
+                cli::cli_warn(
                     "{.arg init_seats} was not passed in, attempting to infer number of seats per region."
                 )
                 init_seats <- infer_plan_seats(
@@ -933,7 +933,7 @@ get_init_plan_params <- function(
                 init_particles <- init_particles - 1L
             }
         } else {
-            cli_abort(
+            cli::cli_abort(
                 "{.arg init_particles} must be either a redist_plans object or a matrix"
             )
         }
@@ -946,7 +946,7 @@ get_init_plan_params <- function(
         if (is.matrix(init_weights) && is.numeric(init_weights)) {
             # check 1 column and nsim rows
             if (any(dim(init_weights) != c(nsims, 1))) {
-                cli_abort(
+                cli::cli_abort(
                     "{.arg init_weights} must have only {nsims} elements!"
                 )
             }
@@ -954,14 +954,14 @@ get_init_plan_params <- function(
             init_weights <- as.vector(init_weights)
         } else if (is.vector(init_weights) && is.numeric(init_weights)) {
             if (length(init_weights) != nsims) {
-                cli_abort(
+                cli::cli_abort(
                     "{.arg init_weights} must be of length {nsims}!"
                 )
             }
         }
         # now check all positive
         if (any(init_weights <= 0)) {
-            cli_abort(
+            cli::cli_abort(
                 "All elements of {.arg init_weights} must be of length positive!"
             )
         }
@@ -998,11 +998,11 @@ extract_control_params <- function(control){
         if ("nproc" %in% names(control)) {
             nproc <- control[["nproc"]]
             if (!rlang::is_integerish(nproc) || !is_scalar(nproc)) {
-                cli_abort(
+                cli::cli_abort(
                     "{.arg nproc} in {.arg control} must be a single integer!"
                 )
             } else if (nproc <= 0) {
-                cli_abort(
+                cli::cli_abort(
                     "{.arg nproc} in {.arg control} must be a positive integer!"
                 )
             }
@@ -1064,7 +1064,7 @@ extract_ms_params <- function(ms_params, total_smc_steps){
             if (
                 !is_scalar(ms_moves_multiplier) || !ms_moves_multiplier > 0
             ) {
-                cli_abort("{.arg ms_moves_multiplier} must be a positive scalar")
+                cli::cli_abort("{.arg ms_moves_multiplier} must be a positive scalar")
             }
         } else {
             ms_moves_multiplier <- 1L
@@ -1084,7 +1084,7 @@ extract_ms_params <- function(ms_params, total_smc_steps){
             if (
                 !is_scalar(merge_prob_type) || merge_prob_type != "uniform"
             ) {
-                cli_abort("Only uniform merge probability is supported right now!")
+                cli::cli_abort("Only uniform merge probability is supported right now!")
             }
         } else {
             # else default to after every step

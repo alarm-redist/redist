@@ -159,7 +159,7 @@ redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE
             }
             rhat <- diag_rhat(x, chain)
             if (is.finite(rhat) && rhat > 1.05) {
-                cli_warn(c("Runs have not converged for this statistic.",
+                cli::cli_warn(c("Runs have not converged for this statistic.",
                            "i" = "R-hat is {round(rhat, 3)}",
                            ">" = "Increase the number of samples."))
             }
@@ -172,7 +172,7 @@ redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE
                 std_err <- sd(run_means) / sqrt(max(chain) - 1) # be slightly conservative
             }
     }else{
-        cli_abort("Can't do non-coda std errors for single MCMC chain!")
+        cli::cli_abort("Can't do non-coda std errors for single MCMC chain!")
     }
 
     alpha <- (1 - conf)/2

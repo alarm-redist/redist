@@ -104,7 +104,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     stopifnot(is.function(score_fn))
 
     if (compactness < 0){
-        cli_abort("{.arg compactness} must be non-negative.")
+        cli::cli_abort("{.arg compactness} must be non-negative.")
     }
     if (burst_size(1) < 1 || max_bursts < 1)
         cli::cli_abort("{.arg burst_size} and {.arg max_bursts} must be positive.")

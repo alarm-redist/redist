@@ -23,9 +23,9 @@ new_redist_map <- function(
 
     if (!is.integer(ndists)) cli::cli_abort("{.arg ndists} must be an integer.")
     if (!is.numeric(pop_bounds) || length(pop_bounds) != 3)
-        cli_abort("{.arg pop_bounds} must be a numeric vector of length 3.")
+        cli::cli_abort("{.arg pop_bounds} must be a numeric vector of length 3.")
     if(ndists > nseats){
-        cli_abort("{.arg ndists} must be less than or equal to {.arg nseats}")
+        cli::cli_abort("{.arg ndists} must be less than or equal to {.arg nseats}")
     }
 
 
@@ -94,14 +94,14 @@ validate_redist_map <- function(data, check_contig = TRUE, call = parent.frame()
 
     exist_col <- attr(data, "existing_col")
     if (!is.null(exist_col) && !is.numeric(data[[exist_col]])){
-        cli_abort("Existing plan {.field {exist_col}} must be a numeric vector.", call = call)
+        cli::cli_abort("Existing plan {.field {exist_col}} must be a numeric vector.", call = call)
     }
     existing_col_seats <- attr(data, "existing_col_seats")
     if(!is.null(exist_col) && is.null(existing_col_seats)){
         if(attr(data, "districting_scheme") == "SMD"){
             existing_col_seats <- rep(1L, attr(data, "ndists"))
         }else{
-            cli_abort("Existing MMD plan must have an accompanying {.field reference_plan_seats}")
+            cli::cli_abort("Existing MMD plan must have an accompanying {.field reference_plan_seats}")
         }
     }
 
@@ -289,20 +289,20 @@ redist_map <- function(..., existing_plan = NULL, pop_tol = NULL,
         if(ndists == nseats){
             seats_range <- 1L
         }else{
-            cli_abort("Must specify {.arg seats_range} if multi-member districting scheme is being used.")
+            cli::cli_abort("Must specify {.arg seats_range} if multi-member districting scheme is being used.")
         }
     }else{
         # check the district sizes are integers
         if(!rlang::is_integerish(seats_range)){
-            cli_abort("{.arg seats_range} must be integers.")
+            cli::cli_abort("{.arg seats_range} must be integers.")
         }
         # check they are all positive
         if(any(seats_range <= 0)){
-            cli_abort("{.arg seats_range} must be positive.")
+            cli::cli_abort("{.arg seats_range} must be positive.")
         }
         # check its not bigger than the total number of seats
         if(any(seats_range >= nseats)){
-            cli_abort("All values in {.arg seats_range} must be less than the total number of seats.")
+            cli::cli_abort("All values in {.arg seats_range} must be less than the total number of seats.")
         }
         # remove duplicates
         seats_range <- unique(seats_range)
@@ -332,13 +332,13 @@ redist_map <- function(..., existing_plan = NULL, pop_tol = NULL,
     # get seat sizes for reference plan
     if(!is.null(existing_plan_seats)){
         if(!rlang::is_integerish(existing_plan_seats)){
-            cli_abort("{.arg existing_plan_seats} must be integers.")
+            cli::cli_abort("{.arg existing_plan_seats} must be integers.")
         }
         if(any(existing_plan_seats <= 0)){
-            cli_abort("{.arg existing_plan_seats} must be all positive")
+            cli::cli_abort("{.arg existing_plan_seats} must be all positive")
         }
         if(length(existing_plan_seats) != ndists){
-            cli_abort("{.arg existing_plan_seats} must be of length {.arg ndists}")
+            cli::cli_abort("{.arg existing_plan_seats} must be of length {.arg ndists}")
         }
         existing_col_seats <- as.integer(existing_plan_seats)
     }else if (!is.null(existing_col)){

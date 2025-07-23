@@ -110,7 +110,7 @@ draw_tree_on_region <- function(
     validate_initial_region_id_mat(partial_plan_labels, V, 1, num_regions)
 
     if(region_id_to_draw_tree_on >= num_regions){
-        cli_abort("Input {.arg region_id_to_draw_tree_on} must be between zero and the number of regions ({num_regions}).")
+        cli::cli_abort("Input {.arg region_id_to_draw_tree_on} must be between zero and the number of regions ({num_regions}).")
     }
 
 
@@ -226,7 +226,7 @@ manually_split_a_multidistrict <- function(
     validate_initial_region_id_mat(partial_plan_labels, map_params$V, 1, num_regions)
 
     if(region_id_to_split >= num_regions){
-        cli_abort("Input {.arg region_id_to_split} must be between zero and the number of regions ({num_regions}).")
+        cli::cli_abort("Input {.arg region_id_to_split} must be between zero and the number of regions ({num_regions}).")
     }
 
 
@@ -286,7 +286,7 @@ manually_split_a_multidistrict <- function(
         # find vertices in the precut tree vs the cut tree
         vertex_nbor_diff <- setdiff(split_algout$uncut_tree[[v]], split_algout$cut_tree[[v]])
         if(length(vertex_nbor_diff) > 1){
-            cli_abort("More than 1 edge was cut from the tree!")
+            cli::cli_abort("More than 1 edge was cut from the tree!")
         }else if(length(vertex_nbor_diff) == 1){
             cut_edge <- c(v-1, vertex_nbor_diff[1])
         }
@@ -409,13 +409,13 @@ split_entire_map_into_plan <- function(
 
             # check new region 1 has same id as old split id
             if(old_split_region_id != new_region1_id){
-                cli_abort("Splitting procedure was changed. We expected the new region 1
+                cli::cli_abort("Splitting procedure was changed. We expected the new region 1
             id to be the same as the id of the old split region.")
             }
 
             # check new region 2 is just the end of the list
             if(split_num+1 == new_region2_id){
-                cli_abort("Splitting procedure was changed. We expected the new region 2
+                cli::cli_abort("Splitting procedure was changed. We expected the new region 2
             id to be the number of regions minus 1, so the split number")
             }
 

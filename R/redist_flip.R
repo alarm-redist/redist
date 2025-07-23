@@ -177,20 +177,20 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
     ndists <- attr(map, "ndists")
 
     if (any(total_pop >= get_target(map)))
-        cli_abort("Units ", which(total_pop >= get_target(map)),
+        cli::cli_abort("Units ", which(total_pop >= get_target(map)),
             " have population larger than the district target.\n",
             "Redistricting impossible.")
 
     # process constraints
     if (!inherits(constraints, "redist_constr")) {
-        cli_abort("Not a {.cls redist_constr} object.")
+        cli::cli_abort("Not a {.cls redist_constr} object.")
     }
 
 
     if (!any(class(thin) %in% c("numeric", "integer"))) {
-        cli_abort("thin must be an integer")
+        cli::cli_abort("thin must be an integer")
     } else if (thin < 1) {
-        cli_abort("thin must be a nonnegative integer.")
+        cli::cli_abort("thin must be a nonnegative integer.")
     } else {
         thin <- as.integer(thin)
     }
@@ -218,7 +218,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
             init_plan <- vctrs::vec_group_id(x = init_plan)
             components <- contiguity(adj, init_plan)
             if (any(components > 1)) {
-                cli_abort("init_plan does not point to a contiguous plan.")
+                cli::cli_abort("init_plan does not point to a contiguous plan.")
             }
         }
     }
@@ -394,21 +394,21 @@ redist_flip_anneal <- function(map,
     ndists <- attr(map, "ndists")
 
     if (any(total_pop >= get_target(map))) {
-        cli_abort("Units ", which(total_pop >= get_target(map)),
+        cli::cli_abort("Units ", which(total_pop >= get_target(map)),
             " have population larger than the district target.\n",
             "Redistricting impossible.")
     }
 
     # process constraints
     if (!inherits(constraints, "redist_constr")) {
-        cli_abort("Not a {.cls redist_constr} object.")
+        cli::cli_abort("Not a {.cls redist_constr} object.")
     }
 
 
     if (!any(class(thin) %in% c("numeric", "integer"))) {
-        cli_abort("thin must be an integer")
+        cli::cli_abort("thin must be an integer")
     } else if (thin < 1) {
-        cli_abort("thin must be a nonnegative integer.")
+        cli::cli_abort("thin must be a nonnegative integer.")
     } else {
         thin <- as.integer(thin)
     }
@@ -437,7 +437,7 @@ redist_flip_anneal <- function(map,
             init_plan <- vctrs::vec_group_id(x = init_plan)
             components <- contiguity(adj, init_plan)
             if (any(components > 1)) {
-                cli_abort("init_plan does not point to a contiguous plan.")
+                cli::cli_abort("init_plan does not point to a contiguous plan.")
             }
         }
     }

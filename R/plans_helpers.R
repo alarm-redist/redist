@@ -14,12 +14,12 @@
 #' @export
 pullback <- function(plans, map = NULL) {
   if (!inherits(plans, "redist_plans")) {
-    cli_abort("{.arg plans} must be a {.cls redist_plans}")
+    cli::cli_abort("{.arg plans} must be a {.cls redist_plans}")
   }
 
   merge_idx <- attr(plans, "merge_idx")
   if (is.null(merge_idx)) {
-    cli_warn("No merged indexing found.")
+    cli::cli_warn("No merged indexing found.")
     return(plans)
   }
 
@@ -38,15 +38,15 @@ pullback <- function(plans, map = NULL) {
 #' @noRd
 check_tidy_types <- function(map, .data) {
   if (!is.null(map) && !inherits(map, "data.frame")) {
-    cli_abort("{.arg map} must be a data frame")
+    cli::cli_abort("{.arg map} must be a data frame")
   }
   if (is.null(.data)) {
-    cli_abort(
+    cli::cli_abort(
       "Must provide {.arg .data} if not called within a {.pkg dplyr} verb"
     )
   }
   if (!inherits(.data, "redist_plans")) {
-    cli_abort("{.arg data} must be a {.cls redist_plans}")
+    cli::cli_abort("{.arg data} must be a {.cls redist_plans}")
   }
 }
 
@@ -66,7 +66,7 @@ check_tidy_types <- function(map, .data) {
 tally_var <- function(map, x, .data = pl(), ncores = 1) {
   check_tidy_types(map, .data)
   if (length(unique(diff(as.integer(.data$district)))) > 2) {
-    cli_warn(
+    cli::cli_warn(
       "Districts not sorted in ascending order; output may be incorrect."
     )
   }
@@ -100,7 +100,7 @@ group_frac <- function(
   check_tidy_types(map, .data)
   # districts not in ascending order
   if (length(unique(diff(as.integer(.data$district)))) > 2) {
-    cli_warn(
+    cli::cli_warn(
       "Districts not sorted in ascending order; output may be incorrect."
     )
   }
@@ -109,17 +109,17 @@ group_frac <- function(
   total_pop <- rlang::eval_tidy(rlang::enquo(total_pop), map)
 
   if (!is.numeric(group_pop) || !is.numeric(total_pop)) {
-    cli_abort("{.arg group_pop} and {.arg total_pop} must be numeric vectors.")
+    cli::cli_abort("{.arg group_pop} and {.arg total_pop} must be numeric vectors.")
   }
 
   plans = get_plans_matrix(.data)
   if (length(total_pop) != nrow(plans)) {
-    cli_abort(
+    cli::cli_abort(
       "{.arg .data} and {.arg total_pop} must have the same number of precincts."
     )
   }
   if (length(group_pop) != nrow(plans)) {
-    cli_abort(
+    cli::cli_abort(
       "{.arg .data} and {.arg group_pop} must have the same number of precincts."
     )
   }
@@ -170,7 +170,7 @@ plan_parity <- function(map, .data = pl(), ncores = 1) {
   ndists <- attr(map, "ndists")
   total_pop <- map[[attr(map, "pop_col")]]
   if (is.null(total_pop)) {
-    cli_abort("Population vector missing from {.arg map}")
+    cli::cli_abort("Population vector missing from {.arg map}")
   }
 
   return(rep(
@@ -226,13 +226,13 @@ prec_assignment <- function(prec, .data = pl()) {
   m <- get_plans_matrix(.data)
   if (is.integer(prec)) {
     if (prec <= 0 || prec > nrow(m)) {
-      cli_abort(c(
+      cli::cli_abort(c(
         "{.arg prec} out of bounds",
         "i" = "There are {nrow(m)} precincts in these plans."
       ))
     }
   } else {
-    cli_abort("{.arg prec} must be an integer index")
+    cli::cli_abort("{.arg prec} must be an integer index")
   }
 
   assignment <- m[prec, , drop = FALSE]

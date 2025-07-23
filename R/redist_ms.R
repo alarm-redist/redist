@@ -139,11 +139,11 @@ redist_mergesplit <- function(
   adapt_k_thresh = .99
 ) {
   if (!missing(constraint_fn)) {
-    cli_warn("{.arg constraint_fn} is deprecated.")
+    cli::cli_warn("{.arg constraint_fn} is deprecated.")
   }
 
   if (!missing(adapt_k_thresh)) {
-    cli_warn(
+    cli::cli_warn(
       "Passing {.arg adapt_k_thresh} directly is deprecated. Pass it in as an argument
                  in {.arg split_params}"
     )
@@ -192,7 +192,7 @@ redist_mergesplit <- function(
     for (d_size1 in seats_range) {
       for (d_size2 in seats_range) {
           if((d_size1 + d_size2) %in% seats_range){
-              cli_abort("SMC does not support {.arg seats_range} where one district's seats is equal to the sum of two others")
+              cli::cli_abort("SMC does not support {.arg seats_range} where one district's seats is equal to the sum of two others")
           }
       }
     }
@@ -202,13 +202,13 @@ redist_mergesplit <- function(
   chains <- as.integer(chains)
 
   if (compactness < 0) {
-    cli_abort("{.arg compactness} must be non-negative.")
+    cli::cli_abort("{.arg compactness} must be non-negative.")
   }
   if (thin < 1) {
-    cli_abort("{.arg thin} must be a positive integer.")
+    cli::cli_abort("{.arg thin} must be a positive integer.")
   }
   if (nsims < 1) {
-    cli_abort("{.arg nsims} must be positive.")
+    cli::cli_abort("{.arg nsims} must be positive.")
   }
 
   #validate the splitting method and params
@@ -341,7 +341,7 @@ redist_mergesplit <- function(
     any()
 
   if (bad_pops) {
-    cli_abort("Provided initialization does not meet population bounds.")
+    cli::cli_abort("Provided initialization does not meet population bounds.")
   }
 
   verbosity <- 1

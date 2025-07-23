@@ -52,14 +52,14 @@ get_map_parameters <- function(map, counties = NULL) {
     # check if just the column name was passed in
     if (is_scalar(counties) && is_string(counties)) {
       if (!counties %in% names(map)) {
-        cli_abort("{counties} is not in the map!")
+        cli::cli_abort("{counties} is not in the map!")
       } else {
         counties <- map[[counties]]
       }
     }
 
     if (any(is.na(counties))) {
-      cli_abort("County vector must not contain missing values.")
+      cli::cli_abort("County vector must not contain missing values.")
     }
 
     # handle discontinuous counties
@@ -72,7 +72,7 @@ get_map_parameters <- function(map, counties = NULL) {
       as.factor() %>%
       as.integer()
     if (any(component > 1)) {
-      cli_warn("Counties were not contiguous; expect additional splits.")
+      cli::cli_warn("Counties were not contiguous; expect additional splits.")
     }
   }
 
@@ -84,7 +84,7 @@ get_map_parameters <- function(map, counties = NULL) {
     too_big <- as.character(which(
       pop >= pop_bounds[3] * smallest_district_size
     ))
-    cli_abort(c(
+    cli::cli_abort(c(
       "Unit{?s} {too_big} ha{?ve/s/ve}
                 population larger than the district target.",
       "x" = "Redistricting impossible."
@@ -94,17 +94,17 @@ get_map_parameters <- function(map, counties = NULL) {
   # now check we don't have too many regions or counties
   max_possible_sizes <- maximum_input_sizes()
   if (dplyr::n_distinct(counties) > max_possible_sizes$max_counties) {
-    cli_abort(
+    cli::cli_abort(
       "The maximum number of supported counties is {max_possible_sizes$max_counties}!"
     )
   }
   if (V > max_possible_sizes$max_V) {
-    cli_abort(
+    cli::cli_abort(
       "The maximum number of supported vertices in a map is {max_possible_sizes$max_V}!"
     )
   }
   if (attr(map, "ndists") > max_possible_sizes$max_districts) {
-    cli_abort(
+    cli::cli_abort(
       "The maximum number of supported districts in a map is {max_possible_sizes$max_districts}!"
     )
   }
@@ -143,7 +143,7 @@ validate_constraints <- function(map, constraints, compactness = 1L) {
     ))
   }
   if (any(c("edges_removed", "log_st") %in% names(constraints))) {
-    cli_warn(c(
+    cli::cli_warn(c(
       "{.var edges_removed} or {.var log_st} constraint found in
            {.arg constraints} and will be ignored.",
       ">" = "Adjust using {.arg compactness} instead."
@@ -152,7 +152,7 @@ validate_constraints <- function(map, constraints, compactness = 1L) {
   if (
     any(c("poslby", "fry_hold") %in% names(constraints)) && compactness == 1
   ) {
-    cli_warn(
+    cli::cli_warn(
       "{.var polsby} or {.var fry_hold} constraint found in {.arg constraints}
                  with {.arg compactness == 1). This may disrupt efficient sampling."
     )
@@ -209,7 +209,7 @@ validate_sample_space_and_splitting_method <- function(
 
   # now check if split params was passed in
   if (!is.null(split_params) && !is.list(split_params)) {
-    cli_abort("{.arg split_params} must be either `NULL` or a list!")
+    cli::cli_abort("{.arg split_params} must be either `NULL` or a list!")
   } else if (is.null(split_params)) {
     if (split_method == NAIVE_K_SPLITTING) {
       split_params <- list(
@@ -228,7 +228,7 @@ validate_sample_space_and_splitting_method <- function(
   # graph space must be naive k
   if (sampling_space == GRAPH_PLAN_SPACE_SAMPLING) {
     if (split_method != NAIVE_K_SPLITTING) {
-      cli_abort(
+      cli::cli_abort(
         "{.arg split_method} must be {NAIVE_K_SPLITTING} when sampling on Graph Plan Space"
       )
     }
@@ -238,7 +238,7 @@ validate_sample_space_and_splitting_method <- function(
     }
     # check its a boolean
     if (!is_bool(split_params$estimate_cut_k)) {
-      cli_abort("{.arg estimate_cut_k} must be a Boolean!")
+      cli::cli_abort("{.arg estimate_cut_k} must be a Boolean!")
     }
     forward_kernel_params$estimate_cut_k <- split_params$estimate_cut_k
 
@@ -251,20 +251,20 @@ validate_sample_space_and_splitting_method <- function(
       }
       # check its a scalar
       if (!is_scalar(split_params$adapt_k_thresh)) {
-        cli_abort("{.arg adapt_k_thresh} must be a number")
+        cli::cli_abort("{.arg adapt_k_thresh} must be a number")
       }
       # now check its between 0 and 1
       if (
         split_params$adapt_k_thresh < 0 |
           split_params$adapt_k_thresh > 1
       ) {
-        cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
+        cli::cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
       }
       forward_kernel_params$adapt_k_thresh <- split_params$adapt_k_thresh
     } else {
       # else check manual k parameter were passed in
       if (!"manual_k_params" %in% names(split_params)) {
-        cli_abort(
+        cli::cli_abort(
           "If not estimating k for Naive Top K splitting method then {.arg manual_k_params} must be included in {.arg split_params}"
         )
       }
@@ -273,7 +273,7 @@ validate_sample_space_and_splitting_method <- function(
         !rlang::is_integerish(split_params$manual_k_params) ||
           any(split_params$manual_k_params <= 0)
       ) {
-        cli_abort(
+        cli::cli_abort(
           "Manual splitting k parameter values must all be positive integers!"
         )
       }
@@ -284,7 +284,7 @@ validate_sample_space_and_splitting_method <- function(
           num_splitting_steps
         )
       } else if (length(split_params$manual_k_params) != num_splitting_steps) {
-        cli_abort(
+        cli::cli_abort(
           "K parameter input must be either 1 value or the number of smc steps!"
         )
       } else {
@@ -298,11 +298,11 @@ validate_sample_space_and_splitting_method <- function(
   ) {
     # check splitting method is not naive k
     if (split_method == NAIVE_K_SPLITTING) {
-      cli_abort(
+      cli::cli_abort(
         "{.arg split_method} cannot be {NAIVE_K_SPLITTING} when sampling on Spanning Forest or Linking Edge Space"
       )
     } else if (!split_method %in% VALID_FOREST_SPLITTING_METHODS) {
-      cli_abort(
+      cli::cli_abort(
         "{.arg split_method} of {split_method} is not a valid splitting method. It must be one of[{VALID_FOREST_SPLITTING_METHODS}]"
       )
     }
@@ -346,28 +346,28 @@ validate_initial_region_id_mat <- function(
 ) {
   # check that matrix dimension is V by nsims
   if (!is.matrix(init_region_ids_mat)) {
-    cli_abort("{.arg init_region_ids_mat} must be a matrix.")
+    cli::cli_abort("{.arg init_region_ids_mat} must be a matrix.")
   }
   if (nrow(init_region_ids_mat) != V) {
-    cli_abort(
+    cli::cli_abort(
       "{.arg init_region_ids_mat} must have as many rows as {.arg map} has precincts."
     )
   }
   if (ncol(init_region_ids_mat) != nsims) {
-    cli_abort("{.arg init_region_ids_mat} must have {.arg nsims} columns.")
+    cli::cli_abort("{.arg init_region_ids_mat} must have {.arg nsims} columns.")
   }
 
   # check that every column only has values from 0 to num_regions-1
   if (any(colmin(init_region_ids_mat) > 0)) {
-    cli_abort(
+    cli::cli_abort(
       "{.arg init_region_ids_mat} must have at least one region with id 0."
     )
   }
   if (any(colmin(init_region_ids_mat) < 0)) {
-    cli_abort("{.arg init_region_ids_mat} can't have number less than 0.")
+    cli::cli_abort("{.arg init_region_ids_mat} can't have number less than 0.")
   }
   if (any(colmax(init_region_ids_mat) != init_num_regions - 1)) {
-    cli_abort(
+    cli::cli_abort(
       "{.arg init_region_ids_mat} can't have number greater than {.arg init_num_regions}-1."
     )
   }
@@ -378,7 +378,7 @@ validate_initial_region_id_mat <- function(
   })
 
   if (!any(cols_as_expected)) {
-    cli_abort(
+    cli::cli_abort(
       "{.arg init_region_ids_mat} can only have values between 0,...,{.arg init_num_regions}-1."
     )
   }
@@ -421,11 +421,11 @@ validate_init_seats <- function(
 ) {
   # check that its a matrix
   if (!is.matrix(init_seats)) {
-    cli_abort("{.arg init_seats} must be a matrix.")
+    cli::cli_abort("{.arg init_seats} must be a matrix.")
   }
   # check its integerish
   if (!rlang::is_integerish(init_seats)) {
-    cli_abort("{.arg init_seats} must be all integers")
+    cli::cli_abort("{.arg init_seats} must be all integers")
   }
   # update the storage mode if needed
   if (storage.mode(init_seats) != "integer") {
@@ -433,10 +433,10 @@ validate_init_seats <- function(
   }
   # now check dimensions
   if (nrow(init_seats) != init_num_regions) {
-    cli_abort("{.arg init_seats} must have {.arg init_num_regions} rows.")
+    cli::cli_abort("{.arg init_seats} must have {.arg init_num_regions} rows.")
   }
   if (ncol(init_seats) != nsims) {
-    cli_abort("{.arg init_seats} must have {.arg nsims} columns.")
+    cli::cli_abort("{.arg init_seats} must have {.arg nsims} columns.")
   }
   # now check values in c++
   validate_init_seats_cpp(
@@ -485,7 +485,7 @@ infer_plan_seats <- function(
   } else if (is.vector(plans) && is.numeric(plans)) {
     plan_matrix <- as.matrix(plans, cols = 1)
   } else {
-    cli_abort("{.arg plans} must be a matrix or {.cls redist_plans} type!")
+    cli::cli_abort("{.arg plans} must be a matrix or {.cls redist_plans} type!")
   }
 
   num_regions <- length(unique(plan_matrix[, 1]))

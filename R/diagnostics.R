@@ -90,7 +90,7 @@ summary.redist_plans <- function(
 
     prec_pop <- attr(object, "prec_pop")
     if (is.null(prec_pop)) {
-        cli_warn(c("Precinct population missing; plan diversity estimates may be misleading.",
+        cli::cli_warn(c("Precinct population missing; plan diversity estimates may be misleading.",
                    ">" = 'Run `attr({name}, "prec_pop") <- <map object>$<pop column>` to fix.'))
         prec_pop <- rep(1, nrow(plans_m))
     }
@@ -102,7 +102,7 @@ summary.redist_plans <- function(
 
     # ignore if not a supported algorithm
     if(!algo %in% summary_supported_algs){
-        cli_abort("{.fn summary} is not supported for the {toupper(algo)} algorithm.")
+        cli::cli_abort("{.fn summary} is not supported for the {toupper(algo)} algorithm.")
         return(invisible(1))
     }
 
@@ -116,7 +116,7 @@ summary.redist_plans <- function(
         algo == MCMC_ALG_TYPE ~ "Merge-Split MCMC",
         algo == "flip" ~ "Flip MCMC"
     )
-    cli_text("{.strong {alg_display_name}:} {fmt_comma(n_samp)} sampled plans of {n_distr}
+    cli::cli_text("{.strong {alg_display_name}:} {fmt_comma(n_samp)} sampled plans of {n_distr}
                  districts on {fmt_comma(nrow(plans_m))} units")
 
     # if revamped alg check that sampling space and splitting methods all the same
@@ -124,7 +124,7 @@ summary.redist_plans <- function(
         # check same sampling space
         all_sampling_spaces <- sapply(all_run_info, function(x) x$sampling_space)
         if(length(unique(all_sampling_spaces)) != 1){
-            cli_abort("{.fn summary} is not supported for plans sampled using different sampling spaces.")
+            cli::cli_abort("{.fn summary} is not supported for plans sampled using different sampling spaces.")
             return(invisible(1))
         }
         sampling_space <- all_sampling_spaces[1]
@@ -136,7 +136,7 @@ summary.redist_plans <- function(
         # check same splitting method
         all_splitting_methods <- sapply(all_run_info, function(x) x$split_method)
         if(length(unique(all_splitting_methods)) != 1){
-            cli_abort("{.fn summary} is not supported for plans sampled using different splitting methods")
+            cli::cli_abort("{.fn summary} is not supported for plans sampled using different splitting methods")
             return(invisible(1))
         }
         split_method <- all_splitting_methods[1]
@@ -152,7 +152,7 @@ summary.redist_plans <- function(
             # don't want to compare cut k used since won't be the same
             all_forward_kernel_params[[i]]$cut_k_used <- NULL
             if(!identical(all_forward_kernel_params[[1]], all_forward_kernel_params[[i]])){
-                cli_abort("{.fn summary} is not supported for plans sampled using different splitting parameters")
+                cli::cli_abort("{.fn summary} is not supported for plans sampled using different splitting parameters")
                 return(invisible(1))
             }
         }
@@ -178,7 +178,7 @@ summary.redist_plans <- function(
     # print algorithm specific parameters
     print_algo_specific_params(algo, all_diagn, all_run_info)
 
-    cli_text("Plan diversity 80% range: {div_rg[1]} to {div_rg[2]}")
+    cli::cli_text("Plan diversity 80% range: {div_rg[1]} to {div_rg[2]}")
     if (div_bad) cli::cli_alert_danger("{.strong WARNING:} Low plan diversity")
 
     # now compute rhats if more than 1 chain
@@ -210,13 +210,13 @@ summary.redist_plans <- function(
         if(!isFALSE(district)){
             # check integer
             if(!rlang::is_integerish(district)){
-                cli_abort("{.arg district} must be an integer!")
+                cli::cli_abort("{.arg district} must be an integer!")
             }else{
                 district <- as.integer(district)
             }
             # check between 1 and ndists
             if(!all(1 <= district && district <= n_distr)){
-                cli_abort("{.arg district} must be between 1 and {.arg ndists}!")
+                cli::cli_abort("{.arg district} must be between 1 and {.arg ndists}!")
             }
         }
         rhats_computed <- TRUE
@@ -238,7 +238,7 @@ summary.redist_plans <- function(
 
 
         ordered_str <- ifelse(order_stats, "ordered ", "")
-        cli_text("Largest R-hat values for {ordered_str}summary statistics:\n")
+        cli::cli_text("Largest R-hat values for {ordered_str}summary statistics:\n")
         # get maximum rhats for each statistic
         max_rhats <- tapply(rhats_df$rhat, rhats_df$stat_name, max)
 
@@ -308,7 +308,7 @@ summary.redist_plans <- function(
             warn_bottlenecks <- smc_summary_result_list$warn_bottlenecks
 
             if (i == 1 || isTRUE(all_runs)) {
-                cli_text("Sampling diagnostics for SMC run {i} of {n_runs} ({fmt_comma(n_samp)} samples)")
+                cli::cli_text("Sampling diagnostics for SMC run {i} of {n_runs} ({fmt_comma(n_samp)} samples)")
                 print(smc_tbl_print, digits = 2)
                 cat("\n")
             }
@@ -322,7 +322,7 @@ summary.redist_plans <- function(
                 smc_ms_tbl_print <- smc_ms_summary_result_list$smc_ms_print_tbl
 
                 if (i == 1 || isTRUE(all_runs)) {
-                    cli_text("Sampling diagnostics for Mergesplit Steps of SMC run {i} of {n_runs} ({fmt_comma(n_samp)} samples)")
+                    cli::cli_text("Sampling diagnostics for Mergesplit Steps of SMC run {i} of {n_runs} ({fmt_comma(n_samp)} samples)")
                     print(smc_ms_tbl_print, digits = 2)
                     cat("\n")
                 }
@@ -667,7 +667,7 @@ compute_all_rhats <- function(stats_df, rhat_cols, order_stats, district, ndists
 get_k_step_ancestors <- function(parent_mat, steps_back = NULL, start_col = NULL){
     # check the matrix is not zero indexed
     if(0 %in% parent_mat){
-        cli_abort("parent_mat must be 1-indexed, not 0 indexed!")
+        cli::cli_abort("parent_mat must be 1-indexed, not 0 indexed!")
     }
 
 
@@ -681,7 +681,7 @@ get_k_step_ancestors <- function(parent_mat, steps_back = NULL, start_col = NULL
         if(!(is_scalar(start_col) &&
              start_col <= nparent_cols &&
              start_col > 1)){
-            cli_abort("Input start_col={start_col} is not valid.
+            cli::cli_abort("Input start_col={start_col} is not valid.
                           Input must be a number between 1 and {nparent_cols}")
         }
     }
@@ -693,7 +693,7 @@ get_k_step_ancestors <- function(parent_mat, steps_back = NULL, start_col = NULL
         if(!(is_scalar(steps_back) &&
              steps_back <= start_col-1 &&
              steps_back >= 1)){
-            cli_abort("Input steps_back={steps_back} is not valid.
+            cli::cli_abort("Input steps_back={steps_back} is not valid.
 Input must be between 1 and the start_col value (you input {steps_back})")
         }
     }
