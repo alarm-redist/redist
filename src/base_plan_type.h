@@ -399,7 +399,7 @@ class RegionPairHash{
             return;
         }
 
-        void Rprint() const;
+        void Rprint(std::vector<int> const &county_component) const;
 
 
 };
@@ -515,7 +515,7 @@ class PlanMultigraph{
 
         double compute_hierarchical_log_multigraph_tau(
             int const num_regions, ScoringFunction const &scoring_function
-        );
+        ) const;
 
         double compute_hierarchical_merged_log_multigraph_tau(
             int const num_regions, std::vector<int> &merge_index_reshuffle,
