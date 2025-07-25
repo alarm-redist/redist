@@ -329,6 +329,8 @@ double LinkingEdgePlan::get_log_eff_boundary_len(
 }
 
 
+// - for linking edge sampling its the edge selection probability PLUS 
+// the ratio log(merged plan linking edges) - log(plan linking edges)
 std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_adj_regions_and_eff_log_boundary_lens(
     PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
     ScoringFunction const &scoring_function, 
@@ -338,6 +340,12 @@ std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_a
     plan_multigraph.build_plan_multigraph(region_ids, num_regions);
     // remove invalid hard constraint merges 
     plan_multigraph.remove_invalid_hard_constraint_pairs(*this, scoring_function);
+
+    // compute log linking edges for the plan
+    double const plan_log_linking_edge_term = plan_multigraph.compute_log_multigraph_tau(
+        num_regions, scoring_function
+    );
+
 
     std::vector<std::tuple<RegionID, RegionID, double>> valid_adj_region_pairs_to_boundary_map;
     valid_adj_region_pairs_to_boundary_map.reserve(linking_edges.size());
@@ -349,6 +357,8 @@ std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_a
         int edge_region2 = std::max(region_ids[std::get<0>(edge_pair)], region_ids[std::get<1>(edge_pair)]);
 
         int edge_region1_size = region_sizes[edge_region1]; int edge_region2_size = region_sizes[edge_region2];
+
+        double log_linking_edge_ratio = -plan_log_linking_edge_term;
         
         // Add if its ok to merge 
         if(splitting_schedule.valid_merge_pair_sizes[edge_region1_size][edge_region2_size]){
@@ -362,8 +372,61 @@ std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_a
                 throw Rcpp::exception("A pair of regions with linking edge is somehow hierarchically invalid now!\n");
             }
 
+
+            if(num_regions > 2){ 
+            std::vector<int> merge_index_reshuffle(num_regions, 0);
+
+
+            // TEMP just rebuild the multigraph 
+            std::vector<RegionID> flattened_all_plans(plan_multigraph.map_params.V);
+            PlanVector plan_region_ids(flattened_all_plans, 0, plan_multigraph.map_params.V);
+            // REprintf("Size is %u!\n", plan_region_ids.size());
+
+            // set merge reindex 
+            int const merged_reindex = num_regions-2;
+            for (int current_reindex = 0, i = 0; i < num_regions; i++){
+                if(i == edge_region1 || i == edge_region2){
+                    merge_index_reshuffle[i] = merged_reindex;
+                }else{
+                    merge_index_reshuffle[i] = current_reindex;
+                    ++current_reindex;
+                }
+                // REprintf("Mapping %d to %d!\n", i, merge_index_reshuffle[i]);
+            }
+
+            // REprintf("Merging (%u, %u)\n", region1_id, region2_id);
+            for (size_t i = 0; i < region_ids.size(); i++)
+            {
+                plan_region_ids[i] = merge_index_reshuffle[region_ids[i]];
+                // REprintf("Plan %u | Merged %u \n", plan.region_ids[i], plan_region_ids[i]);
+            }
+
+            PlanMultigraph temp_multi(plan_multigraph.map_params, true);
+            temp_multi.build_plan_multigraph(plan_region_ids, num_regions -1);
+
+            double merged_tau = plan_multigraph.compute_merged_log_multigraph_tau(
+                num_regions,
+                edge_region1, edge_region2, scoring_function
+            );
+            double temp_tau = temp_multi.compute_log_multigraph_tau(num_regions-1, scoring_function);
+
+            if(std::fabs(merged_tau - temp_tau) > 1e16){
+                REprintf("Difference %f | Merging (%u, %u) | Merged Plan - Merged Code - %f, NO MERGE Code - %f and Equality Check = %s\n",
+                    merged_tau - temp_tau,
+                    edge_region1, edge_region2,
+                merged_tau, temp_tau, 
+                (merged_tau == temp_tau) ? "TRUE" : "FALSE" );
+                Rprint(true);
+                throw Rcpp::exception("DIFFERENT LOG TAU VALUES!\n");
+            }
+            // the ratio is merged/current so since its already current term we just add merged
+            log_linking_edge_ratio += merged_tau;
+
+            }
+
+            // Now we add the edge probability and linking edge ratio 
             valid_adj_region_pairs_to_boundary_map.push_back(
-                {edge_region1, edge_region2, std::get<2>(edge_pair)}
+                {edge_region1, edge_region2, std::get<2>(edge_pair) + log_linking_edge_ratio}
             );
         }
     }

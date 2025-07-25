@@ -186,6 +186,8 @@ public:
     // and the log eff boundary length
     // - for graph sampling its just the log of the graph theoretic boundary legnth
     // - for forest sampling its the effective tree boundary length
+    // - for linking edge sampling its the edge selection probability PLUS 
+    // the ratio log(merged plan linking edges) - log(plan linking edges)
     virtual std::vector<std::tuple<RegionID, RegionID, double>> get_valid_adj_regions_and_eff_log_boundary_lens(
         PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
         ScoringFunction const &scoring_function, 

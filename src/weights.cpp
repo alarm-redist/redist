@@ -279,8 +279,6 @@ double compute_simple_log_incremental_weight(
         log_extra_plan_terms -= plan_multigraph.compute_log_multigraph_tau(plan.num_regions, scoring_function);
 
             if(plan.num_regions > 2){ 
-
-
             // TEMP just rebuild the multigraph 
             std::vector<RegionID> flattened_all_plans(plan_multigraph.map_params.V);
             PlanVector plan_region_ids(flattened_all_plans, 0, plan_multigraph.map_params.V);
@@ -482,12 +480,6 @@ double compute_log_optimal_incremental_weights(
         ust_sampler, edge_splitter
     );
 
-    // get region multigraph if using linked edge 
-    bool const use_linked_edge_space = sampling_space == SamplingSpace::LinkingEdgeSpace;
-    std::vector<int> merge_index_reshuffle(
-        use_linked_edge_space ? plan.num_regions : 0
-    );
-
     // iterate over the pairs 
     if(DEBUG_WEIGHTS_VERBOSE){
         REprintf("There are %d adjacent pairs!\n",
@@ -533,66 +525,6 @@ double compute_log_optimal_incremental_weights(
             log_of_sum_term += log_splitting_prob;
             if(DEBUG_WEIGHTS_VERBOSE) REprintf("\n");
         }
-
-
-        // If using linked edge add multigraph tau
-        if(use_linked_edge_space){
-            // log_of_sum_term -= plan_multigraph.compute_merged_log_multigraph_tau(
-            //     plan.num_regions, merge_index_reshuffle,
-            //     region1_id, region2_id, scoring_function
-            // );
-
-            if(plan.num_regions > 2){ 
-
-
-            // TEMP just rebuild the multigraph 
-            std::vector<RegionID> flattened_all_plans(plan_multigraph.map_params.V);
-            PlanVector plan_region_ids(flattened_all_plans, 0, plan_multigraph.map_params.V);
-            // REprintf("Size is %u!\n", plan_region_ids.size());
-
-            // set merge reindex 
-            int const merged_reindex = plan.num_regions-2;
-            for (int current_reindex = 0, i = 0; i < plan.num_regions; i++){
-                if(i == region1_id || i == region2_id){
-                    merge_index_reshuffle[i] = merged_reindex;
-                }else{
-                    merge_index_reshuffle[i] = current_reindex;
-                    ++current_reindex;
-                }
-                // REprintf("Mapping %d to %d!\n", i, merge_index_reshuffle[i]);
-            }
-
-            // REprintf("Merging (%u, %u)\n", region1_id, region2_id);
-            for (size_t i = 0; i < plan.region_ids.size(); i++)
-            {
-                plan_region_ids[i] = merge_index_reshuffle[plan.region_ids[i]];
-                // REprintf("Plan %u | Merged %u \n", plan.region_ids[i], plan_region_ids[i]);
-            }
-
-            PlanMultigraph temp_multi(plan_multigraph.map_params, true);
-            temp_multi.build_plan_multigraph(plan_region_ids, plan.num_regions -1);
-
-            double merged_tau = plan_multigraph.compute_merged_log_multigraph_tau(
-                plan.num_regions, 
-                region1_id, region2_id, scoring_function
-            );
-            double temp_tau = temp_multi.compute_log_multigraph_tau(plan.num_regions-1, scoring_function);
-
-            log_of_sum_term -= merged_tau;
-
-            if(merged_tau != temp_tau){
-                REprintf("Merging (%u, %u) | Merged Plan - Merged Code - %f, NO MERGE Code - %f and Equality Check = %s\n",
-                    region1_id, region2_id,
-                merged_tau, temp_tau, 
-                (merged_tau == temp_tau) ? "TRUE" : "FALSE" );
-                plan.Rprint(true);
-                throw Rcpp::exception("DIFFERENT LOG TAU VALUES!\n");
-            }
-
-            }
-            
-        }
-
 
         // compute score ratio if any constraints 
         if(scoring_function.any_soft_region_constraints){
@@ -666,16 +598,9 @@ double compute_log_optimal_incremental_weights(
     }
 
     // Extra term if needed
-    double extra_log_terms = 0.0;
-    if(use_linked_edge_space){
-        // need number of linking edges for current plan
-        extra_log_terms -= plan_multigraph.compute_log_multigraph_tau(
-            plan.num_regions, scoring_function
-        );
-    }
 
-    // Now add the log extra terms and subtract the plan score 
-    incremental_weight = extra_log_terms - std::log(incremental_weight) - plan_score;
+    // Now subtract the plan score 
+    incremental_weight =  -std::log(incremental_weight) - plan_score;
 
     if(DEBUG_WEIGHTS_VERBOSE){
         REprintf("Weight=%f, log weight = %f\n", std::exp(incremental_weight), incremental_weight);
