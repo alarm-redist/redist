@@ -53,7 +53,8 @@ class LinkingEdgePlan : public Plan {
         ) const override;
 
         // - for linking edge sampling its the edge selection probability PLUS 
-        // the ratio log(merged plan linking edges) - log(plan linking edges)
+        // the ratio (1/merged plan linking edges)/(1/plan linking edges) so 
+        // log ratio is log(plan linking edges) - log(merged plan linking edges)
         std::vector<std::tuple<RegionID, RegionID, double>> get_valid_adj_regions_and_eff_log_boundary_lens(
             PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
             ScoringFunction const &scoring_function, 

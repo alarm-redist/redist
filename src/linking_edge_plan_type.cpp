@@ -330,7 +330,8 @@ double LinkingEdgePlan::get_log_eff_boundary_len(
 
 
 // - for linking edge sampling its the edge selection probability PLUS 
-// the ratio log(merged plan linking edges) - log(plan linking edges)
+// the ratio (1/merged plan linking edges)/(1/plan linking edges) so 
+// log ratio is log(plan linking edges) - log(merged plan linking edges)
 std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_adj_regions_and_eff_log_boundary_lens(
     PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
     ScoringFunction const &scoring_function, 
@@ -358,7 +359,7 @@ std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_a
 
         int edge_region1_size = region_sizes[edge_region1]; int edge_region2_size = region_sizes[edge_region2];
 
-        double log_linking_edge_ratio = -plan_log_linking_edge_term;
+        double log_linking_edge_ratio = plan_log_linking_edge_term;
         
         // Add if its ok to merge 
         if(splitting_schedule.valid_merge_pair_sizes[edge_region1_size][edge_region2_size]){
@@ -419,8 +420,8 @@ std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_a
                 Rprint(true);
                 throw Rcpp::exception("DIFFERENT LOG TAU VALUES!\n");
             }
-            // the ratio is merged/current so since its already current term we just add merged
-            log_linking_edge_ratio += merged_tau;
+            // the ratio is (1/merged)/(1/current) = current/merged so since its already current term we just add merged
+            log_linking_edge_ratio -= merged_tau;
 
             }
 
