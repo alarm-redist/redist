@@ -435,6 +435,9 @@ class PlanMultigraph{
         RegionPairHash pair_map; // used for tracking adj regions 
 
         bool const need_to_compute_multigraph_taus;
+        std::vector<int> county_component_reindex;
+        std::vector<int> region_reindex_vec;
+
         arma::mat WAIT_laplacian_minor; // Minor of laplacian used for computing log spanning trees for plan
         arma::mat WAIT_merged_laplacian_minor; // minor of laplacian used for computing log spanning trees for merged plan
 
@@ -508,29 +511,29 @@ class PlanMultigraph{
         );
 
         double compute_non_hierarchical_merged_log_multigraph_tau(
-            int const num_regions, std::vector<int> &merge_index_reshuffle,
+            int const num_regions,
             RegionID const region1_id, RegionID const region2_id,
             ScoringFunction const &scoring_function
         );
 
         double compute_hierarchical_log_multigraph_tau(
-            int const num_regions, std::vector<int> &index_reshuffle_vec,
+            int const num_regions, 
             ScoringFunction const &scoring_function
-        ) const;
+        );
 
         double compute_hierarchical_merged_log_multigraph_tau(
-            int const num_regions, std::vector<int> &merge_index_reshuffle,
+            int const num_regions, 
             RegionID const region1_id, RegionID const region2_id,
             ScoringFunction const &scoring_function
         );
 
         double compute_log_multigraph_tau(
-            int const num_regions, std::vector<int> &index_reshuffle_vec,
+            int const num_regions, 
             ScoringFunction const &scoring_function
         );
 
         double compute_merged_log_multigraph_tau(
-            int const num_regions, std::vector<int> &merge_index_reshuffle,
+            int const num_regions, 
             RegionID const region1_id, RegionID const region2_id,
             ScoringFunction const &scoring_function
         );

@@ -137,8 +137,14 @@ Rcpp::List ms_plans(
 
     {
     USTSampler ust_sampler(map_params, *splitting_schedule_ptr);
-    PlanMultigraph current_plan_multigraph(map_params);
-    PlanMultigraph proposed_plan_multigraph(map_params);
+    PlanMultigraph current_plan_multigraph(
+            map_params, 
+            sampling_space == SamplingSpace::LinkingEdgeSpace
+        );
+    PlanMultigraph proposed_plan_multigraph(
+            map_params, 
+            sampling_space == SamplingSpace::LinkingEdgeSpace
+        );
 
 
 

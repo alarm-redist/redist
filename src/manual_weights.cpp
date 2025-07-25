@@ -57,6 +57,8 @@ Rcpp::NumericVector compute_log_unnormalized_plan_target_density(
         region_sizes, rng_states,
         pool 
     );
+
+    auto const sampling_space = SamplingSpace::GraphSpace;
     
     // check if final splits (ie don't do pop_temper)
     bool is_final = num_regions == ndists;
@@ -66,7 +68,10 @@ Rcpp::NumericVector compute_log_unnormalized_plan_target_density(
     Rcpp::Rcout << "Computing Log Target Density!" << std::endl;
     RcppThread::ProgressBar bar(num_plans, 1);
     pool.parallelFor(0, num_plans, [&] (int i) {
-        static thread_local PlanMultigraph plan_multigraph(map_params);
+        static thread_local PlanMultigraph plan_multigraph(
+            map_params, 
+            sampling_space == SamplingSpace::LinkingEdgeSpace
+        );
         static thread_local std::vector<bool> county_component_lookup(
             num_regions * map_params.num_counties, false
         );
@@ -175,7 +180,7 @@ Rcpp::NumericMatrix compute_log_unnormalized_region_target_density(
         region_sizes, rng_states,
         pool 
     );
-    
+    auto const sampling_space = SamplingSpace::LinkingEdgeSpace;
     // check if final splits (ie don't do pop_temper)
     bool is_final = num_regions == ndists;
     Rcpp::NumericMatrix log_unnormalized_region_densities(num_regions, num_plans);
@@ -184,7 +189,10 @@ Rcpp::NumericMatrix compute_log_unnormalized_region_target_density(
     Rcpp::Rcout << "Computing Log Target Density!" << std::endl;
     RcppThread::ProgressBar bar(num_plans, 1);
     pool.parallelFor(0, num_plans, [&] (int i) {
-        static thread_local PlanMultigraph plan_multigraph(map_params);
+        static thread_local PlanMultigraph plan_multigraph(
+            map_params, 
+            sampling_space == SamplingSpace::LinkingEdgeSpace
+        );
         static thread_local std::vector<bool> county_component_lookup(
             num_regions * map_params.num_counties, false
         );
@@ -325,7 +333,10 @@ arma::vec compute_plans_log_optimal_weights(
     RcppThread::ProgressBar bar(nsims, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, nsims, [&] (int i) {
-        static thread_local PlanMultigraph plan_multigraph(map_params);
+        static thread_local PlanMultigraph plan_multigraph(
+            map_params, 
+            sampling_space == SamplingSpace::LinkingEdgeSpace
+        );
 
         // build the multigraph 
         plan_multigraph.build_plan_multigraph(plan_ensemble.plan_ptr_vec[i]->region_ids, plan_ensemble.plan_ptr_vec[i]->num_regions);

@@ -276,9 +276,7 @@ double compute_simple_log_incremental_weight(
         std::vector<int> merge_index_reshuffle(plan.num_regions);
         // we divide target by number of linking edges so 
         // subtract log linking edges from denominator 
-        log_extra_plan_terms -= plan_multigraph.compute_log_multigraph_tau(plan.num_regions, merge_index_reshuffle, scoring_function);
-
-        
+        log_extra_plan_terms -= plan_multigraph.compute_log_multigraph_tau(plan.num_regions, scoring_function);
 
             if(plan.num_regions > 2){ 
 
@@ -307,22 +305,22 @@ double compute_simple_log_incremental_weight(
                 // REprintf("Plan %u | Merged %u \n", plan.region_ids[i], plan_region_ids[i]);
             }
 
-            PlanMultigraph temp_multi(plan_multigraph.map_params);
+            PlanMultigraph temp_multi(plan_multigraph.map_params, true);
             temp_multi.build_plan_multigraph(plan_region_ids, plan.num_regions -1);
 
-            // double merged_tau = plan_multigraph.compute_merged_log_multigraph_tau(
-            //     plan.num_regions, merge_index_reshuffle,
-            //     region1_id, region2_id, scoring_function
-            // );
-            double temp_tau = temp_multi.compute_log_multigraph_tau(plan.num_regions-1, merge_index_reshuffle, scoring_function);
+            double merged_tau = plan_multigraph.compute_merged_log_multigraph_tau(
+                plan.num_regions,
+                region1_id, region2_id, scoring_function
+            );
+            double temp_tau = temp_multi.compute_log_multigraph_tau(plan.num_regions-1, scoring_function);
 
-            log_extra_prev_plan_terms -= temp_tau;
+            log_extra_prev_plan_terms -= merged_tau;
 
-            // if(merged_tau != temp_tau){
-            //     REprintf("Merged Plan - Old Code - %f, New Code - %f and Equality Check = %s\n",
-            //     merged_tau, temp_tau, 
-            //     (merged_tau == temp_tau) ? "TRUE" : "FALSE" );
-            // }
+            if(merged_tau != temp_tau){
+                REprintf("Merged Plan - Old Code - %f, New Code - %f and Equality Check = %s\n",
+                merged_tau, temp_tau, 
+                (merged_tau == temp_tau) ? "TRUE" : "FALSE" );
+            }
 
             }
 
@@ -403,7 +401,10 @@ void compute_all_plans_log_simple_incremental_weights(
     RcppThread::ProgressBar bar(M, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
-        static thread_local PlanMultigraph plan_multigraph(map_params);
+        static thread_local PlanMultigraph plan_multigraph(
+            map_params, 
+            sampling_space == SamplingSpace::LinkingEdgeSpace
+        );
         static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
 
         double log_incr_weight = compute_simple_log_incremental_weight(
@@ -568,22 +569,23 @@ double compute_log_optimal_incremental_weights(
                 // REprintf("Plan %u | Merged %u \n", plan.region_ids[i], plan_region_ids[i]);
             }
 
-            PlanMultigraph temp_multi(plan_multigraph.map_params);
+            PlanMultigraph temp_multi(plan_multigraph.map_params, true);
             temp_multi.build_plan_multigraph(plan_region_ids, plan.num_regions -1);
 
-            // double merged_tau = plan_multigraph.compute_merged_log_multigraph_tau(
-            //     plan.num_regions, merge_index_reshuffle,
-            //     region1_id, region2_id, scoring_function
-            // );
-            double temp_tau = temp_multi.compute_log_multigraph_tau(plan.num_regions-1, merge_index_reshuffle, scoring_function);
+            double merged_tau = plan_multigraph.compute_merged_log_multigraph_tau(
+                plan.num_regions, 
+                region1_id, region2_id, scoring_function
+            );
+            double temp_tau = temp_multi.compute_log_multigraph_tau(plan.num_regions-1, scoring_function);
 
-            log_of_sum_term -= temp_tau;
+            log_of_sum_term -= merged_tau;
 
-            // if(merged_tau != temp_tau){
-            //     REprintf("Merged Plan - Old Code - %f, New Code - %f and Equality Check = %s\n",
-            //     merged_tau, temp_tau, 
-            //     (merged_tau == temp_tau) ? "TRUE" : "FALSE" );
-            // }
+            if(merged_tau != temp_tau){
+                REprintf("Merged Plan - Old Code - %f, New Code - %f and Equality Check = %s\n",
+                merged_tau, temp_tau, 
+                (merged_tau == temp_tau) ? "TRUE" : "FALSE" );
+                throw Rcpp::exception("DIFFERENT LOG TAU VALUES!\n");
+            }
 
             }
             
@@ -666,7 +668,7 @@ double compute_log_optimal_incremental_weights(
     if(use_linked_edge_space){
         // need number of linking edges for current plan
         extra_log_terms -= plan_multigraph.compute_log_multigraph_tau(
-            plan.num_regions, merge_index_reshuffle, scoring_function
+            plan.num_regions, scoring_function
         );
     }
 
@@ -745,7 +747,10 @@ void compute_all_plans_log_optimal_incremental_weights(
     RcppThread::ProgressBar bar(nsims, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, nsims, [&] (int i) {
-        static thread_local PlanMultigraph plan_multigraph(map_params);
+        static thread_local PlanMultigraph plan_multigraph(
+            map_params, 
+            sampling_space == SamplingSpace::LinkingEdgeSpace
+        );
         static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
 
 

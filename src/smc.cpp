@@ -346,8 +346,14 @@ void run_merge_split_step_on_all_plans(
         static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
         static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
         // Create variables needed for each 
-        PlanMultigraph current_plan_multigraph(map_params);
-        PlanMultigraph proposed_plan_multigraph(map_params);
+        PlanMultigraph current_plan_multigraph(
+            map_params, 
+            sampling_space == SamplingSpace::LinkingEdgeSpace
+        );
+        PlanMultigraph proposed_plan_multigraph(
+            map_params, 
+            sampling_space == SamplingSpace::LinkingEdgeSpace
+        );
 
         // store the number of succesful runs
         success_count_vec[i] = run_merge_split_steps(
