@@ -61,14 +61,6 @@ get_region_laplacian <- function(adj_list, region_ids) {
     .Call(`_redist_get_region_laplacian`, adj_list, region_ids)
 }
 
-get_log_number_linking_edges <- function(adj_list, region_ids) {
-    .Call(`_redist_get_log_number_linking_edges`, adj_list, region_ids)
-}
-
-get_merged_log_number_linking_edges <- function(adj_list, region_ids, region1_id, region2_id) {
-    .Call(`_redist_get_merged_log_number_linking_edges`, adj_list, region_ids, region1_id, region2_id)
-}
-
 log_st_map <- function(g, districts, counties, n_distr) {
     .Call(`_redist_log_st_map`, g, districts, counties, n_distr)
 }
@@ -308,6 +300,14 @@ get_plan_counts <- function(input_plans_mat, num_regions, use_canonical_ordering
 
 resample_plans_lowvar <- function(normalized_weights, plans_mat, region_sizes_mat, reorder_sizes_mat) {
     .Call(`_redist_resample_plans_lowvar`, normalized_weights, plans_mat, region_sizes_mat, reorder_sizes_mat)
+}
+
+get_log_number_linking_edges <- function(adj_list, counties, constraints, ndists, nseats, num_regions, region_ids) {
+    .Call(`_redist_get_log_number_linking_edges`, adj_list, counties, constraints, ndists, nseats, num_regions, region_ids)
+}
+
+get_merged_log_number_linking_edges <- function(adj_list, counties, constraints, ndists, nseats, num_regions, region_ids, region1_id, region2_id) {
+    .Call(`_redist_get_merged_log_number_linking_edges`, adj_list, counties, constraints, ndists, nseats, num_regions, region_ids, region1_id, region2_id)
 }
 
 plan_joint <- function(m1, m2, pop) {

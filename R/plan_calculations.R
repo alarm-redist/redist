@@ -218,6 +218,7 @@ compute_log_optimal_weights <- function(
 ){
     if (inherits(plans, "redist_plans")){
         plan_matrix <- get_plans_matrix(plans)
+        sizes_matrix <- get_seats_matrix(plans)
     }else if(is.matrix(plans)){
         plan_matrix <- plans
     }else if(is.vector(plans) && is.numeric(plans)){
@@ -246,9 +247,7 @@ compute_log_optimal_weights <- function(
     }
     storage.mode(district_seat_sizes) <- "integer"
 
-    if (inherits(plans, "redist_plans")){
-        sizes_matrix <- get_seats_matrix(plans)
-    }else if(is.null(sizes_matrix)){
+    if(is.null(sizes_matrix)){
         # infer
         prec_pop <- map[[attr(map, "pop_col")]]
         distr_pop <- pop_tally(plan_matrix, prec_pop, num_regions)

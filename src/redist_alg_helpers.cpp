@@ -949,3 +949,66 @@ Rcpp::IntegerVector resample_plans_lowvar(
 
     return resample_index;
 }
+
+
+
+
+double get_log_number_linking_edges(
+    Rcpp::List const &adj_list, arma::uvec const &counties,
+    Rcpp::List const &constraints,
+    int const ndists, int const nseats, int const num_regions,
+    arma::uvec const &region_ids
+){
+    MapParams const map_params(
+    adj_list, counties, {}, 
+    ndists, nseats, std::vector<int>{1},
+    0, 0, 0);
+
+    PlanMultigraph plan_multigraph(map_params, true);
+
+    ScoringFunction scoring_function(
+        map_params, constraints, 
+        0, true);
+
+    // need to make arma vector into plan multigraph
+    std::vector<RegionID> flattened_all_plans(region_ids.begin(), region_ids.end());
+    PlanVector plan_region_ids(flattened_all_plans, 0, plan_multigraph.map_params.V);
+
+    plan_multigraph.build_plan_multigraph(plan_region_ids, num_regions);
+
+    return plan_multigraph.compute_log_multigraph_tau(num_regions, scoring_function);
+
+}
+
+
+
+
+double get_merged_log_number_linking_edges(
+    Rcpp::List const &adj_list, arma::uvec const &counties,
+    Rcpp::List const &constraints,
+    int const ndists, int const nseats, int const num_regions,
+    arma::uvec const &region_ids,
+    int const region1_id, int const region2_id
+){
+    MapParams const map_params(
+    adj_list, counties, {}, 
+    ndists, nseats, std::vector<int>{1},
+    0, 0, 0);
+
+    PlanMultigraph plan_multigraph(map_params, true);
+
+    ScoringFunction scoring_function(
+        map_params, constraints, 
+        0, true);
+
+    // need to make arma vector into plan multigraph
+    std::vector<RegionID> flattened_all_plans(region_ids.begin(), region_ids.end());
+    PlanVector plan_region_ids(flattened_all_plans, 0, plan_multigraph.map_params.V);
+
+    plan_multigraph.build_plan_multigraph(plan_region_ids, num_regions);
+
+    return plan_multigraph.compute_merged_log_multigraph_tau(
+        num_regions, region1_id, region2_id, scoring_function
+    );
+
+}

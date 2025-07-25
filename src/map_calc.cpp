@@ -451,6 +451,8 @@ double compute_log_county_level_spanning_tree(
     return arma::log_det_sympd(adj);
 }
 
+
+
 // Given a numeric vector of statistics computed on each district this 
 // sorts the statistics within each plan.
 // the length district_stats must be a multiple of ndists

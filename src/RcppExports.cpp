@@ -215,32 +215,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// get_log_number_linking_edges
-double get_log_number_linking_edges(Rcpp::List const& adj_list, arma::uvec const& region_ids);
-RcppExport SEXP _redist_get_log_number_linking_edges(SEXP adj_listSEXP, SEXP region_idsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::List const& >::type adj_list(adj_listSEXP);
-    Rcpp::traits::input_parameter< arma::uvec const& >::type region_ids(region_idsSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_log_number_linking_edges(adj_list, region_ids));
-    return rcpp_result_gen;
-END_RCPP
-}
-// get_merged_log_number_linking_edges
-double get_merged_log_number_linking_edges(Rcpp::List const& adj_list, arma::uvec const& region_ids, int const region1_id, int const region2_id);
-RcppExport SEXP _redist_get_merged_log_number_linking_edges(SEXP adj_listSEXP, SEXP region_idsSEXP, SEXP region1_idSEXP, SEXP region2_idSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::List const& >::type adj_list(adj_listSEXP);
-    Rcpp::traits::input_parameter< arma::uvec const& >::type region_ids(region_idsSEXP);
-    Rcpp::traits::input_parameter< int const >::type region1_id(region1_idSEXP);
-    Rcpp::traits::input_parameter< int const >::type region2_id(region2_idSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_merged_log_number_linking_edges(adj_list, region_ids, region1_id, region2_id));
-    return rcpp_result_gen;
-END_RCPP
-}
 // log_st_map
 NumericVector log_st_map(const Graph& g, const arma::umat& districts, const arma::uvec& counties, int n_distr);
 RcppExport SEXP _redist_log_st_map(SEXP gSEXP, SEXP districtsSEXP, SEXP countiesSEXP, SEXP n_distrSEXP) {
@@ -772,6 +746,42 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// get_log_number_linking_edges
+double get_log_number_linking_edges(Rcpp::List const& adj_list, arma::uvec const& counties, Rcpp::List const& constraints, int const ndists, int const nseats, int const num_regions, arma::uvec const& region_ids);
+RcppExport SEXP _redist_get_log_number_linking_edges(SEXP adj_listSEXP, SEXP countiesSEXP, SEXP constraintsSEXP, SEXP ndistsSEXP, SEXP nseatsSEXP, SEXP num_regionsSEXP, SEXP region_idsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List const& >::type adj_list(adj_listSEXP);
+    Rcpp::traits::input_parameter< arma::uvec const& >::type counties(countiesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List const& >::type constraints(constraintsSEXP);
+    Rcpp::traits::input_parameter< int const >::type ndists(ndistsSEXP);
+    Rcpp::traits::input_parameter< int const >::type nseats(nseatsSEXP);
+    Rcpp::traits::input_parameter< int const >::type num_regions(num_regionsSEXP);
+    Rcpp::traits::input_parameter< arma::uvec const& >::type region_ids(region_idsSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_log_number_linking_edges(adj_list, counties, constraints, ndists, nseats, num_regions, region_ids));
+    return rcpp_result_gen;
+END_RCPP
+}
+// get_merged_log_number_linking_edges
+double get_merged_log_number_linking_edges(Rcpp::List const& adj_list, arma::uvec const& counties, Rcpp::List const& constraints, int const ndists, int const nseats, int const num_regions, arma::uvec const& region_ids, int const region1_id, int const region2_id);
+RcppExport SEXP _redist_get_merged_log_number_linking_edges(SEXP adj_listSEXP, SEXP countiesSEXP, SEXP constraintsSEXP, SEXP ndistsSEXP, SEXP nseatsSEXP, SEXP num_regionsSEXP, SEXP region_idsSEXP, SEXP region1_idSEXP, SEXP region2_idSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List const& >::type adj_list(adj_listSEXP);
+    Rcpp::traits::input_parameter< arma::uvec const& >::type counties(countiesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List const& >::type constraints(constraintsSEXP);
+    Rcpp::traits::input_parameter< int const >::type ndists(ndistsSEXP);
+    Rcpp::traits::input_parameter< int const >::type nseats(nseatsSEXP);
+    Rcpp::traits::input_parameter< int const >::type num_regions(num_regionsSEXP);
+    Rcpp::traits::input_parameter< arma::uvec const& >::type region_ids(region_idsSEXP);
+    Rcpp::traits::input_parameter< int const >::type region1_id(region1_idSEXP);
+    Rcpp::traits::input_parameter< int const >::type region2_id(region2_idSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_merged_log_number_linking_edges(adj_list, counties, constraints, ndists, nseats, num_regions, region_ids, region1_id, region2_id));
+    return rcpp_result_gen;
+END_RCPP
+}
 // plan_joint
 NumericMatrix plan_joint(IntegerVector m1, IntegerVector m2, NumericVector pop);
 RcppExport SEXP _redist_plan_joint(SEXP m1SEXP, SEXP m2SEXP, SEXP popSEXP) {
@@ -997,8 +1007,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_dist_dist_diff", (DL_FUNC) &_redist_dist_dist_diff, 7},
     {"_redist_get_region_multigraph", (DL_FUNC) &_redist_get_region_multigraph, 2},
     {"_redist_get_region_laplacian", (DL_FUNC) &_redist_get_region_laplacian, 2},
-    {"_redist_get_log_number_linking_edges", (DL_FUNC) &_redist_get_log_number_linking_edges, 2},
-    {"_redist_get_merged_log_number_linking_edges", (DL_FUNC) &_redist_get_merged_log_number_linking_edges, 4},
     {"_redist_log_st_map", (DL_FUNC) &_redist_log_st_map, 4},
     {"_redist_n_removed", (DL_FUNC) &_redist_n_removed, 3},
     {"_redist_countpartitions", (DL_FUNC) &_redist_countpartitions, 1},
@@ -1032,6 +1040,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_get_canonical_plan_labelling", (DL_FUNC) &_redist_get_canonical_plan_labelling, 3},
     {"_redist_get_plan_counts", (DL_FUNC) &_redist_get_plan_counts, 4},
     {"_redist_resample_plans_lowvar", (DL_FUNC) &_redist_resample_plans_lowvar, 4},
+    {"_redist_get_log_number_linking_edges", (DL_FUNC) &_redist_get_log_number_linking_edges, 7},
+    {"_redist_get_merged_log_number_linking_edges", (DL_FUNC) &_redist_get_merged_log_number_linking_edges, 9},
     {"_redist_plan_joint", (DL_FUNC) &_redist_plan_joint, 3},
     {"_redist_renumber_matrix", (DL_FUNC) &_redist_renumber_matrix, 2},
     {"_redist_solve_hungarian", (DL_FUNC) &_redist_solve_hungarian, 1},

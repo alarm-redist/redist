@@ -1278,11 +1278,11 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
 
     // We need to compute this hierarchically. First we compute within each 
     // connected component then we compute across all of them 
-    
-
     if(DEBUG_LOG_LINK_EDGE_VERBOSE){
-        REprintf("We are merging %u and %u! | %d Components \n", 
+        REprintf("We are merging %u and %u! in unmereged components( %d, %d) | There are %d Unmerged Components and %d merged components | \n", 
             region1_id, region2_id,
+            region1_component, region2_component,
+            num_county_connected_components,
             merged_num_admin_connected_components
         );
         Rprint();
@@ -1295,12 +1295,19 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
     // Since there can't be more components than regions 
     // this will just map component two to component 1
     for (int a_region_id = 0; a_region_id < num_regions; a_region_id++){
-        auto this_region_component = county_component[a_region_id];
+        auto const this_region_component = county_component[a_region_id];
         // all components but region 2's get mapped to themselves
         if(this_region_component == region2_component){
             county_component_reindex[a_region_id] = region1_component;
         }else{
             county_component_reindex[a_region_id] = this_region_component;
+        }
+        if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+        REprintf("Region %d maps to component %d now! (was %d) \n", 
+            a_region_id, 
+            county_component_reindex[a_region_id], 
+            county_component[a_region_id]
+            );
         }
     }
 
@@ -1338,10 +1345,11 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
     if(DEBUG_LOG_LINK_EDGE_VERBOSE){
     REprintf("%d Components | Pre-Sorted Pairs: \n", merged_num_admin_connected_components);
     for(auto const &val: all_pairs){
-        REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s\n",
+        REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s | Edges %d\n",
             val.first.first, val.first.second, 
             county_component_reindex[val.first.first], county_component_reindex[val.first.second],
-            (val.second.same_admin_component ? "SHARED" : "NOT SHARED"));
+            (val.second.same_admin_component ? "SHARED" : "NOT SHARED"),
+            (val.second.same_admin_component ? val.second.within_county_edges : val.second.across_county_edges));
     }
     }
 
@@ -1349,74 +1357,46 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
     // Sort the pairs to 
     //  1. All pairs that are in different components are at the end
     //  2. Among pairs in the same component sort them by their component 
-    if(two_components_merged){
         // need to account for one less component in sorting 
-        std::sort(all_pairs.begin(), all_pairs.end(),
-            [&](const auto &a, const auto &b) {
-                const auto &[region_1a, region_2a] = a.first;
+    std::sort(all_pairs.begin(), all_pairs.end(),
+        [&](const auto &a, const auto &b) {
+            const auto &[region_1a, region_2a] = a.first;
 
-                bool const data_a_same_component = (
-                    county_component_reindex[region_1a] == county_component_reindex[region_2a]
-                );
+            bool const data_a_same_component = (
+                county_component_reindex[region_1a] == county_component_reindex[region_2a]
+            );
 
-                const auto &[region_1b, region_2b] = b.first;
+            const auto &[region_1b, region_2b] = b.first;
 
 
-                bool const data_b_same_component = (
-                    county_component_reindex[region_1b] == county_component_reindex[region_2b]
-                );
+            bool const data_b_same_component = (
+                county_component_reindex[region_1b] == county_component_reindex[region_2b]
+            );
 
-                // Rule 1: same_admin_component == true goes to the front
-                if (data_a_same_component != data_b_same_component) {
-                    // recall true =1, false = 0 so this says if data_a and data_b 
-                    // different then a is greater iff its true 
-                    return data_a_same_component > data_b_same_component;
-                }
+            // Rule 1: same_admin_component == true goes to the front
+            if (data_a_same_component != data_b_same_component) {
+                // recall true =1, false = 0 so this says if data_a and data_b 
+                // different then a is greater iff its true 
+                return data_a_same_component > data_b_same_component;
+            }
 
-                // Rule 2: for matching entries, sort by reindexed county_component[region1]
-                if (data_a_same_component) {
-                    return county_component_reindex[region_1a] < county_component_reindex[region_1b];
-                }
+            // Rule 2: for matching entries, sort by reindexed county_component[region1]
+            if (data_a_same_component) {
+                return county_component_reindex[region_1a] < county_component_reindex[region_1b];
+            }
 
-                return false; // otherwise, keep existing relative order
-            });
+            return false; // otherwise, keep existing relative order
+        });
 
-    }else{
-        // num components still the same so sort as normal
-        std::sort(all_pairs.begin(), all_pairs.end(),
-            [&](const auto &a, const auto &b) {
-                const auto &[region_1a, region_2a] = a.first;
-                const PairHashData &data_a = a.second;
-
-                const auto &[region_1b, region_2b] = b.first;
-                const PairHashData &data_b = b.second;
-
-                // Rule 1: same_admin_component == true goes to the front
-                if (data_a.same_admin_component != data_b.same_admin_component) {
-                    // recall true =1, false = 0 so this says if data_a and data_b 
-                    // different then a is greater iff its true 
-                    return data_a.same_admin_component > data_b.same_admin_component;
-                }
-
-                // Rule 2: for matching entries, sort by county_component[region1]
-                if (data_a.same_admin_component) {
-                    return county_component[region_1a] < county_component[region_1b];
-                }
-
-                return false; // otherwise, keep existing relative order
-            });
-    }
     
-
-
-
     if(DEBUG_LOG_LINK_EDGE_VERBOSE){
     REprintf("%d Components | NOW SORTED Pairs: \n", merged_num_admin_connected_components);
     for(auto const &val: all_pairs){
-        REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s\n",
+        REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s | Edges %d\n",
             val.first.first, val.first.second, 
             county_component_reindex[val.first.first], county_component_reindex[val.first.second],
-            (val.second.same_admin_component ? "SHARED" : "NOT SHARED"));
+            (val.second.same_admin_component ? "SHARED" : "NOT SHARED"),
+            (val.second.same_admin_component ? val.second.within_county_edges : val.second.across_county_edges));
     }
     }
 
@@ -1450,26 +1430,57 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
                 --num_component_regions;
             }
         }
-
-        // stop loop if we've reached pairs across components
-        if(curr_index >= all_pairs.size() || !all_pairs[curr_index].second.same_admin_component) break;
-        
         if(DEBUG_LOG_LINK_EDGE_VERBOSE){
             REprintf("Component %d which has %d regions!\n", component_id, num_component_regions);
         }
 
+        // stop loop if we've reached pairs across components
+        if(curr_index >= all_pairs.size() || 
+            (county_component_reindex[all_pairs[curr_index].first.first]  != 
+             county_component_reindex[all_pairs[curr_index].first.second])
+            ) break;
+        
+
+
         // If 1 component then there only 1 tree so log(1) = 0
         if(num_component_regions <= 1){
             // do nothing
-            // REprintf("1 Region in Component! Log tau unchanged at %f\n", log_tau);
+            if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+            REprintf("1 Region in Component! Log tau unchanged at %f\n", log_tau);
+            }
             // do nothing 
         }else if(num_component_regions == 2){
             // If its two then its just the degree of either vertex which is the boundary length
             // Since its the same component its just within component edges
-            log_tau += std::log(static_cast<double>(all_pairs[curr_index].second.within_county_edges));
-            // REprintf("2 Regions in Component! Log tau now at %f\n", log_tau);
-            // now increment index
-            ++curr_index;
+
+            // If this is the merged component then there are potentially more than 2 pairs
+            if(component_id == region1_component){
+                int merged_boundary = 0;
+                while(
+                    curr_index < all_pairs.size() &&
+                    county_component_reindex[all_pairs[curr_index].first.first] == component_id && 
+                    county_component_reindex[all_pairs[curr_index].first.second] == component_id 
+                ){
+                    merged_boundary += all_pairs[curr_index].second.within_county_edges;
+                    ++curr_index;
+                }
+                log_tau += std::log(static_cast<double>(merged_boundary));
+                if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+                REprintf("2 Regions in Merged Component! | Boundary length %d |Log tau now at %f\n", 
+                    merged_boundary,
+                    log_tau);
+                }
+            }else{
+                // else if not the merged component there is actually only one pair 
+                log_tau += std::log(static_cast<double>(all_pairs[curr_index].second.within_county_edges));
+                if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+                REprintf("2 Regions in Non-merged Component! | Boundary length %d |Log tau now at %f\n", 
+                    all_pairs[curr_index].second.within_county_edges,
+                    log_tau);
+                }
+                // now increment index
+                ++curr_index;
+            }
         }else{
             if(DEBUG_LOG_LINK_EDGE_VERBOSE){
             REprintf("3 or more regions in component!\n");
@@ -1593,10 +1604,31 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
         throw Rcpp::exception("! Hier\n");
     }
 
+
+    if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+    REprintf("Remaining Across Merged Component Pairs: \n", all_pairs.size() - curr_index - 1);
+    for (size_t i = curr_index; i < all_pairs.size(); i++)
+    {
+        auto val = all_pairs[i];
+        REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s | Edges %d\n",
+            val.first.first, val.first.second, 
+            county_component_reindex[val.first.first], county_component_reindex[val.first.second],
+            (val.second.same_admin_component ? "SHARED" : "NOT SHARED"),
+            (val.second.same_admin_component ? val.second.within_county_edges : val.second.across_county_edges));
+    }
+    
+    }
+
     // If only one connected component then we stop 
     if(merged_num_admin_connected_components == 1){
+        if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+        REprintf("1 Component in entire Merged Plan! Log tau unchanged at %f\n", log_tau);
+        }
         return log_tau;
     }else if(merged_num_admin_connected_components == 2){
+        if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+        REprintf("2 Components in entire Merged Plan!\n");
+        }
         int across_component_edges = 0;
         // If two then we just sum the edges across and take log 
         for (int i = curr_index; i < all_pairs.size(); i++)
@@ -1605,6 +1637,9 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
         }
         // add
         log_tau += std::log(static_cast<double>(across_component_edges));
+        if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+        REprintf("Adding log of %d, Log tau now at %f\n", across_component_edges, log_tau);
+        }
         return log_tau;
     }
 

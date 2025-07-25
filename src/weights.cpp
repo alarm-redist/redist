@@ -317,7 +317,7 @@ double compute_simple_log_incremental_weight(
             log_extra_prev_plan_terms -= merged_tau;
 
             if(merged_tau != temp_tau){
-                REprintf("Merged Plan - Old Code - %f, New Code - %f and Equality Check = %s\n",
+                REprintf("Merged Plan - Merged Code - %f, NO MERGE Code - %f and Equality Check = %s\n",
                 merged_tau, temp_tau, 
                 (merged_tau == temp_tau) ? "TRUE" : "FALSE" );
             }
@@ -581,9 +581,11 @@ double compute_log_optimal_incremental_weights(
             log_of_sum_term -= merged_tau;
 
             if(merged_tau != temp_tau){
-                REprintf("Merged Plan - Old Code - %f, New Code - %f and Equality Check = %s\n",
+                REprintf("Merging (%u, %u) | Merged Plan - Merged Code - %f, NO MERGE Code - %f and Equality Check = %s\n",
+                    region1_id, region2_id,
                 merged_tau, temp_tau, 
                 (merged_tau == temp_tau) ? "TRUE" : "FALSE" );
+                plan.Rprint(true);
                 throw Rcpp::exception("DIFFERENT LOG TAU VALUES!\n");
             }
 
