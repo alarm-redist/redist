@@ -7,7 +7,7 @@
 \usage{
 redist.parity(plans, total_pop)
 
-plan_parity(map, .data = pl(), ...)
+plan_parity(map, .data = pl(), ncores = 1)
 }
 \arguments{
 \item{plans}{A matrix with one row for each precinct and one column for each
@@ -19,7 +19,8 @@ map. Required.}
 
 \item{.data}{a \code{\link{redist_plans}} object}
 
-\item{...}{passed on to \code{redist.parity}}
+\item{ncores}{The number of threads to use for the calculation. Can
+significantly speedup calculations for a large number of plans.}
 }
 \value{
 numeric vector with the population parity for each column

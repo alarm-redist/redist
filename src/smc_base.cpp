@@ -25,7 +25,11 @@ void partition_vec(std::vector<double> &x, std::vector<int> &idxs, int left,
  * Get the index of the k-th smallest element of x
  */
 // TESTED
-int select_k(std::vector<double> x, int k) {
+int global_rng_select_k(std::vector<double> x, int k) {
+    if(k > x.size()){
+        REprintf("k=%d bigger than number of edges=%d!\n", k, (int) x.size());
+        throw Rcpp::exception("k bigger than number of edges!\n");
+    }
     int right = x.size() - 1;
     int left = 0;
     std::vector<int> idxs(right + 1);
@@ -35,7 +39,38 @@ int select_k(std::vector<double> x, int k) {
     while (true) {
         if (left == right)
             return idxs[left];
-        int pivot = left + r_int(right - left + 1);
+        int pivot = left + GLOBAL_RNG.r_int(right - left + 1);
+        partition_vec(x, idxs, left, right, pivot);
+        if (k == pivot) {
+            return idxs[k];
+        } else if (k < pivot) {
+            right = pivot - 1;
+        } else {
+            left = pivot + 1;
+        }
+    }
+}
+
+
+/*
+ * Get the index of the k-th smallest element of x
+ */
+// TESTED
+int select_k(std::vector<double> x, int k, RNGState &rng_state) {
+    if(k > x.size()){
+        REprintf("k=%d bigger than number of edges=%d!\n", k, (int) x.size());
+        throw Rcpp::exception("k bigger than number of edges!\n");
+    }
+    int right = x.size() - 1;
+    int left = 0;
+    std::vector<int> idxs(right + 1);
+    for (int i = 0; i <= right; i++) idxs[i] = i;
+
+    k--;
+    while (true) {
+        if (left == right)
+            return idxs[left];
+        int pivot = left + rng_state.r_int(right - left + 1);
         partition_vec(x, idxs, left, right, pivot);
         if (k == pivot) {
             return idxs[k];

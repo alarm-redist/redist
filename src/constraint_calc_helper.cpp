@@ -121,13 +121,11 @@ arma::uvec getIn(arma::ivec vec1, arma::ivec vec2){
 
 arma::uvec get_in_index(arma::vec vec1, arma::vec vec2){
 
-  int i; int j; bool match; arma::uvec store_in(vec1.n_elem);
+  int i; int j; arma::uvec store_in(vec1.n_elem);
   for(i = 0; i < vec1.n_elem; i++){
-    match = false;
     for(j = 0; j < vec2.n_elem; j++){
       if(vec1(i) == vec2(j)){
-	match = true;
-	break;
+        break;
       }
     }
     store_in(i) = j;
