@@ -375,53 +375,56 @@ std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_a
 
 
             if(num_regions > 2){ 
-            std::vector<int> merge_index_reshuffle(num_regions, 0);
+                double merged_tau = plan_multigraph.compute_merged_log_multigraph_tau(
+                    num_regions,
+                    edge_region1, edge_region2, scoring_function
+                );
+                // the ratio is (1/merged)/(1/current) = current/merged so since its already current term we just add merged
+                log_linking_edge_ratio -= merged_tau;
+            
+            // std::vector<int> merge_index_reshuffle(num_regions, 0);
 
 
-            // TEMP just rebuild the multigraph 
-            std::vector<RegionID> flattened_all_plans(plan_multigraph.map_params.V);
-            PlanVector plan_region_ids(flattened_all_plans, 0, plan_multigraph.map_params.V);
-            // REprintf("Size is %u!\n", plan_region_ids.size());
+            // // TEMP just rebuild the multigraph 
+            // std::vector<RegionID> flattened_all_plans(plan_multigraph.map_params.V);
+            // PlanVector plan_region_ids(flattened_all_plans, 0, plan_multigraph.map_params.V);
+            // // REprintf("Size is %u!\n", plan_region_ids.size());
 
-            // set merge reindex 
-            int const merged_reindex = num_regions-2;
-            for (int current_reindex = 0, i = 0; i < num_regions; i++){
-                if(i == edge_region1 || i == edge_region2){
-                    merge_index_reshuffle[i] = merged_reindex;
-                }else{
-                    merge_index_reshuffle[i] = current_reindex;
-                    ++current_reindex;
-                }
-                // REprintf("Mapping %d to %d!\n", i, merge_index_reshuffle[i]);
-            }
+            // // set merge reindex 
+            // int const merged_reindex = num_regions-2;
+            // for (int current_reindex = 0, i = 0; i < num_regions; i++){
+            //     if(i == edge_region1 || i == edge_region2){
+            //         merge_index_reshuffle[i] = merged_reindex;
+            //     }else{
+            //         merge_index_reshuffle[i] = current_reindex;
+            //         ++current_reindex;
+            //     }
+            //     // REprintf("Mapping %d to %d!\n", i, merge_index_reshuffle[i]);
+            // }
 
-            // REprintf("Merging (%u, %u)\n", region1_id, region2_id);
-            for (size_t i = 0; i < region_ids.size(); i++)
-            {
-                plan_region_ids[i] = merge_index_reshuffle[region_ids[i]];
-                // REprintf("Plan %u | Merged %u \n", plan.region_ids[i], plan_region_ids[i]);
-            }
+            // // REprintf("Merging (%u, %u)\n", region1_id, region2_id);
+            // for (size_t i = 0; i < region_ids.size(); i++)
+            // {
+            //     plan_region_ids[i] = merge_index_reshuffle[region_ids[i]];
+            //     // REprintf("Plan %u | Merged %u \n", plan.region_ids[i], plan_region_ids[i]);
+            // }
 
-            PlanMultigraph temp_multi(plan_multigraph.map_params, true);
-            temp_multi.build_plan_multigraph(plan_region_ids, num_regions -1);
+            // PlanMultigraph temp_multi(plan_multigraph.map_params, true);
+            // temp_multi.build_plan_multigraph(plan_region_ids, num_regions -1);
 
-            double merged_tau = plan_multigraph.compute_merged_log_multigraph_tau(
-                num_regions,
-                edge_region1, edge_region2, scoring_function
-            );
-            double temp_tau = temp_multi.compute_log_multigraph_tau(num_regions-1, scoring_function);
 
-            if(std::fabs(merged_tau - temp_tau) > 1e16){
-                REprintf("Difference %f | Merging (%u, %u) | Merged Plan - Merged Code - %f, NO MERGE Code - %f and Equality Check = %s\n",
-                    merged_tau - temp_tau,
-                    edge_region1, edge_region2,
-                merged_tau, temp_tau, 
-                (merged_tau == temp_tau) ? "TRUE" : "FALSE" );
-                Rprint(true);
-                throw Rcpp::exception("DIFFERENT LOG TAU VALUES!\n");
-            }
-            // the ratio is (1/merged)/(1/current) = current/merged so since its already current term we just add merged
-            log_linking_edge_ratio -= merged_tau;
+            // double temp_tau = temp_multi.compute_log_multigraph_tau(num_regions-1, scoring_function);
+
+            // if(std::fabs(merged_tau - temp_tau) > 1e16){
+            //     REprintf("Difference %f | Merging (%u, %u) | Merged Plan - Merged Code - %f, NO MERGE Code - %f and Equality Check = %s\n",
+            //         merged_tau - temp_tau,
+            //         edge_region1, edge_region2,
+            //     merged_tau, temp_tau, 
+            //     (merged_tau == temp_tau) ? "TRUE" : "FALSE" );
+            //     Rprint(true);
+            //     throw Rcpp::exception("DIFFERENT LOG TAU VALUES!\n");
+            // }
+
 
             }
 
