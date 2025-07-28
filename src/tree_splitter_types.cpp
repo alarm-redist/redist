@@ -9,7 +9,7 @@ functions
 #include "tree_splitter_types.h"
 
 
-
+constexpr bool MERGED_TREE_SPLITTING_VERBOSE = false; // Compile-time constant
 
 std::vector<EdgeCut> TreeSplitter::get_all_valid_pop_edge_cuts_in_directed_tree(
     const MapParams &map_params, 
@@ -166,8 +166,10 @@ double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
         region1_size, region1_population
     );
 
-    // if(TREE_SPLITTING_DEBUG_VERBOSE)
-    // Rprintf("%d valid edges!\n", valid_edges.size());
+    if(MERGED_TREE_SPLITTING_VERBOSE){
+    REprintf("Finding Merge prob for (%d, %d) - %u valid edges!\n", 
+        region1_root, region2_root, valid_edges.size());
+    }
 
     // find the index of the edge we actually removed to get these two regions.
     // it should be 0 if pop bounds are tight but this allows it to work even
@@ -175,7 +177,7 @@ double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
     auto it = std::find(valid_edges.begin(), valid_edges.end(), actual_cut_edge);
 
     int actual_cut_edge_index = std::distance(valid_edges.begin(), it);
-    if(TREE_SPLITTING_DEBUG_VERBOSE){
+    if(MERGED_TREE_SPLITTING_VERBOSE){
     REprintf("Actual Cut Edge at Index %d and so prob is %f \n", 
         actual_cut_edge_index,
         get_log_selection_prob(valid_edges, actual_cut_edge_index));
@@ -220,12 +222,16 @@ std::pair<bool, EdgeCut> UniformValidSplitter::select_edge_to_cut(
     RNGState &rng_state,std::vector<EdgeCut> const &valid_edges,
     bool save_selection_prob
 ) const{
-    int num_valid_edges  = static_cast<int>(valid_edges.size());
+    int num_valid_edges = static_cast<int>(valid_edges.size());
+    // if only 1 edge just return that
+    if(num_valid_edges == 1) return std::make_pair(true, valid_edges[0]);
+
     // pick one unif at random 
     int idx = rng_state.r_int(num_valid_edges);
     // we always store selection probability since its so cheap to compute
     EdgeCut selected_edge_cut = valid_edges[idx];
     selected_edge_cut.log_prob = - std::log(num_valid_edges);
+
     return std::make_pair(true, selected_edge_cut);
 }
 

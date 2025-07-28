@@ -33,6 +33,41 @@ class PlanMultigraph;
 class ScoringFunction;
 
 
+// Designed to allow for different tree splitting methods
+// This allows us to seperate cutting the tree from finding the edge to cut 
+class LinkingEdge {
+
+public:
+    // Default Constructor 
+    LinkingEdge()
+        : vertex1(-1), 
+          vertex2(-1), 
+          log_prob(0),
+          valid_log_prob(false) {}
+    
+    // Constructor
+    LinkingEdge(
+        const int vertex1, const int vertex2,
+        double const log_prob)
+        : vertex1(vertex1), 
+          vertex2(vertex2), 
+          log_prob(log_prob),
+          valid_log_prob(true) {}
+    
+    // Attributes
+    int vertex1; // first vertex in edge
+    int vertex2; // Second vertex
+    double log_prob; // Log Probability this edge was chosen to split in the tree 
+    bool valid_log_prob; // Whether the log prob is current or needs to be computed again
+
+    // Gets the information on the two regions formed from an edge cut by reference
+    std::array<double, 3> export_linking_edge() const {
+        return {static_cast<double>(vertex1), static_cast<double>(vertex2), log_prob};
+    };
+
+
+};
+
 
 /*
  * Abstract Class implementation of plan 
@@ -69,7 +104,7 @@ private:
 
 protected:
     VertexGraph forest_graph; 
-    std::vector<std::tuple<int, int, double>> linking_edges;
+    mutable std::vector<LinkingEdge> linking_edges;
 
 public:
     // constructor for a blank plan 

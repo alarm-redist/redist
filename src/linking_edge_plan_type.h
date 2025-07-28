@@ -85,11 +85,7 @@ class LinkingEdgePlan : public Plan {
             std::vector<std::array<double, 3>> output;
             output.reserve(linking_edges.size());
             for(auto const& an_edge: linking_edges){
-                output.push_back({
-                    static_cast<double>(std::get<0>(an_edge)),
-                    static_cast<double>(std::get<1>(an_edge)),
-                    std::get<2>(an_edge)
-                });
+                output.push_back(an_edge.export_linking_edge());
             }
             return output;
         };

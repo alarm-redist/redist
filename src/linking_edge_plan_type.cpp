@@ -217,9 +217,9 @@ void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
         for (auto const &a_edge: linking_edges)
         {
             Rprintf("\tEdge(%d, %d) - Region (%d, %d)- Prob %f \n", 
-                std::get<0>(a_edge), std::get<1>(a_edge), 
-            region_ids[std::get<0>(a_edge)], region_ids[std::get<1>(a_edge)],
-            std::exp(std::get<2>(a_edge)));
+                a_edge.vertex1, a_edge.vertex2, 
+            region_ids[a_edge.vertex1], region_ids[a_edge.vertex2],
+            std::exp(a_edge.log_prob));
         }
         Rprintf("\n");
         }
@@ -229,10 +229,12 @@ void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
         // Go through and find that pair 
         for (int i = 0; i < linking_edges.size(); i++)
         {
+            auto edge_region1 = region_ids[linking_edges[i].vertex1];
+            auto edge_region2 = region_ids[linking_edges[i].vertex2];
             // get the regions associated with the linking edge
             std::set<int> candidate_pairs = {
-                static_cast<int>(region_ids[std::get<0>(linking_edges[i])]), 
-                static_cast<int>(region_ids[std::get<1>(linking_edges[i])])
+                static_cast<int>(edge_region1), 
+                static_cast<int>(edge_region2)
             };
             // if they match break
             if(candidate_pairs == merge_region_ids){
@@ -277,23 +279,22 @@ void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
 
     // First iterate through the old linking edges and update ones touching a split region
     for(auto &a_linking_edge: linking_edges){
-        int v = std::get<0>(a_linking_edge); int u = std::get<1>(a_linking_edge);
+        int v = a_linking_edge.vertex1; int u = a_linking_edge.vertex2;
         int edge_region1 = region_ids[v];
         int edge_region2 = region_ids[u];
         // If either of the vertices in the edge is now in a split region we need 
-        // to update the probability that edge was chosen 
+        // to mark that the probability the edge was chosen is no longer valid
         if(edge_region1 == split_region1_id || edge_region2 == split_region1_id ||
             edge_region1 == split_region2_id || edge_region2 == split_region2_id){
+
+            // we will recompute this later if needed 
+            a_linking_edge.valid_log_prob = false;
+            
             if(DEBUG_L_EDGE_PLANS_VERBOSE){
                 Rprintf("(%d,%d) in Region (%d,%d)", v,u, edge_region1, edge_region2);
-                Rprintf(" Linking edge prob was %f\n", std::get<2>(a_linking_edge));
+                Rprintf(" Linking edge prob is invalidated!\n");
             } 
-            // update the log probability 
-            std::get<2>(a_linking_edge) = get_regions_log_splitting_prob(
-                tree_splitter, ust_sampler,
-                u, v
-            );
-            if(DEBUG_L_EDGE_PLANS_VERBOSE) Rprintf("Linking edge prob is now %f\n", std::get<2>(a_linking_edge));
+
         }
     }
 
@@ -317,12 +318,22 @@ double LinkingEdgePlan::get_log_eff_boundary_len(
     const int region1_id, int const region2_id
 ) const {
     // Go through and find that pair 
-    for (auto const &edge_pair: linking_edges){
+    for (auto &edge_pair: linking_edges){
         // get the regions associated with the linking edge
-        int edge_region1 = std::min(region_ids[std::get<0>(edge_pair)], region_ids[std::get<1>(edge_pair)]);
-        int edge_region2 = std::max(region_ids[std::get<0>(edge_pair)], region_ids[std::get<1>(edge_pair)]);
+        int edge_region1 = std::min(region_ids[edge_pair.vertex1], region_ids[edge_pair.vertex2]);
+        int edge_region2 = std::max(region_ids[edge_pair.vertex1], region_ids[edge_pair.vertex2]);
         if(edge_region1 == region1_id && edge_region2 == region2_id){
-            return std::get<2>(edge_pair);
+            // if log prob not accurate then recompute first
+            if(!edge_pair.valid_log_prob){
+                // else recompute first 
+                edge_pair.log_prob = get_regions_log_splitting_prob(
+                    tree_splitter, ust_sampler,
+                    edge_pair.vertex1, edge_pair.vertex2
+                );
+            }
+
+            return edge_pair.log_prob;
+            
         }
     }
     throw Rcpp::exception("Linking Pair not found!\n");
@@ -352,10 +363,10 @@ std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_a
     valid_adj_region_pairs_to_boundary_map.reserve(linking_edges.size());
 
     // Go through and find that pair 
-    for (auto const &edge_pair: linking_edges){
+    for (auto &edge_pair: linking_edges){
         // get the regions associated with the linking edge
-        int edge_region1 = std::min(region_ids[std::get<0>(edge_pair)], region_ids[std::get<1>(edge_pair)]);
-        int edge_region2 = std::max(region_ids[std::get<0>(edge_pair)], region_ids[std::get<1>(edge_pair)]);
+        int edge_region1 = std::min(region_ids[edge_pair.vertex1], region_ids[edge_pair.vertex2]);
+        int edge_region2 = std::max(region_ids[edge_pair.vertex1], region_ids[edge_pair.vertex2]);
 
         int edge_region1_size = region_sizes[edge_region1]; int edge_region2_size = region_sizes[edge_region2];
 
@@ -371,6 +382,26 @@ std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_a
             }else if(!search_result.second.merge_is_hier_valid){
                 REprintf("ERROR: A pair of regions with linking edge is somehow hierarchically invalid now!\n");
                 throw Rcpp::exception("A pair of regions with linking edge is somehow hierarchically invalid now!\n");
+            }
+
+            // check if we need to recompute selection probability 
+            if(!edge_pair.valid_log_prob){
+                // else recompute first 
+                edge_pair.log_prob = get_regions_log_splitting_prob(
+                    tree_splitter, ust_sampler,
+                    edge_pair.vertex1, edge_pair.vertex2
+                );
+            }
+
+            if(DEBUG_L_EDGE_PLANS_VERBOSE && std::isinf(edge_pair.log_prob)){
+                REprintf("Error Infinite Prob!\n");
+                REprintf("Edge (%d, %d) | Region (%d, %d) | Size (%d, %d) | Log Prob %f \n",
+                    edge_pair.vertex1, edge_pair.vertex2,
+                    edge_region1, edge_region2, 
+                    edge_region1_size, edge_region2_size,
+                    edge_pair.log_prob);
+                Rprint(true);
+                throw Rcpp::exception("INFINITE PROB!\n");
             }
 
 
@@ -430,7 +461,7 @@ std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_a
 
             // Now we add the edge probability and linking edge ratio 
             valid_adj_region_pairs_to_boundary_map.push_back(
-                {edge_region1, edge_region2, std::get<2>(edge_pair) + log_linking_edge_ratio}
+                {edge_region1, edge_region2, edge_pair.log_prob + log_linking_edge_ratio}
             );
         }
     }
@@ -456,8 +487,8 @@ std::vector<std::pair<RegionID,RegionID>> LinkingEdgePlan::get_valid_smc_merge_r
     // Go through and find that pair 
     for (auto const &edge_pair: linking_edges){
         // get the regions associated with the linking edge
-        int edge_region1 = std::min(region_ids[std::get<0>(edge_pair)], region_ids[std::get<1>(edge_pair)]);
-        int edge_region2 = std::max(region_ids[std::get<0>(edge_pair)], region_ids[std::get<1>(edge_pair)]);
+        int edge_region1 = std::min(region_ids[edge_pair.vertex1], region_ids[edge_pair.vertex2]);
+        int edge_region2 = std::max(region_ids[edge_pair.vertex1], region_ids[edge_pair.vertex2]);
 
         int edge_region1_size = region_sizes[edge_region1]; int edge_region2_size = region_sizes[edge_region2];
 
@@ -501,8 +532,8 @@ std::pair<bool, std::vector<std::pair<RegionID,RegionID>>> LinkingEdgePlan::atte
     // Go through and find that pair 
     for (auto const &edge_pair: linking_edges){
         // get the regions associated with the linking edge
-        auto edge_region1 = std::min(region_ids[std::get<0>(edge_pair)], region_ids[std::get<1>(edge_pair)]);
-        auto edge_region2 = std::max(region_ids[std::get<0>(edge_pair)], region_ids[std::get<1>(edge_pair)]);
+        int edge_region1 = std::min(region_ids[edge_pair.vertex1], region_ids[edge_pair.vertex2]);
+        int edge_region2 = std::max(region_ids[edge_pair.vertex1], region_ids[edge_pair.vertex2]);
 
         int edge_region1_size = region_sizes[edge_region1]; int edge_region2_size = region_sizes[edge_region2];
         // REprintf("(%u, %u) \n", edge_region1, edge_region2);
@@ -533,10 +564,19 @@ void LinkingEdgePlan::Rprint(bool verbose) const{
         Rprintf("Current Linking Edges:\n");
         for (auto const &a_edge: linking_edges)
         {
-            Rprintf("\tEdge(%d, %d) - Region (%d, %d)- Prob %f \n", 
-                std::get<0>(a_edge), std::get<1>(a_edge), 
-            region_ids[std::get<0>(a_edge)], region_ids[std::get<1>(a_edge)],
-            std::exp(std::get<2>(a_edge)));
+            if(a_edge.valid_log_prob){
+                Rprintf("\tEdge(%d, %d) - Region (%d, %d)- Prob %f \n", 
+                    a_edge.vertex1, a_edge.vertex2, 
+                    region_ids[a_edge.vertex1], region_ids[a_edge.vertex2],
+                    std::exp(a_edge.log_prob)
+                );
+            }else{
+                Rprintf("\tEdge(%d, %d) - Region (%d, %d)- No valid Prob\n", 
+                    a_edge.vertex1, a_edge.vertex2, 
+                    region_ids[a_edge.vertex1], region_ids[a_edge.vertex2]
+                );
+            }
+
         }
         Rprintf("\n");
     }

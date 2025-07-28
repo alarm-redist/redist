@@ -687,10 +687,12 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
                 map_params.lower, map_params.target, map_params.upper,
                 smaller_cut_sizes_to_try);
 
-    // REprintf("Pop below region2_root is %d so above is %d so foound %d\n",
-    //     pops_below_vertex.at(region2_root), 
-    //     total_merged_region_pop -pops_below_vertex.at(region2_root),
-    //     (int) edge_across_valid_edge_cuts.size());
+    if(FINDING_EDGE_CUTS_VERBOSE){
+    REprintf("Pop below region2_root is %d so above is %d so foound %d\n",
+        pops_below_vertex.at(region2_root), 
+        total_merged_region_pop - pops_below_vertex.at(region2_root),
+        (int) edge_across_valid_edge_cuts.size());
+    }
 
     // now add the edges from the two trees
     edge_across_valid_edge_cuts.insert(
