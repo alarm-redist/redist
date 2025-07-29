@@ -151,6 +151,9 @@ public:
         throw Rcpp::exception("Get Linking edges not Supported for this concrete Plan class!\n");
     };
 
+    // checks if 
+    std::pair<bool, std::vector<int>> all_region_pops_valid(MapParams const &map_params) const;
+
     // Compute the log number of spanning trees on a region 
     double compute_log_region_spanning_trees(MapParams const &map_params,
         int const region_id) const;

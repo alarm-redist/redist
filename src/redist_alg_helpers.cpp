@@ -883,22 +883,23 @@ void SMCDiagnostics::add_diagnostics_to_out_list(Rcpp::List &out){
 Rcpp::IntegerVector resample_plans_lowvar(
     Rcpp::NumericVector const &normalized_weights,
     Rcpp::IntegerMatrix &plans_mat,
+    Rcpp::IntegerMatrix &region_pops_mat,
     Rcpp::IntegerMatrix &region_sizes_mat,
     bool const reorder_sizes_mat
 ){
     // generate resampling index
-    int const N = normalized_weights.size();
+    int const nsims = normalized_weights.size();
 
     int rng_seed = (int) Rcpp::sample(INT_MAX, 1)[0];
     RNGState rng_state(rng_seed, 42);
-    double r = rng_state.r_unif() / N;
+    double r = rng_state.r_unif() / nsims;
     double cuml = normalized_weights[0];
-    Rcpp::IntegerVector resample_index(N);
-    std::vector<bool> index_unchanged(N);
+    Rcpp::IntegerVector resample_index(nsims);
+    std::vector<bool> index_unchanged(nsims);
 
     int i = 0;
-    for (int n = 0; n < N; n++) {
-        double u = r + n / (double) N;
+    for (int n = 0; n < nsims; n++) {
+        double u = r + n / (double) nsims;
         while (u > cuml) {
             cuml += normalized_weights[++i]; // increment then access
         }
@@ -908,34 +909,47 @@ Rcpp::IntegerVector resample_plans_lowvar(
     }
     
 
+    std::vector<int> buffer(nsims);
     // Now we're going to reorder things one row at a time 
     // makes algout$plans[i] now equal to algout$plans[rs_idx[i]]
     // so we're mapping i -> rs_idx[i]
-    std::vector<int> buffer(N);
-    int const nrow = plans_mat.nrow();
-    for (int row = 0; row < nrow; ++row) {
+    
+    int const V = plans_mat.nrow();
+    for (int row = 0; row < V; ++row) {
         // copy current row
-        for (int col = 0; col < N; ++col) {
+        for (int col = 0; col < nsims; ++col) {
           buffer[col] = plans_mat(row, col);
         }
         // write back in new order
-        for (int col = 0; col < N; ++col) {
+        for (int col = 0; col < nsims; ++col) {
             plans_mat(row, col) = buffer[resample_index[col]];
+        }
+    }
+    
+
+    // reorder the region populations 
+    int const num_regions = region_pops_mat.nrow();
+    for (int row = 0; row < num_regions; ++row) {
+        // copy current row
+        for (int col = 0; col < nsims; ++col) {
+          buffer[col] = region_pops_mat(row, col);
+        }
+        // write back in new order
+        for (int col = 0; col < nsims; ++col) {
+            region_pops_mat(row, col) = buffer[resample_index[col]];
         }
     }
 
     // Reorder region sizes if needed 
     if(reorder_sizes_mat){
-        std::vector<int> sizes_buffer(N);
-        int const nrow = region_sizes_mat.nrow();
-        for (int row = 0; row < nrow; ++row) {
+        for (int row = 0; row < num_regions; ++row) {
             // copy current row
-            for (int col = 0; col < N; ++col) {
-              sizes_buffer[col] = region_sizes_mat(row, col);
+            for (int col = 0; col < nsims; ++col) {
+              buffer[col] = region_sizes_mat(row, col);
             }
             // write back in new order
-            for (int col = 0; col < N; ++col) {
-                region_sizes_mat(row, col) = sizes_buffer[resample_index[col]];
+            for (int col = 0; col < nsims; ++col) {
+                region_sizes_mat(row, col) = buffer[resample_index[col]];
             }
         }
     }
@@ -949,7 +963,6 @@ Rcpp::IntegerVector resample_plans_lowvar(
 
     return resample_index;
 }
-
 
 
 

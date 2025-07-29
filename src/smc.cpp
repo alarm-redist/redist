@@ -1001,14 +1001,7 @@ List run_redist_smc(
     }
 
     if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Exiting main loop and going to do diagnostics!\n");
-
-    Rcpp::IntegerMatrix plan_mat = plan_ensemble_ptr->get_R_plans_matrix(); // integer matrix to store final plans
-    // to try to save memory kill the vector 
-    plan_ensemble_ptr->flattened_all_plans.clear(); plan_ensemble_ptr->flattened_all_plans.shrink_to_fit();
     
-    std::vector<Rcpp::IntegerMatrix> plan_sizes_mat; // hacky way of potentially passing the plan sizes 
-    // mat as output if we are not splitting all the way 
-    plan_sizes_mat.reserve(1);
     bool plan_sizes_saved;
 
     if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Plans saved!\n");
@@ -1020,21 +1013,18 @@ List run_redist_smc(
         splitting_schedule_ptr->schedule_type == SplittingSizeScheduleType::DistrictOnlyMMD
     ){
         if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Getting ready to save region sizes!\n");
-        plan_sizes_mat.push_back(plan_ensemble_ptr->get_R_sizes_matrix(pool));
         plan_sizes_saved = true;
     }else{
-        // else create a dummy matrix 
-        plan_sizes_mat.emplace_back(1,1);
         plan_sizes_saved = false;
     }
 
-    if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Plan matrix (and sizes potentially) saved!\n");
 
+    if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Plan matrix (and sizes potentially) saved!\n");
 
     // Return results
     List out = List::create(
-        _["plans_mat"] = plan_mat,
-        _["seats"] = plan_sizes_mat.at(0),
+        _["plans_mat"] = plan_ensemble_ptr->get_R_plans_matrix(), // integer matrix to store final plans
+        _["seats"] = plan_sizes_saved ? plan_ensemble_ptr->get_R_sizes_matrix(pool) : Rcpp::IntegerMatrix(1,1), // saves sizes matrix if needed
         _["region_pops"] = plan_ensemble_ptr->get_region_pops_matrix(pool),
         _["plan_seats_saved"] = plan_sizes_saved,
         _["log_weights"] = log_weights,
@@ -1043,6 +1033,8 @@ List run_redist_smc(
         _["merge_split_steps"] = merge_split_step_vec
     );
 
+    // to try to save memory kill the plan vector 
+    plan_ensemble_ptr->flattened_all_plans.clear(); plan_ensemble_ptr->flattened_all_plans.shrink_to_fit();
     // add all the diagnostics 
     smc_diagnostics.add_diagnostics_to_out_list(out);
 

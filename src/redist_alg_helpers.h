@@ -312,9 +312,11 @@ class SMCDiagnostics{
 Rcpp::IntegerVector resample_plans_lowvar(
     Rcpp::NumericVector const &normalized_weights,
     Rcpp::IntegerMatrix &plans_mat,
+    Rcpp::IntegerMatrix &region_pops_mat,
     Rcpp::IntegerMatrix &region_sizes_mat,
     bool const reorder_sizes_mat
 );
+
 
 
 // [[Rcpp::export]]

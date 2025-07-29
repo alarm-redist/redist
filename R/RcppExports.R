@@ -298,8 +298,8 @@ get_plan_counts <- function(input_plans_mat, num_regions, use_canonical_ordering
     .Call(`_redist_get_plan_counts`, input_plans_mat, num_regions, use_canonical_ordering, num_threads)
 }
 
-resample_plans_lowvar <- function(normalized_weights, plans_mat, region_sizes_mat, reorder_sizes_mat) {
-    .Call(`_redist_resample_plans_lowvar`, normalized_weights, plans_mat, region_sizes_mat, reorder_sizes_mat)
+resample_plans_lowvar <- function(normalized_weights, plans_mat, region_pops_mat, region_sizes_mat, reorder_sizes_mat) {
+    .Call(`_redist_resample_plans_lowvar`, normalized_weights, plans_mat, region_pops_mat, region_sizes_mat, reorder_sizes_mat)
 }
 
 get_log_number_linking_edges <- function(adj_list, counties, constraints, ndists, nseats, num_regions, region_ids) {

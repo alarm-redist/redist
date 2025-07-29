@@ -10,6 +10,28 @@
 bool constexpr DEBUG_BASE_PLANS_VERBOSE = false;
 bool constexpr DEBUG_LOG_LINK_EDGE_VERBOSE = false;
 
+
+std::pair<bool, std::vector<int>> Plan::all_region_pops_valid(MapParams const &map_params) const{
+    for (size_t region_id = 0; region_id < num_regions; region_id++)
+    {
+        auto region_pop = region_pops[region_id];
+        auto region_size = region_sizes[region_id];
+        auto region_pop_lb = map_params.lower * region_size;
+        auto region_pop_ub = map_params.upper * region_size;
+
+        if(region_pop < region_pop_lb){
+            throw Rcpp::exception("Invalid pop");
+        }
+        if(region_pop > region_pop_ub){
+            throw Rcpp::exception("Invalid pop");
+        }
+        
+    }
+
+    return std::make_pair(true, std::vector<int>{});
+    
+}
+
 // checks the inputted plan has the number of regions it claims it does
 // checks the sizes and that the labels make sense.
 // if makes sense then it counts the number of districts and multidistricts

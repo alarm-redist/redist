@@ -733,16 +733,17 @@ BEGIN_RCPP
 END_RCPP
 }
 // resample_plans_lowvar
-Rcpp::IntegerVector resample_plans_lowvar(Rcpp::NumericVector const& normalized_weights, Rcpp::IntegerMatrix& plans_mat, Rcpp::IntegerMatrix& region_sizes_mat, bool const reorder_sizes_mat);
-RcppExport SEXP _redist_resample_plans_lowvar(SEXP normalized_weightsSEXP, SEXP plans_matSEXP, SEXP region_sizes_matSEXP, SEXP reorder_sizes_matSEXP) {
+Rcpp::IntegerVector resample_plans_lowvar(Rcpp::NumericVector const& normalized_weights, Rcpp::IntegerMatrix& plans_mat, Rcpp::IntegerMatrix& region_pops_mat, Rcpp::IntegerMatrix& region_sizes_mat, bool const reorder_sizes_mat);
+RcppExport SEXP _redist_resample_plans_lowvar(SEXP normalized_weightsSEXP, SEXP plans_matSEXP, SEXP region_pops_matSEXP, SEXP region_sizes_matSEXP, SEXP reorder_sizes_matSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericVector const& >::type normalized_weights(normalized_weightsSEXP);
     Rcpp::traits::input_parameter< Rcpp::IntegerMatrix& >::type plans_mat(plans_matSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix& >::type region_pops_mat(region_pops_matSEXP);
     Rcpp::traits::input_parameter< Rcpp::IntegerMatrix& >::type region_sizes_mat(region_sizes_matSEXP);
     Rcpp::traits::input_parameter< bool const >::type reorder_sizes_mat(reorder_sizes_matSEXP);
-    rcpp_result_gen = Rcpp::wrap(resample_plans_lowvar(normalized_weights, plans_mat, region_sizes_mat, reorder_sizes_mat));
+    rcpp_result_gen = Rcpp::wrap(resample_plans_lowvar(normalized_weights, plans_mat, region_pops_mat, region_sizes_mat, reorder_sizes_mat));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -1039,7 +1040,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_validate_init_seats_cpp", (DL_FUNC) &_redist_validate_init_seats_cpp, 6},
     {"_redist_get_canonical_plan_labelling", (DL_FUNC) &_redist_get_canonical_plan_labelling, 3},
     {"_redist_get_plan_counts", (DL_FUNC) &_redist_get_plan_counts, 4},
-    {"_redist_resample_plans_lowvar", (DL_FUNC) &_redist_resample_plans_lowvar, 4},
+    {"_redist_resample_plans_lowvar", (DL_FUNC) &_redist_resample_plans_lowvar, 5},
     {"_redist_get_log_number_linking_edges", (DL_FUNC) &_redist_get_log_number_linking_edges, 7},
     {"_redist_get_merged_log_number_linking_edges", (DL_FUNC) &_redist_get_merged_log_number_linking_edges, 9},
     {"_redist_plan_joint", (DL_FUNC) &_redist_plan_joint, 3},

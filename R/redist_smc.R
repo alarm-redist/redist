@@ -571,7 +571,6 @@ redist_smc <- function(
         algout$merge_split_attempt_counts <- NULL
       }
 
-
       # turn it into a character vector
       algout$step_split_types <- ifelse(
         algout$merge_split_steps,
@@ -582,7 +581,6 @@ redist_smc <- function(
       num_ms_steps <- sum(
         algout$step_split_types == "ms"
       )
-
 
       # pull out the log weights
       lr <- algout$log_weights
@@ -616,6 +614,7 @@ redist_smc <- function(
         rs_idx <- resample_plans_lowvar(
           normalized_wgts,
           algout$plans_mat,
+          algout$region_pops,
           algout$seats,
           algout$plan_seats_saved
         )
@@ -670,14 +669,14 @@ redist_smc <- function(
         ))
       }
 
-
       # add the numerically stable weights back
       algout$wgt <- wgt
+
+
 
       # flatten the region sizes pops by column into a long vector
       dim(algout$seats) <- NULL
       dim(algout$region_pops) <- NULL
-
 
       # Internal diagnostics,
       algout$internal_diagnostics <- list(
@@ -750,7 +749,6 @@ redist_smc <- function(
                  {format(t2-t1, digits=2)}"
     )
   }
-
 
   # combine if needed
   if (runs > 1) {
