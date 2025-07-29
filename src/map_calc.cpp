@@ -215,16 +215,16 @@ Rcpp::IntegerMatrix infer_region_seats(
     for (int a_size = 2; a_size <= total_seats; a_size++)
     {
         if(upper * (a_size - 1) >= lower * a_size){
-            REprintf("WARNING: Population bounds are not tight for size %d and %d\n",
-            a_size-1, a_size);
-            Rcpp::warning("Population bounds are not tight, inferring a unique number of seats" 
-                " may not be possible.\n");
+            // REprintf("WARNING: Population bounds are not tight for size %d and %d\n",
+            // a_size-1, a_size);
+            // Rcpp::warning("Population bounds are not tight, inferring a unique number of seats" 
+            //     " may not be possible.\n");
             bounds_issues = true;
         }
     }
     if(bounds_issues){
-        REprintf("WARNING: Population bounds are not tight, inferring a unique number of seats" 
-                " may not be possible.\n");
+        Rcpp::warning("Population bounds are not tight, inferring a unique number of seats" 
+                        " may not be possible.\n");
     }
 
     Rcpp::IntegerMatrix region_sizes(num_regions, num_plans);
