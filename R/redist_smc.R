@@ -191,6 +191,9 @@
 #' value `k_i` for each splitting iteration. Higher values are more accurate
 #' but may require more computation. Set to 1 for the most conservative
 #' sampling. Must be between 0 and 1.
+#' @param truncate Deprecated, do not use anymore. 
+#' @param trunc_fn Deprecated, do not use anymore.
+#' @param final_infl Deprecated, do not use anymore.
 #'
 #' @return `redist_smc` returns a [redist_plans] object containing the simulated
 #' plans.
@@ -241,7 +244,8 @@ redist_smc <- function(
   silent = FALSE,
   diagnostics = c("basic", "all"),
   control = list(weight_type = "optimal", nproc = 1L),
-  adapt_k_thresh = .99
+  adapt_k_thresh = .99, truncate = (compactness != 1), trunc_fn = redist_quantile_trunc,
+  final_infl = 1
 ) {
   if (!missing(adapt_k_thresh)) {
     cli::cli_warn(
@@ -257,6 +261,16 @@ redist_smc <- function(
         estimate_cut_k = TRUE
       )
     }
+  }
+  # deprecated arguments
+  if (!missing(truncate)) {
+    cli::cli_abort("{.arg truncate} is deprecated. Do not use this argument.")
+  }
+  if (!missing(trunc_fn)) {
+    cli::cli_abort("{.arg truncate} is deprecated. Do not use this argument.")
+  }
+  if (!missing(final_infl)) {
+    cli::cli_abort("{.arg truncate} is deprecated. Do not use this argument.")
   }
 
   if (!is_scalar(compactness) || compactness < 0) {
@@ -834,9 +848,9 @@ get_splitting_schedule <- function(split_params, districting_scheme){
     if ("splitting_schedule" %in% names(split_params)) {
         splitting_schedule <- split_params[["splitting_schedule"]]
         if (splitting_schedule == "split_district_only") {
-            if (districting_scheme == "SMD") {
+            if (districting_scheme == "single") {
                 splitting_size_regime = "split_district_only"
-            } else if (districting_scheme == "MMD") {
+            } else if (districting_scheme == "multiple") {
                 splitting_size_regime = "split_district_only_mmd"
             } else {
                 cli::cli_abort(
@@ -844,9 +858,9 @@ get_splitting_schedule <- function(split_params, districting_scheme){
                 )
             }
         } else if (splitting_schedule == "any_valid_sizes") {
-            if (districting_scheme == "SMD") {
+            if (districting_scheme == "single") {
                 splitting_size_regime = "any_valid_sizes"
-            } else if (districting_scheme == "MMD") {
+            } else if (districting_scheme == "multiple") {
                 cli::cli_abort(
                     "Generaliezd region splits are not supported for Multi-member districting!"
                 )
@@ -860,9 +874,9 @@ get_splitting_schedule <- function(split_params, districting_scheme){
         }
     } else {
         # default to  district
-        if (districting_scheme == "SMD") {
+        if (districting_scheme == "single") {
             splitting_size_regime = "split_district_only"
-        } else if (districting_scheme == "MMD") {
+        } else if (districting_scheme == "multiple") {
             splitting_size_regime = "split_district_only_mmd"
         } else {
             cli::cli_abort(

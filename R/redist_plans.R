@@ -11,7 +11,7 @@
 
 # plans has n_precinct columns and n_sims rows
 # map is a redist_map
-# algorithm is one of "smc" or "mcmc" or "gsmc_ms
+# algorithm is one of "smc" or "mcmc" or "smc_ms
 # wgt is the weights before any resampling or truncation
 # ... will depend on the algorithm
 # inputs_safe is a boolean. If true means don't check the input
@@ -58,7 +58,7 @@ new_redist_plans <- function(
     }
 
     # check if partial or MMD then region sizes must not be null
-    if(partial || districting_scheme == "MMD"){
+    if(partial || districting_scheme == "multiple"){
         if(is.null(seats)){
             # try to infer
             seats <- infer_region_seats(
@@ -104,7 +104,7 @@ new_redist_plans <- function(
     }
 
 
-    if(partial || districting_scheme == "MMD"){
+    if(partial || districting_scheme == "multiple"){
         plan_tibble <- tibble(draw = rep(draw_fac, each = ndists),
                               district = rep(distr_range, n_sims),
                               total_pop = as.numeric(distr_pop),
@@ -129,7 +129,7 @@ new_redist_plans <- function(
         class = c("redist_plans", "tbl_df", "tbl", "data.frame")
     )
 
-    return(plan_obj)
+    plan_obj
 }
 
 validate_redist_plans <- function(x) {
@@ -145,7 +145,7 @@ validate_redist_plans <- function(x) {
         cli::cli_abort("District numbers must start at 1 and run sequentially to the number of districts.")
 
     # check if its not SMD then nseats is present
-    if (!is.null(attr(x, "districting_scheme")) && attr(x, "districting_scheme") != "SMD"){
+    if (!is.null(attr(x, "districting_scheme")) && attr(x, "districting_scheme") != "single"){
         if(!"seats" %in% names(x)){
             cli::cli_abort("Multi-member district plans must have a {.field seats} column")
         }
@@ -291,7 +291,7 @@ set_plan_matrix <- function(x, mat) {
 get_seats_matrix <- function(x) {
     if (!inherits(x, "redist_plans")) cli::cli_abort("Not a {.cls redist_plans}")
     # if not partial and SMD just return a matrix of ones
-    if(attr(x, "districting_scheme") == "SMD" && isFALSE(attr(x, "partial"))){
+    if(attr(x, "districting_scheme") == "single" && isFALSE(attr(x, "partial"))){
         ndists <- attr(x, "ndists")
         nplans <- ncol(get_plans_matrix(x))
         return(matrix(1L, nrow = ndists, ncol = nplans))
@@ -314,7 +314,7 @@ get_seats_matrix <- function(x) {
         # check if any reindexing needs to be done
         cli::cli_abort("Not implemented for shuffled district plans!")
     }
-    return(sizes_matrix)
+    sizes_matrix
 }
 
 #' Extract the sampling weights from a redistricting simulation.
@@ -422,7 +422,7 @@ add_reference <- function(plans, ref_plan, name = NULL, ref_seats = NULL) {
     }
     if(
         is.null(ref_seats) &&
-        isTRUE(attr(plans, "districting_scheme") == "SMD")
+        isTRUE(attr(plans, "districting_scheme") == "single")
     ){
         ref_seats <- rep(1L, ndists)
     }else if(!is.null(ref_seats)){
@@ -490,7 +490,7 @@ add_reference <- function(plans, ref_plan, name = NULL, ref_seats = NULL) {
     fct_levels <- c(name, levels(plans$draw))
     new_draw <- rep(factor(fct_levels, levels = fct_levels), each = ndists)
 
-    if(isTRUE(attr(plans, "districting_scheme") == "SMD")){
+    if(isTRUE(attr(plans, "districting_scheme") == "single")){
         x <- dplyr::bind_rows(
             tibble(district = 1:ndists,
                    total_pop = as.numeric(distr_pop)),

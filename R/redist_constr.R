@@ -138,15 +138,17 @@ add_to_constr <- function(constr, name, new_constr) {
 #' constraint set by the corresponding `strength` parameter.
 #' The strength can be any real number, with zero corresponding to no constraint.
 #' Higher and higher `strength` values will eventually cause the algorithm's
-#' accuracy and efficiency to suffer. Whenever you use constraints, be sure to
-#' check all sampling diagnostics.
+#' accuracy and efficiency to suffer and potentially cause floating point
+#' overflow errors. Whenever you use constraints, be sure to check all sampling
+#' diagnostics.
 #'
 #' An optional `thresh` value can also be set as well to incorporate hard
 #' thresholding. When the output of a constraint is greater than or equal to
 #' `thresh` the plan will automatically be rejected at the splitting stage. This
 #' ensures that in the final sample there will be no plans with scores at or above
 #' `thresh`. Lower `thresh` values will eventually cause the algorithms efficiency
-#' to suffer.
+#' to suffer. Depending on how its used `thresh` can violate the theoretical
+#' guarantees of the algorithm so caution is advised.
 #'
 #'
 #' The `status_quo` constraint adds a term measuring the variation of
@@ -233,7 +235,10 @@ add_to_constr <- function(constr, name, new_constr) {
 #' costs, since the other constraints are written in C++ and so are more performant.
 #' In addition to the cost of not being native C++ code, weights with custom
 #' R functions can not be computed in parallel and must be computed sequentially.
-#' This can especially slow down sampling on Spanning Forest or Linking Edge Space.
+#' This can especially slow down performance on Spanning Forest and Linking Edge
+#' Space as the weights for those spaces tend to be the slowest step.
+#' These effects can be somewhat mitigated by by increasing the number of
+#' processes(`nproc`) if multiple runs are being done.
 #'
 #' The `custom_plan` constraint allows the user to specify their own constraint using
 #' a function which evaluates the entire plan. Unlike the `custom` constraint,
@@ -247,21 +252,11 @@ add_to_constr <- function(constr, name, new_constr) {
 #' costs, since the other constraints are written in C++ and so are more performant.
 #' In addition to the cost of not being native C++ code, weights with custom
 #' R functions can not be computed in parallel and must be computed sequentially.
-#' This can especially slow down sampling on Spanning Forest or Linking Edge Space.
+#' This can especially slow down performance on Spanning Forest and Linking Edge
+#' Space as the weights for those spaces tend to be the slowest step.
+#' These effects can be somewhat mitigated by by increasing the number of
+#' processes(`nproc`) if multiple runs are being done.
 #'
-#' The `custom_hard_plan` constraint allows the user to specify their own hard
-#' constraint using a function which evaluates the entire plan. This function
-#' must return either `TRUE` or `FALSE`, where a value of `TRUE` means a plan is
-#' valid and `FALSE` means it will be rejected.
-#' The provided function `fn` should take two arguments: a 1-indexed vector
-#' describing the current plan assignment for each unit as its first argument,
-#' and a 1-indexed vector mapping region ids to the number of seats in the region.
-#' The function must return a single scalar for each plan where a value of 0
-#' indicates no penalty is applied.
-#' The flexibility of this constraint comes with strong additional computational
-#' costs. `Rcpp::Function` objects cannot be made thread safe so both splitting
-#' and calculating weights must be done with only a single thread. These effects
-#' can be somewhat mitigated by by increasing the number of processes(`nproc`).
 #'
 #' @param constr A [redist_constr()] object
 #' @param strength The strength of the constraint. Higher values mean a more restrictive constraint.
@@ -302,7 +297,7 @@ add_constr_status_quo <- function(
   strength,
   current,
   only_districts = TRUE,
-  thresh = Inf
+  thresh = NULL
 ) {
   if (!inherits(constr, "redist_constr")) {
     cli::cli_abort("Not a {.cls redist_constr} object")
@@ -314,18 +309,15 @@ add_constr_status_quo <- function(
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
-  if (!is_scalar(thresh)) {
-    cli::cli_abort("{.arg thresh} must be a scalar.")
-  } else if (is.finite(thresh)) {
-    hard_constraint <- T
-    hard_threshold <- thresh
-  } else if (thresh > 0) {
-    # means Inf so no thresholding
-    hard_constraint <- F
+  if (is.null(thresh)) {
+    # no thresholding
+    hard_constraint <- FALSE
     hard_threshold <- 0
+  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+    cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
-    # means -Inf which is invalid
-    cli::cli_abort("{.arg thresh} cannot be -Inf, that would reject every plan!")
+    hard_constraint <- TRUE
+    hard_threshold <- thresh
   }
 
   data <- attr(constr, "data")
@@ -335,7 +327,7 @@ add_constr_status_quo <- function(
 
   new_constr <- list(
     strength = strength,
-    current = eval_tidy(enquo(current), data),
+    current = rlang::eval_tidy(rlang::enquo(current), data),
     only_districts = only_districts,
     hard_constraint = hard_constraint,
     hard_threshold = hard_threshold
@@ -367,7 +359,7 @@ add_constr_grp_pow <- function(
   tgt_other = 0.5,
   pow = 1.0,
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 ) {
   if (!inherits(constr, "redist_constr")) {
     cli::cli_abort("Not a {.cls redist_constr} object")
@@ -379,18 +371,15 @@ add_constr_grp_pow <- function(
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
-  if (!is_scalar(thresh)) {
-    cli::cli_abort("{.arg thresh} must be a scalar.")
-  } else if (is.finite(thresh)) {
-    hard_constraint <- T
-    hard_threshold <- thresh
-  } else if (thresh > 0) {
-    # means Inf so no thresholding
-    hard_constraint <- F
+  if (is.null(thresh)) {
+    # no thresholding
+    hard_constraint <- FALSE
     hard_threshold <- 0
+  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+    cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
-    # means -Inf which is invalid
-    cli::cli_abort("{.arg thresh} cannot be -Inf, that would reject every plan!")
+    hard_constraint <- TRUE
+    hard_threshold <- thresh
   }
 
   data <- attr(constr, "data")
@@ -400,8 +389,8 @@ add_constr_grp_pow <- function(
     only_districts = only_districts,
     hard_constraint = hard_constraint,
     hard_threshold = hard_threshold,
-    group_pop = eval_tidy(enquo(group_pop), data),
-    total_pop = eval_tidy(enquo(total_pop), data),
+    group_pop = rlang::eval_tidy(rlang::enquo(group_pop), data),
+    total_pop = rlang::eval_tidy(rlang::enquo(total_pop), data),
     tgt_group = tgt_group,
     tgt_other = tgt_other,
     pow = pow
@@ -430,7 +419,7 @@ add_constr_grp_hinge <- function(
   total_pop = NULL,
   tgts_group = c(0.55),
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 ) {
   if (!inherits(constr, "redist_constr")) {
     cli::cli_abort("Not a {.cls redist_constr} object")
@@ -440,18 +429,15 @@ add_constr_grp_hinge <- function(
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
-  if (!is_scalar(thresh)) {
-    cli::cli_abort("{.arg thresh} must be a scalar.")
-  } else if (is.finite(thresh)) {
-    hard_constraint <- T
-    hard_threshold <- thresh
-  } else if (thresh > 0) {
-    # means Inf so no thresholding
-    hard_constraint <- F
+  if (is.null(thresh)) {
+    # no thresholding
+    hard_constraint <- FALSE
     hard_threshold <- 0
+  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+    cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
-    # means -Inf which is invalid
-    cli::cli_abort("{.arg thresh} cannot be -Inf, that would reject every plan!")
+    hard_constraint <- TRUE
+    hard_threshold <- thresh
   }
 
   data <- attr(constr, "data")
@@ -461,8 +447,8 @@ add_constr_grp_hinge <- function(
     only_districts = only_districts,
     hard_constraint = hard_constraint,
     hard_threshold = hard_threshold,
-    group_pop = eval_tidy(enquo(group_pop), data),
-    total_pop = eval_tidy(enquo(total_pop), data),
+    group_pop = rlang::eval_tidy(rlang::enquo(group_pop), data),
+    total_pop = rlang::eval_tidy(rlang::enquo(total_pop), data),
     tgts_group = tgts_group
   )
   if (is.null(new_constr$total_pop)) {
@@ -490,7 +476,7 @@ add_constr_grp_inv_hinge <- function(
   total_pop = NULL,
   tgts_group = c(0.55),
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 ) {
   if (!inherits(constr, "redist_constr")) {
     cli::cli_abort("Not a {.cls redist_constr} object")
@@ -499,18 +485,15 @@ add_constr_grp_inv_hinge <- function(
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
-  if (!is_scalar(thresh)) {
-    cli::cli_abort("{.arg thresh} must be a scalar.")
-  } else if (is.finite(thresh)) {
-    hard_constraint <- T
-    hard_threshold <- thresh
-  } else if (thresh > 0) {
-    # means Inf so no thresholding
-    hard_constraint <- F
+  if (is.null(thresh)) {
+    # no thresholding
+    hard_constraint <- FALSE
     hard_threshold <- 0
+  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+    cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
-    # means -Inf which is invalid
-    cli::cli_abort("{.arg thresh} cannot be -Inf, that would reject every plan!")
+    hard_constraint <- TRUE
+    hard_threshold <- thresh
   }
 
   data <- attr(constr, "data")
@@ -520,9 +503,9 @@ add_constr_grp_inv_hinge <- function(
     only_districts = only_districts,
     hard_constraint = hard_constraint,
     hard_threshold = hard_threshold,
-    group_pop = eval_tidy(enquo(total_pop), data) -
-      eval_tidy(enquo(group_pop), data),
-    total_pop = eval_tidy(enquo(total_pop), data),
+    group_pop = rlang::eval_tidy(rlang::enquo(total_pop), data) -
+      rlang::eval_tidy(rlang::enquo(group_pop), data),
+    total_pop = rlang::eval_tidy(rlang::enquo(total_pop), data),
     tgts_group = tgts_group
   )
   if (is.null(new_constr$total_pop)) {
@@ -548,7 +531,7 @@ add_constr_compet <- function(
   rvote,
   pow = 0.5,
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 ) {
   if (!inherits(constr, "redist_constr")) {
     cli::cli_abort("Not a {.cls redist_constr} object")
@@ -561,18 +544,15 @@ add_constr_compet <- function(
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
-  if (!is_scalar(thresh)) {
-    cli::cli_abort("{.arg thresh} must be a scalar.")
-  } else if (is.finite(thresh)) {
-    hard_constraint <- T
-    hard_threshold <- thresh
-  } else if (thresh > 0) {
-    # means Inf so no thresholding
-    hard_constraint <- F
+  if (is.null(thresh)) {
+    # no thresholding
+    hard_constraint <- FALSE
     hard_threshold <- 0
+  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+    cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
-    # means -Inf which is invalid
-    cli::cli_abort("{.arg thresh} cannot be -Inf, that would reject every plan!")
+    hard_constraint <- TRUE
+    hard_threshold <- thresh
   }
 
   data <- attr(constr, "data")
@@ -582,8 +562,8 @@ add_constr_compet <- function(
     only_districts = only_districts,
     hard_constraint = hard_constraint,
     hard_threshold = hard_threshold,
-    dvote = eval_tidy(enquo(dvote), data),
-    rvote = eval_tidy(enquo(rvote), data),
+    dvote = rlang::eval_tidy(rlang::enquo(dvote), data),
+    rvote = rlang::eval_tidy(rlang::enquo(rvote), data),
     pow = pow
   )
   stopifnot(length(new_constr$dvote) == nrow(data))
@@ -603,7 +583,7 @@ add_constr_incumbency <- function(
   strength,
   incumbents,
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 ) {
   if (!inherits(constr, "redist_constr")) {
     cli::cli_abort("Not a {.cls redist_constr} object")
@@ -615,18 +595,15 @@ add_constr_incumbency <- function(
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
-  if (!is_scalar(thresh)) {
-    cli::cli_abort("{.arg thresh} must be a scalar.")
-  } else if (is.finite(thresh)) {
-    hard_constraint <- T
-    hard_threshold <- thresh
-  } else if (thresh > 0) {
-    # means Inf so no thresholding
-    hard_constraint <- F
+  if (is.null(thresh)) {
+    # no thresholding
+    hard_constraint <- FALSE
     hard_threshold <- 0
+  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+    cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
-    # means -Inf which is invalid
-    cli::cli_abort("{.arg thresh} cannot be -Inf, that would reject every plan!")
+    hard_constraint <- TRUE
+    hard_threshold <- thresh
   }
 
   data <- attr(constr, "data")
@@ -636,7 +613,7 @@ add_constr_incumbency <- function(
     only_districts = only_districts,
     hard_constraint = hard_constraint,
     hard_threshold = hard_threshold,
-    incumbents = eval_tidy(enquo(incumbents), data)
+    incumbents = rlang::eval_tidy(rlang::enquo(incumbents), data)
   )
 
   add_to_constr(constr, "incumbency", new_constr)
@@ -650,7 +627,7 @@ add_constr_splits <- function(
   strength,
   admin,
   only_districts = TRUE,
-  thresh = Inf
+  thresh = NULL
 ) {
   if (!inherits(constr, "redist_constr")) {
     cli::cli_abort("Not a {.cls redist_constr} object")
@@ -662,23 +639,20 @@ add_constr_splits <- function(
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
-  if (!is_scalar(thresh)) {
-    cli::cli_abort("{.arg thresh} must be a scalar.")
-  } else if (is.finite(thresh)) {
-    hard_constraint <- T
-    hard_threshold <- thresh
-  } else if (thresh > 0) {
-    # means Inf so no thresholding
-    hard_constraint <- F
+  if (is.null(thresh)) {
+    # no thresholding
+    hard_constraint <- FALSE
     hard_threshold <- 0
+  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+    cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
-    # means -Inf which is invalid
-    cli::cli_abort("{.arg thresh} cannot be -Inf, that would reject every plan!")
+    hard_constraint <- TRUE
+    hard_threshold <- thresh
   }
 
   data <- attr(constr, "data")
 
-  admin <- eval_tidy(enquo(admin), data)
+  admin <- rlang::eval_tidy(rlang::enquo(admin), data)
   if (is.null(admin)) {
     cli::cli_abort("{.arg admin} may not be {.val NULL}.")
   }
@@ -706,7 +680,7 @@ add_constr_multisplits <- function(
   strength,
   admin,
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 ) {
   if (!inherits(constr, "redist_constr")) {
     cli::cli_abort("Not a {.cls redist_constr} object")
@@ -718,23 +692,20 @@ add_constr_multisplits <- function(
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
-  if (!is_scalar(thresh)) {
-    cli::cli_abort("{.arg thresh} must be a scalar.")
-  } else if (is.finite(thresh)) {
-    hard_constraint <- T
-    hard_threshold <- thresh
-  } else if (thresh > 0) {
-    # means Inf so no thresholding
-    hard_constraint <- F
+  if (is.null(thresh)) {
+    # no thresholding
+    hard_constraint <- FALSE
     hard_threshold <- 0
+  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+    cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
-    # means -Inf which is invalid
-    cli::cli_abort("{.arg thresh} cannot be -Inf, that would reject every plan!")
+    hard_constraint <- TRUE
+    hard_threshold <- thresh
   }
 
   data <- attr(constr, "data")
 
-  admin <- eval_tidy(enquo(admin), data)
+  admin <- rlang::eval_tidy(rlang::enquo(admin), data)
   if (is.null(admin)) {
     cli::cli_abort("{.arg admin} may not be {.val NULL}.")
   }
@@ -762,7 +733,7 @@ add_constr_total_splits <- function(
   strength,
   admin,
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 ) {
   if (!inherits(constr, "redist_constr")) {
     cli::cli_abort("Not a {.cls redist_constr} object")
@@ -774,23 +745,20 @@ add_constr_total_splits <- function(
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
-  if (!is_scalar(thresh)) {
-    cli::cli_abort("{.arg thresh} must be a scalar.")
-  } else if (is.finite(thresh)) {
-    hard_constraint <- T
-    hard_threshold <- thresh
-  } else if (thresh > 0) {
-    # means Inf so no thresholding
-    hard_constraint <- F
+  if (is.null(thresh)) {
+    # no thresholding
+    hard_constraint <- FALSE
     hard_threshold <- 0
+  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+    cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
-    # means -Inf which is invalid
-    cli::cli_abort("{.arg thresh} cannot be -Inf, that would reject every plan!")
+    hard_constraint <- TRUE
+    hard_threshold <- thresh
   }
 
   data <- attr(constr, "data")
 
-  admin <- eval_tidy(enquo(admin), data)
+  admin <- rlang::eval_tidy(rlang::enquo(admin), data)
   if (is.null(admin)) {
     cli::cli_abort("{.arg admin} may not be {.val NULL}.")
   }
@@ -817,7 +785,7 @@ add_constr_pop_dev <- function(
   constr,
   strength,
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 ) {
   if (!inherits(constr, "redist_constr")) {
     cli::cli_abort("Not a {.cls redist_constr} object")
@@ -829,18 +797,15 @@ add_constr_pop_dev <- function(
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
-  if (!is_scalar(thresh)) {
-    cli::cli_abort("{.arg thresh} must be a scalar.")
-  } else if (is.finite(thresh)) {
-    hard_constraint <- T
-    hard_threshold <- thresh
-  } else if (thresh > 0) {
-    # means Inf so no thresholding
-    hard_constraint <- F
+  if (is.null(thresh)) {
+    # no thresholding
+    hard_constraint <- FALSE
     hard_threshold <- 0
+  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+    cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
-    # means -Inf which is invalid
-    cli::cli_abort("{.arg thresh} cannot be -Inf, that would reject every plan!")
+    hard_constraint <- TRUE
+    hard_threshold <- thresh
   }
 
   data <- attr(constr, "data")
@@ -862,7 +827,7 @@ add_constr_segregation <- function(
   group_pop,
   total_pop = NULL,
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 ) {
   if (!inherits(constr, "redist_constr")) {
     cli::cli_abort("Not a {.cls redist_constr} object")
@@ -874,18 +839,15 @@ add_constr_segregation <- function(
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
-  if (!is_scalar(thresh)) {
-    cli::cli_abort("{.arg thresh} must be a scalar.")
-  } else if (is.finite(thresh)) {
-    hard_constraint <- T
-    hard_threshold <- thresh
-  } else if (thresh > 0) {
-    # means Inf so no thresholding
-    hard_constraint <- F
+  if (is.null(thresh)) {
+    # no thresholding
+    hard_constraint <- FALSE
     hard_threshold <- 0
+  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+    cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
-    # means -Inf which is invalid
-    cli::cli_abort("{.arg thresh} cannot be -Inf, that would reject every plan!")
+    hard_constraint <- TRUE
+    hard_threshold <- thresh
   }
 
   data <- attr(constr, "data")
@@ -895,8 +857,8 @@ add_constr_segregation <- function(
     only_districts = only_districts,
     hard_constraint = hard_constraint,
     hard_threshold = hard_threshold,
-    group_pop = eval_tidy(enquo(group_pop), data),
-    total_pop = eval_tidy(enquo(total_pop), data)
+    group_pop = rlang::eval_tidy(rlang::enquo(group_pop), data),
+    total_pop = rlang::eval_tidy(rlang::enquo(total_pop), data)
   )
   if (is.null(new_constr$total_pop)) {
     if (!is.null(attr(data, "pop_col"))) {
@@ -922,7 +884,7 @@ add_constr_polsby <- function(
   strength,
   perim_df = NULL,
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 ) {
   if (!inherits(constr, "redist_constr")) {
     cli::cli_abort("Not a {.cls redist_constr} object")
@@ -934,18 +896,15 @@ add_constr_polsby <- function(
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
-  if (!is_scalar(thresh)) {
-    cli::cli_abort("{.arg thresh} must be a scalar.")
-  } else if (is.finite(thresh)) {
-    hard_constraint <- T
-    hard_threshold <- thresh
-  } else if (thresh > 0) {
-    # means Inf so no thresholding
-    hard_constraint <- F
+  if (is.null(thresh)) {
+    # no thresholding
+    hard_constraint <- FALSE
     hard_threshold <- 0
+  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+    cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
-    # means -Inf which is invalid
-    cli::cli_abort("{.arg thresh} cannot be -Inf, that would reject every plan!")
+    hard_constraint <- TRUE
+    hard_threshold <- thresh
   }
 
   data <- attr(constr, "data")
@@ -985,7 +944,7 @@ add_constr_fry_hold <- function(
   ssdmat = NULL,
   denominator = 1,
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 ) {
   if (!inherits(constr, "redist_constr")) {
     cli::cli_abort("Not a {.cls redist_constr} object")
@@ -997,23 +956,20 @@ add_constr_fry_hold <- function(
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
-  if (!is_scalar(thresh)) {
-    cli::cli_abort("{.arg thresh} must be a scalar.")
-  } else if (is.finite(thresh)) {
-    hard_constraint <- T
-    hard_threshold <- thresh
-  } else if (thresh > 0) {
-    # means Inf so no thresholding
-    hard_constraint <- F
+  if (is.null(thresh)) {
+    # no thresholding
+    hard_constraint <- FALSE
     hard_threshold <- 0
+  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+    cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
-    # means -Inf which is invalid
-    cli::cli_abort("{.arg thresh} cannot be -Inf, that would reject every plan!")
+    hard_constraint <- TRUE
+    hard_threshold <- thresh
   }
 
   data <- attr(constr, "data")
 
-  total_pop <- eval_tidy(enquo(total_pop), data)
+  total_pop <- rlang::eval_tidy(rlang::enquo(total_pop), data)
   if (is.null(total_pop)) {
     if (!is.null(attr(data, "pop_col"))) {
       total_pop <- data[[attr(data, "pop_col")]]
@@ -1045,7 +1001,7 @@ add_constr_log_st <- function(
   strength,
   admin = NULL,
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 ) {
   if (!inherits(constr, "redist_constr")) {
     cli::cli_abort("Not a {.cls redist_constr} object")
@@ -1057,23 +1013,20 @@ add_constr_log_st <- function(
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
-  if (!is_scalar(thresh)) {
-    cli::cli_abort("{.arg thresh} must be a scalar.")
-  } else if (is.finite(thresh)) {
-    hard_constraint <- T
-    hard_threshold <- thresh
-  } else if (thresh > 0) {
-    # means Inf so no thresholding
-    hard_constraint <- F
+  if (is.null(thresh)) {
+    # no thresholding
+    hard_constraint <- FALSE
     hard_threshold <- 0
+  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+    cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
-    # means -Inf which is invalid
-    cli::cli_abort("{.arg thresh} cannot be -Inf, that would reject every plan!")
+    hard_constraint <- TRUE
+    hard_threshold <- thresh
   }
 
   data <- attr(constr, "data")
 
-  admin <- eval_tidy(enquo(admin), data)
+  admin <- rlang::eval_tidy(rlang::enquo(admin), data)
   if (is.null(admin)) {
     admin <- rep(1, nrow(data))
   }
@@ -1100,7 +1053,7 @@ add_constr_edges_rem <- function(
   constr,
   strength,
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 ) {
   if (!inherits(constr, "redist_constr")) {
     cli::cli_abort("Not a {.cls redist_constr} object")
@@ -1112,18 +1065,15 @@ add_constr_edges_rem <- function(
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
-  if (!is_scalar(thresh)) {
-    cli::cli_abort("{.arg thresh} must be a scalar.")
-  } else if (is.finite(thresh)) {
-    hard_constraint <- T
-    hard_threshold <- thresh
-  } else if (thresh > 0) {
-    # means Inf so no thresholding
-    hard_constraint <- F
+  if (is.null(thresh)) {
+    # no thresholding
+    hard_constraint <- FALSE
     hard_threshold <- 0
+  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+    cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
-    # means -Inf which is invalid
-    cli::cli_abort("{.arg thresh} cannot be -Inf, that would reject every plan!")
+    hard_constraint <- TRUE
+    hard_threshold <- thresh
   }
 
   data <- attr(constr, "data")
@@ -1146,7 +1096,7 @@ add_constr_qps <- function(
   cities,
   total_pop = NULL,
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 ) {
   if (!inherits(constr, "redist_constr")) {
     cli::cli_abort("Not a {.cls redist_constr} object")
@@ -1158,18 +1108,15 @@ add_constr_qps <- function(
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
-  if (!is_scalar(thresh)) {
-    cli::cli_abort("{.arg thresh} must be a scalar.")
-  } else if (is.finite(thresh)) {
-    hard_constraint <- T
-    hard_threshold <- thresh
-  } else if (thresh > 0) {
-    # means Inf so no thresholding
-    hard_constraint <- F
+  if (is.null(thresh)) {
+    # no thresholding
+    hard_constraint <- FALSE
     hard_threshold <- 0
+  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+    cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
-    # means -Inf which is invalid
-    cli::cli_abort("{.arg thresh} cannot be -Inf, that would reject every plan!")
+    hard_constraint <- TRUE
+    hard_threshold <- thresh
   }
 
   data <- attr(constr, "data")
@@ -1179,7 +1126,7 @@ add_constr_qps <- function(
     only_districts = only_districts,
     hard_constraint = hard_constraint,
     hard_threshold = hard_threshold,
-    cities = eval_tidy(enquo(cities), data)
+    cities = rlang::eval_tidy(rlang::enquo(cities), data)
   )
   new_constr$n_cty <- max(new_constr$cities) + 1
 
@@ -1219,7 +1166,7 @@ add_constr_custom <- function(
   strength,
   fn,
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 ) {
   if (!inherits(constr, "redist_constr")) {
     cli::cli_abort("Not a {.cls redist_constr} object")
@@ -1231,18 +1178,15 @@ add_constr_custom <- function(
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
-  if (!is_scalar(thresh)) {
-    cli::cli_abort("{.arg thresh} must be a scalar.")
-  } else if (is.finite(thresh)) {
-    hard_constraint <- T
-    hard_threshold <- thresh
-  } else if (thresh > 0) {
-    # means Inf so no thresholding
-    hard_constraint <- F
+  if (is.null(thresh)) {
+    # no thresholding
+    hard_constraint <- FALSE
     hard_threshold <- 0
+  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+    cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
-    # means -Inf which is invalid
-    cli::cli_abort("{.arg thresh} cannot be -Inf, that would reject every plan!")
+    hard_constraint <- TRUE
+    hard_threshold <- thresh
   }
 
   args <- rlang::fn_fmls(fn)
@@ -1303,7 +1247,7 @@ add_constr_custom <- function(
 #' @param fn A function
 #' @rdname constraints
 #' @export
-add_constr_custom_plan <- function(constr, strength, fn, thresh = Inf) {
+add_constr_custom_plan <- function(constr, strength, fn, thresh = NULL) {
   if (!inherits(constr, "redist_constr")) {
     cli::cli_abort("Not a {.cls redist_constr} object")
   }
@@ -1311,18 +1255,15 @@ add_constr_custom_plan <- function(constr, strength, fn, thresh = Inf) {
     cli::cli_warn("Nonpositive strength may lead to unexpected results")
   }
 
-  if (!is_scalar(thresh)) {
-    cli::cli_abort("{.arg thresh} must be a scalar.")
-  } else if (is.finite(thresh)) {
-    hard_constraint <- T
-    hard_threshold <- thresh
-  } else if (thresh > 0) {
-    # means Inf so no thresholding
-    hard_constraint <- F
+  if (is.null(thresh)) {
+    # no thresholding
+    hard_constraint <- FALSE
     hard_threshold <- 0
+  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+    cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
-    # means -Inf which is invalid
-    cli::cli_abort("{.arg thresh} cannot be -Inf, that would reject every plan!")
+    hard_constraint <- TRUE
+    hard_threshold <- thresh
   }
 
   args <- rlang::fn_fmls(fn)

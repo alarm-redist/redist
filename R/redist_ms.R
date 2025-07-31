@@ -312,7 +312,7 @@ redist_mergesplit <- function(
     }
   } else {
     if (is.null(init_seats)) {
-      if (districting_scheme == "SMD") {
+      if (districting_scheme == "single") {
         init_seats <- matrix(1L, nrow = ndists, ncol = ncol(init_plan))
       } else {
           init_seats <- replicate(chains, exist_seats)

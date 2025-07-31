@@ -16,7 +16,7 @@
 #'
 #' @inheritParams redist_smc
 #' @param plans Either a `redist_plans` object or a matrix or vector of plan labels
-#' @param num_threads The number of threads used for computing
+#' @param ncores The number of threads used for computing
 #' the target densities.
 #' @param sizes_matrix A matrix of region sizes. The matrix must have
 #' the same number of columns as `plans`, `ndists` rows, and each column
@@ -25,13 +25,12 @@
 #' @return A vector of the unnormalized target density of each plan
 #'
 #' @md
-#' @order 1
 #' @noRd
 compute_log_target_density <- function(
         map, plans, counties = NULL,
         sizes_matrix = NULL, compactness = 1L,
         constraints = list(),
-        num_threads = 0, pop_temper = 0L
+        ncores = 0, pop_temper = 0L
 ){
 
     if (inherits(plans, "redist_plans")){
@@ -49,7 +48,6 @@ compute_log_target_density <- function(
     # get validated inputs
     map_params <- get_map_parameters(map, !!rlang::enquo(counties))
     map <- map_params$map
-    V <- map_params$V
     adj_list <- map_params$adj_list
     counties <- map_params$counties
     pop <- map_params$pop
@@ -58,7 +56,6 @@ compute_log_target_density <- function(
     ndists <- map_params$ndists
     total_seats <- map_params$nseats
     district_seat_sizes <- map_params$seats_range
-    districting_scheme <- map_params$districting_scheme
 
     if (inherits(plans, "redist_plans")){
         sizes_matrix <- get_seats_matrix(plans)
@@ -87,7 +84,7 @@ compute_log_target_density <- function(
         upper=pop_bounds[3],
         region_ids=plan_matrix-1L,
         region_sizes=sizes_matrix,
-        num_threads=num_threads
+        num_threads=ncores
     )
 
     # check if anything was -Inf so probability 0
@@ -109,7 +106,7 @@ compute_log_target_density <- function(
 #' densities over regions is not neccesarily equal to the log density of an entire plan.
 #'
 #' @inheritParams redist_smc
-#' @param num_threads The number of threads used for computing
+#' @param ncores The number of threads used for computing
 #' the target densities.
 #' @param plan_matrix A matrix of 1-indexed plans
 #' @param init_region_sizes_mat A matrix of region sizes. The matrix must have
@@ -119,13 +116,12 @@ compute_log_target_density <- function(
 #' @return A matrix of number of regions by plans of the unnormalized target density of each region in a plan
 #'
 #' @md
-#' @order 1
 #' @noRd
 compute_log_target_density_by_region <- function(
         map, plans, counties = NULL,
         sizes_matrix = NULL, compactness = 1L,
         constraints = list(),
-        num_threads = 0, pop_temper = 0L
+        ncores = 0, pop_temper = 0L
 ){
     if (inherits(plans, "redist_plans")){
         plan_matrix <- get_plans_matrix(plans)
@@ -180,7 +176,7 @@ compute_log_target_density_by_region <- function(
         upper=pop_bounds[3],
         region_ids=plan_matrix-1L,
         region_sizes=sizes_matrix,
-        num_threads=num_threads
+        num_threads=ncores
     )
 
     # check if anything was -Inf so probability 0
@@ -198,7 +194,7 @@ compute_log_target_density_by_region <- function(
 #'
 #'
 #' @inheritParams redist_smc
-#' @param num_threads The number of threads used for computing
+#' @param ncores The number of threads used for computing
 #' the target densities.
 #' @param plan_matrix A matrix of 1-indexed plans
 #' @param init_region_sizes_mat A matrix of region sizes. The matrix must have
@@ -208,13 +204,12 @@ compute_log_target_density_by_region <- function(
 #' @return A vector of the unnormalized target density of each plan
 #'
 #' @md
-#' @order 1
 #' @noRd
 compute_log_optimal_weights <- function(
         map, plans, counties = NULL,
         sizes_matrix = NULL, constraints = list(),
         splitting_schedule = "any_valid_sizes",
-        num_threads = 0, compactness = 1L, pop_temper = 0L
+        ncores = 0, compactness = 1L, pop_temper = 0L
 ){
     if (inherits(plans, "redist_plans")){
         plan_matrix <- get_plans_matrix(plans)
@@ -232,7 +227,6 @@ compute_log_optimal_weights <- function(
     # get validated inputs
     map_params <- get_map_parameters(map, !!rlang::enquo(counties))
     map <- map_params$map
-    V <- map_params$V
     adj_list <- map_params$adj_list
     counties <- map_params$counties
     pop <- map_params$pop
@@ -242,7 +236,7 @@ compute_log_optimal_weights <- function(
     total_seats <- map_params$nseats
     district_seat_sizes <- map_params$seats_range
     districting_scheme <- map_params$districting_scheme
-    if(districting_scheme == "MMD"){
+    if(districting_scheme == "multiple"){
         splitting_schedule <- "split_district_only_mmd"
     }
     storage.mode(district_seat_sizes) <- "integer"
@@ -272,7 +266,7 @@ compute_log_optimal_weights <- function(
         target=pop_bounds[2],
         upper=pop_bounds[3],
         plan_matrix-1L, sizes_matrix,
-        num_threads
+        ncores
     )
 
     # check if anything was -Inf so probability 0

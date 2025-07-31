@@ -41,9 +41,9 @@ new_redist_map <- function(
     attr(data, "existing_col_seats") <- existing_col_seats
     # set the districting scheme
     if(is_scalar(seats_range) && seats_range == 1){
-        attr(data, "districting_scheme") <- "SMD"
+        attr(data, "districting_scheme") <- "single"
     }else{
-        attr(data, "districting_scheme") <- "MMD"
+        attr(data, "districting_scheme") <- "multiple"
     }
 
     data
@@ -84,9 +84,9 @@ validate_redist_map <- function(data, check_contig = TRUE, call = parent.frame()
     if(is.null(attr(data, "districting_scheme"))){
         # set the districting scheme
         if(is_scalar(seats_range) && seats_range == 1){
-            attr(data, "districting_scheme") <- "SMD"
+            attr(data, "districting_scheme") <- "single"
         }else{
-            attr(data, "districting_scheme") <- "MMD"
+            attr(data, "districting_scheme") <- "multiple"
         }
     }
     stopifnot(!is.null(attr(data, "districting_scheme")))
@@ -98,7 +98,7 @@ validate_redist_map <- function(data, check_contig = TRUE, call = parent.frame()
     }
     existing_col_seats <- attr(data, "existing_col_seats")
     if(!is.null(exist_col) && is.null(existing_col_seats)){
-        if(attr(data, "districting_scheme") == "SMD"){
+        if(attr(data, "districting_scheme") == "single"){
             existing_col_seats <- rep(1L, attr(data, "ndists"))
         }else{
             cli::cli_abort("Existing MMD plan must have an accompanying {.field reference_plan_seats}")
@@ -616,7 +616,7 @@ print.redist_map <- function(x, ...) {
     cli::cli_text("A {.cls redist_map} with {nrow(x)} units and {ncol(x)} fields")
 
     bounds <- attr(x, "pop_bounds")
-    if(isTRUE(attr(x, "districting_scheme") == "MMD")){
+    if(isTRUE(attr(x, "districting_scheme") == "multiple")){
         cat("To be partitioned into ", attr(x, "ndists"),
             " districts with populations between:\n",
             sep = "")

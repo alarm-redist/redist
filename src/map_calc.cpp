@@ -108,14 +108,14 @@ mat prec_cooccur(umat m, uvec idxs, int ncores) {
 NumericMatrix group_pct(
     IntegerMatrix const &plans_mat, 
     vec const &group_pop, vec const &total_pop, 
-    int const n_distr, int const num_threads) {
+    int const n_distr, int const ncores) {
     int V = plans_mat.nrow();
     int num_plans = plans_mat.ncol();
 
     NumericMatrix grp_distr(n_distr, num_plans);
     NumericMatrix tot_distr(n_distr, num_plans);
 
-    RcppThread::ThreadPool pool(num_threads > 0 ? num_threads : 0);
+    RcppThread::ThreadPool pool(ncores > 0 ? ncores : 0);
 
     pool.parallelFor(0, num_plans, [&] (unsigned int i) {
         for (int j = 0; j < V; j++) {
@@ -181,7 +181,7 @@ NumericVector group_pct_top_k(const IntegerMatrix m, const NumericVector group_p
 // TESTED
 // NOTE: Maybe can make parallel version of this? Not sure
 NumericMatrix pop_tally(IntegerMatrix const &districts, vec const &pop, int const n_distr,
-    int const num_threads) {
+    int const ncores) {
     int const num_plans = districts.ncol();
     int const V = districts.nrow();
 
@@ -193,7 +193,7 @@ NumericMatrix pop_tally(IntegerMatrix const &districts, vec const &pop, int cons
             int d = districts(j, i) - 1; // districts are 1-indexed
             tally(d, i) = tally(d, i) + pop(j);
         }
-    }, num_threads > 0 ? num_threads : 0);
+    }, ncores > 0 ? ncores : 0);
 
     return tally;
 }
@@ -285,7 +285,8 @@ NumericMatrix proj_distr_m(IntegerMatrix districts, const arma::vec x,
 NumericVector max_dev(
     const IntegerMatrix &districts, const arma::vec &pop, int const n_distr,
     bool const multimember_districts, int const nseats, Rcpp::IntegerMatrix const &seats_matrix,
-    int const num_threads) {
+    int const num_threads
+) {
     int const num_plans = districts.ncol();
     double const target_pop = arma::sum(pop) / nseats;
     NumericVector res(num_plans);
