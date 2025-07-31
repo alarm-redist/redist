@@ -700,7 +700,7 @@ Input must be between 1 and the start_col value (you input {steps_back})")
 
     # vector where index i maps to the index of its ancestor
     # initialize to this
-    ancestor <- 1:nrow(parent_mat)
+    ancestor <- seq_length(nrow(parent_mat))
 
 
     # iterate through each step back we select the successive parent indices
@@ -738,8 +738,7 @@ get_original_ancestors_mat <- function(parent_mat){
 
     # add the first column where every particles ancestor is iteslf
     cbind(
-        1:nrow(parent_mat),
+        seq_length(nrow(parent_mat)), 
         original_ancestor_mat
     )
-
 }

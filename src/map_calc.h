@@ -78,8 +78,11 @@ Rcpp::IntegerMatrix infer_region_seats(
  * Compute the maximum deviation from the equal population constraint.
  */
 // [[Rcpp::export]]
-NumericVector max_dev(const IntegerMatrix &districts, const arma::vec &pop, int const n_distr,
-                      int const num_threads = 0);
+Rcpp::NumericVector max_dev(
+    const Rcpp::IntegerMatrix &districts, const arma::vec &pop, int const n_distr,
+    bool const multimember_districts = false, int const nseats = -1, Rcpp::IntegerMatrix const &seats_matrix = Rcpp::IntegerMatrix(1,1),
+    int const num_threads = 1
+);
 
 
 

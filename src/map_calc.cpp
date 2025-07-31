@@ -282,24 +282,37 @@ NumericMatrix proj_distr_m(IntegerMatrix districts, const arma::vec x,
 /*
  * Compute the maximum deviation from the equal population constraint.
  */
-// TESTED
-// Could be parallelized as well
-NumericVector max_dev(const IntegerMatrix &districts, const arma::vec &pop, int const n_distr,
-                      int const num_threads) {
+NumericVector max_dev(
+    const IntegerMatrix &districts, const arma::vec &pop, int const n_distr,
+    bool const multimember_districts, int const nseats, Rcpp::IntegerMatrix const &seats_matrix,
+    int const num_threads) {
     int const num_plans = districts.ncol();
-    double const target_pop = arma::sum(pop) / n_distr;
-
-    NumericMatrix const dev = pop_tally(districts, pop, n_distr, num_threads) / target_pop - 1.0;
+    double const target_pop = arma::sum(pop) / nseats;
     NumericVector res(num_plans);
+    NumericMatrix district_pops = pop_tally(districts, pop, n_distr, num_threads);
 
-    RcppThread::parallelFor(0, num_plans, [&] (unsigned int i) {
-        for (int j = 0; j < n_distr; j++) {
-            // If deviation at district j bigger then record that
-            if (std::fabs(dev(j, i)) > res(i)){
-                res(i) = std::fabs(dev(j, i));
+    if(multimember_districts){
+        RcppThread::parallelFor(0, num_plans, [&] (unsigned int i) {
+            for (int j = 0; j < n_distr; j++) {
+                double target_seat_pop = target_pop * seats_matrix(j, i);
+                double dev = std::fabs(district_pops(j, i) / target_seat_pop - 1.0);
+                // If deviation at district j bigger then record that
+                if (dev > res(i)){
+                    res(i) = dev;
+                }
             }
-        }
-    }, num_threads > 0 ? num_threads : 0);
+        }, num_threads > 0 ? num_threads : 0);
+    }else{
+        RcppThread::parallelFor(0, num_plans, [&] (unsigned int i) {
+            for (int j = 0; j < n_distr; j++) {
+                double dev = std::fabs(district_pops(j, i) / target_pop - 1.0);
+                // If deviation at district j bigger then record that
+                if (dev > res(i)){
+                    res(i) = dev;
+                }
+            }
+        }, num_threads > 0 ? num_threads : 0);
+    }
 
     return res;
 }

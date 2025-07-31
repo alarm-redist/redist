@@ -550,16 +550,19 @@ BEGIN_RCPP
 END_RCPP
 }
 // max_dev
-NumericVector max_dev(const IntegerMatrix& districts, const arma::vec& pop, int const n_distr, int const num_threads);
-RcppExport SEXP _redist_max_dev(SEXP districtsSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP num_threadsSEXP) {
+Rcpp::NumericVector max_dev(const Rcpp::IntegerMatrix& districts, const arma::vec& pop, int const n_distr, bool const multimember_districts, int const nseats, Rcpp::IntegerMatrix const& seats_matrix, int const num_threads);
+RcppExport SEXP _redist_max_dev(SEXP districtsSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP multimember_districtsSEXP, SEXP nseatsSEXP, SEXP seats_matrixSEXP, SEXP num_threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const IntegerMatrix& >::type districts(districtsSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::IntegerMatrix& >::type districts(districtsSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type pop(popSEXP);
     Rcpp::traits::input_parameter< int const >::type n_distr(n_distrSEXP);
+    Rcpp::traits::input_parameter< bool const >::type multimember_districts(multimember_districtsSEXP);
+    Rcpp::traits::input_parameter< int const >::type nseats(nseatsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix const& >::type seats_matrix(seats_matrixSEXP);
     Rcpp::traits::input_parameter< int const >::type num_threads(num_threadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(max_dev(districts, pop, n_distr, num_threads));
+    rcpp_result_gen = Rcpp::wrap(max_dev(districts, pop, n_distr, multimember_districts, nseats, seats_matrix, num_threads));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -1027,7 +1030,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_group_pct", (DL_FUNC) &_redist_group_pct, 5},
     {"_redist_pop_tally", (DL_FUNC) &_redist_pop_tally, 4},
     {"_redist_infer_region_seats", (DL_FUNC) &_redist_infer_region_seats, 5},
-    {"_redist_max_dev", (DL_FUNC) &_redist_max_dev, 4},
+    {"_redist_max_dev", (DL_FUNC) &_redist_max_dev, 7},
     {"_redist_order_district_stats", (DL_FUNC) &_redist_order_district_stats, 3},
     {"_redist_order_columns_by_district", (DL_FUNC) &_redist_order_columns_by_district, 4},
     {"_redist_ms_plans", (DL_FUNC) &_redist_ms_plans, 21},
