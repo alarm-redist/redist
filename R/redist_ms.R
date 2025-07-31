@@ -414,12 +414,11 @@ redist_mergesplit <- function(
   ) %oper%
     {
       if (chain == 1) {
-        is_chain1 <- T
+        is_chain1 <- TRUE
       }
       run_verbosity <- if (is_chain1 || !multiprocess) verbosity else 0
       if (!silent && is_chain1) {
         cat("Starting chain ", chain, "\n", sep = "")
-        # flush.console()
       }
 
       t1_run <- Sys.time()

@@ -5,18 +5,6 @@
 # Purpose: Helper functions shared across all redist algorithm types
 ####################################################
 
-# simple but common arg checking functions
-is_scalar <- function(x) {
-  length(x) == 1
-}
-
-is_bool <- function(x) {
-  isFALSE(x) || isTRUE(x)
-}
-
-is_string <- function(x) {
-  is.character(x) && length(x) == 1
-}
 
 #' Takes a map and possibly a county label and returns map parameters for redist algorithms
 #'
@@ -50,7 +38,7 @@ get_map_parameters <- function(map, counties = NULL) {
     counties <- rep(1, V)
   } else {
     # check if just the column name was passed in
-    if (is_scalar(counties) && is_string(counties)) {
+    if (rlang::is_scalar_character(counties)) {
       if (!counties %in% names(map)) {
         cli::cli_abort("{counties} is not in the map!")
       } else {
@@ -214,7 +202,7 @@ validate_sample_space_and_splitting_method <- function(
     if (split_method == NAIVE_K_SPLITTING) {
       split_params <- list(
         adapt_k_thresh = .99,
-        estimate_cut_k = T
+        estimate_cut_k = TRUE
       )
     } else if (split_method == UNIF_VALID_EDGE_SPLITTING) {
       split_params <- list()
@@ -234,10 +222,10 @@ validate_sample_space_and_splitting_method <- function(
     }
     if (!"estimate_cut_k" %in% names(split_params)) {
       # If no adapt k mentioned default is to estimate
-      split_params$estimate_cut_k <- T
+      split_params$estimate_cut_k <- TRUE
     }
     # check its a boolean
-    if (!is_bool(split_params$estimate_cut_k)) {
+    if (!rlang::is_bool(split_params$estimate_cut_k)) {
       cli::cli_abort("{.arg estimate_cut_k} must be a Boolean!")
     }
     forward_kernel_params$estimate_cut_k <- split_params$estimate_cut_k
@@ -250,7 +238,7 @@ validate_sample_space_and_splitting_method <- function(
         forward_kernel_params$adapt_k_thresh <- .99
       }
       # check its a scalar
-      if (!is_scalar(split_params$adapt_k_thresh)) {
+      if (!rlang::is_scalar_double(split_params$adapt_k_thresh)) {
         cli::cli_abort("{.arg adapt_k_thresh} must be a number")
       }
       # now check its between 0 and 1

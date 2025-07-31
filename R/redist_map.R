@@ -40,7 +40,7 @@ new_redist_map <- function(
     attr(data, "existing_col") <- existing_col
     attr(data, "existing_col_seats") <- existing_col_seats
     # set the districting scheme
-    if(is_scalar(seats_range) && seats_range == 1){
+    if(rlang::is_scalar_integerish(seats_range) && seats_range == 1){
         attr(data, "districting_scheme") <- "single"
     }else{
         attr(data, "districting_scheme") <- "multiple"
@@ -83,7 +83,7 @@ validate_redist_map <- function(data, check_contig = TRUE, call = parent.frame()
 
     if(is.null(attr(data, "districting_scheme"))){
         # set the districting scheme
-        if(is_scalar(seats_range) && seats_range == 1){
+        if(rlang::is_scalar_integerish(seats_range) && seats_range == 1){
             attr(data, "districting_scheme") <- "single"
         }else{
             attr(data, "districting_scheme") <- "multiple"

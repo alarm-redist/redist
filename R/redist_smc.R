@@ -191,7 +191,7 @@
 #' value `k_i` for each splitting iteration. Higher values are more accurate
 #' but may require more computation. Set to 1 for the most conservative
 #' sampling. Must be between 0 and 1.
-#' @param truncate Deprecated, do not use anymore. 
+#' @param truncate Deprecated, do not use anymore.
 #' @param trunc_fn Deprecated, do not use anymore.
 #' @param final_infl Deprecated, do not use anymore.
 #'
@@ -273,10 +273,10 @@ redist_smc <- function(
     cli::cli_abort("{.arg truncate} is deprecated. Do not use this argument.")
   }
 
-  if (!is_scalar(compactness) || compactness < 0) {
+  if (!rlang::is_scalar_double(compactness) || compactness < 0) {
     cli::cli_abort("{.arg compactness} must be non-negative.")
   }
-  if (seq_alpha <= 0 || seq_alpha > 1 || !is_scalar(seq_alpha)) {
+  if (seq_alpha <= 0 || seq_alpha > 1 || !rlang::is_scalar_double(seq_alpha)) {
     cli::cli_abort("{.arg seq_alpha} must lie in (0, 1].")
   }
   if (nsims < 1) {
@@ -428,7 +428,7 @@ redist_smc <- function(
   if (!is.null(ncores)) {
     if (
       !rlang::is_integerish(ncores) ||
-        !is_scalar(ncores)
+        !rlang::is_scalar_integerish(ncores)
     ) {
       cli::cli_abort("{.arg ncores} must be a single integer!")
     } else if (ncores == 0) {
@@ -529,7 +529,7 @@ redist_smc <- function(
   ) %oper%
     {
       if (chain == 1) {
-        is_chain1 <- T
+        is_chain1 <- TRUE
       }
 
       if (is_chain1 && !silent) {
@@ -1009,7 +1009,7 @@ extract_control_params <- function(control){
     if (is.list(control) && any("nproc" %in% control_param_names)) {
         if ("nproc" %in% names(control)) {
             nproc <- control[["nproc"]]
-            if (!rlang::is_integerish(nproc) || !is_scalar(nproc)) {
+            if (!rlang::is_scalar_integerish(nproc)) {
                 cli::cli_abort(
                     "{.arg nproc} in {.arg control} must be a single integer!"
                 )
@@ -1074,7 +1074,7 @@ extract_ms_params <- function(ms_params, total_smc_steps){
             ms_moves_multiplier <- ms_params[["ms_moves_multiplier"]]
             # check that ms_moves_multiplier is positive
             if (
-                !is_scalar(ms_moves_multiplier) || !ms_moves_multiplier > 0
+                !rlang::is_scalar_double(ms_moves_multiplier) || !ms_moves_multiplier > 0
             ) {
                 cli::cli_abort("{.arg ms_moves_multiplier} must be a positive scalar")
             }
@@ -1094,7 +1094,7 @@ extract_ms_params <- function(ms_params, total_smc_steps){
         if ("merge_prob_type" %in% names(ms_params)) {
             merge_prob_type <- ms_params[["merge_prob_type"]]
             if (
-                !is_scalar(merge_prob_type) || merge_prob_type != "uniform"
+                !rlang::is_scalar_character(merge_prob_type) || merge_prob_type != "uniform"
             ) {
                 cli::cli_abort("Only uniform merge probability is supported right now!")
             }
@@ -1143,3 +1143,20 @@ extract_ms_params <- function(ms_params, total_smc_steps){
 
     return(extracted_ms_params)
 }
+
+
+
+#' Deprecated Helper function to truncate importance weights
+#'
+#' Defined as \code{pmin(x, quantile(x, 1 - length(x)^(-0.5)))}
+#'
+#' @param x the weights
+#'
+#' @return numeric vector
+#'
+#' @export
+#'
+#' @examples
+#' redist_quantile_trunc(c(1, 2, 3, 4))
+#'
+redist_quantile_trunc <- function(x) pmin(x, quantile(x, 1 - length(x)^(-0.5)))

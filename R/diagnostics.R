@@ -678,7 +678,7 @@ get_k_step_ancestors <- function(parent_mat, steps_back = NULL, start_col = NULL
         start_col <- nparent_cols
     }else{
         # else assert starting column is between 1 and number of cols
-        if(!(is_scalar(start_col) &&
+        if(!(rlang::is_scalar_integerish(start_col) &&
              start_col <= nparent_cols &&
              start_col > 1)){
             cli::cli_abort("Input start_col={start_col} is not valid.
@@ -690,7 +690,7 @@ get_k_step_ancestors <- function(parent_mat, steps_back = NULL, start_col = NULL
     if(is.null(steps_back)){
         steps_back <- nparent_cols-1
     }else{
-        if(!(is_scalar(steps_back) &&
+        if(!(rlang::is_scalar_integerish(steps_back) &&
              steps_back <= start_col-1 &&
              steps_back >= 1)){
             cli::cli_abort("Input steps_back={steps_back} is not valid.
@@ -738,7 +738,7 @@ get_original_ancestors_mat <- function(parent_mat){
 
     # add the first column where every particles ancestor is iteslf
     cbind(
-        seq_length(nrow(parent_mat)), 
+        seq_length(nrow(parent_mat)),
         original_ancestor_mat
     )
 }

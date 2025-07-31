@@ -305,7 +305,7 @@ add_constr_status_quo <- function(
   if (strength <= 0) {
     cli::cli_warn("Nonpositive strength may lead to unexpected results")
   }
-  if (!is_bool(only_districts)) {
+  if (!rlang::is_bool(only_districts)) {
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
@@ -313,7 +313,7 @@ add_constr_status_quo <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -367,7 +367,7 @@ add_constr_grp_pow <- function(
   if (strength <= 0) {
     cli::cli_warn("Nonpositive strength may lead to unexpected results")
   }
-  if (!is_bool(only_districts)) {
+  if (!rlang::is_bool(only_districts)) {
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
@@ -375,7 +375,7 @@ add_constr_grp_pow <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -425,7 +425,7 @@ add_constr_grp_hinge <- function(
     cli::cli_abort("Not a {.cls redist_constr} object")
   }
 
-  if (!is_bool(only_districts)) {
+  if (!rlang::is_bool(only_districts)) {
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
@@ -433,7 +433,7 @@ add_constr_grp_hinge <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -481,7 +481,7 @@ add_constr_grp_inv_hinge <- function(
   if (!inherits(constr, "redist_constr")) {
     cli::cli_abort("Not a {.cls redist_constr} object")
   }
-  if (!is_bool(only_districts)) {
+  if (!rlang::is_bool(only_districts)) {
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
@@ -489,7 +489,7 @@ add_constr_grp_inv_hinge <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -540,7 +540,7 @@ add_constr_compet <- function(
     cli::cli_warn("Nonpositive strength may lead to unexpected results")
   }
 
-  if (!is_bool(only_districts)) {
+  if (!rlang::is_bool(only_districts)) {
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
@@ -548,7 +548,7 @@ add_constr_compet <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -591,7 +591,7 @@ add_constr_incumbency <- function(
   if (strength <= 0) {
     cli::cli_warn("Nonpositive strength may lead to unexpected results")
   }
-  if (!is_bool(only_districts)) {
+  if (!rlang::is_bool(only_districts)) {
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
@@ -599,7 +599,7 @@ add_constr_incumbency <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -635,7 +635,7 @@ add_constr_splits <- function(
   if (strength <= 0) {
     cli::cli_warn("Nonpositive strength may lead to unexpected results")
   }
-  if (!is_bool(only_districts)) {
+  if (!rlang::is_bool(only_districts)) {
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
@@ -643,7 +643,7 @@ add_constr_splits <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -688,7 +688,7 @@ add_constr_multisplits <- function(
   if (strength <= 0) {
     cli::cli_warn("Nonpositive strength may lead to unexpected results")
   }
-  if (!is_bool(only_districts)) {
+  if (!rlang::is_bool(only_districts)) {
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
@@ -696,7 +696,7 @@ add_constr_multisplits <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -741,7 +741,7 @@ add_constr_total_splits <- function(
   if (strength <= 0) {
     cli::cli_warn("Nonpositive strength may lead to unexpected results")
   }
-  if (!is_bool(only_districts)) {
+  if (!rlang::is_bool(only_districts)) {
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
@@ -749,7 +749,7 @@ add_constr_total_splits <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -793,7 +793,7 @@ add_constr_pop_dev <- function(
   if (strength <= 0) {
     cli::cli_warn("Nonpositive strength may lead to unexpected results.")
   }
-  if (!is_bool(only_districts)) {
+  if (!rlang::is_bool(only_districts)) {
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
@@ -801,7 +801,7 @@ add_constr_pop_dev <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -835,7 +835,7 @@ add_constr_segregation <- function(
   if (strength <= 0) {
     cli::cli_warn("Nonpositive strength may lead to unexpected results.")
   }
-  if (!is_bool(only_districts)) {
+  if (!rlang::is_bool(only_districts)) {
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
@@ -843,7 +843,7 @@ add_constr_segregation <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -892,7 +892,7 @@ add_constr_polsby <- function(
   if (strength <= 0) {
     cli::cli_warn("Nonpositive strength may lead to unexpected results.")
   }
-  if (!is_bool(only_districts)) {
+  if (!rlang::is_bool(only_districts)) {
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
@@ -900,7 +900,7 @@ add_constr_polsby <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -952,7 +952,7 @@ add_constr_fry_hold <- function(
   if (strength <= 0) {
     cli::cli_warn("Nonpositive strength may lead to unexpected results.")
   }
-  if (!is_bool(only_districts)) {
+  if (!rlang::is_bool(only_districts)) {
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
@@ -960,7 +960,7 @@ add_constr_fry_hold <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -1009,7 +1009,7 @@ add_constr_log_st <- function(
   if (strength <= 0) {
     cli::cli_warn("Nonpositive strength may lead to unexpected results.")
   }
-  if (!is_bool(only_districts)) {
+  if (!rlang::is_bool(only_districts)) {
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
@@ -1017,7 +1017,7 @@ add_constr_log_st <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -1061,7 +1061,7 @@ add_constr_edges_rem <- function(
   if (strength <= 0) {
     cli::cli_warn("Nonpositive strength may lead to unexpected results.")
   }
-  if (!is_bool(only_districts)) {
+  if (!rlang::is_bool(only_districts)) {
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
@@ -1069,7 +1069,7 @@ add_constr_edges_rem <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -1104,7 +1104,7 @@ add_constr_qps <- function(
   if (strength <= 0) {
     cli::cli_warn("Nonpositive strength may lead to unexpected results.")
   }
-  if (!is_bool(only_districts)) {
+  if (!rlang::is_bool(only_districts)) {
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
@@ -1112,7 +1112,7 @@ add_constr_qps <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -1174,7 +1174,7 @@ add_constr_custom <- function(
   if (strength <= 0) {
     cli::cli_warn("Nonpositive strength may lead to unexpected results")
   }
-  if (!is_bool(only_districts)) {
+  if (!rlang::is_bool(only_districts)) {
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }
 
@@ -1182,7 +1182,7 @@ add_constr_custom <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -1259,7 +1259,7 @@ add_constr_custom_plan <- function(constr, strength, fn, thresh = NULL) {
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!is_scalar(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
