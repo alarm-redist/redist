@@ -90,6 +90,9 @@ validate_redist_map <- function(data, check_contig = TRUE, call = parent.frame()
         }
     }
     stopifnot(!is.null(attr(data, "districting_scheme")))
+    if(!attr(data, "districting_scheme") %in% c("single", "multiple")){
+        cli::cli_abort("{.arg districting_scheme} must be either `single` or `multiple`")
+    }
 
 
     exist_col <- attr(data, "existing_col")

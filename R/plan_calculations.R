@@ -56,18 +56,23 @@ compute_log_target_density <- function(
     ndists <- map_params$ndists
     total_seats <- map_params$nseats
     district_seat_sizes <- map_params$seats_range
+    districting_scheme <- map_params$districting_scheme
 
     if (inherits(plans, "redist_plans")){
         sizes_matrix <- get_seats_matrix(plans)
     }else if(is.null(sizes_matrix)){
-        # infer
-        prec_pop <- map[[attr(map, "pop_col")]]
-        distr_pop <- pop_tally(plan_matrix, prec_pop, num_regions)
-        sizes_matrix <- infer_region_seats(
-            distr_pop,
-            attr(map, "pop_bounds")[1], attr(map, "pop_bounds")[3],
-            total_seats
-        )
+        if(districting_scheme == "single" && num_regions == ndists){
+            sizes_matrix <- matrix(1L, nrow = ndists, ncol = ncol(plan_matrix))
+        }else{
+            # infer
+            prec_pop <- map[[attr(map, "pop_col")]]
+            distr_pop <- pop_tally(plan_matrix, prec_pop, num_regions)
+            sizes_matrix <- infer_region_seats(
+                distr_pop,
+                attr(map, "pop_bounds")[1], attr(map, "pop_bounds")[3],
+                total_seats
+            )
+        }
     }
 
 
@@ -96,6 +101,8 @@ compute_log_target_density <- function(
     if(num_prob_zero > 0){
         cli::cli_warn("{num_prob_zero} of the {length(unnormalized_log_density)} plans have probability 0!")
     }
+
+    dim(unnormalized_log_density) <- NULL
 
     return(unnormalized_log_density)
 }
@@ -155,14 +162,18 @@ compute_log_target_density_by_region <- function(
     if (inherits(plans, "redist_plans")){
         sizes_matrix <- get_seats_matrix(plans)
     }else if(is.null(sizes_matrix)){
-        # infer
-        prec_pop <- map[[attr(map, "pop_col")]]
-        distr_pop <- pop_tally(plan_matrix, prec_pop, num_regions)
-        sizes_matrix <- infer_region_seats(
-            distr_pop,
-            attr(map, "pop_bounds")[1], attr(map, "pop_bounds")[3],
-            total_seats
-        )
+        if(districting_scheme == "single" && num_regions == ndists){
+            sizes_matrix <- matrix(1L, nrow = ndists, ncol = ncol(plan_matrix))
+        }else{
+            # infer
+            prec_pop <- map[[attr(map, "pop_col")]]
+            distr_pop <- pop_tally(plan_matrix, prec_pop, num_regions)
+            sizes_matrix <- infer_region_seats(
+                distr_pop,
+                attr(map, "pop_bounds")[1], attr(map, "pop_bounds")[3],
+                total_seats
+            )
+        }
     }
 
 

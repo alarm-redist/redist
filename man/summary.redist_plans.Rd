@@ -31,6 +31,12 @@ variation of information distance (sample diversity).}
 \item{order_stats}{Whether or not to compute rhats on the ordered district
 statistics.}
 
+\item{rhat_thresh}{What values to use when checking convergence. It should
+consist of two named values: \code{q99} and \code{max}.
+Strong convergence is when all rhats are less than or equal to the \code{max} value
+and weak convergence is when the 99th quantile is less than or equal to
+\code{q99} and all rhats are less than or equal to \code{max}.}
+
 \item{\dots}{additional arguments (ignored)}
 }
 \value{

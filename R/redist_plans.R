@@ -5,9 +5,7 @@
 ## Purpose: redist functions for a tidy workflow
 ##############################################
 
-
 # constructors and reconstructors -----------------------------------------
-
 
 # plans has n_precinct columns and n_sims rows
 # map is a redist_map
@@ -18,163 +16,208 @@
 # which we don't need to do if calling directly inside `redist_smc`
 # or `redist_mergesplit`
 new_redist_plans <- function(
-        plans, map, algorithm, wgt,
-        resampled = TRUE, ndists = attr(map, "ndists"),
-        inputs_safe = FALSE,
-        seats = NULL, distr_pop = NULL, ...) {
-    n_sims <- ncol(plans)
-    if (n_sims < 1) cli::cli_abort("Need at least one simulation draw.")
+  plans,
+  map,
+  algorithm,
+  wgt,
+  resampled = TRUE,
+  ndists = attr(map, "ndists"),
+  inputs_safe = FALSE,
+  seats = NULL,
+  distr_pop = NULL,
+  ...
+) {
+  n_sims <- ncol(plans)
+  if (n_sims < 1) {
+    cli::cli_abort("Need at least one simulation draw.")
+  }
 
+  n_prec <- nrow(plans)
+  map_dists <- attr(map, "ndists")
+  partial <- ndists < map_dists
 
-    n_prec <- nrow(plans)
-    map_dists <- attr(map, "ndists")
-    partial <- ndists < map_dists
+  # validate the map for backwards compatibility
+  map <- validate_redist_map(map)
 
-    # validate the map for backwards compatibility
-    map <- validate_redist_map(map)
+  districting_scheme <- attr(map, "districting_scheme")
+  nseats <- attr(map, "nseats")
+  seats_range <- attr(map, "seats_range")
+  pop_bounds <- attr(map, "pop_bounds")
+  distr_range <- 1:ndists
 
+  prec_pop <- map[[attr(map, "pop_col")]]
 
-    districting_scheme <- attr(map, "districting_scheme")
-    nseats <- attr(map, "nseats")
-    seats_range <- attr(map, "seats_range")
-    pop_bounds <- attr(map, "pop_bounds")
-    distr_range <- 1:ndists
+  # if plans are 0 indexed then add 1
+  if (!inputs_safe && min(plans) == 0) {
+    plans <- plans + 1L
+  }
 
-
-    prec_pop <- map[[attr(map, "pop_col")]]
-
-    # if plans are 0 indexed then add 1
-    if(!inputs_safe && min(plans) == 0){
-        plans <- plans + 1L
+  if (is.null(distr_pop)) {
+    # tally the population if needed
+    distr_pop <- pop_tally(plans, prec_pop, ndists)
+  } else if (!inputs_safe) {
+    if (length(distr_pop) != ndists * n_sims) {
+      cli::cli_abort(
+        "{.arg distr_pop} must be a vector of length `ndists` * `nsims`"
+      )
     }
+  }
 
-    if(is.null(distr_pop)){
-        # tally the population if needed
-        distr_pop <- pop_tally(plans, prec_pop, ndists)
-    }else if(!inputs_safe){
-        if(length(distr_pop) != ndists * n_sims){
-            cli::cli_abort("{.arg distr_pop} must be a vector of length `ndists` * `nsims`")
-        }
-    }
-
-    # check if partial or MMD then region sizes must not be null
-    if(partial || districting_scheme == "multiple"){
-        if(is.null(seats)){
-            # try to infer
-            seats <- infer_region_seats(
-                distr_pop,
-                attr(map, "pop_bounds")[1], attr(map, "pop_bounds")[3],
-                nseats
-            )
-            # now flatten
-            dim(seats) <- NULL
-        }else{
-            # if its a matrix make sure dimensions match then flatten it
-            if(is.matrix(seats)){
-                if(any(dim(seats) != dim(distr_pop))){
-                    cli::cli_abort("The dimensions of {.arg seats} must be {.field num_regions} by {.field nsims}")
-                }
-                # now flatten
-                dim(seats) <- NULL
-            }
-
-        }
-
-        # also make sure its the same length as the pop tally
-        if(length(seats) != length(distr_pop)){
-            cli::cli_abort("{.arg seats} must have length equal to number of regions times number of plans!")
-        }
-    }
-
-
-    attr_names <- c("redist_attr", "plans", "ndists", "algorithm", "wgt",
-        "resampled",
-        "districting_scheme", "nseats", "seats_range",
-        "partial", "merge_idx", "prec_pop", "pop_bounds",
-        names(list(...)))
-
-    if (is.null(colnames(plans))) {
-        draw_fac = as.factor(1:n_sims)
+  # check if partial or MMD then region sizes must not be null
+  if (partial || districting_scheme == "multiple") {
+    if (is.null(seats)) {
+      # try to infer
+      seats <- infer_region_seats(
+        distr_pop,
+        attr(map, "pop_bounds")[1],
+        attr(map, "pop_bounds")[3],
+        nseats
+      )
+      # now flatten
+      dim(seats) <- NULL
     } else {
-        draw_fac = character(n_sims)
-        ref_idx = which(nchar(colnames(plans)) > 0)
-        draw_fac[ref_idx] = colnames(plans)[ref_idx]
-        draw_fac[-ref_idx] = as.character(seq_len(n_sims - length(ref_idx)))
-        draw_fac = factor(draw_fac, levels=draw_fac)
+      # if its a matrix make sure dimensions match then flatten it
+      if (is.matrix(seats)) {
+        if (any(dim(seats) != dim(distr_pop))) {
+          cli::cli_abort(
+            "The dimensions of {.arg seats} must be {.field num_regions} by {.field nsims}"
+          )
+        }
+        # now flatten
+        dim(seats) <- NULL
+      }
     }
 
-
-    if(partial || districting_scheme == "multiple"){
-        plan_tibble <- tibble(draw = rep(draw_fac, each = ndists),
-                              district = rep(distr_range, n_sims),
-                              total_pop = as.numeric(distr_pop),
-                              seats = seats)
-    }else{
-        plan_tibble <- tibble(draw = rep(draw_fac, each = ndists),
-                              district = rep(distr_range, n_sims),
-                              total_pop = as.numeric(distr_pop)
-                              )
+    # also make sure its the same length as the pop tally
+    if (length(seats) != length(distr_pop)) {
+      cli::cli_abort(
+        "{.arg seats} must have length equal to number of regions times number of plans!"
+      )
     }
+  }
 
+  attr_names <- c(
+    "redist_attr",
+    "plans",
+    "ndists",
+    "algorithm",
+    "wgt",
+    "resampled",
+    "districting_scheme",
+    "nseats",
+    "seats_range",
+    "partial",
+    "merge_idx",
+    "prec_pop",
+    "pop_bounds",
+    names(list(...))
+  )
 
-    plan_obj <- structure(plan_tibble,
-        plans = plans, ndists = ndists,
-        algorithm = algorithm, wgt = wgt,
-        resampled = resampled,
-        districting_scheme = districting_scheme, nseats=nseats, seats_range=seats_range,
-        partial = partial,
-        merge_idx = attr(map, "merge_idx"),
-        prec_pop = prec_pop, pop_bounds = pop_bounds,
-        redist_attr = attr_names, ...,
-        class = c("redist_plans", "tbl_df", "tbl", "data.frame")
+  if (is.null(colnames(plans))) {
+    draw_fac = as.factor(1:n_sims)
+  } else {
+    draw_fac = character(n_sims)
+    ref_idx = which(nchar(colnames(plans)) > 0)
+    draw_fac[ref_idx] = colnames(plans)[ref_idx]
+    draw_fac[-ref_idx] = as.character(seq_len(n_sims - length(ref_idx)))
+    draw_fac = factor(draw_fac, levels = draw_fac)
+  }
+
+  if (partial || districting_scheme == "multiple") {
+    plan_tibble <- tibble(
+      draw = rep(draw_fac, each = ndists),
+      district = rep(distr_range, n_sims),
+      total_pop = as.numeric(distr_pop),
+      seats = seats
     )
+  } else {
+    plan_tibble <- tibble(
+      draw = rep(draw_fac, each = ndists),
+      district = rep(distr_range, n_sims),
+      total_pop = as.numeric(distr_pop)
+    )
+  }
 
-    plan_obj
+  plan_obj <- structure(
+    plan_tibble,
+    plans = plans,
+    ndists = ndists,
+    algorithm = algorithm,
+    wgt = wgt,
+    resampled = resampled,
+    districting_scheme = districting_scheme,
+    nseats = nseats,
+    seats_range = seats_range,
+    partial = partial,
+    merge_idx = attr(map, "merge_idx"),
+    prec_pop = prec_pop,
+    pop_bounds = pop_bounds,
+    redist_attr = attr_names,
+    ...,
+    class = c("redist_plans", "tbl_df", "tbl", "data.frame")
+  )
+
+  plan_obj
 }
 
 validate_redist_plans <- function(x) {
-    if (names(x)[1] != "draw") cli::cli_abort("First column must be named \"{.field draw}\"")
-    if (!is.factor(x$draw)) cli::cli_abort("{.field draw} column must be a factor")
+  if (names(x)[1] != "draw") {
+    cli::cli_abort("First column must be named \"{.field draw}\"")
+  }
+  if (!is.factor(x$draw)) {
+    cli::cli_abort("{.field draw} column must be a factor")
+  }
 
-    plan_m <- attr(x, "plans")
-    if (is.null(plan_m)) cli::cli_abort("Missing plans matrix")
+  plan_m <- attr(x, "plans")
+  if (is.null(plan_m)) {
+    cli::cli_abort("Missing plans matrix")
+  }
 
-    min_distr <- colmin(plan_m)
-    max_distr <- colmax(plan_m)
-    if (any(min_distr != 1) || any(diff(max_distr) != 0))
-        cli::cli_abort("District numbers must start at 1 and run sequentially to the number of districts.")
+  min_distr <- colmin(plan_m)
+  max_distr <- colmax(plan_m)
+  if (any(min_distr != 1) || any(diff(max_distr) != 0)) {
+    cli::cli_abort(
+      "District numbers must start at 1 and run sequentially to the number of districts."
+    )
+  }
 
-    # check if its not SMD then nseats is present
-    if (!is.null(attr(x, "districting_scheme")) && attr(x, "districting_scheme") != "single"){
-        if(!"seats" %in% names(x)){
-            cli::cli_abort("Multi-member district plans must have a {.field seats} column")
-        }
+  # check if its not Single Member Districting then seats is present
+  if (isTRUE(attr(x, "districting_scheme") == "multiple")) {
+    if (!"seats" %in% names(x)) {
+      cli::cli_abort(
+        "Multi-member district plans must have a {.field seats} column"
+      )
     }
+  }
 
-    x
+  x
 }
 
 reconstruct.redist_plans <- function(data, old) {
-    if (!("draw" %in% names(data)))
-        return(data)
+  if (!("draw" %in% names(data))) {
+    return(data)
+  }
 
-    if (!missing(old)) {
-        for (name in attr(old, "redist_attr")) {
-            if (is.null(attr(data, name)))
-                attr(data, name) <- attr(old, name)
-        }
+  if (!missing(old)) {
+    for (name in attr(old, "redist_attr")) {
+      if (is.null(attr(data, name))) {
+        attr(data, name) <- attr(old, name)
+      }
     }
+  }
 
-    classes <- c("tbl_df", "tbl", "data.frame")
-    if (inherits(data, "grouped_df"))
-        classes <- c("grouped_df", classes)
+  classes <- c("tbl_df", "tbl", "data.frame")
+  if (inherits(data, "grouped_df")) {
+    classes <- c("grouped_df", classes)
+  }
 
-    if (inherits(data, "rowwise_df"))
-        classes <- c("rowwise_df", classes)
+  if (inherits(data, "rowwise_df")) {
+    classes <- c("rowwise_df", classes)
+  }
 
-    class(data) <- c("redist_plans", classes)
+  class(data) <- c("redist_plans", classes)
 
-    data
+  data
 }
 
 #' A set of redistricting plans
@@ -228,32 +271,47 @@ reconstruct.redist_plans <- function(data, old) {
 #' @concept analyze
 #' @export
 redist_plans <- function(plans, map, algorithm, wgt = NULL, seats = NULL, ...) {
-    if (is.numeric(plans) && length(plans) == nrow(map)) {
-        plans <- matrix(as.integer(plans), ncol = 1)
-    }
-    if (!is.matrix(plans)) cli::cli_abort("{.arg plans} must be a matrix.")
-    if (nrow(plans) != nrow(map)) cli::cli_abort("{.arg plans} matrix must have as many rows as {.arg map} has precincts.")
-    if (!inherits(map, "redist_map")) cli::cli_abort("{.arg map} must be a {.cls redist_map}")
+  if (is.numeric(plans) && length(plans) == nrow(map)) {
+    plans <- matrix(as.integer(plans), ncol = 1)
+  }
+  if (!is.matrix(plans)) {
+    cli::cli_abort("{.arg plans} must be a matrix.")
+  }
+  if (nrow(plans) != nrow(map)) {
+    cli::cli_abort(
+      "{.arg plans} matrix must have as many rows as {.arg map} has precincts."
+    )
+  }
+  if (!inherits(map, "redist_map")) {
+    cli::cli_abort("{.arg map} must be a {.cls redist_map}")
+  }
 
+  if (min(plans) == 0L) {
+    plans <- plans + 1L
+  }
 
-    if (min(plans) == 0L) plans <- plans + 1L
+  if (storage.mode(plans) != "integer") {
+    storage.mode(plans) <- "integer"
+  }
 
-    if(storage.mode(plans) != "integer"){
-        storage.mode(plans) <- "integer"
-    }
+  n_regions <- length(unique(plans[, 1]))
 
-    n_regions <- length(unique(plans[,1]))
-
-    obj <- new_redist_plans(plans, map, algorithm, wgt = wgt,
-                            inputs_safe = FALSE,
-                            seats=seats, ndists = n_regions,
-        resampled = FALSE, ...)
-    validate_redist_plans(obj)
+  obj <- new_redist_plans(
+    plans,
+    map,
+    algorithm,
+    wgt = wgt,
+    inputs_safe = FALSE,
+    seats = seats,
+    ndists = n_regions,
+    resampled = FALSE,
+    ...
+  )
+  validate_redist_plans(obj)
 }
 
 
 # getters / setters ------------------------------------------------------------
-
 
 #' Extract the matrix of district assignments from a redistricting simulation
 #'
@@ -263,8 +321,10 @@ redist_plans <- function(plans, map, algorithm, wgt = NULL, seats = NULL, ...) {
 #' @concept analyze
 #' @export
 get_plans_matrix <- function(x) {
-    if (!inherits(x, "redist_plans")) cli::cli_abort("Not a {.cls redist_plans}")
-    attr(x, "plans")
+  if (!inherits(x, "redist_plans")) {
+    cli::cli_abort("Not a {.cls redist_plans}")
+  }
+  attr(x, "plans")
 }
 #' @rdname get_plans_matrix
 #' @method as.matrix redist_plans
@@ -274,8 +334,8 @@ as.matrix.redist_plans <- function(x, ...) get_plans_matrix(x)
 
 # internal -- no check performed!
 set_plan_matrix <- function(x, mat) {
-    attr(x, "plans") <- mat
-    x
+  attr(x, "plans") <- mat
+  x
 }
 
 
@@ -289,32 +349,43 @@ set_plan_matrix <- function(x, mat) {
 #' @concept analyze
 #' @export
 get_seats_matrix <- function(x) {
-    if (!inherits(x, "redist_plans")) cli::cli_abort("Not a {.cls redist_plans}")
-    # if not partial and SMD just return a matrix of ones
-    if(attr(x, "districting_scheme") == "single" && isFALSE(attr(x, "partial"))){
-        ndists <- attr(x, "ndists")
-        nplans <- ncol(get_plans_matrix(x))
-        return(matrix(1L, nrow = ndists, ncol = nplans))
-    }
+  if (!inherits(x, "redist_plans")) {
+    cli::cli_abort("Not a {.cls redist_plans}")
+  }
+  # if not partial and SMD just return a matrix of ones
+  if (
+      isTRUE(attr(x, "districting_scheme") != "multiple") && isFALSE(attr(x, "partial"))
+  ) {
+    ndists <- attr(x, "ndists")
+    nplans <- ncol(get_plans_matrix(x))
+    return(matrix(1L, nrow = ndists, ncol = nplans))
+  }
 
-    if (!"seats" %in% names(x)) cli::cli_abort("{.cls redist_plans} does not have {.field seats}!")
+  if (!"seats" %in% names(x)) {
+    cli::cli_abort("{.cls redist_plans} does not have {.field seats}!")
+  }
 
-    num_regions <- attr(x, "ndists")
-    seats <- attr(x, "seats")
-    nplans <- get_plans_matrix(x) |> ncol()
+  num_regions <- attr(x, "ndists")
+  seats <- attr(x, "seats")
+  nplans <- get_plans_matrix(x) |> ncol()
 
-    # Check if the districts are still in the same order
-    if(all(
-        rep(seq.int(num_regions), times = nplans) == x$district
-    )){# if no reindexing needed then just reshape
-        sizes_matrix <- matrix(
-            x$seats, nrow = num_regions, ncol = nplans
-        )
-    }else{
-        # check if any reindexing needs to be done
-        cli::cli_abort("Not implemented for shuffled district plans!")
-    }
-    sizes_matrix
+  # Check if the districts are still in the same order
+  if (
+    all(
+      rep(seq.int(num_regions), times = nplans) == x$district
+    )
+  ) {
+    # if no reindexing needed then just reshape
+    sizes_matrix <- matrix(
+      x$seats,
+      nrow = num_regions,
+      ncol = nplans
+    )
+  } else {
+    # check if any reindexing needs to be done
+    cli::cli_abort("Not implemented for shuffled district plans!")
+  }
+  sizes_matrix
 }
 
 #' Extract the sampling weights from a redistricting simulation.
@@ -331,11 +402,14 @@ get_seats_matrix <- function(x) {
 #' @concept analyze
 #' @export
 get_plans_weights <- function(plans) {
-    if (!inherits(plans, "redist_plans")) cli::cli_abort("Not a {.cls redist_plans}")
-    wgt <- attr(plans, "wgt")
-    if (!is.null(wgt))
-        attr(wgt, "resampled") <- attr(plans, "resampled")
-    wgt
+  if (!inherits(plans, "redist_plans")) {
+    cli::cli_abort("Not a {.cls redist_plans}")
+  }
+  wgt <- attr(plans, "wgt")
+  if (!is.null(wgt)) {
+    attr(wgt, "resampled") <- attr(plans, "resampled")
+  }
+  wgt
 }
 
 #' @rdname get_plans_weights
@@ -345,14 +419,18 @@ get_plans_weights <- function(plans) {
 #' @return numeric vector
 #' @export
 weights.redist_plans <- function(object, ...) {
-    get_plans_weights(object)
+  get_plans_weights(object)
 }
 
 get_n_ref <- function(x) {
-    if (!inherits(x, "redist_plans")) cli::cli_abort("Not a {.cls redist_plans}")
-    plans_m <- get_plans_matrix(x)
-    if (is.null(colnames(plans_m))) return(0)
-    sum(nchar(colnames(plans_m)) > 0)
+  if (!inherits(x, "redist_plans")) {
+    cli::cli_abort("Not a {.cls redist_plans}")
+  }
+  plans_m <- get_plans_matrix(x)
+  if (is.null(colnames(plans_m))) {
+    return(0)
+  }
+  sum(nchar(colnames(plans_m)) > 0)
 }
 
 #' Extract the sampling information from a redistricting simulation
@@ -364,16 +442,18 @@ get_n_ref <- function(x) {
 #' @concept analysis
 #' @export
 get_sampling_info <- function(plans) {
-    if (!inherits(plans, "redist_plans")) cli::cli_abort("Not a {.cls redist_plans}")
-    all_attr <- attributes(plans)
+  if (!inherits(plans, "redist_plans")) {
+    cli::cli_abort("Not a {.cls redist_plans}")
+  }
+  all_attr <- attributes(plans)
 
-    all_attr$names <- NULL
-    all_attr$row.names <- NULL
-    all_attr$class <- NULL
-    all_attr$plans <- NULL
-    all_attr$redist_attr <- NULL
+  all_attr$names <- NULL
+  all_attr$row.names <- NULL
+  all_attr$class <- NULL
+  all_attr$plans <- NULL
+  all_attr$redist_attr <- NULL
 
-    all_attr
+  all_attr
 }
 
 
@@ -394,124 +474,138 @@ get_sampling_info <- function(plans) {
 #' @concept analyze
 #' @export
 add_reference <- function(plans, ref_plan, name = NULL, ref_seats = NULL) {
-    if (!inherits(plans, "redist_plans")) cli::cli_abort("{.arg plans} must be a {.cls redist_plans}")
-    if (isTRUE(attr(plans, "partial"))){
-        cli::cli_abort("Reference plans not supported for partial plans objects.")
-    }
+  if (!inherits(plans, "redist_plans")) {
+    cli::cli_abort("{.arg plans} must be a {.cls redist_plans}")
+  }
+  if (isTRUE(attr(plans, "partial"))) {
+    cli::cli_abort("Reference plans not supported for partial plans objects.")
+  }
 
-    plan_m <- get_plans_matrix(plans)
-    if (!is.numeric(ref_plan)) cli::cli_abort("{.arg ref_plan} must be numeric")
-    if (length(ref_plan) != nrow(plan_m)){
-        cli::cli_abort("{.arg ref_plan} must have the same number of precincts as {.arg plans}")
-    }
+  plan_m <- get_plans_matrix(plans)
+  if (!is.numeric(ref_plan)) {
+    cli::cli_abort("{.arg ref_plan} must be numeric")
+  }
+  if (length(ref_plan) != nrow(plan_m)) {
+    cli::cli_abort(
+      "{.arg ref_plan} must have the same number of precincts as {.arg plans}"
+    )
+  }
 
-    if (is.null(name)) {
-        ref_str <- deparse(substitute(ref_plan))
-        if (stringr::str_detect(ref_str, stringr::fixed("$")))
-            name <- strsplit(ref_str, "$", fixed = TRUE)[[1]][2]
-        else
-            name <- ref_str
+  if (is.null(name)) {
+    ref_str <- deparse(substitute(ref_plan))
+    if (stringr::str_detect(ref_str, stringr::fixed("$"))) {
+      name <- strsplit(ref_str, "$", fixed = TRUE)[[1]][2]
     } else {
-        if (!is.character(name)) cli::cli_abort("{.arg name} must be a {.cls chr}")
+      name <- ref_str
     }
+  } else {
+    if (!is.character(name)) cli::cli_abort("{.arg name} must be a {.cls chr}")
+  }
 
-    ref_plan <- vctrs::vec_group_id(ref_plan)
-    ndists <- max(ref_plan)
-    if (ndists != max(plan_m[, 1])){
-        cli::cli_abort("{.arg ref_plan} has a different number of districts than {.arg plans}")
+  ref_plan <- vctrs::vec_group_id(ref_plan)
+  ndists <- max(ref_plan)
+  if (ndists != max(plan_m[, 1])) {
+    cli::cli_abort(
+      "{.arg ref_plan} has a different number of districts than {.arg plans}"
+    )
+  }
+  if (
+    is.null(ref_seats) &&
+      isTRUE(attr(plans, "districting_scheme") != "multiple")
+  ) {
+    ref_seats <- rep(1L, ndists)
+  } else if (!is.null(ref_seats)) {
+    if (!rlang::is_integerish(ref_seats)) {
+      cli::cli_abort("{.arg ref_seats} must be integers.")
     }
-    if(
-        is.null(ref_seats) &&
-        isTRUE(attr(plans, "districting_scheme") == "single")
-    ){
-        ref_seats <- rep(1L, ndists)
-    }else if(!is.null(ref_seats)){
-        if(!rlang::is_integerish(ref_seats)){
-            cli::cli_abort("{.arg ref_seats} must be integers.")
-        }
-        # check they are all positive
-        if(any(ref_seats <= 0)){
-            cli::cli_abort("{.arg ref_seats} must be positive.")
-        }
-        # check its not bigger than the total number of seats
-        if(sum(ref_seats) != attr(plans, "nseats")){
-            cli::cli_abort("The sum of {.arg ref_seats} must be equal to {.arg nseats}.")
-        }
+    # check they are all positive
+    if (any(ref_seats <= 0)) {
+      cli::cli_abort("{.arg ref_seats} must be positive.")
     }
-
-
-    # first the matrix
-    plan_m <- cbind(ref_plan, plan_m)
-    colnames(plan_m)[1] <- name
-
-    # then the dataframe
-    prec_pop <- attr(plans, "prec_pop")
-    if (!is.null(prec_pop)){
-        distr_pop <- pop_tally(matrix(ref_plan, ncol = 1), prec_pop, ndists)
-        if(is.null(ref_seats)){
-            # try to infer seat sizes
-            pop_bounds <- attr(plans, "pop_bounds")
-            ref_seats <- infer_region_seats(
-                distr_pop,
-                pop_bounds[1], pop_bounds[3],
-                attr(plans, "nseats")
-            )
-            dim(ref_seats) <- NULL
-        }
-
-    }else{
-        distr_pop <- rep(NA_real_, ndists)
-        if(is.null(ref_seats)){
-            ref_seats <- rep(NA_real_, ndists)
-        }
+    # check its not bigger than the total number of seats
+    if (sum(ref_seats) != attr(plans, "nseats")) {
+      cli::cli_abort(
+        "The sum of {.arg ref_seats} must be equal to {.arg nseats}."
+      )
     }
+  }
 
+  # first the matrix
+  plan_m <- cbind(ref_plan, plan_m)
+  colnames(plan_m)[1] <- name
 
-    if (is.ordered(plans$district)) {
-        rg_labels = range(as.integer(as.character(levels(plans$district))))
-        if (any(rg_labels != c(1L, attr(plans, "ndists")))) {
-            cli::cli_abort(c("Cannot add a reference plan to a set of plans which
+  # then the dataframe
+  prec_pop <- attr(plans, "prec_pop")
+  if (!is.null(prec_pop)) {
+    distr_pop <- pop_tally(matrix(ref_plan, ncol = 1), prec_pop, ndists)
+    if (is.null(ref_seats)) {
+      # try to infer seat sizes
+      pop_bounds <- attr(plans, "pop_bounds")
+      ref_seats <- infer_region_seats(
+        distr_pop,
+        pop_bounds[1],
+        pop_bounds[3],
+        attr(plans, "nseats")
+      )
+      dim(ref_seats) <- NULL
+    }
+  } else {
+    distr_pop <- rep(NA_real_, ndists)
+    if (is.null(ref_seats)) {
+      ref_seats <- rep(NA_real_, ndists)
+    }
+  }
+
+  if (is.ordered(plans$district)) {
+    rg_labels = range(as.integer(as.character(levels(plans$district))))
+    if (any(rg_labels != c(1L, attr(plans, "ndists")))) {
+      cli::cli_abort(c(
+        "Cannot add a reference plan to a set of plans which
                         have relabeled district numbers that don't start at 1.",
-                        ">"="Match the district labels on the unmatched plans with
-                            {.fn match_numbers}")
-            )
-        }
-
-        # good to go
-        plans$district = as.integer(plans$district)
-        cli::cli_inform(c("Coercing {.val district} column to integers.",
-                     "i"="You may want to run {.fn match_numbers} again to fix district labels.\n"))
+        ">" = "Match the district labels on the unmatched plans with
+                            {.fn match_numbers}"
+      ))
     }
 
-    if (name %in% levels(plans$draw)){
-        cli::cli_abort("Reference plan name already exists")
-    }
+    # good to go
+    plans$district = as.integer(plans$district)
+    cli::cli_inform(c(
+      "Coercing {.val district} column to integers.",
+      "i" = "You may want to run {.fn match_numbers} again to fix district labels.\n"
+    ))
+  }
 
-    fct_levels <- c(name, levels(plans$draw))
-    new_draw <- rep(factor(fct_levels, levels = fct_levels), each = ndists)
+  if (name %in% levels(plans$draw)) {
+    cli::cli_abort("Reference plan name already exists")
+  }
 
-    if(isTRUE(attr(plans, "districting_scheme") == "single")){
-        x <- dplyr::bind_rows(
-            tibble(district = 1:ndists,
-                   total_pop = as.numeric(distr_pop)),
-            plans[, -match("draw", names(plans))]
-        ) %>%
-            dplyr::mutate(draw = new_draw, .before = "district")
-    }else{
-        x <- dplyr::bind_rows(
-            tibble(district = 1:ndists,
-                   total_pop = as.numeric(distr_pop),
-                   seats = ref_seats),
-            plans[, -match("draw", names(plans))]
-        ) %>%
-            dplyr::mutate(draw = new_draw, .before = "district")
-    }
+  fct_levels <- c(name, levels(plans$draw))
+  new_draw <- rep(factor(fct_levels, levels = fct_levels), each = ndists)
 
-    exist_wgts <- get_plans_weights(plans)
-    if (!is.null(exist_wgts))
-        attr(plans, "wgt") <- c(0, exist_wgts)
+  if (isFALSE(attr(plans, "districting_scheme") != "single")) {
+    x <- dplyr::bind_rows(
+      tibble(district = 1:ndists, total_pop = as.numeric(distr_pop)),
+      plans[, -match("draw", names(plans))]
+    ) %>%
+      dplyr::mutate(draw = new_draw, .before = "district")
+  } else {
+    x <- dplyr::bind_rows(
+      tibble(
+        district = 1:ndists,
+        total_pop = as.numeric(distr_pop),
+        seats = ref_seats
+      ),
+      plans[, -match("draw", names(plans))]
+    ) %>%
+      dplyr::mutate(draw = new_draw, .before = "district")
+  }
 
-    reconstruct.redist_plans(x, set_plan_matrix(plans, plan_m))
+  exist_wgts <- get_plans_weights(plans)
+  if (!is.null(exist_wgts)) {
+    attr(plans, "wgt") <- c(0, exist_wgts)
+  }
+
+  reconstruct.redist_plans(x, set_plan_matrix(plans, plan_m))
 }
 
 #' Subset to sampled or reference draws
@@ -526,43 +620,47 @@ add_reference <- function(plans, ref_plan, name = NULL, ref_seats = NULL) {
 #' @concept analyze
 #' @export
 subset_sampled <- function(plans, matrix = TRUE) {
-    plans_m <- get_plans_matrix(plans)
-    if (is.null(colnames(plans_m))) return(plans)
+  plans_m <- get_plans_matrix(plans)
+  if (is.null(colnames(plans_m))) {
+    return(plans)
+  }
 
-    nm_lengths <- nchar(colnames(plans_m))
-    draw_ints <- as.integer(plans$draw)
-    idxs <- which(nm_lengths[draw_ints] == 0)
+  nm_lengths <- nchar(colnames(plans_m))
+  draw_ints <- as.integer(plans$draw)
+  idxs <- which(nm_lengths[draw_ints] == 0)
 
-    out <- vctrs::vec_slice(plans, idxs)
-    out$draw <- droplevels(out$draw)
+  out <- vctrs::vec_slice(plans, idxs)
+  out$draw <- droplevels(out$draw)
 
-    idxs <- which(nm_lengths[unique(draw_ints)] == 0)
-    attr(out, "wgt") <- attr(out, "wgt")[idxs]
-    if (isTRUE(matrix)) {
-        out <- set_plan_matrix(out, plans_m[, idxs, drop = FALSE])
-    }
+  idxs <- which(nm_lengths[unique(draw_ints)] == 0)
+  attr(out, "wgt") <- attr(out, "wgt")[idxs]
+  if (isTRUE(matrix)) {
+    out <- set_plan_matrix(out, plans_m[, idxs, drop = FALSE])
+  }
 
-    out
+  out
 }
 
 #' @rdname subset_sampled
 #' @export
 subset_ref <- function(plans, matrix = TRUE) {
-    plans_m <- get_plans_matrix(plans)
-    if (is.null(colnames(plans_m))) return(plans)
+  plans_m <- get_plans_matrix(plans)
+  if (is.null(colnames(plans_m))) {
+    return(plans)
+  }
 
-    nm_lengths <- nchar(colnames(plans_m))
-    draw_ints <- as.integer(plans$draw)
-    idxs <- which(nm_lengths[draw_ints] > 0)
+  nm_lengths <- nchar(colnames(plans_m))
+  draw_ints <- as.integer(plans$draw)
+  idxs <- which(nm_lengths[draw_ints] > 0)
 
-    out <- vctrs::vec_slice(plans, idxs)
-    out$draw <- droplevels(out$draw)
+  out <- vctrs::vec_slice(plans, idxs)
+  out$draw <- droplevels(out$draw)
 
-    idxs <- which(nm_lengths[unique(draw_ints)] > 0)
-    attr(out, "wgt") <- attr(out, "wgt")[idxs]
-    out <- set_plan_matrix(out, plans_m[, idxs, drop = FALSE])
+  idxs <- which(nm_lengths[unique(draw_ints)] > 0)
+  attr(out, "wgt") <- attr(out, "wgt")[idxs]
+  out <- set_plan_matrix(out, plans_m[, idxs, drop = FALSE])
 
-    out
+  out
 }
 
 #' Extract the Metropolis Hastings Acceptance Rate
@@ -574,57 +672,63 @@ subset_ref <- function(plans, matrix = TRUE) {
 #' @concept analysis
 #' @export
 get_mh_acceptance_rate <- function(plans) {
-    if (!inherits(plans, "redist_plans")) cli::cli_abort("Not a {.cls redist_plans}")
-    alg <- attr(plans, "algorithm")
+  if (!inherits(plans, "redist_plans")) {
+    cli::cli_abort("Not a {.cls redist_plans}")
+  }
+  alg <- attr(plans, "algorithm")
 
-    if (alg %in% c("flip", "mergesplit")) {
-        attr(plans, "mh_acceptance")
-    } else {
-        NA_real_
-    }
+  if (alg %in% c("flip", "mergesplit")) {
+    attr(plans, "mh_acceptance")
+  } else {
+    NA_real_
+  }
 }
 
 # generics ----------------------------------------------------------------
 
-
 #' @method dplyr_row_slice redist_plans
 #' @export
 dplyr_row_slice.redist_plans <- function(data, i, ...) {
-    if (is.logical(i)) i <- which(i)
+  if (is.logical(i)) {
+    i <- which(i)
+  }
 
-    draws <- rle(as.integer(data$draw))
-    draws$values <- seq_along(draws$values)
-    draws_left <- unique(inverse.rle(draws)[i])
-    y <- vctrs::vec_slice(data, i)
-    plans_m <- get_plans_matrix(data)
+  draws <- rle(as.integer(data$draw))
+  draws$values <- seq_along(draws$values)
+  draws_left <- unique(inverse.rle(draws)[i])
+  y <- vctrs::vec_slice(data, i)
+  plans_m <- get_plans_matrix(data)
 
-    # if we don't have every district present in every row
-    # this check is necessary but not sufficient for what we want
-    if (length(i) > 0 && "district" %in% colnames(y)) {
-        distrs <- table(as.integer(y$district))
-        ndists <- max(plans_m[, 1])
-        if (any(distrs != distrs[1]) || length(distrs) != ndists)
-            cli::cli_warn(c("Some districts may have been dropped. This will prevent summary statistics from working correctly.",
-                ">" = "To avoid this message, coerce using {.fun as_tibble}."))
+  # if we don't have every district present in every row
+  # this check is necessary but not sufficient for what we want
+  if (length(i) > 0 && "district" %in% colnames(y)) {
+    distrs <- table(as.integer(y$district))
+    ndists <- max(plans_m[, 1])
+    if (any(distrs != distrs[1]) || length(distrs) != ndists) {
+      cli::cli_warn(c(
+        "Some districts may have been dropped. This will prevent summary statistics from working correctly.",
+        ">" = "To avoid this message, coerce using {.fun as_tibble}."
+      ))
     }
+  }
 
-    if (length(draws_left) != ncol(plans_m)) {
-        attr(y, "wgt") <- attr(y, "wgt")[draws_left]
-        y <- set_plan_matrix(y, plans_m[, draws_left, drop = FALSE])
-    }
+  if (length(draws_left) != ncol(plans_m)) {
+    attr(y, "wgt") <- attr(y, "wgt")[draws_left]
+    y <- set_plan_matrix(y, plans_m[, draws_left, drop = FALSE])
+  }
 
-    if (is.factor(y$draw)) {
-        y$draw <- droplevels(y$draw)
-    }
+  if (is.factor(y$draw)) {
+    y$draw <- droplevels(y$draw)
+  }
 
-    y
+  y
 }
 
 # 'template' is the old df
 #' @method dplyr_reconstruct redist_plans
 #' @export
 dplyr_reconstruct.redist_plans <- function(data, template) {
-    reconstruct.redist_plans(data, template)
+  reconstruct.redist_plans(data, template)
 }
 
 #' Combine multiple sets of redistricting plans
@@ -644,103 +748,130 @@ dplyr_reconstruct.redist_plans <- function(data, template) {
 #' @concept analyze
 #' @export
 rbind.redist_plans <- function(..., deparse.level = 1) {
-    objs <- rlang::list2(...)
-    n_obj <- length(objs)
-    if (n_obj == 1) return(objs[[1]])
+  objs <- rlang::list2(...)
+  n_obj <- length(objs)
+  if (n_obj == 1) {
+    return(objs[[1]])
+  }
 
-    # check types
-    n_prec <- nrow(get_plans_matrix(objs[[1]]))
-    prec_pop <- attr(objs[[1]], "prec_pop")
-    ndists <- attr(objs[[1]], "ndists")
-    nseats <- attr(objs[[1]], "nseats")
-    seats_range <- attr(objs[[1]], "seats_range")
-    constr <- attr(objs[[1]], "constraints")
-    resamp <- attr(objs[[1]], "resampled")
-    comp <- attr(objs[[1]], "compactness")
-    partial <- attr(objs[[1]], "partial")
-    districting_scheme <- attr(objs[[1]], "districting_scheme")
-    seats_range <- attr(objs[[1]], "seats_range")
-    distr_ord <- is.ordered(objs[[1]]$district)
-    # additional attributes that might not always be present
-    pop_bounds <- attr(objs[[1]], "pop_bounds")
-    num_admin_units <- attr(objs[[1]], "num_admin_units")
+  # check types
+  n_prec <- nrow(get_plans_matrix(objs[[1]]))
+  prec_pop <- attr(objs[[1]], "prec_pop")
+  ndists <- attr(objs[[1]], "ndists")
+  nseats <- attr(objs[[1]], "nseats")
+  seats_range <- attr(objs[[1]], "seats_range")
+  constr <- attr(objs[[1]], "constraints")
+  resamp <- attr(objs[[1]], "resampled")
+  comp <- attr(objs[[1]], "compactness")
+  partial <- attr(objs[[1]], "partial")
+  districting_scheme <- attr(objs[[1]], "districting_scheme")
+  seats_range <- attr(objs[[1]], "seats_range")
+  distr_ord <- is.ordered(objs[[1]]$district)
+  # additional attributes that might not always be present
+  pop_bounds <- attr(objs[[1]], "pop_bounds")
+  num_admin_units <- attr(objs[[1]], "num_admin_units")
 
-    for (i in 2:n_obj) {
-        if (nrow(get_plans_matrix(objs[[i]])) != n_prec)
-            cli::cli_abort("Number of precincts must match for all sets of plans.")
-        if (!identical(attr(objs[[i]], "prec_pop"), prec_pop))
-            cli::cli_abort("Precinct populations must match for all sets of plans.")
-        if (!identical(attr(objs[[i]], "ndists"), ndists))
-            cli::cli_abort("Number of districts must match for all sets of plans.")
-        if (!identical(attr(objs[[i]], "nseats"), nseats))
-            cli::cli_abort("Total number of of seats must match for all sets of plans.")
-        if (attr(objs[[i]], "resampled") != resamp)
-            cli::cli_abort("Some sets of plans are resampled while others are not.")
-        if (!is.null(comp)) {
-            if (attr(objs[[i]], "compactness") != comp) {
-                cli::cli_warn("Compactness values differ across sets of plans.")
-                comp <- NA
-            }
-        } else {
-            if (!is.null(attr(objs[[i]], "compactness"))) {
-                cli::cli_warn("Some compactness values were non-NULL. Set to {.val NA}.")
-                comp <- NA
-            }
-        }
-        if (!identical(attr(objs[[i]], "constraints"), constr)) {
-            cli::cli_inform("Constraints may not match for all sets of plans.")
-            constr <- NA
-        }
-        if (!identical(attr(objs[[i]], "districting_scheme"), districting_scheme)){
-            cli::cli_abort("All plans must have the same districting scheme.")
-        }
-        if (!identical(attr(objs[[i]], "seats_range"), seats_range)){
-            cli::cli_abort("All plans must have the same district seat sizes")
-        }
-        if (is.ordered(objs[[i]]$district) != distr_ord) {
-            cli::cli_abort(c("Some sets of plans have had district numbers matched to a reference plan,
-                         while others have not. This may cause problems in analysis.",
-                        "i"="Do one of the following:",
-                        ">"="Match the district labels on the unmatched plans with
-                            {.fn match_numbers} [recommended]",
-                        ">"="Convert the matched plans district labels to integers with
-                            {.code as.integer(district)}")
-            )
-        }
+  for (i in 2:n_obj) {
+    if (nrow(get_plans_matrix(objs[[i]])) != n_prec) {
+      cli::cli_abort("Number of precincts must match for all sets of plans.")
     }
+    if (!identical(attr(objs[[i]], "prec_pop"), prec_pop)) {
+      cli::cli_abort("Precinct populations must match for all sets of plans.")
+    }
+    if (!identical(attr(objs[[i]], "ndists"), ndists)) {
+      cli::cli_abort("Number of districts must match for all sets of plans.")
+    }
+    if (!identical(attr(objs[[i]], "nseats"), nseats)) {
+      cli::cli_abort(
+        "Total number of of seats must match for all sets of plans."
+      )
+    }
+    if (attr(objs[[i]], "resampled") != resamp) {
+      cli::cli_abort("Some sets of plans are resampled while others are not.")
+    }
+    if (!is.null(comp)) {
+      if (attr(objs[[i]], "compactness") != comp) {
+        cli::cli_warn("Compactness values differ across sets of plans.")
+        comp <- NA
+      }
+    } else {
+      if (!is.null(attr(objs[[i]], "compactness"))) {
+        cli::cli_warn(
+          "Some compactness values were non-NULL. Set to {.val NA}."
+        )
+        comp <- NA
+      }
+    }
+    if (!identical(attr(objs[[i]], "constraints"), constr)) {
+      cli::cli_inform("Constraints may not match for all sets of plans.")
+      constr <- NA
+    }
+    if (!identical(attr(objs[[i]], "districting_scheme"), districting_scheme)) {
+      cli::cli_abort("All plans must have the same districting scheme.")
+    }
+    if (!identical(attr(objs[[i]], "seats_range"), seats_range)) {
+      cli::cli_abort("All plans must have the same district seat sizes")
+    }
+    if (is.ordered(objs[[i]]$district) != distr_ord) {
+      cli::cli_abort(c(
+        "Some sets of plans have had district numbers matched to a reference plan,
+                         while others have not. This may cause problems in analysis.",
+        "i" = "Do one of the following:",
+        ">" = "Match the district labels on the unmatched plans with
+                            {.fn match_numbers} [recommended]",
+        ">" = "Convert the matched plans district labels to integers with
+                            {.code as.integer(district)}"
+      ))
+    }
+  }
 
-    ret <- lapply(seq_along(objs), function(i) {
-        out <- objs[[i]] |>
-            dplyr::as_tibble()
+  ret <- lapply(seq_along(objs), function(i) {
+    out <- objs[[i]] |>
+      dplyr::as_tibble()
 
-        if (!'chain' %in% names(out)) {
-            out$chain <- i
-        }
-        out
-    }) |>
-        dplyr::bind_rows()
+    if (!'chain' %in% names(out)) {
+      out$chain <- i
+    }
+    out
+  }) |>
+    dplyr::bind_rows()
 
-    #ret$chain <- factor_combine(ret$chain)
-    ret <- reconstruct.redist_plans(ret, objs[[1]])
-    attr(ret, "compactness") <- comp
-    attr(ret, "constraints") <- constr
-    attr(ret, "ndists") <- ndists
-    attr(ret, "nseats") <- nseats
-    attr(ret, "prec_pop") <- prec_pop
-    attr(ret, "partial") <- partial
-    attr(ret, "districting_scheme") <- districting_scheme
-    attr(ret, "seats_range") <- seats_range
-    attr(ret, "diagnostics") <- do.call(c, lapply(objs, function(x) attr(x, "diagnostics")))
-    attr(ret, "run_information") <- do.call(c, lapply(objs, function(x) attr(x, "run_information")))
-    attr(ret, "internal_diagnostics") <- do.call(c, lapply(objs, function(x) attr(x, "internal_diagnostics")))
-    attr(ret, "plans") <- do.call(cbind, lapply(objs, function(x) get_plans_matrix(x)))
-    attr(ret, "wgt") <- do.call(c, lapply(objs, function(x) get_plans_weights(x)))
-    attr(ret, "n_eff") <- sum(do.call(c, lapply(objs, function(x) attr(x, "n_eff"))))
+  #ret$chain <- factor_combine(ret$chain)
+  ret <- reconstruct.redist_plans(ret, objs[[1]])
+  attr(ret, "compactness") <- comp
+  attr(ret, "constraints") <- constr
+  attr(ret, "ndists") <- ndists
+  attr(ret, "nseats") <- nseats
+  attr(ret, "prec_pop") <- prec_pop
+  attr(ret, "partial") <- partial
+  attr(ret, "districting_scheme") <- districting_scheme
+  attr(ret, "seats_range") <- seats_range
+  attr(ret, "diagnostics") <- do.call(
+    c,
+    lapply(objs, function(x) attr(x, "diagnostics"))
+  )
+  attr(ret, "run_information") <- do.call(
+    c,
+    lapply(objs, function(x) attr(x, "run_information"))
+  )
+  attr(ret, "internal_diagnostics") <- do.call(
+    c,
+    lapply(objs, function(x) attr(x, "internal_diagnostics"))
+  )
+  attr(ret, "plans") <- do.call(
+    cbind,
+    lapply(objs, function(x) get_plans_matrix(x))
+  )
+  attr(ret, "wgt") <- do.call(c, lapply(objs, function(x) get_plans_weights(x)))
+  attr(ret, "n_eff") <- sum(do.call(
+    c,
+    lapply(objs, function(x) attr(x, "n_eff"))
+  ))
 
-    attr(ret, "pop_bounds") <- pop_bounds
-    attr(ret, "num_admin_units") <- num_admin_units
+  attr(ret, "pop_bounds") <- pop_bounds
+  attr(ret, "num_admin_units") <- num_admin_units
 
-    ret
+  ret
 }
 
 
@@ -753,58 +884,83 @@ rbind.redist_plans <- function(..., deparse.level = 1) {
 #' @return The original object, invisibly.
 #' @export
 print.redist_plans <- function(x, ...) {
-    plans_m <- get_plans_matrix(x)
-    n_ref <- get_n_ref(x)
-    n_samp <- ncol(plans_m) - n_ref
-    nd <- attr(x, "ndists")
-    if (is.null(nd)) nd <- max(plans_m[, 1])
+  plans_m <- get_plans_matrix(x)
+  n_ref <- get_n_ref(x)
+  n_samp <- ncol(plans_m) - n_ref
+  nd <- attr(x, "ndists")
+  if (is.null(nd)) {
+    nd <- max(plans_m[, 1])
+  }
 
-    # only appears for partial plans
-    is_partial <- isTRUE(attr(x, "partial"))
-    partial_str <- ifelse(is_partial, "partial ", "")
-    region_str <- ifelse(is_partial, "region", "district")
+  # only appears for partial plans
+  is_partial <- isTRUE(attr(x, "partial"))
+  partial_str <- ifelse(is_partial, "partial ", "")
+  region_str <- ifelse(is_partial, "region", "district")
 
-    fmt_comma <- function(x) format(x, nsmall = 0, digits = 1, big.mark = ",")
-    if (n_ref > 0)
-        cli::cli_text("A {.cls redist_plans} containing {fmt_comma(n_samp)}{cli::qty(n_samp)}
-                 sampled {partial_str}plan{cli::qty(n_samp)}{?s} and {n_ref} reference plan{?s}")
-    else
-        cli::cli_text("A {.cls redist_plans} containing
-                 {fmt_comma(n_samp)}{cli::qty(n_samp)} sampled {partial_str}plan{cli::qty(n_samp)}{?s}")
+  fmt_comma <- function(x) format(x, nsmall = 0, digits = 1, big.mark = ",")
+  if (n_ref > 0) {
+    cli::cli_text(
+      "A {.cls redist_plans} containing {fmt_comma(n_samp)}{cli::qty(n_samp)}
+                 sampled {partial_str}plan{cli::qty(n_samp)}{?s} and {n_ref} reference plan{?s}"
+    )
+  } else {
+    cli::cli_text(
+      "A {.cls redist_plans} containing
+                 {fmt_comma(n_samp)}{cli::qty(n_samp)} sampled {partial_str}plan{cli::qty(n_samp)}{?s}"
+    )
+  }
 
-    if (ncol(plans_m) == 0) return(invisible(x))
+  if (ncol(plans_m) == 0) {
+    return(invisible(x))
+  }
 
-    alg_name <- c(mcmc = "Flip Markov chain Monte Carlo",
-        smc = "Sequential Monte Carlo",
-        smc_ms = "Sequential Monte Carlo with Merge-split Markov chain Monte Carlo Steps",
-        mergesplit = "Merge-split Markov chain Monte Carlo",
-        rsg = "random seed-and-grow",
-        crsg = "compact random seed-and-grow",
-        enumpart = "Enumpart",
-        shortburst = "short bursts",
-        none = "a custom collection")[attr(x, "algorithm")]
-    if (is.na(alg_name)) alg_name <- "an unknown algorithm"
+  alg_name <- c(
+    mcmc = "Flip Markov chain Monte Carlo",
+    smc = "Sequential Monte Carlo",
+    smc_ms = "Sequential Monte Carlo with Merge-split Markov chain Monte Carlo Steps",
+    mergesplit = "Merge-split Markov chain Monte Carlo",
+    rsg = "random seed-and-grow",
+    crsg = "compact random seed-and-grow",
+    enumpart = "Enumpart",
+    shortburst = "short bursts",
+    none = "a custom collection"
+  )[attr(x, "algorithm")]
+  if (is.na(alg_name)) {
+    alg_name <- "an unknown algorithm"
+  }
 
-    cli::cli_text("Plans have {nd} {region_str}{cli::qty(nd)}{?s} from a
+  cli::cli_text(
+    "Plans have {nd} {region_str}{cli::qty(nd)}{?s} from a
              {fmt_comma(nrow(plans_m))}{cli::qty(nrow(plans_m))}-unit map,
-             and were drawn using {alg_name}.")
+             and were drawn using {alg_name}."
+  )
 
-    merge_idx <- attr(x, "merge_idx")
-    if (!is.null(merge_idx))
-        cat("Merged from another map with reindexing:",
-            utils::capture.output(str(merge_idx, vec.len = 2)), "\n", sep = "")
+  merge_idx <- attr(x, "merge_idx")
+  if (!is.null(merge_idx)) {
+    cat(
+      "Merged from another map with reindexing:",
+      utils::capture.output(str(merge_idx, vec.len = 2)),
+      "\n",
+      sep = ""
+    )
+  }
 
-    if (!is.null(attr(x, "wgt"))) {
-        if (attr(x, "resampled"))
-            cat("With plans resampled from weights\n")
-        else
-            cat("With weighted plans not resampled\n")
+  if (!is.null(attr(x, "wgt"))) {
+    if (attr(x, "resampled")) {
+      cat("With plans resampled from weights\n")
+    } else {
+      cat("With weighted plans not resampled\n")
     }
+  }
 
-    cat("Plans matrix:", utils::capture.output(str(plans_m, give.attr = FALSE)),
-        "\n", sep = "")
+  cat(
+    "Plans matrix:",
+    utils::capture.output(str(plans_m, give.attr = FALSE)),
+    "\n",
+    sep = ""
+  )
 
-    utils::getS3method("print", "tbl")(x)
+  utils::getS3method("print", "tbl")(x)
 
-    invisible(x)
+  invisible(x)
 }

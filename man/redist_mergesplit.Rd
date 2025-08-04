@@ -32,7 +32,7 @@ redist_mergesplit(
 )
 }
 \arguments{
-\item{map}{A \code{\link{redist_map}} object.}
+\item{map}{A \verb{\link{redist_map}} object.}
 
 \item{nsims}{The number of samples to generate. The chain will run for
 \code{warmup+(nsims*thin)} steps.}
@@ -50,7 +50,7 @@ with its own sampled plan.}
 
 \item{init_plan}{The initial state of the map. If not provided, will default to
 the reference map of the \code{map} object, or if none exists, will sample
-a random initial state using \code{\link{redist_smc}}. You can also request
+a random initial state using \verb{\link{redist_smc}}. You can also request
 a random initial state by setting \code{init_plan="sample"}.}
 
 \item{counties}{A vector containing county (or other administrative or
@@ -63,11 +63,12 @@ split, consider using \code{add_constr_splits()}, \code{add_constr_multisplits()
 and \code{add_constr_total_splits()}.}
 
 \item{compactness}{Controls the compactness of the generated districts, with
-higher values preferring more compact districts. Must be nonnegative. See the
-'Details' section for more information, and computational considerations.}
+higher values preferring more compact districts. Must be nonnegative. See
+the 'Details' section for more information, and computational
+considerations.}
 
-\item{constraints}{A list containing information on constraints to implement.
-See the 'Details' section for more information.}
+\item{constraints}{A \code{\link[=redist_constr]{redist_constr()}} object or a list containing
+information on sampling constraints. See \link{constraints} for more information.}
 
 \item{constraint_fn}{A function which takes in a matrix where each column is
 a redistricting plan and outputs a vector of log-weights, which will be
@@ -130,6 +131,9 @@ and larger values result in more unstable weights.
 }
 }}
 
+\item{merge_prob_type}{What probability to use to select districts to merge
+in the mergesplit kernel. Defaults to giving all pairs equal probability.}
+
 \item{init_seats}{The initial number of seats for each district in \code{init_plan}.}
 
 \item{ncores}{The number of clusters to spawn Defaults to the
@@ -143,12 +147,15 @@ the final plan from each chain.}
 
 \item{init_name}{a name for the initial plan, or \code{FALSE} to not include
 the initial plan in the output.  Defaults to the column name of the
-existing plan, or "\code{<init>}" if the initial plan is sampled.}
+existing plan, or "\verb{<init>}" if the initial plan is sampled.}
 
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}
 
 \item{silent}{Whether to suppress all diagnostic information.}
+
+\item{diagnostic_mode}{Whether or not to return all the proposed plans
+as well.}
 
 \item{control}{A list of optional advanced parameters.
 \itemize{

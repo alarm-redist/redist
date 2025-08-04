@@ -358,7 +358,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     }
 
     if(proposal_accepted){
-        if(DEBUG_MERGING_VERBOSE) Rprintf("ACCEPTED!! Now updating plans\n", std::exp(log_mh_ratio));
+        if(DEBUG_MERGING_VERBOSE) Rprintf("ACCEPTED!! Now updating plans\n");
         // if successful then actually update
         plan.update_from_successful_split(
             tree_splitter,

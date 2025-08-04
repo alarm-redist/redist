@@ -196,6 +196,10 @@ having two or more incumbents be in the same district.}
 \item{denominator}{Fryer Holden minimum value to normalize by. Default is 1 (no normalization).}
 
 \item{fn}{A function}
+
+\item{only_final_plans}{Whether or not to only apply entire-plan constraints to the
+final complete plan (a plan that is all districts). If splitting plans all
+the way this does not affect the final target distribution.}
 }
 \description{
 The \code{\link[=redist_smc]{redist_smc()}} and \code{\link[=redist_mergesplit]{redist_mergesplit()}} algorithms in this package allow

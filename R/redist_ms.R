@@ -29,7 +29,7 @@
 #' compact districts.
 #'
 #' @inheritParams redist_smc
-#' @param map A \code{\link{redist_map}} object.
+#' @param map A `\link{redist_map}` object.
 #' @param nsims The number of samples to generate. The chain will run for
 #' `warmup+(nsims*thin)` steps.
 #' @param chains the number of parallel chains to run. Each chain will have
@@ -42,7 +42,7 @@
 #' Defaults to no thinning (1).
 #' @param init_plan The initial state of the map. If not provided, will default to
 #' the reference map of the \code{map} object, or if none exists, will sample
-#' a random initial state using \code{\link{redist_smc}}. You can also request
+#' a random initial state using `\link{redist_smc}`. You can also request
 #' a random initial state by setting \code{init_plan="sample"}.
 #' @param counties A vector containing county (or other administrative or
 #' geographic unit) labels for each unit, which may be integers ranging from 1
@@ -52,27 +52,26 @@
 #' county splits further, or to constrain a second type of administrative
 #' split, consider using `add_constr_splits()`, `add_constr_multisplits()`,
 #' and `add_constr_total_splits()`.
-#' @param compactness Controls the compactness of the generated districts, with
-#' higher values preferring more compact districts. Must be nonnegative. See the
-#' 'Details' section for more information, and computational considerations.
-#' @param constraints A list containing information on constraints to implement.
-#' See the 'Details' section for more information.
 #' @param constraint_fn A function which takes in a matrix where each column is
 #' a redistricting plan and outputs a vector of log-weights, which will be
 #' added the the final weights.
 #' @param init_name a name for the initial plan, or \code{FALSE} to not include
 #' the initial plan in the output.  Defaults to the column name of the
-#' existing plan, or "\code{<init>}" if the initial plan is sampled.
+#' existing plan, or "`<init>`" if the initial plan is sampled.
 #' @param init_seats The initial number of seats for each district in `init_plan`.
 #' @param verbose Whether to print out intermediate information while sampling.
 #' Recommended.
 #' @param silent Whether to suppress all diagnostic information.
+#' @param merge_prob_type What probability to use to select districts to merge
+#' in the mergesplit kernel. Defaults to giving all pairs equal probability.
 #' @param ncores The number of clusters to spawn Defaults to the
 #' maximum available detected by `parallel::detectCores()`.
 #' @param cl_type the cluster type (see [makeCluster()]). Safest is `"PSOCK"`,
 #' but `"FORK"` may be appropriate in some settings.
 #' @param return_all if `TRUE` return all sampled plans; otherwise, just return
 #' the final plan from each chain.
+#' @param diagnostic_mode Whether or not to return all the proposed plans
+#' as well.
 #' @param adapt_k_thresh The threshold value used in the heuristic to select a
 #' value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if
 #' the algorithm does not appear to be sampling from the target distribution.

@@ -481,7 +481,7 @@ double compute_log_optimal_incremental_weights(
 
     // iterate over the pairs 
     if(DEBUG_WEIGHTS_VERBOSE){
-        REprintf("There are %d adjacent pairs!\n",
+        REprintf("There are %u adjacent pairs!\n",
             region_pair_log_eff_boundary_map.size()
         );
     }

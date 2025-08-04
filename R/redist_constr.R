@@ -270,6 +270,9 @@ add_to_constr <- function(constr, name, new_constr) {
 #' the constraints score is greater than or equal to `thresh` will be rejected
 #' at the splitting stage, ensuring that none of those plans will be in the final
 #' sample.
+#' @param only_final_plans Whether or not to only apply entire-plan constraints to the
+#' final complete plan (a plan that is all districts). If splitting plans all
+#' the way this does not affect the final target distribution.
 #'
 #' @examples
 #' data(iowa)
@@ -1248,7 +1251,13 @@ add_constr_custom <- function(
 #' @param fn A function
 #' @rdname constraints
 #' @export
-add_constr_custom_plan <- function(constr, strength, fn, thresh = NULL, only_final_plans = FALSE) {
+add_constr_custom_plan <- function(
+  constr,
+  strength,
+  fn,
+  thresh = NULL,
+  only_final_plans = FALSE
+) {
   if (!inherits(constr, "redist_constr")) {
     cli::cli_abort("Not a {.cls redist_constr} object")
   }
