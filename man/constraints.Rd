@@ -26,7 +26,7 @@ add_constr_status_quo(
   strength,
   current,
   only_districts = TRUE,
-  thresh = Inf
+  thresh = NULL
 )
 
 add_constr_grp_pow(
@@ -38,7 +38,7 @@ add_constr_grp_pow(
   tgt_other = 0.5,
   pow = 1,
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 )
 
 add_constr_grp_hinge(
@@ -48,7 +48,7 @@ add_constr_grp_hinge(
   total_pop = NULL,
   tgts_group = c(0.55),
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 )
 
 add_constr_grp_inv_hinge(
@@ -58,7 +58,7 @@ add_constr_grp_inv_hinge(
   total_pop = NULL,
   tgts_group = c(0.55),
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 )
 
 add_constr_compet(
@@ -68,7 +68,7 @@ add_constr_compet(
   rvote,
   pow = 0.5,
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 )
 
 add_constr_incumbency(
@@ -76,17 +76,23 @@ add_constr_incumbency(
   strength,
   incumbents,
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 )
 
-add_constr_splits(constr, strength, admin, only_districts = TRUE, thresh = Inf)
+add_constr_splits(
+  constr,
+  strength,
+  admin,
+  only_districts = TRUE,
+  thresh = NULL
+)
 
 add_constr_multisplits(
   constr,
   strength,
   admin,
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 )
 
 add_constr_total_splits(
@@ -94,10 +100,10 @@ add_constr_total_splits(
   strength,
   admin,
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 )
 
-add_constr_pop_dev(constr, strength, only_districts = FALSE, thresh = Inf)
+add_constr_pop_dev(constr, strength, only_districts = FALSE, thresh = NULL)
 
 add_constr_segregation(
   constr,
@@ -105,7 +111,7 @@ add_constr_segregation(
   group_pop,
   total_pop = NULL,
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 )
 
 add_constr_polsby(
@@ -113,7 +119,7 @@ add_constr_polsby(
   strength,
   perim_df = NULL,
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 )
 
 add_constr_fry_hold(
@@ -123,7 +129,7 @@ add_constr_fry_hold(
   ssdmat = NULL,
   denominator = 1,
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 )
 
 add_constr_log_st(
@@ -131,14 +137,20 @@ add_constr_log_st(
   strength,
   admin = NULL,
   only_districts = FALSE,
-  thresh = Inf
+  thresh = NULL
 )
 
-add_constr_edges_rem(constr, strength, only_districts = FALSE, thresh = Inf)
+add_constr_edges_rem(constr, strength, only_districts = FALSE, thresh = NULL)
 
-add_constr_custom(constr, strength, fn, only_districts = FALSE, thresh = Inf)
+add_constr_custom(constr, strength, fn, only_districts = FALSE, thresh = NULL)
 
-add_constr_custom_plan(constr, strength, fn, thresh = Inf)
+add_constr_custom_plan(
+  constr,
+  strength,
+  fn,
+  thresh = NULL,
+  only_final_plans = FALSE
+)
 }
 \arguments{
 \item{constr}{A \code{\link[=redist_constr]{redist_constr()}} object}
@@ -197,15 +209,17 @@ All constraints are fed into a Gibbs measure, with coefficients on each
 constraint set by the corresponding \code{strength} parameter.
 The strength can be any real number, with zero corresponding to no constraint.
 Higher and higher \code{strength} values will eventually cause the algorithm's
-accuracy and efficiency to suffer. Whenever you use constraints, be sure to
-check all sampling diagnostics.
+accuracy and efficiency to suffer and potentially cause floating point
+overflow errors. Whenever you use constraints, be sure to check all sampling
+diagnostics.
 
 An optional \code{thresh} value can also be set as well to incorporate hard
 thresholding. When the output of a constraint is greater than or equal to
 \code{thresh} the plan will automatically be rejected at the splitting stage. This
 ensures that in the final sample there will be no plans with scores at or above
 \code{thresh}. Lower \code{thresh} values will eventually cause the algorithms efficiency
-to suffer.
+to suffer. Depending on how its used \code{thresh} can violate the theoretical
+guarantees of the algorithm so caution is advised.
 
 The \code{status_quo} constraint adds a term measuring the variation of
 information distance between the plan and the reference, rescaled to [0, 1].
@@ -291,35 +305,28 @@ The flexibility of this constraint comes with additional computational
 costs, since the other constraints are written in C++ and so are more performant.
 In addition to the cost of not being native C++ code, weights with custom
 R functions can not be computed in parallel and must be computed sequentially.
-This can especially slow down sampling on Spanning Forest or Linking Edge Space.
+This can especially slow down performance on Spanning Forest and Linking Edge
+Space as the weights for those spaces tend to be the slowest step.
+These effects can be somewhat mitigated by by increasing the number of
+processes(\code{nproc}) if multiple runs are being done.
 
 The \code{custom_plan} constraint allows the user to specify their own constraint using
 a function which evaluates the entire plan. Unlike the \code{custom} constraint,
 this allows users to penalize an entire plan, not just specific districts.
-The provided function \code{fn} should take two arguments: a 1-indexed vector
+The provided function \code{fn} should take three arguments: a 1-indexed vector
 describing the current plan assignment for each unit as its first argument,
-and a 1-indexed vector mapping region ids to the number of seats in the region.
+a 1-indexed vector mapping region ids to the number of seats in the region,
+and the number of regions the plan has.
 The function must return a single scalar for each plan where a value of 0
 indicates no penalty is applied.
 The flexibility of this constraint comes with additional computational
 costs, since the other constraints are written in C++ and so are more performant.
 In addition to the cost of not being native C++ code, weights with custom
 R functions can not be computed in parallel and must be computed sequentially.
-This can especially slow down sampling on Spanning Forest or Linking Edge Space.
-
-The \code{custom_hard_plan} constraint allows the user to specify their own hard
-constraint using a function which evaluates the entire plan. This function
-must return either \code{TRUE} or \code{FALSE}, where a value of \code{TRUE} means a plan is
-valid and \code{FALSE} means it will be rejected.
-The provided function \code{fn} should take two arguments: a 1-indexed vector
-describing the current plan assignment for each unit as its first argument,
-and a 1-indexed vector mapping region ids to the number of seats in the region.
-The function must return a single scalar for each plan where a value of 0
-indicates no penalty is applied.
-The flexibility of this constraint comes with strong additional computational
-costs. \code{Rcpp::Function} objects cannot be made thread safe so both splitting
-and calculating weights must be done with only a single thread. These effects
-can be somewhat mitigated by by increasing the number of processes(\code{nproc}).
+This can especially slow down performance on Spanning Forest and Linking Edge
+Space as the weights for those spaces tend to be the slowest step.
+These effects can be somewhat mitigated by by increasing the number of
+processes(\code{nproc}) if multiple runs are being done.
 }
 \examples{
 data(iowa)

@@ -28,7 +28,10 @@ redist_smc(
   silent = FALSE,
   diagnostics = c("basic", "all"),
   control = list(weight_type = "optimal", nproc = 1L),
-  adapt_k_thresh = 0.99
+  adapt_k_thresh = 0.99,
+  truncate = (compactness != 1),
+  trunc_fn = redist_quantile_trunc,
+  final_infl = 1
 )
 }
 \arguments{
@@ -216,6 +219,12 @@ The threshold value used in the heuristic to select a
 value \code{k_i} for each splitting iteration. Higher values are more accurate
 but may require more computation. Set to 1 for the most conservative
 sampling. Must be between 0 and 1.}
+
+\item{truncate}{Deprecated, do not use anymore.}
+
+\item{trunc_fn}{Deprecated, do not use anymore.}
+
+\item{final_infl}{Deprecated, do not use anymore.}
 }
 \value{
 \code{redist_smc} returns a \link{redist_plans} object containing the simulated
