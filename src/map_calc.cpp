@@ -288,11 +288,12 @@ NumericVector max_dev(
     int const num_threads
 ) {
     int const num_plans = districts.ncol();
-    double const target_pop = arma::sum(pop) / nseats;
+    
     NumericVector res(num_plans);
     NumericMatrix district_pops = pop_tally(districts, pop, n_distr, num_threads);
 
     if(multimember_districts){
+        double const target_pop = arma::sum(pop) / nseats;
         RcppThread::parallelFor(0, num_plans, [&] (unsigned int i) {
             for (int j = 0; j < n_distr; j++) {
                 double target_seat_pop = target_pop * seats_matrix(j, i);
@@ -304,6 +305,7 @@ NumericVector max_dev(
             }
         }, num_threads > 0 ? num_threads : 0);
     }else{
+        double const target_pop = arma::sum(pop) / n_distr;
         RcppThread::parallelFor(0, num_plans, [&] (unsigned int i) {
             for (int j = 0; j < n_distr; j++) {
                 double dev = std::fabs(district_pops(j, i) / target_pop - 1.0);

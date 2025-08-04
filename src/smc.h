@@ -24,7 +24,6 @@
 #include "ust_sampler.h"
 
 
-
 //' Run SMC (optionally with Merge Split steps too)
 //'
 //' Uses smc method with optimal weights and merge split steps to generate a sample of `nsims` plans in `c++` 

@@ -11,24 +11,88 @@ bool constexpr DEBUG_BASE_PLANS_VERBOSE = false;
 bool constexpr DEBUG_LOG_LINK_EDGE_VERBOSE = false;
 
 
-std::pair<bool, std::vector<int>> Plan::all_region_pops_valid(MapParams const &map_params) const{
-    for (size_t region_id = 0; region_id < num_regions; region_id++)
-    {
-        auto region_pop = region_pops[region_id];
-        auto region_size = region_sizes[region_id];
-        auto region_pop_lb = map_params.lower * region_size;
-        auto region_pop_ub = map_params.upper * region_size;
+bool Plan::check_region_pop_valid(MapParams const &map_params, int const region_id) const{
+    auto region_pop = region_pops[region_id];
+    auto region_size = region_sizes[region_id];
+    auto region_pop_lb = map_params.lower * region_size;
+    auto region_pop_ub = map_params.upper * region_size;
 
-        if(region_pop < region_pop_lb){
-            throw Rcpp::exception("Invalid pop");
-        }
-        if(region_pop > region_pop_ub){
-            throw Rcpp::exception("Invalid pop");
-        }
-        
+    return region_pop_lb <= region_pop && region_pop <= region_pop_ub;
+}
+
+std::pair<bool, std::vector<int>> Plan::all_region_pops_valid(MapParams const &map_params) const{
+
+    bool all_valid = true;
+    std::vector<int> bad_regions;
+
+    for (int region_id = 0; region_id < num_regions; region_id++)
+    {
+        if(!check_region_pop_valid(map_params, region_id)){
+            all_valid = false;
+            bad_regions.push_back(region_id);
+        }        
     }
 
-    return std::make_pair(true, std::vector<int>{});
+    return std::make_pair(all_valid, bad_regions);
+}
+
+
+std::pair<bool, std::vector<int>> Plan::all_regions_connected(
+        Graph const &g, CircularQueue<int> &vertex_queue,
+        std::vector<bool> &vertices_visited,
+        std::vector<bool> &regions_visited
+){
+    std::fill(regions_visited.begin(), regions_visited.end(), false);
+    std::fill(vertices_visited.begin(), vertices_visited.end(), false);
+    vertex_queue.clear();
+    int const V = g.size();
+
+    std::set<int> disconnected_regions;
+
+    for (int v = 0; v < V; v++)
+    {
+        // skip if we've already visited this
+        if(vertices_visited[v]){
+            continue;
+        }
+        auto v_region = region_ids[v];
+        // If we've already visited this region but not a vertex
+        // then the region is disconnected
+        if(regions_visited[v_region] && !vertices_visited[v]){
+            disconnected_regions.insert(v_region);
+        }
+        // mark this vertex as visited
+        vertices_visited[v] = true;
+        // mark this region as visited
+        regions_visited[v_region] = true;
+        vertex_queue.push(v);
+        // now visit all its neighbors
+        while (!vertex_queue.empty())
+        {
+            auto u = vertex_queue.pop();
+            auto u_region = region_ids[u];
+            // mark this as visited 
+            vertices_visited[u] = true;
+
+            // add unvisited neighbors
+            for(auto const &u_nbor : g[u]){
+                if(vertices_visited[u_nbor]) continue;
+                auto u_nbor_region = region_ids[u_nbor];
+                if(u_nbor_region == v_region){
+                    vertex_queue.push(u_nbor);
+                    vertices_visited[u_nbor] = true;
+                }
+            }
+        }
+    }
+
+    std::vector<int> disconnected_region_output(
+        disconnected_regions.begin(),
+        disconnected_regions.end()
+    );
+    bool any_disconnected = disconnected_region_output.size() > 0;
+
+    return std::make_pair(any_disconnected, disconnected_region_output);
     
 }
 
@@ -726,7 +790,7 @@ void Plan::update_from_successful_split(
 // Returns false if multigraph was not successfully built 
 std::pair<bool, std::vector<std::pair<RegionID,RegionID>>> Plan::attempt_to_get_valid_mergesplit_pairs(
         PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule,
-        ScoringFunction const &scoring_function
+        ScoringFunction const &scoring_function, bool const is_final_split
 ) const{
     bool const result = plan_multigraph.build_plan_multigraph(region_ids, num_regions);
     // return false if not successful
@@ -734,7 +798,7 @@ std::pair<bool, std::vector<std::pair<RegionID,RegionID>>> Plan::attempt_to_get_
     // plan_multigraph.Rprint_detailed(*this);
     // else remove all the invalid size and mergesplit pairs and invalid hard constraint
     plan_multigraph.remove_invalid_size_pairs(*this, splitting_schedule);
-    plan_multigraph.remove_invalid_hard_constraint_pairs(*this, scoring_function);
+    plan_multigraph.remove_invalid_hard_constraint_pairs(*this, scoring_function, is_final_split);
     plan_multigraph.remove_invalid_mergesplit_pairs(*this);
     // plan_multigraph.Rprint_detailed(*this);
 
@@ -744,7 +808,7 @@ std::pair<bool, std::vector<std::pair<RegionID,RegionID>>> Plan::attempt_to_get_
 
 std::vector<std::pair<RegionID,RegionID>> Plan::get_valid_smc_merge_regions(
         PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule,
-        ScoringFunction const &scoring_function
+        ScoringFunction const &scoring_function, bool const is_final_split
 ) const{
     // build the multigraph 
     plan_multigraph.build_plan_multigraph(region_ids, num_regions);
@@ -768,9 +832,10 @@ std::vector<std::pair<RegionID,RegionID>> Plan::get_valid_smc_merge_regions(
         if(!result.second.merge_is_hier_valid) continue;
 
         // now check hard constraints are satisfied
-        bool const hard_constr_result = scoring_function.compute_hard_merged_plan_constraints_score(
-            *this, a_pair.first, a_pair.second
-        ).first;
+        bool const hard_constr_result = scoring_function.merged_plan_ok(
+            *this, a_pair.first, a_pair.second, is_final_split
+        );
+
         if(!hard_constr_result) continue;
 
         // we've passed all checks so now we can add 
@@ -795,6 +860,8 @@ void RegionPairHash::Rprint(std::vector<int> const &county_component) const{
         );
     }
 };
+
+
 
 
 double PlanMultigraph::compute_non_hierarchical_log_multigraph_tau(
@@ -2172,17 +2239,19 @@ void PlanMultigraph::remove_invalid_size_pairs(
 
 
 void PlanMultigraph::remove_invalid_hard_constraint_pairs(
-    Plan const &plan, ScoringFunction const &scoring_function 
+    Plan const &plan, ScoringFunction const &scoring_function, bool const is_final_split
 ){
     // do nothing if no hard constraints 
-    if (!scoring_function.any_hard_plan_constraints) return;
+    if (!scoring_function.any_hard_constraints) return;
+
 
     pair_map.hashed_pairs.erase(
         std::remove_if(pair_map.hashed_pairs.begin(), pair_map.hashed_pairs.end(), 
         [&](std::pair<RegionID, RegionID> a_pair) { 
-            bool failed_constraint = !scoring_function.compute_hard_merged_plan_constraints_score(
-                plan, a_pair.first, a_pair.second
-            ).first;
+            // check if merging the region invalidates hard constraints
+            bool failed_constraint = !scoring_function.merged_plan_ok(
+                plan, a_pair.first, a_pair.second, is_final_split
+            );
 
             // if invalid then reset data in pair map 
             if(failed_constraint){

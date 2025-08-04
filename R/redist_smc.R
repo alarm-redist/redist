@@ -273,10 +273,10 @@ redist_smc <- function(
     cli::cli_abort("{.arg truncate} is deprecated. Do not use this argument.")
   }
 
-  if (!rlang::is_scalar_double(compactness) || compactness < 0) {
+  if (!rlang::is_scalar_atomic(compactness) || compactness < 0) {
     cli::cli_abort("{.arg compactness} must be non-negative.")
   }
-  if (seq_alpha <= 0 || seq_alpha > 1 || !rlang::is_scalar_double(seq_alpha)) {
+  if (seq_alpha <= 0 || seq_alpha > 1 || !rlang::is_scalar_atomic(seq_alpha)) {
     cli::cli_abort("{.arg seq_alpha} must lie in (0, 1].")
   }
   if (nsims < 1) {
@@ -1074,7 +1074,7 @@ extract_ms_params <- function(ms_params, total_smc_steps){
             ms_moves_multiplier <- ms_params[["ms_moves_multiplier"]]
             # check that ms_moves_multiplier is positive
             if (
-                !rlang::is_scalar_double(ms_moves_multiplier) || !ms_moves_multiplier > 0
+                !rlang::is_scalar_atomic(ms_moves_multiplier) || !ms_moves_multiplier > 0
             ) {
                 cli::cli_abort("{.arg ms_moves_multiplier} must be a positive scalar")
             }

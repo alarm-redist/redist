@@ -111,12 +111,8 @@ attempt_splits_on_a_region <- function(adj_list, counties, pop, ndists, init_num
     .Call(`_redist_attempt_splits_on_a_region`, adj_list, counties, pop, ndists, init_num_regions, region_id_to_split, lower, target, upper, region_ids, region_sizes, splitting_schedule_str, k_param, num_plans, num_threads, verbose)
 }
 
-compute_log_unnormalized_plan_target_density <- function(adj_list, counties, pop, constraints, pop_temper, rho, ndists, total_seats, num_regions, district_seat_sizes, lower, target, upper, region_ids, region_sizes, num_threads) {
-    .Call(`_redist_compute_log_unnormalized_plan_target_density`, adj_list, counties, pop, constraints, pop_temper, rho, ndists, total_seats, num_regions, district_seat_sizes, lower, target, upper, region_ids, region_sizes, num_threads)
-}
-
-compute_log_unnormalized_region_target_density <- function(adj_list, counties, pop, constraints, pop_temper, rho, ndists, total_seats, num_regions, district_seat_sizes, lower, target, upper, region_ids, region_sizes, num_threads) {
-    .Call(`_redist_compute_log_unnormalized_region_target_density`, adj_list, counties, pop, constraints, pop_temper, rho, ndists, total_seats, num_regions, district_seat_sizes, lower, target, upper, region_ids, region_sizes, num_threads)
+compute_log_unnormalized_target_density_components <- function(adj_list, counties, pop, constraints, pop_temper, compute_pop_temper, rho, ndists, total_seats, num_regions, district_seat_sizes, lower, target, upper, region_ids, region_sizes, output_type, num_threads) {
+    .Call(`_redist_compute_log_unnormalized_target_density_components`, adj_list, counties, pop, constraints, pop_temper, compute_pop_temper, rho, ndists, total_seats, num_regions, district_seat_sizes, lower, target, upper, region_ids, region_sizes, output_type, num_threads)
 }
 
 compute_plans_log_optimal_weights <- function(adj_list, counties, pop, constraints, pop_temper, rho, splitting_schedule_str, ndists, total_seats, district_seat_sizes, num_regions, lower, target, upper, region_ids, region_sizes, num_threads) {
@@ -143,12 +139,12 @@ prec_cooccur <- function(m, idxs, ncores = 0L) {
     .Call(`_redist_prec_cooccur`, m, idxs, ncores)
 }
 
-group_pct <- function(plans_mat, group_pop, total_pop, n_distr, num_threads = 0L) {
-    .Call(`_redist_group_pct`, plans_mat, group_pop, total_pop, n_distr, num_threads)
+group_pct <- function(plans_mat, group_pop, total_pop, n_distr, ncores = 1L) {
+    .Call(`_redist_group_pct`, plans_mat, group_pop, total_pop, n_distr, ncores)
 }
 
-pop_tally <- function(districts, pop, n_distr, num_threads = 0L) {
-    .Call(`_redist_pop_tally`, districts, pop, n_distr, num_threads)
+pop_tally <- function(districts, pop, n_distr, ncores = 1L) {
+    .Call(`_redist_pop_tally`, districts, pop, n_distr, ncores)
 }
 
 infer_region_seats <- function(region_pops, lower, upper, total_seats, num_threads = 0L) {

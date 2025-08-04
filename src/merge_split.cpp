@@ -187,14 +187,14 @@ Rcpp::List ms_plans(
     }
     // build multigraph on current plan and get pairs of adj districts to merge
     auto build_result = plan_ensemble.plan_ptr_vec[0]->attempt_to_get_valid_mergesplit_pairs(
-        current_plan_multigraph, *splitting_schedule_ptr, scoring_function
+        current_plan_multigraph, *splitting_schedule_ptr, scoring_function, true
     );
     // shouldn't be possible but just a sanity check
     if (!build_result.first){
         throw Rcpp::exception("BIG ERROR: Plan registered as hierarchically valid but we failed to build hierarchical multigraph!\n");
     }
     auto current_plan_adj_region_pairs = plan_ensemble.plan_ptr_vec[0]->attempt_to_get_valid_mergesplit_pairs(
-        current_plan_multigraph, *splitting_schedule_ptr, scoring_function
+        current_plan_multigraph, *splitting_schedule_ptr, scoring_function, true
     ).second;
 
     // get weights 

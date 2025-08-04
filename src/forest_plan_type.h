@@ -54,7 +54,7 @@ public:
 
     std::vector<std::tuple<RegionID, RegionID, double>> get_valid_adj_regions_and_eff_log_boundary_lens(
         PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
-        ScoringFunction const &scoring_function, 
+        ScoringFunction const &scoring_function, bool const is_final_split,
         USTSampler &ust_sampler, TreeSplitter const &tree_splitter
     ) const override;
 

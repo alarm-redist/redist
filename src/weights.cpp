@@ -116,7 +116,7 @@ double compute_simple_log_incremental_weight(
     USTSampler &ust_sampler, TreeSplitter const &edge_splitter,
     SamplingSpace const sampling_space,
     ScoringFunction const &scoring_function, double rho,
-    bool compute_log_splitting_prob, bool is_final_plan
+    bool compute_log_splitting_prob, bool is_final_split
 ){
     // bool for whether we'll need to compute spanning tree count
     bool compute_log_tau = rho != 1;
@@ -134,7 +134,7 @@ double compute_simple_log_incremental_weight(
 
     // build the plan multigraph and get valid adj pairs 
     auto valid_adj_pairs = plan.get_valid_smc_merge_regions(
-        plan_multigraph, splitting_schedule, scoring_function
+        plan_multigraph, splitting_schedule, scoring_function, is_final_split
     );
 
 
@@ -242,17 +242,18 @@ double compute_simple_log_incremental_weight(
     // compute if any constraints 
     if(scoring_function.any_soft_region_constraints){
         // compute scoring functions
-        region1_score = scoring_function.compute_region_score(
-            plan, region1_id, is_final_plan
+        region1_score = scoring_function.compute_region_soft_score(
+            plan, region1_id, is_final_split
         );
-        region2_score = scoring_function.compute_region_score(
-            plan, region2_id, is_final_plan
+        region2_score = scoring_function.compute_region_soft_score(
+            plan, region2_id, is_final_split
         );
-        merged_region_score = scoring_function.compute_merged_region_score(
-            plan, region1_id, region2_id, is_final_plan
-        );
+        merged_region_score = scoring_function.compute_merged_region_full_score(
+            plan, region1_id, region2_id, is_final_split
+        ).second;
         if(DEBUG_WEIGHTS_VERBOSE){
-            REprintf("Region 1,2 Scores (%f, %f) | Merged Score %f \n",
+            REprintf("Region (%d,%d) Scores (%f, %f) | Merged Score %f \n",
+                region1_id, region2_id,
             region1_score, region2_score, merged_region_score);
         }
     }
@@ -261,8 +262,8 @@ double compute_simple_log_incremental_weight(
     plan_score = prev_plan_score = 0.0;
 
     if(scoring_function.any_soft_plan_constraints){
-        plan_score = scoring_function.compute_plan_score(plan, is_final_plan);
-        prev_plan_score = scoring_function.compute_merged_plan_score(plan, region1_id, region2_id, is_final_plan);
+        plan_score = scoring_function.compute_plan_score(plan).second;
+        prev_plan_score = scoring_function.compute_merged_plan_score(plan, region1_id, region2_id, is_final_split).second;
         if(DEBUG_WEIGHTS_VERBOSE){
             REprintf("Entire Plan Score %f | Previous Plan Score %f \n",
             plan_score, prev_plan_score);
@@ -459,7 +460,7 @@ double compute_log_optimal_incremental_weights(
     USTSampler &ust_sampler, TreeSplitter const &edge_splitter,
     SamplingSpace const sampling_space,
     ScoringFunction const &scoring_function, double const rho,
-    bool compute_log_splitting_prob, bool is_final_plan
+    bool compute_log_splitting_prob, bool is_final_split
 ){
     // plan.Rprint();
     // bool for whether we'll need to compute spanning tree count
@@ -474,7 +475,7 @@ double compute_log_optimal_incremental_weights(
 
     // get region pair to effective boundary length map
     auto region_pair_log_eff_boundary_map = plan.get_valid_adj_regions_and_eff_log_boundary_lens(
-        plan_multigraph, splitting_schedule, scoring_function,
+        plan_multigraph, splitting_schedule, scoring_function, is_final_split,
         ust_sampler, edge_splitter
     );
 
@@ -489,7 +490,7 @@ double compute_log_optimal_incremental_weights(
     double plan_score = 0.0;
 
     if(scoring_function.any_soft_plan_constraints){
-        plan_score += scoring_function.compute_plan_score(plan, is_final_plan);
+        plan_score += scoring_function.compute_plan_score(plan).second;
         if(DEBUG_WEIGHTS_VERBOSE){
             REprintf("Entire Plan Score %f \n",
             plan_score);
@@ -527,17 +528,18 @@ double compute_log_optimal_incremental_weights(
         // compute score ratio if any constraints 
         if(scoring_function.any_soft_region_constraints){
             // compute scoring functions
-            const double region1_score = scoring_function.compute_region_score(
-                plan, region1_id, is_final_plan
+            const double region1_score = scoring_function.compute_region_soft_score(
+                plan, region1_id, is_final_split
             );
-            const double region2_score = scoring_function.compute_region_score(
-                plan, region2_id, is_final_plan
+            const double region2_score = scoring_function.compute_region_soft_score(
+                plan, region2_id, is_final_split
             );
-            const double merged_region_score = scoring_function.compute_merged_region_score(
-                plan, region1_id, region2_id, is_final_plan
-            );
+            const double merged_region_score = scoring_function.compute_merged_region_full_score(
+                plan, region1_id, region2_id, is_final_split
+            ).second;
             if(DEBUG_WEIGHTS_VERBOSE){
-                REprintf("Region 1,2 Scores (%f, %f) | Merged Score %f \n",
+                REprintf("Region (%u, %u) Scores (%f, %f) | Merged Score %f \n",
+                    region1_id, region2_id,
                 region1_score, region2_score, merged_region_score);
             }
             // log ratio is (log region1 + log region2) - log score merged
@@ -547,7 +549,7 @@ double compute_log_optimal_incremental_weights(
 
         
         if(scoring_function.any_soft_plan_constraints){
-            double merged_plan_score = scoring_function.compute_merged_plan_score(plan, region1_id, region2_id, is_final_plan);
+            double merged_plan_score = scoring_function.compute_merged_plan_score(plan, region1_id, region2_id, is_final_split).second;
             if(DEBUG_WEIGHTS_VERBOSE){
                 REprintf(
                     "For Regions (%u, %u) Merged Entire Plan Score %f \n",

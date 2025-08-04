@@ -168,6 +168,54 @@ test_that("Additional constraints work", {
 })
 
 
+test_that("Thresholding constraints work", {
+    iowa_map <- redist_map(iowa, ndists = 4, pop_tol = 0.05)
+
+    # ensure that polk and story county are always in the same region
+    polk_precint <- which(iowa_map$name == "Polk")
+    story_precint <- which(iowa_map$name == "Story")
+
+    constr <- redist_constr(iowa_map) %>%
+        add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) %>%
+        add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) %>%
+        add_constr_custom_plan(1, function(plan, seats, num_regions){
+            # return 0 if in the same region
+            if(plan[polk_precint] == plan[story_precint]){
+                return(0)
+            }else{
+                return(1)
+            }
+        }, thresh = .5, only_final_plans = FALSE)
+
+    plans <- redist_smc(iowa_map, 100, constraints = constr, silent = TRUE)
+
+    expect_true(
+        all(get_plans_matrix(plans)[polk_precint, ] == get_plans_matrix(plans)[story_precint, ])
+    )
+
+    # now ensure polk and story are never in the same region
+    constr <- redist_constr(iowa_map) %>%
+        add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) %>%
+        add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) %>%
+        add_constr_custom_plan(1, function(plan, seats, num_regions){
+
+            if(num_regions == 1 || plan[polk_precint] != plan[story_precint] ){
+                return(0)
+            }else{
+                return(1)
+            }
+            # return 0 if in the same region
+
+        }, thresh = .5, only_final_plans = FALSE)
+
+    plans <- redist_smc(iowa_map, 100, constraints = constr, silent = TRUE)
+
+    expect_true(
+        all(get_plans_matrix(plans)[polk_precint, ] != get_plans_matrix(plans)[story_precint, ])
+    )
+})
+
+
 
 test_that("Precise population bounds are enforced", {
     map2 <- fl_map

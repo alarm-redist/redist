@@ -74,9 +74,11 @@ compute_log_target_density <- function(
     # need to pass in the defused quosure
     constraints <- validate_constraints(map=map, constraints=rlang::enquo(constraints))
 
-    unnormalized_log_density <- compute_log_unnormalized_plan_target_density(
+    unnormalized_log_density <- compute_log_unnormalized_target_density_components(
         adj_list, counties, pop,
-        constraints, pop_temper, rho=compactness,
+        constraints,
+        pop_temper=pop_temper, compute_pop_temper=FALSE,
+        rho=compactness,
         ndists=ndists, total_seats = total_seats, num_regions=num_regions,
         district_seat_sizes=district_seat_sizes,
         lower=pop_bounds[1],
@@ -84,6 +86,7 @@ compute_log_target_density <- function(
         upper=pop_bounds[3],
         region_ids=plan_matrix-1L,
         region_sizes=sizes_matrix,
+        output_type="single",
         num_threads=ncores
     )
 
@@ -166,9 +169,11 @@ compute_log_target_density_by_region <- function(
     # need to pass in the defused quosure
     constraints <- validate_constraints(map=map, constraints=rlang::enquo(constraints))
 
-    unnormalized_log_region_densities <- compute_log_unnormalized_region_target_density(
+    unnormalized_log_region_densities <- compute_log_unnormalized_target_density_components(
         adj_list, counties, pop,
-        constraints, pop_temper, rho=compactness,
+        constraints,
+        pop_temper=pop_temper, compute_pop_temper=FALSE,
+        rho=compactness,
         ndists=ndists, total_seats = total_seats, num_regions=num_regions,
         district_seat_sizes=district_seat_sizes,
         lower=pop_bounds[1],
@@ -176,6 +181,7 @@ compute_log_target_density_by_region <- function(
         upper=pop_bounds[3],
         region_ids=plan_matrix-1L,
         region_sizes=sizes_matrix,
+        output_type="components",
         num_threads=ncores
     )
 

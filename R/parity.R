@@ -43,8 +43,6 @@ redist.parity <- function(plans, total_pop) {
         n_distr <- rg[2]
     }
 
-    if(isTRUE)
-
     max_dev(plans, total_pop, n_distr)
 }
 

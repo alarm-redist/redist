@@ -345,13 +345,13 @@ double LinkingEdgePlan::get_log_eff_boundary_len(
 // log ratio is log(plan linking edges) - log(merged plan linking edges)
 std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_adj_regions_and_eff_log_boundary_lens(
     PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
-    ScoringFunction const &scoring_function, 
+    ScoringFunction const &scoring_function, bool const is_final_split,
     USTSampler &ust_sampler, TreeSplitter const &tree_splitter
 ) const{
     // build the multigraph 
     plan_multigraph.build_plan_multigraph(region_ids, num_regions);
     // remove invalid hard constraint merges 
-    plan_multigraph.remove_invalid_hard_constraint_pairs(*this, scoring_function);
+    plan_multigraph.remove_invalid_hard_constraint_pairs(*this, scoring_function, is_final_split);
 
     // compute log linking edges for the plan
     double const plan_log_linking_edge_term = plan_multigraph.compute_log_multigraph_tau(
@@ -473,13 +473,13 @@ std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_a
 
 std::vector<std::pair<RegionID,RegionID>> LinkingEdgePlan::get_valid_smc_merge_regions(
     PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule,
-    ScoringFunction const &scoring_function
+    ScoringFunction const &scoring_function, bool const is_final_split
 ) const{
     // build the multigraph 
     plan_multigraph.build_plan_multigraph(region_ids, num_regions);
 
     // remove invalid hard constraint merges
-    plan_multigraph.remove_invalid_hard_constraint_pairs(*this, scoring_function);
+    plan_multigraph.remove_invalid_hard_constraint_pairs(*this, scoring_function, is_final_split);
 
     std::vector<std::pair<RegionID,RegionID>> valid_adj_region;
     valid_adj_region.reserve(linking_edges.size());
@@ -514,16 +514,18 @@ std::vector<std::pair<RegionID,RegionID>> LinkingEdgePlan::get_valid_smc_merge_r
 
 std::pair<bool, std::vector<std::pair<RegionID,RegionID>>> LinkingEdgePlan::attempt_to_get_valid_mergesplit_pairs(
     PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule,
-    ScoringFunction const &scoring_function
+    ScoringFunction const &scoring_function, bool const is_final_split
 ) const{
     // attempt to build valid multigraph 
     bool const result = plan_multigraph.build_plan_multigraph(region_ids, num_regions);
     // return false if not successful
     if(!result) return std::make_pair(false, std::vector<std::pair<RegionID,RegionID>>{}); 
 
-    // else remove all the invalid hierarchical merge pairs for multigraph computation later
-    // plan_multigraph.remove_invalid_hierarchical_merge_pairs(*this);
-    plan_multigraph.remove_invalid_hard_constraint_pairs(*this, scoring_function);
+    // removes all merges where the either 
+    // - the merged region triggers hard constraint
+    // - the mergd plan triggers hard constraint
+    //      NOTE: For plan based constraints this doesn't work right now
+    plan_multigraph.remove_invalid_hard_constraint_pairs(*this, scoring_function, is_final_split);
 
 
     std::vector<std::pair<RegionID,RegionID>> valid_adj_region;

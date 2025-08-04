@@ -53,14 +53,14 @@ arma::mat prec_cooccur(arma::umat m, arma::uvec idxs, int ncores=0);
 // [[Rcpp::export]]
 NumericMatrix group_pct(IntegerMatrix const &plans_mat, 
     arma::vec const &group_pop, arma::vec const &total_pop, 
-    int const n_distr, int const num_threads = 0);
+    int const n_distr, int const ncores = 1);
 
 /*
  * Tally a variable by district.
  */
 // [[Rcpp::export]]
 NumericMatrix pop_tally(IntegerMatrix const &districts, arma::vec const &pop, int const n_distr,
-                        int const num_threads = 0);
+                        int const ncores = 1);
 
 
 /*
@@ -200,25 +200,28 @@ double eval_grp_hinge(
     {
         auto const region_id = region_ids[i];
         if(region_id == region1_id || region_id == region2_id){
-            subsetted_grp_pop_sum += grp_pop(i);
-            subsetted_total_pop_sum += total_pop(i);
+            subsetted_grp_pop_sum += grp_pop[i];
+            subsetted_total_pop_sum += total_pop[i];
         }
     }
     // do subsetted_grp_pop_sum/subsetted_total_pop_sum
     double frac = std::exp(
         std::log(subsetted_grp_pop_sum) - std::log(subsetted_total_pop_sum)
     );
+    // REprintf("Frac %f\n", frac);
     // figure out which to compare it to
     double target;
     double diff = 1;
     int n_tgt = tgts_grp.size();
     for (int i = 0; i < n_tgt; i++) {
         double new_diff = std::fabs(tgts_grp[i] - frac);
+        // REprintf("Target %d - Diff %f, Target %f \n", i, new_diff, tgts_grp[i]);
         if (new_diff <= diff) {
             diff = new_diff;
             target = tgts_grp[i];
         }
     }
+    // REprintf("%f\n", target - frac);
 
     return std::sqrt(std::max(0.0, target - frac));
 }

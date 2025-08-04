@@ -110,25 +110,25 @@ double get_log_mh_ratio(
 ){
     double log_mh_ratio = 0.0;
     // We add the scores of the current regions and plan
-    log_mh_ratio += scoring_function.compute_region_score(
+    log_mh_ratio += scoring_function.compute_region_soft_score(
         current_plan, region1_id, is_final
     );
-    log_mh_ratio += scoring_function.compute_region_score(
+    log_mh_ratio += scoring_function.compute_region_soft_score(
         current_plan, region2_id, is_final
     );
     log_mh_ratio += scoring_function.compute_plan_score(
-        current_plan, is_final
-    );
+        current_plan
+    ).second;
     // We subtract the scores of the proposed regions and plan
-    log_mh_ratio -= scoring_function.compute_region_score(
+    log_mh_ratio -= scoring_function.compute_region_soft_score(
         proposed_plan, region1_id, is_final
     );
-    log_mh_ratio -= scoring_function.compute_region_score(
+    log_mh_ratio -= scoring_function.compute_region_soft_score(
         proposed_plan, region2_id, is_final
     );
     log_mh_ratio -= scoring_function.compute_plan_score(
-        proposed_plan, is_final
-    );
+        proposed_plan
+    ).second;
     // we compute taus if neccesary 
     if(rho != 1){
         // we add scorse of proposed region
@@ -232,11 +232,11 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     }
     // check new plan is hierarchically valid if needed
     auto build_attempt = new_plan.attempt_to_get_valid_mergesplit_pairs(
-        proposed_plan_multigraph, splitting_schedule, scoring_function
+        proposed_plan_multigraph, splitting_schedule, scoring_function, is_final
     );
     // new plan is valid if build attempt successful and passes any hard constraints 
-    bool new_plan_valid = build_attempt.first && scoring_function.compute_hard_plan_constraints_score(new_plan).first;
-    
+    bool new_plan_valid = build_attempt.first && scoring_function.new_split_ok(new_plan, region1_id, region2_id, is_final);
+
 
     if(DEBUG_MERGING_VERBOSE){
         Rprintf("%d county splits!\n", proposed_plan_multigraph.num_county_region_components);
@@ -399,7 +399,7 @@ int run_merge_split_steps(
 
     // Build the multigraph and get pairs of adj districts
     auto current_plan_adj_region_pairs = plan.attempt_to_get_valid_mergesplit_pairs(
-        current_plan_multigraph, splitting_schedule, scoring_function
+        current_plan_multigraph, splitting_schedule, scoring_function, is_final
     ).second;
     arma::vec current_plan_pair_unnoramalized_wgts = get_adj_pair_unnormalized_weights(
         plan,

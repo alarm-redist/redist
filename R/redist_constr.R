@@ -243,9 +243,10 @@ add_to_constr <- function(constr, name, new_constr) {
 #' The `custom_plan` constraint allows the user to specify their own constraint using
 #' a function which evaluates the entire plan. Unlike the `custom` constraint,
 #' this allows users to penalize an entire plan, not just specific districts.
-#' The provided function `fn` should take two arguments: a 1-indexed vector
+#' The provided function `fn` should take three arguments: a 1-indexed vector
 #' describing the current plan assignment for each unit as its first argument,
-#' and a 1-indexed vector mapping region ids to the number of seats in the region.
+#' a 1-indexed vector mapping region ids to the number of seats in the region,
+#' and the number of regions the plan has.
 #' The function must return a single scalar for each plan where a value of 0
 #' indicates no penalty is applied.
 #' The flexibility of this constraint comes with additional computational
@@ -313,7 +314,7 @@ add_constr_status_quo <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -375,7 +376,7 @@ add_constr_grp_pow <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -433,7 +434,7 @@ add_constr_grp_hinge <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -489,7 +490,7 @@ add_constr_grp_inv_hinge <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -548,7 +549,7 @@ add_constr_compet <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -599,7 +600,7 @@ add_constr_incumbency <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -643,7 +644,7 @@ add_constr_splits <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -696,7 +697,7 @@ add_constr_multisplits <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -749,7 +750,7 @@ add_constr_total_splits <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -801,7 +802,7 @@ add_constr_pop_dev <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -843,7 +844,7 @@ add_constr_segregation <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -900,7 +901,7 @@ add_constr_polsby <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -960,7 +961,7 @@ add_constr_fry_hold <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -1017,7 +1018,7 @@ add_constr_log_st <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -1069,7 +1070,7 @@ add_constr_edges_rem <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -1112,7 +1113,7 @@ add_constr_qps <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -1182,7 +1183,7 @@ add_constr_custom <- function(
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -1247,7 +1248,7 @@ add_constr_custom <- function(
 #' @param fn A function
 #' @rdname constraints
 #' @export
-add_constr_custom_plan <- function(constr, strength, fn, thresh = NULL) {
+add_constr_custom_plan <- function(constr, strength, fn, thresh = NULL, only_final_plans = FALSE) {
   if (!inherits(constr, "redist_constr")) {
     cli::cli_abort("Not a {.cls redist_constr} object")
   }
@@ -1259,7 +1260,7 @@ add_constr_custom_plan <- function(constr, strength, fn, thresh = NULL) {
     # no thresholding
     hard_constraint <- FALSE
     hard_threshold <- 0
-  } else if (!rlang::is_scalar_double(thresh) || !is.finite(thresh)) {
+  } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
     cli::cli_abort("{.arg thresh} must be a finite scalar.")
   } else {
     hard_constraint <- TRUE
@@ -1267,13 +1268,13 @@ add_constr_custom_plan <- function(constr, strength, fn, thresh = NULL) {
   }
 
   args <- rlang::fn_fmls(fn)
-  if (length(args) != 2) {
-    cli::cli_abort("Function must take exactly two arguments.")
+  if (length(args) != 3) {
+    cli::cli_abort("Function must take exactly three arguments.")
   }
 
   constr_env = rlang::fn_env(fn)
   constr_env <- rlang::env(constr_env)
-  # every symbol used in the function (except the 2 arguments)
+  # every symbol used in the function (except the 3 arguments)
   var_names = setdiff(
     all.names(rlang::fn_body(fn)),
     names(args)
@@ -1293,7 +1294,8 @@ add_constr_custom_plan <- function(constr, strength, fn, thresh = NULL) {
 
   if (!is.null(plan <- get_existing(attr(constr, "data")))) {
     fake_sizes <- rep(1L, length(unique(plan)))
-    out <- tryCatch(fn(plan, fake_sizes), error = function(e) {
+    num_regions <- dplyr::n_distinct(plan)
+    out <- tryCatch(fn(plan, fake_sizes, num_regions), error = function(e) {
       cli::cli_abort(c(
         "Ran into an error testing custom constraint
                         on the existing plan:",
@@ -1315,6 +1317,7 @@ add_constr_custom_plan <- function(constr, strength, fn, thresh = NULL) {
   new_constr <- list(
     strength = strength,
     fn = fn,
+    only_final_plans = only_final_plans,
     hard_constraint = hard_constraint,
     hard_threshold = hard_threshold
   )

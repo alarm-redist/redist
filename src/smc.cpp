@@ -97,7 +97,7 @@ void run_smc_step(
         TreeSplitter const &tree_splitters,
         const arma::vec &normalized_cumulative_weights,
         SMCDiagnostics &smc_diagnostics,
-        int const smc_step_num, int const step_num,
+        int const smc_step_num, int const step_num, bool const is_final_split,
         umat &ancestors, const std::vector<int> &lags,
         RcppThread::ThreadPool &pool,
         int verbosity, int diagnostic_level
@@ -209,7 +209,7 @@ void run_smc_step(
             // if successful update the new plan and check if satisfies any other hard constraints 
             if(std::get<0>(edge_search_result)){
                 if(DEBUG_GSMC_PLANS_VERBOSE){
-                    Rprintf("Success, updating Plan %d\n", i);
+                    Rprintf("Tree on Plan %d Successfully split\n", i);
                 } 
                 // make the new plan a copy of the old one 
                 new_plan_ensemble->plan_ptr_vec[i]->shallow_copy(*old_plan_ensemble->plan_ptr_vec[idx]);
@@ -223,16 +223,23 @@ void run_smc_step(
                 );
 
                 // check if there are any additional hard constraints 
-                if(!scoring_function.any_hard_plan_constraints){
+                if(!scoring_function.any_hard_constraints){
                     ok = true;
                 }else{
                     // If custom hard constraints are used then 
                     // the thread pool can only have a single thread or else everything will break
-                    ok = scoring_function.compute_hard_plan_constraints_score(*new_plan_ensemble->plan_ptr_vec[i]).first;
+                    ok = scoring_function.new_split_ok(*new_plan_ensemble->plan_ptr_vec[i], region_id_to_split, new_region_id, is_final_split);
+                    if(DEBUG_GSMC_PLANS_VERBOSE){
+                        Rprintf("Plan %d - New split has %s probability\n",
+                            i, (ok ? "POSITIVE" : "ZERO"));
+                    }
                 }
             }
 
             if(ok){
+                if(DEBUG_GSMC_PLANS_VERBOSE){
+                    Rprintf("Success, updating Plan %d\n", i);
+                }
                 RcppThread::checkUserInterrupt(i % check_int == 0);
                 // means idx was ok 
                 // record index of new plan's parent
@@ -454,6 +461,16 @@ List run_redist_smc(
         lower, target, upper);
     int V = map_params.g.size();
 
+    if(DEBUG_GSMC_PLANS_VERBOSE){
+        REprintf("District Seat Sizes: ");
+        for (int i = 1; i <= total_seats; i++)
+        {
+            REprintf("%d - %s,", i, (map_params.is_district[i] ? "YES DISTRICT" : "NOT A DISTRICT") );
+        }
+        REprintf("\n");
+        
+    }
+
     // Add scoring function (constraints)
     ScoringFunction const scoring_function(
         map_params, constraints, 
@@ -481,6 +498,15 @@ List run_redist_smc(
 
     // Set the sampling space 
     SamplingSpace sampling_space = get_sampling_space(sampling_space_str);
+
+    // Do not support hard plan constraints with linking edge
+    if(sampling_space == SamplingSpace::LinkingEdgeSpace && scoring_function.any_hard_plan_constraints){
+        // The issue right now is for a merged plan we need to know what pairs in the merged plan are valid
+        // For region based constraints merging two regions doens't affect the others but theoretically for the entire plan
+        // a merge in the original plan could be ok and then cease to be ok after two other regions are merged.
+        // Checks need to be added for that 
+        throw Rcpp::exception("Whole Plan constraints with thresholding is not supported for linking edge space sampling yet!\n");
+    }
     
     // Legacy, in future remove
     RNGState rng_state((int) Rcpp::sample(INT_MAX, 1)[0]);
@@ -591,6 +617,11 @@ List run_redist_smc(
 
     // Create a threadpool
     RcppThread::ThreadPool pool(num_threads);
+
+    // If hard custom then switch to 1 thread only
+    if(scoring_function.any_hard_custom_constraints){
+        pool.setNumThreads(1);
+    }
 
     // Now we add everything here to a scope since it won't be needed for the end
     // create the ensemble 
@@ -764,7 +795,7 @@ List run_redist_smc(
                 *tree_splitter_ptr,
                 normalized_cumulative_weights,
                 smc_diagnostics,
-                smc_step_num, step_num,
+                smc_step_num, step_num, is_final_splitting_step,
                 ancestors, lags,
                 pool,
                 verbosity, diagnostic_mode ? 3 : 0

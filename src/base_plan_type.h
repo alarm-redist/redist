@@ -151,8 +151,16 @@ public:
         throw Rcpp::exception("Get Linking edges not Supported for this concrete Plan class!\n");
     };
 
-    // checks if 
+    // methods for checking plans are connected/in population bounds
+    bool check_region_pop_valid(MapParams const &map_params, int const region_id) const;
+    // checks if all region populations 
     std::pair<bool, std::vector<int>> all_region_pops_valid(MapParams const &map_params) const;
+    // checks for disconnected regions
+    std::pair<bool, std::vector<int>> all_regions_connected(
+        Graph const &g, CircularQueue<int> &vertex_queue,
+        std::vector<bool> &vertex_visited,
+        std::vector<bool> &regions_visited
+    );
 
     // Compute the log number of spanning trees on a region 
     double compute_log_region_spanning_trees(MapParams const &map_params,
@@ -168,12 +176,12 @@ public:
     // attempts to build a plan multigraph and return valid merge split pairs 
     virtual std::pair<bool, std::vector<std::pair<RegionID,RegionID>>> attempt_to_get_valid_mergesplit_pairs(
         PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule,
-        ScoringFunction const &scoring_function
+        ScoringFunction const &scoring_function, bool const is_final_split
     ) const;
 
     virtual std::vector<std::pair<RegionID,RegionID>> get_valid_smc_merge_regions(
         PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule,
-        ScoringFunction const &scoring_function
+        ScoringFunction const &scoring_function, bool const is_final_split
     ) const;
 
 
@@ -229,7 +237,7 @@ public:
     // log ratio is log(plan linking edges) - log(merged plan linking edges)
     virtual std::vector<std::tuple<RegionID, RegionID, double>> get_valid_adj_regions_and_eff_log_boundary_lens(
         PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
-        ScoringFunction const &scoring_function, 
+        ScoringFunction const &scoring_function, bool const is_final_split,
         USTSampler &ust_sampler, TreeSplitter const &tree_splitter
     ) const = 0;  
 };
@@ -367,9 +375,14 @@ class RegionPairHash{
         //     values[hash_index] = PairHashData();
         // }
 
+
+        // Returns all the pairs filtering 
+        //  - 
         std::vector<std::pair<
             std::pair<RegionID, RegionID>, PairHashData
-        >> get_all_values(bool const filter_invalid_hier_merges = false) const{
+        >> get_all_values(
+            bool const filter_invalid_hier_merges = false
+        ) const{
             std::vector<std::pair<
             std::pair<RegionID, RegionID>, 
             PairHashData
@@ -386,6 +399,7 @@ class RegionPairHash{
 
             return all_data;
         }
+        
 
 
 
@@ -522,7 +536,8 @@ class PlanMultigraph{
         // Removes pairs where merging them makes a plan that 
         // doesn't satisfy hard constraints 
         void remove_invalid_hard_constraint_pairs(
-            Plan const &plan, ScoringFunction const &scoring_function 
+            Plan const &plan, ScoringFunction const &scoring_function,
+            bool const is_final_split
         );
 
         // Removes pairs where merging them would create a hierarchicall

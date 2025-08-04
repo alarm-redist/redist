@@ -198,7 +198,7 @@ validate_sample_space_and_splitting_method <- function(
   # now check if split params was passed in
   if (!is.null(split_params) && !is.list(split_params)) {
     cli::cli_abort("{.arg split_params} must be either `NULL` or a list!")
-  } else if (is.null(split_params)) {
+  }else if (is.null(split_params)) {
     if (split_method == NAIVE_K_SPLITTING) {
       split_params <- list(
         adapt_k_thresh = .99,
@@ -235,10 +235,10 @@ validate_sample_space_and_splitting_method <- function(
       # now check its included
       if (!"adapt_k_thresh" %in% names(split_params)) {
         # default is .99
-        forward_kernel_params$adapt_k_thresh <- .99
+          split_params$adapt_k_thresh <- .99
       }
       # check its a scalar
-      if (!rlang::is_scalar_double(split_params$adapt_k_thresh)) {
+      if (!rlang::is_scalar_atomic(split_params$adapt_k_thresh)) {
         cli::cli_abort("{.arg adapt_k_thresh} must be a number")
       }
       # now check its between 0 and 1

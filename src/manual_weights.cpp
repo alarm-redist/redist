@@ -9,146 +9,30 @@ bool DEBUG_MANUAL_WEIGHTS_VERBOSE = false;
 
 #include "manual_weights.h"
 
-// TODO need to add checks for 
-// - population tolerance is ok
-// - plans are connected
-Rcpp::NumericVector compute_log_unnormalized_plan_target_density(
+/*
+ *
+ * Computes the contribution to the log likelihood each each region 
+ * and anything that depends on the entire plan. 
+ * Has the option
+ */
+Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
     List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
-    List const &constraints, double const pop_temper,  double const rho,
+    List const &constraints, 
+    double const pop_temper, bool const compute_pop_temper,
+    double const rho,
     int const ndists, int const total_seats, int const num_regions,
     Rcpp::IntegerVector const &district_seat_sizes,
     double const lower, double const target, double const upper,
     Rcpp::IntegerMatrix const &region_ids, 
     Rcpp::IntegerMatrix const &region_sizes,
-    int num_threads
-){
-    // create the map param object
-    MapParams map_params(
-        adj_list, counties, pop, 
-        ndists, total_seats, as<std::vector<int>>(district_seat_sizes),
-        lower, target, upper);
-    // Add hard constraints to scoring function 
-    constraints["plan_valid_district_sizes"] = true;
-    // Create the scoring function 
-    ScoringFunction scoring_function(map_params, constraints, pop_temper, true);
-
-    // create thread pool
-    RcppThread::ThreadPool pool = get_thread_pool(
-        scoring_function.any_soft_custom_constraints || scoring_function.any_hard_custom_constraints ? 1 : num_threads
-    );
-    // Create the plan objects
-    int num_plans = region_ids.ncol();
-
-    int global_rng_seed2 = (int) Rcpp::sample(INT_MAX, 1)[0];
-    std::vector<RNGState> rng_states;rng_states.reserve(1);
-    rng_states.emplace_back(global_rng_seed2, 6);
-
-    // fake splitting schedule, don't actually use
-    // Just need for constructor 
-    auto splitting_schedule_ptr = std::make_unique<PureMSSplittingSchedule>(ndists, total_seats, as<std::vector<int>>(district_seat_sizes));
-
-
-    PlanEnsemble plan_ensemble(
-        map_params, *splitting_schedule_ptr,
-        num_regions,
-        num_plans,
-        SamplingSpace::GraphSpace,
-        region_ids, 
-        region_sizes, rng_states,
-        pool 
-    );
-
-    auto const sampling_space = SamplingSpace::GraphSpace;
-    
-    // check if final splits (ie don't do pop_temper)
-    bool is_final = num_regions == ndists;
-    Rcpp::NumericVector log_unnormalized_density(num_plans);
-
-    const int check_int = 50; // check for interrupts every _ iterations
-    Rcpp::Rcout << "Computing Log Target Density!" << std::endl;
-    RcppThread::ProgressBar bar(num_plans, 1);
-    pool.parallelFor(0, num_plans, [&] (int i) {
-        static thread_local PlanMultigraph plan_multigraph(
-            map_params, 
-            sampling_space == SamplingSpace::LinkingEdgeSpace
-        );
-        static thread_local std::vector<bool> county_component_lookup(
-            num_regions * map_params.num_counties, false
-        );
-
-        if(DEBUG_MANUAL_WEIGHTS_VERBOSE){
-        auto test_result = plan_multigraph.is_hierarchically_connected(
-            *plan_ensemble.plan_ptr_vec[i], county_component_lookup
-        );
-        Rcpp::Rcout << "Result is " << (test_result.first ? "TRUE" : "FALSE") 
-                    << " and " << test_result.second << " components!" << std::endl; 
-        }
-
-        bool hierarchically_valid = plan_multigraph.is_hierarchically_valid(
-            *plan_ensemble.plan_ptr_vec[i], county_component_lookup
-        );
-
-        if(DEBUG_MANUAL_WEIGHTS_VERBOSE){
-        Rcpp::Rcout << "Result is " << (hierarchically_valid ? "TRUE" : "FALSE") 
-                    << std::endl; 
-        }
-
-
-        // If not hierarchically valid then set log(target) = -Inf
-        if(!hierarchically_valid){
-            log_unnormalized_density[i] = -arma::math::inf();
-            ++bar;
-            RcppThread::checkUserInterrupt(i % check_int == 0);
-            return; // return to break the lambda 
-        }
-        // Now check hard constraints 
-        auto hard_score = scoring_function.compute_hard_plan_constraints_score(*plan_ensemble.plan_ptr_vec[i]);
-        if(!hard_score.first){
-            log_unnormalized_density[i] = -arma::math::inf();
-            ++bar;
-            RcppThread::checkUserInterrupt(i % check_int == 0);
-            return; // return to break the lambda 
-        }
-
-        
-        log_unnormalized_density[i] = -hard_score.second;
-        // compute the tau for the plan if we care about it
-        if(rho != 0){
-            log_unnormalized_density[i] += rho * plan_ensemble.plan_ptr_vec[i]->compute_log_plan_spanning_trees(map_params);
-        }
-        // subtract score from each region
-        for (size_t region_id = 0; region_id < num_regions; region_id++)
-        {
-            log_unnormalized_density[i] -= scoring_function.compute_region_score(
-                *plan_ensemble.plan_ptr_vec[i], region_id, is_final
-            );
-        }
-        
-        ++bar;
-        RcppThread::checkUserInterrupt(i % check_int == 0);
-    });
-
-    pool.wait();
-
-    return log_unnormalized_density;
-}
-
-
-// returns target density term for each region 
-Rcpp::NumericMatrix compute_log_unnormalized_region_target_density(
-    List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
-    List const &constraints, double const pop_temper,  double const rho,
-    int const ndists, int const total_seats, int const num_regions,
-    Rcpp::IntegerVector const &district_seat_sizes,
-    double const lower, double const target, double const upper,
-    Rcpp::IntegerMatrix const &region_ids, 
-    Rcpp::IntegerMatrix const &region_sizes,
+    std::string const &output_type,
     int const num_threads
 ){
     // create the map param object
     MapParams map_params(
         adj_list, counties, pop, 
-        ndists, total_seats, as<std::vector<int>>(district_seat_sizes),
+        ndists, total_seats, 
+        as<std::vector<int>>(district_seat_sizes),
         lower, target, upper);
     
     // Add hard constraints to scoring function 
@@ -173,76 +57,172 @@ Rcpp::NumericMatrix compute_log_unnormalized_region_target_density(
 
     PlanEnsemble plan_ensemble(
         map_params, *splitting_schedule_ptr,
-         num_regions,
+        num_regions,
         num_plans,
         SamplingSpace::GraphSpace,
         region_ids, 
         region_sizes, rng_states,
         pool 
     );
-    auto const sampling_space = SamplingSpace::LinkingEdgeSpace;
-    // check if final splits (ie don't do pop_temper)
-    bool is_final = num_regions == ndists;
-    Rcpp::NumericMatrix log_unnormalized_region_densities(num_regions, num_plans);
+
+    // we say its final if we don't want to compute pop temper
+    bool is_final = !compute_pop_temper;
+
+    // if its single density that means we only care about the 
+    // whole thing, not the components
+    bool just_single_density = output_type == "single";
+
+    Rcpp::NumericMatrix log_unnormalized_component_densities(
+        just_single_density ? 1 : num_regions + 1, 
+        num_plans);
+
+    log_unnormalized_component_densities.fill(0.0);
+
+
+    // single thread if any custom constraints
+    if(scoring_function.any_soft_custom_constraints || scoring_function.any_hard_custom_constraints){
+        pool.setNumThreads(1);
+    }
 
     const int check_int = 50; // check for interrupts every _ iterations
     Rcpp::Rcout << "Computing Log Target Density!" << std::endl;
     RcppThread::ProgressBar bar(num_plans, 1);
     pool.parallelFor(0, num_plans, [&] (int i) {
-        static thread_local PlanMultigraph plan_multigraph(
-            map_params, 
-            sampling_space == SamplingSpace::LinkingEdgeSpace
-        );
+        static thread_local PlanMultigraph plan_multigraph(map_params, false);
         static thread_local std::vector<bool> county_component_lookup(
             num_regions * map_params.num_counties, false
         );
+        static thread_local CircularQueue<int> vertex_queue(map_params.V);
+        static thread_local std::vector<bool> vertices_visited(map_params.V);
+        static thread_local std::vector<bool> regions_visited(num_regions);
+        static thread_local std::vector<bool> zero_prob_component(num_regions+1);
+        // we use this to see if a component has 0 probability meaning we can skip other calculations 
+        std::fill(zero_prob_component.begin(), zero_prob_component.end(), false);
+        // if only the entire plan 
+        bool entire_prob_zero = false;
 
+        // first check each population is ok 
+        auto pop_valid_result = plan_ensemble.plan_ptr_vec[i]->all_region_pops_valid(
+            map_params
+        );
+        // get any regions with 0 prob aka neg infinity
+        for (auto const &bad_region_id: pop_valid_result.second){
+            if(just_single_density){
+                log_unnormalized_component_densities(0, i) = R_NegInf;
+                entire_prob_zero = true;
+            }else{
+                log_unnormalized_component_densities(bad_region_id, i) = R_NegInf;
+                zero_prob_component[bad_region_id] = true;
+            }
+        }
+        if(entire_prob_zero){
+            ++bar;
+            RcppThread::checkUserInterrupt(i % check_int == 0);
+            return; // return to break the loop in the lambda 
+        }
+        // Now check for disconnected regions 
+        auto disconnected_result = plan_ensemble.plan_ptr_vec[i]->all_regions_connected(
+            map_params.g, vertex_queue, vertices_visited, regions_visited
+        );
+        for (auto const &bad_region_id: disconnected_result.second){
+            if(just_single_density){
+                log_unnormalized_component_densities(0, i) = R_NegInf;
+                entire_prob_zero = true;
+            }else{
+                log_unnormalized_component_densities(bad_region_id, i) = R_NegInf;
+                zero_prob_component[bad_region_id] = true;
+            }
+        }
+        if(entire_prob_zero){
+            ++bar;
+            RcppThread::checkUserInterrupt(i % check_int == 0);
+            return; // return to break the loop in the lambda 
+        }
+
+        // Now check for hierarchiaclly connected
         bool hierarchically_valid = plan_multigraph.is_hierarchically_valid(
             *plan_ensemble.plan_ptr_vec[i], county_component_lookup
         );
 
 
-
-        // auto county_splits_result = county_components.count_county_splits(plans_vec[i]);
-        // check number of counties is valid and no double county intersect region components
-        // if too many then log(target) = -Inf
-
-        // TODO only check for each region 
-
         if(!hierarchically_valid){
-            for (size_t region_id = 0; region_id < num_regions; region_id++)
-            {
-                log_unnormalized_region_densities(region_id, i) = -arma::math::inf();
+            if(just_single_density){
+                log_unnormalized_component_densities(0, i) = R_NegInf;
+            }else{
+                for (size_t region_id = 0; region_id < num_regions; region_id++)
+                {
+                    log_unnormalized_component_densities(region_id, i) = R_NegInf;
+                }
             }
             ++bar;
             RcppThread::checkUserInterrupt(i % check_int == 0);
-            return; // return to break the lambda 
-        }
-        // Now check hard constraints 
-        auto hard_score = scoring_function.compute_hard_plan_constraints_score(*plan_ensemble.plan_ptr_vec[i]);
-        if(!hard_score.first){
-            for (size_t region_id = 0; region_id < num_regions; region_id++)
-            {
-                log_unnormalized_region_densities(region_id, i) = -arma::math::inf();
-            }
-            ++bar;
-            RcppThread::checkUserInterrupt(i % check_int == 0);
-            return; // return to break the lambda 
+            return; // return to break the loop in the lambda 
         }
 
+        // now compute the plan only parts 
+        auto plan_only_score_result = scoring_function.compute_plan_score(
+            *plan_ensemble.plan_ptr_vec[i]
+        );
+
+        if(!plan_only_score_result.first){
+            if(just_single_density){
+                log_unnormalized_component_densities(0, i) = R_NegInf;
+                entire_prob_zero = true;
+                ++bar;
+                RcppThread::checkUserInterrupt(i % check_int == 0);
+                return; // return to break the loop in the lambda 
+            }else{
+                log_unnormalized_component_densities(num_regions, i) = R_NegInf;
+            }
+        }else{
+            if(just_single_density){
+                log_unnormalized_component_densities(0, i) -= plan_only_score_result.second;
+            }else{
+                log_unnormalized_component_densities(num_regions, i) -= plan_only_score_result.second;
+            }
+        }
 
         // compute contribution for each region
         for (size_t region_id = 0; region_id < num_regions; region_id++)
         {
-            log_unnormalized_region_densities(region_id, i) = 0.0;
-            if(rho != 0){
-                log_unnormalized_region_densities(region_id, i) += rho * plan_ensemble.plan_ptr_vec[i]->compute_log_region_spanning_trees(
-                    map_params, region_id
-                );
-            }
-            log_unnormalized_region_densities(region_id, i) -= scoring_function.compute_region_score(
+            // skip if already probability zero 
+            if(zero_prob_component[region_id]) continue;
+            bool region_prob_zero = false;
+
+            auto region_score_result = scoring_function.compute_region_full_score(
                 *plan_ensemble.plan_ptr_vec[i], region_id, is_final
             );
+            if(!region_score_result.first){
+                if(just_single_density){
+                    log_unnormalized_component_densities(0, i) = R_NegInf;
+                    entire_prob_zero = true;
+                    ++bar;
+                    RcppThread::checkUserInterrupt(i % check_int == 0);
+                    return; // return to break the loop in the lambda 
+                }else{
+                    log_unnormalized_component_densities(region_id, i) = R_NegInf;
+                    region_prob_zero = 0;
+                }
+            }else{
+                if(just_single_density){
+                    log_unnormalized_component_densities(0, i) -= region_score_result.second;
+                }else{
+                    log_unnormalized_component_densities(region_id, i) -= region_score_result.second;
+                }
+            }
+
+            if(region_prob_zero) continue;
+
+            if(rho != 0){
+                double region_tau = rho * plan_ensemble.plan_ptr_vec[i]->compute_log_region_spanning_trees(
+                    map_params, region_id
+                );
+                if(just_single_density){
+                    log_unnormalized_component_densities(0, i) += region_tau;
+                }else{
+                    log_unnormalized_component_densities(region_id, i) += region_tau;
+                }
+            }
         }
         
         ++bar;
@@ -251,8 +231,9 @@ Rcpp::NumericMatrix compute_log_unnormalized_region_target_density(
 
     pool.wait();
 
-    return log_unnormalized_region_densities;
+    return log_unnormalized_component_densities;
 }
+
 
 
 arma::vec compute_plans_log_optimal_weights(
