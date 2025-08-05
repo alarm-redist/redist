@@ -158,7 +158,7 @@ public:
     // checks for disconnected regions
     std::pair<bool, std::vector<int>> all_regions_connected(
         Graph const &g, CircularQueue<int> &vertex_queue,
-        std::vector<bool> &vertex_visited,
+        std::vector<bool> &vertices_visited,
         std::vector<bool> &regions_visited
     );
 

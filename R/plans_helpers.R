@@ -174,7 +174,11 @@ plan_parity <- function(map, .data = pl(), ncores = 1) {
   }
 
   return(rep(
-    max_dev(get_plans_matrix(.data), total_pop, ndists, ncores),
+    max_dev(
+      districts = get_plans_matrix(.data), 
+      pop = total_pop, 
+      n_distr = ndists, 
+      num_threads = ncores),
     each = ndists
   ))
 }

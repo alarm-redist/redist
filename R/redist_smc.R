@@ -885,7 +885,7 @@ get_splitting_schedule <- function(split_params, districting_scheme){
         }
     }
 
-    return(splitting_size_regime)
+    splitting_size_regime
 }
 
 
@@ -989,7 +989,7 @@ get_init_plan_params <- function(
         init_num_regions = init_num_regions
     )
 
-    return(init_plans_params)
+    init_plans_params
 }
 
 
@@ -1043,7 +1043,7 @@ extract_control_params <- function(control){
         weight_type = weight_type
     )
 
-    return(control_params)
+    control_params
 }
 
 
@@ -1141,7 +1141,7 @@ extract_ms_params <- function(ms_params, total_smc_steps){
         merge_split_step_vec = merge_split_step_vec
     )
 
-    return(extracted_ms_params)
+    extracted_ms_params
 }
 
 

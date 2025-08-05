@@ -104,7 +104,7 @@ compute_log_target_density <- function(
 
     dim(unnormalized_log_density) <- NULL
 
-    return(unnormalized_log_density)
+    unnormalized_log_density
 }
 
 
@@ -203,7 +203,7 @@ compute_log_target_density_by_region <- function(
         cli::cli_warn("{num_prob_zero} of the {prod(dim(unnormalized_log_region_densities))} regions have probability 0!")
     }
 
-    return(unnormalized_log_region_densities)
+    unnormalized_log_region_densities
 }
 
 
@@ -293,5 +293,5 @@ compute_log_optimal_weights <- function(
         cli::cli_warn("{num_prob_zero} of the plans have probability 0!")
     }
 
-    return(unnormalized_log_density)
+    unnormalized_log_density
 }
