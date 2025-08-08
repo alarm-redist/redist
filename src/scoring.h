@@ -74,7 +74,7 @@ class PopTemperConstraint : public RegionConstraint {
     private:
         double const target;
         int const ndists;
-        double const pop_temper;
+        double const pop_temper; 
 
     public:
         PopTemperConstraint(
@@ -337,15 +337,18 @@ class PolsbyConstraint : public RegionConstraint {
 
 class CustomRegionConstraint : public RegionConstraint {
     private:
-        Rcpp::Function const fn;        
+        Rcpp::Function const fn;
+        mutable Rcpp::IntegerVector rcpp_plan_wrap;    
 
     public:
         CustomRegionConstraint(
-            double const strength, Rcpp::Function fn,
+            double const strength, int const V,
+            Rcpp::Function fn,
             bool const score_districts_only, bool const hard_constraint, double const hard_threshold
         ) :
             RegionConstraint(score_districts_only, strength, hard_constraint, hard_threshold),
-            fn(Rcpp::clone(fn))
+            fn(Rcpp::clone(fn)),
+            rcpp_plan_wrap(V)
             {}
     
         double compute_raw_region_constraint_score(const Plan &plan, int const region_id) const override;
@@ -386,6 +389,40 @@ class PlanConstraint {
 
         // just checks if plan is ok, doesn't save score
         bool plan_constraint_ok(const Plan &plan) const;
+
+};
+
+
+// Splits but on the entire plan
+// assume admin is 1 indexed and only has values 1:num_admin_units
+class PlanSplitsConstraint : public PlanConstraint {
+    private:
+        arma::uvec const admin_units;
+        int const num_admin_units;
+        Tree const admin_forest;
+        std::vector<int> const admin_forest_roots;
+        mutable std::vector<int> region_reindex_vec;
+        mutable CircularQueue<int> vertex_queue;
+
+
+    public:
+        PlanSplitsConstraint(
+            double const strength, int const ndists,
+            arma::uvec const admin_units, Tree const &admin_forest, 
+            std::vector<int> const &admin_forest_roots,
+            bool const score_final_plans_only,
+            bool const hard_constraint, double const hard_threshold):
+            PlanConstraint(strength, score_final_plans_only, hard_constraint, hard_threshold),
+            admin_units(admin_units), 
+            num_admin_units(arma::max(admin_units)),
+            admin_forest(admin_forest), 
+            admin_forest_roots(admin_forest_roots),
+            region_reindex_vec(ndists),
+            vertex_queue(admin_forest.size())
+            {};
+        // computes score for a plan 
+        double compute_raw_plan_constraint_score(const Plan &plan) const override;
+        double compute_raw_merged_plan_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
 
 };
 
@@ -441,10 +478,11 @@ class ScoringFunction {
         // district_rho_only is true 
         // the smc is a legacy flag needed for splits. 
         // Ideally update functions and remove in the future 
+        // thread id is for dealing with custom constraints 
         ScoringFunction(
             const MapParams &map_params, Rcpp::List const &constraints, 
-            // double const rho, bool const district_rho_only,
-            double const pop_temper, bool const smc);
+            // double const rho, 
+            double const pop_temper, bool const smc, int const thread_id = 0);
 
         const MapParams &map_params;
         // 
@@ -459,9 +497,6 @@ class ScoringFunction {
         int total_soft_region_constraints;
         int num_hard_region_constraints;
         // counts plan constraints 
-        int num_non_final_soft_plan_constraints; // applied to all but final split
-        int num_final_soft_plan_constraints; // applied to only final split
-        int all_rounds_soft_plan_constraints; // applied to all splits
         int total_soft_plan_constraints;
         int num_hard_plan_constraints; //
 

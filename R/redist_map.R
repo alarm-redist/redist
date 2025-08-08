@@ -431,6 +431,27 @@ get_existing <- function(x) {
     if (is.null(exist_col)) NULL else x[[exist_col]]
 }
 
+
+#' Extract the existing seat counts from a \code{redist_map} object
+#'
+#' @param x the \code{redist_map} object
+#' @returns an integer vector of the seats in each district
+#' @concept prepare
+#' @export
+get_existing_seats <- function(x) {
+    if (!inherits(x, "redist_map")) cli::cli_abort("Not a {.cls redist_map}")
+
+    exist_col <- attr(x, "existing_col")
+    if (is.null(exist_col)){
+        return(NULL)
+    }else if(isTRUE(attr(x, "districting_scheme") == "multiple")){
+        return(attr(x, "existing_col_seats"))
+    }else{
+        return(rep(1L, attr(x, "ndists")))
+    }
+
+}
+
 #' Extract the target seat population from a \code{redist_map} object
 #'
 #' @param x the \code{redist_map} object

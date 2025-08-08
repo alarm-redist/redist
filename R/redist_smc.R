@@ -5,8 +5,6 @@
 ## Purpose: Wrapper for running smc cpp code
 ##############################################
 
-
-
 #' Generalized SMCS Redistricting Sampler (O'Sullivan, McCartan and Imai forthcoming)
 #'
 #'
@@ -244,7 +242,9 @@ redist_smc <- function(
   silent = FALSE,
   diagnostics = c("basic", "all"),
   control = list(weight_type = "optimal", nproc = 1L),
-  adapt_k_thresh = .99, truncate = (compactness != 1), trunc_fn = redist_quantile_trunc,
+  adapt_k_thresh = .99,
+  truncate = (compactness != 1),
+  trunc_fn = redist_quantile_trunc,
   final_infl = 1
 ) {
   if (!missing(adapt_k_thresh)) {
@@ -312,8 +312,7 @@ redist_smc <- function(
   # check that the seat sizes are a range
   if (
     any(
-        seats_range !=
-        seq.int(from = min(seats_range), to = max(seats_range))
+      seats_range != seq.int(from = min(seats_range), to = max(seats_range))
     )
   ) {
     cli::cli_abort(
@@ -322,26 +321,35 @@ redist_smc <- function(
   }
   # check that no district is the sum of two other
   for (d_size1 in seats_range) {
-      for (d_size2 in seats_range) {
-        if((d_size1 + d_size2) %in% seats_range){
-            cli::cli_abort("SMC does not support {.arg seats_range} where one district's seats is equal to the sum of two others")
-        }
+    for (d_size2 in seats_range) {
+      if ((d_size1 + d_size2) %in% seats_range) {
+        cli::cli_abort(
+          "SMC does not support {.arg seats_range} where one district's seats is equal to the sum of two others"
+        )
       }
+    }
   }
 
   # get the splitting size regime
-  splitting_size_regime <- get_splitting_schedule(split_params, districting_scheme)
+  splitting_size_regime <- get_splitting_schedule(
+    split_params,
+    districting_scheme
+  )
 
   # get initial plan parameters
   initial_plan_params <- get_init_plan_params(
-        nsims, nseats, pop, pop_bounds,
-        init_particles, init_seats, init_weights
+    nsims,
+    nseats,
+    pop,
+    pop_bounds,
+    init_particles,
+    init_seats,
+    init_weights
   )
   init_particles <- initial_plan_params$init_particles
   init_seats <- initial_plan_params$init_seats
   initial_log_weights <- initial_plan_params$initial_log_weights
   init_num_regions <- initial_plan_params$init_num_regions
-
 
   if (is.null(n_steps)) {
     n_steps <- ndists - init_num_regions
@@ -353,10 +361,10 @@ redist_smc <- function(
 
   #validate the splitting method and params
   split_stuff_list <- validate_sample_space_and_splitting_method(
-      sampling_space,
-      split_method,
-      split_params,
-      n_steps
+    sampling_space,
+    split_method,
+    split_params,
+    n_steps
   )
 
   sampling_space <- split_stuff_list$sampling_space
@@ -380,27 +388,29 @@ redist_smc <- function(
   ms_frequency <- ms_params_list$ms_frequency
   merge_split_step_vec <- ms_params_list$merge_split_step_vec
 
-
   # get the step types
   step_types <- ifelse(merge_split_step_vec, "ms", "smc")
-  if(sum(!merge_split_step_vec) != total_smc_steps){
-    cli::cli_abort("In {.field step_types} the number of smc steps must be equal to {.field total_smc_steps}")
+  if (sum(!merge_split_step_vec) != total_smc_steps) {
+    cli::cli_abort(
+      "In {.field step_types} the number of smc steps must be equal to {.field total_smc_steps}"
+    )
   }
   # assert first step is not smc
-  if(merge_split_step_vec[1]){
-      cli::cli_abort("The first step cannot be mergesplit! An SMC step must be run first!")
+  if (merge_split_step_vec[1]) {
+    cli::cli_abort(
+      "The first step cannot be mergesplit! An SMC step must be run first!"
+    )
   }
   total_ms_steps <- sum(merge_split_step_vec)
   # total number of steps to run
   total_steps <- total_smc_steps + total_ms_steps
 
-
   # if run_ms is true then seq_alpha must be 1
   if (run_ms && seq_alpha != 1) {
-      seq_alpha <- 1L
-      cli::cli_warn(
-          "{.arg seq_alpha} must be set to 1 if any mergesplit steps are being run!"
-      )
+    seq_alpha <- 1L
+    cli::cli_warn(
+      "{.arg seq_alpha} must be set to 1 if any mergesplit steps are being run!"
+    )
   }
 
   # compute lags thing
@@ -569,7 +579,6 @@ redist_smc <- function(
       # Make integer since arma::umat passed back to R as double
       storage.mode(algout$ancestors) <- "integer"
 
-
       diagnostic_mode = diagnostic_level == 1
 
       if (!diagnostic_mode) {
@@ -641,7 +650,6 @@ redist_smc <- function(
         # now adjust for the resampling
         algout$ancestors <- algout$ancestors[rs_idx, , drop = FALSE]
 
-
         # add a final column for the resampling since for the resampled plans
         # plan[i] parent is rs_idx[i]
         algout$parent_index <- cbind(
@@ -660,15 +668,12 @@ redist_smc <- function(
         nunique_parent_indices <- algout$nunique_parent_indices
       }
 
-
       t2_run <- Sys.time()
-
 
       # make sizes null if needed
       if (!algout$plan_seats_saved) {
         algout$seats <- NULL
       }
-
 
       if (!is.nan(n_eff) && n_eff / nsims <= 0.05) {
         cli::cli_warn(c(
@@ -685,8 +690,6 @@ redist_smc <- function(
 
       # add the numerically stable weights back
       algout$wgt <- wgt
-
-
 
       # flatten the region sizes pops by column into a long vector
       dim(algout$seats) <- NULL
@@ -727,8 +730,8 @@ redist_smc <- function(
 
       # add cut k for graph space
       run_forward_kernel_params <- forward_kernel_params
-      if(sampling_space == GRAPH_PLAN_SPACE_SAMPLING){
-          run_forward_kernel_params$cut_k_used <- algout$cut_k_vals
+      if (sampling_space == GRAPH_PLAN_SPACE_SAMPLING) {
+        run_forward_kernel_params$cut_k_used <- algout$cut_k_vals
       }
 
       # add high level diagnostic stuff
@@ -747,10 +750,10 @@ redist_smc <- function(
       )
 
       if (verbosity >= 1 && runs > 1) {
-          cli::cli_text(
-              "Chain {chain}: {format(nsims, big.mark=',')} plans sampled in
+        cli::cli_text(
+          "Chain {chain}: {format(nsims, big.mark=',')} plans sampled in
                  {format(t2_run - t1_run, digits=2)}"
-          )
+        )
       }
 
       algout
@@ -788,12 +791,11 @@ redist_smc <- function(
 
   alg_type <- ifelse(run_ms, "smc_ms", "smc")
 
-
   out <- new_redist_plans(
-      plans = plans,
-      map = map,
-      algorithm = alg_type,
-    wgt =wgt,
+    plans = plans,
+    map = map,
+    algorithm = alg_type,
+    wgt = wgt,
     inputs_safe = TRUE,
     resampled = resample,
     distr_pop = region_pops,
@@ -810,7 +812,6 @@ redist_smc <- function(
     total_runtime = t2 - t1
   )
 
-
   if (runs > 1) {
     out <- mutate(
       out,
@@ -821,9 +822,19 @@ redist_smc <- function(
 
   exist_name <- attr(map, "existing_col")
   if (!is.null(exist_name) && !isFALSE(ref_name) && ndists == final_dists) {
-
     ref_name <- if (!is.null(ref_name)) ref_name else exist_name
-    out <- add_reference(out, map[[exist_name]], ref_name)
+
+    if(districting_scheme == "multiple"){
+        ref_seats <- attr(map, "existing_col_seats")
+    }else{
+        ref_seats <- rep(1L, ndists)
+    }
+
+    out <- add_reference(
+        plans = out,
+        ref_plan = map[[exist_name]],
+        name = ref_name,
+        ref_seats = ref_seats)
   }
 
   out
@@ -842,52 +853,52 @@ redist_smc <- function(
 #' @returns A list with the following
 #'     - `splitting_schedule`: The splitting schedule for SMC
 #' @noRd
-get_splitting_schedule <- function(split_params, districting_scheme){
-
-    # setting the splitting size regime
-    if ("splitting_schedule" %in% names(split_params)) {
-        splitting_schedule <- split_params[["splitting_schedule"]]
-        if (splitting_schedule == "split_district_only") {
-            if (districting_scheme == "single") {
-                splitting_size_regime = "split_district_only"
-            } else if (districting_scheme == "multiple") {
-                splitting_size_regime = "split_district_only_mmd"
-            } else {
-                cli::cli_abort(
-                    "Districting scheme {districting_scheme} is not supported!"
-                )
-            }
-        } else if (splitting_schedule == "any_valid_sizes") {
-            if (districting_scheme == "single") {
-                splitting_size_regime = "any_valid_sizes"
-            } else if (districting_scheme == "multiple") {
-                cli::cli_abort(
-                    "Generaliezd region splits are not supported for Multi-member districting!"
-                )
-            } else {
-                cli::cli_abort(
-                    "Districting scheme {districting_scheme} is not supported!"
-                )
-            }
-        } else {
-            cli::cli_abort("{.arg splitting_schedule} must be either {.arg any_valid_sizes} or {.arg split_district_only}")
-        }
+get_splitting_schedule <- function(split_params, districting_scheme) {
+  # setting the splitting size regime
+  if ("splitting_schedule" %in% names(split_params)) {
+    splitting_schedule <- split_params[["splitting_schedule"]]
+    if (splitting_schedule == "split_district_only") {
+      if (districting_scheme == "single") {
+        splitting_size_regime = "split_district_only"
+      } else if (districting_scheme == "multiple") {
+        splitting_size_regime = "split_district_only_mmd"
+      } else {
+        cli::cli_abort(
+          "Districting scheme {districting_scheme} is not supported!"
+        )
+      }
+    } else if (splitting_schedule == "any_valid_sizes") {
+      if (districting_scheme == "single") {
+        splitting_size_regime = "any_valid_sizes"
+      } else if (districting_scheme == "multiple") {
+        cli::cli_abort(
+          "Generaliezd region splits are not supported for Multi-member districting!"
+        )
+      } else {
+        cli::cli_abort(
+          "Districting scheme {districting_scheme} is not supported!"
+        )
+      }
     } else {
-        # default to  district
-        if (districting_scheme == "single") {
-            splitting_size_regime = "split_district_only"
-        } else if (districting_scheme == "multiple") {
-            splitting_size_regime = "split_district_only_mmd"
-        } else {
-            cli::cli_abort(
-                "Districting scheme {districting_scheme} is not supported!"
-            )
-        }
+      cli::cli_abort(
+        "{.arg splitting_schedule} must be either {.arg any_valid_sizes} or {.arg split_district_only}"
+      )
     }
+  } else {
+    # default to  district
+    if (districting_scheme == "single") {
+      splitting_size_regime = "split_district_only"
+    } else if (districting_scheme == "multiple") {
+      splitting_size_regime = "split_district_only_mmd"
+    } else {
+      cli::cli_abort(
+        "Districting scheme {districting_scheme} is not supported!"
+      )
+    }
+  }
 
-    splitting_size_regime
+  splitting_size_regime
 }
-
 
 
 #' Gets starting plan related parameters
@@ -902,94 +913,95 @@ get_splitting_schedule <- function(split_params, districting_scheme){
 #'     - `init_num_regions`: The number of initial regions
 #' @noRd
 get_init_plan_params <- function(
-        nsims, nseats, pop, pop_bounds,
-        init_particles, init_seats, init_weights
-){
-    # handle particle, seats, and weights inits
-    if (is.null(init_particles)) {
-        # if no initial plans passed in then create empty matrix
-        init_particles <- matrix(0L)
-        init_seats <- matrix(0L)
-        init_num_regions <- 1L
-    } else {
-        if (inherits(init_particles, "redist_plans")) {
-            if (is.null(init_seats)) {
-                init_seats <- get_seats_matrix(init_particles)
-            }
-            if (is.null(init_weights)) {
-                # get weights if not resampled, else just set all equal to 1
-                init_plan_weights <- get_plans_weights(init_particles)
-                if(isFALSE(attr(init_plan_weights, "resampled"))){
-                    init_weights <- rep(1, nsims)
-                }else{
-                    init_weights <- as.vector(init_plan_weights)
-                }
-            }
-            init_particles <- get_plans_matrix(init_particles) - 1L
-        } else if (is.matrix(init_particles)) {
-            if (is.null(init_seats)) {
-                # else infer
-                cli::cli_warn(
-                    "{.arg init_seats} was not passed in, attempting to infer number of seats per region."
-                )
-                init_seats <- infer_plan_seats(
-                    init_particles,
-                    nseats,
-                    pop,
-                    pop_bounds[1],
-                    pop_bounds[3]
-                )
-            }
-            # subtract 0 if needed
-            if(min(init_particles[,1])){
-                init_particles <- init_particles - 1L
-            }
+  nsims,
+  nseats,
+  pop,
+  pop_bounds,
+  init_particles,
+  init_seats,
+  init_weights
+) {
+  # handle particle, seats, and weights inits
+  if (is.null(init_particles)) {
+    # if no initial plans passed in then create empty matrix
+    init_particles <- matrix(0L)
+    init_seats <- matrix(0L)
+    init_num_regions <- 1L
+  } else {
+    if (inherits(init_particles, "redist_plans")) {
+      if (is.null(init_seats)) {
+        init_seats <- get_seats_matrix(init_particles)
+      }
+      if (is.null(init_weights)) {
+        # get weights if not resampled, else just set all equal to 1
+        init_plan_weights <- get_plans_weights(init_particles)
+        if (isFALSE(attr(init_plan_weights, "resampled"))) {
+          init_weights <- rep(1, nsims)
         } else {
-            cli::cli_abort(
-                "{.arg init_particles} must be either a redist_plans object or a matrix"
-            )
+          init_weights <- as.vector(init_plan_weights)
         }
-        init_num_regions <- length(unique(init_particles[, 1]))
-    }
-
-    # get init weights
-    if (!is.null(init_weights)) {
-        # check its a vector or matrix
-        if (is.matrix(init_weights) && is.numeric(init_weights)) {
-            # check 1 column and nsim rows
-            if (any(dim(init_weights) != c(nsims, 1))) {
-                cli::cli_abort(
-                    "{.arg init_weights} must have only {nsims} elements!"
-                )
-            }
-            # flatten
-            init_weights <- as.vector(init_weights)
-        } else if (is.vector(init_weights) && is.numeric(init_weights)) {
-            if (length(init_weights) != nsims) {
-                cli::cli_abort(
-                    "{.arg init_weights} must be of length {nsims}!"
-                )
-            }
-        }
-        # now check all positive
-        if (any(init_weights <= 0)) {
-            cli::cli_abort(
-                "All elements of {.arg init_weights} must be of length positive!"
-            )
-        }
+      }
+      init_particles <- get_plans_matrix(init_particles)
+    } else if (is.matrix(init_particles)) {
+      if (is.null(init_seats)) {
+        # else infer
+        cli::cli_warn(
+          "{.arg init_seats} was not passed in, attempting to infer number of seats per region."
+        )
+        init_seats <- infer_plan_seats(
+          init_particles,
+          nseats,
+          pop,
+          pop_bounds[1],
+          pop_bounds[3]
+        )
+      }
     } else {
-        init_weights <- rep(1, nsims)
+      cli::cli_abort(
+        "{.arg init_particles} must be either a redist_plans object or a matrix"
+      )
     }
-    initial_log_weights <- log(init_weights)
+    init_num_regions <- length(unique(init_particles[, 1]))
+  }
 
-    init_plans_params <- list(
-        init_particles = init_particles,
-        init_seats = init_seats,
-        initial_log_weights = initial_log_weights,
-        init_num_regions = init_num_regions
-    )
+  # get init weights
+  if (!is.null(init_weights)) {
+    # check its a vector or matrix
+    if (is.matrix(init_weights) && is.numeric(init_weights)) {
+      # check 1 column and nsim rows
+      if (any(dim(init_weights) != c(nsims, 1))) {
+        cli::cli_abort(
+          "{.arg init_weights} must have only {nsims} elements!"
+        )
+      }
+      # flatten
+      init_weights <- as.vector(init_weights)
+    } else if (is.vector(init_weights) && is.numeric(init_weights)) {
+      if (length(init_weights) != nsims) {
+        cli::cli_abort(
+          "{.arg init_weights} must be of length {nsims}!"
+        )
+      }
+    }
+    # now check all positive
+    if (any(init_weights <= 0)) {
+      cli::cli_abort(
+        "All elements of {.arg init_weights} must be of length positive!"
+      )
+    }
+  } else {
+    init_weights <- rep(1, nsims)
+  }
+  initial_log_weights <- log(init_weights)
 
-    init_plans_params
+  init_plans_params <- list(
+    init_particles = init_particles,
+    init_seats = init_seats,
+    initial_log_weights = initial_log_weights,
+    init_num_regions = init_num_regions
+  )
+
+  init_plans_params
 }
 
 
@@ -1002,51 +1014,48 @@ get_init_plan_params <- function(
 #'     - `nproc`: The number of parallel R processes to spawn. Defaults to 1.
 #'     - `weight_type`: Must be either simple or optimal. Defaults to optimal
 #' @noRd
-extract_control_params <- function(control){
+extract_control_params <- function(control) {
+  control_param_names <- c("nproc", "weight_type")
 
-    control_param_names <- c("nproc", "weight_type")
-
-    if (is.list(control) && any("nproc" %in% control_param_names)) {
-        if ("nproc" %in% names(control)) {
-            nproc <- control[["nproc"]]
-            if (!rlang::is_scalar_integerish(nproc)) {
-                cli::cli_abort(
-                    "{.arg nproc} in {.arg control} must be a single integer!"
-                )
-            } else if (nproc <= 0) {
-                cli::cli_abort(
-                    "{.arg nproc} in {.arg control} must be a positive integer!"
-                )
-            }
-        } else {
-            # default to 1
-            nproc <- 1L
-        }
-
-        if ("weight_type" %in% names(control)) {
-            weight_type <- control[["weight_type"]]
-            weight_type <- rlang::arg_match(
-                arg = weight_type,
-                values = c("optimal", "simple")
-            )
-        } else {
-            # else default to optimal
-            weight_type <- "optimal"
-        }
+  if (is.list(control) && any("nproc" %in% control_param_names)) {
+    if ("nproc" %in% names(control)) {
+      nproc <- control[["nproc"]]
+      if (!rlang::is_scalar_integerish(nproc)) {
+        cli::cli_abort(
+          "{.arg nproc} in {.arg control} must be a single integer!"
+        )
+      } else if (nproc <= 0) {
+        cli::cli_abort(
+          "{.arg nproc} in {.arg control} must be a positive integer!"
+        )
+      }
     } else {
-        nproc <- 1L
-        weight_type <- "optimal"
+      # default to 1
+      nproc <- 1L
     }
 
-    control_params <- list(
-        nproc = nproc,
-        weight_type = weight_type
-    )
+    if ("weight_type" %in% names(control)) {
+      weight_type <- control[["weight_type"]]
+      weight_type <- rlang::arg_match(
+        arg = weight_type,
+        values = c("optimal", "simple")
+      )
+    } else {
+      # else default to optimal
+      weight_type <- "optimal"
+    }
+  } else {
+    nproc <- 1L
+    weight_type <- "optimal"
+  }
 
-    control_params
+  control_params <- list(
+    nproc = nproc,
+    weight_type = weight_type
+  )
+
+  control_params
 }
-
-
 
 
 #' Extracts Mergesplit paramters from `ms_params` parameter of `redist_smc`
@@ -1063,87 +1072,87 @@ extract_control_params <- function(control){
 #'     - `merge_split_step_vec`: vector whose length is the total number of steps
 #'     and a value of true indicates that step is a mergesplit step.
 #' @noRd
-extract_ms_params <- function(ms_params, total_smc_steps){
-    ms_param_names <- c("ms_moves_multiplier", "ms_frequency", "merge_prob_type")
+extract_ms_params <- function(ms_params, total_smc_steps) {
+  ms_param_names <- c("ms_moves_multiplier", "ms_frequency", "merge_prob_type")
 
-    # create merge split parameter information
-    if (is.list(ms_params) && any(ms_param_names %in% names(ms_params))) {
-        run_ms <- TRUE
-        # check if ms_moves_multiplier was passed else default to 1
-        if ("ms_moves_multiplier" %in% names(ms_params)) {
-            ms_moves_multiplier <- ms_params[["ms_moves_multiplier"]]
-            # check that ms_moves_multiplier is positive
-            if (
-                !rlang::is_scalar_atomic(ms_moves_multiplier) || !ms_moves_multiplier > 0
-            ) {
-                cli::cli_abort("{.arg ms_moves_multiplier} must be a positive scalar")
-            }
-        } else {
-            ms_moves_multiplier <- 1L
-        }
-
-        # check if the frequency was passed else default to after every step
-        if ("ms_frequency" %in% names(ms_params)) {
-            ms_frequency <- ms_params[["ms_frequency"]]
-        } else {
-            # else default to after every step
-            ms_frequency <- 1L
-        }
-
-        # check merge probability
-        if ("merge_prob_type" %in% names(ms_params)) {
-            merge_prob_type <- ms_params[["merge_prob_type"]]
-            if (
-                !rlang::is_scalar_character(merge_prob_type) || merge_prob_type != "uniform"
-            ) {
-                cli::cli_abort("Only uniform merge probability is supported right now!")
-            }
-        } else {
-            # else default to after every step
-            merge_prob_type <- "uniform"
-        }
+  # create merge split parameter information
+  if (is.list(ms_params) && any(ms_param_names %in% names(ms_params))) {
+    run_ms <- TRUE
+    # check if ms_moves_multiplier was passed else default to 1
+    if ("ms_moves_multiplier" %in% names(ms_params)) {
+      ms_moves_multiplier <- ms_params[["ms_moves_multiplier"]]
+      # check that ms_moves_multiplier is positive
+      if (
+        !rlang::is_scalar_atomic(ms_moves_multiplier) ||
+          !ms_moves_multiplier > 0
+      ) {
+        cli::cli_abort("{.arg ms_moves_multiplier} must be a positive scalar")
+      }
     } else {
-        run_ms <- FALSE
-        merge_prob_type <- "ignore"
-        ms_moves_multiplier <- NULL
-        ms_frequency <- NULL
+      ms_moves_multiplier <- 1L
     }
 
-    if (!run_ms) {
-        merge_split_step_vec <- rep(FALSE, total_smc_steps)
-    } else if (ms_frequency == 1) {
-        # if frequency 1 then do after every step
-        merge_split_step_vec <- rep(FALSE, total_smc_steps)
-        # Now add merge split every `ms_frequency` steps
-        # insertion trick
-        # https://stackoverflow.com/questions/1493969/insert-elements-into-a-vector-at-given-indexes
-        ind <- seq(from = ms_frequency, to = total_smc_steps, by = ms_frequency)
-        val <- c(merge_split_step_vec, rep(TRUE, length(ind)))
-        id <- c(seq_along(merge_split_step_vec), ind + 0.5)
-
-        # number of merge split is sum of trues
-        merge_split_step_vec <- val[order(id)]
-    } else if (ms_frequency == -1) {
-        # if negative 1 then just put at the end
-        merge_split_step_vec <- rep(FALSE, total_smc_steps)
-        merge_split_step_vec <- c(
-            merge_split_step_vec,
-            TRUE
-        )
+    # check if the frequency was passed else default to after every step
+    if ("ms_frequency" %in% names(ms_params)) {
+      ms_frequency <- ms_params[["ms_frequency"]]
+    } else {
+      # else default to after every step
+      ms_frequency <- 1L
     }
 
+    # check merge probability
+    if ("merge_prob_type" %in% names(ms_params)) {
+      merge_prob_type <- ms_params[["merge_prob_type"]]
+      if (
+        !rlang::is_scalar_character(merge_prob_type) ||
+          merge_prob_type != "uniform"
+      ) {
+        cli::cli_abort("Only uniform merge probability is supported right now!")
+      }
+    } else {
+      # else default to after every step
+      merge_prob_type <- "uniform"
+    }
+  } else {
+    run_ms <- FALSE
+    merge_prob_type <- "ignore"
+    ms_moves_multiplier <- NULL
+    ms_frequency <- NULL
+  }
 
-    extracted_ms_params <- list(
-        run_ms = run_ms,
-        merge_prob_type = merge_prob_type,
-        ms_moves_multiplier = ms_moves_multiplier,
-        ms_frequency = ms_frequency,
-        merge_split_step_vec = merge_split_step_vec
+  if (!run_ms) {
+    merge_split_step_vec <- rep(FALSE, total_smc_steps)
+  } else if (ms_frequency == 1) {
+    # if frequency 1 then do after every step
+    merge_split_step_vec <- rep(FALSE, total_smc_steps)
+    # Now add merge split every `ms_frequency` steps
+    # insertion trick
+    # https://stackoverflow.com/questions/1493969/insert-elements-into-a-vector-at-given-indexes
+    ind <- seq(from = ms_frequency, to = total_smc_steps, by = ms_frequency)
+    val <- c(merge_split_step_vec, rep(TRUE, length(ind)))
+    id <- c(seq_along(merge_split_step_vec), ind + 0.5)
+
+    # number of merge split is sum of trues
+    merge_split_step_vec <- val[order(id)]
+  } else if (ms_frequency == -1) {
+    # if negative 1 then just put at the end
+    merge_split_step_vec <- rep(FALSE, total_smc_steps)
+    merge_split_step_vec <- c(
+      merge_split_step_vec,
+      TRUE
     )
+  }
 
-    extracted_ms_params
+  extracted_ms_params <- list(
+    run_ms = run_ms,
+    merge_prob_type = merge_prob_type,
+    ms_moves_multiplier = ms_moves_multiplier,
+    ms_frequency = ms_frequency,
+    merge_split_step_vec = merge_split_step_vec
+  )
+
+  extracted_ms_params
 }
-
 
 
 #' Deprecated Helper function to truncate importance weights

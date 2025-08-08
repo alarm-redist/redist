@@ -382,7 +382,7 @@ void compute_all_plans_log_simple_incremental_weights(
     RcppThread::ThreadPool &pool,
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
     SamplingSpace const sampling_space,
-    ScoringFunction const &scoring_function,
+    std::vector<ScoringFunction> const &scoring_functions,
     double rho,
     std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
     TreeSplitter const &tree_splitter,
@@ -394,10 +394,14 @@ void compute_all_plans_log_simple_incremental_weights(
     int const num_regions = plans_ptr_vec[0]->num_regions;
     const int check_int = 50; // check for interrupts every _ iterations
 
+    // for getting thread ids
+    std::atomic<int> thread_id_counter{0};
+
 
     RcppThread::ProgressBar bar(M, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
+        static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
         static thread_local PlanMultigraph plan_multigraph(
             map_params, 
             sampling_space == SamplingSpace::LinkingEdgeSpace
@@ -408,7 +412,7 @@ void compute_all_plans_log_simple_incremental_weights(
             *plans_ptr_vec[i], plan_multigraph,
             splitting_schedule, ust_sampler, tree_splitter, 
             sampling_space,
-            scoring_function, rho,
+            scoring_functions[thread_id], rho,
             compute_log_splitting_prob, 
             is_final_plans
         );
@@ -658,7 +662,7 @@ void compute_all_plans_log_optimal_incremental_weights(
     RcppThread::ThreadPool &pool,
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
     SamplingSpace const sampling_space,
-    ScoringFunction const &scoring_function,
+    std::vector<ScoringFunction> const &scoring_functions,
     double rho,
     std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
     TreeSplitter const &tree_splitter,
@@ -671,9 +675,13 @@ void compute_all_plans_log_optimal_incremental_weights(
     const int num_regions = plans_ptr_vec[0]->num_regions;
     if(DEBUG_WEIGHTS_VERBOSE) Rprintf("About to start computing weights!\n");
 
+    // for getting thread ids
+    std::atomic<int> thread_id_counter{0};
+
     RcppThread::ProgressBar bar(nsims, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, nsims, [&] (int i) {
+        static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
         static thread_local PlanMultigraph plan_multigraph(
             map_params, 
             sampling_space == SamplingSpace::LinkingEdgeSpace
@@ -685,7 +693,7 @@ void compute_all_plans_log_optimal_incremental_weights(
         double log_incr_weight = compute_log_optimal_incremental_weights(
             *plans_ptr_vec[i], plan_multigraph, 
             splitting_schedule, ust_sampler, tree_splitter,
-            sampling_space, scoring_function, 
+            sampling_space, scoring_functions[thread_id], 
             rho, compute_log_splitting_prob, 
             is_final_plans
         );

@@ -273,6 +273,22 @@ Rcpp::DataFrame get_plan_counts(
 }
 
 
+void set_merged_region_reindex_vec(
+    int const num_regions, std::vector<int> &region_reindex_vec, 
+    int const region1_id, int const region2_id
+){
+    for (int region_id = 0; region_id < num_regions; region_id++)
+    {
+        if(region_id == region2_id){
+            region_reindex_vec[region2_id] = region1_id;
+        }else{
+            region_reindex_vec[region_id] = region_id;
+        }
+    }
+    
+    return;
+}
+
 RcppThread::ThreadPool get_thread_pool(int const num_threads){
     if(num_threads == 1){
         return RcppThread::ThreadPool(1);
@@ -371,6 +387,18 @@ PlanEnsemble::PlanEnsemble(
     flattened_all_region_order_added(ndists*nsims, -1),
     plan_ptr_vec(nsims)
 {
+    // make sure 0 indexed plans were not passed in 
+    if (*std::min_element(flattened_all_plans.begin(), flattened_all_plans.end()) <= 0){
+        throw Rcpp::exception("The initial plans passed in are zero-indexed. They should only be 1 indexed!\n");
+    }
+
+    // Now subtract 1 from plans
+    std::transform(
+        flattened_all_plans.begin(), flattened_all_plans.end(), 
+        flattened_all_plans.begin(), 
+        [](int x) { return x - 1; }
+    );
+
     // check matrix dimensions 
     if(plans_mat.ncol() != nsims){
         REprintf("The number of columns (%u) in the initial plan matrix was not equal to nsims!\n",

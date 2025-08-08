@@ -187,26 +187,6 @@ resample_lowvar <- function(wgts) {
     .Call(`_redist_resample_lowvar`, wgts)
 }
 
-#' Reorders all the plans in the vector by order a region was split
-#'
-#' Takes a vector of plans and uses the vector of dummy plans to reorder
-#' each of the plans by the order a region was split.
-#'
-#'
-#' @title Reorders all the plans in the vector by order a region was split
-#'
-#' @param pool A threadpool for multithreading
-#' @param plan_ptrs_vec A vector of pointers to plans 
-#' @param dummy_plans_vec A vector of pointers to dummy plans 
-#'
-#' @details Modifications
-#'    - Each plan in the `plans_vec` object is reordered by when the region was split
-#'    - Each plan is a shallow copy of the plans in `plans_vec`
-#'
-#' @noRd
-#' @keywords internal
-NULL
-
 maximum_input_sizes <- function() {
     .Call(`_redist_maximum_input_sizes`)
 }

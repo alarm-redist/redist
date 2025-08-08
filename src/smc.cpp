@@ -90,7 +90,7 @@ constexpr bool DEBUG_GSMC_PLANS_VERBOSE = false; // Compile-time constant
  */ 
 void run_smc_step(
         const MapParams &map_params, SplittingSchedule const &splitting_schedule,
-        ScoringFunction const &scoring_function,
+        std::vector<ScoringFunction> const &scoring_functions,
         std::vector<RNGState> &rng_states, SamplingSpace const sampling_space,
         std::unique_ptr<PlanEnsemble> &old_plan_ensemble,
         std::unique_ptr<PlanEnsemble> &new_plan_ensemble,
@@ -153,8 +153,6 @@ void run_smc_step(
     pool.parallelFor(0, M, [&] (int i) {
         static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
         static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
-
-        // ScoringFunction new_score(scoring_function);
 
         // REprintf("Thread ID %d\n", thread_id);
         // REprintf("Plan %d\n\n", i);
@@ -223,12 +221,12 @@ void run_smc_step(
                 );
 
                 // check if there are any additional hard constraints 
-                if(!scoring_function.any_hard_constraints){
+                if(!scoring_functions[thread_id].any_hard_constraints){
                     ok = true;
                 }else{
                     // If custom hard constraints are used then 
                     // the thread pool can only have a single thread or else everything will break
-                    ok = scoring_function.new_split_ok(*new_plan_ensemble->plan_ptr_vec[i], region_id_to_split, new_region_id, is_final_split);
+                    ok = scoring_functions[thread_id].new_split_ok(*new_plan_ensemble->plan_ptr_vec[i], region_id_to_split, new_region_id, is_final_split);
                     if(DEBUG_GSMC_PLANS_VERBOSE){
                         Rprintf("Plan %d - New split has %s probability\n",
                             i, (ok ? "POSITIVE" : "ZERO"));
@@ -312,7 +310,7 @@ void run_smc_step(
 void run_merge_split_step_on_all_plans( 
     RcppThread::ThreadPool &pool,
     MapParams const &map_params, const SplittingSchedule &splitting_schedule,
-    ScoringFunction const &scoring_function,
+    std::vector<ScoringFunction> const &scoring_functions,
     std::vector<RNGState> &rng_states, SamplingSpace const sampling_space,
     std::vector<std::unique_ptr<Plan>> &plan_ptrs_vec, 
     std::vector<std::unique_ptr<Plan>> &new_plan_ptrs_vec, 
@@ -364,7 +362,7 @@ void run_merge_split_step_on_all_plans(
 
         // store the number of succesful runs
         success_count_vec[i] = run_merge_split_steps(
-            map_params, splitting_schedule, scoring_function,
+            map_params, splitting_schedule, scoring_functions[thread_id],
             rng_states[thread_id], sampling_space,
             *plan_ptrs_vec[i], *new_plan_ptrs_vec[i], 
             ust_sampler, tree_splitter,
@@ -471,15 +469,22 @@ List run_redist_smc(
         
     }
 
-    // Add scoring function (constraints)
-    ScoringFunction const scoring_function(
-        map_params, constraints, 
-        as<double>(control["pop_temper"]), true);
+    // Add scoring functions (constraints)
+    // one per thread
+    std::vector<ScoringFunction> scoring_functions; scoring_functions.reserve(num_threads);
+    for (size_t thread_id = 0; thread_id < num_threads; thread_id++)
+    {
+        scoring_functions.emplace_back(
+            map_params, constraints, 
+            as<double>(control["pop_temper"]), true, thread_id
+        );
+    }
 
     // if we have any custom hard constraints then we have to single thread everything 
-    if(scoring_function.any_hard_custom_constraints){
+    if(scoring_functions[0].any_hard_custom_constraints){
         num_threads = 1;
     };
+    
 
     // get seq_alpha 
     double weights_alpha = as<double>(control["seq_alpha"]);
@@ -500,7 +505,7 @@ List run_redist_smc(
     SamplingSpace sampling_space = get_sampling_space(sampling_space_str);
 
     // Do not support hard plan constraints with linking edge
-    if(sampling_space == SamplingSpace::LinkingEdgeSpace && scoring_function.any_hard_plan_constraints){
+    if(sampling_space == SamplingSpace::LinkingEdgeSpace && scoring_functions[0].any_hard_plan_constraints){
         // The issue right now is for a merged plan we need to know what pairs in the merged plan are valid
         // For region based constraints merging two regions doens't affect the others but theoretically for the entire plan
         // a merge in the original plan could be ok and then cease to be ok after two other regions are merged.
@@ -619,7 +624,7 @@ List run_redist_smc(
     RcppThread::ThreadPool pool(num_threads);
 
     // If hard custom then switch to 1 thread only
-    if(scoring_function.any_hard_custom_constraints){
+    if(scoring_functions[0].any_hard_custom_constraints){
         pool.setNumThreads(1);
     }
 
@@ -706,11 +711,11 @@ List run_redist_smc(
                 Rcout << "Ensuring no more than " << ndists - 1 << " splits of the "
                     << map_params.cg.size() << " administrative units.\n";
             }
-            if(scoring_function.total_soft_constraints > 0){
-                Rcout << "Applying " << scoring_function.total_soft_constraints << " soft constraints.\n";
+            if(scoring_functions[0].total_soft_constraints > 0){
+                Rcout << "Applying " << scoring_functions[0].total_soft_constraints << " soft constraints.\n";
             }
-            if(scoring_function.num_hard_plan_constraints > 0){
-                Rcout << "Applying " << scoring_function.num_hard_plan_constraints << " hard constraints.\n";
+            if(scoring_functions[0].num_hard_plan_constraints > 0){
+                Rcout << "Applying " << scoring_functions[0].num_hard_plan_constraints << " hard constraints.\n";
             }
         }
     }
@@ -789,7 +794,7 @@ List run_redist_smc(
 
             if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("About to run smc step %d!\n", smc_step_num);
             // split the map
-            run_smc_step(map_params, *splitting_schedule_ptr, scoring_function,
+            run_smc_step(map_params, *splitting_schedule_ptr, scoring_functions,
                 rng_states, sampling_space,
                 plan_ensemble_ptr, dummy_plan_ensemble_ptr, 
                 *tree_splitter_ptr,
@@ -827,7 +832,7 @@ List run_redist_smc(
             );
 
             // if soft custom constraints and no hard custom then temporarily switch to 1 thread
-            if(scoring_function.any_soft_custom_constraints && !scoring_function.any_hard_custom_constraints){
+            if(scoring_functions[0].any_soft_custom_constraints && !scoring_functions[0].any_hard_custom_constraints){
                 pool.setNumThreads(1);
             }
             
@@ -838,7 +843,7 @@ List run_redist_smc(
                 compute_all_plans_log_optimal_incremental_weights(
                     pool,
                     map_params, *splitting_schedule_ptr, sampling_space,
-                    scoring_function, rho,
+                    scoring_functions, rho,
                     plan_ensemble_ptr->plan_ptr_vec, *tree_splitter_ptr,
                     compute_log_splitting_prob, is_final_splitting_step,
                     smc_diagnostics.log_incremental_weights_mat.col(smc_step_num),
@@ -850,7 +855,7 @@ List run_redist_smc(
                     pool,
                     map_params, *splitting_schedule_ptr,
                     sampling_space,
-                    scoring_function, rho,
+                    scoring_functions, rho,
                     plan_ensemble_ptr->plan_ptr_vec, *tree_splitter_ptr,
                     compute_log_splitting_prob, is_final_splitting_step,
                     smc_diagnostics.log_incremental_weights_mat.col(smc_step_num),
@@ -862,7 +867,7 @@ List run_redist_smc(
             if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Done computing weights!\n");
 
             // now swap back
-            if(scoring_function.any_soft_custom_constraints && !scoring_function.any_hard_custom_constraints){
+            if(scoring_functions[0].any_soft_custom_constraints && !scoring_functions[0].any_hard_custom_constraints){
                 pool.setNumThreads(num_threads);
             }
             
@@ -943,7 +948,7 @@ List run_redist_smc(
             );
 
             // If only soft custom constraints then need to temporarily switch to single threading 
-            if(scoring_function.any_soft_custom_constraints && !scoring_function.any_hard_custom_constraints){
+            if(scoring_functions[0].any_soft_custom_constraints && !scoring_functions[0].any_hard_custom_constraints){
                 pool.setNumThreads(1);
             }
 
@@ -951,7 +956,7 @@ List run_redist_smc(
             run_merge_split_step_on_all_plans(
                 pool,
                 map_params, *splitting_schedule_ptr, 
-                scoring_function,
+                scoring_functions,
                 rng_states, sampling_space, 
                 plan_ensemble_ptr->plan_ptr_vec, dummy_plan_ensemble_ptr->plan_ptr_vec,
                 *tree_splitter_ptr,
@@ -964,7 +969,7 @@ List run_redist_smc(
             );
 
             // now switch back 
-            if(scoring_function.any_soft_custom_constraints && !scoring_function.any_hard_custom_constraints){
+            if(scoring_functions[0].any_soft_custom_constraints && !scoring_functions[0].any_hard_custom_constraints){
                 pool.setNumThreads(num_threads);
             }
 

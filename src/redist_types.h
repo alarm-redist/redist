@@ -137,14 +137,7 @@ Multigraph county_graph(const Graph &g, const arma::uvec &counties);
  */
 Graph list_to_graph(const Rcpp::List &l);
 
-/*
- * Create a forest where each tree is a spanning tree on a county along
- with a vector of roots. Lets you traverse all counties in O(V) time and
- space
- */
-std::pair<Tree,std::vector<int>> build_county_forest(
-    const Graph &g, const arma::uvec &counties, int const num_counties
-);
+
 
 /*
  * Given a graph G and county assignments this creates the potentially disconnected graph
@@ -173,9 +166,6 @@ class MapParams {
         counties(counties), num_counties(max(counties)),
         cg(county_graph(g, counties)),
         county_restricted_graph(num_counties > 1 ? build_restricted_county_graph(g, counties) : Graph(0)),
-        // silly but call function twice so attributes can be constant 
-        county_forest(build_county_forest(g, counties, num_counties).first), 
-        county_forest_roots(build_county_forest(g, counties, num_counties).second),
         pop(pop),
         V(static_cast<int>(g.size())), ndists(ndists), total_seats(total_seats),
         lower(lower), target(target), upper(upper),
@@ -226,8 +216,6 @@ class MapParams {
     int const num_counties; // The number of distinct counties
     Multigraph const cg; // county multigraph
     Graph const county_restricted_graph; // g but with all edges crossing counties removed 
-    Tree const county_forest; // Spanning forest on the counties, ie each tree is a tree on a specific county
-    std::vector<int> const county_forest_roots; // roots of each county tree, so [i] is root of tree on county[i+1]
     arma::uvec const pop; // population of each vertex
     int const V; // Number of vertices in the graph
     int const ndists; // The number of districts a final plan should have

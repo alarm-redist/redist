@@ -482,14 +482,27 @@ add_reference <- function(plans, ref_plan, name = NULL, ref_seats = NULL) {
   }
 
   plan_m <- get_plans_matrix(plans)
-  if (!is.numeric(ref_plan)) {
-    cli::cli_abort("{.arg ref_plan} must be numeric")
+  plan_ndists <- attr(plans, "ndists")
+  if (!rlang::is_integerish(ref_plan)) {
+    cli::cli_abort("{.arg ref_plan} must be integers")
   }
   if (length(ref_plan) != nrow(plan_m)) {
     cli::cli_abort(
       "{.arg ref_plan} must have the same number of precincts as {.arg plans}"
     )
   }
+  ref_ndists <- dplyr::n_distinct(ref_plan)
+  if(plan_ndists != ref_ndists){
+      cli::cli_abort(
+          "{.arg ref_plan} must have the same number of districts as {.arg plans}"
+      )
+  }else if(!setequal(ref_plan, seq_len(plan_ndists))){
+      if(!is.null(ref_seats)){
+          cli::cli_abort("{.arg ref_plan} must already be numbered 1 to {plan_ndists} if {.arg ref_seats} are also passed")
+      }
+      ref_plan <- vctrs::vec_group_id(ref_plan)
+  }
+  ndists <- plan_ndists
 
   if (is.null(name)) {
     ref_str <- deparse(substitute(ref_plan))
@@ -502,13 +515,8 @@ add_reference <- function(plans, ref_plan, name = NULL, ref_seats = NULL) {
     if (!is.character(name)) cli::cli_abort("{.arg name} must be a {.cls chr}")
   }
 
-  ref_plan <- vctrs::vec_group_id(ref_plan)
-  ndists <- max(ref_plan)
-  if (ndists != max(plan_m[, 1])) {
-    cli::cli_abort(
-      "{.arg ref_plan} has a different number of districts than {.arg plans}"
-    )
-  }
+
+
   if (
     is.null(ref_seats) &&
       isTRUE(attr(plans, "districting_scheme") != "multiple")

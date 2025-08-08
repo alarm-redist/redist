@@ -7,7 +7,135 @@
 
  #include "scoring.h"
 
- constexpr bool DEBUG_SCORING_VERBOSE = false;
+constexpr bool DEBUG_SCORING_VERBOSE = false;
+
+
+// helpers
+
+
+/*
+ * Given a contiguous administrative units this builds a forest on the 
+ * admin units where each tree is a spanning tree on an admin unit along
+ with a vector of roots. Lets you traverse all counties in O(V) time and
+ space
+ */
+// Spanning forest on the counties, ie each tree is a tree on a specific county
+// roots of each county tree, so [i] is root of tree on county[i+1]
+std::pair<Tree,std::vector<int>> build_admin_forest(
+    const Graph &g, const arma::uvec &admin_units
+){
+    // we assume admin units is 1 indexed and if `k` units then values are in `1:k`
+    int const num_counties = arma::max(admin_units);
+    // nothing if only 1 county 
+    if(num_counties == 1) return make_pair(Tree(0), std::vector<int>());
+    int const V = g.size();
+    // make vector tracking which vertices we've visitied
+    std::vector<bool> visited(V, false);
+    std::vector<bool> admin_unit_visited(num_counties, false);
+
+    // make a vector tracking the roots of each county tree
+    std::vector<int> admin_forest_roots(num_counties);
+    // init the forest
+    Tree admin_forest(V);
+
+    // Go through graph and build tree on each admin unit
+    for (int v = 0; v < V; v++)
+    {
+        // COUNTIES ARE 1 INDEXED!!
+        int v_admin_unit = admin_units[v]-1; 
+        // skip if we've visitied this county before 
+        if(admin_unit_visited[v_admin_unit]){
+            // sanity check can delete later
+            if(!visited[v]) throw Rcpp::exception("Should have visitied this vertex already!\n");
+            continue;
+        } 
+        
+
+        // else we can start to build a tree on it 
+        // mark this as the root
+        admin_forest_roots[v_admin_unit] = v;
+        visited[v] = true;
+        // queue with vertex 
+        std::queue<int> vertex_queue;
+        // add the root 
+        vertex_queue.push(v);
+
+        // keep going through the children until queue not empty
+        while(!vertex_queue.empty()){
+            // get from queue
+            int u = vertex_queue.front();
+            vertex_queue.pop();
+            // mark as visited since it has to share this county
+            visited[u] = true;
+            int u_admin_unit = admin_units[u]-1;
+            // sanity check delete later
+            if(u_admin_unit != v_admin_unit){
+                REprintf("v county %d, u county %d", admin_units(u)-1, v_admin_unit);
+                throw Rcpp::exception("County forest went wrong!!\n");
+            } 
+
+            // see if any children in the same county
+            for (int const child_vertex : g[u]){
+                // add to queue if same county and not visitied yet
+                if(admin_units[child_vertex]-1 == u_admin_unit && !visited[child_vertex]){
+                    // add in tree
+                    admin_forest[u].push_back(child_vertex);
+                    // mark as visited to avoid being added later  
+                    visited[child_vertex] = true;
+                    vertex_queue.push(child_vertex);
+                }
+            }
+        }
+        // mark this county as visited 
+        admin_unit_visited[v_admin_unit] = true;
+    }
+
+    return std::make_pair(admin_forest, admin_forest_roots);
+}
+
+
+
+// counts how many administrative unit are split by a plan
+// We say a unit is split if there is more than one region inside it
+// The region_reindex_vec lets us map different region ids to the same 
+// index for the purpose of this function
+int count_admin_splits(
+    Tree const &admin_forest, std::vector<int> const &admin_forest_roots,
+    PlanVector const &region_ids, std::vector<int> const &region_reindex_vec,
+    CircularQueue<int> &vertex_queue
+){
+    int split_units = 0;
+
+    // For each admin unit start at the root of its tree
+    for (auto const admin_tree_root : admin_forest_roots){
+        vertex_queue.clear();
+        auto const root_region = region_reindex_vec[region_ids[admin_tree_root]];
+
+        vertex_queue.push(admin_tree_root);
+
+        // walk through the entire unit to see if any different regions 
+        while(!vertex_queue.empty()){
+            auto const v = vertex_queue.pop();
+            auto const v_region = region_reindex_vec[region_ids[v]];
+
+            // if we found a different region immediately break
+            if(v_region != root_region){
+                split_units++;
+                break;
+            }
+            // else add all the children to the queue
+            for (auto const v_child : admin_forest[v]){
+                vertex_queue.push(v_child);
+            }
+        }
+
+    }
+    return split_units;
+}
+
+
+
+//
 
 std::pair<bool, double> RegionConstraint::compute_region_score(const Plan &plan, int region_id) const{
     double region_score = strength * compute_raw_region_constraint_score(plan, region_id);
@@ -307,9 +435,10 @@ double PolsbyConstraint::compute_raw_merged_region_constraint_score(const Plan &
 
 double CustomRegionConstraint::compute_raw_region_constraint_score(const Plan &plan, int const region_id) const{
     // Need to copy into Rcpp vector since no SEXP for current region ids
-    Rcpp::IntegerVector rcpp_plan_wrap(
+     std::copy(
         plan.region_ids.begin(),
-        plan.region_ids.end()
+        plan.region_ids.end(),
+        rcpp_plan_wrap.begin()
     );
 
     
@@ -322,16 +451,13 @@ double CustomRegionConstraint::compute_raw_region_constraint_score(const Plan &p
 // log constraint for region made by merging region 1 and 2
 double CustomRegionConstraint::compute_raw_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
     // Need to copy into Rcpp vector since no SEXP for current region ids
-    Rcpp::IntegerVector rcpp_plan_wrap(
-        plan.region_ids.begin(),
-        plan.region_ids.end()
-    );
-
     // now make all instance of region2 region1
     for (size_t i = 0; i < plan.region_ids.size(); i++)
     {
-        if(rcpp_plan_wrap[i] == region2_id){
+        if(plan.region_ids[i] == region2_id){
             rcpp_plan_wrap[i] = region1_id;
+        }else{
+            rcpp_plan_wrap[i] = plan.region_ids[i];
         }
     }
     
@@ -429,6 +555,50 @@ double CustomPlanConstraint::compute_raw_merged_plan_constraint_score(const Plan
 }
 
 
+double PlanSplitsConstraint::compute_raw_plan_constraint_score(
+    const Plan &plan) const{
+    // no splits if blank map or only 1 admin unit 
+    if(plan.num_regions == 1 || num_admin_units == 1) return 0;
+
+    // set the reindex for each region to be itself
+    std::iota(region_reindex_vec.begin(), region_reindex_vec.end(), 0);
+
+    auto splits = count_admin_splits(
+        admin_forest, admin_forest_roots,
+        plan.region_ids, region_reindex_vec,
+        vertex_queue
+    );
+
+    // REprintf("%d units | %d splits!\n", num_admin_units, splits);
+    return splits;
+
+}
+
+double PlanSplitsConstraint::compute_raw_merged_plan_constraint_score(
+    const Plan &plan, int const region1_id, int const region2_id) const{
+    // no splits if blank map or only 1 admin unit 
+    if(plan.num_regions == 2 || num_admin_units == 1) return 0;
+
+    for (int region_id = 0; region_id < plan.num_regions; region_id++)
+    {
+        if(region_id == region2_id){
+            region_reindex_vec[region2_id] = region1_id;
+        }else{
+            region_reindex_vec[region_id] = region_id;
+        }
+    }
+
+    auto splits = count_admin_splits(
+        admin_forest, admin_forest_roots,
+        plan.region_ids, region_reindex_vec,
+        vertex_queue
+    );
+
+    // REprintf("%d units | %d splits!\n", num_admin_units, splits);
+    return splits;
+}
+
+
 double ValidDistrictsConstraint::compute_raw_plan_constraint_score(const Plan &plan) const{
     // threshold is always .5 so returning 1 means reject
     // first check no region is smaller than the smallest district size 
@@ -451,10 +621,11 @@ double ValidDistrictsConstraint::compute_raw_plan_constraint_score(const Plan &p
 // Scoring function
 ScoringFunction::ScoringFunction(
     MapParams const &map_params,
-    Rcpp::List const &constraints, double const pop_temper, bool const smc
+    Rcpp::List const &constraints, double const pop_temper, bool const smc,
+    int const thread_id
 ):
 map_params(map_params), num_non_final_soft_region_constraints(0), num_final_soft_region_constraints(0), all_rounds_soft_region_constraints(0), 
-num_non_final_soft_plan_constraints(0), num_final_soft_plan_constraints(0), all_rounds_soft_plan_constraints(0), 
+total_soft_plan_constraints(0),
 num_hard_plan_constraints(0), 
 total_soft_constraints(0), num_hard_region_constraints(0),
 any_soft_custom_constraints(false), any_hard_custom_constraints(false){
@@ -853,7 +1024,7 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
                 }
                 region_constraint_ptrs.emplace_back(
                     std::make_unique<CustomRegionConstraint>(
-                        strength, 
+                        strength, map_params.V,
                         as<Rcpp::Function>(constr_inst["fn"]), 
                         constr_score_districts_only, hard_constraint, hard_threshold
                     )
@@ -869,6 +1040,42 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
     }
 
     // Now add plan constraints 
+    if (constraints.containsElementNamed("plan_splits")) {
+        Rcpp::List constr = constraints["plan_splits"];
+        for (int i = 0; i < constr.size(); i++) {
+            List constr_inst = constr[i];
+            double strength = constr_inst["strength"];
+            bool constr_score_final_plans_only = true;
+            if (constr_inst.containsElementNamed("only_final_plans")){
+                constr_score_final_plans_only = as<bool>(constr_inst["only_final_plans"]);
+            }
+            bool hard_constraint = false;
+            if (constr_inst.containsElementNamed("hard_constraint")){
+                hard_constraint = as<bool>(constr_inst["hard_constraint"]);
+            }
+            double hard_threshold = 0.0;
+            if (constr_inst.containsElementNamed("hard_threshold")){
+                hard_threshold = as<double>(constr_inst["hard_threshold"]);
+            }
+            if (strength != 0) {
+                // build the forest and get the roots 
+                arma::uvec admin_units = as<arma::uvec>(constr_inst["admin"]);
+                auto forest_result = build_admin_forest(map_params.g, admin_units);
+                plan_constraint_ptrs.emplace_back(
+                    std::make_unique<PlanSplitsConstraint>(
+                        strength, map_params.ndists,
+                        admin_units, forest_result.first, forest_result.second,
+                        constr_score_final_plans_only,
+                        hard_constraint, hard_threshold
+                    )
+                );
+            }
+
+        }
+    }
+
+    
+
     // Add custom plan constraints 
     if (constraints.containsElementNamed("custom_plan")) {
         Rcpp::List constr = constraints["custom_plan"];
@@ -896,8 +1103,6 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
                         hard_constraint, hard_threshold
                     )
                 );
-                // increase constraints applied at every split count
-                all_rounds_soft_plan_constraints++;
                 any_soft_custom_constraints = true; 
                 // if hard custom constraint note that
                 if(hard_constraint){
@@ -928,10 +1133,10 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
 
     for(auto const &constraint_ptr: plan_constraint_ptrs){
         if(constraint_ptr->hard_constraint) ++num_hard_plan_constraints;
+        total_soft_plan_constraints++;
     }
 
     total_soft_region_constraints = num_non_final_soft_region_constraints+num_final_soft_region_constraints+all_rounds_soft_region_constraints;
-    total_soft_plan_constraints = num_non_final_soft_plan_constraints + num_final_soft_plan_constraints + all_rounds_soft_plan_constraints;
 
     total_soft_constraints = total_soft_region_constraints + total_soft_plan_constraints;
 

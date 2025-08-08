@@ -317,7 +317,7 @@ validate_sample_space_and_splitting_method <- function(
 #' Checks that every plan in a matrix of partial plans is valid. A partial
 #' plans matrix with `init_num_regions` is valid if it is a `V` by `nsims`
 #' matrix where for each column it only has values between
-#' 0,...,`init_num_regions`. Will throw an error if anything is wrong.
+#' 1,...,`init_num_regions`. Will throw an error if anything is wrong.
 #'
 #' @param init_region_ids_mat A V by nsims matrix of zero-indexed partial plans
 #' @param V The number of vertices in the plan graph.
@@ -345,22 +345,22 @@ validate_initial_region_id_mat <- function(
     cli::cli_abort("{.arg init_region_ids_mat} must have {.arg nsims} columns.")
   }
 
-  # check that every column only has values from 0 to num_regions-1
-  if (any(colmin(init_region_ids_mat) > 0)) {
+  # check that every column only has values from 1 to num_regions
+  if (any(colmin(init_region_ids_mat) > 1)) {
     cli::cli_abort(
-      "{.arg init_region_ids_mat} must have at least one region with id 0."
+      "{.arg init_region_ids_mat} must have at least one region with id 1."
     )
   }
-  if (any(colmin(init_region_ids_mat) < 0)) {
-    cli::cli_abort("{.arg init_region_ids_mat} can't have number less than 0.")
+  if (any(colmin(init_region_ids_mat) < 1)) {
+    cli::cli_abort("{.arg init_region_ids_mat} can't have number less than 1.")
   }
-  if (any(colmax(init_region_ids_mat) != init_num_regions - 1)) {
+  if (any(colmax(init_region_ids_mat) != init_num_regions)) {
     cli::cli_abort(
-      "{.arg init_region_ids_mat} can't have number greater than {.arg init_num_regions}-1."
+      "{.arg init_region_ids_mat} can't have number greater than {.arg init_num_regions}."
     )
   }
 
-  expected_region_ids <- seq_len(init_num_regions) - 1
+  expected_region_ids <- seq_len(init_num_regions)
   cols_as_expected <- apply(init_region_ids_mat, 2, function(a_col) {
     base::setequal(expected_region_ids, a_col)
   })
@@ -487,4 +487,10 @@ infer_plan_seats <- function(
   )
 
   sizes_matrix
+}
+
+# ensures the return admin units vector is indexed 1:number of admin
+# units
+get_validated_admin_units <- function(admin_units){
+
 }

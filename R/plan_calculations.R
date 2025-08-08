@@ -89,7 +89,7 @@ compute_log_target_density <- function(
         lower=pop_bounds[1],
         target=pop_bounds[2],
         upper=pop_bounds[3],
-        region_ids=plan_matrix-1L,
+        region_ids=plan_matrix,
         region_sizes=sizes_matrix,
         output_type="single",
         num_threads=ncores
@@ -190,7 +190,7 @@ compute_log_target_density_by_region <- function(
         lower=pop_bounds[1],
         target=pop_bounds[2],
         upper=pop_bounds[3],
-        region_ids=plan_matrix-1L,
+        region_ids=plan_matrix,
         region_sizes=sizes_matrix,
         output_type="components",
         num_threads=ncores
@@ -282,7 +282,7 @@ compute_log_optimal_weights <- function(
         lower=pop_bounds[1],
         target=pop_bounds[2],
         upper=pop_bounds[3],
-        plan_matrix-1L, sizes_matrix,
+        plan_matrix, sizes_matrix,
         ncores
     )
 

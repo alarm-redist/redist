@@ -37,8 +37,15 @@ Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
     
     // Add hard constraints to scoring function 
     constraints["plan_valid_district_sizes"] = true;
-    // Create the scoring function 
-    ScoringFunction scoring_function(map_params, constraints, pop_temper, true);
+    // Create the scoring functions
+    std::vector<ScoringFunction> scoring_functions; scoring_functions.reserve(num_threads);
+    for (size_t thread_id = 0; thread_id < num_threads; thread_id++)
+    {
+        scoring_functions.emplace_back(
+            map_params, constraints, 
+            pop_temper, true, thread_id
+        );
+    }
 
     // create thread pool
     RcppThread::ThreadPool pool = get_thread_pool(num_threads);
@@ -80,14 +87,19 @@ Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
 
 
     // single thread if any custom constraints
-    if(scoring_function.any_soft_custom_constraints || scoring_function.any_hard_custom_constraints){
+    if(scoring_functions[0].any_soft_custom_constraints || scoring_functions[0].any_hard_custom_constraints){
         pool.setNumThreads(1);
     }
+
+
+    // for getting thread ids
+    std::atomic<int> thread_id_counter{0};
 
     const int check_int = 50; // check for interrupts every _ iterations
     Rcpp::Rcout << "Computing Log Target Density!" << std::endl;
     RcppThread::ProgressBar bar(num_plans, 1);
     pool.parallelFor(0, num_plans, [&] (int i) {
+        static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
         static thread_local PlanMultigraph plan_multigraph(map_params, false);
         static thread_local std::vector<bool> county_component_lookup(
             num_regions * map_params.num_counties, false
@@ -160,7 +172,7 @@ Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
         }
 
         // now compute the plan only parts 
-        auto plan_only_score_result = scoring_function.compute_plan_score(
+        auto plan_only_score_result = scoring_functions[thread_id].compute_plan_score(
             *plan_ensemble.plan_ptr_vec[i]
         );
 
@@ -189,7 +201,7 @@ Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
             if(zero_prob_component[region_id]) continue;
             bool region_prob_zero = false;
 
-            auto region_score_result = scoring_function.compute_region_full_score(
+            auto region_score_result = scoring_functions[thread_id].compute_region_full_score(
                 *plan_ensemble.plan_ptr_vec[i], region_id, is_final
             );
             if(!region_score_result.first){

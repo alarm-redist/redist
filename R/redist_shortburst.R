@@ -187,7 +187,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         )
 
         run_burst <- function(init, steps) {
-            init <- matrix(init, ncol = 1) - 1L
+            init <- matrix(init, ncol = 1)
             # just assume always SMD
             init_sizes <- matrix(1L, ncol = 1, nrow = ndists)
 

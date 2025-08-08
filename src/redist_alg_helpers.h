@@ -127,24 +127,34 @@ Rcpp::DataFrame get_plan_counts(
 RcppThread::ThreadPool get_thread_pool(int const num_threads);
 
 
-//' Reorders all the plans in the vector by order a region was split
-//'
-//' Takes a vector of plans and uses the vector of dummy plans to reorder
-//' each of the plans by the order a region was split.
-//'
-//'
-//' @title Reorders all the plans in the vector by order a region was split
-//'
-//' @param pool A threadpool for multithreading
-//' @param plan_ptrs_vec A vector of pointers to plans 
-//' @param dummy_plans_vec A vector of pointers to dummy plans 
-//'
-//' @details Modifications
-//'    - Each plan in the `plans_vec` object is reordered by when the region was split
-//'    - Each plan is a shallow copy of the plans in `plans_vec`
-//'
-//' @noRd
-//' @keywords internal
+/*
+ * Creates a reindexing vector for the plan with two regions merged 
+ * does this by making region2_id map to region1_id. Nothing else 
+ * changes 
+ */
+void set_merged_region_reindex_vec(
+    int const num_regions, std::vector<int> &region_reindex_vec, 
+    int const region1_id, int const region2_id
+);
+
+/*
+ *  Reorders all the plans in the vector by order a region was split
+ * 
+ *  Takes a vector of plans and uses the vector of dummy plans to reorder
+ *  each of the plans by the order a region was split.
+ * 
+ * 
+ *  @title Reorders all the plans in the vector by order a region was split
+ * 
+ *  @param pool A threadpool for multithreading
+ *  @param plan_ptrs_vec A vector of pointers to plans 
+ *  @param dummy_plans_vec A vector of pointers to dummy plans 
+ * 
+ *  @details Modifications
+ *     - Each plan in the `plans_vec` object is reordered by when the region was split
+ *     - Each plan is a shallow copy of the plans in `plans_vec`
+ * 
+ */
 void reorder_all_plans(
     RcppThread::ThreadPool &pool,
     std::vector<std::unique_ptr<Plan>> &plan_ptrs_vec, 

@@ -17,6 +17,7 @@
 \alias{add_constr_fry_hold}
 \alias{add_constr_log_st}
 \alias{add_constr_edges_rem}
+\alias{add_constr_plan_splits}
 \alias{add_constr_custom}
 \alias{add_constr_custom_plan}
 \title{Sampling constraints}
@@ -142,6 +143,14 @@ add_constr_log_st(
 
 add_constr_edges_rem(constr, strength, only_districts = FALSE, thresh = NULL)
 
+add_constr_plan_splits(
+  constr,
+  strength,
+  admin,
+  only_final_plans = FALSE,
+  thresh = NULL
+)
+
 add_constr_custom(constr, strength, fn, only_districts = FALSE, thresh = NULL)
 
 add_constr_custom_plan(
@@ -195,11 +204,11 @@ having two or more incumbents be in the same district.}
 
 \item{denominator}{Fryer Holden minimum value to normalize by. Default is 1 (no normalization).}
 
-\item{fn}{A function}
-
 \item{only_final_plans}{Whether or not to only apply entire-plan constraints to the
 final complete plan (a plan that is all districts). If splitting plans all
 the way this does not affect the final target distribution.}
+
+\item{fn}{A function}
 }
 \description{
 The \code{\link[=redist_smc]{redist_smc()}} and \code{\link[=redist_mergesplit]{redist_mergesplit()}} algorithms in this package allow

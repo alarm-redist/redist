@@ -232,7 +232,7 @@ redist_mergesplit <- function(
   if (is.null(init_plan)) {
     if (!is.null(exist_name)) {
       init_plan <- matrix(
-        rep(vctrs::vec_group_id(get_existing(map)), chains),
+        rep(get_existing(map), chains),
         ncol = chains,
         nrow = length(get_existing(map))
       )
@@ -244,7 +244,7 @@ redist_mergesplit <- function(
     } else {
       init_plan <- "sample"
     }
-  } else if (!is.null(init_plan)) {
+  } else if (!is.null(init_plan) && !isTRUE(init_plan == "sample")) {
     if (inherits(init_plan, "redist_plans")) {
       if (is.null(init_seats)) {
         init_seats <- get_seats_matrix(init_plan)
@@ -253,6 +253,8 @@ redist_mergesplit <- function(
     } else if (is.matrix(init_plan)) {
       stopifnot(ncol(init_plan) == chains)
       init_plan <- init_plan
+    } else if (!rlang::is_integerish(init_plan)){
+        cli::cli_abort("{.arg init_plan} must be integers!")
     } else {
       init_plan <- matrix(rep(as.integer(init_plan), chains), ncol = chains)
     }
@@ -276,6 +278,7 @@ redist_mergesplit <- function(
         # else default to default smc ncores from earlier
       init_ncores <- default_smc_ncores
     }
+
 
     init_plan <- redist_smc(
       map,
@@ -325,8 +328,6 @@ redist_mergesplit <- function(
   init_pop <- pop_tally(init_plan, pop, ndists)
 
 
-  # subtract 1 to make it 0 indexed
-  init_plan <- init_plan - 1
   # validate initial plans
   validate_initial_region_id_mat(init_plan, V, chains, ndists)
 

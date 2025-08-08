@@ -197,31 +197,38 @@ summary.redist_plans <- function(
     if (div_bad) cli::cli_alert_danger("{.strong WARNING:} Low plan diversity")
 
     # now compute rhats if more than 1 chain
-    one_district_only <- 1 <= district && district <= n_distr
     cols <- names(object)
-    addl_cols <- setdiff(cols, c("chain", "draw", "district", "total_pop", "seats", "mcmc_accept"))
-    if(one_district_only){
-        idx <- seq_len(n_samp)
-        if ("district" %in% cols) idx <- as.integer(district) + (idx - 1)*n_distr
+    multiple_chains <- "chain" %in% cols && dplyr::n_distinct(object[["chain"]]) > 1
+    if(multiple_chains){
+        one_district_only <- 1 <= district && district <= n_distr
 
-        const_cols <- vapply(addl_cols, function(col) {
-            x <- object[[col]][idx]
-            all(is.na(x)) || all(x == x[1]) ||
-                any(tapply(x, object[['chain']][idx], FUN = function(z) length(unique(z))) == 1)
-        }, numeric(1))
+        addl_cols <- setdiff(cols, c("chain", "draw", "district", "total_pop", "seats", "mcmc_accept"))
+        if(one_district_only){
+            idx <- seq_len(n_samp)
+            if ("district" %in% cols) idx <- as.integer(district) + (idx - 1)*n_distr
+
+            const_cols <- vapply(addl_cols, function(col) {
+                x <- object[[col]][idx]
+                all(is.na(x)) || all(x == x[1]) ||
+                    any(tapply(x, object[['chain']][idx], FUN = function(z) length(unique(z))) == 1)
+            }, numeric(1))
+        }else{
+            const_cols <- vapply(addl_cols, function(col) {
+                x <- object[[col]]
+                all(is.na(x)) || all(x == x[1]) ||
+                    any(tapply(x, object[['chain']], FUN = function(z) length(unique(z))) == 1)
+            }, numeric(1))
+        }
+        addl_cols <- addl_cols[!const_cols]
     }else{
-        const_cols <- vapply(addl_cols, function(col) {
-            x <- object[[col]]
-            all(is.na(x)) || all(x == x[1]) ||
-                any(tapply(x, object[['chain']], FUN = function(z) length(unique(z))) == 1)
-        }, numeric(1))
+        addl_cols <- c()
     }
-    addl_cols <- addl_cols[!const_cols]
-
 
     warn_converge <- FALSE
     # do nothing if no additional columns or no chain column
-    if(length(addl_cols) > 0 && "chain" %in% cols){
+
+
+    if(multiple_chains && length(addl_cols) > 0){
         # check district input
         if(!isFALSE(district)){
             # check integer

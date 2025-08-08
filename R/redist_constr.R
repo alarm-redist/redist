@@ -1161,6 +1161,60 @@ extract_vars = function(expr) {
   }
 }
 
+#' @param admin A vector indicating administrative unit membership
+#' @rdname constraints
+#' @export
+add_constr_plan_splits <- function(
+        constr,
+        strength,
+        admin,
+        only_final_plans = FALSE,
+        thresh = NULL
+) {
+    if (!inherits(constr, "redist_constr")) {
+        cli::cli_abort("Not a {.cls redist_constr} object")
+    }
+    if (strength <= 0) {
+        cli::cli_warn("Nonpositive strength may lead to unexpected results")
+    }
+    if (!rlang::is_bool(only_final_plans)) {
+        cli::cli_abort("{.arg only_final_plans} must be a boolean.")
+    }
+
+    if (is.null(thresh)) {
+        # no thresholding
+        hard_constraint <- FALSE
+        hard_threshold <- 0
+    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
+        cli::cli_abort("{.arg thresh} must be a finite scalar.")
+    } else {
+        hard_constraint <- TRUE
+        hard_threshold <- thresh
+    }
+
+    data <- attr(constr, "data")
+
+    admin <- rlang::eval_tidy(rlang::enquo(admin), data)
+    if (is.null(admin)) {
+        cli::cli_abort("{.arg admin} may not be {.val NULL}.")
+    }
+    if (any(is.na(admin))) {
+        cli::cli_abort("{.arg admin} many not contain {.val NA}s.")
+    }
+    admin <- vctrs::vec_group_id(admin)
+
+    new_constr <- list(
+        strength = strength,
+        only_final_plans = only_final_plans,
+        hard_constraint = hard_constraint,
+        hard_threshold = hard_threshold,
+        admin = admin,
+        n = length(unique(admin))
+    )
+
+    add_to_constr(constr, "plan_splits", new_constr)
+}
+
 
 #' @param fn A function
 #' @rdname constraints
