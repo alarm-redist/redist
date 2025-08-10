@@ -143,12 +143,14 @@ add_to_constr <- function(constr, name, new_constr) {
 #' diagnostics.
 #'
 #' An optional `thresh` value can also be set as well to incorporate hard
-#' thresholding. When the output of a constraint is greater than or equal to
-#' `thresh` the plan will automatically be rejected at the splitting stage. This
-#' ensures that in the final sample there will be no plans with scores at or above
-#' `thresh`. Lower `thresh` values will eventually cause the algorithms efficiency
-#' to suffer. Depending on how its used `thresh` can violate the theoretical
-#' guarantees of the algorithm so caution is advised.
+#' thresholding. Setting a `thresh` value turns that constraint into an indicator
+#' function meaning when the output of a constraint is greater than or equal to
+#' `thresh` the plan will automatically be rejected at the splitting stage. If
+#' the constraint score is less than the threshold it will not affect the weights
+#' at all. This ensures that in the final sample there will be no plans with
+#' scores at or above `thresh`. Lower `thresh` values will eventually cause the
+#' algorithms efficiency to suffer. Depending on how its used `thresh` can
+#' violate the theoretical guarantees of the algorithm so caution is advised.
 #'
 #'
 #' The `status_quo` constraint adds a term measuring the variation of

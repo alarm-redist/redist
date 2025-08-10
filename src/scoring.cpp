@@ -140,8 +140,12 @@ int count_admin_splits(
 std::pair<bool, double> RegionConstraint::compute_region_score(const Plan &plan, int region_id) const{
     double region_score = strength * compute_raw_region_constraint_score(plan, region_id);
     
-    if(hard_constraint && region_score >= hard_threshold){
-        return std::make_pair(false, region_score);
+    if(hard_constraint){
+        if(region_score >= hard_threshold){
+            return std::make_pair(false, region_score);
+        }else{
+            return std::make_pair(true, 0);
+        }
     }else{
         return std::make_pair(true, region_score);
     }
@@ -151,8 +155,12 @@ std::pair<bool, double> RegionConstraint::compute_region_score(const Plan &plan,
 std::pair<bool, double> RegionConstraint::compute_merged_region_score(
     const Plan &plan, int region1_id, int region2_id) const{
     double region_score = strength * compute_raw_merged_region_constraint_score(plan, region1_id, region2_id);
-    if(hard_constraint && region_score >= hard_threshold){
-        return std::make_pair(false, region_score);
+    if(hard_constraint){
+        if(region_score >= hard_threshold){
+            return std::make_pair(false, region_score);
+        }else{
+            return std::make_pair(true, 0);
+        }
     }else{
         return std::make_pair(true, region_score);
     }
@@ -484,8 +492,13 @@ bool PlanConstraint::plan_constraint_ok(const Plan &plan) const{
 
 std::pair<bool, double> PlanConstraint::compute_plan_score(const Plan &plan) const{
     double plan_score = strength * compute_raw_plan_constraint_score(plan);
-    if(hard_constraint && plan_score >= hard_threshold){
-        return std::make_pair(false, plan_score);
+
+    if(hard_constraint){
+        if(plan_score >= hard_threshold){
+            return std::make_pair(false, plan_score);
+        }else{
+            return std::make_pair(true, 0);
+        }
     }else{
         return std::make_pair(true, plan_score);
     }
@@ -497,8 +510,12 @@ std::pair<bool, double> PlanConstraint::compute_merged_plan_score(
     int const region1_id, int const region2_id) 
 const{
     double plan_score = strength * compute_raw_merged_plan_constraint_score(plan, region1_id, region2_id);
-    if(hard_constraint && plan_score >= hard_threshold){
-        return std::make_pair(false, plan_score);
+    if(hard_constraint){
+        if(plan_score >= hard_threshold){
+            return std::make_pair(false, plan_score);
+        }else{
+            return std::make_pair(true, 0);
+        }
     }else{
         return std::make_pair(true, plan_score);
     }
