@@ -13,14 +13,16 @@
 #' all districts are within 3 percent of population parity.
 #'
 #' @param plans A matrix with one row for each precinct and one column for each
-#' map. Required.
+#' plan. Required.
 #' @param total_pop A numeric vector with the population for every precinct.
+#' @param seats A numeric vector with the number of seats for each district in
+#' each plan in `plans`
 #'
 #' @return numeric vector with the population parity for each column
 #'
 #' @concept analyze
 #' @export
-redist.parity <- function(plans, total_pop) {
+redist.parity <- function(plans, total_pop, seats = NULL) {
     if (!is.numeric(total_pop)) {
         cli::cli_abort("{.arg total_pop} must be a numeric vector")
     }
@@ -43,7 +45,29 @@ redist.parity <- function(plans, total_pop) {
         n_distr <- rg[2]
     }
 
-    max_dev(plans, total_pop, n_distr)
+    if (!is.null(seats)){
+        if (!is.numeric(seats)) {
+            cli::cli_abort("{.arg seats} must be a numeric vector")
+        }
+        if (length(seats) != n_distr * ncol(plans)) {
+            cli::cli_abort(".arg seats} must be of length {.arg ncol(plans)} * {.arg n_distr}.")
+        }
+        # now reshape into matrix 
+        seats <- matrix(
+            seats, ncol = ncol(plans), nrow = n_distr
+        )
+        multimember <- TRUE
+        # nseats is just sum of seats associated with initial plan 
+        nseats <- sum(seats[seq_len(n_distr)])
+    }else{
+        seats <- 0L
+        multimember <- FALSE
+        nseats <- n_distr 
+    }
+
+
+
+    max_dev(plans, total_pop, n_distr, multimember, nseats, seats, 1)
 }
 
 

@@ -540,7 +540,7 @@ class PlanMultigraph{
             bool const is_final_split
         );
 
-        // Removes pairs where merging them would create a hierarchicall
+        // Removes pairs where merging them would create a hierarchically
         // invalid plan
         void remove_invalid_hierarchical_merge_pairs(
             Plan const &plan

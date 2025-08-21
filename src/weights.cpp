@@ -394,23 +394,30 @@ void compute_all_plans_log_simple_incremental_weights(
     int const num_regions = plans_ptr_vec[0]->num_regions;
     const int check_int = 50; // check for interrupts every _ iterations
 
-    // for getting thread ids
+    int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
+    // thread safe id counter
     std::atomic<int> thread_id_counter{0};
+    // now make the vectors of important variables to be used by threads
+    std::vector<USTSampler> ust_samplers_vec; ust_samplers_vec.reserve(num_threads);
+    std::vector<PlanMultigraph> plan_multigraphs_vec; plan_multigraphs_vec.reserve(num_threads);
+    for (size_t i = 0; i < num_threads; i++)
+    {
+        ust_samplers_vec.emplace_back(map_params, splitting_schedule);
+        plan_multigraphs_vec.emplace_back(
+            map_params, 
+            sampling_space == SamplingSpace::LinkingEdgeSpace
+        );
+    }
 
 
     RcppThread::ProgressBar bar(M, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
         static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
-        static thread_local PlanMultigraph plan_multigraph(
-            map_params, 
-            sampling_space == SamplingSpace::LinkingEdgeSpace
-        );
-        static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
 
         double log_incr_weight = compute_simple_log_incremental_weight(
-            *plans_ptr_vec[i], plan_multigraph,
-            splitting_schedule, ust_sampler, tree_splitter, 
+            *plans_ptr_vec[i], plan_multigraphs_vec[thread_id],
+            splitting_schedule, ust_samplers_vec[thread_id], tree_splitter, 
             sampling_space,
             scoring_functions[thread_id], rho,
             compute_log_splitting_prob, 
@@ -675,24 +682,30 @@ void compute_all_plans_log_optimal_incremental_weights(
     const int num_regions = plans_ptr_vec[0]->num_regions;
     if(DEBUG_WEIGHTS_VERBOSE) Rprintf("About to start computing weights!\n");
 
-    // for getting thread ids
+    int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
+    // thread safe id counter
     std::atomic<int> thread_id_counter{0};
+    // now make the vectors of important variables to be used by threads
+    std::vector<USTSampler> ust_samplers_vec; ust_samplers_vec.reserve(num_threads);
+    std::vector<PlanMultigraph> plan_multigraphs_vec; plan_multigraphs_vec.reserve(num_threads);
+    for (size_t i = 0; i < num_threads; i++)
+    {
+        ust_samplers_vec.emplace_back(map_params, splitting_schedule);
+        plan_multigraphs_vec.emplace_back(
+            map_params, 
+            sampling_space == SamplingSpace::LinkingEdgeSpace
+        );
+    }
 
     RcppThread::ProgressBar bar(nsims, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, nsims, [&] (int i) {
         static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
-        static thread_local PlanMultigraph plan_multigraph(
-            map_params, 
-            sampling_space == SamplingSpace::LinkingEdgeSpace
-        );
-        static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
-
 
         // REprintf("I=%d\n", i);
         double log_incr_weight = compute_log_optimal_incremental_weights(
-            *plans_ptr_vec[i], plan_multigraph, 
-            splitting_schedule, ust_sampler, tree_splitter,
+            *plans_ptr_vec[i], plan_multigraphs_vec[thread_id], 
+            splitting_schedule, ust_samplers_vec[thread_id], tree_splitter,
             sampling_space, scoring_functions[thread_id], 
             rho, compute_log_splitting_prob, 
             is_final_plans

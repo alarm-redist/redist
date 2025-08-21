@@ -221,7 +221,9 @@ Rcpp::DataFrame get_plan_counts(
     int const V = plans_mat.nrow();
     int const nsims = plans_mat.ncol();
 
-    std::vector<std::unordered_map<std::string, int>> plan_count_maps_vec(pool.getNumThreads());
+    std::vector<std::unordered_map<std::string, int>> plan_count_maps_vec(
+        pool.getNumThreads() == 0 ? 1 : pool.getNumThreads()
+    );
 
     // trick to give each thread a unique id
     std::atomic<int> thread_id_counter{0};
@@ -291,7 +293,7 @@ void set_merged_region_reindex_vec(
 
 RcppThread::ThreadPool get_thread_pool(int const num_threads){
     if(num_threads == 1){
-        return RcppThread::ThreadPool(1);
+        return RcppThread::ThreadPool(0);
     }else if(num_threads > 1){
         return RcppThread::ThreadPool(num_threads);
     }else{
@@ -437,7 +439,7 @@ PlanEnsemble::PlanEnsemble(
     bool const use_linking_edge_space = sampling_space == SamplingSpace::LinkingEdgeSpace;
 
     if(!use_graph_space){
-        if(rng_states.size() > pool.getNumThreads()){
+        if(rng_states.size() > (pool.getNumThreads() == 0 ? 1 : pool.getNumThreads())){
             throw Rcpp::exception("RNG States vector is more than the number of threads!\n");
         }
     }
@@ -553,6 +555,104 @@ Rcpp::IntegerMatrix PlanEnsemble::get_R_sizes_matrix(
     }
 
     return sizes_mat;
+}
+
+
+int PlanEnsemble::count_unique_plans(
+    RcppThread::ThreadPool &pool
+) const{
+    int const num_regions = plan_ptr_vec[0]->num_regions;
+    int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
+    std::vector<std::unordered_set<std::string>> plan_count_maps_vec(num_threads);
+
+    // // trick to give each thread a unique id
+    std::atomic<int> thread_id_counter{0};
+
+    std::vector<std::vector<RegionID>> reindexed_plan_vecs(num_threads, std::vector<RegionID>(V));
+    std::vector<std::vector<int>> reindex_vecs(num_threads, std::vector<int>(num_regions));
+
+
+    pool.parallelFor(0, nsims, [&] (int i){
+        static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+
+        // REprintf("Da Thread ID %d\n", thread_id);
+        if (thread_id < 0 || thread_id >= num_threads) {
+            REprintf("Thread id thing broke, thread id is %d but num threads is %d!\n");
+        }
+
+        // reset the vector indices 
+        std::fill(
+            reindex_vecs[thread_id].begin(),
+            reindex_vecs[thread_id].end(),
+            -1
+        );
+
+        // REprintf("Thread ID %d\n", thread_id);
+
+        int current_region_relabel_counter = 0;
+
+        for (size_t v = 0; v < V; v++)
+        {
+            auto v_region = plan_ptr_vec[i]->region_ids[v];
+            
+            // check if this region has been relabelled yet
+            if(reindex_vecs[thread_id][v_region] < 0){
+                // if not then we haven't set a relabel for this region
+                reindex_vecs[thread_id][v_region] = current_region_relabel_counter;
+                ++current_region_relabel_counter;
+            }
+
+            if(reindex_vecs[thread_id][v_region] < 0 || reindex_vecs[thread_id][v_region] >= num_regions){
+                REprintf("%d Regions - Vertex %d - Reindexed Region %d to %d \n",
+                    num_regions, v, v_region, reindex_vecs[thread_id][v_region]
+                );
+                REprintf("Reindex Vec is: ");
+                for (int j = 0; j < reindex_vecs[thread_id].size(); j++)
+                {
+                    REprintf("|%d -> %d| ", j, reindex_vecs[thread_id][j]);
+                }
+                REprintf("\nPlan Vectors:");
+                for (int u = 0; u < V; u++)
+                {
+                     REprintf("|%d -> %d| ", 
+                        plan_ptr_vec[i]->region_ids[u], 
+                        reindex_vecs[thread_id][plan_ptr_vec[i]->region_ids[u]]
+                    );
+                }
+                REprintf("\n");
+                throw Rcpp::exception("!\n");
+            }
+
+            // now relabel 
+            reindexed_plan_vecs[thread_id][v] = reindex_vecs[thread_id][v_region];
+        }   
+        
+        // now hash the plan
+        std::ostringstream oss;
+
+        for (int row = 0; row < V; ++row) {
+            oss << reindexed_plan_vecs[thread_id][row];
+            if (row < V - 1) {
+                oss << ",";
+            }
+        }
+        auto key = oss.str();
+        plan_count_maps_vec[thread_id].insert(key);
+
+    });
+    pool.wait();
+
+    // now combine into one map 
+    std::unordered_set<std::string> pattern_counts;
+    for (size_t i = 0; i < plan_count_maps_vec.size(); i++)
+    {
+        for (const auto &plans_str : plan_count_maps_vec[i]) {
+            pattern_counts.insert(plans_str);
+        }
+    }
+
+    return pattern_counts.size();
+
 }
 
 
@@ -736,7 +836,7 @@ SMCDiagnostics::SMCDiagnostics(
     bool const splitting_all_the_way, bool const split_district_only
 ): diagnostic_level(diagnostic_level), total_steps(total_smc_steps+total_ms_steps),
 log_wgt_stddevs(total_smc_steps), acceptance_rates(total_steps),
-nunique_parents(total_smc_steps), n_eff(total_smc_steps),
+nunique_parents(total_smc_steps), nunique_plans(total_steps), n_eff(total_smc_steps),
 num_merge_split_attempts_vec(total_ms_steps),
 cut_k_values(sampling_space == SamplingSpace::GraphSpace ? total_steps : 0)
 {
@@ -889,6 +989,7 @@ void SMCDiagnostics::add_diagnostics_to_out_list(Rcpp::List &out){
     out["parent_unsuccessful_tries_mat"] = parent_unsuccessful_tries_mat;
     out["step_n_eff"] = n_eff;
     out["nunique_parent_indices"] = nunique_parents;
+    out["nunique_plans"] = nunique_plans;
     out["tree_sizes"] = tree_sizes_mat;
     out["successful_tree_sizes"] = successful_tree_sizes_mat;
     out["log_weight_stddev"] = log_wgt_stddevs;

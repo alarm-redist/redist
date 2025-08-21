@@ -521,6 +521,8 @@ redist_mergesplit <- function(
     algout$mhdecisions
   })
 
+  num_admin_units <- length(unique(counties))
+
   out <- new_redist_plans(
     plans = plans,
     map = map,
@@ -532,13 +534,16 @@ redist_mergesplit <- function(
     seats = seats,
     compactness = compactness,
     constraints = constraints,
+    counties = counties,
     ndists = ndists,
+    nseats = nseats,
     mh_acceptance = mh,
     version = packageVersion("redist"),
     diagnostics = l_diag,
     run_information = run_information,
     internal_diagnostics = internal_diagnostics,
     pop_bounds = pop_bounds,
+    num_admin_units = num_admin_units,
     total_runtime = t2 - t1
   ) %>%
     mutate(

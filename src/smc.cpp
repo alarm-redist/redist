@@ -144,28 +144,35 @@ void run_smc_step(
         std::vector<int>(map_params.total_seats, 0)
     );
 
-    // thread safe id counter for seeding RNG generator 
+    int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
+    // thread safe id counter
     std::atomic<int> thread_id_counter{0};
+    // now make the vectors of important variables to be used by threads
+    std::vector<USTSampler> ust_samplers_vec; ust_samplers_vec.reserve(num_threads);
+    for (size_t i = 0; i < num_threads; i++)
+    {
+        ust_samplers_vec.emplace_back(map_params, splitting_schedule);
+    }
+
     if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("About to start SMC Step for %d plans\n", M);
     // create a progress bar
     RcppThread::ProgressBar bar(M, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
         static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
-        static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
 
-        // REprintf("Thread ID %d\n", thread_id);
-        // REprintf("Plan %d\n\n", i);
+        if (thread_id < 0 || thread_id >= num_threads) {
+            REprintf("Thread id thing broke, thread id is %d but num threads is %d!\n", thread_id, num_threads);
+        }
+
         bool ok = false;
         int idx;
         int reject_ct = 0;
         RcppThread::checkUserInterrupt(i % check_int == 0);
-        
 
         while (!ok) {
             // increase the number of tries for particle i by 1
             draw_tries_vec[i]++;
-            // REprintf("%d - Try %d!\n", i, draw_tries_vec[i]);
             // sample previous plan
             idx = rng_states[thread_id].r_int_wgt(normalized_cumulative_weights);
             
@@ -198,7 +205,7 @@ void run_smc_step(
 
 
             // Try to split the region 
-            std::pair<bool, EdgeCut> edge_search_result = ust_sampler.attempt_to_find_valid_tree_split(
+            std::pair<bool, EdgeCut> edge_search_result = ust_samplers_vec[thread_id].attempt_to_find_valid_tree_split(
                 rng_states[thread_id], tree_splitters,
                 *old_plan_ensemble->plan_ptr_vec[idx], region_id_to_split,
                 save_edge_selection_prob
@@ -215,7 +222,7 @@ void run_smc_step(
 
                 new_plan_ensemble->plan_ptr_vec[i]->update_from_successful_split(
                     tree_splitters,
-                    ust_sampler, std::get<1>(edge_search_result),
+                    ust_samplers_vec[thread_id], std::get<1>(edge_search_result),
                     region_id_to_split, new_region_id, 
                     true
                 );
@@ -297,9 +304,13 @@ void run_smc_step(
     // Get number of unique parents
     std::set<int> unique_parents(parent_index_vec.begin(), parent_index_vec.end());
     smc_diagnostics.nunique_parents.at(smc_step_num) = unique_parents.size();
+    // Get the number of unique plans 
+    smc_diagnostics.nunique_plans[step_num] = old_plan_ensemble->count_unique_plans(pool);
+
     if (verbosity >= 3) {
-        Rcout << "  " << std::setprecision(2) << 100.0 * accept_rate << "% acceptance rate, " <<
-       100.0 * smc_diagnostics.nunique_parents.at(smc_step_num) / M << "% of previous step's plans survived.\n";
+       Rcout << "  " << std::setprecision(2) << 100.0 * accept_rate << "% acceptance rate, " <<
+       100.0 * smc_diagnostics.nunique_parents.at(smc_step_num) / M << "% of previous step's plans survived," <<
+       " and there are now " << smc_diagnostics.nunique_plans[step_num] << " unique plans." << std::endl;
     }
 
     // ORIGINAL SMC CODE I DONT KNOW WHAT IT DOES
@@ -341,33 +352,42 @@ void run_merge_split_step_on_all_plans(
     );
 
 
-    
-    // thread safe id counter for seeding RNG generator 
+    int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
+    // thread safe id counter
     std::atomic<int> thread_id_counter{0};
+    // now make the vectors of important variables to be used by threads
+    std::vector<USTSampler> ust_samplers_vec; ust_samplers_vec.reserve(num_threads);
+    std::vector<PlanMultigraph> current_plan_multigraphs_vec; current_plan_multigraphs_vec.reserve(num_threads);
+    std::vector<PlanMultigraph> proposed_plan_multigraphs_vec; proposed_plan_multigraphs_vec.reserve(num_threads);
+
+    for (size_t i = 0; i < num_threads; i++)
+    {
+        ust_samplers_vec.emplace_back(map_params, splitting_schedule);
+        current_plan_multigraphs_vec.emplace_back(
+            map_params, 
+            sampling_space == SamplingSpace::LinkingEdgeSpace
+        );
+        proposed_plan_multigraphs_vec.emplace_back(
+            map_params, 
+            sampling_space == SamplingSpace::LinkingEdgeSpace
+        );
+    }
+    
     // create a progress bar
     RcppThread::ProgressBar bar(nsims, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, nsims, [&] (int i) {
         static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
-        static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
-        // Create variables needed for each 
-        PlanMultigraph current_plan_multigraph(
-            map_params, 
-            sampling_space == SamplingSpace::LinkingEdgeSpace
-        );
-        PlanMultigraph proposed_plan_multigraph(
-            map_params, 
-            sampling_space == SamplingSpace::LinkingEdgeSpace
-        );
+
 
         // store the number of succesful runs
         success_count_vec[i] = run_merge_split_steps(
             map_params, splitting_schedule, scoring_functions[thread_id],
             rng_states[thread_id], sampling_space,
             *plan_ptrs_vec[i], *new_plan_ptrs_vec[i], 
-            ust_sampler, tree_splitter,
-            current_plan_multigraph, 
-            proposed_plan_multigraph,
+            ust_samplers_vec[thread_id], tree_splitter,
+            current_plan_multigraphs_vec[thread_id], 
+            proposed_plan_multigraphs_vec[thread_id],
             merge_prob_type,
             rho, is_final,
             nsteps_to_run,
@@ -379,6 +399,9 @@ void run_merge_split_step_on_all_plans(
         }
 
         RcppThread::checkUserInterrupt(i % check_int == 0);
+        if (RcppThread::isInterrupted(i % check_int == 0)){
+            REprintf("Interrupted!\n");
+        }
 
     });
 
@@ -621,7 +644,7 @@ List run_redist_smc(
 
 
     // Create a threadpool
-    RcppThread::ThreadPool pool(num_threads);
+    RcppThread::ThreadPool pool(num_threads > 1 ? num_threads : 0);
 
     // If hard custom then switch to 1 thread only
     if(scoring_functions[0].any_hard_custom_constraints){
@@ -696,7 +719,7 @@ List run_redist_smc(
         Rcout << "maps with " << ndists << " districts and population between "
               << lower << " and " << upper << "." << std::endl;
         if(verbosity >= 3){
-            Rcout << "Using " << pool.getNumThreads() << " threads, "
+            Rcout << "Using " << (pool.getNumThreads() == 0 ? 1 : pool.getNumThreads()) << " threads, "
                 << total_ms_steps << " merge split steps, ";
             if(splitting_size_regime == SplittingSizeScheduleType::DistrictOnlySMD || splitting_size_regime == SplittingSizeScheduleType::DistrictOnlyMMD){
                 Rcout << "and only performing 1-district splits.";
@@ -989,9 +1012,12 @@ List run_redist_smc(
 
             smc_diagnostics.acceptance_rates.at(step_num) = total_ms_successes / static_cast<double>(total_ms_attempts);
 
+            // add number of unique plans 
+            smc_diagnostics.nunique_plans[step_num] = plan_ensemble_ptr->count_unique_plans(pool);
+
             if (verbosity >= 3){
-                Rprintf("  Acceptance Rate: %.2f\n",   
-                    100.0*smc_diagnostics.acceptance_rates.at(step_num));
+                Rcout << "  " << std::setprecision(2) << 100.0 * smc_diagnostics.acceptance_rates.at(step_num) << "% acceptance rate, " <<
+                "there are now " << smc_diagnostics.nunique_plans[step_num] << " unique plans." << std::endl;
             }
 
             // Access the column
@@ -1001,7 +1027,7 @@ List run_redist_smc(
 
             merge_split_step_num++;
         }
-
+        
         // Add details diagnostics if needed
         // Now update the diagnostic info if needed, region labels, dval column of the matrix
         if(diagnostic_mode){
@@ -1021,13 +1047,35 @@ List run_redist_smc(
         }
         Rcpp::checkUserInterrupt();
 
+        
+
     }
-    } catch (Rcpp::internal::InterruptedException e) {
+    } catch (RcppThread::UserInterruptException e) {
         cli_progress_done(bar);
+        REprintf("Hi\n");
+        // pool.wait();
+        // std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+        REprintf("Hey its a threaded one!!\n");
+        return Rcpp::List();
+    }catch (Rcpp::internal::InterruptedException e) {
+        cli_progress_done(bar);
+        REprintf("Hey\n");
+        return Rcpp::List();
         return R_NilValue;
+    }catch (const std::exception &e) {
+        cli_progress_done(bar);
+        Rcpp::Rcerr << "Standard exception: " << e.what() << "\n";
+        REprintf("Exiting!");
+        return Rcpp::List();
+        return R_NilValue;
+                
+    }
+    catch (...) {
+        Rcpp::Rcerr << "Unknown exception caught!\n";
     }
     cli_progress_done(bar);
-    
+
+
 
     // if not all diagnostic mode and split district only reorder the plans 
     if(!diagnostic_mode && splitting_size_regime != SplittingSizeScheduleType::DistrictOnlySMD){

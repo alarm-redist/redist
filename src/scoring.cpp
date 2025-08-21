@@ -1140,17 +1140,26 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
 
 
     for(auto const &constraint_ptr: region_constraint_ptrs){
-        all_rounds_soft_region_constraints++;
-        if(constraint_ptr->hard_constraint) ++num_hard_region_constraints;
+        if(constraint_ptr->hard_constraint){
+            ++num_hard_region_constraints;
+        }else{
+            ++all_rounds_soft_region_constraints;
+        }
     }
     for(auto const &constraint_ptr: non_final_region_constraint_ptrs){
-        num_non_final_soft_region_constraints++;
-        if(constraint_ptr->hard_constraint) ++num_hard_region_constraints;
+        if(constraint_ptr->hard_constraint){
+            ++num_hard_region_constraints;
+        }else{
+            ++num_non_final_soft_region_constraints;
+        }
     }
 
     for(auto const &constraint_ptr: plan_constraint_ptrs){
-        if(constraint_ptr->hard_constraint) ++num_hard_plan_constraints;
-        total_soft_plan_constraints++;
+        if(constraint_ptr->hard_constraint){
+            ++num_hard_plan_constraints;
+        }else{
+            ++total_soft_plan_constraints;
+        }
     }
 
     total_soft_region_constraints = num_non_final_soft_region_constraints+num_final_soft_region_constraints+all_rounds_soft_region_constraints;

@@ -115,7 +115,8 @@ NumericMatrix group_pct(
     NumericMatrix grp_distr(n_distr, num_plans);
     NumericMatrix tot_distr(n_distr, num_plans);
 
-    RcppThread::ThreadPool pool(ncores > 0 ? ncores : 0);
+    // 0 or 1 ncores means no threading 
+    RcppThread::ThreadPool pool(ncores > 1 ? ncores : 0);
 
     pool.parallelFor(0, num_plans, [&] (unsigned int i) {
         for (int j = 0; j < V; j++) {
@@ -193,7 +194,7 @@ NumericMatrix pop_tally(IntegerMatrix const &districts, vec const &pop, int cons
             int d = districts(j, i) - 1; // districts are 1-indexed
             tally(d, i) = tally(d, i) + pop(j);
         }
-    }, ncores > 0 ? ncores : 0);
+    }, ncores > 1 ? ncores : 0);
 
     return tally;
 }

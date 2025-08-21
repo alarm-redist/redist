@@ -126,6 +126,16 @@ add_to_constr <- function(constr, name, new_constr) {
   constr
 }
 
+# gets the
+get_nregion_score_vec <- function(only_nregions, ndists){
+    # if false then means apply to any number of regions
+    if(isFALSE(only_nregions)){
+        return(rep(TRUE, ndists))
+    }else if(!rlang::is_integerish(only_nregions)){
+        cli::cli_abort("{.arg only_nregions} must be ")
+    }
+}
+
 #' Sampling constraints
 #'
 #' The [redist_smc()] and [redist_mergesplit()] algorithms in this package allow
@@ -275,6 +285,8 @@ add_to_constr <- function(constr, name, new_constr) {
 #' @param only_final_plans Whether or not to only apply entire-plan constraints to the
 #' final complete plan (a plan that is all districts). If splitting plans all
 #' the way this does not affect the final target distribution.
+#' @param only_nregions Whether or not to only apply entire-plan constraints
+#' when the plan has a particular number of regions.
 #'
 #' @examples
 #' data(iowa)

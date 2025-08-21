@@ -510,6 +510,8 @@ get_smc_summary_df <- function(diagn, run_info, resampled, warn_bottlenecks){
 
     smc_accept_rate <- diagn$accept_rate[run_info$step_types == "smc"]
 
+    smc_step_mask <- run_info$step_types == "smc"
+
     run_summary_df <- tibble(
         n_eff = diagn$step_n_eff,
         eff = diagn$step_n_eff/n_samp,
@@ -523,7 +525,7 @@ get_smc_summary_df <- function(diagn, run_info, resampled, warn_bottlenecks){
 
     # if graph space then add the k
     if(run_sampling_space == GRAPH_PLAN_SPACE_SAMPLING){
-        run_summary_df$est_k <- diagn$forward_kernel_params$cut_k_used
+        run_summary_df$est_k <- diagn$forward_kernel_params$cut_k_used[smc_step_mask]
         if(diagn$forward_kernel_params$estimate_cut_k){
             run_summary_names <- c(run_summary_names, "Est. k")
         }else{

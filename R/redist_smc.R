@@ -531,6 +531,10 @@ redist_smc <- function(
   # add the splitting parameters
   cpp_control_list <- c(cpp_control_list, forward_kernel_params)
 
+  # variable to handle cancelling gracefully
+  should_stop <- FALSE
+
+
   t1 <- Sys.time()
   all_out <- foreach(
     chain = seq_len(runs),
@@ -538,6 +542,9 @@ redist_smc <- function(
     .packages = "redist"
   ) %oper%
     {
+      if (should_stop){
+          return(NULL)
+      }
       if (chain == 1) {
         is_chain1 <- TRUE
       }
@@ -572,8 +579,12 @@ redist_smc <- function(
         log_weights = initial_log_weights
       )
 
+
       if (length(algout) == 0) {
+          # means user cancelled or something went wrong
         cli::cli_process_done()
+          should_stop <- TRUE
+        return(NULL)
       }
 
       # Make integer since arma::umat passed back to R as double
@@ -664,8 +675,17 @@ redist_smc <- function(
           algout$nunique_parent_indices,
           dplyr::n_distinct(rs_idx[1:length(rs_idx)])
         )
+        # need to add unique after resample
+        nunique_plans <- c(
+            algout$nunique_plans,
+            nrow(get_plan_counts(
+                algout$plans, dplyr::n_distinct(algout$plans[,1]),
+                TRUE, ncores
+            ))
+        )
       } else {
         nunique_parent_indices <- algout$nunique_parent_indices
+        nunique_plans <- algout$nunique_plans
       }
 
       t2_run <- Sys.time()
@@ -742,6 +762,7 @@ redist_smc <- function(
         accept_rate = algout$acceptance_rates,
         sd_lp = sd_lp,
         unique_survive = nunique_parent_indices,
+        nunique_plans = nunique_plans,
         ms_move_counts = algout$ms_move_counts,
         ancestors = algout$ancestors,
         seq_alpha = seq_alpha,
@@ -760,15 +781,24 @@ redist_smc <- function(
     }
   t2 <- Sys.time()
 
-  if (verbosity >= 1) {
+  if (verbosity >= 1 && !should_stop) {
     cli::cli_text(
       "{format(nsims*runs, big.mark=',')} plans sampled in
                  {format(t2-t1, digits=2)}"
     )
   }
 
+  bad_runs <- sapply(all_out, is.null)
+
+
   # combine if needed
   if (runs > 1) {
+      if(all(bad_runs)){
+          return(NULL)
+      }else if (any(bad_runs)){
+          all_out <- all_out[!bad_runs]
+          runs <- length(all_out)
+      }
     plans <- do.call(cbind, lapply(all_out, function(x) x$plans))
     region_pops <- do.call(cbind, lapply(all_out, function(x) x$region_pops))
     seats <- do.call(c, lapply(all_out, function(x) x$seats))
@@ -777,6 +807,11 @@ redist_smc <- function(
     run_information <- lapply(all_out, function(x) x$run_information)
     internal_diagnostics <- lapply(all_out, function(x) x$internal_diagnostics)
   } else {
+      # if null then return null
+      if(all(bad_runs)){
+          return(NULL)
+      }
+
     # else if just one run extract directly
     plans <- all_out[[1]]$plans
     region_pops <- all_out[[1]]$region_pops
@@ -800,10 +835,12 @@ redist_smc <- function(
     resampled = resample,
     distr_pop = region_pops,
     ndists = n_dist_act,
+    nseats = nseats,
     seats = seats,
     n_eff = all_out[[1]]$n_eff,
     compactness = compactness,
     constraints = constraints,
+    counties = counties,
     version = packageVersion("redist"),
     diagnostics = l_diag,
     run_information = run_information,

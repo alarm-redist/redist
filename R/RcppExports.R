@@ -139,11 +139,11 @@ prec_cooccur <- function(m, idxs, ncores = 0L) {
     .Call(`_redist_prec_cooccur`, m, idxs, ncores)
 }
 
-group_pct <- function(plans_mat, group_pop, total_pop, n_distr, ncores = 1L) {
+group_pct <- function(plans_mat, group_pop, total_pop, n_distr, ncores = 0L) {
     .Call(`_redist_group_pct`, plans_mat, group_pop, total_pop, n_distr, ncores)
 }
 
-pop_tally <- function(districts, pop, n_distr, ncores = 1L) {
+pop_tally <- function(districts, pop, n_distr, ncores = 0L) {
     .Call(`_redist_pop_tally`, districts, pop, n_distr, ncores)
 }
 

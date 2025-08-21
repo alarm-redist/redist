@@ -314,7 +314,7 @@ redist_map <- function(..., existing_plan = NULL, pop_tol = NULL,
     pop_tol <- eval_tidy(enquo(pop_tol), x)
     if (is.null(pop_tol) && is.null(pop_bounds)) {
         if (!is.null(existing_col)) {
-            pop_tol <- redist.parity(x[[existing_col]], x[[pop_col]])
+            pop_tol <- redist.parity(x[[existing_col]], x[[pop_col]], existing_plan_seats)
             if (pop_tol <= 0.001)
                 cli::cli_inform("{.arg pop_tol} calculated from existing plan is \u2264 0.1%")
         } else {

@@ -11,6 +11,7 @@
 #include <memory>
 #include <stdint.h>
 #include <RcppArmadillo.h>
+#include <array>
 
 // [[Rcpp::depends(RcppArmadillo)]]
 

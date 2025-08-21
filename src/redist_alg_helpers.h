@@ -214,6 +214,10 @@ class PlanEnsemble {
         Rcpp::IntegerMatrix get_region_pops_matrix(
             RcppThread::ThreadPool &pool
         );
+        // counts the number of unique plans in the ensemble
+        int count_unique_plans(
+            RcppThread::ThreadPool &pool
+        ) const;
     
 };
 
@@ -269,6 +273,7 @@ class SMCDiagnostics{
     std::vector<double> log_wgt_stddevs; // log weight std devs
     std::vector<double> acceptance_rates; // Tracks the acceptance rate - total number of tries over nsims - for each round
     std::vector<int> nunique_parents; // number of unique parents
+    std::vector<int> nunique_plans; // number of unique plans after each step 
     std::vector<double> n_eff; // Tracks the effective sample size for the weights of each round
     // For each merge split step this counts the number of attempts that were made
     std::vector<int> num_merge_split_attempts_vec;
