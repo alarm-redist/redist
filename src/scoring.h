@@ -365,21 +365,23 @@ class PlanConstraint {
 
     public:
         PlanConstraint(
-            double const strength, bool const score_final_plans_only,
+            double const strength, std::vector<bool> const &num_regions_to_score,
             bool const hard_constraint, double const hard_threshold):
             strength(strength),
-            score_final_plans_only(score_final_plans_only),
+            num_regions_to_score(num_regions_to_score),
             hard_constraint(hard_constraint),
             hard_threshold(hard_threshold) {};
 
         virtual ~PlanConstraint() = default;
         // attributes
         
-        bool const score_final_plans_only; // Whether or not to only final (ie not partial) plans
+        std::vector<bool> const num_regions_to_score; // Whether or not to score plans with that many regions
         bool const hard_constraint; // whether or not this is a hard constraint
         double const hard_threshold; // If hard constraint then the threshold for becoming zero
         
 
+        // print. Just for debugging
+        virtual void print() const;
         // computes score for a plan 
         virtual double compute_raw_plan_constraint_score(const Plan &plan) const = 0;
         virtual double compute_raw_merged_plan_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const = 0;
@@ -410,9 +412,9 @@ class PlanSplitsConstraint : public PlanConstraint {
             double const strength, int const ndists,
             arma::uvec const admin_units, Tree const &admin_forest, 
             std::vector<int> const &admin_forest_roots,
-            bool const score_final_plans_only,
+            std::vector<bool> const &num_regions_to_score,
             bool const hard_constraint, double const hard_threshold):
-            PlanConstraint(strength, score_final_plans_only, hard_constraint, hard_threshold),
+            PlanConstraint(strength, num_regions_to_score, hard_constraint, hard_threshold),
             admin_units(admin_units), 
             num_admin_units(arma::max(admin_units)),
             admin_forest(admin_forest), 
@@ -434,9 +436,9 @@ class CustomPlanConstraint : public PlanConstraint {
 
     public:
         CustomPlanConstraint(double const strength, Rcpp::Function fn, 
-            bool const score_final_plans_only,
+            std::vector<bool> const &num_regions_to_score,
             bool const hard_constraint, double const hard_threshold):
-            PlanConstraint(strength, score_final_plans_only, hard_constraint, hard_threshold),
+            PlanConstraint(strength, num_regions_to_score, hard_constraint, hard_threshold),
             fn(Rcpp::clone(fn))
             {};
         // computes score for a plan 
@@ -453,7 +455,7 @@ class ValidDistrictsConstraint : public PlanConstraint {
 
     public:
         ValidDistrictsConstraint(MapParams const &map_params):
-        PlanConstraint(1, false, true, .5),
+        PlanConstraint(1, std::vector<bool>(map_params.ndists + 1, true), true, .5),
         map_params(map_params){};
 
         double compute_raw_plan_constraint_score(const Plan &plan) const override;

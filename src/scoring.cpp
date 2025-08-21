@@ -477,6 +477,19 @@ double CustomRegionConstraint::compute_raw_merged_region_constraint_score(const 
 }
 
 
+void PlanConstraint::print() const{
+    REprintf("Scoring Plans with Following Number of Regions:");
+    bool first_element = true;
+    // just skip the first element bc size is ndists+1
+    for (int i = 1; i < num_regions_to_score.size(); i++)
+    {
+        if(num_regions_to_score[i]) REprintf("%d,", i);
+    }
+
+    REprintf("\n");
+}
+
+
 bool PlanConstraint::plan_constraint_ok(const Plan &plan) const{
     if (!hard_constraint){
         return true;
@@ -1062,9 +1075,12 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
             double strength = constr_inst["strength"];
-            bool constr_score_final_plans_only = true;
-            if (constr_inst.containsElementNamed("only_final_plans")){
-                constr_score_final_plans_only = as<bool>(constr_inst["only_final_plans"]);
+            std::vector<bool> num_regions_to_score(map_params.ndists+1, true);
+            if (constr_inst.containsElementNamed("nregions_to_score")){
+                // The vector in R is one indexed but c++ is 0 indexed so need to pad an 
+                // extra element
+                num_regions_to_score = Rcpp::as<std::vector<bool>>(constr_inst["nregions_to_score"]);
+                num_regions_to_score.insert(num_regions_to_score.begin(), false);
             }
             bool hard_constraint = false;
             if (constr_inst.containsElementNamed("hard_constraint")){
@@ -1082,7 +1098,7 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
                     std::make_unique<PlanSplitsConstraint>(
                         strength, map_params.ndists,
                         admin_units, forest_result.first, forest_result.second,
-                        constr_score_final_plans_only,
+                        num_regions_to_score,
                         hard_constraint, hard_threshold
                     )
                 );
@@ -1099,9 +1115,12 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
             double strength = constr_inst["strength"];
-            bool constr_score_final_plans_only = true;
-            if (constr_inst.containsElementNamed("only_final_plans")){
-                constr_score_final_plans_only = as<bool>(constr_inst["only_final_plans"]);
+            std::vector<bool> num_regions_to_score(map_params.ndists+1, true);
+            if (constr_inst.containsElementNamed("nregions_to_score")){
+                // The vector in R is one indexed but c++ is 0 indexed so need to pad an 
+                // extra element
+                num_regions_to_score = Rcpp::as<std::vector<bool>>(constr_inst["nregions_to_score"]);
+                num_regions_to_score.insert(num_regions_to_score.begin(), false);
             }
             bool hard_constraint = false;
             if (constr_inst.containsElementNamed("hard_constraint")){
@@ -1116,7 +1135,7 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
                     std::make_unique<CustomPlanConstraint>(
                         strength, 
                         as<Rcpp::Function>(constr_inst["fn"]),
-                        constr_score_final_plans_only,
+                        num_regions_to_score,
                         hard_constraint, hard_threshold
                     )
                 );
@@ -1294,11 +1313,11 @@ std::pair<bool, double> ScoringFunction::compute_merged_region_full_score(const 
 std::pair<bool, double> ScoringFunction::compute_plan_score(const Plan &plan) const{
     double plan_score = 0.0;
 
-    bool const is_final_plan = plan.num_regions == map_params.ndists;
+    auto const num_regions = plan.num_regions;
 
     // add the score from each constraint 
     for(auto const &constraint_ptr: plan_constraint_ptrs){
-        if(constraint_ptr->score_final_plans_only && !is_final_plan) continue; 
+        if(!constraint_ptr->num_regions_to_score[num_regions]) continue;
 
         auto score_result = constraint_ptr->compute_plan_score(plan);
         // immediately return if threshold triggered
@@ -1319,12 +1338,11 @@ std::pair<bool, double> ScoringFunction::compute_merged_plan_score(
     int const region1_id, int const region2_id, bool const is_final) 
 const{
     double plan_score = 0.0;
-    // this will never be true for a merged plan
-    bool const is_final_plan = plan.num_regions - 1 == map_params.ndists;
+    auto const merged_num_regions = plan.num_regions - 1;
 
     // add the score from each constraint 
     for(auto const &constraint_ptr: plan_constraint_ptrs){
-        if(constraint_ptr->score_final_plans_only && !is_final_plan) continue; 
+        if(!constraint_ptr->num_regions_to_score[merged_num_regions]) continue; 
 
         auto score_result = constraint_ptr->compute_merged_plan_score(plan, region1_id, region2_id);
         // immediately return if threshold triggered
@@ -1389,11 +1407,11 @@ bool ScoringFunction::entire_merged_plan_constraint_only_ok(
     if(!any_hard_plan_constraints) return true;
 
     // this will never be true for a merged plan
-    bool const is_final_plan = plan.num_regions - 1 == map_params.ndists;
+    auto const merged_num_regions = plan.num_regions - 1;
 
-    // add the score from each constraint 
+    // check each hard constraint 
     for(auto const &constraint_ptr: plan_constraint_ptrs){
-        if(constraint_ptr->score_final_plans_only && !is_final_plan) continue; 
+        if(!constraint_ptr->hard_constraint || !constraint_ptr->num_regions_to_score[merged_num_regions]) continue; 
 
         auto score_result = constraint_ptr->compute_merged_plan_score(plan, region1_id, region2_id);
         // immediately return if threshold triggered
@@ -1431,7 +1449,7 @@ bool ScoringFunction::new_split_ok(
 ) const{
     if(!any_hard_constraints) return true;
 
-    bool const is_final_plan = plan.num_regions == map_params.ndists;
+    auto const num_regions = plan.num_regions - 1;
 
     // check if new regions are multidistricts 
     bool const is_region1_district = map_params.is_district[plan.region_sizes[region1_id]];
@@ -1454,7 +1472,7 @@ bool ScoringFunction::new_split_ok(
         // skip if not a hard constraint 
         if(!plan_constraint_ptr->hard_constraint) continue;
         // skip if not final plan and only score final plans 
-        if(plan_constraint_ptr->score_final_plans_only && !is_final_plan) continue;
+        if(!plan_constraint_ptr->num_regions_to_score[num_regions]) continue;
 
         if(!plan_constraint_ptr->plan_constraint_ok(plan)) return false;
     }    

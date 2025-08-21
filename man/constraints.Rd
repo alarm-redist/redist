@@ -147,7 +147,7 @@ add_constr_plan_splits(
   constr,
   strength,
   admin,
-  only_final_plans = FALSE,
+  only_nregions = FALSE,
   thresh = NULL
 )
 
@@ -158,7 +158,7 @@ add_constr_custom_plan(
   strength,
   fn,
   thresh = NULL,
-  only_final_plans = FALSE
+  only_nregions = FALSE
 )
 }
 \arguments{
@@ -204,9 +204,9 @@ having two or more incumbents be in the same district.}
 
 \item{denominator}{Fryer Holden minimum value to normalize by. Default is 1 (no normalization).}
 
-\item{only_final_plans}{Whether or not to only apply entire-plan constraints to the
-final complete plan (a plan that is all districts). If splitting plans all
-the way this does not affect the final target distribution.}
+\item{only_nregions}{Whether or not to only apply entire-plan constraints
+when the plan has a particular number of regions. A value of \code{FALSE} means
+the constraint will applied to plans at every step.}
 
 \item{fn}{A function}
 }
@@ -227,12 +227,14 @@ overflow errors. Whenever you use constraints, be sure to check all sampling
 diagnostics.
 
 An optional \code{thresh} value can also be set as well to incorporate hard
-thresholding. When the output of a constraint is greater than or equal to
-\code{thresh} the plan will automatically be rejected at the splitting stage. This
-ensures that in the final sample there will be no plans with scores at or above
-\code{thresh}. Lower \code{thresh} values will eventually cause the algorithms efficiency
-to suffer. Depending on how its used \code{thresh} can violate the theoretical
-guarantees of the algorithm so caution is advised.
+thresholding. Setting a \code{thresh} value turns that constraint into an indicator
+function meaning when the output of a constraint is greater than or equal to
+\code{thresh} the plan will automatically be rejected at the splitting stage. If
+the constraint score is less than the threshold it will not affect the weights
+at all. This ensures that in the final sample there will be no plans with
+scores at or above \code{thresh}. Lower \code{thresh} values will eventually cause the
+algorithms efficiency to suffer. Depending on how its used \code{thresh} can
+violate the theoretical guarantees of the algorithm so caution is advised.
 
 The \code{status_quo} constraint adds a term measuring the variation of
 information distance between the plan and the reference, rescaled to [0, 1].

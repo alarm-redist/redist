@@ -45,7 +45,7 @@ round(ov_un_norm, 2)
 
 set.seed(42)
 iowa_map_5 <- iowa_map <- redist_map(iowa, total_pop = pop, pop_tol = 0.01, ndists = 5)
-plan_5 <- get_plans_matrix(redist_smc(iowa_map_5, 1, ncores = 1))
+plan_5 <- get_plans_matrix(redist_smc(iowa_map_5, 1))
 ov4_5 <- redist.dist.pop.overlap(plans_mat[, 1], plan_5, iowa_map)
 round(ov4_5, 2)
 

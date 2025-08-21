@@ -126,14 +126,23 @@ add_to_constr <- function(constr, name, new_constr) {
   constr
 }
 
-# gets the
+# validates the only_nregions input and returns a
+# vector of length `ndists` for whether or not to score a plan
+# with that many regions
 get_nregion_score_vec <- function(only_nregions, ndists){
     # if false then means apply to any number of regions
     if(isFALSE(only_nregions)){
-        return(rep(TRUE, ndists))
+        nregion_to_score <- rep(TRUE, ndists)
     }else if(!rlang::is_integerish(only_nregions)){
-        cli::cli_abort("{.arg only_nregions} must be ")
+        cli::cli_abort("{.arg only_nregions} must be integers")
+    }else if(any(only_nregions < 1) || any(only_nregions > ndists)){
+        cli::cli_abort("{.arg only_nregions} must be between 1 and {.arg ndists}")
+    }else{
+        nregion_to_score <- rep(FALSE, ndists)
+        nregion_to_score[only_nregions] <- TRUE
     }
+
+    nregion_to_score
 }
 
 #' Sampling constraints
@@ -282,11 +291,9 @@ get_nregion_score_vec <- function(only_nregions, ndists){
 #' the constraints score is greater than or equal to `thresh` will be rejected
 #' at the splitting stage, ensuring that none of those plans will be in the final
 #' sample.
-#' @param only_final_plans Whether or not to only apply entire-plan constraints to the
-#' final complete plan (a plan that is all districts). If splitting plans all
-#' the way this does not affect the final target distribution.
 #' @param only_nregions Whether or not to only apply entire-plan constraints
-#' when the plan has a particular number of regions.
+#' when the plan has a particular number of regions. A value of `FALSE` means
+#' the constraint will applied to plans at every step.
 #'
 #' @examples
 #' data(iowa)
@@ -1182,7 +1189,7 @@ add_constr_plan_splits <- function(
         constr,
         strength,
         admin,
-        only_final_plans = FALSE,
+        only_nregions = FALSE,
         thresh = NULL
 ) {
     if (!inherits(constr, "redist_constr")) {
@@ -1191,9 +1198,9 @@ add_constr_plan_splits <- function(
     if (strength <= 0) {
         cli::cli_warn("Nonpositive strength may lead to unexpected results")
     }
-    if (!rlang::is_bool(only_final_plans)) {
-        cli::cli_abort("{.arg only_final_plans} must be a boolean.")
-    }
+    nregions_to_score <- get_nregion_score_vec(
+        only_nregions, attr(attr(constr, "data"), "ndists")
+    )
 
     if (is.null(thresh)) {
         # no thresholding
@@ -1219,7 +1226,7 @@ add_constr_plan_splits <- function(
 
     new_constr <- list(
         strength = strength,
-        only_final_plans = only_final_plans,
+        nregions_to_score = nregions_to_score,
         hard_constraint = hard_constraint,
         hard_threshold = hard_threshold,
         admin = admin,
@@ -1324,7 +1331,7 @@ add_constr_custom_plan <- function(
   strength,
   fn,
   thresh = NULL,
-  only_final_plans = FALSE
+  only_nregions = FALSE
 ) {
   if (!inherits(constr, "redist_constr")) {
     cli::cli_abort("Not a {.cls redist_constr} object")
@@ -1332,6 +1339,9 @@ add_constr_custom_plan <- function(
   if (strength <= 0) {
     cli::cli_warn("Nonpositive strength may lead to unexpected results")
   }
+    nregions_to_score <- get_nregion_score_vec(
+        only_nregions, attr(attr(constr, "data"), "ndists")
+    )
 
   if (is.null(thresh)) {
     # no thresholding
@@ -1394,7 +1404,7 @@ add_constr_custom_plan <- function(
   new_constr <- list(
     strength = strength,
     fn = fn,
-    only_final_plans = only_final_plans,
+    nregions_to_score = nregions_to_score,
     hard_constraint = hard_constraint,
     hard_threshold = hard_threshold
   )

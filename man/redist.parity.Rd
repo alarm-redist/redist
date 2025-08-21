@@ -5,15 +5,18 @@
 \alias{plan_parity}
 \title{Calculates Maximum Deviation from Population Parity}
 \usage{
-redist.parity(plans, total_pop)
+redist.parity(plans, total_pop, seats = NULL)
 
 plan_parity(map, .data = pl(), ncores = 1)
 }
 \arguments{
 \item{plans}{A matrix with one row for each precinct and one column for each
-map. Required.}
+plan. Required.}
 
 \item{total_pop}{A numeric vector with the population for every precinct.}
+
+\item{seats}{A numeric vector with the number of seats for each district in
+each plan in \code{plans}}
 
 \item{map}{a \code{\link{redist_map}} object}
 
