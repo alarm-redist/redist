@@ -60,7 +60,7 @@ redist.parity <- function(plans, total_pop, seats = NULL) {
         # nseats is just sum of seats associated with initial plan 
         nseats <- sum(seats[seq_len(n_distr)])
     }else{
-        seats <- 0L
+        seats <- matrix(0L)
         multimember <- FALSE
         nseats <- n_distr 
     }
