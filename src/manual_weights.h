@@ -53,4 +53,17 @@ arma::vec compute_plans_log_optimal_weights(
     int num_threads
 );
 
+// [[Rcpp::export]]
+arma::vec compute_plans_log_simple_weights(
+    List const &adj_list, arma::uvec const &counties, arma::uvec const &pop,
+    List const &constraints, double const pop_temper,  double const rho,
+    std::string const &splitting_schedule_str,
+    int const ndists, int const total_seats, Rcpp::IntegerVector const &district_seat_sizes,
+    int const num_regions,
+    double const lower, double const target, double const upper,
+    Rcpp::IntegerMatrix const &region_ids, 
+    Rcpp::IntegerMatrix const &region_sizes,
+    int num_threads
+);
+
 #endif

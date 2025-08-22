@@ -565,73 +565,122 @@ int PlanEnsemble::count_unique_plans(
     int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
     std::vector<std::unordered_set<std::string>> plan_count_maps_vec(num_threads);
 
-    // // trick to give each thread a unique id
+    // Trick to give each thread a unique id
+    // We need the extra steps to avoid the problem where 
+    // only some threads persist from previous calls but the counter resets 
+    // resulting in multiple threads with the same id 
+    static std::atomic<int> global_generation_counter{0};
+    int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
     std::atomic<int> thread_id_counter{0};
-
-    std::vector<std::vector<RegionID>> reindexed_plan_vecs(num_threads, std::vector<RegionID>(V));
-    std::vector<std::vector<int>> reindex_vecs(num_threads, std::vector<int>(num_regions));
 
 
     pool.parallelFor(0, nsims, [&] (int i){
-        static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+        // need to make size ndists because it might persist between function calls
+        static thread_local std::vector<int> reindex_vec(ndists, -1);
+        static thread_local std::vector<RegionID> reindexed_plan_vec(V);
+
+        static thread_local int thread_generation_counter = -1;
+        static thread_local int thread_id;
+
+        // struct{ 
+        //     int thread_generation_counter = -1;
+        //     int thread_id = -1; } static thread_local thread_id_manager;
+
+        // check if the thread id was generated this function call 
+        if (thread_generation_counter != generation) {
+            // if not then give it a new id
+            thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+            thread_generation_counter = generation;
+        }
+
+
+
 
         // REprintf("Da Thread ID %d\n", thread_id);
         if (thread_id < 0 || thread_id >= num_threads) {
-            REprintf("Thread id thing broke, thread id is %d but num threads is %d!\n");
+            RcppThread::Rcerr << "Thread id out of range: " << thread_id
+                              << " / " << num_threads << "\n";
+            throw std::runtime_error("Thread id out of range");
         }
 
         // reset the vector indices 
         std::fill(
-            reindex_vecs[thread_id].begin(),
-            reindex_vecs[thread_id].end(),
+            reindex_vec.begin(),
+            reindex_vec.end(),
             -1
         );
-
-        // REprintf("Thread ID %d\n", thread_id);
 
         int current_region_relabel_counter = 0;
 
         for (size_t v = 0; v < V; v++)
         {
             auto v_region = plan_ptr_vec[i]->region_ids[v];
+
             
             // check if this region has been relabelled yet
-            if(reindex_vecs[thread_id][v_region] < 0){
+            if(reindex_vec[v_region] < 0){
                 // if not then we haven't set a relabel for this region
-                reindex_vecs[thread_id][v_region] = current_region_relabel_counter;
+                reindex_vec[v_region] = current_region_relabel_counter;
                 ++current_region_relabel_counter;
             }
 
-            if(reindex_vecs[thread_id][v_region] < 0 || reindex_vecs[thread_id][v_region] >= num_regions){
-                REprintf("%d Regions - Vertex %d - Reindexed Region %d to %d \n",
-                    num_regions, v, v_region, reindex_vecs[thread_id][v_region]
-                );
-                REprintf("Reindex Vec is: ");
-                for (int j = 0; j < reindex_vecs[thread_id].size(); j++)
-                {
-                    REprintf("|%d -> %d| ", j, reindex_vecs[thread_id][j]);
+            if(reindex_vec[v_region] < 0 || reindex_vec[v_region] >= num_regions){
+                // REprintf("%d Regions - Vertex %d - Reindexed Region %d to %d \n",
+                //     num_regions, v, v_region, reindex_vec[v_region]
+                // );
+                // REprintf("Reindex Vec is: ");
+                // for (int j = 0; j < reindex_vec.size(); j++)
+                // {
+                //     REprintf("|%d -> %d| ", j, reindex_vecs[thread_id][j]);
+                // }
+                // REprintf("\nPlan Vectors:");
+                // for (int u = 0; u < V; u++)
+                // {
+                //      REprintf("|%d -> %d| ", 
+                //         plan_ptr_vec[i]->region_ids[u], 
+                //         reindex_vecs[thread_id][plan_ptr_vec[i]->region_ids[u]]
+                //     );
+                // }
+                // REprintf("\n");
+                // throw Rcpp::exception("!\n");
+                std::ostringstream oss;
+
+                oss << num_regions << " Regions - Vertex " << v
+                    << " - Reindexed Region " << v_region
+                    << " to " << reindex_vec[v_region] << '\n';
+
+                oss << "Reindex Vec is: ";
+                for (int j = 0; j < static_cast<int>(reindex_vec.size()); ++j) {
+                    oss << '|' << j << " -> " << reindex_vec[j] << "| ";
                 }
-                REprintf("\nPlan Vectors:");
-                for (int u = 0; u < V; u++)
-                {
-                     REprintf("|%d -> %d| ", 
-                        plan_ptr_vec[i]->region_ids[u], 
-                        reindex_vecs[thread_id][plan_ptr_vec[i]->region_ids[u]]
-                    );
+
+                oss << "\nPlan Vectors:";
+                for (int u = 0; u < V; ++u) {
+                    int rid = plan_ptr_vec[i]->region_ids[u];
+                    int mapped = (rid >= 0 && rid < static_cast<int>(reindex_vec.size()))
+                                ? reindex_vec[rid]
+                                : -1;  // sentinel if out of range
+                    oss << '|' << rid << " -> " << mapped << "| ";
                 }
-                REprintf("\n");
-                throw Rcpp::exception("!\n");
+                oss << '\n';
+
+                // Safe in workers: buffers and flushes on main thread at pool.wait()/join()
+                Rcpp::Rcout << oss.str();
+
+                // Throw a plain C++ exception from the worker (safe). Catch on main thread and
+                // convert to R error if desired.
+                throw std::range_error("Out\n");
             }
 
             // now relabel 
-            reindexed_plan_vecs[thread_id][v] = reindex_vecs[thread_id][v_region];
+            reindexed_plan_vec[v] = reindex_vec[v_region];
         }   
         
         // now hash the plan
         std::ostringstream oss;
 
         for (int row = 0; row < V; ++row) {
-            oss << reindexed_plan_vecs[thread_id][row];
+            oss << reindex_vec[row];
             if (row < V - 1) {
                 oss << ",";
             }

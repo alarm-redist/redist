@@ -119,6 +119,10 @@ compute_plans_log_optimal_weights <- function(adj_list, counties, pop, constrain
     .Call(`_redist_compute_plans_log_optimal_weights`, adj_list, counties, pop, constraints, pop_temper, rho, splitting_schedule_str, ndists, total_seats, district_seat_sizes, num_regions, lower, target, upper, region_ids, region_sizes, num_threads)
 }
 
+compute_plans_log_simple_weights <- function(adj_list, counties, pop, constraints, pop_temper, rho, splitting_schedule_str, ndists, total_seats, district_seat_sizes, num_regions, lower, target, upper, region_ids, region_sizes, num_threads) {
+    .Call(`_redist_compute_plans_log_simple_weights`, adj_list, counties, pop, constraints, pop_temper, rho, splitting_schedule_str, ndists, total_seats, district_seat_sizes, num_regions, lower, target, upper, region_ids, region_sizes, num_threads)
+}
+
 group_pct_top_k <- function(m, group_pop, total_pop, k, n_distr) {
     .Call(`_redist_group_pct_top_k`, m, group_pop, total_pop, k, n_distr)
 }

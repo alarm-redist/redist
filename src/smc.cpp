@@ -145,30 +145,43 @@ void run_smc_step(
     );
 
     int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
-    // thread safe id counter
+    // Trick to give each thread a unique id
+    // We need the extra steps to avoid the problem where 
+    // only some threads persist from previous calls but the counter resets 
+    // resulting in multiple threads with the same id 
+    static std::atomic<int> global_generation_counter{0};
+    int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
     std::atomic<int> thread_id_counter{0};
-    // now make the vectors of important variables to be used by threads
-    std::vector<USTSampler> ust_samplers_vec; ust_samplers_vec.reserve(num_threads);
-    for (size_t i = 0; i < num_threads; i++)
-    {
-        ust_samplers_vec.emplace_back(map_params, splitting_schedule);
-    }
 
     if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("About to start SMC Step for %d plans\n", M);
     // create a progress bar
     RcppThread::ProgressBar bar(M, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
-        static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+        static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
+        static thread_local int thread_generation_counter = -1;
+        static thread_local int thread_id;
+
+        // check if the thread id was generated this function call 
+        if (thread_generation_counter != generation) {
+            // if not then give it a new id
+            thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+            thread_generation_counter = generation;
+        }
+
+        // if(RcppThread::isInterrupted()){
+        //     return;
+        // }
 
         if (thread_id < 0 || thread_id >= num_threads) {
             REprintf("Thread id thing broke, thread id is %d but num threads is %d!\n", thread_id, num_threads);
+            return;
         }
 
         bool ok = false;
         int idx;
         int reject_ct = 0;
-        RcppThread::checkUserInterrupt(i % check_int == 0);
+        // RcppThread::checkUserInterrupt(i % check_int == 0);
 
         while (!ok) {
             // increase the number of tries for particle i by 1
@@ -190,22 +203,11 @@ void run_smc_step(
             }
             int region_to_split_size = old_plan_ensemble->plan_ptr_vec[idx]->region_sizes[region_id_to_split];
             
-            // int size_of_region_to_split = old_plan_ensemble->plan_ptr_vec[idx]->region_sizes[region_id_to_split];
-            // Rprintf("Picked idx %d, Splitting Region size %d. Sizes to try:\n", idx, size_of_region_to_split);
-            // for(auto i: splitting_schedule.all_regions_smaller_cut_sizes_to_try[size_of_region_to_split]){
-            //     Rprintf("%d, ", i);
-            // }
-            // Rprintf("\nThe min possible =%d, max possible=%d\n", 
-            // splitting_schedule.all_regions_min_and_max_possible_cut_sizes[size_of_region_to_split].first,
-            //     splitting_schedule.all_regions_min_and_max_possible_cut_sizes[size_of_region_to_split].second);
-
             //increase the count 
             ++thread_tree_sizes[thread_id][region_to_split_size-1];
-            // Rprintf("Count for %d is now %d\n", region_to_split_size, thread_tree_sizes[thread_id][region_to_split_size-1]);
-
 
             // Try to split the region 
-            std::pair<bool, EdgeCut> edge_search_result = ust_samplers_vec[thread_id].attempt_to_find_valid_tree_split(
+            std::pair<bool, EdgeCut> edge_search_result = ust_sampler.attempt_to_find_valid_tree_split(
                 rng_states[thread_id], tree_splitters,
                 *old_plan_ensemble->plan_ptr_vec[idx], region_id_to_split,
                 save_edge_selection_prob
@@ -219,10 +221,9 @@ void run_smc_step(
                 // make the new plan a copy of the old one 
                 new_plan_ensemble->plan_ptr_vec[i]->shallow_copy(*old_plan_ensemble->plan_ptr_vec[idx]);
                 // now split that region we found on the old one
-
                 new_plan_ensemble->plan_ptr_vec[i]->update_from_successful_split(
                     tree_splitters,
-                    ust_samplers_vec[thread_id], std::get<1>(edge_search_result),
+                    ust_sampler, std::get<1>(edge_search_result),
                     region_id_to_split, new_region_id, 
                     true
                 );
@@ -245,7 +246,7 @@ void run_smc_step(
                 if(DEBUG_GSMC_PLANS_VERBOSE){
                     Rprintf("Success, updating Plan %d\n", i);
                 }
-                RcppThread::checkUserInterrupt(i % check_int == 0);
+                // RcppThread::checkUserInterrupt(i % check_int == 0);
                 // means idx was ok 
                 // record index of new plan's parent
                 parent_index_vec[i] = idx;
@@ -253,7 +254,7 @@ void run_smc_step(
                 ++thread_successful_tree_sizes[thread_id][region_to_split_size-1];
             }else{ // else bad sample so try again
                  // check for user interrupt
-                 RcppThread::checkUserInterrupt(++reject_ct % reject_check_int == 0);
+                //  RcppThread::checkUserInterrupt(++reject_ct % reject_check_int == 0);
                  // if diagnostic level 2 or higher get unsuccessful count 
                  if(diagnostic_level >= 0){
                      // not atomic so technically not thread safe but doesn't seem to differ in practice
@@ -262,7 +263,6 @@ void run_smc_step(
             }
 
         }
-
 
         // ORIGINAL SMC CODE I DONT KNOW WHAT THIS DOES
         // save ancestors/lags
@@ -281,6 +281,14 @@ void run_smc_step(
 
     // Wait for all the threads to finish
     pool.wait();
+
+    // Rcpp::checkUserInterrupt();
+
+    // RcppThread::checkUserInterrupt();
+
+    if(DEBUG_GSMC_PLANS_VERBOSE){
+        REprintf("Done splitting!\n");
+    }
 
 
     // now swap the old plans with the new ones. This avoids needing to actually copy
@@ -354,40 +362,41 @@ void run_merge_split_step_on_all_plans(
 
     int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
     // thread safe id counter
+    static std::atomic<int> global_generation_counter{0};
+    int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
     std::atomic<int> thread_id_counter{0};
-    // now make the vectors of important variables to be used by threads
-    std::vector<USTSampler> ust_samplers_vec; ust_samplers_vec.reserve(num_threads);
-    std::vector<PlanMultigraph> current_plan_multigraphs_vec; current_plan_multigraphs_vec.reserve(num_threads);
-    std::vector<PlanMultigraph> proposed_plan_multigraphs_vec; proposed_plan_multigraphs_vec.reserve(num_threads);
-
-    for (size_t i = 0; i < num_threads; i++)
-    {
-        ust_samplers_vec.emplace_back(map_params, splitting_schedule);
-        current_plan_multigraphs_vec.emplace_back(
-            map_params, 
-            sampling_space == SamplingSpace::LinkingEdgeSpace
-        );
-        proposed_plan_multigraphs_vec.emplace_back(
-            map_params, 
-            sampling_space == SamplingSpace::LinkingEdgeSpace
-        );
-    }
     
     // create a progress bar
     RcppThread::ProgressBar bar(nsims, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, nsims, [&] (int i) {
-        static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+        static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
+        // Create variables needed for each 
+        static thread_local PlanMultigraph current_plan_multigraph(
+            map_params, 
+            sampling_space == SamplingSpace::LinkingEdgeSpace
+        );
+        static thread_local PlanMultigraph proposed_plan_multigraph(
+            map_params, 
+            sampling_space == SamplingSpace::LinkingEdgeSpace
+        );
 
-
+        static thread_local int thread_generation_counter = -1;
+        static thread_local int thread_id;
+        // check if the thread id was generated this function call 
+        if (thread_generation_counter != generation) {
+            // if not then give it a new id
+            thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+            thread_generation_counter = generation;
+        }
         // store the number of succesful runs
         success_count_vec[i] = run_merge_split_steps(
             map_params, splitting_schedule, scoring_functions[thread_id],
             rng_states[thread_id], sampling_space,
             *plan_ptrs_vec[i], *new_plan_ptrs_vec[i], 
-            ust_samplers_vec[thread_id], tree_splitter,
-            current_plan_multigraphs_vec[thread_id], 
-            proposed_plan_multigraphs_vec[thread_id],
+            ust_sampler, tree_splitter,
+            current_plan_multigraph, 
+            proposed_plan_multigraph,
             merge_prob_type,
             rho, is_final,
             nsteps_to_run,
@@ -398,15 +407,14 @@ void run_merge_split_step_on_all_plans(
             ++bar;
         }
 
-        RcppThread::checkUserInterrupt(i % check_int == 0);
-        if (RcppThread::isInterrupted(i % check_int == 0)){
-            REprintf("Interrupted!\n");
-        }
-
     });
 
     // Wait for all the threads to finish
     pool.wait();
+
+    Rcpp::checkUserInterrupt();
+
+    RcppThread::checkUserInterrupt();
 
     // update tree sizes counts 
     for (size_t region_size = 0; region_size < map_params.total_seats; region_size++)
@@ -1052,21 +1060,13 @@ List run_redist_smc(
     }
     } catch (RcppThread::UserInterruptException e) {
         cli_progress_done(bar);
-        REprintf("Hi\n");
-        // pool.wait();
-        // std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-        REprintf("Hey its a threaded one!!\n");
-        return Rcpp::List();
+        return R_NilValue;
     }catch (Rcpp::internal::InterruptedException e) {
         cli_progress_done(bar);
-        REprintf("Hey\n");
-        return Rcpp::List();
         return R_NilValue;
     }catch (const std::exception &e) {
         cli_progress_done(bar);
         Rcpp::Rcerr << "Standard exception: " << e.what() << "\n";
-        REprintf("Exiting!");
-        return Rcpp::List();
         return R_NilValue;
                 
     }

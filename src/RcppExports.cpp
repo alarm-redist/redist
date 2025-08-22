@@ -417,6 +417,33 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// compute_plans_log_simple_weights
+arma::vec compute_plans_log_simple_weights(List const& adj_list, arma::uvec const& counties, arma::uvec const& pop, List const& constraints, double const pop_temper, double const rho, std::string const& splitting_schedule_str, int const ndists, int const total_seats, Rcpp::IntegerVector const& district_seat_sizes, int const num_regions, double const lower, double const target, double const upper, Rcpp::IntegerMatrix const& region_ids, Rcpp::IntegerMatrix const& region_sizes, int num_threads);
+RcppExport SEXP _redist_compute_plans_log_simple_weights(SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP constraintsSEXP, SEXP pop_temperSEXP, SEXP rhoSEXP, SEXP splitting_schedule_strSEXP, SEXP ndistsSEXP, SEXP total_seatsSEXP, SEXP district_seat_sizesSEXP, SEXP num_regionsSEXP, SEXP lowerSEXP, SEXP targetSEXP, SEXP upperSEXP, SEXP region_idsSEXP, SEXP region_sizesSEXP, SEXP num_threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List const& >::type adj_list(adj_listSEXP);
+    Rcpp::traits::input_parameter< arma::uvec const& >::type counties(countiesSEXP);
+    Rcpp::traits::input_parameter< arma::uvec const& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< List const& >::type constraints(constraintsSEXP);
+    Rcpp::traits::input_parameter< double const >::type pop_temper(pop_temperSEXP);
+    Rcpp::traits::input_parameter< double const >::type rho(rhoSEXP);
+    Rcpp::traits::input_parameter< std::string const& >::type splitting_schedule_str(splitting_schedule_strSEXP);
+    Rcpp::traits::input_parameter< int const >::type ndists(ndistsSEXP);
+    Rcpp::traits::input_parameter< int const >::type total_seats(total_seatsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector const& >::type district_seat_sizes(district_seat_sizesSEXP);
+    Rcpp::traits::input_parameter< int const >::type num_regions(num_regionsSEXP);
+    Rcpp::traits::input_parameter< double const >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double const >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< double const >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix const& >::type region_ids(region_idsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix const& >::type region_sizes(region_sizesSEXP);
+    Rcpp::traits::input_parameter< int >::type num_threads(num_threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(compute_plans_log_simple_weights(adj_list, counties, pop, constraints, pop_temper, rho, splitting_schedule_str, ndists, total_seats, district_seat_sizes, num_regions, lower, target, upper, region_ids, region_sizes, num_threads));
+    return rcpp_result_gen;
+END_RCPP
+}
 // group_pct_top_k
 NumericVector group_pct_top_k(const IntegerMatrix m, const NumericVector group_pop, const NumericVector total_pop, int k, int n_distr);
 RcppExport SEXP _redist_group_pct_top_k(SEXP mSEXP, SEXP group_popSEXP, SEXP total_popSEXP, SEXP kSEXP, SEXP n_distrSEXP) {
@@ -997,6 +1024,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_attempt_splits_on_a_region", (DL_FUNC) &_redist_attempt_splits_on_a_region, 16},
     {"_redist_compute_log_unnormalized_target_density_components", (DL_FUNC) &_redist_compute_log_unnormalized_target_density_components, 18},
     {"_redist_compute_plans_log_optimal_weights", (DL_FUNC) &_redist_compute_plans_log_optimal_weights, 17},
+    {"_redist_compute_plans_log_simple_weights", (DL_FUNC) &_redist_compute_plans_log_simple_weights, 17},
     {"_redist_group_pct_top_k", (DL_FUNC) &_redist_group_pct_top_k, 5},
     {"_redist_proj_distr_m", (DL_FUNC) &_redist_proj_distr_m, 4},
     {"_redist_colmax", (DL_FUNC) &_redist_colmax, 1},

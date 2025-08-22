@@ -630,6 +630,12 @@ double PlanSplitsConstraint::compute_raw_merged_plan_constraint_score(
 
 
 double ValidDistrictsConstraint::compute_raw_plan_constraint_score(const Plan &plan) const{
+    // REprintf("Valid sizes are:");
+    // for (int i = 1; i <= map_params.total_seats; i++)
+    // {
+    //     if(map_params.is_district[i]) REprintf("%d, ", i);
+    // }
+    
     // threshold is always .5 so returning 1 means reject
     // first check no region is smaller than the smallest district size 
     for (size_t i = 0; i < plan.num_regions; i++)

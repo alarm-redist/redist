@@ -367,6 +367,7 @@ double compute_simple_log_incremental_weight(
     // Check its not infinity
     if (!std::isfinite(incremental_weight)) {
         plan.Rprint(true);
+        // plan_multigraph.Rprint();
         throw Rcpp::exception(
             "One of the plan incremental weights is not finite!"
             "Try checking if constraint strength is too large and causing overflow errors.\n"
@@ -390,34 +391,39 @@ void compute_all_plans_log_simple_incremental_weights(
     arma::subview_col<double> log_incremental_weights,
     int verbosity
 ){
-    int const M = (int) plans_ptr_vec.size();
+    int const nsims = (int) plans_ptr_vec.size();
     int const num_regions = plans_ptr_vec[0]->num_regions;
     const int check_int = 50; // check for interrupts every _ iterations
 
     int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
     // thread safe id counter
+    static std::atomic<int> global_generation_counter{0};
+    int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
     std::atomic<int> thread_id_counter{0};
-    // now make the vectors of important variables to be used by threads
-    std::vector<USTSampler> ust_samplers_vec; ust_samplers_vec.reserve(num_threads);
-    std::vector<PlanMultigraph> plan_multigraphs_vec; plan_multigraphs_vec.reserve(num_threads);
-    for (size_t i = 0; i < num_threads; i++)
-    {
-        ust_samplers_vec.emplace_back(map_params, splitting_schedule);
-        plan_multigraphs_vec.emplace_back(
+
+
+    RcppThread::ProgressBar bar(nsims, 1);
+    // Parallel thread pool where all objects in memory shared by default
+    pool.parallelFor(0, nsims, [&] (int i) {
+        static thread_local PlanMultigraph plan_multigraph(
             map_params, 
             sampling_space == SamplingSpace::LinkingEdgeSpace
         );
-    }
+        static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
 
+        static thread_local int thread_generation_counter = -1;
+        static thread_local int thread_id;
 
-    RcppThread::ProgressBar bar(M, 1);
-    // Parallel thread pool where all objects in memory shared by default
-    pool.parallelFor(0, M, [&] (int i) {
-        static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+        // check if the thread id was generated this function call 
+        if (thread_generation_counter != generation) {
+            // if not then give it a new id
+            thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+            thread_generation_counter = generation;
+        }
 
         double log_incr_weight = compute_simple_log_incremental_weight(
-            *plans_ptr_vec[i], plan_multigraphs_vec[thread_id],
-            splitting_schedule, ust_samplers_vec[thread_id], tree_splitter, 
+            *plans_ptr_vec[i], plan_multigraph,
+            splitting_schedule, ust_sampler, tree_splitter, 
             sampling_space,
             scoring_functions[thread_id], rho,
             compute_log_splitting_prob, 
@@ -684,28 +690,33 @@ void compute_all_plans_log_optimal_incremental_weights(
 
     int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
     // thread safe id counter
+    static std::atomic<int> global_generation_counter{0};
+    int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
     std::atomic<int> thread_id_counter{0};
-    // now make the vectors of important variables to be used by threads
-    std::vector<USTSampler> ust_samplers_vec; ust_samplers_vec.reserve(num_threads);
-    std::vector<PlanMultigraph> plan_multigraphs_vec; plan_multigraphs_vec.reserve(num_threads);
-    for (size_t i = 0; i < num_threads; i++)
-    {
-        ust_samplers_vec.emplace_back(map_params, splitting_schedule);
-        plan_multigraphs_vec.emplace_back(
-            map_params, 
-            sampling_space == SamplingSpace::LinkingEdgeSpace
-        );
-    }
 
     RcppThread::ProgressBar bar(nsims, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, nsims, [&] (int i) {
-        static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+        static thread_local PlanMultigraph plan_multigraph(
+            map_params, 
+            sampling_space == SamplingSpace::LinkingEdgeSpace
+        );
+        static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
+
+        static thread_local int thread_generation_counter = -1;
+        static thread_local int thread_id;
+
+        // check if the thread id was generated this function call 
+        if (thread_generation_counter != generation) {
+            // if not then give it a new id
+            thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+            thread_generation_counter = generation;
+        }
 
         // REprintf("I=%d\n", i);
         double log_incr_weight = compute_log_optimal_incremental_weights(
-            *plans_ptr_vec[i], plan_multigraphs_vec[thread_id], 
-            splitting_schedule, ust_samplers_vec[thread_id], tree_splitter,
+            *plans_ptr_vec[i], plan_multigraph, 
+            splitting_schedule, ust_sampler, tree_splitter,
             sampling_space, scoring_functions[thread_id], 
             rho, compute_log_splitting_prob, 
             is_final_plans

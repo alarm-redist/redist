@@ -1872,6 +1872,7 @@ void PlanMultigraph::Rprint() const{
 
 void PlanMultigraph::Rprint_detailed(Plan const &plan){
     REprintf("Pair Map has %d Elements:\n", pair_map.num_hashed_pairs);
+    return;
     for(auto const &a_pair: pair_map.hashed_pairs){
         auto val = pair_map.get_value(a_pair.first, a_pair.second);
         REprintf("    Regions: (%u, %u) | Sizes (%u, %u) | %s Hierarchically Adjacent | %d within county edges, %d across county edges\n",

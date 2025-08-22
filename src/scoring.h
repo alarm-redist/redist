@@ -455,7 +455,14 @@ class ValidDistrictsConstraint : public PlanConstraint {
 
     public:
         ValidDistrictsConstraint(MapParams const &map_params):
-        PlanConstraint(1, std::vector<bool>(map_params.ndists + 1, true), true, .5),
+        PlanConstraint(1, 
+    [&map_params]() {
+                // we only score full plans 
+                std::vector<bool> num_regions_to_score(map_params.ndists + 1, false);
+                num_regions_to_score[map_params.ndists] = true;
+                return num_regions_to_score;
+            }(),
+            true, .5),
         map_params(map_params){};
 
         double compute_raw_plan_constraint_score(const Plan &plan) const override;

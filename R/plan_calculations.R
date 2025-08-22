@@ -230,7 +230,6 @@ compute_log_optimal_weights <- function(
 ){
     if (inherits(plans, "redist_plans")){
         plan_matrix <- get_plans_matrix(plans)
-        sizes_matrix <- get_seats_matrix(plans)
     }else if(is.matrix(plans)){
         plan_matrix <- plans
     }else if(is.vector(plans) && is.numeric(plans)){
@@ -244,6 +243,7 @@ compute_log_optimal_weights <- function(
     # get validated inputs
     map_params <- get_map_parameters(map, !!rlang::enquo(counties))
     map <- map_params$map
+    V <- map_params$V
     adj_list <- map_params$adj_list
     counties <- map_params$counties
     pop <- map_params$pop
@@ -253,20 +253,22 @@ compute_log_optimal_weights <- function(
     total_seats <- map_params$nseats
     district_seat_sizes <- map_params$seats_range
     districting_scheme <- map_params$districting_scheme
-    if(districting_scheme == "multiple"){
-        splitting_schedule <- "split_district_only_mmd"
-    }
-    storage.mode(district_seat_sizes) <- "integer"
 
-    if(is.null(sizes_matrix)){
-        # infer
-        prec_pop <- map[[attr(map, "pop_col")]]
-        distr_pop <- pop_tally(plan_matrix, prec_pop, num_regions)
-        sizes_matrix <- infer_region_seats(
-            distr_pop,
-            attr(map, "pop_bounds")[1], attr(map, "pop_bounds")[3],
-            total_seats
-        )
+    if (inherits(plans, "redist_plans")){
+        sizes_matrix <- get_seats_matrix(plans)
+    }else if(is.null(sizes_matrix)){
+        if(districting_scheme == "single" && num_regions == ndists){
+            sizes_matrix <- matrix(1L, nrow = ndists, ncol = ncol(plan_matrix))
+        }else{
+            # infer
+            prec_pop <- map[[attr(map, "pop_col")]]
+            distr_pop <- pop_tally(plan_matrix, prec_pop, num_regions)
+            sizes_matrix <- infer_region_seats(
+                distr_pop,
+                attr(map, "pop_bounds")[1], attr(map, "pop_bounds")[3],
+                total_seats
+            )
+        }
     }
 
 
