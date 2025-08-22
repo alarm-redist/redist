@@ -7,6 +7,8 @@
 #include "tree_op.h"
 #include "base_plan_type.h"
 
+
+
 class Plan;
 
 // For the future, to avoid needing to create visited and ignore
@@ -78,5 +80,6 @@ public:
     );
 
 };
+
 
 #endif

@@ -536,6 +536,9 @@ List draw_trees_on_a_region(
     // create list of trees to return 
     std::vector<std::vector<Graph>> thread_undirected_trees(num_threads == 0 ? 1 : num_threads); 
     std::vector<int> thread_attempts(num_threads == 0 ? 1 : num_threads,0);
+
+    static std::atomic<int> global_generation_counter{0};
+    int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
     std::atomic<int> thread_id_counter{0};
 
 
@@ -552,7 +555,16 @@ List draw_trees_on_a_region(
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, num_tree, [&] (int ree) {
 
-        static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+        static thread_local int thread_generation_counter = -1;
+        static thread_local int thread_id;
+
+        // check if the thread id was generated this function call 
+        if (thread_generation_counter != generation) {
+            // if not then give it a new id
+            thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+            thread_generation_counter = generation;
+        }
+
         // Stuff for drawing tree
         int root;
         static thread_local Tree ust = init_tree(map_params.V); 
@@ -731,6 +743,9 @@ List attempt_splits_on_a_region(
     // create list of trees to return 
     std::vector<std::vector<Graph>> thread_undirected_trees(num_threads == 0 ? 1 : num_threads); 
     std::vector<int> thread_attempts(num_threads == 0 ? 1 : num_threads,0);
+
+    static std::atomic<int> global_generation_counter{0};
+    int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
     std::atomic<int> thread_id_counter{0};
 
 
@@ -742,7 +757,15 @@ List attempt_splits_on_a_region(
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, num_plans, [&] (int i) {
 
-        static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+        static thread_local int thread_generation_counter = -1;
+        static thread_local int thread_id;
+
+        // check if the thread id was generated this function call 
+        if (thread_generation_counter != generation) {
+            // if not then give it a new id
+            thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+            thread_generation_counter = generation;
+        }
         // Stuff for drawing tree
         static thread_local USTSampler ust_sampler(map_params, *splitting_schedule);
         // copy the plan again

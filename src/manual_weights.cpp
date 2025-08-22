@@ -92,14 +92,28 @@ Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
     }
 
 
-    // for getting thread ids
+    // Trick to give each thread a unique id
+    // We need the extra steps to avoid the problem where 
+    // only some threads persist from previous calls but the counter resets 
+    // resulting in multiple threads with the same id 
+    static std::atomic<int> global_generation_counter{0};
+    int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
     std::atomic<int> thread_id_counter{0};
 
     const int check_int = 50; // check for interrupts every _ iterations
     Rcpp::Rcout << "Computing Log Target Density!" << std::endl;
     RcppThread::ProgressBar bar(num_plans, 1);
     pool.parallelFor(0, num_plans, [&] (int i) {
-        static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+        static thread_local int thread_generation_counter = -1;
+        static thread_local int thread_id;
+
+        // check if the thread id was generated this function call 
+        if (thread_generation_counter != generation) {
+            // if not then give it a new id
+            thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+            thread_generation_counter = generation;
+        }
+        
         static thread_local PlanMultigraph plan_multigraph(map_params, false);
         static thread_local std::vector<bool> county_component_lookup(
             num_regions * map_params.num_counties, false

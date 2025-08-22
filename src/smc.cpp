@@ -174,7 +174,8 @@ void run_smc_step(
         // }
 
         if (thread_id < 0 || thread_id >= num_threads) {
-            REprintf("Thread id thing broke, thread id is %d but num threads is %d!\n", thread_id, num_threads);
+            RcppThread::Rcerr << "Thread id thing broke, thread id is " << thread_id 
+            << " but num threads is  " << num_threads << std::endl;
             return;
         }
 

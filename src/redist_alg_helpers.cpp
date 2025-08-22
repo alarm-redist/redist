@@ -226,12 +226,23 @@ Rcpp::DataFrame get_plan_counts(
     );
 
     // trick to give each thread a unique id
+    static std::atomic<int> global_generation_counter{0};
+    int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
     std::atomic<int> thread_id_counter{0};
 
     
 
     pool.parallelFor(0, nsims, [&] (int i) {
-        static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+        static thread_local int thread_generation_counter = -1;
+        static thread_local int thread_id;
+
+        // check if the thread id was generated this function call 
+        if (thread_generation_counter != generation) {
+            // if not then give it a new id
+            thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+            thread_generation_counter = generation;
+        }
+
         std::ostringstream oss;
 
         for (int row = 0; row < V; ++row) {
@@ -449,14 +460,25 @@ PlanEnsemble::PlanEnsemble(
     }
 
 
+    // trick to give each thread a unique id
+    static std::atomic<int> global_generation_counter{0};
+    int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
     std::atomic<int> thread_id_counter{0};
-
 
     auto tree_ptr = std::make_unique<UniformValidSplitter>(map_params.V);
     
     RcppThread::ProgressBar bar(nsims, 1);
     pool.parallelFor(0, nsims, [&] (int i) {
-        static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+        static thread_local int thread_generation_counter = -1;
+        static thread_local int thread_id;
+
+        // check if the thread id was generated this function call 
+        if (thread_generation_counter != generation) {
+            // if not then give it a new id
+            thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+            thread_generation_counter = generation;
+        }
+
         static thread_local Tree ust(V);
         static thread_local std::vector<bool> visited(V);
         static thread_local std::vector<bool> ignore(V);
@@ -582,10 +604,6 @@ int PlanEnsemble::count_unique_plans(
         static thread_local int thread_generation_counter = -1;
         static thread_local int thread_id;
 
-        // struct{ 
-        //     int thread_generation_counter = -1;
-        //     int thread_id = -1; } static thread_local thread_id_manager;
-
         // check if the thread id was generated this function call 
         if (thread_generation_counter != generation) {
             // if not then give it a new id
@@ -593,10 +611,6 @@ int PlanEnsemble::count_unique_plans(
             thread_generation_counter = generation;
         }
 
-
-
-
-        // REprintf("Da Thread ID %d\n", thread_id);
         if (thread_id < 0 || thread_id >= num_threads) {
             RcppThread::Rcerr << "Thread id out of range: " << thread_id
                               << " / " << num_threads << "\n";
