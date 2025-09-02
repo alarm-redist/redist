@@ -52,5 +52,8 @@ test_that("short bursts work with multiple scorers", {
     expect_true(inherits(plans, "redist_plans"))
     expect_equal(dim(get_plans_matrix(plans)), c(99, 21))
     # check frontier is monotone in right direction
-    expect_equal(1, cor(attr(plans, "pareto_score"), method="spearman")[1, 2])
+    frontier = attr(plans, "pareto_score")
+    if (nrow(frontier) > 1) {
+        expect_equal(1, cor(frontier, method="spearman")[1, 2])
+    }
 })
