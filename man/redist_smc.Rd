@@ -155,16 +155,18 @@ and larger values result in more unstable weights.
 
 \item{ms_params}{A list of mergesplit parameters.
 \itemize{
-\item \code{ms_frequency}: How often to run merge steps. Should either be an integer
+\item \code{frequency}: How often to run merge steps. Should either be an integer
 (meaning run after every _ smc steps) or a vector of 1 indexed step numbers
 indicating which smc steps to run merge split. A value of -1 means just run
 after all smc steps have been run. A value of 1 means run after every smc step.
-\item \code{ms_moves_multiplier} Multiplier to the baseline number of mergesplit
-moves to be performed each step. For a mergesplit step the baseline number of
-moves is calculated as the ceiling of 1 over the previous mergesplit steps
-acceptance rate (or smc step if no prior mergesplit steps were done). The
-total number of moves is \code{ceiling(ms_moves_multiplier * baseline_num_moves)}.
-\item \code{merge_prob_type} What probability to use to select regions to merge
+\item \code{mh_accept_per_smc} Multiplier to the baseline number of mergesplit
+steps to be performed each round. For a mergesplit round the baseline number of
+steps is calculated as the ceiling of 1 over the previous mergesplit round
+acceptance rate (or smc step if no prior mergesplit rounds were done). The
+total number of moves is \code{ceiling(mh_accept_per_smc * baseline_num_steps)}.
+This should be thought of as specifying how many successful mergesplit steps
+are desired for each mergesplit round.
+\item \code{pair_rule} What probability to use to select regions to merge
 in the mergesplit kernel. Defaults to giving all pairs equal probability.
 }}
 

@@ -138,7 +138,10 @@ int count_admin_splits(
 //
 
 std::pair<bool, double> RegionConstraint::compute_region_score(const Plan &plan, int region_id) const{
-    double region_score = strength * compute_raw_region_constraint_score(plan, region_id);
+    double region_score = strength * compute_raw_region_constraint_score(
+        plan.num_regions, 
+        plan.region_ids, plan.region_sizes, plan.region_pops, 
+        region_id);
     
     if(hard_constraint){
         if(region_score >= hard_threshold){
@@ -151,10 +154,29 @@ std::pair<bool, double> RegionConstraint::compute_region_score(const Plan &plan,
     }
 }
 
+double RegionConstraint::compute_soft_region_score(
+    int const num_regions, 
+    PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+    int const region_id
+) const{
+    if(hard_constraint){
+        return 0.0;
+    }else{
+        return strength * compute_raw_region_constraint_score(
+        num_regions, 
+        region_ids, region_sizes, region_pops, 
+        region_id);
+    }
+}
+
 
 std::pair<bool, double> RegionConstraint::compute_merged_region_score(
     const Plan &plan, int region1_id, int region2_id) const{
-    double region_score = strength * compute_raw_merged_region_constraint_score(plan, region1_id, region2_id);
+    double region_score = strength * compute_raw_merged_region_constraint_score(
+        plan.num_regions, 
+        plan.region_ids, plan.region_sizes, plan.region_pops, 
+        region1_id, region2_id);
+
     if(hard_constraint){
         if(region_score >= hard_threshold){
             return std::make_pair(false, region_score);
@@ -172,7 +194,11 @@ bool RegionConstraint::region_constraint_ok(const Plan &plan, int region_id) con
     if (!hard_constraint){
         return true;
     }else{
-        double region_score = strength * compute_raw_region_constraint_score(plan, region_id);
+        double region_score = strength * compute_raw_region_constraint_score(
+            plan.num_regions, 
+            plan.region_ids, plan.region_sizes, plan.region_pops, 
+            region_id
+        );
         if(DEBUG_SCORING_VERBOSE){
             REprintf("Score %f, thresh %f so %d\n", region_score, hard_threshold, region_score < hard_threshold);
         }
@@ -192,24 +218,33 @@ bool RegionConstraint::region_constraint_ok(const Plan &plan, int region_id) con
 
 
 
-double PopTemperConstraint::compute_raw_region_constraint_score(const Plan &plan, int const region_id) const{
-    int const region_pop = plan.region_pops[region_id];
-    int const region_size = plan.region_sizes[region_id];
+double PopTemperConstraint::compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const{
+    int const region_pop = region_pops[region_id];
+    int const region_size = region_sizes[region_id];
     return compute_log_pop_temper(target, pop_temper, ndists, region_pop, region_size);
 }
 
 
-double PopTemperConstraint::compute_raw_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
-    int const merged_region_pop = plan.region_pops[region1_id] + plan.region_pops[region2_id];
-    int const merged_region_size = plan.region_sizes[region1_id] + plan.region_sizes[region2_id];
+double PopTemperConstraint::compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const{
+    int const merged_region_pop = region_pops[region1_id] + region_pops[region2_id];
+    int const merged_region_size = region_sizes[region1_id] + region_sizes[region2_id];
     return compute_log_pop_temper(target, pop_temper, ndists, merged_region_pop, merged_region_size);
 }
 
 
 
-double PopDevConstraint::compute_raw_region_constraint_score(const Plan &plan, int const region_id) const{
+double PopDevConstraint::compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const{
     double raw_score = eval_pop_dev(
-        plan.region_ids, 
+        region_ids, 
         region_id, region_id,
         total_pop, parity
     );
@@ -217,9 +252,12 @@ double PopDevConstraint::compute_raw_region_constraint_score(const Plan &plan, i
     return raw_score;
 }
 // log constraint for region made by merging region 1 and 2
-double PopDevConstraint::compute_raw_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
+double PopDevConstraint::compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const{
     double raw_score = eval_pop_dev(
-        plan.region_ids, 
+        region_ids, 
         region1_id, region2_id,
         total_pop, parity
     );
@@ -227,9 +265,12 @@ double PopDevConstraint::compute_raw_merged_region_constraint_score(const Plan &
 }
 
 
-double StatusQuoConstraint::compute_raw_region_constraint_score(const Plan &plan, int const region_id) const{
+double StatusQuoConstraint::compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const{
     double raw_score = eval_sq_entropy(
-        plan.region_ids, current,
+        region_ids, current,
         region_id, region_id,
         pop, 
         ndists, n_current, V
@@ -238,9 +279,12 @@ double StatusQuoConstraint::compute_raw_region_constraint_score(const Plan &plan
     return raw_score;
 }
 // log constraint for region made by merging region 1 and 2
-double StatusQuoConstraint::compute_raw_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
+double StatusQuoConstraint::compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const{
     double raw_score = eval_sq_entropy(
-        plan.region_ids, current,
+        region_ids, current,
         region1_id, region2_id,
         pop, 
         ndists, n_current, V
@@ -248,27 +292,36 @@ double StatusQuoConstraint::compute_raw_merged_region_constraint_score(const Pla
     return raw_score;
 }
 
-double SegregationConstraint::compute_raw_region_constraint_score(const Plan &plan, int const region_id) const{
+double SegregationConstraint::compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const{
     double raw_score = eval_segregation(
-        plan.region_ids, region_id, region_id,
+        region_ids, region_id, region_id,
         V, grp_pop, total_pop
     );
 
     return raw_score;
 }
 // log constraint for region made by merging region 1 and 2
-double SegregationConstraint::compute_raw_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
+double SegregationConstraint::compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const{
     double raw_score = eval_segregation(
-        plan.region_ids, region1_id, region2_id,
+        region_ids, region1_id, region2_id,
         V, grp_pop, total_pop
     );
     return raw_score;
 }
 
 
-double GroupPowerConstraint::compute_raw_region_constraint_score(const Plan &plan, int const region_id) const{
+double GroupPowerConstraint::compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const{
     double raw_score = eval_grp_pow(
-        plan.region_ids, V, region_id, region_id,
+        region_ids, V, region_id, region_id,
         grp_pop, total_pop,
         tgt_grp, tgt_other, pow
     );
@@ -276,27 +329,36 @@ double GroupPowerConstraint::compute_raw_region_constraint_score(const Plan &pla
     return raw_score;
 }
 // log constraint for region made by merging region 1 and 2
-double GroupPowerConstraint::compute_raw_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
+double GroupPowerConstraint::compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const{
     double raw_score = eval_grp_pow(
-        plan.region_ids, V, region1_id, region2_id,
+        region_ids, V, region1_id, region2_id,
         grp_pop, total_pop,
         tgt_grp, tgt_other, pow
     );
     return raw_score;
 }
 
-double GroupHingeConstraint::compute_raw_region_constraint_score(const Plan &plan, int const region_id) const{
+double GroupHingeConstraint::compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const{
     double raw_score = eval_grp_hinge(
-        plan.region_ids, V, region_id, region_id,
+        region_ids, V, region_id, region_id,
         tgts_group, group_pop, total_pop
     );
 
     return raw_score;
 }
 // log constraint for region made by merging region 1 and 2
-double GroupHingeConstraint::compute_raw_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
+double GroupHingeConstraint::compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const{
     double raw_score = eval_grp_hinge(
-        plan.region_ids, V, region1_id, region2_id,
+        region_ids, V, region1_id, region2_id,
         tgts_group, group_pop, total_pop
     );
     return raw_score;
@@ -304,18 +366,24 @@ double GroupHingeConstraint::compute_raw_merged_region_constraint_score(const Pl
 
 
 
-double IncumbentConstraint::compute_raw_region_constraint_score(const Plan &plan, int const region_id) const{
+double IncumbentConstraint::compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const{
     double raw_score = eval_inc(
-        plan.region_ids, 
+        region_ids, 
         region_id, region_id,
         incumbents);
 
     return raw_score;
 }
 // log constraint for region made by merging region 1 and 2
-double IncumbentConstraint::compute_raw_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
+double IncumbentConstraint::compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const{
     double raw_score = eval_inc(
-        plan.region_ids, 
+        region_ids, 
         region1_id, region2_id,
         incumbents);
     return raw_score;
@@ -325,9 +393,12 @@ double IncumbentConstraint::compute_raw_merged_region_constraint_score(const Pla
 
 
 
-double SplitsConstraint::compute_raw_region_constraint_score(const Plan &plan, int const region_id) const{
+double SplitsConstraint::compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const{
     double raw_score = eval_splits(
-        plan.region_ids, region_id,
+        region_ids, region_id,
         admin_units, n_admin_units, smc
     );
 
@@ -335,11 +406,14 @@ double SplitsConstraint::compute_raw_region_constraint_score(const Plan &plan, i
     return raw_score;
 }
 // log constraint for region made by merging region 1 and 2
-double SplitsConstraint::compute_raw_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
+double SplitsConstraint::compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const{
     // make a copy of the plans 
     std::vector<RegionID> dummy_merged_vec(
-        plan.region_ids.begin(),
-        plan.region_ids.end()
+        region_ids.begin(),
+        region_ids.end()
     );
     // now make all instance of region2 region1
     for (size_t i = 0; i < dummy_merged_vec.size(); i++)
@@ -357,9 +431,12 @@ double SplitsConstraint::compute_raw_merged_region_constraint_score(const Plan &
     return raw_score;
 }
 
-double MultisplitsConstraint::compute_raw_region_constraint_score(const Plan &plan, int const region_id) const{
+double MultisplitsConstraint::compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const{
     double raw_score = eval_multisplits(
-        plan.region_ids, region_id,
+        region_ids, region_id,
         admin_units, n_admin_units, smc
     );
 
@@ -367,11 +444,14 @@ double MultisplitsConstraint::compute_raw_region_constraint_score(const Plan &pl
     return raw_score;
 }
 // log constraint for region made by merging region 1 and 2
-double MultisplitsConstraint::compute_raw_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
+double MultisplitsConstraint::compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const{
     // make a copy of the plans 
     std::vector<RegionID> dummy_merged_vec(
-        plan.region_ids.begin(),
-        plan.region_ids.end()
+        region_ids.begin(),
+        region_ids.end()
     );
     // now make all instance of region2 region1
     for (size_t i = 0; i < dummy_merged_vec.size(); i++)
@@ -390,20 +470,26 @@ double MultisplitsConstraint::compute_raw_merged_region_constraint_score(const P
 }
 
 
-double TotalSplitsConstraint::compute_raw_region_constraint_score(const Plan &plan, int const region_id) const{
+double TotalSplitsConstraint::compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const{
     double raw_score = eval_total_splits(
-        plan.region_ids, region_id,
+        region_ids, region_id,
         admin_units, n_admin_units, smc
     );
 
     return raw_score;
 }
 // log constraint for region made by merging region 1 and 2
-double TotalSplitsConstraint::compute_raw_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
+double TotalSplitsConstraint::compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const{
     // make a copy of the plans 
     std::vector<RegionID> dummy_merged_vec(
-        plan.region_ids.begin(),
-        plan.region_ids.end()
+        region_ids.begin(),
+        region_ids.end()
     );
     // now make all instance of region2 region1
     for (size_t i = 0; i < dummy_merged_vec.size(); i++)
@@ -422,18 +508,24 @@ double TotalSplitsConstraint::compute_raw_merged_region_constraint_score(const P
 }
 
 
-double PolsbyConstraint::compute_raw_region_constraint_score(const Plan &plan, int const region_id) const{
+double PolsbyConstraint::compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const{
     double raw_score = eval_polsby(
-        plan.region_ids, region_id, region_id, V,
+        region_ids, region_id, region_id, V,
         from, to, area, perimeter
     );
 
     return raw_score;
 }
 // log constraint for region made by merging region 1 and 2
-double PolsbyConstraint::compute_raw_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
+double PolsbyConstraint::compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const{
     double raw_score = eval_polsby(
-        plan.region_ids, region1_id, region2_id, V,
+        region_ids, region1_id, region2_id, V,
         from, to, area, perimeter
     );
 
@@ -441,11 +533,14 @@ double PolsbyConstraint::compute_raw_merged_region_constraint_score(const Plan &
 }
 
 
-double CustomRegionConstraint::compute_raw_region_constraint_score(const Plan &plan, int const region_id) const{
+double CustomRegionConstraint::compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const{
     // Need to copy into Rcpp vector since no SEXP for current region ids
      std::copy(
-        plan.region_ids.begin(),
-        plan.region_ids.end(),
+        region_ids.begin(),
+        region_ids.end(),
         rcpp_plan_wrap.begin()
     );
 
@@ -457,15 +552,18 @@ double CustomRegionConstraint::compute_raw_region_constraint_score(const Plan &p
     return raw_score;
 }
 // log constraint for region made by merging region 1 and 2
-double CustomRegionConstraint::compute_raw_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
+double CustomRegionConstraint::compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const{
     // Need to copy into Rcpp vector since no SEXP for current region ids
     // now make all instance of region2 region1
-    for (size_t i = 0; i < plan.region_ids.size(); i++)
+    for (size_t i = 0; i < region_ids.size(); i++)
     {
-        if(plan.region_ids[i] == region2_id){
+        if(region_ids[i] == region2_id){
             rcpp_plan_wrap[i] = region1_id;
         }else{
-            rcpp_plan_wrap[i] = plan.region_ids[i];
+            rcpp_plan_wrap[i] = region_ids[i];
         }
     }
     
@@ -494,7 +592,9 @@ bool PlanConstraint::plan_constraint_ok(const Plan &plan) const{
     if (!hard_constraint){
         return true;
     }else{
-        double region_score = strength * compute_raw_plan_constraint_score(plan);
+        double region_score = strength * compute_raw_plan_constraint_score(
+            plan.num_regions, plan.region_ids, plan.region_sizes, plan.region_pops
+        );
         if(DEBUG_SCORING_VERBOSE){
         REprintf("Score %f, thresh %f\n", region_score, hard_threshold);
         }
@@ -503,8 +603,11 @@ bool PlanConstraint::plan_constraint_ok(const Plan &plan) const{
 }
 
 
-std::pair<bool, double> PlanConstraint::compute_plan_score(const Plan &plan) const{
-    double plan_score = strength * compute_raw_plan_constraint_score(plan);
+std::pair<bool, double> PlanConstraint::compute_plan_score(
+    int const num_regions, 
+    PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops
+) const{
+    double plan_score = strength * compute_raw_plan_constraint_score(num_regions, region_ids, region_sizes, region_pops);
 
     if(hard_constraint){
         if(plan_score >= hard_threshold){
@@ -534,20 +637,23 @@ const{
     }
 }
 
-double CustomPlanConstraint::compute_raw_plan_constraint_score(const Plan &plan) const{
+double CustomPlanConstraint::compute_raw_plan_constraint_score(
+    int const num_regions, 
+    PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops
+) const{
     // Need to copy into Rcpp vector since no SEXP for current region ids
     Rcpp::IntegerVector rcpp_plan_wrap(
-        plan.region_ids.begin(),
-        plan.region_ids.end()
+        region_ids.begin(),
+        region_ids.end()
     );
 
     Rcpp::IntegerVector rcpp_sizes_wrap(
-        plan.region_sizes.begin(),
-        plan.region_sizes.end()
+        region_sizes.begin(),
+        region_sizes.end()
     );
     
     double raw_score = static_cast<double>(
-        as<NumericVector>(fn(rcpp_plan_wrap, rcpp_sizes_wrap, plan.num_regions))[0]
+        as<NumericVector>(fn(rcpp_plan_wrap, rcpp_sizes_wrap, num_regions))[0]
     );
 
     return raw_score;
@@ -586,16 +692,18 @@ double CustomPlanConstraint::compute_raw_merged_plan_constraint_score(const Plan
 
 
 double PlanSplitsConstraint::compute_raw_plan_constraint_score(
-    const Plan &plan) const{
+    int const num_regions, 
+    PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops
+) const{
     // no splits if blank map or only 1 admin unit 
-    if(plan.num_regions == 1 || num_admin_units == 1) return 0;
+    if(num_regions == 1 || num_admin_units == 1) return 0;
 
     // set the reindex for each region to be itself
     std::iota(region_reindex_vec.begin(), region_reindex_vec.end(), 0);
 
     auto splits = count_admin_splits(
         admin_forest, admin_forest_roots,
-        plan.region_ids, region_reindex_vec,
+        region_ids, region_reindex_vec,
         vertex_queue
     );
 
@@ -629,7 +737,10 @@ double PlanSplitsConstraint::compute_raw_merged_plan_constraint_score(
 }
 
 
-double ValidDistrictsConstraint::compute_raw_plan_constraint_score(const Plan &plan) const{
+double ValidDistrictsConstraint::compute_raw_plan_constraint_score(
+    int const num_regions, 
+    PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops
+) const{
     // REprintf("Valid sizes are:");
     // for (int i = 1; i <= map_params.total_seats; i++)
     // {
@@ -638,14 +749,14 @@ double ValidDistrictsConstraint::compute_raw_plan_constraint_score(const Plan &p
     
     // threshold is always .5 so returning 1 means reject
     // first check no region is smaller than the smallest district size 
-    for (size_t i = 0; i < plan.num_regions; i++)
+    for (size_t i = 0; i < num_regions; i++)
     {
-        auto region_size = plan.region_sizes[i];
+        auto region_size = region_sizes[i];
         if(region_size < map_params.smallest_district_size){
             return 1.0;
         }
         // if the plan is all districts, ie ndists = num regions then check every region is a district
-        if(plan.num_regions == map_params.ndists && !map_params.is_district[region_size]){
+        if(num_regions == map_params.ndists && !map_params.is_district[region_size]){
             // if not a district return false
             return 1.0;
         }
@@ -1325,7 +1436,9 @@ std::pair<bool, double> ScoringFunction::compute_plan_score(const Plan &plan) co
     for(auto const &constraint_ptr: plan_constraint_ptrs){
         if(!constraint_ptr->num_regions_to_score[num_regions]) continue;
 
-        auto score_result = constraint_ptr->compute_plan_score(plan);
+        auto score_result = constraint_ptr->compute_plan_score(
+            plan.num_regions, plan.region_ids, plan.region_sizes, plan.region_pops
+        );
         // immediately return if threshold triggered
         if(!score_result.first){
             return std::make_pair(false, 0.0);
@@ -1504,4 +1617,58 @@ bool ScoringFunction::new_split_ok(
 
     return true;
     
+}
+
+
+double ScoringFunction::compute_full_split_plan_soft_score(int const num_regions, 
+    PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+    int const split_region1, int const split_region2
+) const{
+    double score = 0.0;
+    // check if new regions are multidistricts 
+    bool const is_region1_district = map_params.is_district[region_sizes[split_region1]];
+    bool const is_region2_district = map_params.is_district[region_sizes[split_region2]];
+
+
+    for(auto const &region_constraint_ptr: region_constraint_ptrs){
+        // only check if its a district or we're scoring multidistricts 
+        if(is_region1_district || !region_constraint_ptr->score_districts_only){
+            score += region_constraint_ptr->compute_soft_region_score(
+            num_regions, region_ids, region_sizes, region_pops,
+            split_region1);
+        }
+        if(is_region2_district || !region_constraint_ptr->score_districts_only){
+            score += region_constraint_ptr->compute_soft_region_score(
+            num_regions, region_ids, region_sizes, region_pops,
+            split_region2);
+        }
+    }
+    for(auto const &plan_constraint_ptr: plan_constraint_ptrs){
+        // skip if not scoring this many regions 
+        if(!plan_constraint_ptr->num_regions_to_score[num_regions]) continue;
+
+        score += plan_constraint_ptr->compute_plan_score(
+            num_regions, region_ids, region_sizes, region_pops
+        ).second;
+    }    
+
+
+    // This is unneccesary right now as the only region constraint not 
+    // applied on the final round is pop temper but that doesn't support
+    // thresholding right now but this might be useful in the future 
+    for(auto const &region_constraint_ptr: non_final_region_constraint_ptrs){
+        // only check if its a district or we're scoring multidistricts 
+        if(is_region1_district || !region_constraint_ptr->score_districts_only){
+            score += region_constraint_ptr->compute_soft_region_score(
+            num_regions, region_ids, region_sizes, region_pops,
+            split_region1);
+        }
+        if(is_region2_district || !region_constraint_ptr->score_districts_only){
+            score += region_constraint_ptr->compute_soft_region_score(
+            num_regions, region_ids, region_sizes, region_pops,
+            split_region2);
+        }
+    }
+
+    return score;
 }

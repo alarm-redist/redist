@@ -134,16 +134,18 @@
 #'  }
 #' @param ms_params A list of mergesplit parameters.
 #' \itemize{
-#'  \item \code{ms_frequency}: How often to run merge steps. Should either be an integer
+#'  \item \code{frequency}: How often to run merge steps. Should either be an integer
 #' (meaning run after every _ smc steps) or a vector of 1 indexed step numbers
 #' indicating which smc steps to run merge split. A value of -1 means just run
 #' after all smc steps have been run. A value of 1 means run after every smc step.
-#' \item \code{ms_moves_multiplier} Multiplier to the baseline number of mergesplit
-#' moves to be performed each step. For a mergesplit step the baseline number of
-#' moves is calculated as the ceiling of 1 over the previous mergesplit steps
-#' acceptance rate (or smc step if no prior mergesplit steps were done). The
-#' total number of moves is `ceiling(ms_moves_multiplier * baseline_num_moves)`.
-#' \item \code{merge_prob_type} What probability to use to select regions to merge
+#' \item \code{mh_accept_per_smc} Multiplier to the baseline number of mergesplit
+#' steps to be performed each round. For a mergesplit round the baseline number of
+#' steps is calculated as the ceiling of 1 over the previous mergesplit round
+#' acceptance rate (or smc step if no prior mergesplit rounds were done). The
+#' total number of moves is `ceiling(mh_accept_per_smc * baseline_num_steps)`.
+#' This should be thought of as specifying how many successful mergesplit steps
+#' are desired for each mergesplit round.
+#' \item \code{pair_rule} What probability to use to select regions to merge
 #' in the mergesplit kernel. Defaults to giving all pairs equal probability.
 #' }
 #' @param n_steps How many steps to run the SMC algorithm for.
@@ -383,8 +385,8 @@ redist_smc <- function(
   # get merge split parameter information
   ms_params_list <- extract_ms_params(ms_params, total_smc_steps)
   run_ms <- ms_params_list$run_ms
-  merge_prob_type <- ms_params_list$merge_prob_type
-  ms_moves_multiplier <- ms_params_list$ms_moves_multiplier
+  pair_rule <- ms_params_list$pair_rule
+  mh_accept_per_smc <- ms_params_list$mh_accept_per_smc
   ms_frequency <- ms_params_list$ms_frequency
   merge_split_step_vec <- ms_params_list$merge_split_step_vec
 
@@ -524,8 +526,8 @@ redist_smc <- function(
     splitting_size_regime = splitting_size_regime,
     custom_size_split_list = list(),
     merge_split_step_vec = merge_split_step_vec,
-    ms_moves_multiplier = ms_moves_multiplier,
-    merge_prob_type = merge_prob_type
+    mh_accept_per_smc = mh_accept_per_smc,
+    pair_rule = pair_rule
   )
 
   # add the splitting parameters
@@ -742,8 +744,8 @@ redist_smc <- function(
         split_method = split_method,
         splitting_schedule = splitting_size_regime,
         merge_split_step_vec = merge_split_step_vec,
-        ms_moves_multiplier = ms_moves_multiplier,
-        merge_prob_type = merge_prob_type,
+        mh_accept_per_smc = mh_accept_per_smc,
+        pair_rule = pair_rule,
         step_types = step_types,
         nsims = nsims
       )
@@ -1102,31 +1104,31 @@ extract_control_params <- function(control) {
 #'
 #' @returns A list with the following
 #'     - `run_ms`: Whether or not any mergesplit steps will be run
-#'     - `merge_prob_type`: What probability to use when selecting pairs to merge.
+#'     - `pair_rule`: What probability to use when selecting pairs to merge.
 #'     Defaults to "uniform".
-#'     - `ms_moves_multiplier`: Multiplier to baseline number of steps
+#'     - `mh_accept_per_smc`: Multiplier to baseline number of steps
 #'     - `ms_frequency`: How oftent to run mergesplit steps
 #'     - `merge_split_step_vec`: vector whose length is the total number of steps
 #'     and a value of true indicates that step is a mergesplit step.
 #' @noRd
 extract_ms_params <- function(ms_params, total_smc_steps) {
-  ms_param_names <- c("ms_moves_multiplier", "ms_frequency", "merge_prob_type")
+  ms_param_names <- c("mh_accept_per_smc", "ms_frequency", "pair_rule")
 
   # create merge split parameter information
   if (is.list(ms_params) && any(ms_param_names %in% names(ms_params))) {
     run_ms <- TRUE
-    # check if ms_moves_multiplier was passed else default to 1
-    if ("ms_moves_multiplier" %in% names(ms_params)) {
-      ms_moves_multiplier <- ms_params[["ms_moves_multiplier"]]
-      # check that ms_moves_multiplier is positive
+    # check if mh_accept_per_smc was passed else default to 1
+    if ("mh_accept_per_smc" %in% names(ms_params)) {
+      mh_accept_per_smc <- ms_params[["mh_accept_per_smc"]]
+      # check that mh_accept_per_smc is positive
       if (
-        !rlang::is_scalar_atomic(ms_moves_multiplier) ||
-          !ms_moves_multiplier > 0
+        !rlang::is_scalar_atomic(mh_accept_per_smc) ||
+          !mh_accept_per_smc > 0
       ) {
-        cli::cli_abort("{.arg ms_moves_multiplier} must be a positive scalar")
+        cli::cli_abort("{.arg mh_accept_per_smc} must be a positive scalar")
       }
     } else {
-      ms_moves_multiplier <- 1L
+      mh_accept_per_smc <- 1L
     }
 
     # check if the frequency was passed else default to after every step
@@ -1138,22 +1140,22 @@ extract_ms_params <- function(ms_params, total_smc_steps) {
     }
 
     # check merge probability
-    if ("merge_prob_type" %in% names(ms_params)) {
-      merge_prob_type <- ms_params[["merge_prob_type"]]
+    if ("pair_rule" %in% names(ms_params)) {
+      pair_rule <- ms_params[["pair_rule"]]
       if (
-        !rlang::is_scalar_character(merge_prob_type) ||
-          merge_prob_type != "uniform"
+        !rlang::is_scalar_character(pair_rule) ||
+          pair_rule != "uniform"
       ) {
         cli::cli_abort("Only uniform merge probability is supported right now!")
       }
     } else {
       # else default to after every step
-      merge_prob_type <- "uniform"
+      pair_rule <- "uniform"
     }
   } else {
     run_ms <- FALSE
-    merge_prob_type <- "ignore"
-    ms_moves_multiplier <- NULL
+    pair_rule <- "ignore"
+    mh_accept_per_smc <- NULL
     ms_frequency <- NULL
   }
 
@@ -1182,8 +1184,8 @@ extract_ms_params <- function(ms_params, total_smc_steps) {
 
   extracted_ms_params <- list(
     run_ms = run_ms,
-    merge_prob_type = merge_prob_type,
-    ms_moves_multiplier = ms_moves_multiplier,
+    pair_rule = pair_rule,
+    mh_accept_per_smc = mh_accept_per_smc,
     ms_frequency = ms_frequency,
     merge_split_step_vec = merge_split_step_vec
   )

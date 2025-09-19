@@ -274,7 +274,7 @@ inline std::vector<EdgeCut> get_all_valid_edge_cuts_from_edge(
  *
  */
 arma::vec compute_expo_prob_weights_on_edges(
-        std::vector<EdgeCut> valid_edges, double alpha, double target){
+        std::vector<EdgeCut> &valid_edges, double alpha, double target){
 
     // get the weights vector
     arma::vec unnormalized_wgts(valid_edges.size());
@@ -300,7 +300,7 @@ arma::vec compute_expo_prob_weights_on_edges(
 
 
 arma::vec compute_expo_prob_weights_on_smaller_dev_edges(
-        std::vector<EdgeCut> valid_edges, double alpha, double target){
+        std::vector<EdgeCut> &valid_edges, double alpha, double target){
 
     // get the weights vector
     arma::vec unnormalized_wgts(valid_edges.size());
@@ -325,7 +325,7 @@ arma::vec compute_expo_prob_weights_on_smaller_dev_edges(
 
 
 arma::vec compute_almost_best_weights_on_smaller_dev_edges(
-        std::vector<EdgeCut> valid_edges, double epsilon, double target){
+        std::vector<EdgeCut> &valid_edges, double epsilon, double target){
 
     // get the weights vector
     arma::vec unnormalized_wgts(valid_edges.size());
@@ -361,8 +361,106 @@ arma::vec compute_almost_best_weights_on_smaller_dev_edges(
 
 }
 
+// takes an uncut tree and an edge in the tree 
+// and updates the region ids as if the cut edge was really removed 
+void assign_region_ids_from_uncut_tree(
+    Tree const &ust, PlanVector &region_ids,
+    int const root, int const root_region_id,
+    int const cut_vertex_root, int const cut_vertex_parent, int const cut_region_id,
+    CircularQueue<std::pair<int,int>> &vertex_queue
+){
+    // clear the queue
+    vertex_queue.clear();
+    
 
+    // update root and add its children to queue 
+    region_ids[root] = root_region_id;
+    for(auto const &child_vertex: ust[root]){
+        // check if this edge is one to remove in which case we ignore 
+        if(root == cut_vertex_parent && child_vertex == cut_vertex_root) continue;
 
+        vertex_queue.push({child_vertex, 0});
+    }
+
+    // update all the children
+    while(!vertex_queue.empty()){
+        // get and remove head of queue 
+        auto [vertex, dont_care] = vertex_queue.pop();
+        // update region ids
+        region_ids[vertex] = root_region_id;
+        // add children 
+        for(auto const &child_vertex: ust[vertex]){
+            // check if this edge is one to remove in which case we ignore 
+            if(vertex == cut_vertex_parent && child_vertex == cut_vertex_root) continue;
+
+            vertex_queue.push({child_vertex, 0});
+        }
+    }
+
+    // now we update starting at the cut root vertex
+    // update root and add its children to queue 
+    region_ids[cut_vertex_root] = cut_region_id;
+    for(auto const &child_vertex: ust[cut_vertex_root]){
+        // since tree is directed we don't need to check anything
+        vertex_queue.push({child_vertex, 0});
+    }
+
+    // update all the children
+    while(!vertex_queue.empty()){
+        // get and remove head of queue 
+        auto [vertex, dont_care] = vertex_queue.pop();
+        // update region ids
+        region_ids[vertex] = cut_region_id;
+        // add children 
+        for(auto const &child_vertex: ust[vertex]){
+            // since tree is directed we don't need to check anything
+            vertex_queue.push({child_vertex, 0});
+        }
+    }
+
+    return;
+}
+
+arma::vec compute_soft_constraint_edge_cut_weights(
+    std::vector<EdgeCut> &valid_edges, 
+    ScoringFunction const &scoring_function, Tree const &ust, int const num_regions,
+    PlanVector &region_ids, RegionSizes &region_sizes, IntPlanAttribute &region_pops,
+    int const split_region_id1, int const split_region_id2,
+    CircularQueue<std::pair<int,int>> &vertex_queue
+){
+    arma::vec unnormalized_wgts(valid_edges.size());
+
+    for (size_t i = 0; i < valid_edges.size(); i++)
+    {
+        // update split info 
+        region_sizes[split_region_id1] = valid_edges[i].cut_above_region_size;
+        region_sizes[split_region_id2] = valid_edges[i].cut_below_region_size;
+
+        region_pops[split_region_id1] = valid_edges[i].cut_above_pop;
+        region_pops[split_region_id2] = valid_edges[i].cut_below_pop;
+        
+        // update the region ids 
+        assign_region_ids_from_uncut_tree(
+            ust, region_ids,
+            valid_edges[i].tree_root, split_region_id1,
+            valid_edges[i].cut_vertex, valid_edges[i].cut_vertex_parent, split_region_id2,
+            vertex_queue
+        );
+
+        // get the soft score 
+        double const score = scoring_function.compute_full_split_plan_soft_score(
+            num_regions, region_ids, region_sizes, region_pops,
+            split_region_id1, split_region_id2
+        );
+
+        // REprintf("Soft score %f, unnormed weight %.20f\n", score, std::exp(-score));
+
+        unnormalized_wgts[i] = std::exp(-score);
+
+    }
+    
+    return unnormalized_wgts;
+}
 
 
 std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
@@ -511,7 +609,8 @@ std::vector<EdgeCut> get_all_valid_edges_in_undirected_tree(
     const int min_potential_cut_size, const int max_potential_cut_size,
     std::vector<int> const &smaller_cut_sizes_to_try,
     const int total_region_pop, const int total_region_size,
-   const double lower, const double upper, const double target) {
+   const double lower, const double upper, const double target
+){
 
     
     std::vector<EdgeCut> valid_edges;

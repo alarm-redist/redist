@@ -62,7 +62,7 @@
 #' @param verbose Whether to print out intermediate information while sampling.
 #' Recommended.
 #' @param silent Whether to suppress all diagnostic information.
-#' @param merge_prob_type What probability to use to select districts to merge
+#' @param pair_rule What probability to use to select districts to merge
 #' in the mergesplit kernel. Defaults to giving all pairs equal probability.
 #' @param ncores The number of clusters to spawn Defaults to the
 #' maximum available detected by `parallel::detectCores()`.
@@ -125,7 +125,7 @@ redist_mergesplit <- function(
   sampling_space = c("graph_plan", "spanning_forest", "linking_edge"),
   split_method = NULL,
   split_params = NULL,
-  merge_prob_type = "uniform",
+  pair_rule = "uniform",
   init_seats = NULL,
   ncores = NULL,
   cl_type = "PSOCK",
@@ -439,7 +439,7 @@ redist_mergesplit <- function(
         init_plan = init_plan[, chain, drop = FALSE],
         init_seats = init_seats[, chain, drop = FALSE],
         sampling_space_str = sampling_space,
-        merge_prob_type = merge_prob_type,
+        pair_rule = pair_rule,
         control = control,
         constraints = constraints,
         verbosity = run_verbosity,
@@ -487,7 +487,7 @@ redist_mergesplit <- function(
         valid_split_region_sizes_list = algout$valid_split_region_sizes_list,
         sampling_space = sampling_space,
         split_method = split_method,
-        merge_prob_type = merge_prob_type,
+        pair_rule = pair_rule,
         nsims = nsims,
         alg_name = "mergesplit"
       )

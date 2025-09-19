@@ -132,7 +132,7 @@ void validate_init_seats_cpp(
 Rcpp::IntegerMatrix get_canonical_plan_labelling(
     Rcpp::IntegerMatrix const &plans_mat,
     int const num_regions,
-    int const num_threads
+    int const ncores
 ){
     int const V = plans_mat.nrow();
     int const nsims = plans_mat.ncol();
@@ -146,17 +146,34 @@ Rcpp::IntegerMatrix get_canonical_plan_labelling(
 
     Rcpp::IntegerMatrix relabelled_plan_mat(V, nsims);
 
+    int const num_threads = ncores <= 0 ? std::thread::hardware_concurrency() : ncores;
     // create thread pool
-    RcppThread::ThreadPool pool(num_threads >= 1 ? num_threads : std::thread::hardware_concurrency());
+    RcppThread::ThreadPool pool(num_threads > 1 ? num_threads : 0);
+
+    // trick to give each thread a unique id
+    static std::atomic<int> global_generation_counter{0};
+    int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
+    std::atomic<int> thread_id_counter{0};
+
+    // make vectors which maps old region ids to the new canonical one
+    std::vector<std::vector<int>> reindex_vecs(num_threads, std::vector<int>(num_regions));
+
 
     // now relabel 
     pool.parallelFor(0, nsims, [&] (int i) {
-        // make a vector which maps old region ids to the new canonical one
-        static thread_local std::vector<int> reindex_vec(num_regions, -1);
+        static thread_local int thread_generation_counter = -1;
+        static thread_local int thread_id;
+
+        // check if the thread id was generated this function call 
+        if (thread_generation_counter != generation) {
+            // if not then give it a new id
+            thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+            thread_generation_counter = generation;
+        }
         // reset the vector indices 
         std::fill(
-            reindex_vec.begin(),
-            reindex_vec.end(),
+            reindex_vecs[thread_id].begin(),
+            reindex_vecs[thread_id].end(),
             -1
         );
 
@@ -165,14 +182,14 @@ Rcpp::IntegerMatrix get_canonical_plan_labelling(
         for (size_t v = 0; v < V; v++)
         {
             // check if this region has been relabelled yet
-            if(reindex_vec[plans_mat(v, i) - 1] <= 0){
+            if(reindex_vecs[thread_id][plans_mat(v, i) - 1] <= 0){
                 // if not then we haven't set a relabel for this region
-                reindex_vec[plans_mat(v, i) - 1] = current_region_relabel_counter;
+                reindex_vecs[thread_id][plans_mat(v, i) - 1] = current_region_relabel_counter;
                 ++current_region_relabel_counter;
             }
 
             // now relabel 
-            relabelled_plan_mat(v, i) = reindex_vec[plans_mat(v, i) - 1];
+            relabelled_plan_mat(v, i) = reindex_vecs[thread_id][plans_mat(v, i) - 1];
         }        
     });
 
@@ -215,7 +232,9 @@ Rcpp::DataFrame get_plan_counts(
     int const num_regions, bool const use_canonical_ordering,
     int const num_threads
 ){
+
     Rcpp::IntegerMatrix plans_mat = use_canonical_ordering ? get_canonical_plan_labelling(input_plans_mat, num_regions, num_threads) : input_plans_mat;
+
 
     RcppThread::ThreadPool pool = get_thread_pool(num_threads);
     int const V = plans_mat.nrow();
@@ -229,6 +248,7 @@ Rcpp::DataFrame get_plan_counts(
     static std::atomic<int> global_generation_counter{0};
     int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
     std::atomic<int> thread_id_counter{0};
+
 
     
 
@@ -460,6 +480,8 @@ PlanEnsemble::PlanEnsemble(
     }
 
 
+
+
     // trick to give each thread a unique id
     static std::atomic<int> global_generation_counter{0};
     int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
@@ -595,12 +617,10 @@ int PlanEnsemble::count_unique_plans(
     int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
     std::atomic<int> thread_id_counter{0};
 
+    std::vector<std::vector<RegionID>> reindexed_plan_vecs(num_threads, std::vector<RegionID>(V));
+    std::vector<std::vector<int>> reindex_vecs(num_threads, std::vector<int>(num_regions));
 
     pool.parallelFor(0, nsims, [&] (int i){
-        // need to make size ndists because it might persist between function calls
-        static thread_local std::vector<int> reindex_vec(ndists, -1);
-        static thread_local std::vector<RegionID> reindexed_plan_vec(V);
-
         static thread_local int thread_generation_counter = -1;
         static thread_local int thread_id;
 
@@ -619,8 +639,8 @@ int PlanEnsemble::count_unique_plans(
 
         // reset the vector indices 
         std::fill(
-            reindex_vec.begin(),
-            reindex_vec.end(),
+            reindex_vecs[thread_id].begin(),
+            reindex_vecs[thread_id].end(),
             -1
         );
 
@@ -632,13 +652,13 @@ int PlanEnsemble::count_unique_plans(
 
             
             // check if this region has been relabelled yet
-            if(reindex_vec[v_region] < 0){
+            if(reindex_vecs[thread_id][v_region] < 0){
                 // if not then we haven't set a relabel for this region
-                reindex_vec[v_region] = current_region_relabel_counter;
+                reindex_vecs[thread_id][v_region] = current_region_relabel_counter;
                 ++current_region_relabel_counter;
             }
 
-            if(reindex_vec[v_region] < 0 || reindex_vec[v_region] >= num_regions){
+            if(reindex_vecs[thread_id][v_region] < 0 || reindex_vecs[thread_id][v_region] >= num_regions){
                 // REprintf("%d Regions - Vertex %d - Reindexed Region %d to %d \n",
                 //     num_regions, v, v_region, reindex_vec[v_region]
                 // );
@@ -661,18 +681,18 @@ int PlanEnsemble::count_unique_plans(
 
                 oss << num_regions << " Regions - Vertex " << v
                     << " - Reindexed Region " << v_region
-                    << " to " << reindex_vec[v_region] << '\n';
+                    << " to " << reindex_vecs[thread_id][v_region] << '\n';
 
                 oss << "Reindex Vec is: ";
-                for (int j = 0; j < static_cast<int>(reindex_vec.size()); ++j) {
-                    oss << '|' << j << " -> " << reindex_vec[j] << "| ";
+                for (int j = 0; j < static_cast<int>(reindex_vecs[thread_id].size()); ++j) {
+                    oss << '|' << j << " -> " << reindex_vecs[thread_id][j] << "| ";
                 }
 
                 oss << "\nPlan Vectors:";
                 for (int u = 0; u < V; ++u) {
                     int rid = plan_ptr_vec[i]->region_ids[u];
-                    int mapped = (rid >= 0 && rid < static_cast<int>(reindex_vec.size()))
-                                ? reindex_vec[rid]
+                    int mapped = (rid >= 0 && rid < static_cast<int>(reindex_vecs[thread_id].size()))
+                                ? reindex_vecs[thread_id][rid]
                                 : -1;  // sentinel if out of range
                     oss << '|' << rid << " -> " << mapped << "| ";
                 }
@@ -687,14 +707,14 @@ int PlanEnsemble::count_unique_plans(
             }
 
             // now relabel 
-            reindexed_plan_vec[v] = reindex_vec[v_region];
+            reindexed_plan_vecs[thread_id][v] = reindex_vecs[thread_id][v_region];
         }   
         
         // now hash the plan
         std::ostringstream oss;
 
         for (int row = 0; row < V; ++row) {
-            oss << reindex_vec[row];
+            oss << reindexed_plan_vecs[thread_id][row];
             if (row < V - 1) {
                 oss << ",";
             }
@@ -857,32 +877,55 @@ void reorder_all_plans(
 
 
 
-std::unique_ptr<TreeSplitter> get_tree_splitters(
+std::vector<std::unique_ptr<TreeSplitter>> get_tree_splitter_ptrs(
     MapParams const &map_params,
     SplittingMethodType const splitting_method,
     Rcpp::List const &control,
-    int const nsims
+    int const nsims, int const num_threads
 ){
     int V = map_params.V;
     double target = map_params.target;
 
+
+    // create the pointer 
+    std::vector<std::unique_ptr<TreeSplitter>> tree_splitters_ptr_vec; 
+    tree_splitters_ptr_vec.reserve(nsims);
+
+
     if(splitting_method == SplittingMethodType::NaiveTopK){
         // set splitting k to -1
-        return std::make_unique<NaiveTopKSplitter>(V, -1);
+        std::generate_n(std::back_inserter(tree_splitters_ptr_vec), num_threads, [V] {
+            return std::make_unique<NaiveTopKSplitter>(V, -1);
+        });
     }else if(splitting_method == SplittingMethodType::UnifValid){
-        return std::make_unique<UniformValidSplitter>(V);
+        std::generate_n(std::back_inserter(tree_splitters_ptr_vec), num_threads, [V] {
+            return std::make_unique<UniformValidSplitter>(V);
+        });
     }else if(splitting_method == SplittingMethodType::ExpBiggerAbsDev){
         double alpha = as<double>(control["splitting_alpha"]);
-        return std::make_unique<ExpoWeightedSplitter>(V, alpha, target);
+        std::generate_n(std::back_inserter(tree_splitters_ptr_vec), num_threads, [V, alpha, target] {
+            return std::make_unique<ExpoWeightedSplitter>(V, alpha, target);
+        });
     }else if(splitting_method == SplittingMethodType::ExpSmallerAbsDev){
         double alpha = as<double>(control["splitting_alpha"]);
-        return std::make_unique<ExpoWeightedSmallerDevSplitter>(V, alpha, target);
+        std::generate_n(std::back_inserter(tree_splitters_ptr_vec), num_threads, [V, alpha, target] {
+            return std::make_unique<ExpoWeightedSmallerDevSplitter>(V, alpha, target);
+        });
+    }else if(splitting_method == SplittingMethodType::Constraint){
+        int const ndists = map_params.ndists;
+        std::generate_n(std::back_inserter(tree_splitters_ptr_vec), num_threads, [V, ndists] {
+            return std::make_unique<ConstraintSplitter>(V, ndists);
+        });
     }else if(splitting_method == SplittingMethodType::Experimental){
         double epsilon = as<double>(control["splitting_epsilon"]);
-        return std::make_unique<ExperimentalSplitter>(V, epsilon, target);
+        std::generate_n(std::back_inserter(tree_splitters_ptr_vec), num_threads, [V, epsilon, target] {
+            return std::make_unique<ExperimentalSplitter>(V, epsilon, target);
+        });
     }else{
         throw Rcpp::exception("Invalid Splitting Method!");
     }
+
+    return tree_splitters_ptr_vec;
 }
 
 

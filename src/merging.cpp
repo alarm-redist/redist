@@ -173,7 +173,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     ScoringFunction const &scoring_function,
     RNGState &rng_state, SamplingSpace const sampling_space,
     Plan &plan, Plan &new_plan, 
-    USTSampler &ust_sampler, TreeSplitter const &tree_splitter,
+    USTSampler &ust_sampler, TreeSplitter &tree_splitter,
     PlanMultigraph &current_plan_multigraph,
     PlanMultigraph &proposed_plan_multigraph,
     std::string const merge_prob_type, bool save_edge_selection_prob,
@@ -195,7 +195,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
 
     // try to draw a region 
     std::tuple<bool, EdgeCut> edge_search_result = ust_sampler.attempt_to_find_valid_tree_mergesplit(
-        rng_state, tree_splitter,
+        rng_state, scoring_function, tree_splitter,
         plan, region1_id, region2_id,
         save_edge_selection_prob
     );
@@ -304,12 +304,12 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         // compute the boundary length 
         double current_log_eff_boundary = plan.get_log_eff_boundary_len(
             current_plan_multigraph, splitting_schedule,
-            ust_sampler, tree_splitter, 
+            ust_sampler, tree_splitter, scoring_function,
             region1_id, region2_id
         );
         double proposed_log_eff_boundary = new_plan.get_log_eff_boundary_len(
             proposed_plan_multigraph, splitting_schedule, 
-            ust_sampler, tree_splitter,
+            ust_sampler, tree_splitter, scoring_function,
             region1_id, region2_id
         );
         // If linking edge space we need to subtract linking edge correction term
@@ -386,7 +386,7 @@ int run_merge_split_steps(
     ScoringFunction const &scoring_function,
     RNGState &rng_state, SamplingSpace const sampling_space,
     Plan &plan, Plan &dummy_plan, 
-    USTSampler &ust_sampler, TreeSplitter const &tree_splitter,
+    USTSampler &ust_sampler, TreeSplitter &tree_splitter,
     PlanMultigraph &current_plan_multigraph,
     PlanMultigraph &proposed_plan_multigraph,
     std::string const merge_prob_type,

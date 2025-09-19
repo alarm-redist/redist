@@ -167,8 +167,8 @@ order_columns_by_district <- function(df, columns, ndists, num_threads = 0L) {
     .Call(`_redist_order_columns_by_district`, df, columns, ndists, num_threads)
 }
 
-ms_plans <- function(nsims, warmup, thin, ndists, total_seats, district_seat_sizes, adj_list, counties, pop, target, lower, upper, rho, init_plan, init_seats, sampling_space_str, merge_prob_type, control, constraints, verbosity = 3L, diagnostic_mode = FALSE) {
-    .Call(`_redist_ms_plans`, nsims, warmup, thin, ndists, total_seats, district_seat_sizes, adj_list, counties, pop, target, lower, upper, rho, init_plan, init_seats, sampling_space_str, merge_prob_type, control, constraints, verbosity, diagnostic_mode)
+ms_plans <- function(nsims, warmup, thin, ndists, total_seats, district_seat_sizes, adj_list, counties, pop, target, lower, upper, rho, init_plan, init_seats, sampling_space_str, pair_rule, control, constraints, verbosity = 3L, diagnostic_mode = FALSE) {
+    .Call(`_redist_ms_plans`, nsims, warmup, thin, ndists, total_seats, district_seat_sizes, adj_list, counties, pop, target, lower, upper, rho, init_plan, init_seats, sampling_space_str, pair_rule, control, constraints, verbosity, diagnostic_mode)
 }
 
 pareto_dominated <- function(x) {

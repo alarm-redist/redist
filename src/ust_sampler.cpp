@@ -76,7 +76,9 @@ bool USTSampler::attempt_to_draw_tree_on_merged_region(RNGState &rng_state,
 
 
 std::pair<bool, EdgeCut> USTSampler::try_to_sample_splittable_tree(
-    RNGState &rng_state, TreeSplitter const &tree_splitter,
+    Plan const &plan, int const split_region1, int const split_region2,
+    ScoringFunction const &scoring_function,
+    RNGState &rng_state, TreeSplitter &tree_splitter,
     int const region_populations, int const region_size,
     bool const save_selection_prob
 ){
@@ -93,7 +95,8 @@ std::pair<bool, EdgeCut> USTSampler::try_to_sample_splittable_tree(
     // REprintf("\n");
 
     std::pair<bool, EdgeCut> edge_search_result = tree_splitter.attempt_to_find_edge_to_cut(
-        map_params, rng_state,
+        map_params, scoring_function, rng_state,
+        plan, split_region1, split_region2,
         ust, root, stack,
         pops_below_vertex, ignore,
         region_populations, region_size,
@@ -116,8 +119,9 @@ std::pair<bool, EdgeCut> USTSampler::try_to_sample_splittable_tree(
 
 
 std::pair<bool, EdgeCut> USTSampler::attempt_to_find_valid_tree_split(
-    RNGState &rng_state, TreeSplitter const &tree_splitter,
-    Plan const &plan, int const region_to_split,
+    RNGState &rng_state, ScoringFunction const &scoring_function,
+    TreeSplitter &tree_splitter,
+    Plan const &plan, int const region_to_split, int const new_region_id,
     bool const save_selection_prob
 ){
     // Try to draw a tree
@@ -133,7 +137,8 @@ std::pair<bool, EdgeCut> USTSampler::attempt_to_find_valid_tree_split(
     int region_to_split_population = plan.region_pops[region_to_split];
 
     return try_to_sample_splittable_tree(
-        rng_state, tree_splitter,
+        plan, region_to_split, new_region_id,
+        scoring_function, rng_state, tree_splitter,
         region_to_split_population, region_to_split_size,
         save_selection_prob
     );
@@ -142,7 +147,8 @@ std::pair<bool, EdgeCut> USTSampler::attempt_to_find_valid_tree_split(
 
 
 std::pair<bool, EdgeCut> USTSampler::attempt_to_find_valid_tree_mergesplit(
-    RNGState &rng_state, TreeSplitter const &tree_splitter,
+    RNGState &rng_state, ScoringFunction const &scoring_function,
+    TreeSplitter &tree_splitter,
     Plan const &plan, int const merge_region1, int const merge_region2,
     bool const save_selection_prob
 ){
@@ -159,7 +165,8 @@ std::pair<bool, EdgeCut> USTSampler::attempt_to_find_valid_tree_mergesplit(
     int region_to_split_population = plan.region_pops[merge_region1]+plan.region_pops[merge_region2];
 
     return try_to_sample_splittable_tree(
-        rng_state, tree_splitter,
+        plan, merge_region1, merge_region2,
+        scoring_function, rng_state, tree_splitter,
         region_to_split_population, region_to_split_size,
         save_selection_prob
     );

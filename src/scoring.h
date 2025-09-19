@@ -53,15 +53,27 @@ class RegionConstraint {
         double const hard_threshold; // If hard constraint then the threshold for becoming zero
 
         // raw log constraint for one region
-        virtual double compute_raw_region_constraint_score(const Plan &plan, int region_id) const = 0;
+        virtual double compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const = 0;
         // raw log constraint for region made by merging region 1 and 2
-        virtual double compute_raw_merged_region_constraint_score(const Plan &plan, int region1_id, int region2_id) const = 0;
+        virtual double compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const = 0;
 
         // Returns whether region is valid and score
         // - value of true means satisfies hard constraint, false means probability zero
         // - double is the constraint score 
         std::pair<bool, double> compute_region_score(const Plan &plan, int region_id) const;
         std::pair<bool, double> compute_merged_region_score(const Plan &plan, int region1_id, int region2_id) const;
+
+        // returns 0 if hard constraint otherwise returns soft score
+        double compute_soft_region_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region_id) const;
 
         // just true or false for if the region is valid 
         bool region_constraint_ok(const Plan &plan, int region_id) const;
@@ -85,9 +97,15 @@ class PopTemperConstraint : public RegionConstraint {
             ndists(ndists),
             pop_temper(pop_temper) {}
     
-        double compute_raw_region_constraint_score(const Plan &plan, int const region_id) const override;
+        double compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const override;
         // log constraint for region made by merging region 1 and 2
-        double compute_raw_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
+        double compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const override;
 };
 
 
@@ -107,9 +125,15 @@ class PopDevConstraint : public RegionConstraint {
             parity(parity),
             total_pop(total_pop) {}
     
-        double compute_raw_region_constraint_score(const Plan &plan, int const region_id) const override;
+        double compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const override;
         // log constraint for region made by merging region 1 and 2
-        double compute_raw_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
+        double compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const override;
 };
 
 
@@ -138,9 +162,15 @@ class StatusQuoConstraint : public RegionConstraint {
             n_current(n_current),
             V(V) {}
     
-        double compute_raw_region_constraint_score(const Plan &plan, int const region_id) const override;
+        double compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const override;
         // log constraint for region made by merging region 1 and 2
-        double compute_raw_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
+        double compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const override;
 };
 
 
@@ -163,9 +193,15 @@ class SegregationConstraint : public RegionConstraint {
             total_pop(total_pop),
             V(V) {}
     
-        double compute_raw_region_constraint_score(const Plan &plan, int const region_id) const override;
+        double compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const override;
         // log constraint for region made by merging region 1 and 2
-        double compute_raw_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
+        double compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const override;
 };
 
 class GroupPowerConstraint : public RegionConstraint {
@@ -193,9 +229,15 @@ class GroupPowerConstraint : public RegionConstraint {
             tgt_grp(tgt_grp), tgt_other(tgt_other), pow(pow)
             {}
     
-        double compute_raw_region_constraint_score(const Plan &plan, int const region_id) const override;
+        double compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const override;
         // log constraint for region made by merging region 1 and 2
-        double compute_raw_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
+        double compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const override;
 };
 
 class GroupHingeConstraint : public RegionConstraint {
@@ -215,9 +257,15 @@ class GroupHingeConstraint : public RegionConstraint {
             group_pop(group_pop), 
             total_pop(total_pop) {}
     
-        double compute_raw_region_constraint_score(const Plan &plan, int const region_id) const override;
+        double compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const override;
         // log constraint for region made by merging region 1 and 2
-        double compute_raw_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
+        double compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const override;
 };
 
 
@@ -232,9 +280,15 @@ class IncumbentConstraint : public RegionConstraint {
             RegionConstraint(score_districts_only, strength, hard_constraint, hard_threshold),
             incumbents(incumbents) {}
     
-        double compute_raw_region_constraint_score(const Plan &plan, int const region_id) const override;
+        double compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const override;
         // log constraint for region made by merging region 1 and 2
-        double compute_raw_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
+        double compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const override;
 };
 
 
@@ -256,9 +310,15 @@ class SplitsConstraint : public RegionConstraint {
             n_admin_units(n_admin_units),
             smc(smc) {}
     
-        double compute_raw_region_constraint_score(const Plan &plan, int const region_id) const override;
+        double compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const override;
         // log constraint for region made by merging region 1 and 2
-        double compute_raw_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
+        double compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const override;
 };
 
 
@@ -279,9 +339,15 @@ class MultisplitsConstraint : public RegionConstraint {
             n_admin_units(n_admin_units),
             smc(smc) {}
     
-        double compute_raw_region_constraint_score(const Plan &plan, int const region_id) const override;
+        double compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const override;
         // log constraint for region made by merging region 1 and 2
-        double compute_raw_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
+        double compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const override;
 };
 
 
@@ -302,9 +368,15 @@ class TotalSplitsConstraint : public RegionConstraint {
             n_admin_units(n_admin_units),
             smc(smc) {}
     
-        double compute_raw_region_constraint_score(const Plan &plan, int const region_id) const override;
+        double compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const override;
         // log constraint for region made by merging region 1 and 2
-        double compute_raw_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
+        double compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const override;
 };
 
 
@@ -329,9 +401,15 @@ class PolsbyConstraint : public RegionConstraint {
             from(from), to(to), area(area), perimeter(perimeter)
             {}
     
-        double compute_raw_region_constraint_score(const Plan &plan, int const region_id) const override;
+        double compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const override;
         // log constraint for region made by merging region 1 and 2
-        double compute_raw_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
+        double compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const override;
 };
 
 
@@ -351,9 +429,15 @@ class CustomRegionConstraint : public RegionConstraint {
             rcpp_plan_wrap(V)
             {}
     
-        double compute_raw_region_constraint_score(const Plan &plan, int const region_id) const override;
+        double compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const override;
         // log constraint for region made by merging region 1 and 2
-        double compute_raw_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
+        double compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const override;
 };
 
 
@@ -383,10 +467,17 @@ class PlanConstraint {
         // print. Just for debugging
         virtual void print() const;
         // computes score for a plan 
-        virtual double compute_raw_plan_constraint_score(const Plan &plan) const = 0;
+        virtual double compute_raw_plan_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops
+        ) const = 0;
         virtual double compute_raw_merged_plan_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const = 0;
         // 
-        std::pair<bool, double> compute_plan_score(const Plan &plan) const;
+        
+        std::pair<bool, double> compute_plan_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops
+        ) const;
         std::pair<bool, double> compute_merged_plan_score(const Plan &plan, int const region1_id, int const region2_id) const;
 
         // just checks if plan is ok, doesn't save score
@@ -423,7 +514,10 @@ class PlanSplitsConstraint : public PlanConstraint {
             vertex_queue(admin_forest.size())
             {};
         // computes score for a plan 
-        double compute_raw_plan_constraint_score(const Plan &plan) const override;
+        double compute_raw_plan_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops
+        ) const override;
         double compute_raw_merged_plan_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
 
 };
@@ -442,7 +536,10 @@ class CustomPlanConstraint : public PlanConstraint {
             fn(Rcpp::clone(fn))
             {};
         // computes score for a plan 
-        double compute_raw_plan_constraint_score(const Plan &plan) const override;
+        double compute_raw_plan_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops
+        ) const override;
         double compute_raw_merged_plan_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
 
 };
@@ -465,7 +562,10 @@ class ValidDistrictsConstraint : public PlanConstraint {
             true, .5),
         map_params(map_params){};
 
-        double compute_raw_plan_constraint_score(const Plan &plan) const override;
+        double compute_raw_plan_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops
+        ) const override;
         double compute_raw_merged_plan_constraint_score(
             const Plan &plan, int const region1_id, int const region2_id
         ) const override {throw Rcpp::exception("ValidDistrictsConstraint Merged version Not implemented yet!\n");};
@@ -520,6 +620,12 @@ class ScoringFunction {
         // For those. We make booleans to keep track of that 
         bool any_soft_custom_constraints;
         bool any_hard_custom_constraints;
+
+        // used for constraint splitter
+        double compute_full_split_plan_soft_score(int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const split_region1, int const split_region2
+        ) const;
         
 
         // scores individual regions

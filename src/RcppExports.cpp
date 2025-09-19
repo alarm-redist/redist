@@ -597,8 +597,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // ms_plans
-Rcpp::List ms_plans(int const nsims, int const warmup, int const thin, int const ndists, int const total_seats, Rcpp::IntegerVector const& district_seat_sizes, List const& adj_list, const arma::uvec& counties, const arma::uvec& pop, double const target, double const lower, double const upper, double const rho, Rcpp::IntegerMatrix const& init_plan, Rcpp::IntegerMatrix const& init_seats, std::string const& sampling_space_str, std::string const& merge_prob_type, List const& control, List const& constraints, int const verbosity, bool const diagnostic_mode);
-RcppExport SEXP _redist_ms_plans(SEXP nsimsSEXP, SEXP warmupSEXP, SEXP thinSEXP, SEXP ndistsSEXP, SEXP total_seatsSEXP, SEXP district_seat_sizesSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP init_planSEXP, SEXP init_seatsSEXP, SEXP sampling_space_strSEXP, SEXP merge_prob_typeSEXP, SEXP controlSEXP, SEXP constraintsSEXP, SEXP verbositySEXP, SEXP diagnostic_modeSEXP) {
+Rcpp::List ms_plans(int const nsims, int const warmup, int const thin, int const ndists, int const total_seats, Rcpp::IntegerVector const& district_seat_sizes, List const& adj_list, const arma::uvec& counties, const arma::uvec& pop, double const target, double const lower, double const upper, double const rho, Rcpp::IntegerMatrix const& init_plan, Rcpp::IntegerMatrix const& init_seats, std::string const& sampling_space_str, std::string const& pair_rule, List const& control, List const& constraints, int const verbosity, bool const diagnostic_mode);
+RcppExport SEXP _redist_ms_plans(SEXP nsimsSEXP, SEXP warmupSEXP, SEXP thinSEXP, SEXP ndistsSEXP, SEXP total_seatsSEXP, SEXP district_seat_sizesSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP init_planSEXP, SEXP init_seatsSEXP, SEXP sampling_space_strSEXP, SEXP pair_ruleSEXP, SEXP controlSEXP, SEXP constraintsSEXP, SEXP verbositySEXP, SEXP diagnostic_modeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -618,12 +618,12 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::IntegerMatrix const& >::type init_plan(init_planSEXP);
     Rcpp::traits::input_parameter< Rcpp::IntegerMatrix const& >::type init_seats(init_seatsSEXP);
     Rcpp::traits::input_parameter< std::string const& >::type sampling_space_str(sampling_space_strSEXP);
-    Rcpp::traits::input_parameter< std::string const& >::type merge_prob_type(merge_prob_typeSEXP);
+    Rcpp::traits::input_parameter< std::string const& >::type pair_rule(pair_ruleSEXP);
     Rcpp::traits::input_parameter< List const& >::type control(controlSEXP);
     Rcpp::traits::input_parameter< List const& >::type constraints(constraintsSEXP);
     Rcpp::traits::input_parameter< int const >::type verbosity(verbositySEXP);
     Rcpp::traits::input_parameter< bool const >::type diagnostic_mode(diagnostic_modeSEXP);
-    rcpp_result_gen = Rcpp::wrap(ms_plans(nsims, warmup, thin, ndists, total_seats, district_seat_sizes, adj_list, counties, pop, target, lower, upper, rho, init_plan, init_seats, sampling_space_str, merge_prob_type, control, constraints, verbosity, diagnostic_mode));
+    rcpp_result_gen = Rcpp::wrap(ms_plans(nsims, warmup, thin, ndists, total_seats, district_seat_sizes, adj_list, counties, pop, target, lower, upper, rho, init_plan, init_seats, sampling_space_str, pair_rule, control, constraints, verbosity, diagnostic_mode));
     return rcpp_result_gen;
 END_RCPP
 }

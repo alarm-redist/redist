@@ -206,6 +206,8 @@ validate_sample_space_and_splitting_method <- function(
       )
     } else if (split_method == UNIF_VALID_EDGE_SPLITTING) {
       split_params <- list()
+    } else if (split_method == CONSTRAINT_SPLITTING) {
+        split_params <- list()
     } else if (split_method == EXP_BIGGER_ABS_DEV_SPLITTING) {
       split_params <- list(
         splitting_alpha = 50

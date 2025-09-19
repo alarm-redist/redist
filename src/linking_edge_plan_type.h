@@ -48,7 +48,8 @@ class LinkingEdgePlan : public Plan {
 
         double get_log_eff_boundary_len(
             PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
-            USTSampler &ust_sampler, TreeSplitter const &tree_splitter, 
+            USTSampler &ust_sampler, TreeSplitter &tree_splitter, 
+            ScoringFunction const &scoring_function,
             const int region1_id, int const region2_id
         ) const override;
 
@@ -58,13 +59,14 @@ class LinkingEdgePlan : public Plan {
         std::vector<std::tuple<RegionID, RegionID, double>> get_valid_adj_regions_and_eff_log_boundary_lens(
             PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
             ScoringFunction const &scoring_function, bool const is_final_split,
-            USTSampler &ust_sampler, TreeSplitter const &tree_splitter
+            USTSampler &ust_sampler, TreeSplitter &tree_splitter
         ) const override;
 
         // For a plan and edge across two regions it returns the log probability 
         // that edge would be split in the merged tree across the two regions
         double get_regions_log_splitting_prob(
-            TreeSplitter const &tree_splitter, USTSampler &ust_sampler,
+            ScoringFunction const &scoring_function,
+            TreeSplitter &tree_splitter, USTSampler &ust_sampler,
             const int region1_root, const int region2_root
         ) const;
 

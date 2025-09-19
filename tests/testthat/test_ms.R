@@ -47,7 +47,7 @@ test_that("Thresholding constraints work", {
             }else{
                 return(1)
             }
-        }, thresh = .5, only_final_plans = FALSE)
+        }, thresh = .5)
 
     plans <- redist_mergesplit(iowa_map, nsims = 100, warmup = 50,
                                constraints = constr, silent = TRUE)
@@ -69,7 +69,7 @@ test_that("Thresholding constraints work", {
             }
             # return 0 if in the same region
 
-        }, thresh = .5, only_final_plans = FALSE)
+        }, thresh = .5)
 
     plans <- redist_mergesplit(iowa_map, nsims = 100, warmup = 50,
                                constraints = constr, silent = TRUE)

@@ -113,7 +113,7 @@ double get_log_retroactive_splitting_prob(
 double compute_simple_log_incremental_weight(
     Plan const &plan, PlanMultigraph &plan_multigraph,
     const SplittingSchedule &splitting_schedule, 
-    USTSampler &ust_sampler, TreeSplitter const &edge_splitter,
+    USTSampler &ust_sampler, TreeSplitter &edge_splitter,
     SamplingSpace const sampling_space,
     ScoringFunction const &scoring_function, double rho,
     bool compute_log_splitting_prob, bool is_final_split
@@ -151,7 +151,7 @@ double compute_simple_log_incremental_weight(
         // taus cancel so just add the boundary length which we have from hash map 
         log_forward_kernel_term = plan.get_log_eff_boundary_len(
             plan_multigraph, splitting_schedule, 
-            ust_sampler, edge_splitter,
+            ust_sampler, edge_splitter, scoring_function,
             region1_id, region2_id
         );
         if(compute_log_tau){
@@ -197,7 +197,7 @@ double compute_simple_log_incremental_weight(
         // tree boundary length 
         log_forward_kernel_term += plan.get_log_eff_boundary_len(
             plan_multigraph, splitting_schedule, 
-            ust_sampler, edge_splitter,
+            ust_sampler, edge_splitter, scoring_function,
             region1_id, region2_id
         );
 
@@ -386,7 +386,7 @@ void compute_all_plans_log_simple_incremental_weights(
     std::vector<ScoringFunction> const &scoring_functions,
     double rho,
     std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
-    TreeSplitter const &tree_splitter,
+    std::vector<std::unique_ptr<TreeSplitter>> &tree_splitter_ptrs_vec,
     bool compute_log_splitting_prob, bool is_final_plans,
     arma::subview_col<double> log_incremental_weights,
     int verbosity
@@ -400,17 +400,22 @@ void compute_all_plans_log_simple_incremental_weights(
     static std::atomic<int> global_generation_counter{0};
     int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
     std::atomic<int> thread_id_counter{0};
+    // now make the vectors of important variables to be used by threads
+    std::vector<USTSampler> ust_samplers_vec; ust_samplers_vec.reserve(num_threads);
+    std::vector<PlanMultigraph> plan_multigraphs_vec; plan_multigraphs_vec.reserve(num_threads);
+    for (size_t i = 0; i < num_threads; i++)
+    {
+        ust_samplers_vec.emplace_back(map_params, splitting_schedule);
+        plan_multigraphs_vec.emplace_back(
+            map_params, 
+            sampling_space == SamplingSpace::LinkingEdgeSpace
+        );
+    }
 
 
     RcppThread::ProgressBar bar(nsims, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, nsims, [&] (int i) {
-        static thread_local PlanMultigraph plan_multigraph(
-            map_params, 
-            sampling_space == SamplingSpace::LinkingEdgeSpace
-        );
-        static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
-
         static thread_local int thread_generation_counter = -1;
         static thread_local int thread_id;
 
@@ -422,8 +427,9 @@ void compute_all_plans_log_simple_incremental_weights(
         }
 
         double log_incr_weight = compute_simple_log_incremental_weight(
-            *plans_ptr_vec[i], plan_multigraph,
-            splitting_schedule, ust_sampler, tree_splitter, 
+            *plans_ptr_vec[i], plan_multigraphs_vec[thread_id],
+            splitting_schedule, ust_samplers_vec[thread_id], 
+            *tree_splitter_ptrs_vec[thread_id], 
             sampling_space,
             scoring_functions[thread_id], rho,
             compute_log_splitting_prob, 
@@ -474,7 +480,7 @@ void compute_all_plans_log_simple_incremental_weights(
 double compute_log_optimal_incremental_weights(
     Plan const &plan, PlanMultigraph &plan_multigraph,
     const SplittingSchedule &splitting_schedule, 
-    USTSampler &ust_sampler, TreeSplitter const &edge_splitter,
+    USTSampler &ust_sampler, TreeSplitter &edge_splitter,
     SamplingSpace const sampling_space,
     ScoringFunction const &scoring_function, double const rho,
     bool compute_log_splitting_prob, bool is_final_split
@@ -678,7 +684,7 @@ void compute_all_plans_log_optimal_incremental_weights(
     std::vector<ScoringFunction> const &scoring_functions,
     double rho,
     std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
-    TreeSplitter const &tree_splitter,
+    std::vector<std::unique_ptr<TreeSplitter>> &tree_splitter_ptrs_vec,
     bool compute_log_splitting_prob, bool is_final_plans,
     arma::subview_col<double> log_incremental_weights,
     int verbosity
@@ -694,15 +700,21 @@ void compute_all_plans_log_optimal_incremental_weights(
     int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
     std::atomic<int> thread_id_counter{0};
 
-    RcppThread::ProgressBar bar(nsims, 1);
-    // Parallel thread pool where all objects in memory shared by default
-    pool.parallelFor(0, nsims, [&] (int i) {
-        static thread_local PlanMultigraph plan_multigraph(
+    // now make the vectors of important variables to be used by threads
+    std::vector<USTSampler> ust_samplers_vec; ust_samplers_vec.reserve(num_threads);
+    std::vector<PlanMultigraph> plan_multigraphs_vec; plan_multigraphs_vec.reserve(num_threads);
+    for (size_t i = 0; i < num_threads; i++)
+    {
+        ust_samplers_vec.emplace_back(map_params, splitting_schedule);
+        plan_multigraphs_vec.emplace_back(
             map_params, 
             sampling_space == SamplingSpace::LinkingEdgeSpace
         );
-        static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
+    }
 
+    RcppThread::ProgressBar bar(nsims, 1);
+    // Parallel thread pool where all objects in memory shared by default
+    pool.parallelFor(0, nsims, [&] (int i) {
         static thread_local int thread_generation_counter = -1;
         static thread_local int thread_id;
 
@@ -713,10 +725,10 @@ void compute_all_plans_log_optimal_incremental_weights(
             thread_generation_counter = generation;
         }
 
-        // REprintf("I=%d\n", i);
+
         double log_incr_weight = compute_log_optimal_incremental_weights(
-            *plans_ptr_vec[i], plan_multigraph, 
-            splitting_schedule, ust_sampler, tree_splitter,
+            *plans_ptr_vec[i], plan_multigraphs_vec[thread_id], 
+            splitting_schedule, ust_samplers_vec[thread_id], *tree_splitter_ptrs_vec[thread_id],
             sampling_space, scoring_functions[thread_id], 
             rho, compute_log_splitting_prob, 
             is_final_plans

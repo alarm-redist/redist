@@ -3,6 +3,12 @@
 #define GREDIST_TYPES_H
 
 
+
+#ifndef ARMA_NO_DEBUG
+#define ARMA_NO_DEBUG
+#endif
+
+
 #define PRINT_LN Rcout << __func__ << "(), " << __FILE__ << ":" << __LINE__ << "\n";
 
 #include <vector>
@@ -437,6 +443,7 @@ enum class SplittingMethodType : unsigned char
     UnifValid, // picks uniform valid edge at random 
     ExpBiggerAbsDev, // propto exp(-alpha*bigger abs dev of pair)
     ExpSmallerAbsDev, // propto exp(-alpha*smaller abs dev of pair)
+    Constraint, // propto constraint score (unif if no constraints)
     Experimental // Just for testing
 };
 

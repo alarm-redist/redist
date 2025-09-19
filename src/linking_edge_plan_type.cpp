@@ -158,13 +158,12 @@ Plan(num_regions, pop,
     // reserve space for ndists - 1 linking edges 
     linking_edges.reserve(ndists-1);
 
+    // dummy scoring Function 
+    ScoringFunction scoring_function(ust_sampler.map_params, Rcpp::List(), 0,false, 0);
+
     for (auto const a_pair: initial_linking_edges){
         // REprintf("(%d, %d)\n", a_pair.first, a_pair.second);
-        double log_prob = get_regions_log_splitting_prob(
-            tree_splitter,  ust_sampler,
-            a_pair.first, a_pair.second
-        );
-        linking_edges.push_back({a_pair.first, a_pair.second, log_prob});
+        linking_edges.push_back({a_pair.first, a_pair.second});
     }
     
 }
@@ -173,9 +172,10 @@ Plan(num_regions, pop,
 
 
 
-// NOTE: This really only belongs to Forest and linking edge class, not graph 
+
 double LinkingEdgePlan::get_regions_log_splitting_prob(
-    TreeSplitter const &tree_splitter, USTSampler &ust_sampler,
+    ScoringFunction const &scoring_function,
+    TreeSplitter &tree_splitter, USTSampler &ust_sampler,
     const int region1_root, const int region2_root
 ) const{
     int region1_id = region_ids[region1_root]; int region2_id = region_ids[region2_root];
@@ -187,11 +187,9 @@ double LinkingEdgePlan::get_regions_log_splitting_prob(
 
     // get the log probability
     return tree_splitter.get_log_retroactive_splitting_prob_for_joined_tree(
-        ust_sampler.map_params, forest_graph, ust_sampler.stack,
+        ust_sampler.map_params, scoring_function, forest_graph, ust_sampler.stack,
         ust_sampler.visited, ust_sampler.pops_below_vertex,
-        region1_root, region2_root,
-        region_pops[region1_id], region_pops[region2_id],
-        region1_size, region2_size,
+        region1_root, region2_root, *this,
         min_possible_cut_size, max_possible_cut_size,
         ust_sampler.splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_region_size]
     );
@@ -314,7 +312,8 @@ void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
 
 double LinkingEdgePlan::get_log_eff_boundary_len(
     PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
-    USTSampler &ust_sampler, TreeSplitter const &tree_splitter, 
+    USTSampler &ust_sampler, TreeSplitter &tree_splitter, 
+    ScoringFunction const &scoring_function,
     const int region1_id, int const region2_id
 ) const {
     // Go through and find that pair 
@@ -327,6 +326,7 @@ double LinkingEdgePlan::get_log_eff_boundary_len(
             if(!edge_pair.valid_log_prob){
                 // else recompute first 
                 edge_pair.log_prob = get_regions_log_splitting_prob(
+                    scoring_function, 
                     tree_splitter, ust_sampler,
                     edge_pair.vertex1, edge_pair.vertex2
                 );
@@ -346,7 +346,7 @@ double LinkingEdgePlan::get_log_eff_boundary_len(
 std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_adj_regions_and_eff_log_boundary_lens(
     PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
     ScoringFunction const &scoring_function, bool const is_final_split,
-    USTSampler &ust_sampler, TreeSplitter const &tree_splitter
+    USTSampler &ust_sampler, TreeSplitter &tree_splitter
 ) const{
     // build the multigraph 
     plan_multigraph.build_plan_multigraph(region_ids, num_regions);
@@ -388,6 +388,7 @@ std::vector<std::tuple<RegionID, RegionID, double>> LinkingEdgePlan::get_valid_a
             if(!edge_pair.valid_log_prob){
                 // else recompute first 
                 edge_pair.log_prob = get_regions_log_splitting_prob(
+                    scoring_function,
                     tree_splitter, ust_sampler,
                     edge_pair.vertex1, edge_pair.vertex2
                 );

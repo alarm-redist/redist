@@ -492,8 +492,8 @@ print_algo_specific_params <- function(algo, all_diagn, all_run_info, pre_v5_pla
         cli::cli_bullets(c(
             "Mergesplit Parameters:",
             "*"="{.arg total_ms_steps} = {format(total_ms_steps, digits=2)}",
-            "*"="{.arg ms_moves_multiplier} = {format(all_run_info[[1]]$ms_moves_multiplier, digits=2)}",
-            "*"="{.arg merge_prob_type} = {format(all_run_info[[1]]$merge_prob_type, digits=2)}"
+            "*"="{.arg mh_accept_per_smc} = {format(all_run_info[[1]]$mh_accept_per_smc, digits=2)}",
+            "*"="{.arg pair_rule} = {format(all_run_info[[1]]$pair_rule, digits=2)}"
         )
         )
     }

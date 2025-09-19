@@ -201,7 +201,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
                 init_plan=init,
                 init_seats=init_sizes,
                 sampling_space_str = FOREST_SPACE_SAMPLING,
-                merge_prob_type = "uniform",
+                pair_rule = "uniform",
                 control=control, constraints=constraints,
                 verbosity=0, diagnostic_mode=FALSE
             )$plans

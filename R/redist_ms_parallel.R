@@ -42,7 +42,7 @@ redist_mergesplit_parallel <- function(
         sampling_space = c("graph_plan", "spanning_forest", "linking_edge"),
         split_method = NULL,
         split_params = NULL,
-        merge_prob_type = "uniform",
+        pair_rule = "uniform",
         init_seats = NULL,
         ncores = NULL,
         cl_type = "PSOCK",

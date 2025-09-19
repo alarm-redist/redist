@@ -267,6 +267,8 @@ List perform_a_valid_multidistrict_split(
         plan_ensemble.plan_ptr_vec[0]->Rprint();
     }
 
+
+    ScoringFunction scoring_function(map_params, Rcpp::List(), 0, false, 0);
     
 
     // Create tree related stuff
@@ -336,7 +338,8 @@ List perform_a_valid_multidistrict_split(
 
         // Now try to select an edge to cut
         std::pair<bool, EdgeCut> edge_search_result = tree_splitter->attempt_to_find_edge_to_cut(
-            map_params, rng_state, 
+            map_params, scoring_function, rng_state, 
+            *plan_ensemble.plan_ptr_vec[0], region_id_to_split, plan_ensemble.plan_ptr_vec[0]->num_regions,
             ust_sampler.ust, uncut_tree_root, ust_sampler.stack,
             pop_below, visited, 
             plan_ensemble.plan_ptr_vec[0]->region_pops[region_id_to_split],
@@ -749,7 +752,7 @@ List attempt_splits_on_a_region(
     std::atomic<int> thread_id_counter{0};
 
 
-
+    ScoringFunction scoring_function(map_params, Rcpp::List(), 0, false, 0);
 
     std::vector<bool> successful_update(num_plans);
 
@@ -786,7 +789,9 @@ List attempt_splits_on_a_region(
 
         // now draw a tree 
         auto edge_search_result = ust_sampler.try_to_sample_splittable_tree(
-            rng_states[thread_id], tree_splitter,
+            *thread_plan_ensemble.plan_ptr_vec[thread_id],
+            region_id_to_split, thread_plan_ensemble.plan_ptr_vec[thread_id]->num_regions,
+            scoring_function, rng_states[thread_id], tree_splitter,
             thread_plan_ensemble.plan_ptr_vec[thread_id]->region_pops[region_id_to_split], 
             thread_plan_ensemble.plan_ptr_vec[thread_id]->region_sizes[region_id_to_split],
             false

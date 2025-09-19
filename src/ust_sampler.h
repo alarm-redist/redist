@@ -6,10 +6,13 @@
 #include "redist_types.h"
 #include "tree_op.h"
 #include "base_plan_type.h"
+#include "scoring.h"
 
 
 
 class Plan;
+class ScoringFunction;
+class TreeSplitter;
 
 // For the future, to avoid needing to create visited and ignore
 class USTSampler {
@@ -61,20 +64,25 @@ public:
         const int region1_to_draw_tree_on, const int region2_to_draw_tree_on);
 
     std::pair<bool, EdgeCut> attempt_to_find_valid_tree_split(
-        RNGState &rng_state, TreeSplitter const &tree_splitter,
+        RNGState &rng_state, ScoringFunction const &scoring_function,
+        TreeSplitter &tree_splitter,
         Plan const &plan, int const region_to_split,
+        int const new_region_id,
         bool const save_selection_prob
     );
 
     std::pair<bool, EdgeCut> try_to_sample_splittable_tree(
-        RNGState &rng_state, TreeSplitter const &tree_splitter,
+        Plan const &plan, int const split_region1, int const split_region2,
+        ScoringFunction const &scoring_function,
+        RNGState &rng_state, TreeSplitter &tree_splitter,
         int const region_populations, int const region_size,
         bool const save_selection_prob
     );
 
 
     std::pair<bool, EdgeCut> attempt_to_find_valid_tree_mergesplit(
-        RNGState &rng_state, TreeSplitter const &tree_splitter,
+        RNGState &rng_state, ScoringFunction const &scoring_function,
+        TreeSplitter &tree_splitter,
         Plan const &plan, int const merge_region1, int const merge_region2,
         bool const save_selection_prob
     );

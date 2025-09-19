@@ -74,7 +74,7 @@ void GraphPlan::update_vertex_and_plan_specific_info_from_cut(
 std::vector<std::tuple<RegionID, RegionID, double>> GraphPlan::get_valid_adj_regions_and_eff_log_boundary_lens(
     PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
     ScoringFunction const &scoring_function, bool const is_final_split,
-    USTSampler &ust_sampler, TreeSplitter const &tree_splitter
+    USTSampler &ust_sampler, TreeSplitter &tree_splitter
 ) const{
 
     // build the multigraph 
@@ -114,7 +114,8 @@ std::vector<std::tuple<RegionID, RegionID, double>> GraphPlan::get_valid_adj_reg
 
 double GraphPlan::get_log_eff_boundary_len(
     PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
-    USTSampler &ust_sampler, TreeSplitter const &tree_splitter, 
+    USTSampler &ust_sampler, TreeSplitter &tree_splitter, 
+    ScoringFunction const &scoring_function,
     const int region1_id, int const region2_id
 ) const{
     // Return the log of the graph theoretic boundary

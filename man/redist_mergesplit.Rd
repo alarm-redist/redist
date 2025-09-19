@@ -18,7 +18,7 @@ redist_mergesplit(
   sampling_space = c("graph_plan", "spanning_forest", "linking_edge"),
   split_method = NULL,
   split_params = NULL,
-  merge_prob_type = "uniform",
+  pair_rule = "uniform",
   init_seats = NULL,
   ncores = NULL,
   cl_type = "PSOCK",
@@ -131,7 +131,7 @@ and larger values result in more unstable weights.
 }
 }}
 
-\item{merge_prob_type}{What probability to use to select districts to merge
+\item{pair_rule}{What probability to use to select districts to merge
 in the mergesplit kernel. Defaults to giving all pairs equal probability.}
 
 \item{init_seats}{The initial number of seats for each district in \code{init_plan}.}

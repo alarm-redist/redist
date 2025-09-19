@@ -111,7 +111,8 @@ void ForestPlan::update_vertex_and_plan_specific_info_from_cut(
 std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundary_lens(
     const ForestPlan &plan, VertexGraph const &forest_graph,
     PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
-    USTSampler &ust_sampler, const TreeSplitter &edge_splitter
+    USTSampler &ust_sampler, TreeSplitter &edge_splitter,
+    ScoringFunction const &scoring_function
 ){    
     int const V = plan_multigraph.map_params.V;
 
@@ -168,11 +169,9 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
             auto max_possible_cut_size = cut_size_bounds.second;
 
             double log_edge_selection_prob = edge_splitter.get_log_retroactive_splitting_prob_for_joined_tree(
-                    plan_multigraph.map_params, forest_graph, ust_sampler.stack,
+                    plan_multigraph.map_params, scoring_function, forest_graph, ust_sampler.stack,
                     ust_sampler.visited, ust_sampler.pops_below_vertex,
-                    v, v_nbor,
-                    plan.region_pops[plan.region_ids[v]], plan.region_pops[plan.region_ids[v_nbor]],
-                    plan.region_sizes[plan.region_ids[v]], plan.region_sizes[plan.region_ids[v_nbor]],
+                    v, v_nbor, plan,
                     min_possible_cut_size, max_possible_cut_size,
                     splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_region_size]);
 
@@ -207,7 +206,7 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
 std::vector<std::tuple<RegionID, RegionID, double>> ForestPlan::get_valid_adj_regions_and_eff_log_boundary_lens(
     PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
     ScoringFunction const &scoring_function, bool const is_final_split,
-    USTSampler &ust_sampler, TreeSplitter const &tree_splitter
+    USTSampler &ust_sampler, TreeSplitter &tree_splitter
 ) const{
     // build the multigraph 
     plan_multigraph.build_plan_multigraph(region_ids, num_regions);
@@ -222,7 +221,7 @@ std::vector<std::tuple<RegionID, RegionID, double>> ForestPlan::get_valid_adj_re
     auto region_pairs_tuple_vec = compute_log_tree_eff_boundary_lens(
         *this, forest_graph,
         plan_multigraph, splitting_schedule,
-        ust_sampler, tree_splitter
+        ust_sampler, tree_splitter, scoring_function
     );
 
     return region_pairs_tuple_vec;
@@ -234,7 +233,8 @@ std::vector<std::tuple<RegionID, RegionID, double>> ForestPlan::get_valid_adj_re
 
 double ForestPlan::get_log_eff_boundary_len(
     PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
-    USTSampler &ust_sampler, TreeSplitter const &tree_splitter, 
+    USTSampler &ust_sampler, TreeSplitter &tree_splitter, 
+    ScoringFunction const &scoring_function,
     const int region1_id, int const region2_id
 ) const{
     // reset the neccesary variables 
@@ -268,11 +268,9 @@ double ForestPlan::get_log_eff_boundary_len(
             if(v_county != plan_multigraph.map_params.counties[nbor] && !count_edges_across) continue;
 
             double log_edge_selection_prob = tree_splitter.get_log_retroactive_splitting_prob_for_joined_tree(
-                plan_multigraph.map_params, forest_graph, ust_sampler.stack,
+                plan_multigraph.map_params, scoring_function, forest_graph, ust_sampler.stack,
                 ust_sampler.visited, ust_sampler.pops_below_vertex,
-                v, nbor,
-                region_pops[region_ids[v]], region_pops[region_ids[nbor]],
-                region_sizes[region_ids[v]], region_sizes[region_ids[nbor]],
+                v, nbor, *this,
                 min_possible_cut_size,max_possible_cut_size,
                 splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_region_size]);
             

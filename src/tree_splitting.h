@@ -11,6 +11,7 @@
 #include "redist_types.h"
 #include "smc_base.h"
 #include "tree_op.h"
+#include "scoring.h"
 
 
 
@@ -70,15 +71,33 @@
 
 
 arma::vec compute_expo_prob_weights_on_edges(
-        std::vector<EdgeCut> valid_edges, double alpha, double target);
+        std::vector<EdgeCut> &valid_edges, double alpha, double target);
 
 
 arma::vec compute_expo_prob_weights_on_smaller_dev_edges(
-        std::vector<EdgeCut> valid_edges, double alpha, double target);
+        std::vector<EdgeCut> &valid_edges, double alpha, double target);
 
 
 arma::vec compute_almost_best_weights_on_smaller_dev_edges(
-        std::vector<EdgeCut> valid_edges, double epsilon, double target);
+        std::vector<EdgeCut> &valid_edges, double epsilon, double target);
+
+
+arma::vec compute_soft_constraint_edge_cut_weights(
+    std::vector<EdgeCut> &valid_edges, 
+    ScoringFunction const &scoring_function, Tree const &ust, int const num_regions,
+    PlanVector &region_ids, RegionSizes &region_sizes, IntPlanAttribute &region_pops,
+    int const split_region_id1, int const split_region_id2,
+    CircularQueue<std::pair<int,int>> &vertex_queue
+);
+
+
+arma::uvec compute_retroactive_soft_constraint_edge_cut_weights(
+    std::vector<EdgeCut> &valid_edges, 
+    ScoringFunction const &scoring_function, VertexGraph const &ust, int const num_regions,
+    PlanVector &region_ids, RegionSizes &region_sizes, IntPlanAttribute &region_pops,
+    int const split_region_id1, int const split_region_id2,
+    CircularQueue<std::pair<int,int>> &vertex_queue
+);
 
 
 std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(

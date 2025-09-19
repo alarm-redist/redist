@@ -19,7 +19,6 @@
 #include "merging.h"
 #include "weights.h"
 #include "redist_alg_helpers.h"
-#include "tree_splitter_types.h"
 #include "scoring.h"
 #include "ust_sampler.h"
 
