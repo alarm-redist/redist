@@ -2464,7 +2464,6 @@ std::pair<bool, EdgeCut> TreeSplitter::select_edge_to_cut(
         RNGState &rng_state, std::vector<EdgeCut> &valid_edges,
         bool save_selection_prob
     ) const {
-    REprintf("Looking for edges to cut\n");
     auto num_valid_edges = valid_edges.size();
 
     // if no valid edges reject immediately 
@@ -2510,7 +2509,6 @@ double TreeSplitter::get_log_selection_prob(
         std::vector<EdgeCut> &valid_edges,
         int idx
 ) const{
-    REprintf("!! Looking for edges to cut\n");
     auto num_valid_edges = valid_edges.size();
     // get the weights 
     double weight_sum = 0.0;
