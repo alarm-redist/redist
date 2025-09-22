@@ -765,7 +765,7 @@ redist_smc <- function(
         sd_lp = sd_lp,
         unique_survive = nunique_parent_indices,
         nunique_plans = nunique_plans,
-        ms_move_counts = algout$ms_move_counts,
+        ms_step_counts = algout$ms_step_counts,
         ancestors = algout$ancestors,
         seq_alpha = seq_alpha,
         pop_temper = pop_temper,

@@ -585,14 +585,14 @@ get_smc_ms_summary_df <- function(diagn, run_info, resampled){
     run_sampling_space <- run_info$sampling_space
 
     ms_accept_rate <- diagn$accept_rate[run_info$step_types == "ms"]
-    ms_moves_per_plan <- diagn$ms_move_counts
+    ms_steps_per_plan <- diagn$ms_step_counts
 
     run_summary_df <- tibble(
         accept_rate = ms_accept_rate,
-        ms_moves = ms_moves_per_plan
+        ms_steps = ms_steps_per_plan
     )
 
-    run_summary_names <- c("Acc. rate", "MS Moves per Plan")
+    run_summary_names <- c("Acc. rate", "MS Steps per Plan")
 
     tbl_print <- as.data.frame(run_summary_df)
 

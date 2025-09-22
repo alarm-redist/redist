@@ -1101,7 +1101,7 @@ void SMCDiagnostics::add_diagnostics_to_out_list(Rcpp::List &out){
     out["log_weight_stddev"] = log_wgt_stddevs;
     out["cut_k_vals"] = cut_k_values;
     out["log_incremental_weights_mat"] = log_incremental_weights_mat;
-    out["ms_move_counts"] = num_merge_split_attempts_vec;
+    out["ms_step_counts"] = num_merge_split_attempts_vec;
     out["merge_split_success_mat"] = merge_split_successes_mat;
     out["region_ids_mat_list"] = all_steps_plan_region_ids_list;
     out["region_seats_mat_list"] = region_sizes_mat_list;
