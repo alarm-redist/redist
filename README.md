@@ -28,6 +28,9 @@ Authors:
 - [Christopher T Kenny](https://christophertkenny.com),
   <christopherkenny@fas.harvard.edu> (Maintainer)
 - [Cory McCartan](https://corymccartan.com), <cmccartan@g.harvard.edu>
+- [Philip
+  O’Sullivan](https://statistics.fas.harvard.edu/people/philip-w-o%E2%80%99sullivan),
+  <posullivan@fas.harvard.edu>
 - [Ben Fifield](https://www.benfifield.com), <benfifield@gmail.com>
 - [Kosuke Imai](https://imai.fas.harvard.edu), <imai@harvard.edu>
 
@@ -41,6 +44,9 @@ Contributors:
 
 Papers:
 
+- O’Sullivan, P., McCartan, C., & Imai, K. (Working Paper Forthcoming).
+  Generalized Sequential Monte Carlo Sampling for Larger-scale
+  Redistricting Problems.
 - McCartan, C., & Imai, K. (Forthcoming). [Sequential Monte Carlo for
   sampling balanced and compact redistricting
   plans](https://arxiv.org/abs/2008.06131/). *Annals of Applied
@@ -78,6 +84,7 @@ functions: `redist_smc`, `redist_flip`, and `redist_mergesplit`.
 
 ``` r
 library(redist)
+#> Warning: package 'redistmetrics' was built under R version 4.4.3
 library(dplyr)
 
 data(iowa)
@@ -86,8 +93,9 @@ data(iowa)
 iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.001, total_pop = pop)
 # simulate 500 plans using the SMC algorithm
 iowa_plans = redist_smc(iowa_map, nsims=500)
+#> Starting Chain 1
 #> SEQUENTIAL MONTE CARLO
-#> Sampling 500 99-unit maps with 4 districts and population between 760,827 and 762,350.
+#> Using Graph Sampling space to sample 500 99-unit maps with 4 districts and population between 760827 and 762350.
 ```
 
 After generating plans, you can use `redist`’s plotting functions to
@@ -109,7 +117,7 @@ iowa_plans = iowa_plans %>%
     mutate(Compactness = comp_polsby(pl(), iowa_map),
            `Population deviation` = plan_parity(iowa_map),
            `Democratic vote` = group_frac(iowa_map, dem_08, tot_08))
-#> Linking to GEOS 3.11.0, GDAL 3.5.3, PROJ 9.1.0; sf_use_s2() is TRUE
+#> Linking to GEOS 3.13.0, GDAL 3.8.5, PROJ 9.5.1; sf_use_s2() is TRUE
 
 hist(iowa_plans, `Population deviation`) + hist(iowa_plans, Compactness) +
     plot_layout(guides="collect") +
