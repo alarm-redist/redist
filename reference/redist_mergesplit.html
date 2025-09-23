@@ -220,9 +220,6 @@ Markov chains for redistricting. arXiv preprint arXiv:1911.05725.</p>
 <span class="r-in"><span><span class="va">sampled_basic</span> <span class="op">&lt;-</span> <span class="fu">redist_mergesplit</span><span class="op">(</span><span class="va">fl_map</span>, <span class="fl">10000</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> MARKOV CHAIN MONTE CARLO</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Sampling 10000 25-unit maps with 3 districts and population between 52513 and 64182.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■                               </span>   0% | ETA: 0s</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.00</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Acceptance rate: 3.37%</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">sampled_constr</span> <span class="op">&lt;-</span> <span class="fu">redist_mergesplit</span><span class="op">(</span><span class="va">fl_map</span>, <span class="fl">10000</span>, constraints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
@@ -230,6 +227,9 @@ Markov chains for redistricting. arXiv preprint arXiv:1911.05725.</p>
 <span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> MARKOV CHAIN MONTE CARLO</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Sampling 10000 25-unit maps with 3 districts and population between 52513 and 64182.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■                               </span>   0% | ETA: 2s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.33</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Acceptance rate: 2.08%</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
