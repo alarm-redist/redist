@@ -1,7 +1,8 @@
 template:
   bootstrap: 5
-  params:
+  bslib:
     bootswatch: yeti
+    navbar-bg: "#344669"
 home:
   title: An R package for legislative redistricting
   description: >
