@@ -591,6 +591,31 @@ add_constr_qps <- function(constr, strength, cities, total_pop = NULL) {
     add_to_constr(constr, "qps", new_constr)
 }
 
+#' @param current The reference map for the phase-in school commute constraint.
+#' @param schools A vector of unit indices for schools. For example, if there
+#' are three schools located in precincts that correspond to rows 1 and 2 of
+#' your [redist_map], entering schools = c(1, 2) would indicate that.
+#' @param school_coords A data frame with columns 'lon' and 'lat' giving the coordinates of each school.
+#' @rdname constraints
+#' @export
+add_constr_phase_commute <- function(constr, strength, current, schools, school_coords, block_coords) {
+    if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
+    if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results")
+    data <- attr(constr, "data")
+    if (missing(current)) current <- get_existing(data)
+
+    new_constr <- list(strength = strength,
+        current = eval_tidy(enquo(current), data),
+        schools = eval_tidy(enquo(schools), data),
+        school_coords = school_coords,
+        block_coords = block_coords)
+    if (is.null(current) || length(new_constr$current) != nrow(data))
+        cli::cli_abort("{.arg current} must be provided, and must have as many
+                  precincts as the {.cls redist_map}")
+
+    add_to_constr(constr, "phase_commute", new_constr)
+}
+
 # utilty functions for parsing ASTs
 find_env <- function(name, env = rlang::caller_env()) {
     if (identical(env, rlang::empty_env())) {

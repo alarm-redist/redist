@@ -346,6 +346,90 @@ double eval_er(const subview_col<uword> &districts, const Graph g, int ndists) {
     return (double) redistmetrics::n_removed(g, districts, ndists)[0];
 }
 
+/*
+ * Compute the school reassignment commute penalty for district `distr`
+ */
+double eval_phase_commute(const subview_col<uword> &districts, const uvec &current,
+                       int distr, const uvec &pop, int n_distr, const uvec &schools, 
+                       const arma::mat &school_coords, const arma::mat &block_coords, int V) {
+    double reassigned_pop = 0.0;
+    for (int k = 0; k < V; k++) {
+        if (districts[k] != distr) continue; // only evaluate blocks in proposed district
+        // find school that is in proposed district and current district
+        school_old_idx = -1;
+        school_new_idx = -1;
+        for (int j = 0; j < schools.n_elem; j++) {
+            if (current[schools[j]] == distr) {
+                school_old_idx = j;
+            }
+            if (districts[schools[j]] == distr) {
+                school_new_idx = j;
+            }
+            if (school_old_idx != -1 && school_new_idx != -1) {
+                break;
+            }
+        }
+        if (schools[school_old_idx] == schools[school_new_idx]) continue;
+        // compute and compare commute distances to old and new schools
+        commute_old = get_commute_distance(block_coords(k, 0), 
+                                 block_coords(k, 1), 
+                                 school_coords(school_old_idx, 0), 
+                                 school_coords(school_old_idx, 1));
+        commute_new = get_commute_distance(block_coords(k, 0), 
+                                 block_coords(k, 1),
+                                 school_coords(school_new_idx, 0),
+                                 school_coords(school_new_idx, 1));
+        if (commute_old < commute_new) {
+            reassigned_pop += pop[k]; // perhaps weight by how much the commute increases?
+        }
+    }
+    return reassigned_pop;
+}
+
+// Helper for libcurl to write response to a string
+static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
+    ((std::string*)userp)->append((char*)contents, size * nmemb);
+    return size * nmemb;
+}
+
+double get_commute_distance(double block_lat, double block_lon, double school_lat, double school_lon) {
+    std::string api_key = "YOUR_MAPBOX_API_KEY"; // Replace with actual key
+    std::string weekday = "2025-09-22"; // Use a representative weekday (e.g., Monday)
+    std::string depart_morning = weekday + "T08:00";
+    std::string depart_afternoon = weekday + "T16:00";
+
+    auto get_duration = [&](double from_lat, double from_lon, double to_lat, double to_lon, const std::string& depart_at) -> double {
+        std::ostringstream url;
+        url << "https://api.mapbox.com/directions/v5/mapbox/driving-traffic/"
+            << from_lon << "," << from_lat << ";"
+            << to_lon << "," << to_lat
+            << "?access_token=" << api_key
+            << "&overview=false"
+            << "&depart_at=" << depart_at;
+        CURL* curl = curl_easy_init();
+        std::string readBuffer;
+        if (curl) {
+            curl_easy_setopt(curl, CURLOPT_URL, url.str().c_str());
+            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+            curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+            CURLcode res = curl_easy_perform(curl);
+            curl_easy_cleanup(curl);
+            if (res != CURLE_OK) return -1.0;
+        } else {
+            return -1.0;
+        }
+        auto json = nlohmann::json::parse(readBuffer, nullptr, false);
+        if (json.is_discarded() || !json.contains("routes") || json["routes"].empty()) return -1.0;
+        return json["routes"][0]["duration"];
+    };
+
+    double to_school = get_duration(block_lat, block_lon, school_lat, school_lon, depart_morning);
+    double from_school = get_duration(school_lat, school_lon, block_lat, block_lon, depart_afternoon);
+
+    if (to_school < 0 || from_school < 0) return -1.0;
+    return to_school + from_school; // total commute time in seconds
+}
+
 
 
 
