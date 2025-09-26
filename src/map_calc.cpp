@@ -350,37 +350,47 @@ double eval_er(const subview_col<uword> &districts, const Graph g, int ndists) {
  * Compute the school reassignment commute penalty for district `distr`
  */
 double eval_phase_commute(const subview_col<uword> &districts, const uvec &current,
-                       int distr, const uvec &pop, int n_distr, const uvec &schools, 
-                       const arma::mat &school_coords, const arma::mat &block_coords, int V) {
+                       int distr, const uvec &pop, const uvec &schools_idx, 
+                       const arma::mat &commute_times_morning, 
+                       const arma::mat &commute_times_afternoon, int V) {
+    // districts: proposed plan
+    // current: old plan
+    // distr: district to evaluate
+    // pop: population of each block
+    // schools_idx: indices of schools in the data
+    // commute_times: matrix of commute times from each block to each school
+    // V: number of blocks
     double reassigned_pop = 0.0;
     for (int k = 0; k < V; k++) {
         if (districts[k] != distr) continue; // only evaluate blocks in proposed district
+        
         // find school that is in proposed district and current district
         school_old_idx = -1;
         school_new_idx = -1;
-        for (int j = 0; j < schools.n_elem; j++) {
-            if (current[schools[j]] == distr) {
+        
+        for (int j = 0; j < schools_idx.n_elem; j++) {
+            // check if school and block are in the same old district
+            if (current[schools_idx[j]] == current[k]) {
                 school_old_idx = j;
             }
-            if (districts[schools[j]] == distr) {
+            // check if school and block are in the same proposed district
+            if (districts[schools_idx[j]] == districts[k]) {
                 school_new_idx = j;
             }
+            // both old zoned school and new zoned school have been found
             if (school_old_idx != -1 && school_new_idx != -1) {
                 break;
             }
         }
-        if (schools[school_old_idx] == schools[school_new_idx]) continue;
+        
+        // if schools are the same, no disruption
+        if (school_old_idx == school_new_idx) continue;
+        
         // compute and compare commute distances to old and new schools
-        commute_old = get_commute_distance(block_coords(k, 0), 
-                                 block_coords(k, 1), 
-                                 school_coords(school_old_idx, 0), 
-                                 school_coords(school_old_idx, 1));
-        commute_new = get_commute_distance(block_coords(k, 0), 
-                                 block_coords(k, 1),
-                                 school_coords(school_new_idx, 0),
-                                 school_coords(school_new_idx, 1));
+        commute_old = commute_times_morning(k, school_old_idx) + commute_times_afternoon(k, school_old_idx);
+        commute_new = commute_times_morning(k, school_new_idx) + commute_times_afternoon(k, school_new_idx);
         if (commute_old < commute_new) {
-            reassigned_pop += pop[k]; // perhaps weight by how much the commute increases?
+            reassigned_pop += pop[k] * (commute_new - commute_old);
         }
     }
     return reassigned_pop;

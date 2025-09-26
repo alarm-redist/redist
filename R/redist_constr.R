@@ -592,13 +592,12 @@ add_constr_qps <- function(constr, strength, cities, total_pop = NULL) {
 }
 
 #' @param current The reference map for the phase-in school commute constraint.
-#' @param schools A vector of unit indices for schools. For example, if there
+#' @param schools_idx A vector of unit indices for schools. For example, if there
 #' are three schools located in precincts that correspond to rows 1 and 2 of
 #' your [redist_map], entering schools = c(1, 2) would indicate that.
-#' @param school_coords A data frame with columns 'lon' and 'lat' giving the coordinates of each school.
 #' @rdname constraints
 #' @export
-add_constr_phase_commute <- function(constr, strength, current, schools, school_coords, block_coords) {
+add_constr_phase_commute <- function(constr, strength, current, schools_idx) {
     if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
     if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results")
     data <- attr(constr, "data")
@@ -606,14 +605,92 @@ add_constr_phase_commute <- function(constr, strength, current, schools, school_
 
     new_constr <- list(strength = strength,
         current = eval_tidy(enquo(current), data),
-        schools = eval_tidy(enquo(schools), data),
-        school_coords = school_coords,
-        block_coords = block_coords)
+        schools_idx = schools_idx)
     if (is.null(current) || length(new_constr$current) != nrow(data))
         cli::cli_abort("{.arg current} must be provided, and must have as many
                   precincts as the {.cls redist_map}")
+    
+    # get representative points
+    schools <- sf::st_point_on_surface(data[schools_idx,])
+    blocks <- sf::st_point_on_surface(data)
+
+    # convert to WGS84 lon/lat for mapbox
+    schools <- sf::st_transform(schools, 4326)
+    blocks <- sf::st_transform(blocks, 4326)
+    
+    # load mapbox library
+    library(mapboxapi)
+    mb_access_token("YOUR_MAPBOX_ACCESS_TOKEN")
+
+    # calculate morning and afternoon commute times
+    new_constr$commute_times_morning <- get_commute_times(
+        schools_idx = schools_idx,
+        schools = schools,
+        blocks = blocks,
+        profile = "driving-traffic",
+        output = "duration",
+        duration_output = "seconds",
+        depart_at = "2025-09-25T08:00"
+    )
+    new_constr$commute_times_afternoon <- get_commute_times(
+        schools_idx = schools_idx,
+        schools = schools,
+        blocks = blocks,
+        profile = "driving-traffic",
+        output = "duration",
+        duration_output = "seconds",
+        depart_at = "2025-09-25T16:00"
+    )
 
     add_to_constr(constr, "phase_commute", new_constr)
+}
+
+# helper function for getting commute times
+get_commute_times <- function(schools_idx, schools, blocks, profile = "driving-traffic", output = "duration", duration_output = "seconds", depart_at = "2025-09-25T08:00") {
+    # prepare output matrix
+    num_schools <- nrow(schools)
+    num_blocks <- nrow(blocks)
+    commute_times <- matrix(NA_real_, nrow = num_blocks, ncol = num_schools)
+    rownames(commute_times) <- as.character(seq_len(num_blocks))
+    colnames(commute_times) <- as.character(schools_idx)
+
+    # chunk origins and destinations to avoid API limits (10)
+    origin_chunk_size <- min(9, num_blocks)
+    origin_indices <- split(seq_len(num_blocks), ceiling(seq_len(num_blocks) / origin_chunk_size))
+    
+    for (i in seq_along(origin_indices)) {
+        origin_idx <- origin_indices[[i]]
+        origin_chunk <- blocks[origin_idx, , drop = FALSE]
+        
+        # determine size of destination chunk to not exceed limit
+        dest_chunk_size <- 10 - nrow(origin_chunk)
+        if (dest_chunk_size <= 0) next 
+        dest_indices <- split(seq_len(num_schools), ceiling(seq_along(seq_len(num_schools)) / dest_chunk_size))
+        
+        for (j in seq_along(dest_indices)) {
+            dest_idx <- dest_indices[[j]]
+            dest_chunk <- schools[dest_idx, , drop=FALSE]
+
+            # get matrix of commute times from chunk of origins to destinations
+            submatrix <- mb_matrix(
+                origins = origin_chunk,
+                destinations = dest_chunk,
+                profile = profile,
+                output = output,
+                duration_output = duration_output,
+                depart_at = depart_at_time
+            )
+
+            commute_times[origin_idx, dest_idx] <- submatrix
+        }
+    }
+
+    # set metadata attributes
+    attr(commute_times, "profile") <- profile
+    attr(commute_times, "depart_at") <- depart_at_time
+    attr(commute_times, "units") <- duration_output
+
+    commute_times
 }
 
 # utilty functions for parsing ASTs

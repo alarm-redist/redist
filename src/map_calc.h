@@ -118,8 +118,9 @@ double eval_er(const subview_col<uword> &districts, const Graph g, int ndists);
  * Compute the commute penalty for district `distr`
  */
 double eval_phase_commute(const subview_col<uword> &districts, const uvec &current,
-                       int distr, const uvec &pop, int n_distr, const uvec &schools, 
-                       const arma::mat &school_coords, const arma::mat &block_coords, int V);
+                       int distr, const uvec &pop, const uvec &schools_idx, 
+                       const arma::mat &commute_times_morning, 
+                       const arma::mat &commute_times_afternoon, int V);
 
 /*
  * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,
