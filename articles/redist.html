@@ -110,7 +110,7 @@ three algorithms:</p>
 <ul>
 <li>
 <code><a href="../reference/redist_smc.html">redist_smc()</a></code>, the recommended algorithm for most
-purposes.<a class="footnote-ref" tabindex="0" data-bs-toggle="popover" data-bs-content='&lt;p&gt;from &lt;a href="http://arxiv.org/pdf/2008.06131" class="external-link"&gt;Sequential Monte Carlo for
+purposes.<a class="footnote-ref" tabindex="0" data-bs-toggle="popover" data-bs-content='&lt;p&gt;from &lt;a href="https://arxiv.org/pdf/2008.06131" class="external-link"&gt;Sequential Monte Carlo for
 Sampling Balanced and Compact Redistricting Plans&lt;/a&gt;&lt;/p&gt;'><sup>1</sup></a>
 </li>
 <li>
@@ -500,11 +500,11 @@ population deviation, the perimeter-based compactness measure related to
 the Iowa Code’s redistricting requirements, and the fraction of minority
 voters and two-party Democratic vote share by district.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">county_perims</span> <span class="op">=</span> <span class="fu"><a href="http://alarm-redist.org/redistmetrics/reference/prep_perims.html" class="external-link">prep_perims</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">iowa_map</span><span class="op">$</span><span class="va">adj</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">county_perims</span> <span class="op">=</span> <span class="fu"><a href="http://alarm-redist.org/redistmetrics/reference/prep_perims.html">prep_perims</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">iowa_map</span><span class="op">$</span><span class="va">adj</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">iowa_plans</span> <span class="op">=</span> <span class="va">iowa_plans</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>pop_dev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">total_pop</span> <span class="op">/</span> <span class="fu"><a href="../reference/get_target.html">get_target</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span>,</span>
-<span>           comp <span class="op">=</span> <span class="fu"><a href="http://alarm-redist.org/redistmetrics/reference/comp_polsby.html" class="external-link">comp_polsby</a></span><span class="op">(</span><span class="fu"><a href="../reference/pl.html">pl</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">iowa_map</span>, perim_df<span class="op">=</span><span class="va">county_perims</span><span class="op">)</span>,</span>
+<span>           comp <span class="op">=</span> <span class="fu"><a href="http://alarm-redist.org/redistmetrics/reference/comp_polsby.html">comp_polsby</a></span><span class="op">(</span><span class="fu"><a href="../reference/pl.html">pl</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">iowa_map</span>, perim_df<span class="op">=</span><span class="va">county_perims</span><span class="op">)</span>,</span>
 <span>           pct_min <span class="op">=</span> <span class="fu"><a href="../reference/redist.group.percent.html">group_frac</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">vap</span> <span class="op">-</span> <span class="va">wvap</span>, <span class="va">vap</span><span class="op">)</span>,</span>
 <span>           pct_dem <span class="op">=</span> <span class="fu"><a href="../reference/redist.group.percent.html">group_frac</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">dem_08</span>, <span class="va">dem_08</span> <span class="op">+</span> <span class="va">rep_08</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">iowa_plans</span><span class="op">)</span></span>

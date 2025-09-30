@@ -5,7 +5,7 @@ redistricting plans according to contiguity, population, compactness, and
 administrative boundary constraints."><meta property="og:description" content="redist_smc uses a Sequential Monte Carlo algorithm (McCartan and Imai 2023)
 to generate representative samples of congressional or legislative
 redistricting plans according to contiguity, population, compactness, and
-administrative boundary constraints."><meta property="og:image" content="/logo.png"></head><body>
+administrative boundary constraints."><meta property="og:image" content="http://alarm-redist.org/redist/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -256,9 +256,6 @@ Available at <a href="https://doi.org/10.1214/23-AOAS1763" class="external-link"
 <span class="r-in"><span><span class="va">sampled_basic</span> <span class="op">&lt;-</span> <span class="fu">redist_smc</span><span class="op">(</span><span class="va">fl_map</span>, <span class="fl">5000</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> SEQUENTIAL MONTE CARLO</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Sampling 5000 25-unit maps with 3 districts and population between 52513 and 64182.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Split [0/2] <span style="color: #00BB00;">■                               </span> | ETA?</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Split [2/2] <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> | ETA 0s</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">constr</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_constr.html">redist_constr</a></span><span class="op">(</span><span class="va">fl_map</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">constr</span> <span class="op">&lt;-</span> <span class="fu"><a href="constraints.html">add_constr_incumbency</a></span><span class="op">(</span><span class="va">constr</span>, strength <span class="op">=</span> <span class="fl">100</span>, incumbents <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">6</span>, <span class="fl">25</span><span class="op">)</span><span class="op">)</span></span></span>
@@ -299,20 +296,20 @@ Available at <a href="https://doi.org/10.1214/23-AOAS1763" class="external-link"
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Plans have 3 districts from a 25-unit map, and were drawn using Sequential</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Monte Carlo.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> With plans resampled from weights</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Plans matrix: int [1:25, 1:1000] 1 2 2 2 3 2 3 3 1 3 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Plans matrix: int [1:25, 1:1000] 2 1 3 3 1 3 1 2 3 2 ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3,000 × 3</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    draw  district total_pop</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  <span style="color: #BCBCBC;">*</span> <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> 1            1     <span style="text-decoration: underline;">58</span>683</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> 1            2     <span style="text-decoration: underline;">61</span>813</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> 1            3     <span style="text-decoration: underline;">54</span>547</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> 2            1     <span style="text-decoration: underline;">52</span>653</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> 2            2     <span style="text-decoration: underline;">58</span>683</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> 2            3     <span style="text-decoration: underline;">63</span>707</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> 3            1     <span style="text-decoration: underline;">59</span>440</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> 3            2     <span style="text-decoration: underline;">60</span>282</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> 3            3     <span style="text-decoration: underline;">55</span>321</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> 4            1     <span style="text-decoration: underline;">60</span>432</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> 1            1     <span style="text-decoration: underline;">61</span>543</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> 1            2     <span style="text-decoration: underline;">58</span>164</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> 1            3     <span style="text-decoration: underline;">55</span>336</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> 2            1     <span style="text-decoration: underline;">58</span>812</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> 2            2     <span style="text-decoration: underline;">62</span>147</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> 2            3     <span style="text-decoration: underline;">54</span>084</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> 3            1     <span style="text-decoration: underline;">58</span>683</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> 3            2     <span style="text-decoration: underline;">60</span>081</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> 3            3     <span style="text-decoration: underline;">56</span>279</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> 4            1     <span style="text-decoration: underline;">58</span>683</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 2,990 more rows</span></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>

@@ -343,7 +343,7 @@ merges these groups together. We can use the
 the <code><a href="../reference/is_county_split.html">is_county_split()</a></code> function to identify split
 municipalities.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="http://alarm-redist.org/redistmetrics/reference/splits_admin.html" class="external-link">splits_admin</a></span><span class="op">(</span><span class="va">king_land</span><span class="op">$</span><span class="va">distr</span>, <span class="va">king_land</span>, <span class="va">city</span><span class="op">)</span>, <span class="st">"split cities\n"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="http://alarm-redist.org/redistmetrics/reference/splits_admin.html">splits_admin</a></span><span class="op">(</span><span class="va">king_land</span><span class="op">$</span><span class="va">distr</span>, <span class="va">king_land</span>, <span class="va">city</span><span class="op">)</span>, <span class="st">"split cities\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; 11 11 11 11 11 11 11 11 11 split cities</span></span>
 <span></span>
 <span><span class="va">king_land</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
@@ -440,8 +440,8 @@ completely preserves the municipalities which were frozen with
 <h2 id="district-cores">District Cores<a class="anchor" aria-label="anchor" href="#district-cores"></a>
 </h2>
 <p>A common requirement in redistricting is that districts after
-redistricting resemble the original districts, or <a href="https://www.ncsl.org/redistricting-and-census" class="external-link">“preserve the
-cores” of previous districts</a>, to ensure relative continuity of
+redistricting resemble the original districts, or <a href="https://documents.ncsl.org/wwwncsl/Redistricting-Census/Redistricting-Law-2020_NCSL%20FINAL.pdf" class="external-link">“preserve
+the cores” of previous districts</a>, to ensure relative continuity of
 representation. The <code>redist</code> package operationalizes this
 idea by explicitly constructing the cores of a set of districts with
 <code><a href="../reference/redist.identify.cores.html">make_cores()</a></code>, and merging them together with

@@ -20,7 +20,7 @@
 ">
 <meta property="og:description" content="This R package enables researchers to sample redistricting plans from a pre-specified target distribution using Sequential Monte Carlo and Markov Chain Monte Carlo algorithms. The package supports various constraints in the redistricting process, such as geographic compactness and population parity requirements. Tools for analysis, including computation of various summary statistics and plotting functionality, are also included.
 ">
-<meta property="og:image" content="/logo.png">
+<meta property="og:image" content="http://alarm-redist.org/redist/logo.png">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -150,7 +150,7 @@
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="va">iowa_plans</span> <span class="op">=</span> <span class="va">iowa_plans</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>Compactness <span class="op">=</span> <span class="fu"><a href="http://alarm-redist.org/redistmetrics/reference/comp_polsby.html" class="external-link">comp_polsby</a></span><span class="op">(</span><span class="fu"><a href="reference/pl.html">pl</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">iowa_map</span><span class="op">)</span>,</span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>Compactness <span class="op">=</span> <span class="fu"><a href="http://alarm-redist.org/redistmetrics/reference/comp_polsby.html">comp_polsby</a></span><span class="op">(</span><span class="fu"><a href="reference/pl.html">pl</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">iowa_map</span><span class="op">)</span>,</span>
 <span>           `Population deviation` <span class="op">=</span> <span class="fu"><a href="reference/redist.parity.html">plan_parity</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span>,</span>
 <span>           `Democratic vote` <span class="op">=</span> <span class="fu"><a href="reference/redist.group.percent.html">group_frac</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">dem_08</span>, <span class="va">tot_08</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Linking to GEOS 3.11.0, GDAL 3.5.3, PROJ 9.1.0; sf_use_s2() is TRUE</span></span>
