@@ -43,7 +43,7 @@ The package contains a variety of redistricting simulation and enumeration
 algorithms.  Generally you will use one of the following three algorithms:
 
 - `redist_smc()`, the recommended algorithm for most purposes.^[from 
-[Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans](http://arxiv.org/pdf/2008.06131)]
+[Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans](https://arxiv.org/pdf/2008.06131)]
 - `redist_mergesplit()`, a MCMC version of the SMC proposal.^[based on Carter,
 D., Herschlag, G., Hunter, Z., and Mattingly, J. (2019). A merge-split proposal
 for reversible Monte Carlo Markov chain sampling of redistricting plans. arXiv
