@@ -597,18 +597,16 @@ add_constr_qps <- function(constr, strength, cities, total_pop = NULL) {
 #' your [redist_map], entering schools = c(1, 2) would indicate that.
 #' @rdname constraints
 #' @export
-add_constr_phase_commute <- function(constr, strength, current, schools_idx) {
+add_constr_phase_commute <- function(constr, strength, current, schools_idx,
+                                     osrm_server = "http://127.0.0.1:5000", osrm_profile = "car",
+                                     src_chunk = 100, dst_chunk = 140) {
     if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
     if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results")
     data <- attr(constr, "data")
     if (missing(current)) current <- get_existing(data)
 
-    new_constr <- list(strength = strength,
-        current = eval_tidy(enquo(current), data),
-        schools_idx = schools_idx)
-    if (is.null(current) || length(new_constr$current) != nrow(data))
-        cli::cli_abort("{.arg current} must be provided, and must have as many
-                  precincts as the {.cls redist_map}")
+    library(sf)
+    library(osrm)
     
     # get representative points
     schools <- sf::st_point_on_surface(data[schools_idx,])
@@ -617,80 +615,95 @@ add_constr_phase_commute <- function(constr, strength, current, schools_idx) {
     # convert to WGS84 lon/lat for mapbox
     schools <- sf::st_transform(schools, 4326)
     blocks <- sf::st_transform(blocks, 4326)
-    
-    # load mapbox library
-    library(mapboxapi)
-    mb_access_token("YOUR_MAPBOX_ACCESS_TOKEN")
 
-    # calculate morning and afternoon commute times
-    new_constr$commute_times_morning <- get_commute_times(
-        schools_idx = schools_idx,
-        schools = schools,
-        blocks = blocks,
-        profile = "driving-traffic",
-        output = "duration",
-        duration_output = "seconds",
-        depart_at = "2025-09-25T08:00"
+    # get lon/lat matrices
+    schools_coord <- sf::st_coordinates(schools)
+    blocks_coord <- sf::st_coordinates(blocks)
+
+    # compute commute matrix in seconds
+    commute_times <- get_commute_times(blocks_coord, schools_coord,
+                                       profile = osrm_profile, server = osrm_server,
+                                       src_chunk = src_chunk, dst_chunk = dst_chunk
     )
-    new_constr$commute_times_afternoon <- get_commute_times(
+
+    new_constr <- list(strength = strength,
+        current = eval_tidy(enquo(current), data),
         schools_idx = schools_idx,
-        schools = schools,
-        blocks = blocks,
-        profile = "driving-traffic",
-        output = "duration",
-        duration_output = "seconds",
-        depart_at = "2025-09-25T16:00"
-    )
+        commute_times = commute_times)
+    if (is.null(current) || length(new_constr$current) != nrow(data))
+        cli::cli_abort("{.arg current} must be provided, and must have as many
+                  precincts as the {.cls redist_map}")
 
     add_to_constr(constr, "phase_commute", new_constr)
 }
 
-# helper function for getting commute times
-get_commute_times <- function(schools_idx, schools, blocks, profile = "driving-traffic", output = "duration", duration_output = "seconds", depart_at = "2025-09-25T08:00") {
-    # prepare output matrix
-    num_schools <- nrow(schools)
-    num_blocks <- nrow(blocks)
-    commute_times <- matrix(NA_real_, nrow = num_blocks, ncol = num_schools)
-    rownames(commute_times) <- as.character(seq_len(num_blocks))
-    colnames(commute_times) <- as.character(schools_idx)
+# get matrix of commute times between blocks and schools via OSRM
+get_commute_times <- function(blocks_coord, 
+                              schools_coord, 
+                              profile = "car", 
+                              server = "http://127.0.0.1:5000", 
+                              src_chunk = 100, 
+                              dst_chunk = 140) {
+    # ensure osrm talks to server/profile
+    old_url <- getOption("osrm.server")
+    old_profile <- getOption("osrm.profile")
+    on.exit({
+        options(osrm.server = old_url)
+        options(osrm.profile = old_profile)
+    }, add = TRUE)
+    options(osrm.server = server, osrm.profile = profile)
 
-    # chunk origins and destinations to avoid API limits (10)
-    origin_chunk_size <- min(9, num_blocks)
-    origin_indices <- split(seq_len(num_blocks), ceiling(seq_len(num_blocks) / origin_chunk_size))
-    
-    for (i in seq_along(origin_indices)) {
-        origin_idx <- origin_indices[[i]]
-        origin_chunk <- blocks[origin_idx, , drop = FALSE]
+    to_sf <- function(mat) {
+        sf::st_as_sf(
+            data.frame(lon = mat[,1], lat = mat[,2]),
+            coords = c("lon", "lat"), crs = 4326, agr = "constant"
+        )
+    }
+
+    blocks_sf <- to_sf(blocks_coord)
+    schools_sf <- to_sf(schools_coord)
+
+    n_blocks <- nrow(blocks_sf)
+    n_schools <- nrow(schools_sf)
+    commute_times <- matrix(NA_real_, nrow = n_blocks, ncol = n_schools)
+
+    # chunked osrm::osrmTable calls
+    for (b0 in seq(1, n_blocks, by = src_chunk)) {
+        b1 <- min(b0 + src_chunk - 1, n_blocks)
+        src <- blocks_sf[b0:b1, , drop = FALSE]
         
-        # determine size of destination chunk to not exceed limit
-        dest_chunk_size <- 10 - nrow(origin_chunk)
-        if (dest_chunk_size <= 0) next 
-        dest_indices <- split(seq_len(num_schools), ceiling(seq_along(seq_len(num_schools)) / dest_chunk_size))
-        
-        for (j in seq_along(dest_indices)) {
-            dest_idx <- dest_indices[[j]]
-            dest_chunk <- schools[dest_idx, , drop=FALSE]
+        for (s0 in seq(1, n_schools, by = dst_chunk)) {
+            s1 <- min(s0 + dst_chunk - 1, n_schools)
+            dst <- schools_sf[s0:s1, , drop = FALSE]
+            
+            chunk_ok <- TRUE
+            duration_sec <- NULL 
 
-            # get matrix of commute times from chunk of origins to destinations
-            submatrix <- mb_matrix(
-                origins = origin_chunk,
-                destinations = dest_chunk,
-                profile = profile,
-                output = output,
-                duration_output = duration_output,
-                depart_at = depart_at_time
-            )
+            tryCatch({
+                table <- osrm::osrmTable(src = src, dst = dst, measure = "duration")
+                duration_sec <- as.matrix(table$duration) * 60 # convert to seconds
+                
+                # check that dimensions are as expected
+                if (!all(dim(duration_sec) == c(nrow(src), nrow(dst)))) {
+                    stop(sprintf("Returned table is %dx%d, expected %dx%d.", 
+                                 nrow(duration_sec), ncol(duration_sec), 
+                                 nrow(src), nrow(dst)))
+                }
+            }, error = function(e) {
+                chunk_ok <<- FALSE
+                cli::cli_warn(c("Failed to get commute times from OSRM server for blocks {b0}-{b1} and schools {s0}-{s1}:",
+                    "x" = "{e$message}",
+                    "*" = "Filling with {.val NA}."))
+            })
 
-            commute_times[origin_idx, dest_idx] <- submatrix
+            # insert commute times into matrix
+            if (chunk_ok) {
+                commute_times[b0:b1, s0:s1] <- duration_sec
+            }
         }
     }
 
-    # set metadata attributes
-    attr(commute_times, "profile") <- profile
-    attr(commute_times, "depart_at") <- depart_at_time
-    attr(commute_times, "units") <- duration_output
-
-    commute_times
+    commute_times # return final matrix
 }
 
 # utilty functions for parsing ASTs

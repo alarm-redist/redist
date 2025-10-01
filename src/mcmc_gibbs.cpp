@@ -135,8 +135,7 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
     log_tgt += add_constraint("phase_commute", constraints, districts, psi_vec,
                               [&] (List l, int distr) -> double {
                                   return eval_phase_commute(plan, as<uvec>(l["current"]), distr,
-                                                         pop, as<int>(l["schools_idx"]), as<mat>(l["commute_times_morning"]),
-                                                         as<mat>(l["commute_times_afternoon"]), V);
+                                                         pop, as<int>(l["schools_idx"]), as<mat>(l["commute_times"]), V);
                               });
 
     log_tgt += add_constraint("custom", constraints, districts, psi_vec,

@@ -3,13 +3,6 @@
 #include <RcppThread.h>
 #include "smc_base.h"
 #include "tree_op.h"
-#include <string>
-#include <vector>
-#include <cmath>
-#include <armadillo>
-#include <curl/curl.h>
-#include <nlohmann/json.hpp>
-#include <sstream>
 
 #ifndef MAP_CALC_H
 #define MAP_CALC_H
@@ -119,8 +112,7 @@ double eval_er(const subview_col<uword> &districts, const Graph g, int ndists);
  */
 double eval_phase_commute(const subview_col<uword> &districts, const uvec &current,
                        int distr, const uvec &pop, const uvec &schools_idx, 
-                       const arma::mat &commute_times_morning, 
-                       const arma::mat &commute_times_afternoon, int V);
+                       const arma::mat &commute_times, int V);
 
 /*
  * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,
