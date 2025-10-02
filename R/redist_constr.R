@@ -604,9 +604,6 @@ add_constr_phase_commute <- function(constr, strength, current, schools_idx,
     if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results")
     data <- attr(constr, "data")
     if (missing(current)) current <- get_existing(data)
-
-    library(sf)
-    library(osrm)
     
     # get representative points
     schools <- sf::st_point_on_surface(data[schools_idx,])
@@ -625,6 +622,7 @@ add_constr_phase_commute <- function(constr, strength, current, schools_idx,
                                        profile = osrm_profile, server = osrm_server,
                                        src_chunk = src_chunk, dst_chunk = dst_chunk
     )
+    cli::cli_alert_info("Calculated commute times matrix with {nrow(commute_times)} blocks and {ncol(commute_times)} schools.")
 
     new_constr <- list(strength = strength,
         current = eval_tidy(enquo(current), data),
@@ -640,7 +638,7 @@ add_constr_phase_commute <- function(constr, strength, current, schools_idx,
 # get matrix of commute times between blocks and schools via OSRM
 get_commute_times <- function(blocks_coord, 
                               schools_coord, 
-                              profile = "car", 
+                              profile = "driving", 
                               server = "http://127.0.0.1:5000", 
                               src_chunk = 100, 
                               dst_chunk = 140) {
@@ -680,8 +678,8 @@ get_commute_times <- function(blocks_coord,
             duration_sec <- NULL 
 
             tryCatch({
-                table <- osrm::osrmTable(src = src, dst = dst, measure = "duration")
-                duration_sec <- as.matrix(table$duration) * 60 # convert to seconds
+                table <- osrm_table_safe(src = src, dst = dst, profile = profile, server = server, measure = "duration")
+                duration_sec <- as.matrix(table$duration)
                 
                 # check that dimensions are as expected
                 if (!all(dim(duration_sec) == c(nrow(src), nrow(dst)))) {
@@ -704,6 +702,48 @@ get_commute_times <- function(blocks_coord,
     }
 
     commute_times # return final matrix
+}
+
+osrm_table_safe <- function(src, dst, profile = "driving",
+                            server = "http://127.0.0.1:5000",
+                            measure = "duration") {
+    stopifnot(measure %in% c("duration","distance"))
+    
+    src <- sf::st_transform(src, 4326)
+    dst <- sf::st_transform(dst, 4326)
+    
+    to_str <- function(g) {
+        paste(apply(sf::st_coordinates(g), 1, \(xy) paste0(xy[1], ",", xy[2])), collapse = ";")
+    }
+    src_str <- to_str(src)
+    dst_str <- to_str(dst)
+    
+    n_src <- nrow(src)
+    n_dst <- nrow(dst)
+    
+    # 0-based indices into the COMBINED list: "src;dst"
+    src_idx <- paste0(seq(0, n_src - 1), collapse = ";")
+    dst_idx <- paste0(seq(n_src, n_src + n_dst - 1), collapse = ";")
+    
+    base <- sub("/+$", "", trimws(server))
+    url  <- sprintf("%s/table/v1/%s/%s;%s?sources=%s&destinations=%s",
+                    base, profile, src_str, dst_str, src_idx, dst_idx)
+                    
+    resp <- httr::GET(url)
+    httr::stop_for_status(resp)
+    txt <- httr::content(resp, as = "text", encoding = "UTF-8")
+    j <- jsonlite::fromJSON(txt)
+    
+    out <- list()
+    if (!is.null(j$durations)) {
+        dur <- j$durations
+        out$duration <- if (is.list(dur)) {
+            do.call(rbind, lapply(dur, function(row) as.numeric(row)))
+        } else {
+            as.matrix(dur)
+        }
+    }
+    out
 }
 
 # utilty functions for parsing ASTs
