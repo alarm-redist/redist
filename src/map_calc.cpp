@@ -393,7 +393,6 @@ double eval_phase_commute(const subview_col<uword> &districts, const uvec &curre
         if (commute_old < commute_new) {
             double to_add = pop[k] * (commute_new - commute_old);
             reassigned_pop += to_add;
-            Rcout << "Adding " << to_add << " to reassigned_pop" << std::endl;
         }
     }
     return reassigned_pop;
