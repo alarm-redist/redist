@@ -45,6 +45,23 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="4.3.0" id="redist-430">redist 4.3.0<a class="anchor" aria-label="anchor" href="#redist-430"></a></h2>
+<ul><li>Improves SMC performance by pre-allocating some memory while drawing spanning trees.</li>
+<li>Replaces SMC label-counting adjustments (exact and importance-sampling-based) with a new backward kernel that eliminates approximation error and requires far less computation</li>
+<li>4.2.0 introduced some regressions in <code><a href="../reference/redist_shortburst.html">redist_shortburst()</a></code> along with the new features. The following issues are fixed:
+<ul><li>the returned <code>redist_plans</code> object would store the wrong score for the ‘<init>’ input. This issue only impacted the returned object and the correct score was used during the shortburst process. (<a href="https://github.com/alarm-redist/redist/issues/180" class="external-link">#180</a>)</init></li>
+<li>the function would return immediately if <code>stop_at</code> was specified and <code>minimize = FALSE</code>. (<a href="https://github.com/alarm-redist/redist/issues/181" class="external-link">#181</a>)</li>
+</ul></li>
+<li>Add <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> support for plans sampled with the <code>flip</code> algorithm. This does not replace the full flip diagnostic suite, but provides an easy way to compute r-hats.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="4.2.0" id="redist-420">redist 4.2.0<a class="anchor" aria-label="anchor" href="#redist-420"></a></h2>
+<ul><li>Deprecate functionality that is provided by <code>redistmetrics</code> package.</li>
+<li>Improve contiguity checking speed drastically.</li>
+<li>Support for multiple independent scoring functions in <code><a href="../reference/redist_shortburst.html">redist_shortburst()</a></code>. With multiple scorers, the algorithm will stochastically explore to try to find the largest Pareto frontier for the scores. The frontier can be accessed with <code>attr(&lt;plans obj&gt;, "pareto_score")</code>.</li>
+<li>Removes the MPI vignette which relied on older implementations of <code>redist.mcmc()</code>, which was replaced by <code>redist.flip()</code> a few years ago, and finally <code><a href="../reference/redist_flip.html">redist_flip()</a></code>.</li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="4.1.1" id="redist-411">redist 4.1.1<a class="anchor" aria-label="anchor" href="#redist-411"></a></h2>
 <ul><li>Resolves a sanitizer error for CRAN</li>
 </ul></div>
