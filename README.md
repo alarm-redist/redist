@@ -23,37 +23,6 @@ and population parity requirements. Tools for analysis, including
 computation of various summary statistics and plotting functionality,
 are also included.
 
-Authors:
-
-- [Christopher T Kenny](https://christophertkenny.com),
-  <christopherkenny@fas.harvard.edu> (Maintainer)
-- [Cory McCartan](https://corymccartan.com), <cmccartan@g.harvard.edu>
-- [Ben Fifield](https://www.benfifield.com), <benfifield@gmail.com>
-- [Kosuke Imai](https://imai.fas.harvard.edu), <imai@harvard.edu>
-
-Contributors:
-
-- Jun Kawahara, <jkawahara@i.kyoto-u.ac.jp>
-- Alex Tarr, <atarr@princeton.edu>
-- [Michael
-  Higgins](https://www.k-state.edu/stats/about/people/HigginsMichael.html),
-  <mjh5@princeton.edu>
-
-Papers:
-
-- McCartan, C., & Imai, K. (Forthcoming). [Sequential Monte Carlo for
-  sampling balanced and compact redistricting
-  plans](https://arxiv.org/abs/2008.06131/). *Annals of Applied
-  Statistics*.
-- Fifield, B., Higgins, M., Imai, K., & Tarr, A. (2020). [Automated
-  redistricting simulation using Markov chain Monte
-  Carlo](https://doi.org/10.1080/10618600.2020.1739532). *Journal of
-  Computational and Graphical Statistics*, 29(4), 715-728.
-- Fifield, B., Imai, K., Kawahara, J., & Kenny, C. T. (2020). [The
-  essential role of empirical validation in legislative redistricting
-  simulation](https://doi.org/10.1080/2330443X.2020.1791773).
-  *Statistics and Public Policy*, 7(1), 52-68.
-
 ## Installation Instructions
 
 `redist` is available on CRAN and can be installed using:
