@@ -16,14 +16,14 @@ editor_options:
 
 <!-- badges: end -->
 
-<img src="man/figures/map_photo.jpg" style="width: 100%"/>
+<img src="man/figures/map_photo.jpg" class="pkgdown-hide" style="width: 100%"/>
 
 ```{r, echo = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, fig.path = "man/figures/README-", comment = "#>")
 set.seed(5118)
 ```
 
-<img src="man/figures/logo.png" align="right" style="height: 128px; margin-left: 4px;"/>
+<img src="man/figures/logo.png" class="pkgdown-hide" align="right" style="height: 128px; margin-left: 4px;"/>
 
 This R package enables researchers to sample redistricting plans from a 
 pre-specified target distribution using Sequential Monte Carlo and Markov 
