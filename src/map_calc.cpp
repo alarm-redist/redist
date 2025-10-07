@@ -395,7 +395,11 @@ double eval_phase_commute(const subview_col<uword> &districts, const uvec &curre
             reassigned_pop += to_add;
         }
     }
-    return reassigned_pop;
+
+    // return log(1 + average extra commute time per person in the district)
+    double district_pop = (double) sum(pop(find(districts == distr)));
+    double avg_extra = (district_pop > 0.0) ? (reassigned_pop / district_pop) : 0.0;
+    return std::log1p(avg_extra);
 }
 
 
