@@ -348,17 +348,17 @@ double eval_er(const subview_col<uword> &districts, const Graph g, int ndists) {
 
 /*
  * Compute the school reassignment commute penalty for district `distr`
+ * districts: proposed plan
+ * current: old plan
+ * distr: district to evaluate
+ * pop: population of each block
+ * school_idx: indices of schools in the data
+ * commute_times: matrix of commute times from each block to each school
+ * V: number of blocks
  */
 double eval_phase_commute(const subview_col<uword> &districts, const uvec &current,
                        int distr, const uvec &pop, const uvec &schools_idx, 
                        const arma::mat &commute_times, int V) {
-    // districts: proposed plan
-    // current: old plan
-    // distr: district to evaluate
-    // pop: population of each block
-    // schools_idx: indices of schools in the data
-    // commute_times: matrix of commute times from each block to each school
-    // V: number of blocks
     double reassigned_pop = 0.0;
     for (int k = 0; k < V; k++) {
         if (districts(k) != distr) continue; // only evaluate blocks in proposed district
