@@ -134,15 +134,16 @@
 #'  }
 #' @param ms_params A list of mergesplit parameters.
 #' \itemize{
-#'  \item \code{frequency}: How often to run merge steps. Should either be an integer
-#' (meaning run after every _ smc steps) or a vector of 1 indexed step numbers
-#' indicating which smc steps to run merge split. A value of -1 means just run
+#'  \item \code{frequency}: How often to perform mergesplit rounds after SMC
+#' steps. Should either be an integer (meaning run after every _ smc steps)
+#' or a vector of 1 indexed step numbers indicating after which smc steps to
+#' run a mergesplit round. A value of -1 means just run a single mergesplit round
 #' after all smc steps have been run. A value of 1 means run after every smc step.
 #' \item \code{mh_accept_per_smc} Multiplier to the baseline number of mergesplit
 #' steps to be performed each round. For a mergesplit round the baseline number of
 #' steps is calculated as the ceiling of 1 over the previous mergesplit round
 #' acceptance rate (or smc step if no prior mergesplit rounds were done). The
-#' total number of moves is `ceiling(mh_accept_per_smc * baseline_num_steps)`.
+#' total number of steps is `ceiling(mh_accept_per_smc * baseline_num_steps)`.
 #' This should be thought of as specifying how many successful mergesplit steps
 #' are desired for each mergesplit round.
 #' \item \code{pair_rule} What probability to use to select regions to merge

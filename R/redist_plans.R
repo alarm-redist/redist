@@ -589,6 +589,7 @@ add_reference <- function(plans, ref_plan, name = NULL, ref_seats = NULL) {
 
   fct_levels <- c(name, levels(plans$draw))
   new_draw <- rep(factor(fct_levels, levels = fct_levels), each = ndists)
+  # TODO: this is broken when multiple runs but draws are labelled the same
 
   if (isFALSE(attr(plans, "districting_scheme") != "single")) {
     x <- dplyr::bind_rows(

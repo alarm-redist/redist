@@ -68,7 +68,7 @@
 #' @md
 #' @export
 summary.redist_plans <- function(
-        object, district = FALSE, all_runs = TRUE, vi_max = 100,
+        object, district = FALSE, all_runs = FALSE, vi_max = 100,
         order_stats = TRUE,
         rhat_thresh = getOption("redist.rhat_thresh", c(q99=1.05, max=1.1)),
         ...) {
@@ -87,11 +87,14 @@ summary.redist_plans <- function(
     if (is.null(n_distr)) n_distr <- max(plans_m[, 1])
 
 
+    out_list <- list()
+
+
     if (n_distr == 1 || nrow(plans_m) == 1) {
         cli::cli_text("{fmt_comma(n_samp)}{cli::qty(n_samp)} sampled plan{?s} of
                  {n_distr} district{?s} on
                  {fmt_comma(nrow(plans_m))}{cli::qty(nrow(plans_m))} unit{?s}")
-        return(invisible(1))
+        return(invisible(out_list))
     }
 
     prec_pop <- attr(object, "prec_pop")
@@ -109,7 +112,7 @@ summary.redist_plans <- function(
     # ignore if not a supported algorithm
     if(!algo %in% summary_supported_algs){
         cli::cli_abort("{.fn summary} is not supported for the {toupper(algo)} algorithm.")
-        return(invisible(1))
+        return(invisible(out_list))
     }
 
     # bool for not flip
@@ -262,6 +265,8 @@ summary.redist_plans <- function(
             rhats_df <- rhats_df[!is.na(rhats_df$rhat),]
         }
 
+        out_list[["rhats_df"]] <- rhats_df
+
         # get thresholds
         q99_rhat_thresh <- ifelse("q99" %in% rhat_thresh, rhat_thresh[["q99"]], 1.05)
         rhat_max_thresh <- ifelse("max" %in% rhat_thresh, rhat_thresh[["max"]], 1.1)
@@ -279,8 +284,6 @@ summary.redist_plans <- function(
 
         # print counts
         rhat_vals <- rhats_df$rhat
-
-
 
         cli::cli_ul()
         cli::cli_li("R-hat ≤ {format(q99_rhat_thresh, digits=3)}: {sum(rhat_vals <= q99_rhat_thresh)}")
@@ -363,7 +366,12 @@ summary.redist_plans <- function(
             }
 
         }
-        out <- bind_rows(smc_ms_run_dfs)
+
+        out_list[["smc_diagnostic_dfs"]] <- bind_rows(smc_run_dfs)
+        if(algo == MS_SMC_ALG_TYPE){
+            out_list[["ms_diagnostic_dfs"]] <- bind_rows(smc_ms_run_dfs)
+        }
+
 
         #step_nums <- ave(seq_along(all_run_info[[i]]$step_types), all_run_info[[i]]$step_types, FUN = seq_along)
 
@@ -407,13 +415,13 @@ summary.redist_plans <- function(
         accept_rate <- sprintf("%0.1f%%", 100*attr(object, "mh_acceptance"))
         cli::cli_text("Chain acceptance rate{?s}: {accept_rate}")
 
-        if(rhats_computed){
-            out <- rhats_df
-        }else{
-            out <- tibble(accept_rate = attr(object, "mh_acceptance"),
+
+        out <- tibble(accept_rate = attr(object, "mh_acceptance"),
                           div_q10 = div_rg[1],
                           div_q90 = div_rg[2])
-        }
+
+
+        out_list[["mcmc_diagnostic_dfs"]] <- out
 
         cli::cli_li(cli::col_grey("
             Watch out for low acceptance rates (less than 10%).
@@ -437,7 +445,7 @@ summary.redist_plans <- function(
         cli::cli_abort("{.fn summary} is not supported for the {toupper(algo)} algorithm.")
     }
 
-    invisible(out)
+    invisible(out_list)
 }
 
 
