@@ -9,8 +9,12 @@
 # constructors and reconstructors
 
 # Main internal constructor
-new_redist_map <- function(data, adj, ndists, pop_bounds, pop_col = "pop",
-                           adj_col = "adj", add_adj = TRUE, existing_col = NULL) {
+new_redist_map <- function(
+        data, adj, ndists, nseats, seats_range,
+        pop_bounds, pop_col = "pop",
+        adj_col = "adj", add_adj = TRUE,
+        existing_col = NULL,
+        existing_col_seats = NULL) {
     if (add_adj) {
         stopifnot(!is.null(adj))
 
@@ -20,13 +24,27 @@ new_redist_map <- function(data, adj, ndists, pop_bounds, pop_col = "pop",
     if (!is.integer(ndists)) cli::cli_abort("{.arg ndists} must be an integer.")
     if (!is.numeric(pop_bounds) || length(pop_bounds) != 3)
         cli::cli_abort("{.arg pop_bounds} must be a numeric vector of length 3.")
+    if(ndists > nseats){
+        cli::cli_abort("{.arg ndists} must be less than or equal to {.arg nseats}")
+    }
+
+
 
     data <- reconstruct.redist_map(data)
     attr(data, "ndists") <- ndists
+    attr(data, "nseats") <- nseats
     attr(data, "pop_bounds") <- pop_bounds
+    attr(data, "seats_range") <- seats_range
     attr(data, "pop_col") <- pop_col
     attr(data, "adj_col") <- adj_col
     attr(data, "existing_col") <- existing_col
+    attr(data, "existing_col_seats") <- existing_col_seats
+    # set the districting scheme
+    if(rlang::is_scalar_integerish(seats_range) && seats_range == 1){
+        attr(data, "districting_scheme") <- "single"
+    }else{
+        attr(data, "districting_scheme") <- "multiple"
+    }
 
     data
 }
@@ -53,10 +71,43 @@ validate_redist_map <- function(data, check_contig = TRUE, call = parent.frame()
 
     stopifnot(!is.null(attr(data, "pop_col")))
     stopifnot(!is.null(attr(data, "ndists")))
+    if(is.null(attr(data, "nseats"))){
+        attr(data, "nseats") <- attr(data, "ndists")
+    }
+    if(is.null(attr(data, "seats_range"))){
+        attr(data, "seats_range") <- 1L
+    }
+    stopifnot(!is.null(attr(data, "nseats")))
+    stopifnot(!is.null(attr(data, "seats_range")))
+    seats_range <- attr(data, "seats_range")
+
+    if(is.null(attr(data, "districting_scheme"))){
+        # set the districting scheme
+        if(rlang::is_scalar_integerish(seats_range) && seats_range == 1){
+            attr(data, "districting_scheme") <- "single"
+        }else{
+            attr(data, "districting_scheme") <- "multiple"
+        }
+    }
+    stopifnot(!is.null(attr(data, "districting_scheme")))
+    if(!attr(data, "districting_scheme") %in% c("single", "multiple")){
+        cli::cli_abort("{.arg districting_scheme} must be either `single` or `multiple`")
+    }
+
 
     exist_col <- attr(data, "existing_col")
-    if (!is.null(exist_col) && !is.numeric(data[[exist_col]]))
+    if (!is.null(exist_col) && !is.numeric(data[[exist_col]])){
         cli::cli_abort("Existing plan {.field {exist_col}} must be a numeric vector.", call = call)
+    }
+    existing_col_seats <- attr(data, "existing_col_seats")
+    if(!is.null(exist_col) && is.null(existing_col_seats)){
+        if(attr(data, "districting_scheme") == "single"){
+            existing_col_seats <- rep(1L, attr(data, "ndists"))
+        }else{
+            cli::cli_abort("Existing MMD plan must have an accompanying {.field reference_plan_seats}")
+        }
+    }
+
 
     pop_bounds <- attr(data, "pop_bounds")
     stopifnot(!is.null(pop_bounds))
@@ -139,6 +190,11 @@ reconstruct.redist_map <- function(data, old) {
 #' \code{total_pop} columns, if one exists.
 #' @param ndists \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the integer number of
 #' districts to partition the map into. Must be specified if `existing_plan` is not supplied.
+#' @param nseats \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the total number of
+#' legislative seats in the map. For single-member districting schemes this is equal to `ndists`.
+#' If not provided then defaults to `ndists`.
+#' @param seats_range The number of seats a district is allowed to have. For
+#' single member districting schemes this is always 1.
 #' @param pop_bounds \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} more specific
 #' population bounds, in the form of \code{c(lower, target, upper)}.
 #' @param adj the adjacency graph for the object. Defaults to being computed
@@ -146,6 +202,8 @@ reconstruct.redist_map <- function(data, old) {
 #' @param adj_col the name of the adjacency graph column
 #' @param planarize a number, indicating the CRS to project the shapefile to if
 #' it is latitude-longitude based. Set to NULL or FALSE to avoid planarizing.
+#' @param existing_plan_seats the number of seats for each district in the
+#' existing district assignment. Only needed for multi-member district plans.
 #'
 #' @return A redist_map object
 #'
@@ -159,8 +217,10 @@ reconstruct.redist_map <- function(data, old) {
 #' @export
 redist_map <- function(..., existing_plan = NULL, pop_tol = NULL,
                        total_pop = c("pop", "population", "total_pop", "POP100"),
-                       ndists = NULL, pop_bounds = NULL,
-                       adj = NULL, adj_col = "adj", planarize = 3857) {
+                       ndists = NULL, nseats = NULL, seats_range = NULL,
+                       pop_bounds = NULL,
+                       adj = NULL, adj_col = "adj", planarize = 3857,
+                       existing_plan_seats = NULL) {
     x <- tibble(...)
     is_sf <- any(vapply(x, function(x) inherits(x, "sfc"), TRUE))
     if (is_sf) {
@@ -198,8 +258,9 @@ redist_map <- function(..., existing_plan = NULL, pop_tol = NULL,
     }
 
     existing_col <- names(tidyselect::eval_select(rlang::enquo(existing_plan), x))
-    if (length(existing_col) == 0)
+    if (length(existing_col) == 0){
         existing_col <- NULL
+    }
 
     if (!is.null(existing_col)) {
         if (!is.numeric(x[[existing_col]])) {
@@ -223,10 +284,37 @@ redist_map <- function(..., existing_plan = NULL, pop_tol = NULL,
         ndists <- as.integer(rlang::eval_tidy(rlang::enquo(ndists), x))
     }
 
+    if(is.null(nseats)){
+        nseats <- ndists
+    }
+    # if no district size passed throw error if MMD
+    if(is.null(seats_range)){
+        if(ndists == nseats){
+            seats_range <- 1L
+        }else{
+            cli::cli_abort("Must specify {.arg seats_range} if multi-member districting scheme is being used.")
+        }
+    }else{
+        # check the district sizes are integers
+        if(!rlang::is_integerish(seats_range)){
+            cli::cli_abort("{.arg seats_range} must be integers.")
+        }
+        # check they are all positive
+        if(any(seats_range <= 0)){
+            cli::cli_abort("{.arg seats_range} must be positive.")
+        }
+        # check its not bigger than the total number of seats
+        if(any(seats_range >= nseats)){
+            cli::cli_abort("All values in {.arg seats_range} must be less than the total number of seats.")
+        }
+        # remove duplicates
+        seats_range <- unique(seats_range)
+    }
+
     pop_tol <- eval_tidy(enquo(pop_tol), x)
     if (is.null(pop_tol) && is.null(pop_bounds)) {
         if (!is.null(existing_col)) {
-            pop_tol <- redist.parity(x[[existing_col]], x[[pop_col]])
+            pop_tol <- redist.parity(x[[existing_col]], x[[pop_col]], existing_plan_seats)
             if (pop_tol <= 0.001)
                 cli::cli_inform("{.arg pop_tol} calculated from existing plan is \u2264 0.1%")
         } else {
@@ -238,11 +326,44 @@ redist_map <- function(..., existing_plan = NULL, pop_tol = NULL,
     if (is.null(pop_bounds)) {
         stopifnot(!is.null(pop_tol))
         stopifnot(pop_tol > 0)
-
-        target <- sum(x[[pop_col]])/ndists
+        target <- sum(x[[pop_col]])/nseats
         pop_bounds <- target*c(1 - pop_tol, 1, 1 + pop_tol)
     } else {
         pop_bounds <- rlang::eval_tidy(rlang::enquo(pop_bounds), x)
+    }
+
+    # get seat sizes for reference plan
+    if(!is.null(existing_plan_seats)){
+        if(!rlang::is_integerish(existing_plan_seats)){
+            cli::cli_abort("{.arg existing_plan_seats} must be integers.")
+        }
+        if(any(existing_plan_seats <= 0)){
+            cli::cli_abort("{.arg existing_plan_seats} must be all positive")
+        }
+        if(length(existing_plan_seats) != ndists){
+            cli::cli_abort("{.arg existing_plan_seats} must be of length {.arg ndists}")
+        }
+        existing_col_seats <- as.integer(existing_plan_seats)
+    }else if (!is.null(existing_col)){
+        # all 1 if SMD
+        if(nseats == ndists){
+            existing_col_seats <- rep(1L, ndists)
+        }else{
+            # else attempt to infer
+            existing_plan_pop <- pop_tally(
+                as.matrix(x[[existing_col]], ncol = 1L) ,
+                x[[pop_col]],
+                ndists, 1)
+            existing_col_seats <- infer_region_seats(
+                existing_plan_pop,
+                pop_bounds[1], pop_bounds[3],
+                nseats
+            )
+            # flatten to vector
+            dim(existing_col_seats) <- NULL
+        }
+    }else{
+        existing_col_seats <- NULL
     }
 
     if (is_sf && is.null(adj)) {
@@ -254,8 +375,9 @@ redist_map <- function(..., existing_plan = NULL, pop_tol = NULL,
     }
 
     validate_redist_map(
-        new_redist_map(x, adj, ndists, pop_bounds, pop_col, adj_col,
-            add_adj = TRUE, existing_col)
+        new_redist_map(x, adj, ndists, nseats, seats_range,
+                       pop_bounds, pop_col, adj_col,
+            add_adj = TRUE, existing_col, existing_col_seats)
     )
 }
 
@@ -309,7 +431,28 @@ get_existing <- function(x) {
     if (is.null(exist_col)) NULL else x[[exist_col]]
 }
 
-#' Extract the target district population from a \code{redist_map} object
+
+#' Extract the existing seat counts from a \code{redist_map} object
+#'
+#' @param x the \code{redist_map} object
+#' @returns an integer vector of the seats in each district
+#' @concept prepare
+#' @export
+get_existing_seats <- function(x) {
+    if (!inherits(x, "redist_map")) cli::cli_abort("Not a {.cls redist_map}")
+
+    exist_col <- attr(x, "existing_col")
+    if (is.null(exist_col)){
+        return(NULL)
+    }else if(isTRUE(attr(x, "districting_scheme") == "multiple")){
+        return(attr(x, "existing_col_seats"))
+    }else{
+        return(rep(1L, attr(x, "ndists")))
+    }
+
+}
+
+#' Extract the target seat population from a \code{redist_map} object
 #'
 #' @param x the \code{redist_map} object
 #' @returns a single numeric value, the target population
@@ -380,9 +523,15 @@ dplyr_row_slice.redist_map <- function(data, i, ...) {
     # fix ndists if existing_col exists
     exist_col <- attr(data, "existing_col")
     new_distr <- attr(data, "ndists")
-    if (!is.null(exist_col))
-        new_distr <- length(unique(y[[exist_col]]))
+    new_nseats <- attr(data, "nseats")
+    if (!is.null(exist_col)){
+        subsetted_districts <- unique(y[[exist_col]])
+        new_distr <- length(subsetted_districts)
+        new_nseats <- sum(attr(data, "existing_col_seats")[subsetted_districts])
+    }
+
     attr(y, "ndists") <- new_distr
+    attr(y, "nseats") <- new_nseats
 
     # fix merge_idx
     merge_idx <- attr(data, "merge_idx")
@@ -393,7 +542,7 @@ dplyr_row_slice.redist_map <- function(data, i, ...) {
     # fix pop. bounds
     bounds <- attr(data, "pop_bounds")
     attr(y, "pop_bounds") <- bounds
-    new_tgt <- sum(y[[attr(data, "pop_col")]])/new_distr
+    new_tgt <- sum(y[[attr(data, "pop_col")]])/new_nseats
 
     if (new_distr > 0) {
         if (bounds[1] > new_tgt || bounds[3] < new_tgt) {
@@ -491,13 +640,30 @@ print.redist_map <- function(x, ...) {
     cli::cli_text("A {.cls redist_map} with {nrow(x)} units and {ncol(x)} fields")
 
     bounds <- attr(x, "pop_bounds")
-    cat("To be partitioned into ", attr(x, "ndists"),
-        " districts with population between ",
-        format(bounds[2], nsmall = 0, big.mark = ","), " - ",
-        format(100 - 100*bounds[1]/bounds[2], nsmall = 1), "% and ",
-        format(bounds[2], nsmall = 0, big.mark = ","), " + ",
-        format(100*bounds[3]/bounds[2] - 100, nsmall = 1), "%\n",
-        sep = "")
+    if(isTRUE(attr(x, "districting_scheme") == "multiple")){
+        cat("To be partitioned into ", attr(x, "ndists"),
+            " districts with populations between:\n",
+            sep = "")
+
+        seats_range <- attr(x, "seats_range")
+        for (a_seat_size in seats_range) {
+            cat("\t", a_seat_size,"-seat district with population between: ",
+                format(a_seat_size*bounds[2], nsmall = 0, big.mark = ","), " - ",
+                format(100 - 100*bounds[1]/bounds[2], nsmall = 1), "% and ",
+                format(a_seat_size*bounds[2], nsmall = 0, big.mark = ","), " + ",
+                format(100*bounds[3]/bounds[2] - 100, nsmall = 1), "%\n",
+                sep = "")
+        }
+    }else{
+        cat("To be partitioned into ", attr(x, "ndists"),
+            " districts with population between ",
+            format(bounds[2], nsmall = 0, big.mark = ","), " - ",
+            format(100 - 100*bounds[1]/bounds[2], nsmall = 1), "% and ",
+            format(bounds[2], nsmall = 0, big.mark = ","), " + ",
+            format(100*bounds[3]/bounds[2] - 100, nsmall = 1), "%\n",
+            sep = "")
+    }
+
 
     merge_idx <- attr(x, "merge_idx")
     if (!is.null(merge_idx))
