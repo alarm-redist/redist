@@ -22,3 +22,4 @@ builder.sh
 ^\.github$
 ^LICENSE\.md$
 ^CRAN-SUBMISSION$
+^revdep$
