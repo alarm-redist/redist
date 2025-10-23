@@ -11,9 +11,9 @@
 
 <!-- badges: end -->
 
-<img src="man/figures/map_photo.jpg" style="width: 100%"/>
+<img src="man/figures/map_photo.jpg" class="pkgdown-hide" style="width: 100%"/>
 
-<img src="man/figures/logo.png" align="right" style="height: 128px; margin-left: 4px;"/>
+<img src="man/figures/logo.png" class="pkgdown-hide" align="right" style="height: 128px; margin-left: 4px;"/>
 
 This R package enables researchers to sample redistricting plans from a
 pre-specified target distribution using Sequential Monte Carlo and
@@ -22,37 +22,6 @@ constraints in the redistricting process, such as geographic compactness
 and population parity requirements. Tools for analysis, including
 computation of various summary statistics and plotting functionality,
 are also included.
-
-Authors:
-
-- [Christopher T Kenny](https://christophertkenny.com),
-  <christopherkenny@fas.harvard.edu> (Maintainer)
-- [Cory McCartan](https://corymccartan.com), <cmccartan@g.harvard.edu>
-- [Ben Fifield](https://www.benfifield.com), <benfifield@gmail.com>
-- [Kosuke Imai](https://imai.fas.harvard.edu), <imai@harvard.edu>
-
-Contributors:
-
-- Jun Kawahara, <jkawahara@i.kyoto-u.ac.jp>
-- Alex Tarr, <atarr@princeton.edu>
-- [Michael
-  Higgins](https://www.k-state.edu/stats/about/people/HigginsMichael.html),
-  <mjh5@princeton.edu>
-
-Papers:
-
-- McCartan, C., & Imai, K. (Forthcoming). [Sequential Monte Carlo for
-  sampling balanced and compact redistricting
-  plans](https://arxiv.org/abs/2008.06131/). *Annals of Applied
-  Statistics*.
-- Fifield, B., Higgins, M., Imai, K., & Tarr, A. (2020). [Automated
-  redistricting simulation using Markov chain Monte
-  Carlo](https://doi.org/10.1080/10618600.2020.1739532). *Journal of
-  Computational and Graphical Statistics*, 29(4), 715-728.
-- Fifield, B., Imai, K., Kawahara, J., & Kenny, C. T. (2020). [The
-  essential role of empirical validation in legislative redistricting
-  simulation](https://doi.org/10.1080/2330443X.2020.1791773).
-  *Statistics and Public Policy*, 7(1), 52-68.
 
 ## Installation Instructions
 
@@ -87,7 +56,7 @@ iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.001, total_pop = po
 # simulate 500 plans using the SMC algorithm
 iowa_plans = redist_smc(iowa_map, nsims=500)
 #> SEQUENTIAL MONTE CARLO
-#> Sampling 500 99-unit maps with 4 districts and population between 760,827 and 762,350.
+#> Sampling 500 99-unit maps with 4 districts and population between 760827 and 762350.
 ```
 
 After generating plans, you can use `redist`’s plotting functions to
@@ -109,7 +78,7 @@ iowa_plans = iowa_plans %>%
     mutate(Compactness = comp_polsby(pl(), iowa_map),
            `Population deviation` = plan_parity(iowa_map),
            `Democratic vote` = group_frac(iowa_map, dem_08, tot_08))
-#> Linking to GEOS 3.11.0, GDAL 3.5.3, PROJ 9.1.0; sf_use_s2() is TRUE
+#> Linking to GEOS 3.13.0, GDAL 3.8.5, PROJ 9.5.1; sf_use_s2() is TRUE
 
 hist(iowa_plans, `Population deviation`) + hist(iowa_plans, Compactness) +
     plot_layout(guides="collect") +
@@ -130,6 +99,8 @@ redist.plot.scatter(iowa_plans, `Population deviation`, Compactness) +
 plot(iowa_plans, `Democratic vote`, size=0.5, color_thresh=0.5) +
     scale_color_manual(values=c("black", "tomato2", "dodgerblue")) +
     labs(title="Democratic vote share by district")
+#> Ignoring unknown labels:
+#> • shape : "Plan"
 ```
 
 ![](man/figures/README-readme-plot-4.png)<!-- -->
