@@ -917,6 +917,7 @@ add_constr_polsby <- function(
   if (strength <= 0) {
     cli::cli_warn("Nonpositive strength may lead to unexpected results.")
   }
+
   if (!rlang::is_bool(only_districts)) {
     cli::cli_abort("{.arg only_districts} must be a boolean.")
   }

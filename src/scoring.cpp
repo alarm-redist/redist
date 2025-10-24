@@ -512,6 +512,7 @@ double PolsbyConstraint::compute_raw_region_constraint_score(
             int const num_regions, 
             PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
             int region_id) const{
+
     double raw_score = eval_polsby(
         region_ids, region_id, region_id, V,
         from, to, area, perimeter

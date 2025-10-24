@@ -431,16 +431,19 @@ double eval_polsby(
     // Sum perimeter contributions from boundary edges
     int E = to.n_elem;
     for (int e = 0; e < E; ++e) {
-        if (to[e] == region1_id || to[e] == region2_id) {
-            int src = from[e];
+        auto out_vertex = to[e] - 1;
+        if (region_ids[out_vertex] == region1_id || region_ids[out_vertex] == region2_id) {
+            int src_vertex = from[e] - 1;
             // only count if its on the permiter
-            if (src == -1 || (region_ids[src] != region1_id && region_ids[src] != region2_id)) {
+            // need to subtract one because R is 1 indexed
+            if (src_vertex <=-1 || (region_ids[src_vertex] != region1_id && region_ids[src_vertex] != region2_id)) {
                 tot_perim += perimeter[e];
             }
         }
     }
 
     double dist_peri2 = std::pow(tot_perim, 2.0);
+
     return 1.0 - (pi4 * tot_area / dist_peri2);
 
 }
