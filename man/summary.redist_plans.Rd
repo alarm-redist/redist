@@ -7,7 +7,7 @@
 \method{summary}{redist_plans}(
   object,
   district = FALSE,
-  all_runs = TRUE,
+  all_runs = FALSE,
   vi_max = 100,
   order_stats = TRUE,
   rhat_thresh = getOption("redist.rhat_thresh", c(q99 = 1.05, max = 1.1)),
