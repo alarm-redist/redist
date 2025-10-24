@@ -338,7 +338,7 @@ void run_smc_step(
     smc_diagnostics.nunique_plans[step_num] = old_plan_ensemble->count_unique_plans(pool);
 
     if (verbosity >= 3) {
-       Rcout << "  " << std::setprecision(2) << 100.0 * accept_rate << "% acceptance rate, " <<
+       Rcout << "  " << std::setprecision(2) << 100.0 * accept_rate << "% acceptance rate. " <<
        100.0 * smc_diagnostics.nunique_parents.at(smc_step_num) / M << "% of previous step's plans survived," <<
        " and there are now " << smc_diagnostics.nunique_plans[step_num] << " unique plans." << std::endl;
     }
@@ -1055,8 +1055,8 @@ List run_redist_smc(
             smc_diagnostics.nunique_plans[step_num] = plan_ensemble_ptr->count_unique_plans(pool);
 
             if (verbosity >= 3){
-                Rcout << "  " << std::setprecision(2) << 100.0 * smc_diagnostics.acceptance_rates.at(step_num) << "% acceptance rate, " <<
-                "there are now " << smc_diagnostics.nunique_plans[step_num] << " unique plans." << std::endl;
+                Rcout << "  " << std::setprecision(2) << 100.0 * smc_diagnostics.acceptance_rates.at(step_num) << "% acceptance rate. " <<
+                "There are now " << smc_diagnostics.nunique_plans[step_num] << " unique plans." << std::endl;
             }
 
             // Access the column
