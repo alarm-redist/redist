@@ -2,7 +2,7 @@
 % Please edit documentation in R/redist_map.R
 \name{get_target}
 \alias{get_target}
-\title{Extract the target district population from a \code{redist_map} object}
+\title{Extract the target seat population from a \code{redist_map} object}
 \usage{
 get_target(x)
 }
@@ -13,6 +13,6 @@ get_target(x)
 a single numeric value, the target population
 }
 \description{
-Extract the target district population from a \code{redist_map} object
+Extract the target seat population from a \code{redist_map} object
 }
 \concept{prepare}

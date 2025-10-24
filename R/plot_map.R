@@ -73,7 +73,7 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = "",
 
             plot <- ggplot(shp) +
                 geom_sf(aes(fill = plan), lwd = 0.3*boundaries,
-                    color = if (boundaries) "#444444" else NA) +
+                        color = if (boundaries) "#444444" else NA) +
                 theme_void() +
                 labs(fill = "District", title = title) +
                 theme(legend.position = "bottom")
@@ -100,7 +100,7 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = "",
 
             plot <- ggplot(shp) +
                 geom_sf(aes(fill = plan, alpha = fill), lwd = 0.3*boundaries,
-                    color = if (boundaries) "#444444" else NA) +
+                        color = if (boundaries) "#444444" else NA) +
                 theme_void() +
                 labs(alpha = fill_label, title = title) +
                 theme(legend.position = "bottom")
@@ -114,7 +114,7 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = "",
             if (is.null(fill)) { # plan but no fill
                 plot <- ggplot(shp) +
                     geom_sf(aes(fill = as.character(plan)), lwd = 0.3*boundaries,
-                        color = if (boundaries) "#444444" else NA) +
+                            color = if (boundaries) "#444444" else NA) +
                     theme_void() +
                     labs(fill = "District Membership", title = title) +
                     theme(legend.position = "bottom")
@@ -125,7 +125,7 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = "",
 
                 plot <- ggplot(shp) +
                     geom_sf(aes(fill = as.character(plan), alpha = fill), lwd = 0.3*boundaries,
-                        color = if (boundaries) "#444444" else NA) +
+                            color = if (boundaries) "#444444" else NA) +
                     theme_void() +
                     labs(fill = "District Membership", alpha = fill_label, title = title) +
                     ggplot2::guides(alpha = "none") +
@@ -147,7 +147,7 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = "",
 
         plot <- ggplot(shp) +
             geom_sf(aes(fill = fill), lwd = 0.3*boundaries,
-                color = if (boundaries) "#444444" else NA) +
+                    color = if (boundaries) "#444444" else NA) +
             theme_void() +
             labs(fill = fill_label, title = title) +
             theme(legend.position = "bottom")
@@ -167,7 +167,7 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = "",
     if (!is.null(zoom_to)) {
         bbox <- sf::st_bbox(sf::st_geometry(shp)[zoom_to])
         plot <- plot + ggplot2::coord_sf(xlim = c(bbox$xmin, bbox$xmax),
-            ylim = c(bbox$ymin, bbox$ymax))
+                                         ylim = c(bbox$ymin, bbox$ymax))
     }
 
 
@@ -278,7 +278,7 @@ redist.plot.adj <- function(shp, adj = NULL, plan = NULL, centroids = TRUE,
     if (!is.null(zoom_to)) {
         bbox <- sf::st_bbox(sf::st_geometry(shp)[zoom_to])
         plot <- plot + ggplot2::coord_sf(xlim = c(bbox$xmin, bbox$xmax),
-            ylim = c(bbox$ymin, bbox$ymax))
+                                         ylim = c(bbox$ymin, bbox$ymax))
     }
 
 
@@ -333,4 +333,3 @@ edge_center_df <- function(shp, adj) {
 
     list(nb = dplyr::rowwise(nb), centers = centers)
 }
-

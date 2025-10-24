@@ -5,6 +5,7 @@
 
 #include <string>
 #include <cli/progress.h>
+#include <cmath>
 
 // [[Rcpp::depends(redistmetrics)]]
 
@@ -13,48 +14,34 @@
 #include "map_calc.h"
 #include <kirchhoff_inline.h>
 #include "mcmc_gibbs.h"
+#include "splitting_schedule_types.h"
+#include "scoring.h"
+#include "redist_alg_helpers.h"
+#include "base_plan_type.h"
+#include "ust_sampler.h"
+#include "merging.h"
 
 /*
  * Main entry point.
  *
- * USING MCMMC
+ * USING MCMC
  * Sample `N` redistricting plans on map `g`, ensuring that the maximum
  * population deviation is between `lower` and `upper` (and ideally `target`)
  */
 // [[Rcpp::export]]
-Rcpp::List ms_plans(int N, List l, const arma::uvec init, const arma::uvec &counties,
-                    const arma::uvec &pop, int n_distr, double target, double lower,
-                    double upper, double rho, List constraints, List control,
-                    int k, int thin, int verbosity);
+Rcpp::List ms_plans(
+    int const nsims, int const warmup, int const thin,
+    int const ndists, int const total_seats, Rcpp::IntegerVector const &district_seat_sizes,
+    List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
+    double const target, double const lower, double const upper,
+    double const rho, // compactness
+    Rcpp::IntegerMatrix const &init_plan, Rcpp::IntegerMatrix const &init_seats,
+    std::string const &sampling_space_str, // sampling space (graphs, forest, etc)
+    std::string const &pair_rule, // method for setting probability of picking a pair to merge
+    List const &control, // control has pop temper, and k parameter value, and whether only district splits are allowed
+    List const &constraints, // constraints
+    int const verbosity = 3, bool const diagnostic_mode = false
+);
 
-
-/*
- * Split a map into two pieces with population lying between `lower` and `upper`
- */
-double split_map_ms(const Graph &g, Tree &ust, const uvec &counties, Multigraph &cg,
-                    subview_col<uword> districts, int distr_1, int distr_2,
-                     std::vector<bool> &visited, std::vector<bool> &ignore,
-                    const uvec &pop, double lower, double upper, double target,
-                    int k);
-
-/*
- * Cut district into two pieces of roughly equal population
- */
-// TESTED
-bool cut_districts_ms(Tree &ust, int k, int root, subview_col<uword> &districts,
-                      int distr_1, int distr_2, const uvec &pop, double total_pop,
-                      double lower, double upper, double target);
-
-/*
- * Choose k and multiplier for efficient, accurate sampling
- */
-void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
-                         double tol, const uvec &plan, const uvec &counties,
-                         Multigraph &cg, const uvec &pop, double target);
-
-/*
- * Select a pair of neighboring districts i, j
- */
-void select_pair(int n_distr, const Graph &dist_g, int &i, int &j);
 
 #endif

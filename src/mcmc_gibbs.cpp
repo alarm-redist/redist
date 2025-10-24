@@ -37,7 +37,7 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
 
     log_tgt += add_constraint("pop_dev", constraints, districts, psi_vec,
                               [&] (List l, int distr) -> double {
-                                  return eval_pop_dev(plan, distr,
+                                  return eval_pop_dev(plan, distr, distr,
                                                       pop, parity);
                               });
 
@@ -57,25 +57,29 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
 
     log_tgt += add_constraint("segregation", constraints, districts, psi_vec,
                               [&] (List l, int distr) -> double {
-                                  return eval_segregation(plan, distr, as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"]));
+
+                                  return eval_segregation(
+                                    plan, distr, distr, V,
+                                     as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"])
+                                    );
                               });
 
     log_tgt += add_constraint("grp_pow", constraints, districts, psi_vec,
                               [&] (List l, int distr) -> double {
-                                  return eval_grp_pow(plan, distr, as<uvec>(l["group_pop"]),
+                                  return eval_grp_pow(plan, V, distr, distr, as<uvec>(l["group_pop"]),
                                                       as<uvec>(l["total_pop"]), as<double>(l["tgt_group"]),
                                                       as<double>(l["tgt_other"]), as<double>(l["pow"]));
                               });
 
     log_tgt += add_constraint("grp_hinge", constraints, districts, psi_vec,
                               [&] (List l, int distr) -> double {
-                                  return eval_grp_hinge(plan, distr, as<vec>(l["tgts_group"]),
+                                  return eval_grp_hinge(plan, V, distr, distr, as<vec>(l["tgts_group"]),
                                                         as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"]));
                               });
 
     log_tgt += add_constraint("grp_inv_hinge", constraints, districts, psi_vec,
                               [&] (List l, int distr) -> double {
-                                  return eval_grp_hinge(plan, distr, as<vec>(l["tgts_group"]),
+                                  return eval_grp_hinge(plan, V, distr, distr, as<vec>(l["tgts_group"]),
                                                             as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"]));
                               });
 
@@ -83,25 +87,26 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
                               [&] (List l, int distr) -> double {
                                   uvec dvote = l["dvote"];
                                   uvec total = dvote + as<uvec>(l["rvote"]);
-                                  return eval_grp_pow(plan, distr, dvote, total, 0.5, 0.5,
+                                  return eval_grp_pow(plan, V, distr, distr, dvote, total, 0.5, 0.5,
                                                       as<double>(l["pow"]));
                               });
 
     log_tgt += add_constraint("status_quo", constraints, districts, psi_vec,
                               [&] (List l, int distr) -> double {
-                                  return eval_sq_entropy(plan, as<uvec>(l["current"]), distr,
+                                  return eval_sq_entropy(plan, as<uvec>(l["current"]), distr, distr,
                                                          pop, n_distr, as<int>(l["n_current"]), V);
                               });
 
     log_tgt += add_constraint("incumbency", constraints, districts, psi_vec,
                               [&] (List l, int distr) -> double {
-                                  return eval_inc(plan, distr, as<uvec>(l["incumbents"]));
+                                  return eval_inc(plan, distr, distr, as<uvec>(l["incumbents"]));
                               });
+
 
 
     log_tgt += add_constraint("polsby", constraints, districts, psi_vec,
                               [&] (List l, int distr) -> double {
-                                  return eval_polsby(plan, distr, as<ivec>(l["from"]),
+                                  return eval_polsby(plan, distr, distr, V, as<ivec>(l["from"]),
                                                      as<ivec>(l["to"]), as<vec>(l["area"]),
                                                      as<vec>(l["perimeter"]));
                               });

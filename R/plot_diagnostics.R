@@ -21,7 +21,7 @@
 #' density plots, running means, and Gelman-Rubin convergence diagnostics
 #' (Gelman & Rubin 1992).
 #'
-#' @return Returns a plot of file type \code{.pdf}.
+#' @return Returns a plot of file type `.pdf`.
 #'
 #' @references Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander
 #' Tarr. (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte
