@@ -320,6 +320,7 @@ double GroupPowerConstraint::compute_raw_region_constraint_score(
             int const num_regions, 
             PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
             int region_id) const{
+
     double raw_score = eval_grp_pow(
         region_ids, V, region_id, region_id,
         grp_pop, total_pop,
@@ -905,7 +906,7 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
         }
     }
     if (constraints.containsElementNamed("compet")) {
-        Rcpp::List constr = constraints["grp_pow"];
+        Rcpp::List constr = constraints["compet"];
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
             double strength = constr_inst["strength"];
