@@ -348,6 +348,7 @@ double eval_er(const subview_col<uword> &districts, const Graph g, int ndists) {
 
 /*
  * Compute the school reassignment commute penalty for district `distr`
+ * Returns penalty based on the average extra commute time for people in the district
  * districts: proposed plan
  * current: old plan
  * distr: district to evaluate
@@ -357,7 +358,7 @@ double eval_er(const subview_col<uword> &districts, const Graph g, int ndists) {
  * V: number of blocks
  */
 double eval_phase_commute(const subview_col<uword> &districts, const uvec &current,
-                       int distr, const uvec &pop, const uvec &schools_idx, 
+                       int distr, const uvec &pop, const uvec &schools, 
                        const arma::mat &commute_times, int V) {
     double reassigned_pop = 0.0;
     for (int k = 0; k < V; k++) {
@@ -367,13 +368,13 @@ double eval_phase_commute(const subview_col<uword> &districts, const uvec &curre
         int school_old_idx = -1;
         int school_new_idx = -1;
         
-        for (int j = 0; j < schools_idx.n_elem; j++) {
+        for (int j = 0; j < schools.n_elem; j++) {
             // check if school and block are in the same old district
-            if (current[schools_idx[j]] == current[k]) {
+            if (current[schools[j]] == current[k]) {
                 school_old_idx = j;
             }
             // check if school and block are in the same proposed district
-            if (districts(schools_idx[j]) == districts(k)) {
+            if (districts(schools[j]) == districts(k)) {
                 school_new_idx = j;
             }
             // both old zoned school and new zoned school have been found
@@ -400,6 +401,62 @@ double eval_phase_commute(const subview_col<uword> &districts, const uvec &curre
     double district_pop = (double) sum(pop(find(districts == distr)));
     double avg_extra = (district_pop > 0.0) ? (reassigned_pop / district_pop) : 0.0;
     return std::log1p(avg_extra);
+}
+
+/*
+ * Compute the school reassignment commute penalty for district `distr`
+ * Returns penalty based on the max extra commute time for any person in the district
+ * districts: proposed plan
+ * current: old plan
+ * distr: district to evaluate
+ * pop: population of each block
+ * school_idx: indices of schools in the data
+ * commute_times: matrix of commute times from each block to each school
+ * V: number of blocks
+ */
+double eval_max_commute(const subview_col<uword> &districts, const uvec &current,
+                       int distr, const uvec &pop, const uvec &schools, 
+                       const arma::mat &commute_times, int V) {
+    double reassigned_pop = 0.0;
+    double max_extra = 0.0;
+    for (int k = 0; k < V; k++) {
+        if (districts(k) != distr) continue; // only evaluate blocks in proposed district
+        
+        // find school that is in proposed district and current district
+        int school_old_idx = -1;
+        int school_new_idx = -1;
+        
+        for (int j = 0; j < schools.n_elem; j++) {
+            // check if school and block are in the same old district
+            if (current[schools[j]] == current[k]) {
+                school_old_idx = j;
+            }
+            // check if school and block are in the same proposed district
+            if (districts(schools[j]) == districts(k)) {
+                school_new_idx = j;
+            }
+            // both old zoned school and new zoned school have been found
+            if (school_old_idx != -1 && school_new_idx != -1) {
+                break;
+            }
+        }
+        
+        // if schools are the same, no disruption
+        if (school_old_idx == school_new_idx) continue;
+        // if either school is not found, skip
+        if (school_old_idx == -1 || school_new_idx == -1) continue;
+        
+        // compute and compare commute distances to old and new schools
+        double commute_old = commute_times(k, school_old_idx);
+        double commute_new = commute_times(k, school_new_idx);
+        double commute_extra = commute_new - commute_old;
+        if (commute_extra > max_extra) {
+            max_extra = commute_extra;
+        }
+    }
+
+    // return log(1 + max extra commute time for a person in the district)
+    return std::log1p(max_extra);
 }
 
 

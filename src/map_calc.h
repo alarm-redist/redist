@@ -111,7 +111,7 @@ double eval_er(const subview_col<uword> &districts, const Graph g, int ndists);
  * Compute the commute penalty for district `distr`
  */
 double eval_phase_commute(const subview_col<uword> &districts, const uvec &current,
-                       int distr, const uvec &pop, const uvec &schools_idx, 
+                       int distr, const uvec &pop, const uvec &schools, 
                        const arma::mat &commute_times, int V);
 
 /*
