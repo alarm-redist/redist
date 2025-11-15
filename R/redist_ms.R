@@ -127,7 +127,7 @@ redist_mergesplit <- function(
   split_params = NULL,
   pair_rule = "uniform",
   init_seats = NULL,
-  ncores = NULL,
+  ncores = 1L,
   cl_type = "PSOCK",
   return_all = TRUE,
   init_name = NULL,
@@ -158,7 +158,7 @@ redist_mergesplit <- function(
   }
 
     # get parallel related params
-    if (is.null(ncores)) {
+    if (ncores <= 0) {
         ncores <- parallel::detectCores()
         if (ncores <= 0) ncores <- 1
     }
