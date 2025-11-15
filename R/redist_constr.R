@@ -145,6 +145,23 @@ get_nregion_score_vec <- function(only_nregions, ndists){
     nregion_to_score
 }
 
+
+# validates a population vector by ensuring
+# - the vector is length V and numeric
+# - There are no missing entries
+# - All entries are non-negative
+validate_population_vector <- function(V, pop_vector){
+    if(!is.numeric(pop_vector)){
+        cli::cli_abort("Population vectors must be numeric")
+    }else if(length(pop_vector) != V){
+        cli::cli_abort("Population vectors must be of length {V}")
+    }else if(any(is.na(pop_vector)) || !any(is.finite(pop_vector))){
+        cli::cli_abort("Population vector values must be non-missing and finite")
+    }else if(any(pop_vector < 0)){
+        cli::cli_abort("Population vector values must be non-negative")
+    }
+}
+
 #' Sampling constraints
 #'
 #' The [redist_smc()] and [redist_mergesplit()] algorithms in this package allow
@@ -260,6 +277,10 @@ get_nregion_score_vec <- function(only_nregions, ndists){
 #' Space as the weights for those spaces tend to be the slowest step.
 #' These effects can be somewhat mitigated by by increasing the number of
 #' processes(`nproc`) if multiple runs are being done.
+#'
+#' The `min_group_frac` constraint adds a term counting the number of districts
+#' in a plan where the fraction `group_pop/total_pop` is greater than or equal to
+#' a certain threshold, `min_frac` for each of the populations passed in.
 #'
 #' The `custom_plan` constraint allows the user to specify their own constraint using
 #' a function which evaluates the entire plan. Unlike the `custom` constraint,
@@ -1225,6 +1246,21 @@ add_constr_plan_splits <- function(
     }
     admin <- vctrs::vec_group_id(admin)
 
+    # handle discontinuous admin groups
+    adj_list <- get_adj(attr(constr, "data"))
+    component <- contiguity(adj_list, vctrs::vec_group_id(admin))
+    admin <- dplyr::if_else(
+        component > 1,
+        paste0(as.character(admin), "-", component),
+        as.character(admin)
+    ) %>%
+        as.factor() %>%
+        as.integer()
+    if (any(component > 1)) {
+        cli::cli_warn("Counties were not contiguous; expect additional splits.")
+    }
+
+
     new_constr <- list(
         strength = strength,
         nregions_to_score = nregions_to_score,
@@ -1237,6 +1273,104 @@ add_constr_plan_splits <- function(
     add_to_constr(constr, "plan_splits", new_constr)
 }
 
+
+#' @param group_pops A list of vectors of target group populations
+#' @param total_pops A list of vectors of total populations
+#' @param min_fracs A vector of minimum fraction thresholds for each of the
+#' different population sets
+#' @rdname constraints
+#' @export
+add_constr_min_group_frac <- function(
+        constr,
+        strength,
+        group_pops,
+        total_pops,
+        min_fracs,
+        only_nregions = FALSE,
+        thresh = NULL
+) {
+    if (!inherits(constr, "redist_constr")) {
+        cli::cli_abort("Not a {.cls redist_constr} object")
+    }
+    if (strength <= 0) {
+        cli::cli_warn("Nonpositive strength may lead to unexpected results")
+    }
+    nregions_to_score <- get_nregion_score_vec(
+        only_nregions, attr(attr(constr, "data"), "ndists")
+    )
+
+    if (is.null(thresh)) {
+        # no thresholding
+        hard_constraint <- FALSE
+        hard_threshold <- 0
+    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
+        cli::cli_abort("{.arg thresh} must be a finite scalar.")
+    } else {
+        hard_constraint <- TRUE
+        hard_threshold <- thresh
+    }
+
+    data <- attr(constr, "data")
+    V <- nrow(data)
+
+    # check the fraction is between zero and 1
+    if(!is.numeric(min_fracs)){
+        cli::cli_abort("{.arg min_fracs} must be a finite scalar.")
+    }
+    if(any(min_fracs <= 0) || any(min_fracs >= 1)){
+        cli::cli_abort("{.arg min_fracs} must be between 0 and 1.")
+    }
+
+    # check the lengths are all the same
+    if(length(group_pops) != length(total_pops)){
+        cli::cli_abort("The number of {.arg group_pops} must be the same as {.arg total_pops}.")
+    }
+    num_populations <- length(min_fracs)
+    if(num_populations == 1){
+        # if just a vector then put it inside a list
+        if(!rlang::is_list(group_pops)){
+            validate_population_vector(V, group_pops)
+            group_pops <- list(group_pops)
+        }
+        if(!rlang::is_list(total_pops)){
+            validate_population_vector(V, total_pops)
+            total_pops <- list(total_pops)
+        }
+    }
+
+    # if more than one population check there's the same number of minimum fractions
+    if(length(group_pops) != length(min_fracs)){
+        cli::cli_abort("The number of {.arg group_pops} must be the same length as the length of {.arg min_fracs}.")
+    }
+
+    # check the populations are a list of vectors
+    if(!rlang::is_list(group_pops)){
+        cli::cli_abort("{.arg group_pops} must either by a single vector or a list of vectors.")
+    }else if(!rlang::is_list(total_pops)){
+        cli::cli_abort("{.arg total_pops} must either by a single vector or a list of vectors.")
+    }
+    # now check each one
+    for (pop_num in seq_len(num_populations)) {
+        validate_population_vector(V, group_pops[[pop_num]])
+        validate_population_vector(V, total_pops[[pop_num]])
+        if(any(group_pops[[pop_num]] > total_pops[[pop_num]])){
+            cli::cli_abort("Each population in {.arg group_pops} must be less than or equal to {.arg total_pops}")
+        }
+    }
+
+    new_constr <- list(
+        strength = strength,
+        nregions_to_score = nregions_to_score,
+        hard_constraint = hard_constraint,
+        hard_threshold = hard_threshold,
+        group_pops = group_pops,
+        total_pops = total_pops,
+        min_fracs = min_fracs,
+        num_populations = num_populations
+    )
+
+    add_to_constr(constr, "min_group_frac", new_constr)
+}
 
 #' @param fn A function
 #' @rdname constraints

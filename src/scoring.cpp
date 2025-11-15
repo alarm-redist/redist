@@ -134,6 +134,76 @@ int count_admin_splits(
 }
 
 
+int count_min_threshold_regions(
+    int const num_populations,
+    std::vector<arma::vec> const &group_pop, 
+    std::vector<arma::vec> const &total_pop, 
+    std::vector<double> const &min_fracs,
+    std::vector<bool> const &region_ids_to_count,
+    PlanVector const &region_ids, std::vector<int> const &region_reindex_vec,
+    std::vector<std::vector<double>> &plan_group_pops, 
+    std::vector<std::vector<double>> &plan_total_pops
+){
+    // clear the group populations 
+    for (size_t i = 0; i < num_populations; i++)
+    {
+        std::fill(plan_group_pops[i].begin(), plan_group_pops[i].end(), 0.0);
+        std::fill(plan_total_pops[i].begin(), plan_total_pops[i].end(), 0.0);
+    }
+    
+
+
+    auto const V = region_ids.size();
+    for (size_t v = 0; v < V; v++)
+    {
+        // get the reinexed region id
+        auto const v_region = region_reindex_vec[region_ids[v]];
+        // REprintf("Count=%s| v=%u region %u reindex %u\n", (region_ids_to_count[v_region] ? "TRUE" : "FALSE"),
+        //     v, region_ids[v], region_reindex_vec[region_ids[v]]);
+        // check if this region is one we care about 
+        if(!region_ids_to_count[v_region]) continue;
+
+        for (size_t i = 0; i < num_populations; i++)
+        {
+            // add to the counts for these two regions 
+            plan_group_pops[i][v_region] += group_pop[i][v];
+            plan_total_pops[i][v_region] += total_pop[i][v];
+        }
+        
+    }
+
+    // Now count how many clear the threshold 
+    int regions_above_threshold = 0;
+
+    for (size_t region_id = 0; region_id < region_ids_to_count.size(); region_id++)
+    {
+        // skip if we don't count this region 
+        if(!region_ids_to_count[region_id]) continue; 
+
+        bool region_ok = true;
+        
+        for (size_t i = 0; i < num_populations; i++)
+        {
+            // break if population is zero or ratio over threshold
+            if(plan_total_pops[i][region_id] == 0.0 ||
+                plan_group_pops[i][region_id] / plan_total_pops[i][region_id] < min_fracs[i]){
+                region_ok = false;
+                break;
+            }
+        }
+
+        // skip if all regions are ok
+        if(region_ok){
+            regions_above_threshold++;
+        }
+
+        // REprintf("Region %u - Ratio %f\n", region_id, pop_ratio);
+    }
+    
+    return regions_above_threshold;
+
+}
+
 
 //
 
@@ -739,6 +809,98 @@ double PlanSplitsConstraint::compute_raw_merged_plan_constraint_score(
 }
 
 
+double MinGroupFracConstraint::compute_raw_plan_constraint_score(
+    int const num_regions, 
+    PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops
+) const{
+    // if just 1 region we just do the sums
+    if(num_regions == 1){
+        double pops_above = 0.0;
+        for (size_t i = 0; i < num_populations; i++)
+        {
+            if(arma::sum(group_pops[i])/arma::sum(total_pops[i]) >= min_fracs[i]){
+                pops_above++;
+            }
+        }
+        
+        return pops_above;
+    }
+
+    // set the reindex for each region to be itself
+    std::iota(region_reindex_vec.begin(), region_reindex_vec.end(), 0);
+    std::fill(region_ids_to_count.begin(), region_ids_to_count.end(), false);
+
+    // set the reindex for each region to be itself and make all of those ok
+    for (size_t i = 0; i < num_regions; i++)
+    {
+        region_reindex_vec[i] = i;
+        region_ids_to_count[i] = true;
+    }
+
+    
+    
+    auto num_regions_above_threshold = count_min_threshold_regions(
+        num_populations, group_pops, total_pops, 
+        min_fracs,
+        region_ids_to_count,
+        region_ids, region_reindex_vec,
+        plan_group_pops, plan_total_pops
+    );
+
+    // if(num_regions_above_threshold >= 1){
+    //     REprintf("Min Frac %f | %d regions above!\n", min_frac, num_regions_above_threshold);
+    // }
+
+    return static_cast<double>(num_regions_above_threshold);
+
+}
+
+double MinGroupFracConstraint::compute_raw_merged_plan_constraint_score(
+    const Plan &plan, int const region1_id, int const region2_id) const{
+
+    // if just 1 region we just sum the two 
+    if(plan.num_regions == 1){
+        throw Rcpp::exception("Calling MinGroupFracConstraint Merge on a 1 region plan!\n");
+        return 0.0;
+    }else if(plan.num_regions == 2){
+        double pops_above = 0.0;
+        for (size_t i = 0; i < num_populations; i++)
+        {
+            if(arma::sum(group_pops[i])/arma::sum(total_pops[i]) >= min_fracs[i]){
+                pops_above++;
+            }
+        }
+        
+        return pops_above;
+    }
+
+    // set the reindex for each region to be itself
+    std::iota(region_reindex_vec.begin(), region_reindex_vec.end(), 0);
+    std::fill(region_ids_to_count.begin(), region_ids_to_count.end(), false);
+
+    // set the reindex for each region to be itself and make all of those ok
+    for (size_t i = 0; i < plan.num_regions; i++)
+    {
+        region_reindex_vec[i] = i;
+        region_ids_to_count[i] = true;
+    }
+
+    // merge region2 into region 1 
+    region_reindex_vec[region2_id] = region1_id;
+    region_ids_to_count[region2_id] = false;
+    
+    auto num_regions_above_threshold = count_min_threshold_regions(
+        num_populations, group_pops, total_pops, 
+        min_fracs,
+        region_ids_to_count,
+        plan.region_ids, region_reindex_vec,
+        plan_group_pops, plan_total_pops
+    );
+
+    return static_cast<double>(num_regions_above_threshold);
+}
+
+
 double ValidDistrictsConstraint::compute_raw_plan_constraint_score(
     int const num_regions, 
     PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops
@@ -1189,6 +1351,7 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
     }
 
     // Now add plan constraints 
+    // counts splits in the entire plan
     if (constraints.containsElementNamed("plan_splits")) {
         Rcpp::List constr = constraints["plan_splits"];
         for (int i = 0; i < constr.size(); i++) {
@@ -1217,6 +1380,43 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
                     std::make_unique<PlanSplitsConstraint>(
                         strength, map_params.ndists,
                         admin_units, forest_result.first, forest_result.second,
+                        num_regions_to_score,
+                        hard_constraint, hard_threshold
+                    )
+                );
+            }
+
+        }
+    }
+    // counts the number of regions greater than or equal to a certain fraction
+    if (constraints.containsElementNamed("min_group_frac")) {
+        Rcpp::List constr = constraints["min_group_frac"];
+        for (int i = 0; i < constr.size(); i++) {
+            List constr_inst = constr[i];
+            double strength = constr_inst["strength"];
+            std::vector<bool> num_regions_to_score(map_params.ndists+1, true);
+            if (constr_inst.containsElementNamed("nregions_to_score")){
+                // The vector in R is one indexed but c++ is 0 indexed so need to pad an 
+                // extra element
+                num_regions_to_score = Rcpp::as<std::vector<bool>>(constr_inst["nregions_to_score"]);
+                num_regions_to_score.insert(num_regions_to_score.begin(), false);
+            }
+            bool hard_constraint = false;
+            if (constr_inst.containsElementNamed("hard_constraint")){
+                hard_constraint = as<bool>(constr_inst["hard_constraint"]);
+            }
+            double hard_threshold = 0.0;
+            if (constr_inst.containsElementNamed("hard_threshold")){
+                hard_threshold = as<double>(constr_inst["hard_threshold"]);
+            }
+            if (strength != 0) {
+                plan_constraint_ptrs.emplace_back(
+                    std::make_unique<MinGroupFracConstraint>(
+                        strength, map_params.ndists, map_params.is_district,
+                        as<std::vector<arma::vec>>(constr_inst["group_pops"]),
+                        as<std::vector<arma::vec>>(constr_inst["total_pops"]), 
+                        as<std::vector<double>>(constr_inst["min_fracs"]),
+                        as<double>(constr_inst["num_populations"]),
                         num_regions_to_score,
                         hard_constraint, hard_threshold
                     )
@@ -1570,7 +1770,8 @@ bool ScoringFunction::new_split_ok(
 ) const{
     if(!any_hard_constraints) return true;
 
-    auto const num_regions = plan.num_regions - 1;
+    auto const num_regions = plan.num_regions;
+
 
     // check if new regions are multidistricts 
     bool const is_region1_district = map_params.is_district[plan.region_sizes[region1_id]];

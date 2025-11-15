@@ -522,6 +522,49 @@ class PlanSplitsConstraint : public PlanConstraint {
 
 };
 
+
+// Counts the number of districts where group_pop/target_pop >= min_frac
+class MinGroupFracConstraint : public PlanConstraint {
+    private:
+        std::vector<bool> const is_district;
+        mutable std::vector<std::vector<double>> plan_group_pops;
+        mutable std::vector<std::vector<double>> plan_total_pops;
+        mutable std::vector<bool> region_ids_to_count;
+        mutable std::vector<int> region_reindex_vec;
+        std::vector<arma::vec> const group_pops;
+        std::vector<arma::vec> const total_pops;
+        std::vector<double> const min_fracs;
+        int const num_populations;
+
+
+    public:
+        MinGroupFracConstraint(
+            double const strength, int const ndists,
+            std::vector<bool> const &is_district,
+            std::vector<arma::vec> const &group_pops, 
+            std::vector<arma::vec> const &total_pops, 
+            std::vector<double> const &min_fracs,
+            int const num_populations, 
+            std::vector<bool> const &num_regions_to_score,
+            bool const hard_constraint, double const hard_threshold):
+            PlanConstraint(strength, num_regions_to_score, hard_constraint, hard_threshold),
+            is_district(is_district),
+            plan_group_pops(num_populations, std::vector<double>(ndists, 0.0)), 
+            plan_total_pops(num_populations, std::vector<double>(ndists, 0.0)), 
+            region_ids_to_count(ndists, false),
+            region_reindex_vec(ndists),
+            group_pops(group_pops), total_pops(total_pops), min_fracs(min_fracs),
+            num_populations(num_populations)
+            {};
+        // computes score for a plan 
+        double compute_raw_plan_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops
+        ) const override;
+        double compute_raw_merged_plan_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
+
+};
+
 // custom plan constraint. Assumes an Rcpp::Function is passed in
 // which takes a vector 
 class CustomPlanConstraint : public PlanConstraint {

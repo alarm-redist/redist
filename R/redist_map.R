@@ -506,6 +506,41 @@ set_pop_tol <- function(map, pop_tol) {
 }
 
 
+#' Extract the reference plan from a \code{redist_map} object. If the map was
+#' previously subsetted the districts in this plan will be labelled 1 to `ndists`
+#'
+#' @param x the \code{redist_map} object
+#' @returns a vector of precinct assignments if a reference plan exists, if not
+#' returns `NULL`
+get_ref_plan_and_seats <- function(x) {
+    exist_col <- attr(x, "existing_col")
+    # if no ref plan return null
+    if (is.null(exist_col)){
+        return(NULL)
+
+        subsetted_districts <- unique(y[[exist_col]])
+        new_distr <- length(subsetted_districts)
+        new_nseats <- sum(attr(data, "existing_col_seats")[subsetted_districts])
+    }
+    # check if plan was subsetted
+    ndists <- attr(x, "ndists")
+    unique_district_ids <- unique(x[[exist_name]])
+
+    if(base::setequal(unique_district_ids, seq_len(ndists))){
+
+    }else{
+        # then we need to relabel districts
+        mapping <- setNames(seq_along(unique_district_ids), unique_district_ids)
+    }
+
+    x[[exist_name]]
+
+
+    if (!inherits(x, "redist_map")) cli::cli_abort("Not a {.cls redist_map}")
+
+    attr(x, "pop_bounds")[2]
+}
+
 
 #######################
 # generics

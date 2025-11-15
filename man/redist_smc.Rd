@@ -12,7 +12,7 @@ redist_smc(
   constraints = list(),
   resample = TRUE,
   runs = 1L,
-  ncores = 0L,
+  ncores = 1L,
   init_particles = NULL,
   init_seats = NULL,
   init_weights = NULL,
@@ -70,9 +70,10 @@ compatibility with MCMC methods, runs are identified with the \code{chain}
 column in the output.}
 
 \item{ncores}{How many threads to use to parallelize plan generation within each
-process. The default, 0, will use the number of available cores on the machine
-as long as \code{nsims} and the number of units is large enough. If \code{runs>1}
-you will need to set this manually. If more than one core is used, the
+process. The default value is 1 which is single-threading. If \code{ncores} is set
+to 0 it will use the number of available cores on the machine
+as long as \code{nsims} and the number of units is large enough.
+If more than one core is used, the
 sampler output will not be fully reproducible with \code{set.seed()}. If full
 reproducibility is desired, set \code{ncores=1} and \code{nproc=1}.}
 

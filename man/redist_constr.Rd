@@ -33,6 +33,7 @@ Constraints may be added by using one of the following functions:
 \item \code{\link[=add_constr_grp_pow]{add_constr_grp_pow()}}
 \item \code{\link[=add_constr_incumbency]{add_constr_incumbency()}}
 \item \code{\link[=add_constr_log_st]{add_constr_log_st()}}
+\item \code{\link[=add_constr_min_group_frac]{add_constr_min_group_frac()}}
 \item \code{\link[=add_constr_multisplits]{add_constr_multisplits()}}
 \item \code{\link[=add_constr_plan_splits]{add_constr_plan_splits()}}
 \item \code{\link[=add_constr_polsby]{add_constr_polsby()}}
