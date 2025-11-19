@@ -138,6 +138,18 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
                                                          pop, as<uvec>(l["schools"]), as<mat>(l["commute_times"]), V);
                               });
 
+    log_tgt += add_constraint("split_feeder", constraints, districts, psi_vec,
+                              [&] (List l, int distr) -> double {
+                                  return eval_split_feeders(plan, as<uvec>(l["lower"]), distr,
+                                                           pop, as<uvec>(l["schools"]), V);
+                              });
+
+    log_tgt += add_constraint("capacity", constraints, districts, psi_vec,
+                              [&] (List l, int distr) -> double {
+                                  return eval_capacity(plan, distr, pop, as<uvec>(l["schools"]), 
+                                                       as<uvec>(l["schools_capacity"]), V);
+                              });
+
     log_tgt += add_constraint("custom", constraints, districts, psi_vec,
                               [&] (List l, int distr) -> double {
                                   Function fn = l["fn"];

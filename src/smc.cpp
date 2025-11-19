@@ -313,6 +313,18 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
                                            j, pop, as<uvec>(l["schools"]), as<mat>(l["commute_times"]), V);
                 });
 
+            lp[i] += add_constraint("split_feeder", constraints,
+                [&] (List l) -> double {
+                    return eval_split_feeders(districts.col(i), as<uvec>(l["lower"]),
+                                           j, pop, as<uvec>(l["schools"]), V);
+                });
+
+            lp[i] += add_constraint("capacity", constraints,
+                [&] (List l) -> double {
+                    return eval_capacity(districts.col(i), j, pop, as<uvec>(l["schools"]), 
+                                         as<uvec>(l["schools_capacity"]), V);
+                });
+
             lp[i] += add_constraint("custom", constraints,
                 [&] (List l) -> double {
                     Function fn = l["fn"];

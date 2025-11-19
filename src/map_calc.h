@@ -115,6 +115,18 @@ double eval_phase_commute(const subview_col<uword> &districts, const uvec &curre
                        const arma::mat &commute_times, int V);
 
 /*
+ * Compute the split feeder penalty for district `distr`
+ */
+double eval_split_feeders(const subview_col<uword> &districts, const uvec &lower,
+                          int distr, const uvec &pop, const uvec &schools, int V);
+
+/*
+ * Compute the commute penalty for district `distr`
+ */
+double eval_capacity(const subview_col<uword> &districts, int distr, const uvec &pop, 
+                     const uvec &schools, const uvec &schools_capacity, int V);
+
+/*
  * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,
  * given a collection of plans
  */

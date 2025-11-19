@@ -460,6 +460,86 @@ double eval_max_commute(const subview_col<uword> &districts, const uvec &current
     return std::log1p(max_extra);
 }
 
+/*
+ * Compute the split feeder penalty for district `distr`
+ * Returns penalty based on whether <25% of students from a lower level school got assigned to the current district
+ * districts: proposed plan for upper level
+ * lower: plan for lower level
+ * distr: district to evaluate
+ * pop: population of each block
+ * school: indices of schools in the block data
+ * V: number of blocks
+ */
+double eval_split_feeders(const subview_col<uword> &districts, const uvec &lower,
+                       int distr, const uvec &pop, const uvec &schools, int V) {
+    // Which lower level districts are sending students to the current upper level district? How many?
+    std::unordered_map<int, int> lower_students;
+    for (int v = 0; v < V; ++v) {
+        if (districts(v) != distr) continue;
+        if (lower_students.find(lower(v)) == lower_students.end()) {
+            lower_students[lower(v)] = 0;
+        }
+        lower_students[lower(v)] += pop(v);
+    }
+
+    // For each lower level school sending students, check if less than 25% 
+    // of students are going to the current upper level district
+    int split_feeders_count = 0;
+    for (auto const &pair : lower_students) {
+        int lower_distr = pair.first;
+        uvec rows_in_lower = find(lower == lower_distr);
+        int lower_total = sum(pop(rows_in_lower));
+        double frac = (double) pair.second / lower_total;
+        if (frac < 0.25) {
+            split_feeders_count += 1;
+        }
+    }
+
+    return split_feeders_count;
+}
+
+/*
+ * Compute the capacity utilization penalty for district `distr`
+ * Returns penalty based on the ratio of capacity that is over/underutilized
+ * districts: proposed plan
+ * distr: district to evaluate
+ * pop: population of each block
+ * schools: indices of schools in the map data (0-indexed)
+ * schools_capacity: integer capacities of schools according to order in schools_idx
+ * V: number of blocks
+ */
+double eval_capacity(const subview_col<uword> &districts, int distr, const uvec &pop, 
+                     const uvec &schools, const uvec &schools_capacity, int V) {
+    // Get all rows in the current district
+    uvec rows_in_district = find(districts == distr);
+    if (rows_in_district.is_empty()) return 1000;
+    
+    // Which index in schools corresponds to the school for this district?
+    arma::uvec idx_in_schools;
+    for (arma::uword i = 0; i < schools.n_elem; ++i) {
+        if (arma::any(rows_in_district == schools(i))) {
+            idx_in_schools.insert_rows(idx_in_schools.n_elem, arma::uvec{ i });
+        }
+    }
+    if (idx_in_schools.is_empty()) return 1000;
+    unsigned int school_index = idx_in_schools(0);
+    
+    double pop_capacity = schools_capacity(school_index);
+    double pop_assigned = sum(pop(rows_in_district));
+    double ratio = pop_assigned / pop_capacity;
+
+    // Compare ratio
+    if (ratio < 0.85 || ratio > 1.15) {
+        return 20;
+    }
+    else if ((0.85 <= ratio && ratio <= 0.94) || 1.05 <= ratio <= 1.14) {
+        return 10;
+    }
+    else if (0.95 <= ratio && ratio <= 1.04) {
+        return 0;
+    }
+}
+
 
 
 

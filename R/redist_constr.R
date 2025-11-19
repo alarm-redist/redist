@@ -618,6 +618,42 @@ add_constr_phase_commute <- function(constr, strength, current, schools, commute
     add_to_constr(constr, "phase_commute", new_constr)
 }
 
+#' @param lower The reference map for the split feeders constraint,, i.e. lower-level school attendance areas.
+#' @param schools A vector of unit indices for schools. For example, if there
+#' are three schools located in precincts that correspond to rows 1 and 2 of
+#' your [redist_map], entering schools = c(1, 2) would indicate that.
+#' @rdname constraints
+#' @export
+add_constr_split_feeders <- function(constr, strength, lower, schools) {
+    if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
+    if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results")
+    data <- attr(constr, "data")
+
+    new_constr <- list(strength = strength,
+        lower = eval_tidy(enquo(lower), data),
+        schools = schools - 1L)
+
+    add_to_constr(constr, "split_feeders", new_constr)
+}
+
+#' @param schools A vector of unit indices for schools. For example, if there
+#' are three schools located in precincts that correspond to rows 1 and 2 of
+#' your [redist_map], entering schools = c(1, 2) would indicate that.
+#' @param schools_capacity A vector of capacities for each school.
+#' @rdname constraints
+#' @export
+add_constr_capacity <- function(constr, strength, schools, schools_capacity) {
+    if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
+    if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results")
+    data <- attr(constr, "data")
+
+    new_constr <- list(strength = strength,
+        schools = schools - 1L,
+        schools_capacity = schools_capacity)
+
+    add_to_constr(constr, "capacity", new_constr)
+}
+
 # utilty functions for parsing ASTs
 find_env <- function(name, env = rlang::caller_env()) {
     if (identical(env, rlang::empty_env())) {
