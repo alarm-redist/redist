@@ -865,17 +865,13 @@ redist_smc <- function(
   if (!is.null(exist_name) && !isFALSE(ref_name) && ndists == final_dists) {
     ref_name <- if (!is.null(ref_name)) ref_name else exist_name
 
-    if(districting_scheme == "multiple"){
-        ref_seats <- attr(map, "existing_col_seats")
-    }else{
-        ref_seats <- rep(1L, ndists)
-    }
+    ref_plan_list <- get_ref_plan_and_seats(map)
 
     out <- add_reference(
         plans = out,
-        ref_plan = map[[exist_name]],
+        ref_plan = ref_plan_list$ref_plan,
         name = ref_name,
-        ref_seats = ref_seats)
+        ref_seats = ref_plan_list$ref_seats)
   }
 
   out
@@ -1114,7 +1110,7 @@ extract_control_params <- function(control) {
 #'     and a value of true indicates that step is a mergesplit step.
 #' @noRd
 extract_ms_params <- function(ms_params, total_smc_steps) {
-  ms_param_names <- c("mh_accept_per_smc", "ms_frequency", "pair_rule")
+  ms_param_names <- c("mh_accept_per_smc", "frequency", "pair_rule")
 
   # create merge split parameter information
   if (is.list(ms_params) && any(ms_param_names %in% names(ms_params))) {
@@ -1134,8 +1130,8 @@ extract_ms_params <- function(ms_params, total_smc_steps) {
     }
 
     # check if the frequency was passed else default to after every step
-    if ("ms_frequency" %in% names(ms_params)) {
-      ms_frequency <- ms_params[["ms_frequency"]]
+    if ("frequency" %in% names(ms_params)) {
+      ms_frequency <- ms_params[["frequency"]]
     } else {
       # else default to after every step
       ms_frequency <- 1L
@@ -1182,6 +1178,7 @@ extract_ms_params <- function(ms_params, total_smc_steps) {
       merge_split_step_vec,
       TRUE
     )
+
   }
 
   extracted_ms_params <- list(

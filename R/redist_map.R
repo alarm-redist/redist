@@ -510,35 +510,51 @@ set_pop_tol <- function(map, pop_tol) {
 #' previously subsetted the districts in this plan will be labelled 1 to `ndists`
 #'
 #' @param x the \code{redist_map} object
-#' @returns a vector of precinct assignments if a reference plan exists, if not
+#' @returns `NULL` if no reference plan exists. Else returns a list with
+#' - `ref_plan` - a vector of precinct assignments if a reference plan exists, if not
 #' returns `NULL`
+#' - `ref_seats` - a vector of seats for each district
 get_ref_plan_and_seats <- function(x) {
+    if (!inherits(x, "redist_map")) cli::cli_abort("Not a {.cls redist_map}")
+
     exist_col <- attr(x, "existing_col")
     # if no ref plan return null
     if (is.null(exist_col)){
         return(NULL)
-
-        subsetted_districts <- unique(y[[exist_col]])
-        new_distr <- length(subsetted_districts)
-        new_nseats <- sum(attr(data, "existing_col_seats")[subsetted_districts])
     }
-    # check if plan was subsetted
+
+    # check if plan was subsetted meaning that even though there are ndists
+    # districts they are not numbered 1:ndists
     ndists <- attr(x, "ndists")
-    unique_district_ids <- unique(x[[exist_name]])
+    unique_district_ids <- unique(x[[exist_col]])
 
     if(base::setequal(unique_district_ids, seq_len(ndists))){
-
+        ref_plan <- x[[exist_col]]
+        # if multi member district plan we need to return sizes as well
+        if(isTRUE(attr(x, "districting_scheme") == "multiple")){
+            ref_seats <- attr(x, "existing_col_seats")[seq_len(ndists)]
+        }else{
+            ref_seats <- rep(1, ndists)
+        }
     }else{
-        # then we need to relabel districts
+        # then we need to relabel districts by mapping them to indexes 1:ndists
         mapping <- setNames(seq_along(unique_district_ids), unique_district_ids)
+        ref_plan <- mapping[as.character(x[[exist_col]])] |> unname()
+
+        # if multi member district plan we need to return sizes as well
+        if(isTRUE(attr(x, "districting_scheme") == "multiple")){
+            # since we set mapping using seq_along we can just use the unique
+            # district ids to get the reindexed sizes
+            ref_seats <- attr(x, "existing_col_seats")[unique_district_ids]
+        }else{
+            ref_seats <- rep(1, ndists)
+        }
     }
 
-    x[[exist_name]]
-
-
-    if (!inherits(x, "redist_map")) cli::cli_abort("Not a {.cls redist_map}")
-
-    attr(x, "pop_bounds")[2]
+    list(
+        ref_plan = ref_plan,
+        ref_seats = ref_seats
+    )
 }
 
 

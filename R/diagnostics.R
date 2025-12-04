@@ -663,7 +663,6 @@ diag_rhat <- function(x, grp, split = FALSE) {
 #' @returns A long dataframe of rhats
 #' @noRd
 compute_all_rhats <- function(stats_df, rhat_cols, order_stats, district, ndists, split_rhat){
-
     # order values if needed
     if(order_stats){
         stats_df <- order_columns_by_district(

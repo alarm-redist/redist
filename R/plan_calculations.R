@@ -32,7 +32,10 @@ compute_log_target_density <- function(
         constraints = list(),
         ncores = 0, pop_temper = 0L
 ){
-
+    if(ncores <= 0){
+        ncores <- parallel::detectCores()
+    }
+    
     if (inherits(plans, "redist_plans")){
         plan_matrix <- get_plans_matrix(plans)
     }else if(is.matrix(plans)){
@@ -133,6 +136,10 @@ compute_log_target_density_by_region <- function(
         constraints = list(),
         ncores = 0, pop_temper = 0L
 ){
+    if(ncores <= 0){
+        ncores <- parallel::detectCores()
+    }
+
     if (inherits(plans, "redist_plans")){
         plan_matrix <- get_plans_matrix(plans)
     }else if(is.matrix(plans)){

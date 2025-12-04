@@ -11,8 +11,12 @@ get_ref_plan_and_seats(x)
 \item{x}{the \code{redist_map} object}
 }
 \value{
-a vector of precinct assignments if a reference plan exists, if not
+\code{NULL} if no reference plan exists. Else returns a list with
+\itemize{
+\item \code{ref_plan} - a vector of precinct assignments if a reference plan exists, if not
 returns \code{NULL}
+\item \code{ref_seats} - a vector of seats for each district
+}
 }
 \description{
 Extract the reference plan from a \code{redist_map} object. If the map was

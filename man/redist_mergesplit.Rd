@@ -20,7 +20,7 @@ redist_mergesplit(
   split_params = NULL,
   pair_rule = "uniform",
   init_seats = NULL,
-  ncores = NULL,
+  ncores = 1L,
   cl_type = "PSOCK",
   return_all = TRUE,
   init_name = NULL,

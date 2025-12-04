@@ -228,14 +228,18 @@ redist_mergesplit <- function(
 
 
   exist_name <- attr(map, "existing_col")
-  exist_seats <- attr(map, "existing_col_seats")
   if (is.null(init_plan)) {
     if (!is.null(exist_name)) {
+        ref_plan_list <- get_ref_plan_and_seats(map)
+
       init_plan <- matrix(
-        rep(get_existing(map), chains),
+        rep(ref_plan_list$ref_plan, chains),
         ncol = chains,
-        nrow = length(get_existing(map))
+        nrow = length(ref_plan_list$ref_plan)
       )
+
+      init_seats <- replicate(chains, ref_plan_list$ref_seats)
+
       if (is.null(init_name)) {
         init_names <- rep(exist_name, chains)
       } else {
@@ -311,14 +315,6 @@ redist_mergesplit <- function(
       init_names <- paste0("<init> ", seq_len(chains))
     } else {
       init_names <- paste(init_name, seq_len(chains))
-    }
-  } else {
-    if (is.null(init_seats)) {
-      if (districting_scheme == "single") {
-        init_seats <- matrix(1L, nrow = ndists, ncol = ncol(init_plan))
-      } else {
-          init_seats <- replicate(chains, exist_seats)
-      }
     }
   }
 
