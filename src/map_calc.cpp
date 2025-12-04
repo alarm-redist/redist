@@ -510,25 +510,21 @@ double eval_split_feeders(const subview_col<uword> &districts, const uvec &lower
  */
 double eval_capacity(const subview_col<uword> &districts, int distr, const uvec &pop, 
                      const uvec &schools, const uvec &schools_capacity, int V) {
-    // Get all rows in the current district
-    uvec rows_in_district = find(districts == distr);
-    if (rows_in_district.is_empty()) return 1000;
-    
-    // Which index in schools corresponds to the school for this district?
-    arma::uvec idx_in_schools;
-    for (arma::uword i = 0; i < schools.n_elem; ++i) {
-        if (arma::any(rows_in_district == schools(i))) {
-            idx_in_schools.insert_rows(idx_in_schools.n_elem, arma::uvec{ i });
+    // Count how many people are assigned to current district
+    int pop_assigned = 0;
+    for (int v = 0; v < V; ++v) {
+        if (districts(v) == distr) {
+            pop_assigned += pop(v);
         }
     }
-    if (idx_in_schools.is_empty()) return 1000;
-    unsigned int school_index = idx_in_schools(0);
-    
-    double pop_capacity = schools_capacity(school_index);
-    double pop_assigned = sum(pop(rows_in_district));
+
+    // What is the capacity of the current district
+    int school_idx = distr - 1; // assume distr is 1-indexed and schools/schools_capacity are in ascending district ID order
+    double pop_capacity = schools_capacity(school_idx);
+
+    // Calculate and compare ratio
     double ratio = pop_assigned / pop_capacity;
 
-    // Compare ratio
     if (ratio < 0.85 || ratio > 1.15) {
         return 20;
     }
