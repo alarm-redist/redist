@@ -418,7 +418,6 @@ double eval_phase_commute(const subview_col<uword> &districts, const uvec &curre
 double eval_max_commute(const subview_col<uword> &districts, const uvec &current,
                        int distr, const uvec &pop, const uvec &schools, 
                        const arma::mat &commute_times, int V) {
-    double reassigned_pop = 0.0;
     double max_extra = 0.0;
     for (int k = 0; k < V; k++) {
         if (districts(k) != distr) continue; // only evaluate blocks in proposed district
@@ -528,12 +527,14 @@ double eval_capacity(const subview_col<uword> &districts, int distr, const uvec 
     if (ratio < 0.85 || ratio > 1.15) {
         return 20;
     }
-    else if ((0.85 <= ratio && ratio <= 0.94) || 1.05 <= ratio <= 1.14) {
+    else if ((0.85 <= ratio && ratio <= 0.94) || (1.05 <= ratio && ratio <= 1.14)) {
         return 10;
     }
     else if (0.95 <= ratio && ratio <= 1.04) {
         return 0;
     }
+
+    return 0;
 }
 
 
