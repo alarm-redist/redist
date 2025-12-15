@@ -519,7 +519,6 @@ double eval_capacity(const subview_col<uword> &districts, int distr, const uvec 
 
     // What is the capacity of the current district
     int school_idx = distr - 1; // assume distr is 1-indexed and schools/schools_capacity are in ascending district ID order
-    Rcout << "school_idx: " << school_idx << std::endl;
     double pop_capacity = schools_capacity(school_idx);
 
     // Calculate and compare ratio
