@@ -354,7 +354,7 @@ double eval_er(const subview_col<uword> &districts, const Graph g, int ndists) {
  * current: old plan
  * distr: district to evaluate
  * pop: population of each block
- * school_idx: indices of schools in the data
+ * school: indices of schools in the data
  * commute_times: matrix of commute times from each block to each school
  * V: number of blocks
  */
@@ -411,7 +411,7 @@ double eval_phase_commute(const subview_col<uword> &districts, const uvec &curre
  * current: old plan
  * distr: district to evaluate
  * pop: population of each block
- * school_idx: indices of schools in the data
+ * schools: indices of schools in the data
  * commute_times: matrix of commute times from each block to each school
  * V: number of blocks
  */
@@ -466,12 +466,13 @@ double eval_max_commute(const subview_col<uword> &districts, const uvec &current
  * lower: plan for lower level
  * distr: district to evaluate
  * pop: population of each block
- * school: indices of schools in the block data
+ * schools: indices of schools in the block data
  * V: number of blocks
  */
 double eval_split_feeders(const subview_col<uword> &districts, const uvec &lower,
                        int distr, const uvec &pop, const uvec &schools, int V) {
     // Which lower level districts are sending students to the current upper level district? How many?
+    // Key: lower level district ID, Value: number of students that lower level district sent to the current upper level district
     std::unordered_map<int, int> lower_students;
     for (int v = 0; v < V; ++v) {
         if (districts(v) != distr) continue;

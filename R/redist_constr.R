@@ -594,7 +594,7 @@ add_constr_qps <- function(constr, strength, cities, total_pop = NULL) {
 #' @param current The reference map for the phase-in school commute constraint,
 #' i.e. the current attendance areas.
 #' @param schools A vector of unit indices for schools. For example, if there
-#' are three schools located in precincts that correspond to rows 1 and 2 of
+#' are two schools located in precincts that correspond to rows 1 and 2 of
 #' your [redist_map], entering schools = c(1, 2) would indicate that.
 #' @param commute_times A numeric matrix (n_units × n_schools) of commute times
 #' (in seconds) from each geographical unit to each school. Can be computed via
