@@ -364,30 +364,13 @@ double eval_phase_commute(const subview_col<uword> &districts, const uvec &curre
     double reassigned_pop = 0.0;
     for (int k = 0; k < V; k++) {
         if (districts(k) != distr) continue; // only evaluate blocks in proposed district
-        
-        // find school that is in proposed district and current district
-        int school_old_idx = -1;
-        int school_new_idx = -1;
-        
-        for (int j = 0; j < schools.n_elem; j++) {
-            // check if school and block are in the same old district
-            if (current[schools[j]] == current[k]) {
-                school_old_idx = j;
-            }
-            // check if school and block are in the same proposed district
-            if (districts(schools[j]) == districts(k)) {
-                school_new_idx = j;
-            }
-            // both old zoned school and new zoned school have been found
-            if (school_old_idx != -1 && school_new_idx != -1) {
-                break;
-            }
-        }
+
+        // get old and new districts of current block
+        int school_old_idx = current[k];
+        int school_new_idx = districts(k);
         
         // if schools are the same, no disruption
         if (school_old_idx == school_new_idx) continue;
-        // if either school is not found, skip
-        if (school_old_idx == -1 || school_new_idx == -1) continue;
         
         // compute and compare commute distances to old and new schools
         double commute_old = commute_times(k, school_old_idx);
@@ -421,30 +404,13 @@ double eval_max_commute(const subview_col<uword> &districts, const uvec &current
     double max_extra = 0.0;
     for (int k = 0; k < V; k++) {
         if (districts(k) != distr) continue; // only evaluate blocks in proposed district
-        
-        // find school that is in proposed district and current district
-        int school_old_idx = -1;
-        int school_new_idx = -1;
-        
-        for (int j = 0; j < schools.n_elem; j++) {
-            // check if school and block are in the same old district
-            if (current[schools[j]] == current[k]) {
-                school_old_idx = j;
-            }
-            // check if school and block are in the same proposed district
-            if (districts(schools[j]) == districts(k)) {
-                school_new_idx = j;
-            }
-            // both old zoned school and new zoned school have been found
-            if (school_old_idx != -1 && school_new_idx != -1) {
-                break;
-            }
-        }
+
+        // get old and new districts of current block
+        int school_old_idx = current[k];
+        int school_new_idx = districts(k);
         
         // if schools are the same, no disruption
         if (school_old_idx == school_new_idx) continue;
-        // if either school is not found, skip
-        if (school_old_idx == -1 || school_new_idx == -1) continue;
         
         // compute and compare commute distances to old and new schools
         double commute_old = commute_times(k, school_old_idx);
