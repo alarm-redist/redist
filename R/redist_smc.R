@@ -1132,6 +1132,10 @@ extract_ms_params <- function(ms_params, total_smc_steps) {
     # check if the frequency was passed else default to after every step
     if ("frequency" %in% names(ms_params)) {
       ms_frequency <- ms_params[["frequency"]]
+      # ensure its integers
+      if(!rlang::is_integerish(ms_frequency)){
+          cli::cli_abort("{.arg frequency} must be a integer valued")
+      }
     } else {
       # else default to after every step
       ms_frequency <- 1L
@@ -1159,27 +1163,47 @@ extract_ms_params <- function(ms_params, total_smc_steps) {
 
   if (!run_ms) {
     merge_split_step_vec <- rep(FALSE, total_smc_steps)
-  } else if (ms_frequency == 1) {
-    # if frequency 1 then do after every step
-    merge_split_step_vec <- rep(FALSE, total_smc_steps)
-    # Now add merge split every `ms_frequency` steps
-    # insertion trick
-    # https://stackoverflow.com/questions/1493969/insert-elements-into-a-vector-at-given-indexes
-    ind <- seq(from = ms_frequency, to = total_smc_steps, by = ms_frequency)
-    val <- c(merge_split_step_vec, rep(TRUE, length(ind)))
-    id <- c(seq_along(merge_split_step_vec), ind + 0.5)
+  } else if(rlang::is_scalar_integerish(ms_frequency)){
+      # check if its a scalar
+      if (ms_frequency >= 1) {
+          # then we do merge split after every ms_frequency-th step.
+          ms_frequency <- min(ms_frequency, total_smc_steps)
 
-    # number of merge split is sum of trues
-    merge_split_step_vec <- val[order(id)]
-  } else if (ms_frequency == -1) {
-    # if negative 1 then just put at the end
-    merge_split_step_vec <- rep(FALSE, total_smc_steps)
-    merge_split_step_vec <- c(
-      merge_split_step_vec,
-      TRUE
-    )
+          merge_split_step_vec <- rep(FALSE, total_smc_steps)
+          insert_positions <- seq(ms_frequency, total_smc_steps, by = ms_frequency)
 
+          # Build the result
+          offset <- 0
+
+          for (pos in insert_positions) {
+              idx <- pos + offset
+              merge_split_step_vec <- append(merge_split_step_vec, TRUE, after = idx)
+              offset <- offset + 1
+          }
+      }else if (ms_frequency <= -1) {
+          # if its a negative number then that means the last ms_frequency steps
+          # make sure its absolute value is less than the number of smc steps
+          if(abs(ms_frequency) > total_smc_steps){
+              ms_frequency <- -total_smc_steps
+          }
+
+          merge_split_step_vec <- rep(FALSE, total_smc_steps)
+          # This makes it so we run mergesplit after the last abs(ms_frequency)
+          # SMC steps
+          freq <- abs(ms_frequency)
+          stopifnot(freq <= length(merge_split_step_vec))
+          merge_split_step_vec <- c(
+              rep(FALSE, length(merge_split_step_vec) - freq),
+              rep(c(FALSE, TRUE), times = freq)
+          )
+      }else{
+          cli::cli_abort("{.arg frequency} cannot be 0")
+      }
+  } else{
+      # else that means its a vector of specific SMC steps to run it after
+      cli::cli_abort("Specific step {.arg frequency} is not implemented yet!")
   }
+
 
   extracted_ms_params <- list(
     run_ms = run_ms,

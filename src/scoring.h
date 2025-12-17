@@ -34,6 +34,7 @@ std::pair<bool, int> is_plan_connected(
  * Constraint Classes
  ********************/
 
+
 class RegionConstraint {
     private:
         double const strength; // constraint strength 
@@ -45,7 +46,17 @@ class RegionConstraint {
             score_districts_only(score_districts_only),
             strength(strength),
             hard_constraint(hard_constraint),
-            hard_threshold(hard_threshold) {};  
+            hard_threshold(hard_threshold) {}; 
+
+        RegionConstraint(
+            Rcpp::List const &a_constraint
+        ): 
+            score_districts_only(a_constraint.containsElementNamed("only_districts") ? as<bool>(a_constraint["only_districts"]) : false),
+            strength(a_constraint.containsElementNamed("strength") ? as<double>(a_constraint["strength"]) : 1.0),
+            hard_constraint(a_constraint.containsElementNamed("hard_constraint") ? as<bool>(a_constraint["hard_constraint"]) : false),
+            hard_threshold(a_constraint.containsElementNamed("hard_threshold") ? as<double>(a_constraint["hard_threshold"]) : 0.0) 
+            {};
+
         virtual ~RegionConstraint() = default;
         
         bool const score_districts_only; // whether or not to score districts only 
@@ -117,11 +128,10 @@ class PopDevConstraint : public RegionConstraint {
 
     public:
         PopDevConstraint(
-            double const strength, 
-            double const parity, arma::uvec const &total_pop,
-            bool const score_districts_only, bool const hard_constraint, double const hard_threshold
+            Rcpp::List const &a_constraint,
+            double const parity, arma::uvec const &total_pop
         ) :
-            RegionConstraint(score_districts_only, strength, hard_constraint, hard_threshold),
+            RegionConstraint(a_constraint),
             parity(parity),
             total_pop(total_pop) {}
     
@@ -149,13 +159,11 @@ class StatusQuoConstraint : public RegionConstraint {
 
     public:
         StatusQuoConstraint(
-            double const strength, 
+            Rcpp::List const &a_constraint, 
             arma::uvec const &current, arma::uvec const &pop,
-            int const ndists, int const n_current, int const V,
-            bool const score_districts_only, bool const hard_constraint, double const hard_threshold
+            int const ndists, int const n_current, int const V
         ) :
-            RegionConstraint(score_districts_only, strength, hard_constraint, hard_threshold),
-
+            RegionConstraint(a_constraint),
             current(current),
             pop(pop),
             ndists(ndists),
@@ -183,12 +191,11 @@ class SegregationConstraint : public RegionConstraint {
 
     public:
         SegregationConstraint(
-            double const strength, 
+            Rcpp::List const &a_constraint,
             arma::uvec const &grp_pop, arma::uvec const &total_pop,
-            int const V,
-            bool const score_districts_only, bool const hard_constraint, double const hard_threshold
+            int const V
         ) :
-            RegionConstraint(score_districts_only, strength, hard_constraint, hard_threshold),
+            RegionConstraint(a_constraint),
             grp_pop(grp_pop),
             total_pop(total_pop),
             V(V) {}
@@ -216,13 +223,12 @@ class GroupPowerConstraint : public RegionConstraint {
 
     public:
         GroupPowerConstraint(
-            double const strength, 
+            Rcpp::List const &a_constraint, 
             int const V,
             arma::uvec const &grp_pop, arma::uvec const &total_pop,
-            double const tgt_grp, double const tgt_other, double const pow,
-            bool const score_districts_only, bool const hard_constraint, double const hard_threshold
+            double const tgt_grp, double const tgt_other, double const pow
         ) :
-            RegionConstraint(score_districts_only, strength, hard_constraint, hard_threshold),
+            RegionConstraint(a_constraint),
             V(V),
             grp_pop(grp_pop),
             total_pop(total_pop),
@@ -248,10 +254,12 @@ class GroupHingeConstraint : public RegionConstraint {
         arma::uvec const total_pop;
 
     public:
-        GroupHingeConstraint(double const strength, int const V, arma::vec const &tgts_group, arma::uvec const &group_pop,
-            arma::uvec const &total_pop, 
-            bool const score_districts_only, bool const hard_constraint, double const hard_threshold) :
-            RegionConstraint(score_districts_only, strength, hard_constraint, hard_threshold),
+        GroupHingeConstraint(
+            Rcpp::List const &a_constraint, 
+            int const V, arma::vec const &tgts_group, arma::uvec const &group_pop,
+            arma::uvec const &total_pop
+        ):
+            RegionConstraint(a_constraint),
             V(V), 
             tgts_group(tgts_group),
             group_pop(group_pop), 
@@ -275,9 +283,11 @@ class IncumbentConstraint : public RegionConstraint {
         arma::uvec const incumbents;
 
     public:
-        IncumbentConstraint(double const strength, const arma::uvec &incumbents, 
-            bool const score_districts_only, bool const hard_constraint, double const hard_threshold) :
-            RegionConstraint(score_districts_only, strength, hard_constraint, hard_threshold),
+        IncumbentConstraint(
+            Rcpp::List const &a_constraint, 
+            const arma::uvec &incumbents
+            ) :
+            RegionConstraint(a_constraint),
             incumbents(incumbents) {}
     
         double compute_raw_region_constraint_score(
@@ -301,11 +311,10 @@ class SplitsConstraint : public RegionConstraint {
 
     public:
         SplitsConstraint(
-            double const strength, 
-            arma::uvec const &admin_units, int const n_admin_units, bool const smc,
-            bool const score_districts_only, bool const hard_constraint, double const hard_threshold
+            Rcpp::List const &a_constraint, 
+            arma::uvec const &admin_units, int const n_admin_units, bool const smc
         ) :
-            RegionConstraint(score_districts_only, strength, hard_constraint, hard_threshold),
+            RegionConstraint(a_constraint),
             admin_units(admin_units),
             n_admin_units(n_admin_units),
             smc(smc) {}
@@ -330,11 +339,10 @@ class MultisplitsConstraint : public RegionConstraint {
 
     public:
         MultisplitsConstraint(
-            double const strength, 
-            arma::uvec const &admin_units, int const n_admin_units, bool const smc,
-            bool const score_districts_only, bool const hard_constraint, double const hard_threshold
+            Rcpp::List const &a_constraint, 
+            arma::uvec const &admin_units, int const n_admin_units, bool const smc
         ) :
-            RegionConstraint(score_districts_only, strength, hard_constraint, hard_threshold),
+            RegionConstraint(a_constraint),
             admin_units(admin_units),
             n_admin_units(n_admin_units),
             smc(smc) {}
@@ -359,11 +367,10 @@ class TotalSplitsConstraint : public RegionConstraint {
 
     public:
         TotalSplitsConstraint(
-            double const strength, 
-            arma::uvec const &admin_units, int const n_admin_units, bool const smc,
-            bool const score_districts_only, bool const hard_constraint, double const hard_threshold
+            Rcpp::List const &a_constraint, 
+            arma::uvec const &admin_units, int const n_admin_units, bool const smc
         ) :
-            RegionConstraint(score_districts_only, strength, hard_constraint, hard_threshold),
+            RegionConstraint(a_constraint),
             admin_units(admin_units),
             n_admin_units(n_admin_units),
             smc(smc) {}
@@ -391,12 +398,12 @@ class PolsbyConstraint : public RegionConstraint {
 
     public:
         PolsbyConstraint(
-            double const strength, int const V,
+            Rcpp::List const &a_constraint, 
+            int const V,
             arma::ivec const &from, arma::ivec const &to, arma::vec const &area,
-            arma::vec const &perimeter, 
-            bool const score_districts_only, bool const hard_constraint, double const hard_threshold
+            arma::vec const &perimeter
         ) :
-            RegionConstraint(score_districts_only, strength, hard_constraint, hard_threshold),
+            RegionConstraint(a_constraint),
             V(V),
             from(from), to(to), area(area), perimeter(perimeter)
             {}
@@ -420,11 +427,11 @@ class CustomRegionConstraint : public RegionConstraint {
 
     public:
         CustomRegionConstraint(
-            double const strength, int const V,
-            Rcpp::Function fn,
-            bool const score_districts_only, bool const hard_constraint, double const hard_threshold
+            Rcpp::List const &a_constraint, 
+            int const V,
+            Rcpp::Function fn
         ) :
-            RegionConstraint(score_districts_only, strength, hard_constraint, hard_threshold),
+            RegionConstraint(a_constraint),
             fn(Rcpp::clone(fn)),
             rcpp_plan_wrap(V)
             {}
@@ -455,6 +462,26 @@ class PlanConstraint {
             num_regions_to_score(num_regions_to_score),
             hard_constraint(hard_constraint),
             hard_threshold(hard_threshold) {};
+
+
+        PlanConstraint(
+            Rcpp::List const &a_constraint, int const ndists
+            ):
+            strength(a_constraint.containsElementNamed("strength") ? as<double>(a_constraint["strength"]) : 1.0),
+            num_regions_to_score([ndists, &a_constraint]() {
+                    // vector where index i is true iff i seats is a district 
+                    std::vector<bool> num_regions_to_score(ndists + 1, false);
+                    if (a_constraint.containsElementNamed("nregions_to_score")){
+                        // The vector in R is one indexed but c++ is 0 indexed so need to pad an 
+                        // extra element
+                        num_regions_to_score = Rcpp::as<std::vector<bool>>(a_constraint["nregions_to_score"]);
+                        num_regions_to_score.insert(num_regions_to_score.begin(), false);
+                    }
+                    return num_regions_to_score;
+                }()),
+            hard_constraint(a_constraint.containsElementNamed("hard_constraint") ? as<bool>(a_constraint["hard_constraint"]) : false),
+            hard_threshold(a_constraint.containsElementNamed("hard_threshold") ? as<double>(a_constraint["hard_threshold"]) : 0.0) 
+          {};
 
         virtual ~PlanConstraint() = default;
         // attributes

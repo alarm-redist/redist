@@ -956,148 +956,67 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
         Rcpp::List constr = constraints["pop_dev"];
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
-            double strength = constr_inst["strength"];
-            if (strength != 0) {
-                bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("only_districts")){
-                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
-                }
-                bool hard_constraint = false;
-                if (constr_inst.containsElementNamed("hard_constraint")){
-                    hard_constraint = as<bool>(constr_inst["hard_constraint"]);
-                }
-                double hard_threshold = 0.0;
-                if (constr_inst.containsElementNamed("hard_threshold")){
-                    hard_threshold = as<double>(constr_inst["hard_threshold"]);
-                }
-                region_constraint_ptrs.emplace_back(
-                    std::make_unique<PopDevConstraint>(
-                        strength, 
-                        map_params.target, map_params.pop,
-                        constr_score_districts_only, hard_constraint, hard_threshold
-                    ));
-            }
+            region_constraint_ptrs.emplace_back(
+                std::make_unique<PopDevConstraint>(
+                    constr_inst, 
+                    map_params.target, map_params.pop
+                ));
         }
     }
     if (constraints.containsElementNamed("status_quo")) {
         Rcpp::List constr = constraints["status_quo"];
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
-            double strength = constr_inst["strength"];
-            if (strength != 0) {
-                bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("only_districts")){
-                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
-                }
-                bool hard_constraint = false;
-                if (constr_inst.containsElementNamed("hard_constraint")){
-                    hard_constraint = as<bool>(constr_inst["hard_constraint"]);
-                }
-                double hard_threshold = 0.0;
-                if (constr_inst.containsElementNamed("hard_threshold")){
-                    hard_threshold = as<double>(constr_inst["hard_threshold"]);
-                }
-                region_constraint_ptrs.emplace_back(
-                    std::make_unique<StatusQuoConstraint>(
-                        strength, 
-                        as<arma::uvec>(constr_inst["current"]), map_params.pop,
-                        map_params.ndists, as<int>(constr_inst["n_current"]), map_params.V,
-                        constr_score_districts_only, hard_constraint, hard_threshold
-                    ));
-            }
+            region_constraint_ptrs.emplace_back(
+                std::make_unique<StatusQuoConstraint>(
+                    constr_inst, 
+                    as<arma::uvec>(constr_inst["current"]), map_params.pop,
+                    map_params.ndists, as<int>(constr_inst["n_current"]), map_params.V
+                ));
         }
     }
     if (constraints.containsElementNamed("segregation")) {
         Rcpp::List constr = constraints["segregation"];
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
-            double strength = constr_inst["strength"];
-            if (strength != 0) {
-                bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("only_districts")){
-                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
-                }
-                bool hard_constraint = false;
-                if (constr_inst.containsElementNamed("hard_constraint")){
-                    hard_constraint = as<bool>(constr_inst["hard_constraint"]);
-                }
-                double hard_threshold = 0.0;
-                if (constr_inst.containsElementNamed("hard_threshold")){
-                    hard_threshold = as<double>(constr_inst["hard_threshold"]);
-                }
-                region_constraint_ptrs.emplace_back(
-                    std::make_unique<SegregationConstraint>(
-                        strength, 
-                        as<arma::uvec>(constr_inst["group_pop"]), 
-                        as<arma::uvec>(constr_inst["total_pop"]), 
-                        map_params.V, 
-                        constr_score_districts_only, hard_constraint, hard_threshold
-                    ));
-            }
+            region_constraint_ptrs.emplace_back(
+                std::make_unique<SegregationConstraint>(
+                    constr_inst, 
+                    as<arma::uvec>(constr_inst["group_pop"]), 
+                    as<arma::uvec>(constr_inst["total_pop"]), 
+                    map_params.V
+                ));
         }
     }
     if (constraints.containsElementNamed("grp_pow")) {
         Rcpp::List constr = constraints["grp_pow"];
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
-            double strength = constr_inst["strength"];
-            if (strength != 0) {
-                bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("only_districts")){
-                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
-                }
-                bool hard_constraint = false;
-                if (constr_inst.containsElementNamed("hard_constraint")){
-                    hard_constraint = as<bool>(constr_inst["hard_constraint"]);
-                }
-                double hard_threshold = 0.0;
-                if (constr_inst.containsElementNamed("hard_threshold")){
-                    hard_threshold = as<double>(constr_inst["hard_threshold"]);
-                }
-                region_constraint_ptrs.emplace_back(
-                    std::make_unique<GroupPowerConstraint>(
-                        strength, map_params.V,
-                        as<arma::uvec>(constr_inst["group_pop"]), 
-                        as<arma::uvec>(constr_inst["total_pop"]),
-                        as<double>(constr_inst["tgt_group"]),
-                        as<double>(constr_inst["tgt_other"]),
-                        as<double>(constr_inst["pow"]),
-                         constr_score_districts_only, hard_constraint, hard_threshold
-                    ));
-            }
+            region_constraint_ptrs.emplace_back(
+                std::make_unique<GroupPowerConstraint>(
+                    constr_inst, map_params.V,
+                    as<arma::uvec>(constr_inst["group_pop"]), 
+                    as<arma::uvec>(constr_inst["total_pop"]),
+                    as<double>(constr_inst["tgt_group"]),
+                    as<double>(constr_inst["tgt_other"]),
+                    as<double>(constr_inst["pow"])
+                ));
         }
     }
     if (constraints.containsElementNamed("compet")) {
         Rcpp::List constr = constraints["compet"];
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
-            double strength = constr_inst["strength"];
-            if (strength != 0) {
-                bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("only_districts")){
-                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
-                }
-                bool hard_constraint = false;
-                if (constr_inst.containsElementNamed("hard_constraint")){
-                    hard_constraint = as<bool>(constr_inst["hard_constraint"]);
-                }
-                double hard_threshold = 0.0;
-                if (constr_inst.containsElementNamed("hard_threshold")){
-                    hard_threshold = as<double>(constr_inst["hard_threshold"]);
-                }
-                // Competition is just group power with group target and other target .5
-                arma::uvec dvote = constr_inst["dvote"];
-                arma::uvec total = dvote + as<arma::uvec>(constr_inst["rvote"]);
-
-                region_constraint_ptrs.emplace_back(
-                    std::make_unique<GroupPowerConstraint>(
-                        strength, map_params.V,
-                        dvote, total,
-                        .5, .5, 
-                        as<double>(constr_inst["pow"]),
-                         constr_score_districts_only, hard_constraint, hard_threshold
-                    ));
-            }
+            // Competition is just group power with group target and other target .5
+            arma::uvec dvote = constr_inst["dvote"];
+            arma::uvec total = dvote + as<arma::uvec>(constr_inst["rvote"]);
+            region_constraint_ptrs.emplace_back(
+                std::make_unique<GroupPowerConstraint>(
+                    constr_inst, map_params.V,
+                    dvote, total,
+                    .5, .5, 
+                    as<double>(constr_inst["pow"])
+            ));
         }
     }
     if (constraints.containsElementNamed("grp_hinge")) {
@@ -1105,27 +1024,11 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
         Rcpp::List constr = constraints["grp_hinge"];
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
-            double strength = constr_inst["strength"];
-            if (strength != 0) {
-                bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("only_districts")){
-                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
-                }
-                bool hard_constraint = false;
-                if (constr_inst.containsElementNamed("hard_constraint")){
-                    hard_constraint = as<bool>(constr_inst["hard_constraint"]);
-                }
-                double hard_threshold = 0.0;
-                if (constr_inst.containsElementNamed("hard_threshold")){
-                    hard_threshold = as<double>(constr_inst["hard_threshold"]);
-                }
-                region_constraint_ptrs.emplace_back(
-                    std::make_unique<GroupHingeConstraint>(
-                        strength, map_params.V, as<arma::vec>(constr_inst["tgts_group"]),
-                        as<arma::uvec>(constr_inst["group_pop"]), as<arma::uvec>(constr_inst["total_pop"]),
-                        constr_score_districts_only, hard_constraint, hard_threshold
-                    ));
-            }
+            region_constraint_ptrs.emplace_back(
+                std::make_unique<GroupHingeConstraint>(
+                    constr_inst, map_params.V, as<arma::vec>(constr_inst["tgts_group"]),
+                    as<arma::uvec>(constr_inst["group_pop"]), as<arma::uvec>(constr_inst["total_pop"])
+            ));
         }
     }
     if (constraints.containsElementNamed("grp_inv_hinge")) {
@@ -1134,167 +1037,71 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
         Rcpp::List constr = constraints["grp_inv_hinge"];
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
-            double strength = constr_inst["strength"];
-            if (strength != 0) {
-                bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("only_districts")){
-                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
-                }
-                bool hard_constraint = false;
-                if (constr_inst.containsElementNamed("hard_constraint")){
-                    hard_constraint = as<bool>(constr_inst["hard_constraint"]);
-                }
-                double hard_threshold = 0.0;
-                if (constr_inst.containsElementNamed("hard_threshold")){
-                    hard_threshold = as<double>(constr_inst["hard_threshold"]);
-                }
-                region_constraint_ptrs.emplace_back(
-                    std::make_unique<GroupHingeConstraint>(
-                        strength, map_params.V, as<arma::vec>(constr_inst["tgts_group"]),
-                        as<arma::uvec>(constr_inst["group_pop"]), as<arma::uvec>(constr_inst["total_pop"]),
-                        constr_score_districts_only, hard_constraint, hard_threshold
-                    ));
-            }
+            region_constraint_ptrs.emplace_back(
+                std::make_unique<GroupHingeConstraint>(
+                    constr_inst, map_params.V, as<arma::vec>(constr_inst["tgts_group"]),
+                    as<arma::uvec>(constr_inst["group_pop"]), as<arma::uvec>(constr_inst["total_pop"])
+                ));
         }
     }
     if (constraints.containsElementNamed("incumbency")) {
         Rcpp::List constr = constraints["incumbency"];
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
-            double strength = constr_inst["strength"];
-            if (strength != 0) {
-                bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("only_districts")){
-                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
-                }
-                bool hard_constraint = false;
-                if (constr_inst.containsElementNamed("hard_constraint")){
-                    hard_constraint = as<bool>(constr_inst["hard_constraint"]);
-                }
-                double hard_threshold = 0.0;
-                if (constr_inst.containsElementNamed("hard_threshold")){
-                    hard_threshold = as<double>(constr_inst["hard_threshold"]);
-                }
-                region_constraint_ptrs.emplace_back(
-                    std::make_unique<IncumbentConstraint>(
-                        strength, as<arma::uvec>(constr_inst["incumbents"]),
-                        constr_score_districts_only, hard_constraint, hard_threshold
-                    ));
-            }
+            region_constraint_ptrs.emplace_back(
+                std::make_unique<IncumbentConstraint>(
+                    constr_inst, as<arma::uvec>(constr_inst["incumbents"])
+                ));
         }
     }
     if (constraints.containsElementNamed("splits")) {
         Rcpp::List constr = constraints["splits"];
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
-            double strength = constr_inst["strength"];
-            if (strength != 0) {
-                bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("only_districts")){
-                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
-                }
-                bool hard_constraint = false;
-                if (constr_inst.containsElementNamed("hard_constraint")){
-                    hard_constraint = as<bool>(constr_inst["hard_constraint"]);
-                }
-                double hard_threshold = 0.0;
-                if (constr_inst.containsElementNamed("hard_threshold")){
-                    hard_threshold = as<double>(constr_inst["hard_threshold"]);
-                }
-                region_constraint_ptrs.emplace_back(
-                    std::make_unique<SplitsConstraint>(
-                        strength, 
-                        as<arma::uvec>(constr_inst["admin"]), as<int>(constr_inst["n"]),
-                        smc,
-                        constr_score_districts_only, hard_constraint, hard_threshold
-                    ));
-            }
+            region_constraint_ptrs.emplace_back(
+                std::make_unique<SplitsConstraint>(
+                    constr_inst, 
+                    as<arma::uvec>(constr_inst["admin"]), as<int>(constr_inst["n"]),
+                    smc
+                ));
         }
     }
     if (constraints.containsElementNamed("multisplits")) {
         Rcpp::List constr = constraints["multisplits"];
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
-            double strength = constr_inst["strength"];
-            if (strength != 0) {
-                bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("only_districts")){
-                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
-                }
-                bool hard_constraint = false;
-                if (constr_inst.containsElementNamed("hard_constraint")){
-                    hard_constraint = as<bool>(constr_inst["hard_constraint"]);
-                }
-                double hard_threshold = 0.0;
-                if (constr_inst.containsElementNamed("hard_threshold")){
-                    hard_threshold = as<double>(constr_inst["hard_threshold"]);
-                }
-                region_constraint_ptrs.emplace_back(
-                    std::make_unique<MultisplitsConstraint>(
-                        strength, 
-                        as<arma::uvec>(constr_inst["admin"]), as<int>(constr_inst["n"]),
-                        smc,
-                        constr_score_districts_only, hard_constraint, hard_threshold
-                    ));
-            }
+            region_constraint_ptrs.emplace_back(
+                std::make_unique<MultisplitsConstraint>(
+                    constr_inst, 
+                    as<arma::uvec>(constr_inst["admin"]), as<int>(constr_inst["n"]),
+                    smc
+                ));
         }
     }
     if (constraints.containsElementNamed("total_splits")) {
         Rcpp::List constr = constraints["total_splits"];
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
-            double strength = constr_inst["strength"];
-            if (strength != 0) {
-                bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("only_districts")){
-                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
-                }
-                bool hard_constraint = false;
-                if (constr_inst.containsElementNamed("hard_constraint")){
-                    hard_constraint = as<bool>(constr_inst["hard_constraint"]);
-                }
-                double hard_threshold = 0.0;
-                if (constr_inst.containsElementNamed("hard_threshold")){
-                    hard_threshold = as<double>(constr_inst["hard_threshold"]);
-                }
-                region_constraint_ptrs.emplace_back(
-                    std::make_unique<TotalSplitsConstraint>(
-                        strength, 
-                        as<arma::uvec>(constr_inst["admin"]), as<int>(constr_inst["n"]),
-                        smc,
-                        constr_score_districts_only, hard_constraint, hard_threshold
-                    ));
-            }
+            region_constraint_ptrs.emplace_back(
+                std::make_unique<TotalSplitsConstraint>(
+                    constr_inst, 
+                    as<arma::uvec>(constr_inst["admin"]), as<int>(constr_inst["n"]),
+                    smc
+            ));
         }
     }
     if (constraints.containsElementNamed("polsby")) {
         Rcpp::List constr = constraints["polsby"];
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
-            double strength = constr_inst["strength"];
-            if (strength != 0) {
-                bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("only_districts")){
-                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
-                }
-                bool hard_constraint = false;
-                if (constr_inst.containsElementNamed("hard_constraint")){
-                    hard_constraint = as<bool>(constr_inst["hard_constraint"]);
-                }
-                double hard_threshold = 0.0;
-                if (constr_inst.containsElementNamed("hard_threshold")){
-                    hard_threshold = as<double>(constr_inst["hard_threshold"]);
-                }
-                region_constraint_ptrs.emplace_back(
-                    std::make_unique<PolsbyConstraint>(
-                        strength, map_params.V,
-                        as<arma::ivec>(constr_inst["from"]), 
-                        as<arma::ivec>(constr_inst["to"]),
-                        as<arma::vec>(constr_inst["area"]),
-                        as<arma::vec>(constr_inst["perimeter"]),
-                        constr_score_districts_only, hard_constraint, hard_threshold
-                    ));
-            }
+            region_constraint_ptrs.emplace_back(
+                std::make_unique<PolsbyConstraint>(
+                    constr_inst, map_params.V,
+                    as<arma::ivec>(constr_inst["from"]), 
+                    as<arma::ivec>(constr_inst["to"]),
+                    as<arma::vec>(constr_inst["area"]),
+                    as<arma::vec>(constr_inst["perimeter"])
+                ));
         }
     }
 
@@ -1319,33 +1126,21 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
         Rcpp::List constr = constraints["custom"];
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
-            double strength = constr_inst["strength"];
-            if (strength != 0) {
-                bool constr_score_districts_only = false;
-                if (constr_inst.containsElementNamed("only_districts")){
-                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
-                }
-                bool hard_constraint = false;
-                if (constr_inst.containsElementNamed("hard_constraint")){
-                    hard_constraint = as<bool>(constr_inst["hard_constraint"]);
-                }
-                double hard_threshold = 0.0;
-                if (constr_inst.containsElementNamed("hard_threshold")){
-                    hard_threshold = as<double>(constr_inst["hard_threshold"]);
-                }
-                region_constraint_ptrs.emplace_back(
-                    std::make_unique<CustomRegionConstraint>(
-                        strength, map_params.V,
-                        as<Rcpp::Function>(constr_inst["fn"]), 
-                        constr_score_districts_only, hard_constraint, hard_threshold
-                    )
-                );
-                // mark custom R constraints as true 
-                any_soft_custom_constraints = true; 
-                // if hard custom constraint note that
-                if(hard_constraint){
-                    any_hard_custom_constraints = true;
-                }
+            bool hard_constraint = false;
+            if (constr_inst.containsElementNamed("hard_constraint")){
+                hard_constraint = as<bool>(constr_inst["hard_constraint"]);
+            }
+            region_constraint_ptrs.emplace_back(
+                std::make_unique<CustomRegionConstraint>(
+                    constr_inst, map_params.V,
+                    as<Rcpp::Function>(constr_inst["fn"])
+                )
+            );
+            // mark custom R constraints as true 
+            any_soft_custom_constraints = true; 
+            // if hard custom constraint note that
+            if(hard_constraint){
+                any_hard_custom_constraints = true;
             }
         }
     }
@@ -1385,7 +1180,6 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
                     )
                 );
             }
-
         }
     }
     // counts the number of regions greater than or equal to a certain fraction
@@ -1425,8 +1219,6 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
 
         }
     }
-
-    
 
     // Add custom plan constraints 
     if (constraints.containsElementNamed("custom_plan")) {
