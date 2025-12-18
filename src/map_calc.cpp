@@ -362,12 +362,24 @@ double eval_phase_commute(const subview_col<uword> &districts, const uvec &curre
                        int distr, const uvec &pop, const uvec &schools, 
                        const arma::mat &commute_times, int V) {
     double reassigned_pop = 0.0;
+    uvec dist_sorted = unique(sort(current));
+
     for (int k = 0; k < V; k++) {
         if (districts(k) != distr) continue; // only evaluate blocks in proposed district
 
         // get old and new districts of current block
-        int school_old_idx = current[k] - 1;
-        int school_new_idx = districts(k) - 1;
+        uword school_old = current[k];
+        uword school_new = districts(k);
+
+        // find index of old school in dist_sorted
+        uvec tmp_old = find(dist_sorted == school_old, 1);
+        if (tmp_old.is_empty()) continue; // safety: label not found
+        uword school_old_idx = tmp_old(0);
+
+        // find index of new school in dist_sorted
+        uvec tmp_new = find(dist_sorted == school_new, 1);
+        if (tmp_new.is_empty()) continue;
+        uword school_new_idx = tmp_new(0);
         
         // if schools are the same, no disruption
         if (school_old_idx == school_new_idx) continue;
@@ -402,12 +414,24 @@ double eval_max_commute(const subview_col<uword> &districts, const uvec &current
                        int distr, const uvec &pop, const uvec &schools, 
                        const arma::mat &commute_times, int V) {
     double max_extra = 0.0;
+    uvec dist_sorted = unique(sort(current));
+
     for (int k = 0; k < V; k++) {
         if (districts(k) != distr) continue; // only evaluate blocks in proposed district
 
         // get old and new districts of current block
-        int school_old_idx = current[k];
-        int school_new_idx = districts(k);
+        uword school_old = current[k];
+        uword school_new = districts(k);
+
+        // find index of old school in dist_sorted
+        uvec tmp_old = find(dist_sorted == school_old, 1);
+        if (tmp_old.is_empty()) continue; // safety: label not found
+        uword school_old_idx = tmp_old(0);
+
+        // find index of new school in dist_sorted
+        uvec tmp_new = find(dist_sorted == school_new, 1);
+        if (tmp_new.is_empty()) continue;
+        uword school_new_idx = tmp_new(0);
         
         // if schools are the same, no disruption
         if (school_old_idx == school_new_idx) continue;
