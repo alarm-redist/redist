@@ -593,15 +593,12 @@ add_constr_qps <- function(constr, strength, cities, total_pop = NULL) {
 
 #' @param current The reference map for the phase-in school commute constraint,
 #' i.e. the current attendance areas.
-#' @param schools A vector of unit indices for schools. For example, if there
-#' are two schools located in precincts that correspond to rows 1 and 2 of
-#' your [redist_map], entering schools = c(1, 2) would indicate that.
 #' @param commute_times A numeric matrix (n_units × n_schools) of commute times
 #' (in seconds) from each geographical unit to each school. Can be computed via
 #' `redistmetrics::get_commute_matrix()`.
 #' @rdname constraints
 #' @export
-add_constr_phase_commute <- function(constr, strength, current, schools, commute_times) {
+add_constr_phase_commute <- function(constr, strength, current, commute_times) {
     if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
     if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results")
     data <- attr(constr, "data")
@@ -609,7 +606,6 @@ add_constr_phase_commute <- function(constr, strength, current, schools, commute
 
     new_constr <- list(strength = strength,
         current = eval_tidy(enquo(current), data),
-        schools = schools - 1L,
         commute_times = commute_times)
     if (is.null(current) || length(new_constr$current) != nrow(data))
         cli::cli_abort("{.arg current} must be provided, and must have as many
