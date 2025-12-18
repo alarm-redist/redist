@@ -1246,21 +1246,6 @@ add_constr_plan_splits <- function(
     }
     admin <- vctrs::vec_group_id(admin)
 
-    # handle discontinuous admin groups
-    adj_list <- get_adj(attr(constr, "data"))
-    component <- contiguity(adj_list, vctrs::vec_group_id(admin))
-    admin <- dplyr::if_else(
-        component > 1,
-        paste0(as.character(admin), "-", component),
-        as.character(admin)
-    ) %>%
-        as.factor() %>%
-        as.integer()
-    if (any(component > 1)) {
-        cli::cli_warn("Counties were not contiguous; expect additional splits.")
-    }
-
-
     new_constr <- list(
         strength = strength,
         nregions_to_score = nregions_to_score,
@@ -1272,6 +1257,62 @@ add_constr_plan_splits <- function(
 
     add_to_constr(constr, "plan_splits", new_constr)
 }
+
+
+#' @param admin A vector indicating administrative unit membership
+#' @rdname constraints
+#' @export
+add_constr_total_plan_splits <- function(
+        constr,
+        strength,
+        admin,
+        only_nregions = FALSE,
+        thresh = NULL
+) {
+    if (!inherits(constr, "redist_constr")) {
+        cli::cli_abort("Not a {.cls redist_constr} object")
+    }
+    if (strength <= 0) {
+        cli::cli_warn("Nonpositive strength may lead to unexpected results")
+    }
+    nregions_to_score <- get_nregion_score_vec(
+        only_nregions, attr(attr(constr, "data"), "ndists")
+    )
+
+    if (is.null(thresh)) {
+        # no thresholding
+        hard_constraint <- FALSE
+        hard_threshold <- 0
+    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
+        cli::cli_abort("{.arg thresh} must be a finite scalar.")
+    } else {
+        hard_constraint <- TRUE
+        hard_threshold <- thresh
+    }
+
+    data <- attr(constr, "data")
+
+    admin <- rlang::eval_tidy(rlang::enquo(admin), data)
+    if (is.null(admin)) {
+        cli::cli_abort("{.arg admin} may not be {.val NULL}.")
+    }
+    if (any(is.na(admin))) {
+        cli::cli_abort("{.arg admin} many not contain {.val NA}s.")
+    }
+    admin <- vctrs::vec_group_id(admin)
+
+    new_constr <- list(
+        strength = strength,
+        nregions_to_score = nregions_to_score,
+        hard_constraint = hard_constraint,
+        hard_threshold = hard_threshold,
+        admin = admin,
+        n = length(unique(admin))
+    )
+
+    add_to_constr(constr, "total_plan_splits", new_constr)
+}
+
 
 
 #' @param group_pops A list of vectors of target group populations

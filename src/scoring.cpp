@@ -13,6 +13,86 @@ constexpr bool DEBUG_SCORING_VERBOSE = false;
 // helpers
 
 
+std::vector<std::vector<int>> build_admin_vertex_lists(
+    const Graph &g, const arma::uvec &admin_units
+){
+    // we assume admin units is 1 indexed and if `k` units then values are in `1:k`
+    int const num_counties = arma::max(admin_units);
+    std::vector<std::vector<int>> admin_vertex_lists(num_counties);
+    // nothing if only 1 county 
+    if(num_counties == 1) return admin_vertex_lists;
+    // else walk through the graph and add each vertex to list for each unit
+    int const V = g.size();
+
+    for (int v = 0; v < V; v++)
+    {
+        int v_admin_unit = admin_units[v]-1;
+        admin_vertex_lists[v_admin_unit].push_back(v);
+    }
+    return admin_vertex_lists;
+}
+
+// counts how many administrative unit are split by a plan
+// We say a unit is split if there is more than one region inside it
+// The region_reindex_vec lets us map different region ids to the same 
+// index for the purpose of this function
+int count_admin_splits(
+    std::vector<std::vector<int>> const &admin_vertex_lists, 
+    PlanVector const &region_ids, std::vector<int> const &region_reindex_vec
+){
+    int split_units = 0;
+    int const num_admin_units = admin_vertex_lists.size();
+
+    for (size_t admin_unit_i = 0; admin_unit_i < num_admin_units; admin_unit_i++)
+    {
+        // Find what region the first vertex in the unit is 
+        auto const first_unit_vertex = admin_vertex_lists[admin_unit_i][0];
+        auto const first_unit_region = region_reindex_vec[region_ids[first_unit_vertex]];
+        // We see if all the other vertices are in the same region 
+        for (auto const v: admin_vertex_lists[admin_unit_i]){
+            auto const v_unit_region = region_reindex_vec[region_ids[v]];
+            if(first_unit_region != v_unit_region){
+                ++split_units;
+                break;
+            }
+        }
+        
+    }
+
+    return split_units;
+}
+
+
+
+int count_total_admin_splits(
+    std::vector<std::vector<int>> const &admin_vertex_lists, 
+    std::vector<std::set<int>> &admin_unit_regions,
+    PlanVector const &region_ids, std::vector<int> const &region_reindex_vec
+){
+    int total_splits = 0;
+    int const num_admin_units = admin_vertex_lists.size();
+
+    // clear each units sets 
+    for (size_t i = 0; i < num_admin_units; i++)
+    {
+        admin_unit_regions[i].clear();
+    }
+    
+
+    for (size_t admin_unit_i = 0; admin_unit_i < num_admin_units; admin_unit_i++)
+    {
+        // First count how many different regions are in that admin unit
+        for (auto const v: admin_vertex_lists[admin_unit_i]){
+            auto const v_unit_region = region_reindex_vec[region_ids[v]];
+            admin_unit_regions[admin_unit_i].insert(v_unit_region);
+        }
+        // The number of splits is the number of regions in the admin unit minus 1
+        total_splits += admin_unit_regions[admin_unit_i].size() - 1;
+    }
+
+    return total_splits;
+}
+
 /*
  * Given a contiguous administrative units this builds a forest on the 
  * admin units where each tree is a spanning tree on an admin unit along
@@ -91,46 +171,6 @@ std::pair<Tree,std::vector<int>> build_admin_forest(
     }
 
     return std::make_pair(admin_forest, admin_forest_roots);
-}
-
-
-
-// counts how many administrative unit are split by a plan
-// We say a unit is split if there is more than one region inside it
-// The region_reindex_vec lets us map different region ids to the same 
-// index for the purpose of this function
-int count_admin_splits(
-    Tree const &admin_forest, std::vector<int> const &admin_forest_roots,
-    PlanVector const &region_ids, std::vector<int> const &region_reindex_vec,
-    CircularQueue<int> &vertex_queue
-){
-    int split_units = 0;
-
-    // For each admin unit start at the root of its tree
-    for (auto const admin_tree_root : admin_forest_roots){
-        vertex_queue.clear();
-        auto const root_region = region_reindex_vec[region_ids[admin_tree_root]];
-
-        vertex_queue.push(admin_tree_root);
-
-        // walk through the entire unit to see if any different regions 
-        while(!vertex_queue.empty()){
-            auto const v = vertex_queue.pop();
-            auto const v_region = region_reindex_vec[region_ids[v]];
-
-            // if we found a different region immediately break
-            if(v_region != root_region){
-                split_units++;
-                break;
-            }
-            // else add all the children to the queue
-            for (auto const v_child : admin_forest[v]){
-                vertex_queue.push(v_child);
-            }
-        }
-
-    }
-    return split_units;
 }
 
 
@@ -774,12 +814,10 @@ double PlanSplitsConstraint::compute_raw_plan_constraint_score(
     std::iota(region_reindex_vec.begin(), region_reindex_vec.end(), 0);
 
     auto splits = count_admin_splits(
-        admin_forest, admin_forest_roots,
-        region_ids, region_reindex_vec,
-        vertex_queue
+        admin_vertex_lists, 
+        region_ids, region_reindex_vec
     );
 
-    // REprintf("%d units | %d splits!\n", num_admin_units, splits);
     return splits;
 
 }
@@ -799,12 +837,52 @@ double PlanSplitsConstraint::compute_raw_merged_plan_constraint_score(
     }
 
     auto splits = count_admin_splits(
-        admin_forest, admin_forest_roots,
-        plan.region_ids, region_reindex_vec,
-        vertex_queue
+        admin_vertex_lists, 
+        plan.region_ids, region_reindex_vec
     );
 
-    // REprintf("%d units | %d splits!\n", num_admin_units, splits);
+    return splits;
+}
+
+
+double TotalPlanSplitsConstraint::compute_raw_plan_constraint_score(
+    int const num_regions, 
+    PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops
+) const{
+    // no splits if blank map or only 1 admin unit 
+    if(num_regions == 1 || num_admin_units == 1) return 0;
+
+    // set the reindex for each region to be itself
+    std::iota(region_reindex_vec.begin(), region_reindex_vec.end(), 0);
+
+    auto splits = count_total_admin_splits(
+        admin_vertex_lists, admin_unit_regions,
+        region_ids, region_reindex_vec
+    );
+
+    return splits;
+
+}
+
+double TotalPlanSplitsConstraint::compute_raw_merged_plan_constraint_score(
+    const Plan &plan, int const region1_id, int const region2_id) const{
+    // no splits if blank map or only 1 admin unit 
+    if(plan.num_regions == 2 || num_admin_units == 1) return 0;
+
+    for (int region_id = 0; region_id < plan.num_regions; region_id++)
+    {
+        if(region_id == region2_id){
+            region_reindex_vec[region2_id] = region1_id;
+        }else{
+            region_reindex_vec[region_id] = region_id;
+        }
+    }
+
+    auto splits = count_total_admin_splits(
+        admin_vertex_lists, admin_unit_regions,
+        plan.region_ids, region_reindex_vec
+    );
+
     return splits;
 }
 
@@ -1170,11 +1248,47 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
             if (strength != 0) {
                 // build the forest and get the roots 
                 arma::uvec admin_units = as<arma::uvec>(constr_inst["admin"]);
-                auto forest_result = build_admin_forest(map_params.g, admin_units);
+                auto admin_vertex_lists = build_admin_vertex_lists(map_params.g, admin_units);
                 plan_constraint_ptrs.emplace_back(
                     std::make_unique<PlanSplitsConstraint>(
                         strength, map_params.ndists,
-                        admin_units, forest_result.first, forest_result.second,
+                        admin_units, admin_vertex_lists,
+                        num_regions_to_score,
+                        hard_constraint, hard_threshold
+                    )
+                );
+            }
+        }
+    }
+    // total splits for whole plan
+    if (constraints.containsElementNamed("total_plan_splits")) {
+        Rcpp::List constr = constraints["total_plan_splits"];
+        for (int i = 0; i < constr.size(); i++) {
+            List constr_inst = constr[i];
+            double strength = constr_inst["strength"];
+            std::vector<bool> num_regions_to_score(map_params.ndists+1, true);
+            if (constr_inst.containsElementNamed("nregions_to_score")){
+                // The vector in R is one indexed but c++ is 0 indexed so need to pad an 
+                // extra element
+                num_regions_to_score = Rcpp::as<std::vector<bool>>(constr_inst["nregions_to_score"]);
+                num_regions_to_score.insert(num_regions_to_score.begin(), false);
+            }
+            bool hard_constraint = false;
+            if (constr_inst.containsElementNamed("hard_constraint")){
+                hard_constraint = as<bool>(constr_inst["hard_constraint"]);
+            }
+            double hard_threshold = 0.0;
+            if (constr_inst.containsElementNamed("hard_threshold")){
+                hard_threshold = as<double>(constr_inst["hard_threshold"]);
+            }
+            if (strength != 0) {
+                // build the forest and get the roots 
+                arma::uvec admin_units = as<arma::uvec>(constr_inst["admin"]);
+                auto admin_vertex_lists = build_admin_vertex_lists(map_params.g, admin_units);
+                plan_constraint_ptrs.emplace_back(
+                    std::make_unique<TotalPlanSplitsConstraint>(
+                        strength, map_params.ndists,
+                        admin_units, admin_vertex_lists,
                         num_regions_to_score,
                         hard_constraint, hard_threshold
                     )

@@ -519,26 +519,55 @@ class PlanSplitsConstraint : public PlanConstraint {
     private:
         arma::uvec const admin_units;
         int const num_admin_units;
-        Tree const admin_forest;
-        std::vector<int> const admin_forest_roots;
+        std::vector<std::vector<int>> const admin_vertex_lists;
         mutable std::vector<int> region_reindex_vec;
-        mutable CircularQueue<int> vertex_queue;
-
 
     public:
         PlanSplitsConstraint(
             double const strength, int const ndists,
-            arma::uvec const admin_units, Tree const &admin_forest, 
-            std::vector<int> const &admin_forest_roots,
+            arma::uvec const admin_units, 
+            std::vector<std::vector<int>> const &admin_vertex_lists,
             std::vector<bool> const &num_regions_to_score,
             bool const hard_constraint, double const hard_threshold):
             PlanConstraint(strength, num_regions_to_score, hard_constraint, hard_threshold),
             admin_units(admin_units), 
             num_admin_units(arma::max(admin_units)),
-            admin_forest(admin_forest), 
-            admin_forest_roots(admin_forest_roots),
+            admin_vertex_lists(admin_vertex_lists),
+            region_reindex_vec(ndists)
+            {};
+        // computes score for a plan 
+        double compute_raw_plan_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops
+        ) const override;
+        double compute_raw_merged_plan_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
+
+};
+
+
+// Total Splits but of the entire plan
+// assume admin is 1 indexed and only has values 1:num_admin_units
+class TotalPlanSplitsConstraint : public PlanConstraint {
+    private:
+        arma::uvec const admin_units;
+        int const num_admin_units;
+        std::vector<std::vector<int>> const admin_vertex_lists;
+        mutable std::vector<int> region_reindex_vec;
+        mutable std::vector<std::set<int>> admin_unit_regions;
+
+    public:
+        TotalPlanSplitsConstraint(
+            double const strength, int const ndists,
+            arma::uvec const admin_units, 
+            std::vector<std::vector<int>> const &admin_vertex_lists,
+            std::vector<bool> const &num_regions_to_score,
+            bool const hard_constraint, double const hard_threshold):
+            PlanConstraint(strength, num_regions_to_score, hard_constraint, hard_threshold),
+            admin_units(admin_units), 
+            num_admin_units(arma::max(admin_units)),
+            admin_vertex_lists(admin_vertex_lists),
             region_reindex_vec(ndists),
-            vertex_queue(admin_forest.size())
+            admin_unit_regions(std::vector<std::set<int>>(num_admin_units))
             {};
         // computes score for a plan 
         double compute_raw_plan_constraint_score(
