@@ -368,7 +368,7 @@ double eval_phase_commute(const subview_col<uword> &districts, const uvec &curre
 
         // get old and new districts of current block
         int school_old_idx = current[k] - 1;
-        int school_new_idx = districts(k) - 1;
+        int school_new_idx = districts(k);
         
         // compute and compare commute distances to old and new schools
         double commute_old = commute_times(k, school_old_idx);
@@ -406,7 +406,7 @@ double eval_max_commute(const subview_col<uword> &districts, const uvec &current
 
         // get old and new districts of current block
         int school_old_idx = current[k] - 1;
-        int school_new_idx = districts(k) - 1;
+        int school_new_idx = districts(k);
         
         // if schools are the same, no disruption
         if (school_old_idx == school_new_idx) continue;
