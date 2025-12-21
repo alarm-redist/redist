@@ -1314,6 +1314,53 @@ add_constr_total_plan_splits <- function(
 }
 
 
+#' @param incumbents A vector of unit indices for incumbents. For example, if
+#' three incumbents live in the precincts that correspond to rows 1, 2, and
+#' 100 of your [redist_map], entering incumbents = c(1, 2, 100) would avoid
+#' having two or more incumbents be in the same district.
+#' @rdname constraints
+#' @export
+add_constr_plan_incumbency <- function(
+        constr,
+        strength,
+        incumbents,
+        only_nregions = FALSE,
+        thresh = NULL
+) {
+    if (!inherits(constr, "redist_constr")) {
+        cli::cli_abort("Not a {.cls redist_constr} object")
+    }
+    if (strength <= 0) {
+        cli::cli_warn("Nonpositive strength may lead to unexpected results")
+    }
+    nregions_to_score <- get_nregion_score_vec(
+        only_nregions, attr(attr(constr, "data"), "ndists")
+    )
+
+    if (is.null(thresh)) {
+        # no thresholding
+        hard_constraint <- FALSE
+        hard_threshold <- 0
+    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
+        cli::cli_abort("{.arg thresh} must be a finite scalar.")
+    } else {
+        hard_constraint <- TRUE
+        hard_threshold <- thresh
+    }
+
+    data <- attr(constr, "data")
+
+    new_constr <- list(
+        strength = strength,
+        hard_constraint = hard_constraint,
+        hard_threshold = hard_threshold,
+        nregions_to_score = nregions_to_score,
+        incumbents = rlang::eval_tidy(rlang::enquo(incumbents), data)
+    )
+
+    add_to_constr(constr, "plan_incumbency", new_constr)
+}
+
 
 #' @param group_pops A list of vectors of target group populations
 #' @param total_pops A list of vectors of total populations

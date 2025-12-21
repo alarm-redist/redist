@@ -174,6 +174,46 @@ std::pair<Tree,std::vector<int>> build_admin_forest(
 }
 
 
+// Counts how many districts have more than 1 incumbent in them 
+// NOTE: incumbents is 1-indexed
+int count_plan_incumbent_pairings(
+    arma::uvec const &incumbents, 
+    std::vector<int> &region_incumbent_counts, 
+    PlanVector const &region_ids, 
+    std::vector<int> const &region_reindex_vec,
+    std::vector<bool> const &region_is_district
+){
+
+    // set each region to zero 
+    std::fill(region_incumbent_counts.begin(), region_incumbent_counts.end(), 0);
+
+
+    int districts_with_multiple_incumbents = 0;
+
+    // Now we iterate through each incumbent 
+    int n_inc = incumbents.size();
+    for (int i = 0; i < n_inc; i++) {
+        // find the region the incumbent is in
+        auto const incumbent_i_region = region_reindex_vec[region_ids[incumbents[i] - 1]];
+        // increase the count
+        region_incumbent_counts[incumbent_i_region]++;
+    }
+
+    // Now count the number of districts with more than 1 incumbent 
+    for (size_t region_id = 0; region_id < region_incumbent_counts.size(); region_id++)
+    {
+        // ignore if not a district
+        if(!region_is_district[region_reindex_vec[region_id]]) continue;
+
+        if(region_incumbent_counts[region_reindex_vec[region_id]] > 1){
+            districts_with_multiple_incumbents++;
+        }
+    }
+
+    return districts_with_multiple_incumbents;
+
+}
+
 int count_min_threshold_regions(
     int const num_populations,
     std::vector<arma::vec> const &group_pop, 
@@ -887,6 +927,72 @@ double TotalPlanSplitsConstraint::compute_raw_merged_plan_constraint_score(
 }
 
 
+
+double PlanIncumbentConstraint::compute_raw_plan_constraint_score(
+    int const num_regions, 
+    PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops
+) const{
+    // no splits if blank map or only 1 admin unit 
+    if(num_regions == 1 || incumbents.size() == 1) return 0;
+
+
+    // set the reindex for each region to be itself
+    std::iota(region_reindex_vec.begin(), region_reindex_vec.end(), 0);
+
+    // Now just mark which regions are districts 
+    for (size_t i = 0; i < num_regions; i++)
+    {
+        region_is_district[i] = is_district[region_sizes[i]];
+    }
+
+    int incumbent_count = count_plan_incumbent_pairings(
+        incumbents, 
+        region_incumbent_counts, 
+        region_ids, 
+        region_reindex_vec,
+        region_is_district
+    );
+
+    return incumbent_count;
+
+}
+
+double PlanIncumbentConstraint::compute_raw_merged_plan_constraint_score(
+    const Plan &plan, int const region1_id, int const region2_id) const{
+    // no splits if blank map or only 1 admin unit 
+    if(plan.num_regions == 2 || incumbents.size() == 1) return 0;
+
+    // set region2 to reindex to region1
+    for (int region_id = 0; region_id < plan.num_regions; region_id++)
+    {
+        if(region_id == region2_id){
+            region_reindex_vec[region2_id] = region1_id;
+        }else{
+            region_reindex_vec[region_id] = region_id;
+        }
+    }
+
+    // Now just mark which regions are districts 
+    for (size_t i = 0; i < plan.num_regions; i++)
+    {
+        region_is_district[i] = is_district[plan.region_sizes[i]];
+    }
+    // Update the merged region 
+    region_is_district[region2_id] = false;
+    region_is_district[region1_id] = is_district[plan.region_sizes[region1_id] + plan.region_sizes[region2_id]];
+
+    int incumbent_count = count_plan_incumbent_pairings(
+        incumbents, 
+        region_incumbent_counts, 
+        plan.region_ids, 
+        region_reindex_vec,
+        region_is_district
+    );
+
+    return incumbent_count;
+}
+
+
 double MinGroupFracConstraint::compute_raw_plan_constraint_score(
     int const num_regions, 
     PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops
@@ -1289,6 +1395,39 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
                     std::make_unique<TotalPlanSplitsConstraint>(
                         strength, map_params.ndists,
                         admin_units, admin_vertex_lists,
+                        num_regions_to_score,
+                        hard_constraint, hard_threshold
+                    )
+                );
+            }
+        }
+    }
+    // districts with more than one incumbent 
+    if (constraints.containsElementNamed("plan_incumbency")) {
+        Rcpp::List constr = constraints["plan_incumbency"];
+        for (int i = 0; i < constr.size(); i++) {
+            List constr_inst = constr[i];
+            double strength = constr_inst["strength"];
+            std::vector<bool> num_regions_to_score(map_params.ndists+1, true);
+            if (constr_inst.containsElementNamed("nregions_to_score")){
+                // The vector in R is one indexed but c++ is 0 indexed so need to pad an 
+                // extra element
+                num_regions_to_score = Rcpp::as<std::vector<bool>>(constr_inst["nregions_to_score"]);
+                num_regions_to_score.insert(num_regions_to_score.begin(), false);
+            }
+            bool hard_constraint = false;
+            if (constr_inst.containsElementNamed("hard_constraint")){
+                hard_constraint = as<bool>(constr_inst["hard_constraint"]);
+            }
+            double hard_threshold = 0.0;
+            if (constr_inst.containsElementNamed("hard_threshold")){
+                hard_threshold = as<double>(constr_inst["hard_threshold"]);
+            }
+            if (strength != 0) {
+                plan_constraint_ptrs.emplace_back(
+                    std::make_unique<PlanIncumbentConstraint>(
+                        strength, map_params.ndists,
+                        map_params.is_district, as<arma::uvec>(constr_inst["incumbents"]),
                         num_regions_to_score,
                         hard_constraint, hard_threshold
                     )

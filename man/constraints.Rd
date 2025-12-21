@@ -19,6 +19,7 @@
 \alias{add_constr_edges_rem}
 \alias{add_constr_plan_splits}
 \alias{add_constr_total_plan_splits}
+\alias{add_constr_plan_incumbency}
 \alias{add_constr_min_group_frac}
 \alias{add_constr_custom}
 \alias{add_constr_custom_plan}
@@ -157,6 +158,14 @@ add_constr_total_plan_splits(
   constr,
   strength,
   admin,
+  only_nregions = FALSE,
+  thresh = NULL
+)
+
+add_constr_plan_incumbency(
+  constr,
+  strength,
+  incumbents,
   only_nregions = FALSE,
   thresh = NULL
 )

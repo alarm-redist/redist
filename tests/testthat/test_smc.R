@@ -196,17 +196,8 @@ test_that("Thresholding constraints work", {
     # now ensure polk and story are never in the same region
     constr <- redist_constr(iowa_map) %>%
         add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) %>%
-        add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) %>%
-        add_constr_custom_plan(1, function(plan, seats, num_regions){
-
-            if(num_regions == 1 || plan[polk_precint] != plan[story_precint] ){
-                return(0)
-            }else{
-                return(1)
-            }
-            # return 0 if in the same region
-
-        }, thresh = .5)
+        add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) |>
+        add_constr_plan_incumbency(1, c(polk_precint, story_precint), thresh = 1)
 
     plans <- redist_smc(iowa_map, 100, constraints = constr, silent = TRUE)
 

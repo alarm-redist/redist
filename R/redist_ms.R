@@ -316,6 +316,20 @@ redist_mergesplit <- function(
     } else {
       init_names <- paste(init_name, seq_len(chains))
     }
+  }else {
+      if (is.null(init_seats)) {
+          if (districting_scheme == "single") {
+              init_seats <- matrix(1L, nrow = ndists, ncol = ncol(init_plan))
+          } else {
+              init_seats <- infer_plan_seats(
+                  init_plan,
+                  nseats,
+                  pop,
+                  pop_bounds[1],
+                  pop_bounds[3]
+              )
+          }
+      }
   }
 
 

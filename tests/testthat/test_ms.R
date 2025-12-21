@@ -2,7 +2,7 @@ test_that("redist_mergesplit works", {
     set.seed(1, kind = "Mersenne-Twister", normal.kind = "Inversion")
 
     nsims <- 10
-    out <- redist_mergesplit(fl_map, nsims, nsims %/% 2, init_plan = plans_10[, 1], silent = TRUE)
+    out <- redist_mergesplit(fl_map, nsims = nsims, nsims %/% 2, init_plan = plans_10[, 1], silent = TRUE)
     par <- redist.parity(as.matrix(out), total_pop = pop)
 
     expect_equal(range(as.matrix(out)), c(1, 3))

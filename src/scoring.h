@@ -280,7 +280,7 @@ class GroupHingeConstraint : public RegionConstraint {
 
 class IncumbentConstraint : public RegionConstraint {
     private:
-        arma::uvec const incumbents;
+        arma::uvec const incumbents; // NOTE: incumbents is 1-indexed
 
     public:
         IncumbentConstraint(
@@ -568,6 +568,39 @@ class TotalPlanSplitsConstraint : public PlanConstraint {
             admin_vertex_lists(admin_vertex_lists),
             region_reindex_vec(ndists),
             admin_unit_regions(std::vector<std::set<int>>(num_admin_units))
+            {};
+        // computes score for a plan 
+        double compute_raw_plan_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops
+        ) const override;
+        double compute_raw_merged_plan_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const override;
+
+};
+
+
+// Counts how many districts in a plan have more than 1 incumbent in it 
+class PlanIncumbentConstraint : public PlanConstraint {
+    private:
+        std::vector<bool> const is_district; // of length total_seats that says whether or not that size is a district
+        arma::uvec const incumbents;
+        mutable std::vector<int> region_reindex_vec;
+        mutable std::vector<int> region_incumbent_counts;
+        mutable std::vector<bool> region_is_district; // for specific plan checks if region is district 
+
+    public:
+        PlanIncumbentConstraint(
+            double const strength, int const ndists,
+            std::vector<bool> const &is_district,
+            arma::uvec const &incumbents,
+            std::vector<bool> const &num_regions_to_score,
+            bool const hard_constraint, double const hard_threshold):
+            PlanConstraint(strength, num_regions_to_score, hard_constraint, hard_threshold),
+            is_district(is_district), 
+            incumbents(incumbents),
+            region_reindex_vec(ndists),
+            region_incumbent_counts(ndists),
+            region_is_district(ndists)
             {};
         // computes score for a plan 
         double compute_raw_plan_constraint_score(
