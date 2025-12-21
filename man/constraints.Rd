@@ -79,7 +79,7 @@ add_constr_log_st(constr, strength, admin = NULL)
 
 add_constr_edges_rem(constr, strength)
 
-add_constr_phase_commute(constr, strength, current, schools, commute_times)
+add_constr_phase_commute(constr, strength, current, commute_times)
 
 add_constr_split_feeders(constr, strength, lower, schools)
 
@@ -120,15 +120,15 @@ having two or more incumbents be in the same district.}
 
 \item{denominator}{Fryer Holden minimum value to normalize by. Default is 1 (no normalization).}
 
-\item{schools}{A vector of unit indices for schools. For example, if there
-are three schools located in precincts that correspond to rows 1 and 2 of
-your \link{redist_map}, entering schools = c(1, 2) would indicate that.}
-
 \item{commute_times}{A numeric matrix (n_units × n_schools) of commute times
 (in seconds) from each geographical unit to each school. Can be computed via
 \code{redistmetrics::get_commute_matrix()}.}
 
 \item{lower}{The reference map for the split feeders constraint,, i.e. lower-level school attendance areas.}
+
+\item{schools}{A vector of unit indices for schools. For example, if there
+are three schools located in precincts that correspond to rows 1 and 2 of
+your \link{redist_map}, entering schools = c(1, 2) would indicate that.}
 
 \item{schools_capacity}{A vector of capacities for each school.}
 
