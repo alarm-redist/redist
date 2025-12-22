@@ -354,7 +354,6 @@ double eval_er(const subview_col<uword> &districts, const Graph g, int ndists) {
  * current: old plan
  * distr: district to evaluate
  * pop: population of each block
- * school: indices of schools in the data
  * commute_times: matrix of commute times from each block to each school
  * V: number of blocks
  */
@@ -392,36 +391,29 @@ double eval_phase_commute(const subview_col<uword> &districts, const uvec &curre
  * current: old plan
  * distr: district to evaluate
  * pop: population of each block
- * schools: indices of schools in the data
  * commute_times: matrix of commute times from each block to each school
  * V: number of blocks
  */
 double eval_max_commute(const subview_col<uword> &districts, const uvec &current,
                        int distr, const uvec &pop,
                        const arma::mat &commute_times, int V) {
-    double max_extra = 0.0;
+    double max_commute = 0.0;
 
     for (int k = 0; k < V; k++) {
         if (districts(k) != distr) continue; // only evaluate blocks in proposed district
 
-        // get old and new districts of current block
-        int school_old_idx = current[k] - 1;
+        // get new district of current block
         int school_new_idx = districts(k);
         
-        // if schools are the same, no disruption
-        if (school_old_idx == school_new_idx) continue;
-        
-        // compute and compare commute distances to old and new schools
-        double commute_old = commute_times(k, school_old_idx);
+        // update max commute if needed
         double commute_new = commute_times(k, school_new_idx);
-        double commute_extra = commute_new - commute_old;
-        if (commute_extra > max_extra) {
-            max_extra = commute_extra;
+        if (commute_new > max_commute) {
+            max_commute = commute_new;
         }
     }
 
-    // return log(1 + max extra commute time for a person in the district)
-    return std::log1p(max_extra);
+    // return log(1 + max commute time for a person in the district)
+    return std::log1p(max_commute);
 }
 
 /*
