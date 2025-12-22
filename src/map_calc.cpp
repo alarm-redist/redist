@@ -483,9 +483,9 @@ double eval_capacity(const subview_col<uword> &districts, int distr, const uvec 
         }
     }
 
-    // What is the capacity of the current district
-    int school_idx = distr; // assume schools/schools_capacity are in ascending district ID order
-    double pop_capacity = schools_capacity(school_idx);
+    // What is the capacity of the current district?
+    // Assume schools/schools_capacity are in ascending district ID order
+    double pop_capacity = schools_capacity(distr);
 
     // Estimate number of school-aged children in the district
     double normalized_pop = pop_assigned / sum(pop) * sum(schools_capacity);
@@ -493,10 +493,10 @@ double eval_capacity(const subview_col<uword> &districts, int distr, const uvec 
     double ratio = normalized_pop / pop_capacity;
 
     if (ratio < 0.85 || ratio > 1.15) {
-        return 20;
+        return 2;
     }
     else if ((0.85 <= ratio && ratio <= 0.94) || (1.05 <= ratio && ratio <= 1.14)) {
-        return 10;
+        return 1;
     }
     else if (0.95 <= ratio && ratio <= 1.04) {
         return 0;
