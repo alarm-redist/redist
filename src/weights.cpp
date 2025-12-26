@@ -482,8 +482,10 @@ double compute_log_optimal_incremental_weights(
     const SplittingSchedule &splitting_schedule, 
     USTSampler &ust_sampler, TreeSplitter &edge_splitter,
     SamplingSpace const sampling_space,
-    ScoringFunction const &scoring_function, double const rho,
-    bool compute_log_splitting_prob, bool is_final_split
+    ScoringFunction const &scoring_function, 
+    double const rho, double const whole_map_compactness_term,
+    bool compute_log_splitting_prob, bool is_final_split,
+    bool const using_caching, WeightCache *weight_cache
 ){
     // plan.Rprint();
     // bool for whether we'll need to compute spanning tree count
@@ -595,17 +597,33 @@ double compute_log_optimal_incremental_weights(
 
         // Do taus if neccesary 
         if(compute_log_tau){
+            if(DEBUG_WEIGHTS_VERBOSE){
+                REprintf("Computing log tau ratio!\n");
+            }
             double log_tau_ratio = 0.0;
             // add merged region
-            log_tau_ratio += (rho-1)*plan.compute_log_merged_region_spanning_trees(
-                plan_multigraph.map_params, region1_id, region2_id
-            );
+            if(plan.num_regions == 2){
+                // if its two regions its just the tau for the whole map 
+                log_tau_ratio += whole_map_compactness_term;
+            }else{
+                log_tau_ratio += (rho-1)*plan.compute_log_merged_region_spanning_trees(
+                    plan_multigraph.map_params, region1_id, region2_id
+                );
+            }
+
             // subtract split regions
-            log_tau_ratio -= (rho-1)*plan.compute_log_region_spanning_trees(
-                plan_multigraph.map_params, region1_id
+            // This function return (rho-1)*log compactness
+            log_tau_ratio -= compute_or_fetch_log_region_compactness(
+                plan, region1_id,
+                plan_multigraph.map_params,
+                rho, 
+                using_caching, weight_cache
             );
-            log_tau_ratio -= (rho-1)*plan.compute_log_region_spanning_trees(
-                plan_multigraph.map_params, region2_id
+            log_tau_ratio -= compute_or_fetch_log_region_compactness(
+                plan, region2_id,
+                plan_multigraph.map_params,
+                rho, 
+                using_caching, weight_cache
             );
             log_of_sum_term += log_tau_ratio;
         }
@@ -682,11 +700,12 @@ void compute_all_plans_log_optimal_incremental_weights(
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
     SamplingSpace const sampling_space,
     std::vector<ScoringFunction> const &scoring_functions,
-    double rho,
+    double rho, double const whole_map_compactness_term,
     std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
     std::vector<std::unique_ptr<TreeSplitter>> &tree_splitter_ptrs_vec,
     bool compute_log_splitting_prob, bool is_final_plans,
     arma::subview_col<double> log_incremental_weights,
+    WeightCacheEnsemble &cache_ensemble,  
     int verbosity
 ){
     const int nsims = static_cast<int>(plans_ptr_vec.size());
@@ -725,16 +744,27 @@ void compute_all_plans_log_optimal_incremental_weights(
             thread_generation_counter = generation;
         }
 
-
-        double log_incr_weight = compute_log_optimal_incremental_weights(
-            *plans_ptr_vec[i], plan_multigraphs_vec[thread_id], 
-            splitting_schedule, ust_samplers_vec[thread_id], *tree_splitter_ptrs_vec[thread_id],
-            sampling_space, scoring_functions[thread_id], 
-            rho, compute_log_splitting_prob, 
-            is_final_plans
-        );
-
-        log_incremental_weights[i] = log_incr_weight;
+        if(cache_ensemble.using_caching){
+            log_incremental_weights[i] = compute_log_optimal_incremental_weights(
+                    *plans_ptr_vec[i], plan_multigraphs_vec[thread_id], 
+                    splitting_schedule, ust_samplers_vec[thread_id], *tree_splitter_ptrs_vec[thread_id],
+                    sampling_space, scoring_functions[thread_id], 
+                    rho, whole_map_compactness_term,
+                    compute_log_splitting_prob, 
+                    is_final_plans,
+                    cache_ensemble.using_caching, cache_ensemble.weight_cache_ptr_vec[i].get()
+                );
+        }else{
+            log_incremental_weights[i] = compute_log_optimal_incremental_weights(
+                    *plans_ptr_vec[i], plan_multigraphs_vec[thread_id], 
+                    splitting_schedule, ust_samplers_vec[thread_id], *tree_splitter_ptrs_vec[thread_id],
+                    sampling_space, scoring_functions[thread_id], 
+                    rho, whole_map_compactness_term,
+                    compute_log_splitting_prob, 
+                    is_final_plans,
+                    cache_ensemble.using_caching, nullptr
+                );
+        }
 
         if (verbosity >= 3) {
             ++bar;
@@ -748,3 +778,24 @@ void compute_all_plans_log_optimal_incremental_weights(
 
     return;
 }
+
+
+
+std::pair<bool, double> WeightCache::attempt_to_get_region_value(
+        RegionID const region_id, 
+        int const current_region_order_added_num
+    )
+{
+    // If the current region order added is the same as the stored one then the region 
+    // has not changed and the old value is safe. If its not the same then the value is
+    // stale and must be removed 
+    if(current_region_order_added_num == this_plan_order_added[region_id]){
+        return std::make_pair(true, region_cache_values[region_id]);
+    }else{
+        // the value is stale 
+        return std::make_pair(false, 0);
+    }
+};
+
+
+

@@ -21,6 +21,7 @@
 #include "redist_types.h"
 #include "weights.h"
 #include "ust_sampler.h"
+#include "weight_caching.h"
 
 
 
@@ -42,7 +43,8 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     std::string const merge_prob_type, bool save_edge_selection_prob,
     std::vector<std::pair<RegionID, RegionID>> &adj_region_pairs,
     arma::vec &unnormalized_pair_wgts,
-    double const rho, bool const is_final, bool const do_mh
+    double const rho, bool const is_final, bool const do_mh,
+    bool const using_caching, WeightCache *weight_cache
 );
 
 int run_merge_split_steps(
@@ -56,7 +58,8 @@ int run_merge_split_steps(
     std::string const merge_prob_type,
     double const rho, bool const is_final, 
     int num_steps_to_run,
-    std::vector<int> &tree_sizes, std::vector<int> &successful_tree_sizes
+    std::vector<int> &tree_sizes, std::vector<int> &successful_tree_sizes,
+    bool const using_caching, WeightCache *weight_cache
 );
 
 

@@ -360,7 +360,7 @@ void run_merge_split_step_on_all_plans(
     double const rho, bool const is_final,
     int const nsteps_to_run,
     int const merge_split_step_num, int const step_num,
-    SMCDiagnostics &smc_diagnostics,
+    SMCDiagnostics &smc_diagnostics, WeightCacheEnsemble &cache_ensemble, 
     int verbosity
 ){
     int const num_regions = plan_ptrs_vec[0]->num_regions;
@@ -419,18 +419,36 @@ void run_merge_split_step_on_all_plans(
             thread_generation_counter = generation;
         }
         // store the number of succesful runs
-        success_count_vec[i] = run_merge_split_steps(
-            map_params, splitting_schedule, scoring_functions[thread_id],
-            rng_states[thread_id], sampling_space,
-            *plan_ptrs_vec[i], *new_plan_ptrs_vec[i],
-            ust_samplers_vec[thread_id], *tree_splitter_ptrs_vec[thread_id],
-            current_plan_multigraphs_vec[thread_id],
-            proposed_plan_multigraphs_vec[thread_id],
-            merge_prob_type,
-            rho, is_final,
-            nsteps_to_run,
-            thread_tree_sizes[thread_id], thread_successful_tree_sizes[thread_id]
-        );
+        if(cache_ensemble.using_caching){
+            success_count_vec[i] = run_merge_split_steps(
+                map_params, splitting_schedule, scoring_functions[thread_id],
+                rng_states[thread_id], sampling_space,
+                *plan_ptrs_vec[i], *new_plan_ptrs_vec[i],
+                ust_samplers_vec[thread_id], *tree_splitter_ptrs_vec[thread_id],
+                current_plan_multigraphs_vec[thread_id],
+                proposed_plan_multigraphs_vec[thread_id],
+                merge_prob_type,
+                rho, is_final,
+                nsteps_to_run,
+                thread_tree_sizes[thread_id], thread_successful_tree_sizes[thread_id],
+                true, cache_ensemble.weight_cache_ptr_vec[i].get()
+            );
+        }else{
+            success_count_vec[i] = run_merge_split_steps(
+                map_params, splitting_schedule, scoring_functions[thread_id],
+                rng_states[thread_id], sampling_space,
+                *plan_ptrs_vec[i], *new_plan_ptrs_vec[i],
+                ust_samplers_vec[thread_id], *tree_splitter_ptrs_vec[thread_id],
+                current_plan_multigraphs_vec[thread_id],
+                proposed_plan_multigraphs_vec[thread_id],
+                merge_prob_type,
+                rho, is_final,
+                nsteps_to_run,
+                thread_tree_sizes[thread_id], thread_successful_tree_sizes[thread_id],
+                false, nullptr
+            );
+        }
+
 
         if (verbosity >= 3) {
             ++bar;
@@ -583,7 +601,8 @@ List run_redist_smc(
     std::vector<int> lags = as<std::vector<int>>(control["lags"]); arma::umat ancestors(nsims, lags.size(), fill::zeros);
     // weight type
     std::string wgt_type = as<std::string>(control["weight_type"]);
-
+    // whether or not to cache the weights 
+    bool const using_caching = as<bool>(control["cache_weights"]);
 
 
     // total number of steps to run
@@ -736,6 +755,25 @@ List run_redist_smc(
     normalized_cumulative_weights = normalized_cumulative_weights / normalized_cumulative_weights[nsims-1];
 
 
+    // Create the weight cache's if needed 
+    std::unique_ptr<WeightCacheEnsemble> cache_ensemble_ptr = std::make_unique<WeightCacheEnsemble>(
+        using_caching, map_params,
+        nsims, rho, sampling_space
+    );
+
+    std::unique_ptr<WeightCacheEnsemble> dummy_cache_ensemble_ptr = std::make_unique<WeightCacheEnsemble>(
+        using_caching, map_params,
+        nsims, rho, sampling_space
+    );
+
+    double entire_map_compactness = 0.0;
+    // compute the whole map compactness if needed 
+    if(initial_num_regions == 1 & rho != 1){
+        entire_map_compactness = (rho - 1) * plan_ensemble_ptr->plan_ptr_vec[0]->compute_log_region_spanning_trees(
+            map_params, 0
+        );
+    }
+
 
     // Loading Info
     if (verbosity >= 1) {
@@ -875,6 +913,23 @@ List run_redist_smc(
                     smc_diagnostics.parent_index_mat.column(0).end(),
                     0);
             }
+            
+            // update the weights if caching 
+            if(using_caching){
+                // use the dummy one as a temp
+                for (size_t i = 0; i < nsims; i++)
+                {
+                    // for plan i it was split from plan smc_diagnostics.parent_index_mat(i, smc_step_num)
+                    // so we want to make plan i in the dummy one to be the cache from the split plan
+                    std::swap(
+                        dummy_cache_ensemble_ptr->weight_cache_ptr_vec[i],
+                        cache_ensemble_ptr->weight_cache_ptr_vec[smc_diagnostics.parent_index_mat(i, smc_step_num)]
+                    );
+                }
+                // now we swap the two pointers so the cache ensemble one is aligned 
+                std::swap(cache_ensemble_ptr, dummy_cache_ensemble_ptr);
+            }
+
             // plan_ensemble_ptr->plan_ptr_vec[0]->Rprint(true);
 
 
@@ -905,11 +960,11 @@ List run_redist_smc(
                 compute_all_plans_log_optimal_incremental_weights(
                     pool,
                     map_params, *splitting_schedule_ptr, sampling_space,
-                    scoring_functions, rho,
+                    scoring_functions, rho, entire_map_compactness,
                     plan_ensemble_ptr->plan_ptr_vec, tree_splitter_ptrs_vec,
                     compute_log_splitting_prob, is_final_splitting_step,
                     smc_diagnostics.log_incremental_weights_mat.col(smc_step_num),
-                    verbosity
+                    *cache_ensemble_ptr, verbosity
                 );
             }else if(wgt_type == "simple"){
                 if (verbosity >= 3) Rprintf("Computing Simple Backwards Kernel Weights:\n");
@@ -1026,7 +1081,7 @@ List run_redist_smc(
                 rho, is_final_splitting_step,
                 nsteps_to_run,
                 merge_split_step_num, step_num,
-                smc_diagnostics,
+                smc_diagnostics, *cache_ensemble_ptr,
                 verbosity
             );
 

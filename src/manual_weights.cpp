@@ -382,12 +382,12 @@ arma::vec compute_plans_log_optimal_weights(
         }
 
         // REprintf("I=%d\n", i);
-        log_weights(i) = compute_log_optimal_incremental_weights(
-            *plan_ensemble.plan_ptr_vec[i], plan_multigraph,
-            *splitting_schedule_ptr, ust_sampler, tree_splitter,
-            sampling_space, scoring_function, 
-            rho, true, is_final
-        );
+        // log_weights(i) = compute_log_optimal_incremental_weights(
+        //     *plan_ensemble.plan_ptr_vec[i], plan_multigraph,
+        //     *splitting_schedule_ptr, ust_sampler, tree_splitter,
+        //     sampling_space, scoring_function, 
+        //     rho, true, is_final
+        // );
 
 
 
@@ -529,12 +529,12 @@ arma::vec compute_plans_log_simple_weights(
         }
 
         // REprintf("I=%d\n", i);
-        log_weights(i) = compute_log_optimal_incremental_weights(
-            *plan_ensemble.plan_ptr_vec[i], plan_multigraph,
-            *splitting_schedule_ptr, ust_sampler, tree_splitter,
-            sampling_space, scoring_function, 
-            rho, true, is_final
-        );
+        // log_weights(i) = compute_log_optimal_incremental_weights(
+        //     *plan_ensemble.plan_ptr_vec[i], plan_multigraph,
+        //     *splitting_schedule_ptr, ust_sampler, tree_splitter,
+        //     sampling_space, scoring_function, 
+        //     rho, true, is_final
+        // );
 
 
 

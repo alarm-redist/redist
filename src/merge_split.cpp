@@ -288,7 +288,8 @@ Rcpp::List ms_plans(
             pair_rule, save_edge_selection_prob,
             current_plan_adj_region_pairs,
             current_plan_pair_unnoramalized_wgts,
-            rho, true, do_mh
+            rho, true, do_mh,
+            false, nullptr
         );
         // count size
         ++tree_sizes[std::get<3>(mergesplit_result)-1];

@@ -21,6 +21,7 @@
 #include "redist_alg_helpers.h"
 #include "scoring.h"
 #include "ust_sampler.h"
+#include "weight_caching.h"
 
 
 //' Run SMC (optionally with Merge Split steps too)

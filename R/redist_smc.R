@@ -457,9 +457,10 @@ redist_smc <- function(
   }
 
   # Now extract control parameters
-  control_params_list <- extract_control_params(control)
+  control_params_list <- extract_control_params(control, compactness)
   nproc <- control_params_list[["nproc"]]
   weight_type <- control_params_list[["weight_type"]]
+  cache_weights <- control_params_list[["cache_weights"]]
 
   multiprocess <- nproc > 1
   # make sure we're not spawning more proccesses than runs
@@ -520,6 +521,7 @@ redist_smc <- function(
 
   cpp_control_list <- list(
     weight_type = weight_type,
+    cache_weights = cache_weights,
     lags = lags,
     seq_alpha = seq_alpha,
     pop_temper = pop_temper,
@@ -1051,10 +1053,10 @@ get_init_plan_params <- function(
 #'     - `nproc`: The number of parallel R processes to spawn. Defaults to 1.
 #'     - `weight_type`: Must be either simple or optimal. Defaults to optimal
 #' @noRd
-extract_control_params <- function(control) {
-  control_param_names <- c("nproc", "weight_type")
+extract_control_params <- function(control, compactness) {
+  control_param_names <- c("nproc", "weight_type", "cache_weights")
 
-  if (is.list(control) && any("nproc" %in% control_param_names)) {
+  if (is.list(control) && any(names(control) %in% control_param_names)) {
     if ("nproc" %in% names(control)) {
       nproc <- control[["nproc"]]
       if (!rlang::is_scalar_integerish(nproc)) {
@@ -1081,14 +1083,27 @@ extract_control_params <- function(control) {
       # else default to optimal
       weight_type <- "optimal"
     }
+
+  if ("cache_weights" %in% names(control)) {
+      cache_weights <- control[["cache_weights"]]
+      if(!rlang::is_scalar_logical(cache_weights)){
+        cli::cli_abort("{.arg cache_weights} must be a scalar boolean")
+      }
+  } else {
+      # else default to caching if compactness is not 1
+      cache_weights <- compactness != 1
+  }
+
   } else {
     nproc <- 1L
     weight_type <- "optimal"
+    cache_weights <- compactness != 1
   }
 
   control_params <- list(
     nproc = nproc,
-    weight_type = weight_type
+    weight_type = weight_type,
+    cache_weights = cache_weights
   )
 
   control_params

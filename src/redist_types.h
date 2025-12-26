@@ -104,6 +104,7 @@ template <typename T> class PlanAttribute {
 typedef PlanAttribute<RegionID> PlanVector;
 typedef PlanAttribute<RegionID> RegionSizes;
 typedef PlanAttribute<int> IntPlanAttribute;
+typedef PlanAttribute<double> DoublePlanAttribute;
 
 
 // uniquely maps pairs (x,y) of the form 

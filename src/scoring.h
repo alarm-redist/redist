@@ -51,8 +51,8 @@ class RegionConstraint {
         RegionConstraint(
             Rcpp::List const &a_constraint
         ): 
-            score_districts_only(a_constraint.containsElementNamed("only_districts") ? as<bool>(a_constraint["only_districts"]) : false),
             strength(a_constraint.containsElementNamed("strength") ? as<double>(a_constraint["strength"]) : 1.0),
+            score_districts_only(a_constraint.containsElementNamed("only_districts") ? as<bool>(a_constraint["only_districts"]) : false),
             hard_constraint(a_constraint.containsElementNamed("hard_constraint") ? as<bool>(a_constraint["hard_constraint"]) : false),
             hard_threshold(a_constraint.containsElementNamed("hard_threshold") ? as<double>(a_constraint["hard_threshold"]) : 0.0) 
             {};

@@ -98,6 +98,9 @@ arma::vec get_adj_pair_unnormalized_weights(
 }
 
 // computes log metropolis hastings ratio
+// new_region1_log_compactness, new_region2_log_compactness
+// are pass by reference to save the log tau of the new regions 
+// if the split was successful 
 double get_log_mh_ratio(
     MapParams const &map_params, ScoringFunction const &scoring_function,
     const int region1_id, const int region2_id,
@@ -105,8 +108,11 @@ double get_log_mh_ratio(
     double const proposed_log_eff_boundary_len, 
     const double log_current_pair_merge_prob, 
     const double log_new_pair_merge_prob, 
+    double &new_region1_log_compactness,
+    double &new_region2_log_compactness,
     Plan const &current_plan, Plan const &proposed_plan,
-    double const rho, bool const is_final
+    double const rho, bool const is_final,
+    bool const using_caching, WeightCache *weight_cache
 ){
     double log_mh_ratio = 0.0;
     // We add the scores of the current regions and plan
@@ -132,19 +138,28 @@ double get_log_mh_ratio(
     // we compute taus if neccesary 
     if(rho != 1){
         // we add scorse of proposed region
-        log_mh_ratio += (rho-1) * proposed_plan.compute_log_region_spanning_trees(
+        new_region1_log_compactness = (rho-1) * proposed_plan.compute_log_region_spanning_trees(
             map_params, region1_id
         );
-        log_mh_ratio += (rho-1) * proposed_plan.compute_log_region_spanning_trees(
+        new_region2_log_compactness = (rho-1) * proposed_plan.compute_log_region_spanning_trees(
             map_params, region2_id
         );
+        log_mh_ratio += new_region1_log_compactness;
+        log_mh_ratio += new_region2_log_compactness;
         // we subtract scores of current region
-        log_mh_ratio -= (rho-1) * current_plan.compute_log_region_spanning_trees(
-            map_params, region1_id
-        );
-        log_mh_ratio -= (rho-1) * current_plan.compute_log_region_spanning_trees(
-            map_params, region2_id
-        );
+        // This function return (rho-1)*log compactness
+        log_mh_ratio -= compute_or_fetch_log_region_compactness(
+                current_plan, region1_id,
+                map_params,
+                rho, 
+                using_caching, weight_cache
+            );
+        log_mh_ratio -= compute_or_fetch_log_region_compactness(
+                current_plan, region2_id,
+                map_params,
+                rho, 
+                using_caching, weight_cache
+            );
     }
     // we add forward kernel proposed to current terms 
     log_mh_ratio += current_log_eff_boundary_len;
@@ -179,7 +194,8 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     std::string const merge_prob_type, bool save_edge_selection_prob,
     std::vector<std::pair<RegionID, RegionID>> &adj_region_pairs,
     arma::vec &unnormalized_pair_wgts,
-    double const rho, bool const is_final, bool const do_mh
+    double const rho, bool const is_final, bool const do_mh,
+    bool const using_caching, WeightCache *weight_cache
 ){
     // sample a pair 
     int sampled_pair_index = rng_state.r_int_unnormalized_wgt(unnormalized_pair_wgts);
@@ -339,6 +355,8 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
             );
         }
 
+        double new_region1_log_compactness, new_region2_log_compactness;
+
         log_mh_ratio = get_log_mh_ratio(
             map_params, scoring_function,
             region1_id, region2_id,
@@ -346,11 +364,22 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
             proposed_log_eff_boundary, 
             std::log(unnormalized_pair_wgts(sampled_pair_index)) - std::log(arma::sum(unnormalized_pair_wgts)), 
             std::log(new_valid_pair_weights(region_pair_proposal_index)) - std::log(arma::sum(new_valid_pair_weights)), 
+            new_region1_log_compactness, new_region2_log_compactness,
             plan, new_plan,
-            rho, is_final
+            rho, is_final,
+            using_caching, weight_cache
         );
         proposal_accepted = rng_state.r_unif() <= std::exp(log_mh_ratio);
         if(DEBUG_MERGING_VERBOSE) Rprintf("Ratio is %f and it is", std::exp(log_mh_ratio));
+        
+        // update the cached compactness if needed 
+        if(proposal_accepted && using_caching){
+            weight_cache->region_cache_values[region1_id] = new_region1_log_compactness;
+            weight_cache->this_plan_order_added[region1_id] = new_plan.region_added_order[region1_id];
+            weight_cache->region_cache_values[region2_id] = new_region2_log_compactness;
+            weight_cache->this_plan_order_added[region2_id] = new_plan.region_added_order[region2_id];
+        }
+
     }else{
         // always accept 
         proposal_accepted = true;
@@ -392,7 +421,8 @@ int run_merge_split_steps(
     std::string const merge_prob_type,
     double const rho, bool const is_final, 
     int num_steps_to_run,
-    std::vector<int> &tree_sizes, std::vector<int> &successful_tree_sizes
+    std::vector<int> &tree_sizes, std::vector<int> &successful_tree_sizes,
+    bool const using_caching, WeightCache *weight_cache
 ){
     int num_succesful_steps = 0;
     bool save_edge_selection_prob = sampling_space == SamplingSpace::LinkingEdgeSpace;
@@ -419,7 +449,8 @@ int run_merge_split_steps(
             merge_prob_type, save_edge_selection_prob,
             current_plan_adj_region_pairs,
             current_plan_pair_unnoramalized_wgts,
-            rho, is_final, true
+            rho, is_final, true,
+            using_caching, weight_cache
         );
         // count tree size
         ++tree_sizes[std::get<3>(mergesplit_result)-1];

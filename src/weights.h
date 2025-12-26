@@ -20,6 +20,7 @@
 #include "scoring.h"
 #include "map_calc.h"
 #include "graph_ops.h"
+#include "weight_caching.h"
 
 
 /* Computes Compute Effective Sample Size from log incremental weights
@@ -36,6 +37,7 @@
  * @return sum of weights squared over sum of squared weights (sum(wgt)^2 / sum(wgt^2))
  */
 double compute_n_eff(const arma::subview_col<double> log_wgt);
+
 
 
 
@@ -56,9 +58,10 @@ double compute_log_optimal_incremental_weights(
     Plan const &plan, PlanMultigraph &plan_multigraph,
     const SplittingSchedule &splitting_schedule, 
     USTSampler &ust_sampler, TreeSplitter &edge_splitter,
-    SamplingSpace const sampling_space,
+    SamplingSpace const sampling_space, double const whole_map_compactness_term,
     ScoringFunction const &scoring_function, double const rho,
-    bool compute_log_splitting_prob, bool is_final_plan
+    bool compute_log_splitting_prob, bool is_final_plan,
+    bool const using_caching, WeightCache *weight_cache
 );
 
 void compute_all_plans_log_optimal_incremental_weights(
@@ -66,11 +69,12 @@ void compute_all_plans_log_optimal_incremental_weights(
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
     SamplingSpace const sampling_space,
     std::vector<ScoringFunction> const &scoring_functions,
-    double rho,
+    double rho, double const whole_map_compactness_term,
     std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
     std::vector<std::unique_ptr<TreeSplitter>> &tree_splitter_ptrs_vec,
     bool compute_log_splitting_prob, bool is_final_plans,
     arma::subview_col<double> log_incremental_weights,
+    WeightCacheEnsemble &cache_ensemble, 
     int verbosity
 );
 
