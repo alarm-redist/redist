@@ -470,30 +470,37 @@ double Plan::compute_log_region_spanning_trees(MapParams const &map_params,
             }
         }
     }
-
     // comput tau for each county intersect region
     for (auto const county_num: region_counties) {
         log_st += compute_log_region_and_county_spanning_tree_eigen_tri(
             map_params.g, map_params.counties, county_num,
             region_ids, region_id, region_id
         );
-        // REprintf("Called for %d!\n", county_num);
-        // log_st += compute_log_region_and_county_spanning_tree(
-        //     map_params.g, map_params.counties, county_num,
-        //     region_ids, region_id, region_id
-        // );
-
-        // REprintf("%f vs %f, diff %.20f and %d\n", 
-        //     new_tau, old_tau, 
-        //     std::fabs(new_tau - old_tau),
-        //     old_tau == new_tau);
     }
     // Add county level multigraph tau
-    log_st += compute_log_county_level_spanning_tree(
+    log_st += compute_log_county_level_spanning_tree_eigen(
         map_params.g, map_params.counties, map_params.num_counties,
         region_ids,
         region_id, region_id
     );
+
+    // double old_log_st = 0;
+    // // comput tau for each county intersect region
+    // for (auto const county_num: region_counties) {
+    //     old_log_st += compute_log_region_and_county_spanning_tree(
+    //         map_params.g, map_params.counties, county_num,
+    //         region_ids, region_id, region_id
+    //     );
+    // }
+    // // Add county level multigraph tau
+    // old_log_st += compute_log_county_level_spanning_tree(
+    //     map_params.g, map_params.counties, map_params.num_counties,
+    //     region_ids,
+    //     region_id, region_id
+    // );
+    // REprintf("New %f vs old %f, diff is %.20F and %d\n",
+    //     log_st, old_log_st, std::fabs(log_st - old_log_st), old_log_st == log_st
+    // );
 
     return log_st;
 }
@@ -526,11 +533,6 @@ double Plan::compute_log_merged_region_spanning_trees(MapParams const &map_param
             map_params.g, map_params.counties, county_num,
             region_ids, region1_id, region2_id
         );
-        // REprintf("Called for %d!\n", county_num);
-        // log_st += compute_log_region_and_county_spanning_tree(
-        //     map_params.g, map_params.counties, county_num,
-        //     region_ids, region1_id, region2_id
-        // );
     }
     // Add county level multigraph tau
     log_st += compute_log_county_level_spanning_tree(
@@ -1064,9 +1066,24 @@ double PlanMultigraph::compute_log_multigraph_tau(
     ScoringFunction const &scoring_function
 ){
     if(counties_on){
-        return compute_hierarchical_log_multigraph_tau(
+        double new_tau = compute_hierarchical_log_multigraph_tau_eigen(
             num_regions, scoring_function
         );
+        // double old_tau = compute_hierarchical_log_multigraph_tau(
+        //     num_regions, scoring_function
+        // );
+        // if(std::fabs(new_tau - old_tau) > 1e-10){
+        //     REprintf("new %f v. old %f | diff %.20f, %d\n", 
+        //         new_tau, old_tau, std::fabs(new_tau - old_tau), 
+        //         new_tau == old_tau
+        //     );
+        // }
+
+        return new_tau;
+
+        // return compute_hierarchical_log_multigraph_tau(
+        //     num_regions, scoring_function
+        // );
     }else{
         return compute_non_hierarchical_log_multigraph_tau(
             num_regions, scoring_function
@@ -1081,11 +1098,32 @@ double PlanMultigraph::compute_merged_log_multigraph_tau(
             ScoringFunction const &scoring_function
 ){
     if(counties_on){
-        return compute_hierarchical_merged_log_multigraph_tau(
+        double new_tau = compute_hierarchical_merged_log_multigraph_tau_eigen(
             num_regions, 
             region1_id, region2_id,
             scoring_function
         );
+
+        // double old_tau = compute_hierarchical_merged_log_multigraph_tau(
+        //     num_regions, 
+        //     region1_id, region2_id,
+        //     scoring_function
+        // );
+        // if(std::fabs(new_tau - old_tau) > 1e-10){
+        //     REprintf("new %f v. old %f | diff %.20f, %d\n", 
+        //         new_tau, old_tau, std::fabs(new_tau - old_tau), 
+        //         new_tau == old_tau
+        //     );
+        // }
+
+        return new_tau;
+
+
+        // return compute_hierarchical_merged_log_multigraph_tau(
+        //     num_regions, 
+        //     region1_id, region2_id,
+        //     scoring_function
+        // );
     }else{
         return compute_non_hierarchical_merged_log_multigraph_tau(
             num_regions, 
@@ -1094,6 +1132,329 @@ double PlanMultigraph::compute_merged_log_multigraph_tau(
         );
     }
 }
+
+
+double PlanMultigraph::compute_hierarchical_log_multigraph_tau_eigen(
+    int const num_regions, 
+    ScoringFunction const &scoring_function
+) {
+    // if two regions then its just the log(boundary length) between
+    // Since any minor of laplacian is just the degree of vertex 0 or 1
+    if(num_regions == 2){
+        // Get the value 
+        auto val = pair_map.get_value(0, 1).second;
+        if(val.admin_adjacent){
+            return std::log(static_cast<double>(val.within_county_edges));
+        }else{
+            return std::log(static_cast<double>(val.across_county_edges));
+        }
+    }
+
+    // We need to compute this hierarchically. First we compute within each 
+    // connected component then we compute across all of them 
+    // First we need to sort all the pairs
+
+    if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+        Rprint();
+    }
+
+    auto all_pairs = pair_map.get_all_values(true);
+
+    if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+    REprintf("%d Components | Pre-Sorted Pairs: \n", num_county_connected_components);
+    for(auto const &val: all_pairs){
+        REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s\n",
+            val.first.first, val.first.second, 
+            county_component[val.first.first], county_component[val.first.second],
+            (val.second.same_admin_component ? "SHARED" : "NOT SHARED"));
+    }
+    }
+
+    // Sort the pairs to 
+    //  1. All pairs that are in different components are at the end
+    //  2. Among pairs in the same component sort them by their component  
+    std::sort(all_pairs.begin(), all_pairs.end(),
+        [&](const auto &a, const auto &b) {
+            const auto &[region_1a, region_2a] = a.first;
+            const PairHashData &data_a = a.second;
+
+            const auto &[region_1b, region_2b] = b.first;
+            const PairHashData &data_b = b.second;
+
+            // Rule 1: same_admin_component == true goes to the front
+            if (data_a.same_admin_component != data_b.same_admin_component) {
+                // recall true =1, false = 0 so this says if data_a and data_b 
+                // different then a is greater iff its true 
+                return data_a.same_admin_component > data_b.same_admin_component;
+            }
+
+            // Rule 2: for matching entries, sort by county_component[region1]
+            if (data_a.same_admin_component) {
+                return county_component[region_1a] < county_component[region_1b];
+            }
+
+            return false; // otherwise, keep existing relative order
+        });
+
+
+    if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+    REprintf("%d Components | NOW SORTED Pairs: \n", num_county_connected_components);
+    for(auto const &val: all_pairs){
+        REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s\n",
+            val.first.first, val.first.second, 
+            county_component[val.first.first], county_component[val.first.second],
+            (val.second.same_admin_component ? "SHARED" : "NOT SHARED"));
+    }
+    }
+
+
+    double log_tau = 0.0;
+
+    // current index through all_pairs
+    int curr_index = 0;
+
+    // Now we go through each component and compute log spanning trees 
+    for (int component_id = 0; component_id < num_county_connected_components; component_id++)
+    {
+
+        // stop loop if we've reached pairs across components
+        if(curr_index >= all_pairs.size() || !all_pairs[curr_index].second.same_admin_component) break;
+
+        int num_component_regions = component_region_counts[component_id];
+        
+        if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+            REprintf("Component %d which has %d regions!\n", component_id, num_component_regions);
+        }
+
+        // If 1 component then there only 1 tree so log(1) = 0
+        if(num_component_regions <= 1){
+            // do nothing
+            // REprintf("1 Region in Component! Log tau unchanged at %f\n", log_tau);
+            // do nothing 
+        }else if(num_component_regions == 2){
+            // If its two then its just the degree of either vertex which is the boundary length
+            // Since its the same component its just within component edges
+            log_tau += std::log(static_cast<double>(all_pairs[curr_index].second.within_county_edges));
+            // REprintf("2 Regions in Component! Log tau now at %f\n", log_tau);
+            // now increment index
+            ++curr_index;
+        }else{
+            if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+            REprintf("3 or more regions in component!\n");
+            }
+            // else more than two regions so we need to reindex the regions 
+            // This ensures each region in the component is indexed from 
+            // 0, ... num regions in the component 
+            for (int current_reindex = 0, a_region_id = 0; a_region_id < num_regions; a_region_id++){
+                // if in the component then reindex that region
+                if(county_component[a_region_id] == component_id){
+                    region_reindex_vec[a_region_id] = current_reindex;
+                    ++current_reindex;
+                    if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+                    REprintf("Mapping %d to %d!\n", a_region_id, region_reindex_vec[a_region_id]);
+                    }
+                }
+            }
+
+            // Now make the graph laplacian matrix 
+            // as a sparse upper triangle matrix 
+            std::vector<Eigen::Triplet<double, int>> laplacian_minor_trips;
+
+            // now we iterate through all pairs where both are in this component
+            while(
+                curr_index < all_pairs.size() &&
+                county_component[all_pairs[curr_index].first.first] == component_id && 
+                county_component[all_pairs[curr_index].first.second] == component_id 
+            ){
+
+                const auto &[pair_region1, pair_region2] = all_pairs[curr_index].first;
+                const PairHashData &pair_val = all_pairs[curr_index].second;
+
+                // Because we filter out hier merge invalid we don't need to check
+
+                double edges = 0;
+
+                // else valid merge so get edges we count
+                if(pair_val.admin_adjacent){
+                    edges = static_cast<double>(all_pairs[curr_index].second.within_county_edges);
+                }else{
+                    REprintf("Region Pair (%d, %d) - ", pair_region1, pair_region2);
+                    REprintf("Error! in BASE PLAN TYPE NON ADMIN ADJACENT HIER MERGE VALID!\n");
+                    throw Rcpp::exception("Bro!]n");
+                }
+
+                if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+                    REprintf("Region Pair (%d, %d) | %d | %d edges!\n ", 
+                        pair_region1, pair_region2, 
+                        pair_val.admin_adjacent,
+                        edges);
+                }
+
+                auto reindexed_pair_region1 = region_reindex_vec[pair_region1];
+                auto reindexed_pair_region2 = region_reindex_vec[pair_region2];
+
+                // Now for both pairs we need to 
+                // 1. Update the degree of the vertex
+                // 2. Increase the count of edges between the regions 
+
+                // But if either region has index num_regions-1
+                // we don't count its degree or care about edge count
+
+                // Check if neither pair is id num_regions-1
+                if(reindexed_pair_region1 != num_component_regions-1 && 
+                   reindexed_pair_region2 != num_component_regions-1){
+                    // increase the degree of both vertices 
+                    // by adding triplets for them 
+                    laplacian_minor_trips.emplace_back(reindexed_pair_region1, reindexed_pair_region1, edges);
+                    laplacian_minor_trips.emplace_back(reindexed_pair_region2, reindexed_pair_region2, edges);
+
+                    // subtract edges between them 
+                    // now we add the negative edges between them but only to the upper triangle 
+                    // meaning (smaller_reindex, bigger_reindex, -edges)
+                    if(reindexed_pair_region1 < reindexed_pair_region2){
+                        laplacian_minor_trips.emplace_back(reindexed_pair_region1, reindexed_pair_region2, -edges);
+                    }else if(reindexed_pair_region2 < reindexed_pair_region1){
+                        laplacian_minor_trips.emplace_back(reindexed_pair_region2, reindexed_pair_region1, -edges);
+                    }else{
+                        REprintf("ERROR in compute hierarchical linking edge: Reindex %d=%d\n",
+                            reindexed_pair_region1, reindexed_pair_region2);
+                        throw Rcpp::exception("Big time error! \n");
+                    }
+
+                }else if(reindexed_pair_region1 != num_component_regions-1){
+                    // increase the degree 
+                    laplacian_minor_trips.emplace_back(reindexed_pair_region1, reindexed_pair_region1, edges);
+                    // because other region is merged one ignore the edges between them
+                }else if(reindexed_pair_region2 != num_component_regions-1){
+                    // increase the degree 
+                    laplacian_minor_trips.emplace_back(reindexed_pair_region2, reindexed_pair_region2, edges);
+                    // because other region is merged one ignore the edges between them
+                }
+                // increase current index by 1
+                ++curr_index;
+            }
+            if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+                REprintf("Printing Laplacian Minor!\n");
+                // laplacian_minor.print();
+            }
+            // Now add log det
+            log_tau += compute_log_det_from_triplets(laplacian_minor_trips, num_component_regions-1);
+        }
+    }
+
+    if(curr_index >= all_pairs.size() && num_county_connected_components > 1){
+        REprintf("ERROR!!\n %u pairs, curr index %d but %d num admin components\n",
+            all_pairs.size(), curr_index, num_county_connected_components);
+            Rprint();
+    REprintf("%d Components | NOW SORTED Pairs: \n", num_county_connected_components);
+    for(auto const &val: all_pairs){
+        REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s\n",
+            val.first.first, val.first.second, 
+            county_component[val.first.first], county_component[val.first.second],
+            (val.second.same_admin_component ? "SHARED" : "NOT SHARED"));
+    }
+    for (int i = 0; i < num_county_connected_components; i++)
+    {
+        REprintf("Component %d - %d Regions\n", i, component_region_counts[i]);
+    }
+        throw Rcpp::exception("! Hier\n");
+    }
+
+    // If only one connected component then we stop 
+    if(num_county_connected_components == 1){
+        return log_tau;
+    }else if(num_county_connected_components == 2){
+        int across_component_edges = 0;
+        // If two then we just sum the edges across and take log 
+        for (int i = curr_index; i < all_pairs.size(); i++)
+        {
+            across_component_edges += all_pairs[i].second.across_county_edges;
+        }
+        // add
+        log_tau += std::log(static_cast<double>(across_component_edges));
+        return log_tau;
+    }
+
+    // Now we compute spanning trees across components 
+    // as a sparse upper triangle matrix 
+    std::vector<Eigen::Triplet<double, int>> component_laplacian_minor_trips;
+
+    if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+    REprintf("Current index now %d with %u pairs\n", curr_index, all_pairs.size());
+    }
+    
+    // Iterate over the remaining pairs that are across components 
+    for (int i = curr_index; i < all_pairs.size(); i++)
+    {
+        const auto &[pair_region1, pair_region2] = all_pairs[i].first;
+        const PairHashData &pair_val = all_pairs[i].second;
+
+        int component1_id = county_component[pair_region1];
+        int component2_id = county_component[pair_region2];
+
+        // 
+        if(pair_val.same_admin_component){
+            REprintf("BIG ERROR SAME COMPONENT WHEN SHOULD BE DIFF!\n");
+        }
+
+        double edges = static_cast<double>(pair_val.across_county_edges);
+        if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+        REprintf("Components (%d,%d) - %d edges across!\n",
+            component1_id,component2_id, edges);
+        }
+        // Now for both pairs we need to 
+        // 1. Update the degree of the vertex
+        // 2. Increase the count of edges between the regions 
+
+        // But if either region has index num_regions-1
+        // we don't count its degree or care about edge count
+
+        // Check if neither pair is id num_regions-1
+        if(component1_id != num_county_connected_components-1 && 
+            component2_id != num_county_connected_components-1){
+            // increase the degree of both vertices 
+            component_laplacian_minor_trips.emplace_back(
+                component1_id, component1_id, edges
+            );
+            component_laplacian_minor_trips.emplace_back(
+                component2_id, component2_id, edges
+            );
+
+            // subtract edges between them 
+            if(component1_id < component2_id){
+                component_laplacian_minor_trips.emplace_back(component1_id, component2_id, -edges);
+            }else if(component2_id < component1_id){
+                component_laplacian_minor_trips.emplace_back(component2_id, component1_id, -edges);
+            }else{
+                REprintf("ERROR in compute hierarchical linking edge: Reindex %d=%d\n",
+                    component1_id, component2_id);
+                throw Rcpp::exception("Big time error! \n");
+            }
+        }else if(component1_id != num_county_connected_components-1){
+            // increase the degree 
+            component_laplacian_minor_trips.emplace_back(
+                component1_id, component1_id, edges
+            );
+            // because other region is merged one ignore 
+        }else if(component2_id != num_county_connected_components-1){
+            // increase the degree 
+            component_laplacian_minor_trips.emplace_back(
+                component2_id, component2_id, edges
+            );
+            // because other region is merged one ignore 
+        }
+    }
+    
+    if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+        REprintf("Printing Component Laplacian Minor\n");
+    }
+
+    // Now add log det
+    log_tau += compute_log_det_from_triplets(component_laplacian_minor_trips, num_county_connected_components-1);
+
+    return log_tau;
+}
+
 
 double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
     int const num_regions, 
@@ -1389,6 +1750,507 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
     log_tau += arma::log_det_sympd(component_laplacian_minor);
 
     return log_tau;
+}
+
+
+// Need to take care because some previously inelgible hier merge pairs now 
+// become ok to merge 
+double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau_eigen(
+            int const num_regions, 
+            RegionID const region1_id, RegionID const region2_id,
+            ScoringFunction const &scoring_function
+){
+    // if two regions then their merge is just 1 region which has no linking 
+    // edges. Size of empty set is 0 so return log(1) = 0
+    if(num_regions <= 2){
+        return 0.0;
+    }
+
+    // Determine if the merge is joining two admin connected components
+    auto region1_component = county_component[region1_id];
+    auto region2_component = county_component[region2_id];
+    bool const two_components_merged = region1_component != region2_component;
+    int merged_num_admin_connected_components = num_county_connected_components - two_components_merged;
+
+
+    // We need to compute this hierarchically. First we compute within each 
+    // connected component then we compute across all of them 
+    if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+        REprintf("We are merging %u and %u! in unmereged components( %d, %d) | There are %d Unmerged Components and %d merged components | \n", 
+            region1_id, region2_id,
+            region1_component, region2_component,
+            num_county_connected_components,
+            merged_num_admin_connected_components
+        );
+        Rprint();
+    }
+
+    // First get all pairs ignoring invalid merges 
+    auto all_pairs = pair_map.get_all_values(true);
+
+    // We'll use the reindex vector to first reindex component ids 
+    // Since there can't be more components than regions 
+    // this will just map component two to component 1
+    for (int a_region_id = 0; a_region_id < num_regions; a_region_id++){
+        auto const this_region_component = county_component[a_region_id];
+        // all components but region 2's get mapped to themselves
+        if(this_region_component == region2_component){
+            county_component_reindex[a_region_id] = region1_component;
+        }else{
+            county_component_reindex[a_region_id] = this_region_component;
+        }
+        if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+        REprintf("Region %d maps to component %d now! (was %d) \n", 
+            a_region_id, 
+            county_component_reindex[a_region_id], 
+            county_component[a_region_id]
+            );
+        }
+    }
+
+    if(two_components_merged){
+        // If we're joining two components then we need to filter out pairs
+        // that are not admin adjacent but were previously in different components
+        all_pairs.erase(
+            std::remove_if(all_pairs.begin(), all_pairs.end(), 
+            [&](const std::pair<std::pair<RegionID, RegionID>, PairHashData> &an_el) { 
+                const auto &[region_1a, region_2a] = an_el.first;
+                const PairHashData &data_a = an_el.second;
+            
+                // We remove if both are same component and not admin adjacent
+                bool const invalid_merge_now = (
+                    county_component_reindex[region_1a] == county_component_reindex[region_2a] &&
+                    !data_a.admin_adjacent
+                );
+
+                // remove if any size is invalid split size or if merged size can't be split
+                return invalid_merge_now;
+            }
+        ), all_pairs.end());
+    }else{        
+        // We're merging two regions in the same admin connected component so just 
+        // remove that pair
+        all_pairs.erase(
+            std::remove_if(all_pairs.begin(), all_pairs.end(), 
+            [&](auto an_el) { 
+                const auto &[region_1a, region_2a] = an_el.first;
+                return region_1a == region1_id && region_2a == region2_id;
+            }
+        ), all_pairs.end());
+    }
+
+    if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+    REprintf("%d Components | Pre-Sorted Pairs: \n", merged_num_admin_connected_components);
+    for(auto const &val: all_pairs){
+        REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s | Edges %d\n",
+            val.first.first, val.first.second, 
+            county_component_reindex[val.first.first], county_component_reindex[val.first.second],
+            (val.second.same_admin_component ? "SHARED" : "NOT SHARED"),
+            (val.second.same_admin_component ? val.second.within_county_edges : val.second.across_county_edges));
+    }
+    }
+
+
+    // Sort the pairs to 
+    //  1. All pairs that are in different components are at the end
+    //  2. Among pairs in the same component sort them by their component 
+        // need to account for one less component in sorting 
+    std::sort(all_pairs.begin(), all_pairs.end(),
+        [&](const auto &a, const auto &b) {
+            const auto &[region_1a, region_2a] = a.first;
+
+            bool const data_a_same_component = (
+                county_component_reindex[region_1a] == county_component_reindex[region_2a]
+            );
+
+            const auto &[region_1b, region_2b] = b.first;
+
+
+            bool const data_b_same_component = (
+                county_component_reindex[region_1b] == county_component_reindex[region_2b]
+            );
+
+            // Rule 1: same_admin_component == true goes to the front
+            if (data_a_same_component != data_b_same_component) {
+                // recall true =1, false = 0 so this says if data_a and data_b 
+                // different then a is greater iff its true 
+                return data_a_same_component > data_b_same_component;
+            }
+
+            // Rule 2: for matching entries, sort by reindexed county_component[region1]
+            if (data_a_same_component) {
+                return county_component_reindex[region_1a] < county_component_reindex[region_1b];
+            }
+
+            return false; // otherwise, keep existing relative order
+        });
+
+    
+    if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+    REprintf("%d Components | NOW SORTED Pairs: \n", merged_num_admin_connected_components);
+    for(auto const &val: all_pairs){
+        REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s | Edges %d\n",
+            val.first.first, val.first.second, 
+            county_component_reindex[val.first.first], county_component_reindex[val.first.second],
+            (val.second.same_admin_component ? "SHARED" : "NOT SHARED"),
+            (val.second.same_admin_component ? val.second.within_county_edges : val.second.across_county_edges));
+    }
+    }
+
+
+    double log_tau = 0.0;
+
+    // current index through all_pairs
+    int curr_index = 0;
+
+    // Now we go through each component and compute log spanning trees 
+    for (int component_id = 0; component_id < num_county_connected_components; component_id++)
+    {
+        // Number of components in the region is same if not component 1
+        // If component 1 then we add up the two regions 
+        int num_component_regions;
+        if(two_components_merged){
+            if(component_id == region2_component){
+                // if two components merged then we ignore the second one 
+                continue;
+            }else if(component_id == region1_component){
+                // number of components is the sum of the regions 
+                // minus 1 because merged 
+                num_component_regions = component_region_counts[component_id] + component_region_counts[region2_component] - 1;
+            }else{
+                num_component_regions = component_region_counts[component_id];
+            }
+        }else{
+            num_component_regions = component_region_counts[component_id];
+            // If merged component subtract a region
+            if(component_id == region1_component){
+                --num_component_regions;
+            }
+        }
+        if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+            REprintf("Component %d which has %d regions!\n", component_id, num_component_regions);
+        }
+
+        // stop loop if we've reached pairs across components
+        if(curr_index >= all_pairs.size() || 
+            (county_component_reindex[all_pairs[curr_index].first.first]  != 
+             county_component_reindex[all_pairs[curr_index].first.second])
+            ) break;
+        
+
+
+        // If 1 component then there only 1 tree so log(1) = 0
+        if(num_component_regions <= 1){
+            // do nothing
+            if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+            REprintf("1 Region in Component! Log tau unchanged at %f\n", log_tau);
+            }
+            // do nothing 
+        }else if(num_component_regions == 2){
+            // If its two then its just the degree of either vertex which is the boundary length
+            // Since its the same component its just within component edges
+
+            // If this is the merged component then there are potentially more than 2 pairs
+            if(component_id == region1_component){
+                int merged_boundary = 0;
+                while(
+                    curr_index < all_pairs.size() &&
+                    county_component_reindex[all_pairs[curr_index].first.first] == component_id && 
+                    county_component_reindex[all_pairs[curr_index].first.second] == component_id 
+                ){
+                    merged_boundary += all_pairs[curr_index].second.within_county_edges;
+                    ++curr_index;
+                }
+                log_tau += std::log(static_cast<double>(merged_boundary));
+                if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+                REprintf("2 Regions in Merged Component! | Boundary length %d |Log tau now at %f\n", 
+                    merged_boundary,
+                    log_tau);
+                }
+            }else{
+                // else if not the merged component there is actually only one pair 
+                log_tau += std::log(static_cast<double>(all_pairs[curr_index].second.within_county_edges));
+                if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+                REprintf("2 Regions in Non-merged Component! | Boundary length %d |Log tau now at %f\n", 
+                    all_pairs[curr_index].second.within_county_edges,
+                    log_tau);
+                }
+                // now increment index
+                ++curr_index;
+            }
+        }else{
+            if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+            REprintf("3 or more regions in component!\n");
+            }
+            if(component_id == region1_component){
+                // We will reindex the merged region to the last index in the component 
+                for (int current_reindex = 0, a_region_id = 0; a_region_id < num_regions; a_region_id++){
+                    if(a_region_id == region1_id || a_region_id == region2_id){
+                        // the regions we're merging get reindex to the last region in the component 
+                        region_reindex_vec[a_region_id] = num_component_regions - 1;
+                    }else if(county_component_reindex[a_region_id] == component_id){
+                        region_reindex_vec[a_region_id] = current_reindex;
+                        ++current_reindex;
+                    }
+                    if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+                    REprintf("Mapping %d to %d!\n", a_region_id, region_reindex_vec[a_region_id]);
+                    }
+                } 
+            }else{
+                // else more than two regions so we need to reindex the regions 
+                // This ensures each region in the component is indexed from 
+                // 0, ... num regions in the component 
+                for (int current_reindex = 0, a_region_id = 0; a_region_id < num_regions; a_region_id++){
+                    // if in the component then reindex that region
+                    if(county_component_reindex[a_region_id] == component_id){
+                        region_reindex_vec[a_region_id] = current_reindex;
+                        ++current_reindex;
+                        if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+                        REprintf("Mapping %d to %d!\n", a_region_id, region_reindex_vec[a_region_id]);
+                        }
+                    }
+                } 
+            }
+
+            // Now make the graph laplacian matrix 
+            // as a sparse upper triangle matrix 
+            std::vector<Eigen::Triplet<double, int>> laplacian_minor_trips;
+
+            // now we iterate through all pairs where both are in this component
+            while(
+                curr_index < all_pairs.size() &&
+                county_component_reindex[all_pairs[curr_index].first.first] == component_id && 
+                county_component_reindex[all_pairs[curr_index].first.second] == component_id 
+            ){
+
+                const auto &[pair_region1, pair_region2] = all_pairs[curr_index].first;
+                const PairHashData &pair_val = all_pairs[curr_index].second;
+
+                // Because we filter out hier merge invalid we don't need to check
+
+                double edges = 0;
+                // else valid merge so get edges we count
+                if(pair_val.admin_adjacent){
+                    edges = static_cast<double>(all_pairs[curr_index].second.within_county_edges);
+                }else{
+                    REprintf("Region Pair (%d, %d) - ", pair_region1, pair_region2);
+                    REprintf("Error! in BASE PLAN TYPE NON ADMIN ADJACENT HIER MERGE VALID!\n");
+                    throw Rcpp::exception("Bro!]n");
+                }
+
+                if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+                    REprintf("Region Pair (%d, %d) | %d | %d edges!\n ", 
+                        pair_region1, pair_region2, 
+                        pair_val.admin_adjacent,
+                        edges);
+                }
+
+                auto reindexed_pair_region1 = region_reindex_vec[pair_region1];
+                auto reindexed_pair_region2 = region_reindex_vec[pair_region2];
+                // Now for both pairs we need to 
+                // 1. Update the degree of the vertex
+                // 2. Increase the count of edges between the regions 
+
+                // But if either region has index num_regions-1
+                // we don't count its degree or care about edge count
+
+                // Check if neither pair is id num_regions-1
+                if(reindexed_pair_region1 != num_component_regions-1 && 
+                   reindexed_pair_region2 != num_component_regions-1){
+                    // increase the degree of both vertices 
+                    laplacian_minor_trips.emplace_back(reindexed_pair_region1, reindexed_pair_region1, edges);
+                    laplacian_minor_trips.emplace_back(reindexed_pair_region2, reindexed_pair_region2, edges);
+
+                    // subtract edges between them 
+                    // now we add the negative edges between them but only to the upper triangle 
+                    // meaning (smaller_reindex, bigger_reindex, -edges)
+                    if(reindexed_pair_region1 < reindexed_pair_region2){
+                        laplacian_minor_trips.emplace_back(reindexed_pair_region1, reindexed_pair_region2, -edges);
+                    }else if(reindexed_pair_region2 < reindexed_pair_region1){
+                        laplacian_minor_trips.emplace_back(reindexed_pair_region2, reindexed_pair_region1, -edges);
+                    }else{
+                        REprintf("ERROR in compute hierarchical linking edge: Reindex %d=%d\n",
+                            reindexed_pair_region1, reindexed_pair_region2);
+                        throw Rcpp::exception("Big time error! \n");
+                    }
+                }else if(reindexed_pair_region1 != num_component_regions-1){
+                    // increase the degree 
+                    laplacian_minor_trips.emplace_back(reindexed_pair_region1, reindexed_pair_region1, edges);
+                    // because other region is merged one ignore 
+                }else if(reindexed_pair_region2 != num_component_regions-1){
+                    // increase the degree 
+                    laplacian_minor_trips.emplace_back(reindexed_pair_region2, reindexed_pair_region2, edges);
+                    // because other region is merged one ignore 
+                }
+                // increase current index by 1
+                ++curr_index;
+            }
+            if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+            REprintf("Printing Laplacian Minor!\n");
+            }
+            // Now add log det
+            log_tau += compute_log_det_from_triplets(laplacian_minor_trips, num_component_regions-1);
+        }
+    }
+
+    if(curr_index >= all_pairs.size() && merged_num_admin_connected_components > 1){
+        REprintf("ERROR!!\n %u pairs, curr index %d but %d num merged admin components\n",
+            all_pairs.size(), curr_index, merged_num_admin_connected_components);
+            Rprint();
+    REprintf("%d Components | NOW SORTED Pairs: \n", merged_num_admin_connected_components);
+    for(auto const &val: all_pairs){
+        REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s\n",
+            val.first.first, val.first.second, 
+            county_component[val.first.first], county_component[val.first.second],
+            (val.second.same_admin_component ? "SHARED" : "NOT SHARED"));
+    }
+    for (int i = 0; i < merged_num_admin_connected_components; i++)
+    {
+        REprintf("Component %d - %d Regions\n", i, component_region_counts[i]);
+    }
+        throw Rcpp::exception("! Hier\n");
+    }
+
+
+    if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+    REprintf("Remaining Across Merged Component Pairs: \n", all_pairs.size() - curr_index - 1);
+    for (size_t i = curr_index; i < all_pairs.size(); i++)
+    {
+        auto val = all_pairs[i];
+        REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s | Edges %d\n",
+            val.first.first, val.first.second, 
+            county_component_reindex[val.first.first], county_component_reindex[val.first.second],
+            (val.second.same_admin_component ? "SHARED" : "NOT SHARED"),
+            (val.second.same_admin_component ? val.second.within_county_edges : val.second.across_county_edges));
+    }
+    
+    }
+
+    // If only one connected component then we stop 
+    if(merged_num_admin_connected_components == 1){
+        if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+        REprintf("1 Component in entire Merged Plan! Log tau unchanged at %f\n", log_tau);
+        }
+        return log_tau;
+    }else if(merged_num_admin_connected_components == 2){
+        if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+        REprintf("2 Components in entire Merged Plan!\n");
+        }
+        int across_component_edges = 0;
+        // If two then we just sum the edges across and take log 
+        for (int i = curr_index; i < all_pairs.size(); i++)
+        {
+            across_component_edges += all_pairs[i].second.across_county_edges;
+        }
+        // add
+        log_tau += std::log(static_cast<double>(across_component_edges));
+        if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+        REprintf("Adding log of %d, Log tau now at %f\n", across_component_edges, log_tau);
+        }
+        return log_tau;
+    }
+
+    // Now we compute spanning trees across components 
+    // as a sparse upper triangle matrix 
+    std::vector<Eigen::Triplet<double, int>> merged_component_laplacian_minor_trips;
+
+
+
+    if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+    REprintf("Current index now %d with %d pairs\n", curr_index, all_pairs.size());
+    }
+
+    // Now we don't care about specific component id so reindex things 
+    // to make the merged regions 
+    /* 
+    we make merged reindex which essentially just reindexes all the regions to 
+    the two merged regions are the new largest value and everything else gets
+    potentially shifted down. For example imagine 5 regions
+    and we merge 1 and 3 so the reindex vector is [0,3,1,3,2]
+     */
+    int const merged_component = merged_num_admin_connected_components-1;
+    for (int current_reindex = 0, a_component_id = 0; a_component_id < num_county_connected_components; a_component_id++){
+        // all components but region 2's get mapped to themselves
+        if(a_component_id == region2_component || a_component_id == region1_component){
+            county_component_reindex[a_component_id] = merged_component;
+        }else{
+            county_component_reindex[a_component_id] = current_reindex;
+            ++current_reindex;
+        }
+        // REprintf("Mapping %d to %d!\n", i, merge_index_reshuffle[i]);
+    }
+
+    
+    // Iterate over the remaining pairs that are across components 
+    for (int i = curr_index; i < all_pairs.size(); i++)
+    {
+        const auto &[pair_region1, pair_region2] = all_pairs[i].first;
+        const PairHashData &pair_val = all_pairs[i].second;
+
+        int component1_id = county_component_reindex[county_component[pair_region1]];
+        int component2_id = county_component_reindex[county_component[pair_region2]];
+
+        // 
+        if(pair_val.same_admin_component){
+            REprintf("BIG ERROR SAME COMPONENT WHEN SHOULD BE DIFF!\n");
+        }
+
+        double edges = static_cast<double>(pair_val.across_county_edges);
+        if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+        REprintf("Components (%d,%d) - %d edges across!\n",
+            component1_id, component2_id, edges);
+        }
+        // Now for both pairs we need to 
+        // 1. Update the degree of the vertex
+        // 2. Increase the count of edges between the regions 
+
+        // But if either region has index num_regions-1
+        // we don't count its degree or care about edge count
+
+        // Check if neither pair is id num_regions-1
+        if(component1_id != merged_num_admin_connected_components-1 && 
+            component2_id != merged_num_admin_connected_components-1){
+            // increase the degree of both vertices 
+            merged_component_laplacian_minor_trips.emplace_back(
+                component1_id, component1_id, edges
+            );
+            merged_component_laplacian_minor_trips.emplace_back(
+                component2_id, component2_id, edges
+            );
+            // subtract edges between them 
+            if(component1_id < component2_id){
+                merged_component_laplacian_minor_trips.emplace_back(component1_id, component2_id, -edges);
+            }else if(component2_id < component1_id){
+                merged_component_laplacian_minor_trips.emplace_back(component2_id, component1_id, -edges);
+            }else{
+                REprintf("ERROR in compute hierarchical linking edge: Reindex %d=%d\n",
+                    component1_id, component2_id);
+                throw Rcpp::exception("Big time error! \n");
+            }
+        }else if(component1_id != merged_num_admin_connected_components-1){
+            // increase the degree 
+            merged_component_laplacian_minor_trips.emplace_back(
+                component1_id, component1_id, edges
+            );
+            // because other region is merged one ignore 
+        }else if(component2_id != merged_num_admin_connected_components-1){
+            // increase the degree 
+            merged_component_laplacian_minor_trips.emplace_back(
+                component2_id, component2_id, edges
+            );
+            // because other region is merged one ignore 
+        }
+    }
+    
+    if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+        REprintf("Printing Component Laplacian Minor\n");
+    }
+
+    // Now add log det
+    log_tau += compute_log_det_from_triplets(merged_component_laplacian_minor_trips, merged_num_admin_connected_components-1);
+
+    return log_tau;
+
 }
 
 

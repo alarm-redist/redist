@@ -86,7 +86,10 @@ Rcpp::NumericVector max_dev(
     int const num_threads = 1
 );
 
-
+double compute_log_det_from_triplets(
+    std::vector<Eigen::Triplet<double, int>> const &trips,
+    int const num_rows
+);
 
 // computes log number of spanning trees on region intersect county
 // In either a region or a merged region 
@@ -113,7 +116,11 @@ double compute_log_county_level_spanning_tree(
     int const region1_id, int const region2_id
 );
 
-
+double compute_log_county_level_spanning_tree_eigen(
+    Graph const &g, const uvec &counties, int const n_cty,
+    PlanVector const &region_ids,
+    int const region1_id, int const region2_id
+);
 
 
 // [[Rcpp::export]]

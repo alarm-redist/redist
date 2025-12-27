@@ -412,6 +412,68 @@ double compute_log_region_and_county_spanning_tree(
     return arma::log_det_sympd(adj);
 }
 
+// This assumes the matrix is stored as upper triangular one via 
+// triplets (ie every triplet (i, j, value) we have i <= j )
+double compute_log_det_from_triplets(
+    std::vector<Eigen::Triplet<double, int>> const &trips,
+    int const num_rows
+){
+    // now make the sparse matrix 
+    SparseMat sparse_adj_mat(num_rows, num_rows);
+    sparse_adj_mat.setFromTriplets(trips.begin(), trips.end());
+    sparse_adj_mat.makeCompressed();
+    // now factor it 
+
+
+    // 1) Create a sparse Cholesky (LLᵀ) factorization object.
+    Eigen::SimplicialLLT<SparseMat> chol;
+
+    // 2) Analyze + factorize the matrix.
+    //    - analyzePattern() inspects the sparsity structure (symbolic factorization / ordering)
+    //    - factorize() does the numeric factorization
+    //    compute() does both in one call (analyzePattern + factorize).
+    // Note we assume it is an upper triangular matrix 
+    chol.compute(sparse_adj_mat.selfadjointView<Eigen::Upper>());
+
+    // 3) Check whether factorization succeeded.
+    //    Failure usually means: matrix is not SPD (singular/indefinite) or numerical breakdown.
+    if (chol.info() != Eigen::Success) {
+        REprintf("it FAILED!\n");
+        return -INFINITY;  // or throw, depending on how you want to handle failure
+    }
+
+    // Avoid materializing L: iterate the diagonal directly in the stored sparse factor
+    const auto Lview = chol.matrixL();                 // TriangularView (in your build)
+    const auto &Lmat = Lview.nestedExpression();       // underlying SparseMatrix
+
+    double sumlog = 0.0;
+    for (int j = 0; j < num_rows; ++j) {
+        bool found = false;
+
+        // Column j scan
+        for (SparseMat::InnerIterator it(Lmat, j); it; ++it) {
+        if (it.row() == j) {                           // diagonal entry
+            const double d = it.value();
+            if (!(d > 0.0)){
+                REprintf("it FAILED!\n");
+                return -INFINITY;
+            }
+            sumlog += std::log(d);
+            found = true;
+            break;
+        }
+        // For lower-triangular L, rows are >= j; if we passed j, diagonal is missing
+        if (it.row() > j) break;
+        }
+
+        if (!found){
+            REprintf("it FAILED!\n");
+            return -INFINITY; // should not happen for successful LLT
+        }
+    }
+
+  return 2.0 * sumlog;
+}
 
 double compute_log_region_and_county_spanning_tree_eigen_tri(
     Graph const &g, const uvec &counties, int const county,
@@ -465,7 +527,12 @@ double compute_log_region_and_county_spanning_tree_eigen_tri(
             // Now only if the other vertex is also not the one we're skipping then 
             // we add an entry 
             if (pos[nbor] < 0) continue;
-            trips.emplace_back(prec, pos[nbor], -1.0);
+            // Since we're only building the upper triangular matrix we only 
+            // add it if row <= column which here means 
+            // prec <= pos[nbor]
+            if(prec <= pos[nbor]){
+                trips.emplace_back(prec, pos[nbor], -1.0);
+            }
         }
     }
     // now add the vertex degrees as triplets
@@ -474,64 +541,87 @@ double compute_log_region_and_county_spanning_tree_eigen_tri(
         trips.emplace_back(v,v, static_cast<double>(vertex_degrees[v]));
     }
 
+    // now return the log determinant 
+    return compute_log_det_from_triplets(trips, minor_V);
 
-
-    // now make the sparse matrix 
-    SparseMat sparse_adj_mat(minor_V, minor_V);
-    sparse_adj_mat.setFromTriplets(trips.begin(), trips.end());
-    sparse_adj_mat.makeCompressed();
-    // now factor it 
-
-
-  // 1) Create a sparse Cholesky (LLᵀ) factorization object.
-  Eigen::SimplicialLLT<SparseMat> chol(sparse_adj_mat);
-
-  // 2) Analyze + factorize the matrix.
-  //    - analyzePattern() inspects the sparsity structure (symbolic factorization / ordering)
-  //    - factorize() does the numeric factorization
-  //    compute() does both in one call (analyzePattern + factorize).
-//   chol.compute(sparse_adj_mat);
-
-  // 3) Check whether factorization succeeded.
-  //    Failure usually means: matrix is not SPD (singular/indefinite) or numerical breakdown.
-  if (chol.info() != Eigen::Success) {
-    REprintf("it FAILED!\n");
-    return -INFINITY;  // or throw, depending on how you want to handle failure
-  }
-
-  // Avoid materializing L: iterate the diagonal directly in the stored sparse factor
-  const auto Lview = chol.matrixL();                 // TriangularView (in your build)
-  const auto &Lmat = Lview.nestedExpression();       // underlying SparseMatrix
-
-  double sumlog = 0.0;
-  for (int j = 0; j < minor_V; ++j) {
-    bool found = false;
-
-    // Column j scan
-    for (SparseMat::InnerIterator it(Lmat, j); it; ++it) {
-      if (it.row() == j) {                           // diagonal entry
-        const double d = it.value();
-        if (!(d > 0.0)){
-            REprintf("it FAILED!\n");
-            return -INFINITY;
-        }
-        sumlog += std::log(d);
-        found = true;
-        break;
-      }
-      // For lower-triangular L, rows are >= j; if we passed j, diagonal is missing
-      if (it.row() > j) break;
-    }
-
-    if (!found){
-        REprintf("it FAILED!\n");
-        return -INFINITY; // should not happen for successful LLT
-    }
-  }
-
-  return 2.0 * sumlog;
 }
 
+
+
+/*
+ * Compute the log number of spanning trees for the contracted (ie county level) graph
+ */
+// TESTED
+double compute_log_county_level_spanning_tree_eigen(
+    Graph const &g, const uvec &counties, int const n_cty,
+    PlanVector const &region_ids,
+    int const region1_id, int const region2_id
+){
+    // If 1 county then just log(1) = 0
+    if (n_cty == 1) return 0;
+
+    int const V = g.size();
+    // number of counties in this district
+    int K = 0;
+    std::vector<int> pos(V); // keep track of positions in subgraph
+    std::vector<int> seen(n_cty, -2); // county lookup
+    int start = 0;
+    for (int i = 0; i < V; i++) {
+        if (region_ids[i] != region1_id && region_ids[i] != region2_id) continue;
+
+        if (seen[counties[i]-1] < 0) {
+            pos[i] = K - 1; // minus one because we're dropping 1st row and column
+            seen[counties[i]-1] = K;
+            K++;
+            if (K == 2) start = i; // start 2nd vertex
+        } else {
+            pos[i] = seen.at(counties[i]-1) - 1;
+        }
+    }
+    if (K <= 1) return 0;
+
+
+    int const minor_V = K-1; // number of vertices in the matrix to build
+    // we will build the sparse matrix by first creating entries 
+    // This stores entries as (i, j, value)
+    std::vector<Eigen::Triplet<double, int>> trips;  
+    // since modifying triplets after creation is expensive we just track degrees then 
+    // add at the end 
+    std::vector<int> vertex_degrees(minor_V, 0);  
+
+    for (int i = start; i < V; i++) {
+        if (region_ids[i] != region1_id && region_ids[i] != region2_id) continue;
+
+        int cty = pos[i];
+        if (cty < 0) continue; // skip 1st row, col
+
+        for (auto const nbor: g[i]){
+            // skip if not in the region or its in the same county 
+            if ((region_ids[nbor] != region1_id && region_ids[nbor] != region2_id) ||
+                 pos[nbor] == cty) continue;
+            
+            // this means we've found an edge within the region across counties 
+            vertex_degrees[cty]++;
+            // if one of the vertices is the 1st one we ignore it 
+            if (pos[nbor] < 0) continue;
+            // now because we're building an upper triangular matrix we
+            // only add if row <= col
+            if(cty <= pos[nbor]){
+                trips.emplace_back(cty, pos[nbor], -1.0);
+            }
+        }
+    }
+
+    // now add the vertex degrees as triplets
+    for (size_t v = 0; v < minor_V; v++)
+    {
+        trips.emplace_back(v,v, static_cast<double>(vertex_degrees[v]));
+    }
+
+    // now return the log determinant 
+    return compute_log_det_from_triplets(trips, minor_V);
+
+}
 
 /*
  * Compute the log number of spanning trees for the contracted (ie county level) graph
