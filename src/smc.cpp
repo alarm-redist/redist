@@ -921,9 +921,8 @@ List run_redist_smc(
                 {
                     // for plan i it was split from plan smc_diagnostics.parent_index_mat(i, smc_step_num)
                     // so we want to make plan i in the dummy one to be the cache from the split plan
-                    std::swap(
-                        dummy_cache_ensemble_ptr->weight_cache_ptr_vec[i],
-                        cache_ensemble_ptr->weight_cache_ptr_vec[smc_diagnostics.parent_index_mat(i, smc_step_num)]
+                    dummy_cache_ensemble_ptr->weight_cache_ptr_vec[i]->copy_from(
+                        *cache_ensemble_ptr->weight_cache_ptr_vec[smc_diagnostics.parent_index_mat(i, smc_step_num)]
                     );
                 }
                 // now we swap the two pointers so the cache ensemble one is aligned 
