@@ -434,7 +434,10 @@ double compute_log_region_and_county_spanning_tree_eigen_tri(
         }
     }
     // if only 1 vertex then log(1) = 0
-    if (K <= 1) return 0;
+    if (K <= 1){
+        return 0;
+    }
+
 
     int const minor_V = K-1; // number of vertices in the matrix to build
     // we will build the sparse matrix by first creating entries 
@@ -471,9 +474,7 @@ double compute_log_region_and_county_spanning_tree_eigen_tri(
         trips.emplace_back(v,v, static_cast<double>(vertex_degrees[v]));
     }
 
-    if(minor_V == 1){
-        REprintf("THIS IS 1\n");
-    }
+
 
     // now make the sparse matrix 
     SparseMat sparse_adj_mat(minor_V, minor_V);
@@ -529,44 +530,6 @@ double compute_log_region_and_county_spanning_tree_eigen_tri(
   }
 
   return 2.0 * sumlog;
-
-
-  // 4) Get the lower-triangular Cholesky factor L, where A = L * Lᵀ.
-  //    In some Eigen versions this returns a triangular view, so we materialize into SparseMat.
-  SparseMat L = chol.matrixL();
-
-  // 5) Compute log(det(A)).
-  //    det(A) = det(L)^2, and det(L) is the product of diagonal entries of L.
-  //    So: log(det(A)) = 2 * sum(log(L_ii)).
-  //
-  //    L.diagonal() gives the diagonal as a vector expression.
-  //    .array().log().sum() computes sum(log(diagonal entries)).
-  double logdet = 2.0 * L.diagonal().array().log().sum();
-
-  // 6) Return the log determinant.
-  return logdet;
-
-    // Eigen::SimplicialLLT<SparseMat> llt(sparse_adj_mat);
-
-    // Eigen::CholmodDe
-
-    // // llt.compute()
-
-    // return 2.0 * llt.matrixL().nestedExpression().diagonal().array().log().sum();
-
-    // // The log-determinant is 2 * sum(log(diag(L)))
-    // double log_det = 0.0;
-    // // Iterate over the diagonal elements of the factor L
-    // const auto& L = llt.matrixL();
-    // for (int i = 0; i < L.rows(); ++i) {
-    //     log_det += std::log(L.coeff(i, i));
-    // }
-    // log_det *= 2.0;
-
-    // return log_det;
-
-
-    // return arma::log_det_sympd(adj);
 }
 
 
