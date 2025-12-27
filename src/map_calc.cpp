@@ -3,10 +3,8 @@
 #include <redistmetrics.h>
 
 
-
-
-
-
+// alias for SparseMatrix
+using SparseMat = Eigen::SparseMatrix<double, Eigen::ColMajor, int>;
 
 /*
  * Compute the Fryer-Holden penalty for district `distr`
@@ -389,7 +387,7 @@ double compute_log_region_and_county_spanning_tree(
     }
     if (K <= 1) return 0;
 
-    mat adj = zeros<mat>(K-1, K-1); // adjacency matrix (minus 1st row and column)
+    mat adj = arma::zeros<mat>(K-1, K-1); // adjacency matrix (minus 1st row and column)
     for (int i = start; i < V; i++) {
         // ignore if not in either region or the county 
         if ((region_ids[i] != region1_id && region_ids[i] != region2_id) 
@@ -412,6 +410,163 @@ double compute_log_region_and_county_spanning_tree(
     }
 
     return arma::log_det_sympd(adj);
+}
+
+
+double compute_log_region_and_county_spanning_tree_eigen_tri(
+    Graph const &g, const uvec &counties, int const county,
+    PlanVector const &region_ids,
+    int const region1_id, int const region2_id
+){
+
+    int const V = g.size();
+    // number of precincts in this district
+    int K = 0;
+    std::vector<int> pos(V); // keep track of positions in subgraph
+    int start = 0; // where to start loop below, to save time
+    for (int i = 0; i < V; i++) {
+        pos[i] = K - 1; // minus one because we're dropping 1st row and column
+        // Check if in either region and the county
+        if ((region_ids[i] == region1_id || region_ids[i] == region2_id) && 
+            counties[i] == county) {
+            K++;
+            if (K == 2) start = i; // start 2nd vertex
+        }
+    }
+    // if only 1 vertex then log(1) = 0
+    if (K <= 1) return 0;
+
+    int const minor_V = K-1; // number of vertices in the matrix to build
+    // we will build the sparse matrix by first creating entries 
+    // This stores entries as (i, j, value)
+    std::vector<Eigen::Triplet<double, int>> trips;  
+    // since modifying triplets after creation is expensive we just track degrees then 
+    // add at the end 
+    std::vector<int> vertex_degrees(minor_V, 0);  
+
+    for (int i = start; i < V; i++) {
+        // ignore if not in either region or the county 
+        if ((region_ids[i] != region1_id && region_ids[i] != region2_id) 
+            || counties[i] != county) continue;
+
+        // This tells us what index we're mapping the vertex too
+        int prec = pos[i];
+        if (prec < 0) continue; // if its less than 0 its the first row we're ignoring 
+        // iterate over vertex neighbors 
+        for (auto const nbor: g[i]){
+            // if nbor not in same region & county then we ignore it
+            if ((region_ids[nbor] != region1_id && region_ids[nbor] != region2_id) 
+                || counties(nbor) != county) continue;
+            // Else this is an edge we care about so we increase the degree count
+            vertex_degrees[prec]++;
+            // Now only if the other vertex is also not the one we're skipping then 
+            // we add an entry 
+            if (pos[nbor] < 0) continue;
+            trips.emplace_back(prec, pos[nbor], -1.0);
+        }
+    }
+    // now add the vertex degrees as triplets
+    for (size_t v = 0; v < minor_V; v++)
+    {
+        trips.emplace_back(v,v, static_cast<double>(vertex_degrees[v]));
+    }
+
+    if(minor_V == 1){
+        REprintf("THIS IS 1\n");
+    }
+
+    // now make the sparse matrix 
+    SparseMat sparse_adj_mat(minor_V, minor_V);
+    sparse_adj_mat.setFromTriplets(trips.begin(), trips.end());
+    sparse_adj_mat.makeCompressed();
+    // now factor it 
+
+
+  // 1) Create a sparse Cholesky (LLᵀ) factorization object.
+  Eigen::SimplicialLLT<SparseMat> chol(sparse_adj_mat);
+
+  // 2) Analyze + factorize the matrix.
+  //    - analyzePattern() inspects the sparsity structure (symbolic factorization / ordering)
+  //    - factorize() does the numeric factorization
+  //    compute() does both in one call (analyzePattern + factorize).
+//   chol.compute(sparse_adj_mat);
+
+  // 3) Check whether factorization succeeded.
+  //    Failure usually means: matrix is not SPD (singular/indefinite) or numerical breakdown.
+  if (chol.info() != Eigen::Success) {
+    REprintf("it FAILED!\n");
+    return -INFINITY;  // or throw, depending on how you want to handle failure
+  }
+
+  // Avoid materializing L: iterate the diagonal directly in the stored sparse factor
+  const auto Lview = chol.matrixL();                 // TriangularView (in your build)
+  const auto &Lmat = Lview.nestedExpression();       // underlying SparseMatrix
+
+  double sumlog = 0.0;
+  for (int j = 0; j < minor_V; ++j) {
+    bool found = false;
+
+    // Column j scan
+    for (SparseMat::InnerIterator it(Lmat, j); it; ++it) {
+      if (it.row() == j) {                           // diagonal entry
+        const double d = it.value();
+        if (!(d > 0.0)){
+            REprintf("it FAILED!\n");
+            return -INFINITY;
+        }
+        sumlog += std::log(d);
+        found = true;
+        break;
+      }
+      // For lower-triangular L, rows are >= j; if we passed j, diagonal is missing
+      if (it.row() > j) break;
+    }
+
+    if (!found){
+        REprintf("it FAILED!\n");
+        return -INFINITY; // should not happen for successful LLT
+    }
+  }
+
+  return 2.0 * sumlog;
+
+
+  // 4) Get the lower-triangular Cholesky factor L, where A = L * Lᵀ.
+  //    In some Eigen versions this returns a triangular view, so we materialize into SparseMat.
+  SparseMat L = chol.matrixL();
+
+  // 5) Compute log(det(A)).
+  //    det(A) = det(L)^2, and det(L) is the product of diagonal entries of L.
+  //    So: log(det(A)) = 2 * sum(log(L_ii)).
+  //
+  //    L.diagonal() gives the diagonal as a vector expression.
+  //    .array().log().sum() computes sum(log(diagonal entries)).
+  double logdet = 2.0 * L.diagonal().array().log().sum();
+
+  // 6) Return the log determinant.
+  return logdet;
+
+    // Eigen::SimplicialLLT<SparseMat> llt(sparse_adj_mat);
+
+    // Eigen::CholmodDe
+
+    // // llt.compute()
+
+    // return 2.0 * llt.matrixL().nestedExpression().diagonal().array().log().sum();
+
+    // // The log-determinant is 2 * sum(log(diag(L)))
+    // double log_det = 0.0;
+    // // Iterate over the diagonal elements of the factor L
+    // const auto& L = llt.matrixL();
+    // for (int i = 0; i < L.rows(); ++i) {
+    //     log_det += std::log(L.coeff(i, i));
+    // }
+    // log_det *= 2.0;
+
+    // return log_det;
+
+
+    // return arma::log_det_sympd(adj);
 }
 
 

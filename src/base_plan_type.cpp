@@ -453,12 +453,40 @@ void Plan::shallow_copy(Plan const &plan_to_copy){
 double Plan::compute_log_region_spanning_trees(MapParams const &map_params,
     int const region_id) const{
     double log_st = 0;
+    // gather the counties to iterate over 
+    std::set<int> region_counties;
+    // // if one county just that 
+    if(map_params.num_counties == 1){
+        // if there's only 1 county 
+        region_counties.insert(map_params.counties[0]);
+    }else{
+        // just add the counties in that region 
+        for (size_t v = 0; v < map_params.V; v++)
+        {
+            if(region_ids[v] == region_id){
+                region_counties.insert(
+                    map_params.counties[v]
+                );
+            }
+        }
+    }
+
     // comput tau for each county intersect region
-    for (int county_num = 1; county_num <= map_params.num_counties; county_num++) {
-        log_st += compute_log_region_and_county_spanning_tree(
+    for (auto const county_num: region_counties) {
+        log_st += compute_log_region_and_county_spanning_tree_eigen_tri(
             map_params.g, map_params.counties, county_num,
             region_ids, region_id, region_id
         );
+        // REprintf("Called for %d!\n", county_num);
+        // log_st += compute_log_region_and_county_spanning_tree(
+        //     map_params.g, map_params.counties, county_num,
+        //     region_ids, region_id, region_id
+        // );
+
+        // REprintf("%f vs %f, diff %.20f and %d\n", 
+        //     new_tau, old_tau, 
+        //     std::fabs(new_tau - old_tau),
+        //     old_tau == new_tau);
     }
     // Add county level multigraph tau
     log_st += compute_log_county_level_spanning_tree(
@@ -470,7 +498,48 @@ double Plan::compute_log_region_spanning_trees(MapParams const &map_params,
     return log_st;
 }
 
+// Compute the log number of spanning trees on a merged region 
+double Plan::compute_log_merged_region_spanning_trees(MapParams const &map_params,
+    int const region1_id, int const region2_id) const{
+    double log_st = 0;
+    // gather the counties to iterate over 
+    std::set<int> region_counties;
+    // // if one county just that 
+    if(map_params.num_counties == 1){
+        // if there's only 1 county 
+        region_counties.insert(map_params.counties[0]);
+    }else{
+        // just add the counties in that region 
+        for (size_t v = 0; v < map_params.V; v++)
+        {
+            if(region_ids[v] == region1_id || region_ids[v] == region2_id){
+                region_counties.insert(
+                    map_params.counties[v]
+                );
+            }
+        }
+    }
 
+    // comput tau for each county intersect region
+    for (auto const county_num: region_counties) {
+        log_st += compute_log_region_and_county_spanning_tree_eigen_tri(
+            map_params.g, map_params.counties, county_num,
+            region_ids, region1_id, region2_id
+        );
+        // REprintf("Called for %d!\n", county_num);
+        // log_st += compute_log_region_and_county_spanning_tree(
+        //     map_params.g, map_params.counties, county_num,
+        //     region_ids, region1_id, region2_id
+        // );
+    }
+    // Add county level multigraph tau
+    log_st += compute_log_county_level_spanning_tree(
+        map_params.g, map_params.counties, map_params.num_counties,
+        region_ids, region1_id, region2_id
+    );
+
+    return log_st;
+}
 
 double Plan::compute_log_plan_spanning_trees(MapParams const &map_params) const{
     double log_st = 0;
@@ -483,28 +552,6 @@ double Plan::compute_log_plan_spanning_trees(MapParams const &map_params) const{
     }
     return log_st;
 }
-
-
-// Compute the log number of spanning trees on a merged region 
-double Plan::compute_log_merged_region_spanning_trees(MapParams const &map_params,
-    int const region1_id, int const region2_id) const{
-    double log_st = 0;
-    // comput tau for each county intersect region
-    for (int county_num = 1; county_num <= map_params.num_counties; county_num++) {
-        log_st += compute_log_region_and_county_spanning_tree(
-            map_params.g, map_params.counties, county_num,
-            region_ids, region1_id, region2_id
-        );
-    }
-    // Add county level multigraph tau
-    log_st += compute_log_county_level_spanning_tree(
-        map_params.g, map_params.counties, map_params.num_counties,
-        region_ids, region1_id, region2_id
-    );
-
-    return log_st;
-}
-
 
 //' Selects a valid multidistrict to split uniformly at random 
 //'

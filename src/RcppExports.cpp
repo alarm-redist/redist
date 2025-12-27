@@ -4,6 +4,7 @@
 #include "redist_types.h"
 #include <RcppArmadillo.h>
 #include <RcppThread.h>
+#include <RcppEigen.h>
 #include <Rcpp.h>
 
 using namespace Rcpp;
@@ -35,6 +36,36 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< List >::type graph(graphSEXP);
     Rcpp::traits::input_parameter< const arma::uvec& >::type idxs(idxsSEXP);
     rcpp_result_gen = Rcpp::wrap(collapse_adj(graph, idxs));
+    return rcpp_result_gen;
+END_RCPP
+}
+// test_new_tau
+Rcpp::List test_new_tau(Rcpp::List const& adj_list, arma::uvec const& counties, arma::uvec const& region_ids, int const region1_id, int const region2_id);
+RcppExport SEXP _redist_test_new_tau(SEXP adj_listSEXP, SEXP countiesSEXP, SEXP region_idsSEXP, SEXP region1_idSEXP, SEXP region2_idSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List const& >::type adj_list(adj_listSEXP);
+    Rcpp::traits::input_parameter< arma::uvec const& >::type counties(countiesSEXP);
+    Rcpp::traits::input_parameter< arma::uvec const& >::type region_ids(region_idsSEXP);
+    Rcpp::traits::input_parameter< int const >::type region1_id(region1_idSEXP);
+    Rcpp::traits::input_parameter< int const >::type region2_id(region2_idSEXP);
+    rcpp_result_gen = Rcpp::wrap(test_new_tau(adj_list, counties, region_ids, region1_id, region2_id));
+    return rcpp_result_gen;
+END_RCPP
+}
+// test_old_tau
+Rcpp::List test_old_tau(Rcpp::List const& adj_list, arma::uvec const& counties, arma::uvec const& region_ids, int const region1_id, int const region2_id);
+RcppExport SEXP _redist_test_old_tau(SEXP adj_listSEXP, SEXP countiesSEXP, SEXP region_idsSEXP, SEXP region1_idSEXP, SEXP region2_idSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List const& >::type adj_list(adj_listSEXP);
+    Rcpp::traits::input_parameter< arma::uvec const& >::type counties(countiesSEXP);
+    Rcpp::traits::input_parameter< arma::uvec const& >::type region_ids(region_idsSEXP);
+    Rcpp::traits::input_parameter< int const >::type region1_id(region1_idSEXP);
+    Rcpp::traits::input_parameter< int const >::type region2_id(region2_idSEXP);
+    rcpp_result_gen = Rcpp::wrap(test_old_tau(adj_list, counties, region_ids, region1_id, region2_id));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -1001,6 +1032,8 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_redist_reduce_adj", (DL_FUNC) &_redist_reduce_adj, 3},
     {"_redist_collapse_adj", (DL_FUNC) &_redist_collapse_adj, 2},
+    {"_redist_test_new_tau", (DL_FUNC) &_redist_test_new_tau, 5},
+    {"_redist_test_old_tau", (DL_FUNC) &_redist_test_old_tau, 5},
     {"_redist_coarsen_adjacency", (DL_FUNC) &_redist_coarsen_adjacency, 2},
     {"_redist_get_plan_graph", (DL_FUNC) &_redist_get_plan_graph, 4},
     {"_redist_color_graph", (DL_FUNC) &_redist_color_graph, 2},

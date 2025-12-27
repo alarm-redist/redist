@@ -3,6 +3,8 @@
 #include <RcppThread.h>
 #include "smc_base.h"
 #include "tree_op.h"
+#include <RcppEigen.h>
+#include <Eigen/Sparse>
 
 
 #ifndef MAP_CALC_H
@@ -93,6 +95,13 @@ double compute_log_region_and_county_spanning_tree(
     PlanVector const &region_ids,
     int const region1_id, int const region2_id
 );
+
+double compute_log_region_and_county_spanning_tree_eigen_tri(
+    Graph const &g, const arma::uvec &counties, int const county,
+    PlanVector const &region_ids,
+    int const region1_id, int const region2_id
+);
+
 
 
 /*
