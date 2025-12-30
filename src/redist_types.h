@@ -10,7 +10,6 @@
 
 
 #define PRINT_LN Rcout << __func__ << "(), " << __FILE__ << ":" << __LINE__ << "\n";
-
 #include <vector>
 #include <queue>
 #include <cstdint>

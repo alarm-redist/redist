@@ -33,6 +33,7 @@ Depends:
     redistmetrics (>= 1.0.2) 
 Imports:
     Rcpp (>= 0.11.0),
+    RcppEigen,
     rlang,
     cli (>= 3.1.0),
     vctrs,
@@ -62,7 +63,7 @@ Suggests:
     RSpectra,
     testthat (>= 3.0.0),
     spelling
-LinkingTo: Rcpp, RcppArmadillo, RcppThread, cli, redistmetrics
+LinkingTo: Rcpp, RcppArmadillo, RcppThread, cli, redistmetrics, RcppEigen
 License: GPL (>= 2)
 SystemRequirements: C++17, python
 NeedsCompilation: yes

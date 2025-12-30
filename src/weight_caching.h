@@ -27,6 +27,11 @@ class WeightCache {
     // This stores compactness + constraint score for each region 
     
     
+    // Copy cached data from another WeightCache
+    void copy_from(const WeightCache &other) {
+        this_plan_order_added.copy(other.this_plan_order_added);
+        region_cache_values.copy(other.region_cache_values);
+    }
 
     // For a specific region it fetches the log compactness + score if its still valid
     // or if stale it returns false 

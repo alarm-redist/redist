@@ -590,6 +590,17 @@ class PlanMultigraph{
             ScoringFunction const &scoring_function
         );
 
+        double compute_hierarchical_log_multigraph_tau_eigen(
+            int const num_regions, 
+            ScoringFunction const &scoring_function
+        );
+
+        double compute_hierarchical_merged_log_multigraph_tau_eigen(
+            int const num_regions, 
+            RegionID const region1_id, RegionID const region2_id,
+            ScoringFunction const &scoring_function
+        );
+
         double compute_hierarchical_merged_log_multigraph_tau(
             int const num_regions, 
             RegionID const region1_id, RegionID const region2_id,

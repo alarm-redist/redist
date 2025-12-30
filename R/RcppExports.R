@@ -9,6 +9,14 @@ collapse_adj <- function(graph, idxs) {
     .Call(`_redist_collapse_adj`, graph, idxs)
 }
 
+test_new_tau <- function(adj_list, counties, region_ids, region1_id, region2_id) {
+    .Call(`_redist_test_new_tau`, adj_list, counties, region_ids, region1_id, region2_id)
+}
+
+test_old_tau <- function(adj_list, counties, region_ids, region1_id, region2_id) {
+    .Call(`_redist_test_old_tau`, adj_list, counties, region_ids, region1_id, region2_id)
+}
+
 coarsen_adjacency <- function(adj, groups) {
     .Call(`_redist_coarsen_adjacency`, adj, groups)
 }

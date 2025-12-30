@@ -611,6 +611,10 @@ double compute_log_optimal_incremental_weights(
                 );
             }
 
+            if(DEBUG_WEIGHTS_VERBOSE){
+                REprintf("Computing log tau for each region pair!\n");
+            }
+
             // subtract split regions
             // This function return (rho-1)*log compactness
             log_tau_ratio -= compute_or_fetch_log_region_compactness(

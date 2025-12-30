@@ -9,6 +9,7 @@
 #include "weight_caching.h"
 
 
+
 WeightCacheEnsemble::WeightCacheEnsemble(
     bool const using_caching,
     MapParams const &map_params,
