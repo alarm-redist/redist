@@ -650,6 +650,24 @@ add_constr_capacity <- function(constr, strength, schools, schools_capacity) {
     add_to_constr(constr, "capacity", new_constr)
 }
 
+#' @param schools A vector of unit indices for schools. For example, if there
+#' are three schools located in precincts that correspond to rows 1 and 2 of
+#' your [redist_map], entering schools = c(1, 2) would indicate that.
+#' @param schools_capacity A vector of capacities for each school.
+#' @rdname constraints
+#' @export
+add_constr_capacity_partial <- function(constr, strength, schools, schools_capacity) {
+    if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
+    if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results")
+    data <- attr(constr, "data")
+
+    new_constr <- list(strength = strength,
+        schools = schools - 1L,
+        schools_capacity = schools_capacity)
+
+    add_to_constr(constr, "capacitypartial", new_constr)
+}
+
 # utilty functions for parsing ASTs
 find_env <- function(name, env = rlang::caller_env()) {
     if (identical(env, rlang::empty_env())) {

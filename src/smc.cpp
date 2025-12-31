@@ -325,6 +325,12 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
                                          as<uvec>(l["schools_capacity"]), V);
                 });
 
+            lp[i] += add_constraint("capacitypartial", constraints,
+                [&] (List l) -> double {
+                    return eval_capacity_partial(districts.col(i), j, pop, as<uvec>(l["schools"]), 
+                                         as<uvec>(l["schools_capacity"]), V);
+                });
+
             lp[i] += add_constraint("custom", constraints,
                 [&] (List l) -> double {
                     Function fn = l["fn"];

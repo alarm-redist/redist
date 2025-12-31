@@ -467,11 +467,6 @@ double eval_split_feeders(const subview_col<uword> &districts, const uvec &lower
  */
 double eval_capacity(const subview_col<uword> &districts, int distr, const uvec &pop, 
                      const uvec &schools, const uvec &schools_capacity, int V) {
-    if (schools_capacity.n_elem <= distr) {
-        // No capacity data for this district
-        return 0;
-    }
-                        
     // Count how many people are assigned to current district
     int pop_assigned = 0;
     for (int v = 0; v < V; ++v) {
@@ -483,6 +478,54 @@ double eval_capacity(const subview_col<uword> &districts, int distr, const uvec 
     // What is the capacity of the current district?
     // Assume schools/schools_capacity are in ascending district ID order
     double pop_capacity = schools_capacity(distr);
+
+    // Estimate number of school-aged children in the district
+    double normalized_pop = pop_assigned / sum(pop) * sum(schools_capacity);
+    // Calculate and compare ratio
+    double ratio = normalized_pop / pop_capacity;
+
+    if (ratio < 0.85 || ratio > 1.15) {
+        return 2;
+    }
+    else if ((0.85 <= ratio && ratio <= 0.94) || (1.05 <= ratio && ratio <= 1.14)) {
+        return 1;
+    }
+    else if (0.95 <= ratio && ratio <= 1.04) {
+        return 0;
+    }
+
+    return 0;
+}
+
+/*
+ * Compute the capacity utilization penalty for district `distr`
+ * Returns penalty based on the ratio of capacity that is over/underutilized
+ * districts: proposed plan
+ * distr: district to evaluate
+ * pop: population of each block
+ * schools: indices of schools in the map data (0-indexed)
+ * schools_capacity: integer capacities of schools according to order in schools_idx
+ * V: number of blocks
+ */
+double eval_capacity_partial(const subview_col<uword> &districts, int distr, const uvec &pop, 
+                     const uvec &schools, const uvec &schools_capacity, int V) {
+
+    int distr_adj = distr - 1;
+    if (distr_adj < 0) {
+        return 0;
+    }
+
+    // Count how many people are assigned to current district
+    int pop_assigned = 0;
+    for (int v = 0; v < V; ++v) {
+        if (districts(v) == distr_adj) {
+            pop_assigned += pop(v);
+        }
+    }
+
+    // What is the capacity of the current district?
+    // Assume schools/schools_capacity are in ascending district ID order
+    double pop_capacity = schools_capacity(distr_adj);
 
     // Estimate number of school-aged children in the district
     double normalized_pop = pop_assigned / sum(pop) * sum(schools_capacity);

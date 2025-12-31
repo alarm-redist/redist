@@ -150,6 +150,12 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
                                                        as<uvec>(l["schools_capacity"]), V);
                               });
 
+    log_tgt += add_constraint("capacitypartial", constraints, districts, psi_vec,
+                              [&] (List l, int distr) -> double {
+                                  return eval_capacity_partial(plan, distr, pop, as<uvec>(l["schools"]), 
+                                                       as<uvec>(l["schools_capacity"]), V);
+                              });
+
     log_tgt += add_constraint("custom", constraints, districts, psi_vec,
                               [&] (List l, int distr) -> double {
                                   Function fn = l["fn"];

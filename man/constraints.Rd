@@ -20,6 +20,7 @@
 \alias{add_constr_phase_commute}
 \alias{add_constr_split_feeders}
 \alias{add_constr_capacity}
+\alias{add_constr_capacity_partial}
 \alias{add_constr_custom}
 \title{Sampling constraints}
 \usage{
@@ -84,6 +85,8 @@ add_constr_phase_commute(constr, strength, current, commute_times)
 add_constr_split_feeders(constr, strength, lower, schools)
 
 add_constr_capacity(constr, strength, schools, schools_capacity)
+
+add_constr_capacity_partial(constr, strength, schools, schools_capacity)
 
 add_constr_custom(constr, strength, fn)
 }
