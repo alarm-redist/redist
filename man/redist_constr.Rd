@@ -25,6 +25,7 @@ Constraints may be added by using one of the following functions:
 \itemize{
 \item \code{\link[=add_constr_capacity]{add_constr_capacity()}}
 \item \code{\link[=add_constr_capacity_partial]{add_constr_capacity_partial()}}
+\item \code{\link[=add_constr_commute]{add_constr_commute()}}
 \item \code{\link[=add_constr_compet]{add_constr_compet()}}
 \item \code{\link[=add_constr_custom]{add_constr_custom()}}
 \item \code{\link[=add_constr_edges_rem]{add_constr_edges_rem()}}
@@ -35,7 +36,6 @@ Constraints may be added by using one of the following functions:
 \item \code{\link[=add_constr_incumbency]{add_constr_incumbency()}}
 \item \code{\link[=add_constr_log_st]{add_constr_log_st()}}
 \item \code{\link[=add_constr_multisplits]{add_constr_multisplits()}}
-\item \code{\link[=add_constr_phase_commute]{add_constr_phase_commute()}}
 \item \code{\link[=add_constr_polsby]{add_constr_polsby()}}
 \item \code{\link[=add_constr_pop_dev]{add_constr_pop_dev()}}
 \item \code{\link[=add_constr_segregation]{add_constr_segregation()}}

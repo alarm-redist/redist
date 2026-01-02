@@ -307,7 +307,7 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
                                                           n_distr);
                                       });
 
-            lp[i] += add_constraint("phase_commute", constraints,
+            lp[i] += add_constraint("commute", constraints,
                 [&] (List l) -> double {
                     return eval_phase_commute(districts.col(i), as<uvec>(l["current"]),
                                            j, pop, as<mat>(l["commute_times"]), V);

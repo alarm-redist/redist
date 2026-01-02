@@ -108,9 +108,16 @@ double eval_log_st(const subview_col<uword> &districts, const Graph g,
 double eval_er(const subview_col<uword> &districts, const Graph g, int ndists);
 
 /*
- * Compute the commute penalty for district `distr`
+ * Compute the phase-in commute penalty for district `distr`
  */
 double eval_phase_commute(const subview_col<uword> &districts, const uvec &current,
+                       int distr, const uvec &pop, 
+                       const arma::mat &commute_times, int V);
+
+/*
+ * Compute the maximum commute penalty for district `distr`
+ */
+double eval_max_commute(const subview_col<uword> &districts, const uvec &current,
                        int distr, const uvec &pop, 
                        const arma::mat &commute_times, int V);
 
@@ -121,13 +128,13 @@ double eval_split_feeders(const subview_col<uword> &districts, const uvec &lower
                           int distr, const uvec &pop, const uvec &schools, int V);
 
 /*
- * Compute the commute penalty for district `distr`
+ * Compute the capacity penalty for district `distr`
  */
 double eval_capacity(const subview_col<uword> &districts, int distr, const uvec &pop, 
                      const uvec &schools, const uvec &schools_capacity, int V);
 
 /*
- * Compute the commute penalty for district `distr`
+ * Compute the capacity penalty for district `distr` for partial plans
  */
 double eval_capacity_partial(const subview_col<uword> &districts, int distr, const uvec &pop, 
                      const uvec &schools, const uvec &schools_capacity, int V);

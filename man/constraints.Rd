@@ -17,7 +17,7 @@
 \alias{add_constr_fry_hold}
 \alias{add_constr_log_st}
 \alias{add_constr_edges_rem}
-\alias{add_constr_phase_commute}
+\alias{add_constr_commute}
 \alias{add_constr_split_feeders}
 \alias{add_constr_capacity}
 \alias{add_constr_capacity_partial}
@@ -80,7 +80,7 @@ add_constr_log_st(constr, strength, admin = NULL)
 
 add_constr_edges_rem(constr, strength)
 
-add_constr_phase_commute(constr, strength, current, commute_times)
+add_constr_commute(constr, strength, current, commute_times)
 
 add_constr_split_feeders(constr, strength, lower, schools)
 
@@ -95,7 +95,7 @@ add_constr_custom(constr, strength, fn)
 
 \item{strength}{The strength of the constraint. Higher values mean a more restrictive constraint.}
 
-\item{current}{The reference map for the phase-in school commute constraint,
+\item{current}{The reference map for the school commute constraint,
 i.e. the current attendance areas.}
 
 \item{group_pop}{A vector of group population}
