@@ -156,7 +156,9 @@ right_join.redist_plans <- function(x, y, by = NULL, copy = FALSE, suffix = c(".
 #' @importFrom dplyr select
 select.redist_plans <- function(.data, ...) {
     result <- reconstruct.redist_plans(NextMethod(), .data)
-    # Explicitly preserve ndists attribute if missing
+    # Explicitly preserve ndists attribute if missing after reconstruction.
+    # This ensures ndists is preserved even when select() drops columns,
+    # preventing errors in downstream operations that depend on this attribute.
     if (is.null(attr(result, "ndists"))) {
         attr(result, "ndists") <- attr(.data, "ndists")
     }
