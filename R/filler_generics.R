@@ -155,7 +155,12 @@ right_join.redist_plans <- function(x, y, by = NULL, copy = FALSE, suffix = c(".
 #' @export
 #' @importFrom dplyr select
 select.redist_plans <- function(.data, ...) {
-    reconstruct.redist_plans(NextMethod(), .data)
+    result <- reconstruct.redist_plans(NextMethod(), .data)
+    # Explicitly preserve ndists attribute if missing
+    if (is.null(attr(result, "ndists"))) {
+        attr(result, "ndists") <- attr(.data, "ndists")
+    }
+    result
 }
 
 #' @export

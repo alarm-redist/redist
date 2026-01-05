@@ -41,6 +41,20 @@ test_that("plotting works", {
     expect_s3_class(out, "ggplot")
 })
 
+test_that("select preserves ndists attribute", {
+    fl <- redist_map(fl25, ndists = 3, pop_tol = 0.1) %>% suppressMessages()
+    x <- redist_plans(plans_10, fl, "enumpart")
+    
+    # Check that ndists attribute exists before select
+    expect_equal(attr(x, "ndists"), 3)
+    
+    # Select some columns
+    y <- dplyr::select(x, draw, district, total_pop)
+    
+    # Check that ndists attribute is preserved after select
+    expect_equal(attr(y, "ndists"), 3)
+})
+
 test_that("get_mh_acceptance_rate works", {
     iowa_map <- redist_map(iowa, pop_tol = 0.01, existing_plan = cd_2010)
 
