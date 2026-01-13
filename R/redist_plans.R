@@ -629,16 +629,28 @@ add_reference <- function(plans, ref_plan, name = NULL, ref_seats = NULL) {
 #' @concept analyze
 #' @export
 subset_sampled <- function(plans, matrix = TRUE) {
+    # get plan matrix
   plans_m <- get_plans_matrix(plans)
   if (is.null(colnames(plans_m))) {
     return(plans)
   }
 
+  # find what columns have character names
   nm_lengths <- nchar(colnames(plans_m))
-  draw_ints <- as.integer(plans$draw)
-  idxs <- which(nm_lengths[draw_ints] == 0)
 
+  if("chain" %in% names(plans)){
+      # allows for the case where draws go from 1:nsims within each chain
+      draw_ints <- interaction(plans$draw, plans$chain, drop = TRUE)
+      draw_ints <- match(draw_ints, unique(draw_ints))
+  }else{
+      draw_ints <- as.integer(plans$draw)
+  }
+
+
+  # get the ids of the rows that don't have character names
+  idxs <- which(nm_lengths[draw_ints] == 0)
   out <- vctrs::vec_slice(plans, idxs)
+
   out$draw <- droplevels(out$draw)
 
   idxs <- which(nm_lengths[unique(draw_ints)] == 0)
@@ -659,7 +671,16 @@ subset_ref <- function(plans, matrix = TRUE) {
   }
 
   nm_lengths <- nchar(colnames(plans_m))
-  draw_ints <- as.integer(plans$draw)
+  if("chain" %in% names(plans)){
+      draw_ints <- as.integer(
+          interaction(
+              plans$draw,
+              plans$chain
+          )
+      )
+  }else{
+      draw_ints <- as.integer(plans$draw)
+  }
   idxs <- which(nm_lengths[draw_ints] > 0)
 
   out <- vctrs::vec_slice(plans, idxs)
