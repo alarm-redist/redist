@@ -68,7 +68,7 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
         "segregation", "grp_pow", "grp_hinge", "grp_inv_hinge",
         "compet", "status_quo", "incumbency",
         "polsby", "fry_hold", "log_st", "edges_removed",
-        "qps", "custom"
+        "qps", "custom", "commute", "split_feeder", "capacity"
     );
     NumericVector new_psi(psi_names.size());
     std::vector<int> distr_1_2;
