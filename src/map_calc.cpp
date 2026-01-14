@@ -467,11 +467,15 @@ double eval_split_feeders(const subview_col<uword> &districts, const uvec &lower
  */
 double eval_capacity(const subview_col<uword> &districts, int distr, const uvec &pop, 
                      const uvec &schools, const uvec &schools_capacity, int V) {
-    Rcout << "Evaluating capacity for district " << distr << "\n";
+
+    // TESTING INDICES FOR MERGESPLIT
+    int distr_idx = distr - 1;
+
+    Rcout << "Evaluating capacity for district " << distr_idx << "\n";
     // Count how many people are assigned to current district
     int pop_assigned = 0;
     for (int v = 0; v < V; ++v) {
-        if (districts(v) == distr) {
+        if (districts(v) == distr_idx) {
             pop_assigned += pop(v);
         }
     }
@@ -480,7 +484,7 @@ double eval_capacity(const subview_col<uword> &districts, int distr, const uvec 
 
     // What is the capacity of the current district?
     // Assume schools/schools_capacity are in ascending district ID order
-    double pop_capacity = schools_capacity(distr);
+    double pop_capacity = schools_capacity(distr_idx);
 
     Rcout << "Population capacity: " << pop_capacity << "\n";
 
