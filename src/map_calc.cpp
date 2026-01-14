@@ -467,6 +467,7 @@ double eval_split_feeders(const subview_col<uword> &districts, const uvec &lower
  */
 double eval_capacity(const subview_col<uword> &districts, int distr, const uvec &pop, 
                      const uvec &schools, const uvec &schools_capacity, int V) {
+    Rcout << "Evaluating capacity for district " << distr << "\n";
     // Count how many people are assigned to current district
     int pop_assigned = 0;
     for (int v = 0; v < V; ++v) {
@@ -475,14 +476,20 @@ double eval_capacity(const subview_col<uword> &districts, int distr, const uvec 
         }
     }
 
+    Rcout << "Population assigned: " << pop_assigned << "\n";
+
     // What is the capacity of the current district?
     // Assume schools/schools_capacity are in ascending district ID order
     double pop_capacity = schools_capacity(distr);
+
+    Rcout << "Population capacity: " << pop_capacity << "\n";
 
     // Estimate number of school-aged children in the district
     double normalized_pop = pop_assigned / sum(pop) * sum(schools_capacity);
     // Calculate and compare ratio
     double ratio = normalized_pop / pop_capacity;
+
+    Rcout << "Utilization ratio: " << ratio << "\n";
 
     if (ratio < 0.95) {
         return 10 * abs(ratio - 0.95);
