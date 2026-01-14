@@ -134,7 +134,7 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
 
     log_tgt += add_constraint("commute", constraints, districts, psi_vec,
                               [&] (List l, int distr) -> double {
-                                  return eval_phase_commute(plan, as<uvec>(l["current"]), distr,
+                                  return eval_max_commute(plan, as<uvec>(l["current"]), distr,
                                                          pop, as<mat>(l["commute_times"]), V);
                               });
 
