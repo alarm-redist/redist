@@ -360,10 +360,13 @@ double eval_er(const subview_col<uword> &districts, const Graph g, int ndists) {
 double eval_phase_commute(const subview_col<uword> &districts, const uvec &current,
                        int distr, const uvec &pop,
                        const arma::mat &commute_times, int V) {
+    // MERGESPLIT IS 0-INDEXED
+    int distr_idx = distr - 1;
+
     double reassigned_pop = 0.0;
 
     for (int k = 0; k < V; k++) {
-        if (districts(k) != distr) continue; // only evaluate blocks in proposed district
+        if (districts(k) != distr_idx) continue; // only evaluate blocks in proposed district
 
         // get old and new districts of current block
         int school_old_idx = current[k] - 1;
@@ -379,7 +382,7 @@ double eval_phase_commute(const subview_col<uword> &districts, const uvec &curre
     }
 
     // return log(1 + average extra commute time per person in the district)
-    double district_pop = (double) sum(pop(find(districts == distr)));
+    double district_pop = (double) sum(pop(find(districts == distr_idx)));
     double avg_extra = (district_pop > 0.0) ? (reassigned_pop / district_pop) : 0.0;
     return std::log1p(avg_extra);
 }
@@ -397,10 +400,13 @@ double eval_phase_commute(const subview_col<uword> &districts, const uvec &curre
 double eval_max_commute(const subview_col<uword> &districts, const uvec &current,
                        int distr, const uvec &pop,
                        const arma::mat &commute_times, int V) {
+    // MERGESPLIT IS 0-INDEXED
+    int distr_idx = distr - 1;
+
     double max_commute = 0.0;
 
     for (int k = 0; k < V; k++) {
-        if (districts(k) != distr) continue; // only evaluate blocks in proposed district
+        if (districts(k) != distr_idx) continue; // only evaluate blocks in proposed district
 
         // get new district of current block
         int school_new_idx = districts(k);
@@ -468,7 +474,7 @@ double eval_split_feeders(const subview_col<uword> &districts, const uvec &lower
 double eval_capacity(const subview_col<uword> &districts, int distr, const uvec &pop, 
                      const uvec &schools, const uvec &schools_capacity, int V) {
 
-    // MERGESPLIT IS 0-INDEXED -- REMOVE -1 FOR SMC
+    // MERGESPLIT IS 0-INDEXED
     int distr_idx = distr - 1;
 
     // Count how many people are assigned to current district
