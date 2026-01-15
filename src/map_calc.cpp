@@ -468,20 +468,17 @@ double eval_split_feeders(const subview_col<uword> &districts, const uvec &lower
 double eval_capacity(const subview_col<uword> &districts, int distr, const uvec &pop, 
                      const uvec &schools, const uvec &schools_capacity, int V) {
 
-    // MERGESPLIT IS 0-INDEXED -- REMOVE -1 FOR SMC
-    int distr_idx = distr - 1;
-
     // Count how many people are assigned to current district
     int pop_assigned = 0;
     for (int v = 0; v < V; ++v) {
-        if (districts(v) == distr_idx) {
+        if (districts(v) == distr) {
             pop_assigned += pop(v);
         }
     }
 
     // What is the capacity of the current district?
     // Assume schools/schools_capacity are in ascending district ID order
-    double pop_capacity = schools_capacity(distr_idx);
+    double pop_capacity = schools_capacity(distr);
 
     // Estimate number of school-aged children in the district
     double normalized_pop = pop_assigned / sum(pop) * sum(schools_capacity);
