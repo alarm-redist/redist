@@ -418,8 +418,8 @@ double eval_max_commute(const subview_col<uword> &districts, const uvec &current
         }
     }
 
-    // return log(1 + max commute time for a person in the district)
-    return std::log1p(max_commute);
+    // return max commute time for a person in district in minutes
+    return max_commute / 60.0;
 }
 
 /*
