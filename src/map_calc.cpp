@@ -378,10 +378,10 @@ double eval_phase_commute(const subview_col<uword> &districts, const uvec &curre
         }
     }
 
-    // return log(1 + average extra commute time per person in the district)
+    // return average extra commute time per person in the district (in minutes)
     double district_pop = (double) sum(pop(find(districts == distr)));
     double avg_extra = (district_pop > 0.0) ? (reassigned_pop / district_pop) : 0.0;
-    return std::log1p(avg_extra);
+    return avg_extra / 60.0;
 }
 
 /*
@@ -412,8 +412,8 @@ double eval_max_commute(const subview_col<uword> &districts, const uvec &current
         }
     }
 
-    // return log(1 + max commute time for a person in the district)
-    return std::log1p(max_commute);
+    // return max commute time for any person in the district (in minutes)
+    return max_commute / 60.0;
 }
 
 /*
