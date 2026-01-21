@@ -5,8 +5,9 @@
  * `lower` is a lower bound (inclusive) on the index of the first unvisited element
  */
 // TESTED
-int rvtx(const std::vector<bool> &visited, int size, int remaining, int &lower) {
-    int idx = r_int(remaining);
+int rvtx(const std::vector<bool> &visited, int size, int remaining, int &lower,
+    RNGState &rng_state) {
+    int idx = rng_state.r_int(remaining);
     int accuml = 0;
     bool seen_one = false;
     for (int i = lower; i < size - 1; i++) {
@@ -24,87 +25,19 @@ int rvtx(const std::vector<bool> &visited, int size, int remaining, int &lower) 
  * Generate a random neighbor to a vertex, except for the `last` vertex.
  */
 // TESTED
-int rnbor(const Graph &g, int vtx) {
+int rnbor(const Graph &g, int vtx, RNGState &rng_state) {
     int n_nbors = g[vtx].size();
-    return g[vtx][r_int(n_nbors)];
-}
-
-/*
- * Make a county graph from a precinct graph and list of counties
- * County graph is list of list of 3: <cty of nbor, index of vtx, index of nbor>
- */
-// TESTED
-Multigraph county_graph(const Graph &g, const uvec &counties) {
-    int n_county = max(counties);
-    Multigraph cg = init_multigraph(n_county);
-
-    int V = g.size();
-    for (int i = 0; i < V; i++) {
-        std::vector<int> nbors = g[i];
-        int length = nbors.size();
-        int county = counties.at(i) - 1;
-        for (int j = 0; j < length; j++) {
-            int nbor_cty = counties.at(nbors[j]) - 1;
-            if (county == nbor_cty) continue;
-            std::vector<int> el = {nbor_cty, i, nbors[j]};
-            cg.at(county).push_back(el);
-        }
-    }
-
-    return cg;
+    return g[vtx][rng_state.r_int(n_nbors)];
 }
 
 
-/*
- * Make the district adjacency graph for `plan` from the overall precinct graph `g`
- */
-// TESTED
-Graph district_graph(const Graph &g, const uvec &plan, int nd, bool zero) {
-    int V = g.size();
-    std::vector<std::vector<bool>> gr_bool;
-    for (int i = 0; i < nd; i++) {
-        std::vector<bool> tmp(nd, false);
-        gr_bool.push_back(tmp);
-    }
-
-    for (int i = 0; i < V; i++) {
-        std::vector<int> nbors = g[i];
-        int dist_i = plan[i] - 1 + zero;
-        for (int nbor : nbors) {
-            int dist_j = plan[nbor] - 1 + zero;
-            if (dist_j != dist_i) {
-                gr_bool[dist_i][dist_j] = true;
-            }
-        }
-    }
-
-    Graph out;
-    for (int i = 0; i < nd; i++) {
-        std::vector<int> tmp;
-        for (int j = 0; j < nd; j++) {
-            if (gr_bool[i][j]) {
-                tmp.push_back(j);
-            }
-        }
-        out.push_back(tmp);
-    }
-
-    return out;
-}
 
 
-/*
- * Initialize empty multigraph structure on graph with `V` vertices
- */
-// TESTED
-Multigraph init_multigraph(int V) {
-    Multigraph g;
-    for (int i = 0; i < V; i++) {
-        std::vector<std::vector<int>> el;
-        g.push_back(el);
-    }
-    return g;
-}
+
+
+
+
+
 
 /*
  * Initialize empty tree structure on graph with `V` vertices
@@ -128,21 +61,24 @@ void clear_tree(Tree &tree) {
     }
 }
 
-/*
- * Convert R adjacency list to Graph object (vector of vectors of ints).
- */
-Graph list_to_graph(const List &l) {
-    int V = l.size();
-    Graph g;
-    for (int i = 0; i < V; i++) {
-        g.push_back(as<std::vector<int>>((IntegerVector) l[i]));
+
+
+void print_tree(Tree const &ust){
+    Rprintf("Printing Tree:\n");
+    for (int i = 0; i < ust.size(); i++)
+    {
+        Rprintf("%d: (", i);
+        for (auto &node : ust.at(i)) {
+            Rprintf("%d ", node);
+        }
+        Rprintf(")\n");
     }
-    return g;
+
 }
 
 
 /*
- * Count population below each node in tree
+ * Count population below each node in tree and get each node's parent
  */
 // TESTED
 // [[Rcpp::export]]
@@ -161,35 +97,170 @@ int tree_pop(Tree &ust, int vtx, const arma::uvec &pop,
     return pop_at;
 }
 
-/*
- * Assign `district` to all descendants of `root` in `ust`
- */
-// TESTED
-void assign_district(const Tree &ust, subview_col<uword> &districts,
-                     int root, int district) {
-    districts(root) = district;
-    int n_desc = ust.at(root).size();
-    for (int i = 0; i < n_desc; i++) {
-        assign_district(ust, districts, ust.at(root).at(i), district);
-    }
-}
 
-/*
- * Find the root of a subtree.
- */
-// TESTED
-int find_subroot(const Tree &ust, const std::vector<bool> &ignore) {
-    int V = ust.size();
-    std::vector<bool> visited(V, false);
-    for (int j = 0; j < V; j++) {
-        const std::vector<int>* nbors = &ust[j];
-        for (int k = 0; k < nbors->size(); k++) {
-            visited[(*nbors)[k]] = true;
+void get_tree_pops_below(
+    const Tree &ust, const int root, TreePopStack &stack,
+    const arma::uvec &pop, std::vector<int> &pop_below) {
+    stack.clear();
+    // add the root 
+    // we don't care about parent here
+    stack.push({root, 0, false});
+
+    while (!stack.empty()) {
+        auto [vtx, parent, is_revisiting] = stack.pop();
+
+        // if visiting again then that means we've seen all the children 
+        if (is_revisiting) {
+            int total_pop = pop[vtx];
+            for (int child : ust[vtx]) {
+                total_pop += pop_below[child];
+            }
+            pop_below[vtx] = total_pop;
+        } else {
+            // else push again and push the children
+            stack.push({vtx, 0, true});
+            for (const auto &child : ust[vtx]) {
+                stack.push({child, 0, false});
+            }
         }
     }
-    int root;
-    for (root = 0; root < V; root++) {
-        if (!visited[root] && !ignore.at(root)) break;
+
+    return;
+}
+
+
+/*
+ * Just Count population below each node in tree 
+ */
+// TESTED
+int get_tree_pops_below(const Tree &ust, const int vtx, const arma::uvec &pop,
+             std::vector<int> &pop_below) {
+    int pop_at = pop[vtx];
+    const std::vector<int> *nbors = &ust[vtx];
+    int length = nbors->size();
+    for (auto const nbor: ust[vtx]){
+        pop_at += get_tree_pops_below(ust, nbor, pop, pop_below);
     }
-    return root;
+
+    pop_below[vtx] = pop_at;
+    return pop_at;
+}
+
+
+
+
+
+
+
+void assign_region_id_from_tree(
+    Tree const &ust, PlanVector &region_ids,
+    int const root, const int new_region_id,
+    CircularQueue<std::pair<int,int>> &vertex_queue
+){
+    // clear the queue
+    vertex_queue.clear();
+    
+
+    // update root and add its children to queue 
+    region_ids[root] = new_region_id;
+    for(auto const &child_vertex: ust[root]){
+        vertex_queue.push({child_vertex, 0});
+    }
+
+    // update all the children
+    while(!vertex_queue.empty()){
+        // get and remove head of queue 
+        auto [vertex, dont_care] = vertex_queue.pop();
+        // update region ids
+        region_ids[vertex] = new_region_id;
+        // add children 
+        for(auto const &child_vertex: ust[vertex]){
+            vertex_queue.push({child_vertex, 0});
+        }
+    }
+
+    return;
+}
+
+
+// updates both the vertex labels and the forest adjacency 
+void assign_region_id_and_forest_from_tree(
+    const Tree &ust, 
+    PlanVector &region_ids,
+    VertexGraph &forest_graph,
+    int root,
+    const int new_region_id,
+    CircularQueue<std::pair<int,int>> &vertex_queue){
+
+    // clear the queue of vertex, parent 
+    vertex_queue.clear();
+
+    // update root region id
+    region_ids[root] = new_region_id;
+    // and its forest vertices
+    int n_desc = ust[root].size();
+    // clear this vertices neighbors in the graph and reserve size for children
+    forest_graph[root].clear(); forest_graph[root].reserve(n_desc);
+
+    
+    // add roots children to queue 
+    for(auto const &child_vertex: ust[root]){
+        vertex_queue.push({child_vertex, root});
+        forest_graph[root].push_back(child_vertex);
+    }
+    
+    // update all the children
+    while(!vertex_queue.empty()){
+        // get and remove head of queue 
+        auto [vertex, parent_vertex] = vertex_queue.pop();
+
+        // update region ids
+        region_ids[vertex] = new_region_id;
+        // clear this vertices neighbors in the graph and reserve size for children and parent 
+        int n_desc = ust[vertex].size();
+        forest_graph[vertex].clear(); forest_graph[vertex].reserve(n_desc+1);
+        // add the edge from vertex to parent 
+        forest_graph[vertex].push_back(parent_vertex);
+        
+        for(auto const &child_vertex: ust[vertex]){
+            // add children to queue
+            vertex_queue.push({child_vertex, vertex});
+            // add this edge from vertex to its children 
+            forest_graph[vertex].push_back(child_vertex);
+        }
+    }
+
+    return;
+}
+
+
+/*  
+ *  Erases an edge from a tree
+ * 
+ *  Erases the directed edge (`cut_edge.cut_vertex_parent`, `cut_edge.cut_vertex`)
+ *  from the tree `ust`. The directed edge here means we have `child_vertex` being one of 
+ *  the values in `ust[parent_vertex]`.
+ * 
+ * 
+ *  @param ust A directed spanning tree passed by reference
+ *  @param cut_edge An `EdgeCut` object representing the edge cut
+ * 
+ *  @details Modifications
+ *     - The edge (`cut_edge.cut_vertex_parent`, `cut_edge.cut_vertex`) 
+ *     is removed from `ust`
+ * 
+ * 
+ */ 
+void erase_tree_edge(Tree &ust, EdgeCut cut_edge){
+    // Get all of the descendents of `cut_vertex_parent` 
+    std::vector<int> *siblings = &ust[cut_edge.cut_vertex_parent];
+    int length = siblings->size();
+    int j;
+    // find index of `cut_vertex` among `cut_vertex_parent`'s children
+    for (j = 0; j < length; j++) {
+        if ((*siblings)[j] == cut_edge.cut_vertex) break;
+    }
+
+    // Now remove the edge corresponding to `cut_vertex` from the tree
+    siblings->erase(siblings->begin()+j);
 }

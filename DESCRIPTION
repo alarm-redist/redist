@@ -1,12 +1,14 @@
 Package: redist
-Version: 4.3.0
-Date: 2025-07-07
+Version: 5.0.0.1
+Date: 2025-08-08
 Title: Simulation Methods for Legislative Redistricting
 Authors@R: c(
     person("Christopher T.", "Kenny", email = "christopherkenny@fas.harvard.edu", 
            role = c("aut", "cre"), comment = c(ORCID = "0000-0002-9386-6860")),
     person("Cory", "McCartan", email = "mccartan@psu.edu", role = "aut",
            comment = c(ORCID = "0000-0002-6251-669X")),
+    person("Philip", "O'Sullivan", email = "posullivan@fas.harvard.edu", role = "aut",
+           comment = c(ORCID = "0000-0002-9665-2462")),
     person("Ben", "Fifield", email = "benfifield@gmail.com", role = "aut",
            comment = c(ORCID = "0000-0002-2247-0201")),
     person("Kosuke", "Imai", email = "imai@harvard.edu", role = "aut",
@@ -31,6 +33,7 @@ Depends:
     redistmetrics (>= 1.0.2) 
 Imports:
     Rcpp (>= 0.11.0),
+    RcppEigen,
     rlang,
     cli (>= 3.1.0),
     vctrs,
@@ -60,7 +63,7 @@ Suggests:
     RSpectra,
     testthat (>= 3.0.0),
     spelling
-LinkingTo: Rcpp, RcppArmadillo, RcppThread, cli, redistmetrics
+LinkingTo: Rcpp, RcppArmadillo, RcppThread, cli, redistmetrics, RcppEigen
 License: GPL (>= 2)
 SystemRequirements: C++17, python
 NeedsCompilation: yes

@@ -7,46 +7,51 @@
 redist_mergesplit_parallel(
   map,
   nsims,
-  chains = 1,
   warmup = if (is.null(init_plan)) 10 else max(100, nsims\%/\%5),
   thin = 1L,
+  chains = 1L,
   init_plan = NULL,
   counties = NULL,
   compactness = 1,
   constraints = list(),
   constraint_fn = function(m) rep(0, ncol(m)),
-  adapt_k_thresh = 0.99,
-  k = NULL,
+  sampling_space = c("graph_plan", "spanning_forest", "linking_edge"),
+  split_method = NULL,
+  split_params = NULL,
+  pair_rule = "uniform",
+  init_seats = NULL,
   ncores = NULL,
   cl_type = "PSOCK",
   return_all = TRUE,
   init_name = NULL,
-  silly_adj_fix = FALSE,
   verbose = FALSE,
-  silent = FALSE
+  silent = FALSE,
+  diagnostic_mode = FALSE,
+  control = list(),
+  adapt_k_thresh = 0.99
 )
 }
 \arguments{
-\item{map}{A \code{\link{redist_map}} object.}
+\item{map}{A \verb{\link{redist_map}} object.}
 
-\item{nsims}{The number of samples to draw, including warmup.}
-
-\item{chains}{the number of parallel chains to run. Each chain will have
-\code{nsims} draws. If \code{init_plan} is sampled, each chain will be initialized
-with its own sampled plan.}
+\item{nsims}{The number of samples to generate. The chain will run for
+\code{warmup+(nsims*thin)} steps.}
 
 \item{warmup}{The number of warmup samples to discard. Recommended to be at
 least the first 20\% of samples, and in any case no less than around 100
 samples, unless initializing from a random plan.}
 
-\item{thin}{Save every \code{thin}-th sample. Defaults to no thinning (1).}
+\item{thin}{Save every \code{thin}-th sample after running warump.
+Defaults to no thinning (1).}
 
-\item{init_plan}{The initial state of the map, provided as a single vector
-to be shared across all chains, or a matrix with \code{chains} columns.
-If not provided, will default to the reference map of the map object, or if
-none exists, will sample a random initial state using redist_smc. You can
-also request a random initial state for each chain by setting
-init_plan="sample".}
+\item{chains}{the number of parallel chains to run. Each chain will have
+\code{nsims} draws. If \code{init_plan} is sampled, each chain will be initialized
+with its own sampled plan.}
+
+\item{init_plan}{The initial state of the map. If not provided, will default to
+the reference map of the \code{map} object, or if none exists, will sample
+a random initial state using \verb{\link{redist_smc}}. You can also request
+a random initial state by setting \code{init_plan="sample"}.}
 
 \item{counties}{A vector containing county (or other administrative or
 geographic unit) labels for each unit, which may be integers ranging from 1
@@ -58,26 +63,81 @@ split, consider using \code{add_constr_splits()}, \code{add_constr_multisplits()
 and \code{add_constr_total_splits()}.}
 
 \item{compactness}{Controls the compactness of the generated districts, with
-higher values preferring more compact districts. Must be nonnegative. See the
-'Details' section for more information, and computational considerations.}
+higher values preferring more compact districts. Must be nonnegative. See
+the 'Details' section for more information, and computational
+considerations.}
 
-\item{constraints}{A list containing information on constraints to implement.
-See the 'Details' section for more information.}
+\item{constraints}{A \code{\link[=redist_constr]{redist_constr()}} object or a list containing
+information on sampling constraints. See \link{constraints} for more information.}
 
 \item{constraint_fn}{A function which takes in a matrix where each column is
 a redistricting plan and outputs a vector of log-weights, which will be
 added the the final weights.}
 
-\item{adapt_k_thresh}{The threshold value used in the heuristic to select a
-value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if
-the algorithm does not appear to be sampling from the target distribution.
-Must be between 0 and 1.}
+\item{sampling_space}{The space to sample the plans on. This does not affect
+the plans output by the function but the sample space used can have a large
+impact on computational cost/runtime and convergence. Current spaces supported
+right now are
+\itemize{
+\item graph_plan : graph partition space
+\item spanning_forest : spanning forest space
+\item linking_edge : linking edge forest space
+}}
 
-\item{k}{The number of edges to consider cutting after drawing a spanning
-tree. Should be selected automatically in nearly all cases.}
+\item{split_method}{The method used for splitting spanning trees in the
+sampling process. When sampling on the space of graph partitions it must be
+the naive top k method but any method is allowed for forest space sampling.}
 
-\item{ncores}{the number of parallel processes to run. Defaults to the
-maximum available.}
+\item{split_params}{A list of parameters related to splitting the plans.
+Options include
+\itemize{
+\item \code{splitting_schedule} What rule to use for selecting splitting
+sizes. The final target distribution is the same regardless of splitting
+schedule but the intermediate distributions can change. Current options
+include
+\itemize{
+\item \code{split_district_only} At each step split off a single district.
+\item \code{any_valid_sizes} At each step allow for regions to be split
+into any two sizes (assuming the sizes can eventually be split into
+districts.) Currently this is only supported for single member districting.
+}
+}
+Parameters for \code{split_method} Any relevant parameters for the
+\code{split_method}. These include the following
+\itemize{
+\item top_k parameters:
+\itemize{
+\item \code{adapt_k_thresh} The threshold value used in the heuristic to
+select a value \code{k_i} for each splitting iteration for graph space
+sampling if estimation is desired (the \code{k_i} can also be manually passed in.)
+Higher values are more accurate but may require more
+computation. Set to 1 for the most conservative sampling.
+Must be between 0 and 1.
+\item \code{manual_k_params} The \code{k_i} values to be used for each splitting
+iteration for graph space sampling. Beware when specifying manual values
+it is crucial they are close to the true values as too small \code{k_i} values
+will cause the algorithm to fail to sample from the target distribution
+correctly and too large values will cause a drastic performance hit. The
+input must either be a single integer to use for each step or a vector
+of integers equal to the number of smc steps.
+}
+\item exp_abs_dev
+\itemize{
+\item \code{splitting_alpha} When selecting an edge to cut in the
+tree a valid edge is selected with probability proportional to
+\code{exp(-splitting_alpha * max_dev)}. \code{splitting_alpha} can
+be any real number. Values closer to zero result in more stable weights
+and larger values result in more unstable weights.
+}
+}}
+
+\item{pair_rule}{What probability to use to select districts to merge
+in the mergesplit kernel. Defaults to giving all pairs equal probability.}
+
+\item{init_seats}{The initial number of seats for each district in \code{init_plan}.}
+
+\item{ncores}{The number of clusters to spawn Defaults to the
+maximum available detected by \code{parallel::detectCores()}.}
 
 \item{cl_type}{the cluster type (see \code{\link[=makeCluster]{makeCluster()}}). Safest is \code{"PSOCK"},
 but \code{"FORK"} may be appropriate in some settings.}
@@ -87,22 +147,42 @@ the final plan from each chain.}
 
 \item{init_name}{a name for the initial plan, or \code{FALSE} to not include
 the initial plan in the output.  Defaults to the column name of the
-existing plan, or "\code{<init>}" if the initial plan is sampled.}
-
-\item{silly_adj_fix}{Heuristic for fixing weird inputs.}
+existing plan, or "\verb{<init>}" if the initial plan is sampled.}
 
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}
 
 \item{silent}{Whether to suppress all diagnostic information.}
+
+\item{diagnostic_mode}{Whether or not to return all the proposed plans
+as well.}
+
+\item{control}{A list of optional advanced parameters.
+\itemize{
+\item \code{nproc}: The number of processes (independent instances of R)
+spawned to simulate the plans. The processes execute runs in parallel, each
+using \code{ncores} threads. If more than one process is used, the
+sampler output will not be fully reproducible with \code{set.seed()}. If full
+reproducibility is desired, set \code{nproc=1} and
+\code{ncores = 1}. If missing defaults to a single process.
+\item \code{weight_type} The type of SMC weights to use. Optimal weights typically
+have lower variance and lead to faster convergence but can be more
+computationally expensive, especially for computationally complex constraints
+or when \code{compactness} is not set to 1.
+}}
+
+\item{adapt_k_thresh}{The threshold value used in the heuristic to select a
+value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if
+the algorithm does not appear to be sampling from the target distribution.
+Must be between 0 and 1.}
 }
 \value{
 A \code{\link{redist_plans}} object with all of the simulated plans, and an
 additional \code{chain} column indicating the chain the plan was drawn from.
 }
 \description{
-\code{redist_mergesplit_parallel()} runs \code{\link[=redist_mergesplit]{redist_mergesplit()}} on several
-chains in parallel.
+\code{redist_mergesplit_parallel()} is deprecated. Please call \code{redist_mergesplit}
+now instead.
 }
 \details{
 This function draws samples from a specific target measure, controlled by the
@@ -121,7 +201,7 @@ compact districts.
 \dontrun{
 data(fl25)
 fl_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1)
-sampled <- redist_mergesplit_parallel(fl_map, nsims = 100, chains = 100)
+sampled <- redist_mergesplit(fl_map, nsims = 100, chains = 100)
 }
 
 }

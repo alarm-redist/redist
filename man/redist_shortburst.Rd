@@ -15,9 +15,7 @@ redist_shortburst(
   counties = NULL,
   constraints = redist_constr(map),
   compactness = 1,
-  adapt_k_thresh = 0.95,
   reversible = TRUE,
-  fixed_k = NULL,
   return_all = TRUE,
   thin = 1L,
   backend = "mergesplit",
@@ -68,17 +66,8 @@ If no county-split constraint is desired, this parameter should be left blank.}
 higher values preferring more compact districts. Must be non-negative. See
 \code{\link{redist_mergesplit}} for more information.}
 
-\item{adapt_k_thresh}{The threshold value used in the heuristic to select a
-value \code{k_i} for each splitting iteration.}
-
 \item{reversible}{If \code{FALSE} and \code{backend="mergesplit"}, the Markov chain
 used will not be reversible. This may speed up optimization.}
-
-\item{fixed_k}{If not \code{NULL}, will be used to set the \code{k} parameter for the
-\code{mergesplit} backend. If e.g. \code{k=1} then the best edge in each spanning
-tree will be used.  Lower values may speed up optimization at the
-cost of the Markov chain no longer targeting a known distribution.
-Recommended only in conjunction with \code{reversible=FALSE}.}
 
 \item{return_all}{Whether to return all the burst results or just the best
 one (generally, the Pareto frontier). Recommended for monitoring purposes.}

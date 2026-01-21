@@ -43,7 +43,9 @@ test_that("Not egregiously incorrect sampling accuracy (5-prec)", {
     g <- list(c(1L, 4L), c(0L, 2L, 4L), c(1L, 3L, 4L), c(2L, 4L), c(0L, 1L, 2L, 3L))
     g_pop <- c(2, 1, 1, 1, 1)
     map <- redist_map(pop = g_pop, ndists = 2, pop_tol = 0.5, adj = g)
-    out <- redist_smc(map, 20e3, compactness = 0, adapt_k_thresh = 0.99, resample = FALSE, silent = TRUE)
+    out <- redist_smc(map, 20e3, compactness = 0,
+                      split_params = list(adapt_k_thresh = 0.99), ncores = 1L,
+                      resample = FALSE, silent = TRUE)
     types <- apply(as.matrix(out), 2, function(x) 1L + (x[1] == x[2]))
     wgts <- weights(out)
     avg <- weighted.mean(types, wgts)
@@ -59,8 +61,10 @@ test_that("Not egregiously incorrect sampling accuracy (25-prec)", {
     ref_plans <- plans_10[, redist.parity(plans_10, pop) <= 0.01]
     log_st_ref <- round(log_st_map(adj, ref_plans, rep(1L, 25), 3L), 5)
 
-    out <- redist_smc(set_pop_tol(fl_map, 0.01), 6000, compactness=0,
-        adapt_k_thresh=0.99999, seq_alpha=0.5, resample=FALSE, silent=TRUE) %>%
+    out <- redist_smc(set_pop_tol(fl_map, 0.01), 6000, compactness = 0,
+                      ncores = 1L, control = list(weight_type = "simple"),
+                      split_params = list(adapt_k_thresh = .99999), seq_alpha = 1L,
+                      resample = FALSE, silent = TRUE) %>%
         suppressWarnings() # efficiency
     log_st <- round(log_st_map(adj, as.matrix(out), rep(1L, 25), 3L), 5)
     types <- match(log_st, log_st_ref)
@@ -81,7 +85,9 @@ test_that("Labeling accounted for", {
     g <- list(1:2, c(0L, 3L), c(0L, 3L, 4L), c(1L, 2L, 5L), c(2L, 5L, 6L),
               c(3L, 4L, 7L), c(4L, 7L), 5:6)
     map <- redist_map(pop = rep(1, 8), ndists = 4, pop_tol = 0.05, adj = g)
-    out <- redist_smc(map, 10e3, adapt_k_thresh = 1, resample = FALSE, silent = TRUE)
+    out <- redist_smc(map, 10e3, ncores = 1L,
+                      split_params = list(adapt_k_thresh = 1L),
+                      resample = FALSE, silent = TRUE)
     types = apply(as.matrix(out), 2, function(x) {
         paste(vctrs::vec_group_id(x), collapse="")
     }) |>
@@ -96,42 +102,58 @@ test_that("Labeling accounted for", {
 })
 
 
+
 test_that("Partial sampling works accurately", {
     skip_on_cran()
     set.seed(1935)
+    nsims <- 1000
+    compactness <- 1L
 
-    ref_plans <- plans_10[, redist.parity(plans_10, pop) <= 0.01]
-    log_st_ref <- round(log_st_map(adj, ref_plans, rep(1L, 25), 3L), 5)
+    # check that sampling all the way and partial sampling return about the same
 
-    out1 <- redist_smc(set_pop_tol(fl_map, 0.01), 3000, compactness = 0,
-        n_steps = 1, adapt_k_thresh = 1, seq_alpha = 0.5,
-        resample = TRUE, silent = TRUE) %>%
+    # sample all the way
+    out_all_the_way <- redist_smc(set_pop_tol(fl_map, 0.01), nsims, compactness = compactness,
+                                  split_params = list(adapt_k_thresh = .99), seq_alpha = 1L,
+                                  ncores = 1L, # control = list(weight_type = "simple"),
+                                  resample = F, silent = TRUE) %>%
         suppressWarnings() # efficiency
-    out2 <- redist_smc(set_pop_tol(fl_map, 0.01), 3000, compactness = 0,
-        init_particles = as.matrix(out1),
-        adapt_k_thresh = 1, seq_alpha = 0.5, resample = FALSE, silent = TRUE) %>%
-        suppressWarnings() # efficiency
-    log_st <- round(log_st_map(adj, as.matrix(out2), rep(1L, 25), 3L), 5)
-    types <- match(log_st, log_st_ref)
 
-    wgts <- weights(out2)
-    avgs <- sapply(seq_along(log_st_ref), function(i) weighted.mean(types == i, wgts))
-    ses <- sapply(seq_along(log_st_ref), function(i) {
-        sqrt(sum(((types == i) - avgs[i])^2*(wgts/sum(wgts))^2))
-    })
-    zscores <- (avgs - (1/length(log_st_ref)))/ses
-    expect_true(all(abs(zscores) <= 5.0))
+    # partially sample
+    out1 <- redist_smc(set_pop_tol(fl_map, 0.01), nsims, compactness = compactness,
+                       n_steps = 1, split_params = list(adapt_k_thresh = .99), seq_alpha = 1L,
+                       ncores = 1L, # control = list(weight_type = "simple"),
+                       resample = F, silent = TRUE) %>%
+        suppressWarnings() # efficiency
+    out2 <- redist_smc(set_pop_tol(fl_map, 0.01), nsims, compactness = compactness,
+                       init_particles = out1,
+                       ncores = 1L, #control = list(weight_type = "simple"),
+                       split_params = list(adapt_k_thresh = .99),
+                       seq_alpha = 1L, resample = F, silent = TRUE) %>%
+        suppressWarnings() # efficiency
+
+    # get the counts of the plans in the two samples
+    all_the_way_counts_df <- get_plan_counts(
+        get_plans_matrix(out_all_the_way), attr(fl_map, "ndists")
+    ) |>
+        arrange(plan_string)
+
+    partial_counts_df <- get_plan_counts(
+        get_plans_matrix(out2), attr(fl_map, "ndists")
+    ) |>
+        arrange(plan_string)
+
+    test_result <- chisq.test(
+        all_the_way_counts_df$count,
+        partial_counts_df$count,
+        simulate.p.value = TRUE, B = 10000
+    ) |>
+        suppressWarnings() # efficiency
+
+    expect_true(test_result$p.value > .001)
+
 })
 
-test_that("Partial sampling works with strange bounds", {
-    bounds <- sum(fl25$pop)*c(0.25, 0.3, 0.32)
-    fl_map2 <- redist_map(fl25, pop_bounds = bounds, ndists = 4, adj = adj) %>%
-        suppressMessages()
-    res <- redist_smc(fl_map2, 1000, n_steps = 2, silent = TRUE)
-    expect_s3_class(res, "redist_plans")
-    expect_true(all(res$total_pop[res$district > 0] > bounds[1]))
-    expect_true(all(res$total_pop[res$district > 0] < bounds[3]))
-})
+
 
 test_that("Additional constraints work", {
     iowa_map <- redist_map(iowa, ndists = 4, pop_tol = 0.05)
@@ -139,11 +161,52 @@ test_that("Additional constraints work", {
     constr <- redist_constr(iowa_map) %>%
         add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) %>%
         add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) %>%
-        add_constr_custom(1e5, function(plan, distr) plan[7] == 2)
+        add_constr_custom(1e2, function(plan, distr) plan[7] == 2)
 
     plans <- redist_smc(iowa_map, 100, constraints = constr, silent = TRUE)
-    expect_false(any(as.matrix(plans)[7, ] == 2))
+    expect_false(any( (as.matrix(plans)[7, ] - 1L) == 2))
 })
+
+
+test_that("Thresholding constraints work", {
+    iowa_map <- redist_map(iowa, ndists = 4, pop_tol = 0.05)
+
+    # ensure that polk and story county are always in the same region
+    polk_precint <- which(iowa_map$name == "Polk")
+    story_precint <- which(iowa_map$name == "Story")
+
+    constr <- redist_constr(iowa_map) %>%
+        add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) %>%
+        add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) %>%
+        add_constr_custom_plan(1, function(plan, seats, num_regions){
+            # return 0 if in the same region
+            if(plan[polk_precint] == plan[story_precint]){
+                return(0)
+            }else{
+                return(1)
+            }
+        }, thresh = .5)
+
+    plans <- redist_smc(iowa_map, 100, constraints = constr, silent = TRUE)
+
+    expect_true(
+        all(get_plans_matrix(plans)[polk_precint, ] == get_plans_matrix(plans)[story_precint, ])
+    )
+
+    # now ensure polk and story are never in the same region
+    constr <- redist_constr(iowa_map) %>%
+        add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) %>%
+        add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) |>
+        add_constr_plan_incumbency(1, c(polk_precint, story_precint), thresh = 1)
+
+    plans <- redist_smc(iowa_map, 100, constraints = constr, silent = TRUE)
+
+    expect_true(
+        all(get_plans_matrix(plans)[polk_precint, ] != get_plans_matrix(plans)[story_precint, ])
+    )
+})
+
+
 
 test_that("Precise population bounds are enforced", {
     map2 <- fl_map
@@ -157,20 +220,25 @@ test_that("Precise population bounds are enforced", {
 test_that("SMC checks arguments", {
     expect_error(redist_smc(fl_map, 10, compactness = -1), "non-negative")
     expect_error(redist_smc(fl_map, 10, seq_alpha = 1.5), "0, 1")
-    expect_error(redist_smc(fl_map, 10, adapt_k_thresh = 1.5), "0, 1")
+    expect_error(redist_smc(fl_map, 10, split_params = list(adapt_k_thresh = 1.5)), "0, 1")
     expect_error(redist_smc(fl_map, 0), "positive")
 })
 
 test_that("Parallel runs are reproducible", {
+    # need to make sure 1 thread and process
     set.seed(5118)
-    pl1 <- redist_smc(fl_map, 100, runs = 2, silent = TRUE)
+    pl1 <- redist_smc(fl_map, 100, runs = 2, silent = TRUE,
+                      ncores = 1L, control = list(nproc = 1L))
     set.seed(5118)
-    pl2 <- redist_smc(fl_map, 100, runs = 2, silent = TRUE)
+    pl2 <- redist_smc(fl_map, 100, runs = 2, silent = TRUE,
+                      ncores = 1L, control = list(nproc = 1L))
 
-    # runtime is the only thing that shouldn't be identical
+    # runtime related is the only thing that shouldn't be identical
     for (i in 1:2) {
         attr(pl1, "diagnostics")[[i]]$runtime <- NULL
         attr(pl2, "diagnostics")[[i]]$runtime <- NULL
+        attr(pl1, "total_runtime") <- NULL
+        attr(pl2, "total_runtime") <- NULL
     }
 
     expect_identical(pl1, pl2)

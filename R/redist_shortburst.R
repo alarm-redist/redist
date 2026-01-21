@@ -45,15 +45,8 @@
 #' @param compactness Controls the compactness of the generated districts, with
 #' higher values preferring more compact districts. Must be non-negative. See
 #' \code{\link{redist_mergesplit}} for more information.
-#' @param adapt_k_thresh The threshold value used in the heuristic to select a
-#' value `k_i` for each splitting iteration.
 #' @param reversible If `FALSE` and `backend="mergesplit"`, the Markov chain
 #' used will not be reversible. This may speed up optimization.
-#' @param fixed_k If not `NULL`, will be used to set the `k` parameter for the
-#'   `mergesplit` backend. If e.g. `k=1` then the best edge in each spanning
-#'   tree will be used.  Lower values may speed up optimization at the
-#'   cost of the Markov chain no longer targeting a known distribution.
-#'   Recommended only in conjunction with `reversible=FALSE`.
 #' @param return_all Whether to return all the burst results or just the best
 #' one (generally, the Pareto frontier). Recommended for monitoring purposes.
 #' @param thin Save every `thin`-th sample. Defaults to no thinning (1). Ignored
@@ -89,8 +82,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
                               burst_size = ifelse(backend == "mergesplit", 10L, 50L),
                               max_bursts = 500L, maximize = TRUE, init_plan = NULL,
                               counties = NULL,  constraints = redist_constr(map),
-                              compactness = 1, adapt_k_thresh = 0.95,
-                              reversible=TRUE, fixed_k=NULL,
+                              compactness = 1, reversible=TRUE,
                               return_all = TRUE, thin = 1L, backend = "mergesplit",
                               flip_lambda = 0, flip_eprob = 0.05,
                               verbose = TRUE) {
@@ -111,11 +103,9 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     score_fn <- rlang::as_closure(score_fn)
     stopifnot(is.function(score_fn))
 
-    if (compactness < 0)
+    if (compactness < 0){
         cli::cli_abort("{.arg compactness} must be non-negative.")
-    if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
-        cli::cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
-
+    }
     if (burst_size(1) < 1 || max_bursts < 1)
         cli::cli_abort("{.arg burst_size} and {.arg max_bursts} must be positive.")
     if (thin < 1 || thin > max_bursts)
@@ -144,7 +134,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     if (is.null(init_plan)) init_plan <- vctrs::vec_group_id(get_existing(map))
     if (length(init_plan) == 0L || isTRUE(init_plan == "sample")) {
         init_plan <- as.integer(get_plans_matrix(
-            redist_smc(map, 10, counties, resample = FALSE, ref_name = FALSE, silent = TRUE, ncores = 1))[, 1])
+            redist_smc(map, 10, counties, resample = FALSE, ref_name = FALSE, silent = TRUE))[, 1])
     }
 
     # check init
@@ -175,20 +165,46 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     constraints <- as.list(constraints)
 
     if (backend == "mergesplit") {
-        control = list(adapt_k_thresh=adapt_k_thresh, do_mh=reversible)
-        if (is.null(fixed_k)) {
-            x <- ms_plans(1, adj, init_plan, counties, pop, ndists, pop_bounds[2],
-                          pop_bounds[1], pop_bounds[3], compactness,
-                          list(), control, 0L, 1L, verbosity = 0)
-            k <- x$est_k
-        } else {
-            k = fixed_k
-        }
+        # get map params
+        map_params <- get_map_parameters(map, !!rlang::enquo(counties))
+        map <- map_params$map
+        V <- map_params$V
+        adj_list <- map_params$adj_list
+        counties <- map_params$counties
+        num_admin_units <- length(unique(counties))
+        pop <- map_params$pop
+        pop_bounds <- map_params$pop_bounds
+        # get the total number of districts
+        ndists <- map_params$ndists
+        nseats <- map_params$nseats
+        seats_range <- map_params$seats_range
+        districting_scheme <- map_params$districting_scheme
+
+
+        control = list(
+            splitting_method=UNIF_VALID_EDGE_SPLITTING,
+            do_mh=reversible
+        )
 
         run_burst <- function(init, steps) {
-            ms_plans(steps, adj, init, counties, pop, ndists,
-                pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
-                constraints, control, k, 1L, verbosity = 0)$plans[, -1L]
+            init <- matrix(init, ncol = 1)
+            # just assume always SMD
+            init_sizes <- matrix(1L, ncol = 1, nrow = ndists)
+
+            ms_plans(
+                nsims=steps, warmup=0L, thin=1L,
+                ndists=ndists, total_seats=nseats,
+                district_seat_sizes=seats_range,
+                adj_list=adj_list, counties=counties, pop=pop,
+                target=pop_bounds[2], lower=pop_bounds[1], upper=pop_bounds[3],
+                rho=compactness,
+                init_plan=init,
+                init_seats=init_sizes,
+                sampling_space_str = FOREST_SPACE_SAMPLING,
+                pair_rule = "uniform",
+                control=control, constraints=constraints,
+                verbosity=0, diagnostic_mode=FALSE
+            )$plans
         }
     } else {
 

@@ -25,6 +25,7 @@ Constraints may be added by using one of the following functions:
 \itemize{
 \item \code{\link[=add_constr_compet]{add_constr_compet()}}
 \item \code{\link[=add_constr_custom]{add_constr_custom()}}
+\item \code{\link[=add_constr_custom_plan]{add_constr_custom_plan()}}
 \item \code{\link[=add_constr_edges_rem]{add_constr_edges_rem()}}
 \item \code{\link[=add_constr_fry_hold]{add_constr_fry_hold()}}
 \item \code{\link[=add_constr_grp_hinge]{add_constr_grp_hinge()}}
@@ -32,12 +33,16 @@ Constraints may be added by using one of the following functions:
 \item \code{\link[=add_constr_grp_pow]{add_constr_grp_pow()}}
 \item \code{\link[=add_constr_incumbency]{add_constr_incumbency()}}
 \item \code{\link[=add_constr_log_st]{add_constr_log_st()}}
+\item \code{\link[=add_constr_min_group_frac]{add_constr_min_group_frac()}}
 \item \code{\link[=add_constr_multisplits]{add_constr_multisplits()}}
+\item \code{\link[=add_constr_plan_incumbency]{add_constr_plan_incumbency()}}
+\item \code{\link[=add_constr_plan_splits]{add_constr_plan_splits()}}
 \item \code{\link[=add_constr_polsby]{add_constr_polsby()}}
 \item \code{\link[=add_constr_pop_dev]{add_constr_pop_dev()}}
 \item \code{\link[=add_constr_segregation]{add_constr_segregation()}}
 \item \code{\link[=add_constr_splits]{add_constr_splits()}}
 \item \code{\link[=add_constr_status_quo]{add_constr_status_quo()}}
+\item \code{\link[=add_constr_total_plan_splits]{add_constr_total_plan_splits()}}
 \item \code{\link[=add_constr_total_splits]{add_constr_total_splits()}}
 }
 

@@ -4,7 +4,7 @@
 \alias{add_reference}
 \title{Add a reference plan to a set of plans}
 \usage{
-add_reference(plans, ref_plan, name = NULL)
+add_reference(plans, ref_plan, name = NULL, ref_seats = NULL)
 }
 \arguments{
 \item{plans}{a \code{redist_plans} object}
@@ -14,6 +14,9 @@ renumbered to 1..\code{ndists}.}
 
 \item{name}{a human-readable name for the reference plan. Defaults to the
 name of \code{ref_plan}.}
+
+\item{ref_seats}{an integer vector containing the number of seats for each
+of the districts. Only needed for MMD plans.}
 }
 \value{
 a modified \code{redist_plans} object containing the reference plan

@@ -1,0 +1,93 @@
+#pragma once
+#ifndef UST_SAMPLER_H
+#define UST_SAMPLER_H
+
+#include <RcppArmadillo.h>
+#include "redist_types.h"
+#include "tree_op.h"
+#include "base_plan_type.h"
+#include "scoring.h"
+
+
+
+class Plan;
+class ScoringFunction;
+class TreeSplitter;
+
+// For the future, to avoid needing to create visited and ignore
+class USTSampler {
+
+private:
+
+
+public:
+
+    USTSampler(MapParams const &map_params, SplittingSchedule const &splitting_schedule) : 
+        ust(init_tree(map_params.V)), pops_below_vertex(map_params.V, 0), 
+        visited(map_params.V), ignore(map_params.V),
+        stack(map_params.V + 1),
+        county_tree(init_tree(map_params.num_counties)),
+        county_stack(map_params.num_counties + 1), 
+        county_pop(map_params.num_counties, arma::fill::zeros),
+        county_members(map_params.num_counties, std::vector<int>{}),
+        c_visited(map_params.num_counties, true),
+        cty_pop_below(map_params.num_counties, 0),
+        vertex_queue(map_params.V),
+        map_params(map_params), splitting_schedule(splitting_schedule){};
+
+
+    Tree ust;
+    std::vector<int> pops_below_vertex;
+    std::vector<bool> visited, ignore;
+    int root;
+    TreePopStack stack;
+    Tree county_tree;
+    TreePopStack county_stack;
+    arma::uvec county_pop;
+    std::vector<std::vector<int>> county_members;
+    std::vector<bool> c_visited;
+    std::vector<int> cty_pop_below;
+    std::vector<std::array<int, 3>> county_path;
+    std::vector<int> path;
+    CircularQueue<std::pair<int,int>> vertex_queue;
+    MapParams const &map_params;
+    SplittingSchedule const &splitting_schedule;
+    
+
+    // Attempts to draw a tree on a region 
+    bool attempt_to_draw_tree_on_region(RNGState &rng_state,
+        Plan const &plan, const int region_to_draw_tree_on);
+
+    // Attempts to draw a tree on a region formed by merging the two regions
+    bool attempt_to_draw_tree_on_merged_region(RNGState &rng_state,
+        Plan const &plan, 
+        const int region1_to_draw_tree_on, const int region2_to_draw_tree_on);
+
+    std::pair<bool, EdgeCut> attempt_to_find_valid_tree_split(
+        RNGState &rng_state, ScoringFunction const &scoring_function,
+        TreeSplitter &tree_splitter,
+        Plan const &plan, int const region_to_split,
+        int const new_region_id,
+        bool const save_selection_prob
+    );
+
+    std::pair<bool, EdgeCut> try_to_sample_splittable_tree(
+        Plan const &plan, int const split_region1, int const split_region2,
+        ScoringFunction const &scoring_function,
+        RNGState &rng_state, TreeSplitter &tree_splitter,
+        int const region_populations, int const region_size,
+        bool const save_selection_prob
+    );
+
+
+    std::pair<bool, EdgeCut> attempt_to_find_valid_tree_mergesplit(
+        RNGState &rng_state, ScoringFunction const &scoring_function,
+        TreeSplitter &tree_splitter,
+        Plan const &plan, int const merge_region1, int const merge_region2,
+        bool const save_selection_prob
+    );
+
+};
+
+
+#endif

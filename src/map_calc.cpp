@@ -2,256 +2,9 @@
 #include "map_calc.h"
 #include <redistmetrics.h>
 
-/*
- * Compute the logarithm of the graph theoretic length of the boundary between
- * `distr_root` and `distr_other`, where the root of `ust` is in `distr_root`
- */
-double log_boundary(const Graph &g, const subview_col<uword> &districts,
-                    int distr_root, int distr_other) {
-    int V = g.size();
 
-    double count = 0; // number of cuttable edges to create eq-pop districts
-    for (int i = 0; i < V; i++) {
-        std::vector<int> nbors = g[i];
-        if (districts(i) != distr_root) continue; // same side of boundary as root
-        for (int nbor : nbors) {
-            if (districts(nbor) != distr_other)
-                continue;
-            // otherwise, boundary with root -> ... -> i -> nbor
-            count += 1.0;
-        }
-    }
-
-    return std::log(count);
-}
-
-/*
- * Compute the status quo penalty for district `distr`
- */
-double eval_sq_entropy(const subview_col<uword> &districts, const uvec &current,
-                       int distr, const uvec &pop, int n_distr, int n_current, int V) {
-    double accuml = 0;
-    for (int j = 1; j <= n_current; j++) { // 1-indexed districts
-        double pop_overlap = 0;
-        double pop_total = 0;
-        for (int k = 0; k < V; k++) {
-            if (current[k] != j) continue;
-            pop_total += pop[k];
-
-            if (districts[k] == distr)
-                pop_overlap += pop[k];
-        }
-        double frac = pop_overlap / pop_total;
-        if (frac > 0)
-            accuml += frac * std::log(frac);
-    }
-
-    return -accuml / n_distr / std::log(n_current);
-}
-
-/*
- * Compute the new, hinge group penalty for district `distr`
- */
-double eval_grp_hinge(const subview_col<uword> &districts, int distr,
-                      const vec &tgts_grp, const uvec &grp_pop, const uvec &total_pop) {
-    uvec idxs = find(districts == distr);
-    double frac = ((double) sum(grp_pop(idxs))) / sum(total_pop(idxs));
-    // figure out which to compare it to
-    double target;
-    double diff = 1;
-    int n_tgt = tgts_grp.size();
-    for (int i = 0; i < n_tgt; i++) {
-        double new_diff = std::fabs(tgts_grp[i] - frac);
-        if (new_diff <= diff) {
-            diff = new_diff;
-            target = tgts_grp[i];
-        }
-    }
-
-    return std::sqrt(std::max(0.0, target - frac));
-}
-
-/*
- * Compute the new, hinge group penalty for district `distr`
- */
-double eval_grp_inv_hinge(const subview_col<uword> &districts, int distr,
-                      const vec &tgts_grp, const uvec &grp_pop, const uvec &total_pop) {
-    uvec idxs = find(districts == distr);
-    double frac = ((double) sum(grp_pop(idxs))) / sum(total_pop(idxs));
-    // figure out which to compare it to
-    double target;
-    double diff = 1;
-    int n_tgt = tgts_grp.size();
-    for (int i = 0; i < n_tgt; i++) {
-        double new_diff = std::fabs(tgts_grp[i] - frac);
-        if (new_diff <= diff) {
-            diff = new_diff;
-            target = tgts_grp[i];
-        }
-    }
-
-    return std::sqrt(std::max(0.0, frac - target));
-}
-
-/*
- * Compute the power-based group penalty for district `distr`
- */
-double eval_grp_pow(const subview_col<uword> &districts, int distr,
-                   const uvec &grp_pop, const uvec &total_pop,
-                   double tgt_grp, double tgt_other, double pow) {
-    uvec idxs = find(districts == distr);
-    double frac = ((double) sum(grp_pop(idxs))) / sum(total_pop(idxs));
-    return std::pow(std::fabs(frac - tgt_grp) * std::fabs(frac - tgt_other), pow);
-}
-
-/*
- * Compute the incumbent-preserving penalty for district `distr`
- */
-double eval_inc(const subview_col<uword> &districts, int distr, const uvec &incumbents) {
-    int n_inc = incumbents.size();
-    double inc_in_distr = -1.0; // first incumbent doesn't count
-    for (int i = 0; i < n_inc; i++) {
-        if (districts[incumbents[i] - 1] == distr)
-            inc_in_distr++;
-    }
-
-    if (inc_in_distr < 0.0) {
-        inc_in_distr = 0.0;
-    }
-
-    return inc_in_distr;
-}
-
-
-// helper function
-// calculates districts which appear in each county (but not zeros)
-std::vector<std::set<int>> calc_county_dist(const subview_col<uword> &districts,
-                                            const uvec &counties, int n_cty,
-                                            bool zero_ok) {
-    std::vector<std::set<int>> county_dist(n_cty);
-    int V = counties.size();
-    for (int i = 0; i < n_cty; i++) {
-        county_dist[i] = std::set<int>();
-    }
-    for (int i = 0; i < V; i++) {
-        if (zero_ok || districts[i] > 0) {
-            county_dist[counties[i]-1].insert(districts[i]);
-        }
-    }
-    return county_dist;
-}
-
-/*
- * Compute the county split penalty for district `distr`
- */
-double eval_splits(const subview_col<uword> &districts, int distr,
-                   const uvec &counties, int n_cty, bool smc) {
-    std::vector<std::set<int>> county_dist = calc_county_dist(districts, counties, n_cty, distr == 0);
-
-    int splits = 0;
-    for (int i = 0; i < n_cty; i++) {
-        int cty_n_distr = county_dist[i].size();
-        // for SMC, just count the split when it crosses the threshold
-        // for MCMC there is no sequential nature
-        bool cond = smc ? cty_n_distr == 2 : cty_n_distr >= 2;
-        if (cond) {
-            if (smc) {
-                auto search = county_dist[i].find(distr);
-                if (search != county_dist[i].end()) {
-                    splits++;
-                }
-            } else {
-                splits++;
-            }
-        }
-    }
-
-    return splits;
-}
-
-/*
- * Compute the county multisplit penalty for district `distr`
- */
-double eval_multisplits(const subview_col<uword> &districts, int distr,
-                        const uvec &counties, int n_cty, bool smc) {
-    std::vector<std::set<int>> county_dist = calc_county_dist(districts, counties, n_cty, distr == 0);
-
-    double splits = 0;
-    for (int i = 0; i < n_cty; i++) {
-        int cty_n_distr = county_dist[i].size();
-        // for SMC, just count the split when it crosses the threshold
-        // for MCMC there is no sequential nature
-        bool cond = smc ? cty_n_distr == 3 : cty_n_distr >= 3;
-        if (cond) {
-            if (smc) {
-                auto search = county_dist[i].find(distr);
-                if (search != county_dist[i].end()) {
-                    splits++;
-                }
-            } else {
-                splits++;
-            }
-        }
-    }
-
-    return splits;
-}
-
-/*
- * Compute the total splits penalty for district `distr`
- */
-double eval_total_splits(const subview_col<uword> &districts, int distr,
-                         const uvec &counties, int n_cty, bool smc) {
-    std::vector<std::set<int>> county_dist = calc_county_dist(districts, counties, n_cty, distr == 0);
-
-    double splits = 0;
-    for (int i = 0; i < n_cty; i++) {
-        int cty_n_distr = county_dist[i].size();
-        // no over-counting since every split counts
-        if (cty_n_distr > 1) {
-            if (smc) {
-                auto search = county_dist[i].find(distr);
-                if (search != county_dist[i].end()) {
-                    splits++;
-                }
-            } else {
-                splits++;
-            }
-        }
-    }
-
-    return splits;
-}
-
-/*
- * Compute the Polsby Popper penalty for district `distr`
- */
-double eval_polsby(const subview_col<uword> &districts, int distr,
-                   const ivec &from,
-                   const ivec &to,
-                   const vec &area,
-                   const vec &perimeter) {
-    uvec idxs = find(districts == distr);
-
-    double pi4 = 4.0 * 3.14159265;
-    double tot_area = sum(area(idxs));
-
-    double tot_perim = 0.0;
-
-    uvec idx = find(to == distr);
-    for (int e = 0; e < idx.size(); e++) {
-        if(from(idx(e)) == -1) {
-            tot_perim += perimeter(idx(e));
-        } else {
-            if (districts(from(idx(e))) != distr) {
-                tot_perim += perimeter(idx(e));
-            }
-        }
-    }
-
-    double dist_peri2 = pow(tot_perim, 2.0);
-    return 1.0 - (pi4 * tot_area / dist_peri2);
-}
+// alias for SparseMatrix
+using SparseMat = Eigen::SparseMatrix<double, Eigen::ColMajor, int>;
 
 /*
  * Compute the Fryer-Holden penalty for district `distr`
@@ -271,34 +24,7 @@ double eval_fry_hold(const subview_col<uword> &districts, int distr,
     return ssd / denominator;
 }
 
-/*
- * Compute the population penalty for district `distr`
- */
-double eval_pop_dev(const subview_col<uword> &districts, int distr,
-                       const uvec &total_pop, double parity) {
-    uvec idxs = find(districts == distr);
-    double pop = sum(total_pop(idxs));
 
-    return std::pow(pop / parity - 1.0, 2.0);
-}
-
-
-/*
- * Compute the segregation penalty for district `distr`
- */
-double eval_segregation(const subview_col<uword> &districts, int distr,
-                        const uvec &grp_pop, const uvec &total_pop) {
-
-    int T = sum(total_pop);
-    double pAll = (double) sum(grp_pop) / T;
-    double denom = (double) 2.0 * T * pAll * (1 - pAll);
-
-    uvec idxs = find(districts == distr);
-    double grp = sum(grp_pop(idxs));
-    double pop = sum(total_pop(idxs));
-
-    return (double)(pop * std::abs((grp / pop) - pAll) / denom);
-}
 
 /*
  * Compute the qps penalty for district `distr`
@@ -377,27 +103,38 @@ mat prec_cooccur(umat m, uvec idxs, int ncores) {
 /*
  * Compute the percentage of `group` in each district. Asummes `m` is 1-indexed.
  */
-NumericMatrix group_pct(umat m, vec group_pop, vec total_pop, int n_distr) {
-    int v = m.n_rows;
-    int n = m.n_cols;
+NumericMatrix group_pct(
+    IntegerMatrix const &plans_mat, 
+    vec const &group_pop, vec const &total_pop, 
+    int const n_distr, int const ncores) {
+    int V = plans_mat.nrow();
+    int num_plans = plans_mat.ncol();
 
-    NumericMatrix grp_distr(n_distr, n);
-    NumericMatrix tot_distr(n_distr, n);
+    NumericMatrix grp_distr(n_distr, num_plans);
+    NumericMatrix tot_distr(n_distr, num_plans);
 
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < v; j++) {
-            int distr = m(j, i) - 1;
+    // 0 or 1 ncores means no threading 
+    RcppThread::ThreadPool pool(ncores > 1 ? ncores : 0);
+
+    pool.parallelFor(0, num_plans, [&] (unsigned int i) {
+        for (int j = 0; j < V; j++) {
+            int distr = plans_mat(j, i) - 1;
             grp_distr(distr, i) += group_pop[j];
             tot_distr(distr, i) += total_pop[j];
         }
-    }
+    });
+
+    pool.wait();
+
 
     // divide
-    for (int i = 0; i < n; i++) {
+    pool.parallelFor(0, num_plans, [&] (unsigned int i) {
         for (int j = 0; j < n_distr; j++) {
             grp_distr(j, i) /= tot_distr(j, i);
         }
-    }
+    });
+
+    pool.wait();
 
     return grp_distr;
 }
@@ -441,20 +178,85 @@ NumericVector group_pct_top_k(const IntegerMatrix m, const NumericVector group_p
  * Tally a variable by district.
  */
 // TESTED
-NumericMatrix pop_tally(IntegerMatrix districts, vec pop, int n_distr) {
-    int N = districts.ncol();
-    int V = districts.nrow();
+// NOTE: Maybe can make parallel version of this? Not sure
+NumericMatrix pop_tally(IntegerMatrix const &districts, vec const &pop, int const n_distr,
+    int const ncores) {
+    int const num_plans = districts.ncol();
+    int const V = districts.nrow();
 
-    NumericMatrix tally(n_distr, N);
-    for (int i = 0; i < N; i++) {
+    NumericMatrix tally(n_distr, num_plans);
+
+    // parallel for loop over each plan 
+    RcppThread::parallelFor(0, num_plans, [&] (unsigned int i) {
         for (int j = 0; j < V; j++) {
             int d = districts(j, i) - 1; // districts are 1-indexed
             tally(d, i) = tally(d, i) + pop(j);
         }
-    }
+    }, ncores > 1 ? ncores : 0);
 
     return tally;
 }
+
+// We assume that the population deviations are less than 1
+// If they are 1 or greater then you cannot uniquely infer sizes
+Rcpp::IntegerMatrix infer_region_seats(
+    Rcpp::IntegerMatrix const &region_pops,
+    double const lower, double const upper,
+    int const total_seats,
+    int const num_threads
+){
+    // 
+    int const num_plans = region_pops.ncol() ;
+    int const num_regions = region_pops.nrow();
+
+    bool bounds_issues = false;
+    // warn if population bounds aren't tight 
+    for (int a_size = 2; a_size <= total_seats; a_size++)
+    {
+        if(upper * (a_size - 1) >= lower * a_size){
+            // REprintf("WARNING: Population bounds are not tight for size %d and %d\n",
+            // a_size-1, a_size);
+            // Rcpp::warning("Population bounds are not tight, inferring a unique number of seats" 
+            //     " may not be possible.\n");
+            bounds_issues = true;
+        }
+    }
+    if(bounds_issues){
+        Rcpp::warning("Population bounds are not tight, inferring a unique number of seats" 
+                        " may not be possible.\n");
+    }
+
+    Rcpp::IntegerMatrix region_sizes(num_regions, num_plans);
+
+    // parallel for loop over each plan 
+    RcppThread::parallelFor(0, num_plans, [&] (unsigned int i) {
+        // loop over each region 
+        for (int j = 0; j < num_regions; j++) {
+            // get region pop
+            auto region_pop = region_pops(j, i);
+            int region_size; bool size_selected = false;
+            // find the first instance in which the region is in bounds 
+            for (int potential_size = 1; potential_size <= total_seats; potential_size++)
+            {
+                // see if this size works
+                if(lower * potential_size <= region_pop && region_pop <= upper * potential_size){
+                    region_size = potential_size; 
+                    size_selected = true;
+                }
+            }
+            if(!size_selected){
+                REprintf("No valid size could be found for Plan %i\n", i+1);
+                throw Rcpp::exception("No valid size could be inferred!\n");    
+            }
+
+            region_sizes(j, i) = region_size;
+        }
+    }, num_threads > 0 ? num_threads : 0);
+    
+    return region_sizes;
+}
+
+
 
 /*
  * Create the projective distribution of a variable `x`
@@ -479,45 +281,42 @@ NumericMatrix proj_distr_m(IntegerMatrix districts, const arma::vec x,
 /*
  * Compute the maximum deviation from the equal population constraint.
  */
-// TESTED
-NumericVector max_dev(const IntegerMatrix districts, const vec pop, int n_distr) {
-    int N = districts.ncol();
-    double target_pop = sum(pop) / n_distr;
+NumericVector max_dev(
+    const IntegerMatrix &districts, const arma::vec &pop, int const n_distr,
+    bool const multimember_districts, int const nseats, Rcpp::IntegerMatrix const &seats_matrix,
+    int const num_threads
+) {
+    int const num_plans = districts.ncol();
+    
+    NumericVector res(num_plans);
+    NumericMatrix district_pops = pop_tally(districts, pop, n_distr, num_threads);
 
-    NumericMatrix dev = pop_tally(districts, pop, n_distr) / target_pop - 1.0;
-    NumericVector res(N);
-    for (int j = 0; j < n_distr; j++) {
-        for (int i = 0; i < N; i++) {
-            if (std::fabs(dev(j, i)) > res(i))
-                res(i) = std::fabs(dev(j, i));
-        }
+    if(multimember_districts){
+        double const target_pop = arma::sum(pop) / nseats;
+        RcppThread::parallelFor(0, num_plans, [&] (unsigned int i) {
+            for (int j = 0; j < n_distr; j++) {
+                double target_seat_pop = target_pop * seats_matrix(j, i);
+                double dev = std::fabs(district_pops(j, i) / target_seat_pop - 1.0);
+                // If deviation at district j bigger then record that
+                if (dev > res(i)){
+                    res(i) = dev;
+                }
+            }
+        }, num_threads > 0 ? num_threads : 0);
+    }else{
+        double const target_pop = arma::sum(pop) / n_distr;
+        RcppThread::parallelFor(0, num_plans, [&] (unsigned int i) {
+            for (int j = 0; j < n_distr; j++) {
+                double dev = std::fabs(district_pops(j, i) / target_pop - 1.0);
+                // If deviation at district j bigger then record that
+                if (dev > res(i)){
+                    res(i) = dev;
+                }
+            }
+        }, num_threads > 0 ? num_threads : 0);
     }
 
     return res;
-}
-
-/*
- * Calculate the deviation for cutting at every edge in a spanning tree.
- */
-std::vector<double> tree_dev(Tree &ust, int root, const uvec &pop,
-                             double total_pop, double target) {
-    int V = pop.size();
-    std::vector<int> pop_below(V, 0);
-    std::vector<int> parent(V);
-    tree_pop(ust, root, pop, pop_below, parent);
-    // compile a list of candidate edges to cut
-    int idx = 0;
-    std::vector<double> devs(V-1);
-    for (int i = 0; i < V; i++) {
-        if (i == root) continue;
-        devs.at(idx) = std::min(std::fabs(pop_below.at(i) - target),
-                std::fabs(total_pop - pop_below[i] - target)) / target;
-        idx++;
-    }
-
-    std::sort(devs.begin(), devs.end());
-
-    return devs;
 }
 
 
@@ -560,4 +359,410 @@ NumericVector colmin(const NumericMatrix x) {
     }
 
     return out;
+}
+
+
+
+// computes log number of spanning trees on region intersect county
+// In either a region or a merged region 
+double compute_log_region_and_county_spanning_tree(
+    Graph const &g, const uvec &counties, int const county,
+    PlanVector const &region_ids,
+    int const region1_id, int const region2_id
+){
+
+    int const V = g.size();
+    // number of precincts in this district
+    int K = 0;
+    std::vector<int> pos(V); // keep track of positions in subgraph
+    int start = 0; // where to start loop below, to save time
+    for (int i = 0; i < V; i++) {
+        pos[i] = K - 1; // minus one because we're dropping 1st row and column
+        // Check if in either region and the county
+        if ((region_ids[i] == region1_id || region_ids[i] == region2_id) && 
+            counties(i) == county) {
+            K++;
+            if (K == 2) start = i; // start 2nd vertex
+        }
+    }
+    if (K <= 1) return 0;
+
+    mat adj = arma::zeros<mat>(K-1, K-1); // adjacency matrix (minus 1st row and column)
+    for (int i = start; i < V; i++) {
+        // ignore if not in either region or the county 
+        if ((region_ids[i] != region1_id && region_ids[i] != region2_id) 
+            || counties(i) != county) continue;
+
+        int prec = pos.at(i);
+        if (prec < 0) continue;
+        std::vector<int> nbors = g[i];
+        int length = nbors.size();
+        int degree = 0; // keep track of index within subgraph
+        for (int j = 0; j < length; j++) {
+            int nbor = nbors[j];
+            if ((region_ids[nbor] != region1_id && region_ids[nbor] != region2_id) 
+                || counties(nbor) != county) continue;
+            degree++;
+            if (pos.at(nbor) < 0) continue;
+            adj(prec, pos[nbor]) = -1;
+        }
+        adj(prec, prec) = degree;
+    }
+
+    return arma::log_det_sympd(adj);
+}
+
+// This assumes the matrix is stored as upper triangular one via 
+// triplets (ie every triplet (i, j, value) we have i <= j )
+double compute_log_det_from_triplets(
+    std::vector<Eigen::Triplet<double, int>> const &trips,
+    int const num_rows
+){
+    // now make the sparse matrix 
+    SparseMat sparse_adj_mat(num_rows, num_rows);
+    sparse_adj_mat.setFromTriplets(trips.begin(), trips.end());
+    sparse_adj_mat.makeCompressed();
+    // now factor it 
+
+
+    // 1) Create a sparse Cholesky (LLᵀ) factorization object.
+    Eigen::SimplicialLLT<SparseMat> chol;
+
+    // 2) Analyze + factorize the matrix.
+    //    - analyzePattern() inspects the sparsity structure (symbolic factorization / ordering)
+    //    - factorize() does the numeric factorization
+    //    compute() does both in one call (analyzePattern + factorize).
+    // Note we assume it is an upper triangular matrix 
+    chol.compute(sparse_adj_mat.selfadjointView<Eigen::Upper>());
+
+    // 3) Check whether factorization succeeded.
+    //    Failure usually means: matrix is not SPD (singular/indefinite) or numerical breakdown.
+    if (chol.info() != Eigen::Success) {
+        REprintf("it FAILED!\n");
+        return -INFINITY;  // or throw, depending on how you want to handle failure
+    }
+
+    // Avoid materializing L: iterate the diagonal directly in the stored sparse factor
+    const auto Lview = chol.matrixL();                 // TriangularView (in your build)
+    const auto &Lmat = Lview.nestedExpression();       // underlying SparseMatrix
+
+    double sumlog = 0.0;
+    for (int j = 0; j < num_rows; ++j) {
+        bool found = false;
+
+        // Column j scan
+        for (SparseMat::InnerIterator it(Lmat, j); it; ++it) {
+        if (it.row() == j) {                           // diagonal entry
+            const double d = it.value();
+            if (!(d > 0.0)){
+                REprintf("it FAILED!\n");
+                return -INFINITY;
+            }
+            sumlog += std::log(d);
+            found = true;
+            break;
+        }
+        // For lower-triangular L, rows are >= j; if we passed j, diagonal is missing
+        if (it.row() > j) break;
+        }
+
+        if (!found){
+            REprintf("it FAILED!\n");
+            return -INFINITY; // should not happen for successful LLT
+        }
+    }
+
+  return 2.0 * sumlog;
+}
+
+double compute_log_region_and_county_spanning_tree_eigen_tri(
+    Graph const &g, const uvec &counties, int const county,
+    PlanVector const &region_ids,
+    int const region1_id, int const region2_id
+){
+
+    int const V = g.size();
+    // number of precincts in this district
+    int K = 0;
+    std::vector<int> pos(V); // keep track of positions in subgraph
+    int start = 0; // where to start loop below, to save time
+    for (int i = 0; i < V; i++) {
+        pos[i] = K - 1; // minus one because we're dropping 1st row and column
+        // Check if in either region and the county
+        if ((region_ids[i] == region1_id || region_ids[i] == region2_id) && 
+            counties[i] == county) {
+            K++;
+            if (K == 2) start = i; // start 2nd vertex
+        }
+    }
+    // if only 1 vertex then log(1) = 0
+    if (K <= 1){
+        return 0;
+    }
+
+
+    int const minor_V = K-1; // number of vertices in the matrix to build
+    // we will build the sparse matrix by first creating entries 
+    // This stores entries as (i, j, value)
+    std::vector<Eigen::Triplet<double, int>> trips;  
+    // since modifying triplets after creation is expensive we just track degrees then 
+    // add at the end 
+    std::vector<int> vertex_degrees(minor_V, 0);  
+
+    for (int i = start; i < V; i++) {
+        // ignore if not in either region or the county 
+        if ((region_ids[i] != region1_id && region_ids[i] != region2_id) 
+            || counties[i] != county) continue;
+
+        // This tells us what index we're mapping the vertex too
+        int prec = pos[i];
+        if (prec < 0) continue; // if its less than 0 its the first row we're ignoring 
+        // iterate over vertex neighbors 
+        for (auto const nbor: g[i]){
+            // if nbor not in same region & county then we ignore it
+            if ((region_ids[nbor] != region1_id && region_ids[nbor] != region2_id) 
+                || counties(nbor) != county) continue;
+            // Else this is an edge we care about so we increase the degree count
+            vertex_degrees[prec]++;
+            // Now only if the other vertex is also not the one we're skipping then 
+            // we add an entry 
+            if (pos[nbor] < 0) continue;
+            // Since we're only building the upper triangular matrix we only 
+            // add it if row <= column which here means 
+            // prec <= pos[nbor]
+            if(prec <= pos[nbor]){
+                trips.emplace_back(prec, pos[nbor], -1.0);
+            }
+        }
+    }
+    // now add the vertex degrees as triplets
+    for (size_t v = 0; v < minor_V; v++)
+    {
+        trips.emplace_back(v,v, static_cast<double>(vertex_degrees[v]));
+    }
+
+    // now return the log determinant 
+    return compute_log_det_from_triplets(trips, minor_V);
+
+}
+
+
+
+/*
+ * Compute the log number of spanning trees for the contracted (ie county level) graph
+ */
+// TESTED
+double compute_log_county_level_spanning_tree_eigen(
+    Graph const &g, const uvec &counties, int const n_cty,
+    PlanVector const &region_ids,
+    int const region1_id, int const region2_id
+){
+    // If 1 county then just log(1) = 0
+    if (n_cty == 1) return 0;
+
+    int const V = g.size();
+    // number of counties in this district
+    int K = 0;
+    std::vector<int> pos(V); // keep track of positions in subgraph
+    std::vector<int> seen(n_cty, -2); // county lookup
+    int start = 0;
+    for (int i = 0; i < V; i++) {
+        if (region_ids[i] != region1_id && region_ids[i] != region2_id) continue;
+
+        if (seen[counties[i]-1] < 0) {
+            pos[i] = K - 1; // minus one because we're dropping 1st row and column
+            seen[counties[i]-1] = K;
+            K++;
+            if (K == 2) start = i; // start 2nd vertex
+        } else {
+            pos[i] = seen.at(counties[i]-1) - 1;
+        }
+    }
+    if (K <= 1) return 0;
+
+
+    int const minor_V = K-1; // number of vertices in the matrix to build
+    // we will build the sparse matrix by first creating entries 
+    // This stores entries as (i, j, value)
+    std::vector<Eigen::Triplet<double, int>> trips;  
+    // since modifying triplets after creation is expensive we just track degrees then 
+    // add at the end 
+    std::vector<int> vertex_degrees(minor_V, 0);  
+
+    for (int i = start; i < V; i++) {
+        if (region_ids[i] != region1_id && region_ids[i] != region2_id) continue;
+
+        int cty = pos[i];
+        if (cty < 0) continue; // skip 1st row, col
+
+        for (auto const nbor: g[i]){
+            // skip if not in the region or its in the same county 
+            if ((region_ids[nbor] != region1_id && region_ids[nbor] != region2_id) ||
+                 pos[nbor] == cty) continue;
+            
+            // this means we've found an edge within the region across counties 
+            vertex_degrees[cty]++;
+            // if one of the vertices is the 1st one we ignore it 
+            if (pos[nbor] < 0) continue;
+            // now because we're building an upper triangular matrix we
+            // only add if row <= col
+            if(cty <= pos[nbor]){
+                trips.emplace_back(cty, pos[nbor], -1.0);
+            }
+        }
+    }
+
+    // now add the vertex degrees as triplets
+    for (size_t v = 0; v < minor_V; v++)
+    {
+        trips.emplace_back(v,v, static_cast<double>(vertex_degrees[v]));
+    }
+
+    // now return the log determinant 
+    return compute_log_det_from_triplets(trips, minor_V);
+
+}
+
+/*
+ * Compute the log number of spanning trees for the contracted (ie county level) graph
+ */
+// TESTED
+double compute_log_county_level_spanning_tree(
+    Graph const &g, const uvec &counties, int const n_cty,
+    PlanVector const &region_ids,
+    int const region1_id, int const region2_id
+){
+    // If 1 county then just log(1) = 0
+    if (n_cty == 1) return 0;
+
+    int const V = g.size();
+    // number of counties in this district
+    int K = 0;
+    std::vector<int> pos(V); // keep track of positions in subgraph
+    std::vector<int> seen(n_cty, -2); // county lookup
+    int start = 0;
+    for (int i = 0; i < V; i++) {
+        if (region_ids[i] != region1_id && region_ids[i] != region2_id) continue;
+
+        if (seen[counties(i)-1] < 0) {
+            pos.at(i) = K - 1; // minus one because we're dropping 1st row and column
+            seen[counties(i)-1] = K;
+            K++;
+            if (K == 2) start = i; // start 2nd vertex
+        } else {
+            pos.at(i) = seen.at(counties(i)-1) - 1;
+        }
+    }
+    if (K <= 1) return 0;
+
+    mat adj = zeros<mat>(K-1, K-1); // adjacency matrix (minus 1st row and column)
+    for (int i = start; i < V; i++) {
+        if (region_ids[i] != region1_id && region_ids[i] != region2_id) continue;
+
+        int cty = pos[i];
+        if (cty < 0) continue; // skip 1st row, col
+        std::vector<int> nbors = g[i];
+        int length = nbors.size();
+        for (int j = 0; j < length; j++) {
+            int nbor = nbors.at(j);
+            if ((region_ids[nbor] != region1_id && region_ids[nbor] != region2_id) ||
+                 pos.at(nbor) == cty) continue;
+            adj(cty, cty)++;
+            if (pos[nbor] < 0) continue; // ignore 1st row and column
+            adj(cty, pos[nbor])--;
+        }
+    }
+
+    return arma::log_det_sympd(adj);
+}
+
+
+
+// Given a numeric vector of statistics computed on each district this 
+// sorts the statistics within each plan.
+// the length district_stats must be a multiple of ndists
+Rcpp::NumericVector order_district_stats(
+    Rcpp::NumericVector const &district_stats, 
+    int const ndists,
+    int const num_threads
+){
+    
+    if(district_stats.size() % ndists != 0){
+        throw Rcpp::exception("The length of the vector of district statistics must be a multiple of the number of districts\n");
+    }else if(ndists <= 1){
+        throw Rcpp::exception("Number of districts must be at least 2!\n");
+    }
+
+    int num_plans = district_stats.size() / ndists;
+
+    NumericVector ordered_district_stats = clone(district_stats);
+
+    RcppThread::parallelFor(0, num_plans, [&] (unsigned int i) {
+        // sort each chunk
+        int start_index = i * ndists;
+        // we don't subtract 1 since the end index is exclusive!!
+        int end_index = start_index + ndists;
+
+        std::sort(
+            ordered_district_stats.begin() + start_index, 
+            ordered_district_stats.begin() + end_index
+        );
+    }, num_threads > 0 ? num_threads : 0);
+
+    return ordered_district_stats;
+}
+
+
+Rcpp::DataFrame order_columns_by_district(
+    Rcpp::DataFrame const &df,
+    Rcpp::CharacterVector const &columns,
+    int const ndists,
+    int const num_threads) {
+
+    Rcpp::List out(df.size());            // same number of columns
+    Rcpp::CharacterVector names = df.names();
+
+    RcppThread::parallelFor(0, df.size(), [&] (unsigned int i) {
+        Rcpp::String colname = names[i];
+        bool should_process = false;
+
+        // check if this column is in the selected set
+        for (int j = 0; j < columns.size(); ++j) {
+            if (columns[j] == colname) {
+                should_process = true;
+                break;
+            }
+        }
+
+        if (should_process) {
+            Rcpp::NumericVector col = df[i];
+            out[i] = order_district_stats(col, ndists, 1);
+        } else {
+            out[i] = df[i];  // leave unchanged
+        }
+    }, num_threads > 0 ? num_threads : 0);
+
+    out.attr("names") = names;
+    out.attr("class") = df.attr("class");
+    out.attr("row.names") = df.attr("row.names");
+
+    return out;
+}
+
+
+
+double compute_log_pop_temper(
+    double const target, double const pop_temper, int const ndists,
+    int const region_pop, int const region_size
+){
+    double region_target = target*region_size;
+    // get population deviation 
+    double const pop_dev = std::fabs(
+        static_cast<double>(region_pop) - region_target
+    )/region_target;
+
+    double const pop_pen = std::sqrt(static_cast<double>(ndists) - 2) * std::log(1e-12 + pop_dev);
+
+    // now return the values for the old region minus the two new ones
+    return pop_pen * pop_temper;
 }

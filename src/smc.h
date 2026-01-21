@@ -8,70 +8,67 @@
 
 #include <string>
 #include <cmath>
+#include <iostream>
 #include <functional>
 #include <cli/progress.h>
 #include <RcppThread.h>
+#include <atomic>
+#include <chrono>
 
-#include <kirchhoff_inline.h>
-#include "wilson.h"
-#include "tree_op.h"
-#include "map_calc.h"
 
-/*
- * Main entry point.
- *
- * Sample `N` redistricting plans on map `g`, ensuring that the maximum
- * population deviation is between `lower` and `upper` (and ideally `target`)
- */
+#include "merging.h"
+#include "weights.h"
+#include "redist_alg_helpers.h"
+#include "scoring.h"
+#include "ust_sampler.h"
+#include "weight_caching.h"
+
+
+//' Run SMC (optionally with Merge Split steps too)
+//'
+//' Uses smc method with optimal weights and merge split steps to generate a sample of `nsims` plans in `c++` 
+//' 
+//' 
+//' Using the procedure outlined in <PAPER HERE> this function uses Sequential
+//' Monte Carlo (SMC) methods to generate a sample of `M` plans
+//'
+//'
+//' @param ndists The number of districts the final plans will have
+//' @param adj_list A 0-indexed adjacency list representing the undirected graph
+//' which represents the underlying map the plans are to be drawn on
+//' @param counties Vector of county labels of each vertex in `g`
+//' @param pop A vector of the population associated with each vertex in `g`
+//' @param target Ideal population of a valid district. This is what deviance is calculated
+//' relative to
+//' @param lower Acceptable lower bounds on a valid district's population
+//' @param upper Acceptable upper bounds on a valid district's population
+//' @param nsims The number of plans (samples) to draw
+//' @param k_param The k parameter from the SMC algorithm, you choose among the top k_param edges
+//' @param control Named list of additional parameters.
+//' @param num_threads The number of threads the threadpool should use
+//' @param verbosity What level of detail to print out while the algorithm is
+//' running <ADD OPTIONS>
+//' @keywords internal
+//' @noRd
 // [[Rcpp::export]]
-List smc_plans(int N, List l, const arma::uvec &counties, const arma::uvec &pop,
-               int n_distr, double target, double lower, double upper, double rho,
-               arma::umat districts, int n_drawn, int n_steps,
-               List constraints, List control, int verbosity=1);
+List run_redist_smc(
+        int const nsims, 
+        int const total_seats, int const ndists, Rcpp::IntegerVector const district_seat_sizes,
+        int const initial_num_regions, 
+        List const &adj_list,
+        arma::uvec const &counties, const arma::uvec &pop,
+        Rcpp::CharacterVector const &step_types,
+        double const target, double const lower, double const upper,
+        double const rho, // compactness 
+        std::string const &sampling_space_str, // sampling space (graphs, forest, etc)
+        List const &control, // control has pop temper, and k parameter value, and splitting method are allowed
+        List const &constraints, // constraints 
+        int const verbosity, int const diagnostic_level,
+        Rcpp::IntegerMatrix const &region_id_mat, 
+        Rcpp::IntegerMatrix const &region_sizes_mat,
+        arma::vec &log_weights
+);
 
-/*
- * Split off a piece from each map in `districts`,
- * keeping deviation between `lower` and `upper`
- */
-void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
-                const uvec &pop, umat &districts, vec &cum_wgt, vec &lp,
-                vec &pop_left, vec &log_temper, double pop_temper,
-                double &accept_rate, int n_distr, int dist_ctr,
-                umat &ancestors, const std::vector<int> &lags, int &n_unique,
-                double lower, double upper, double target,
-                double rho, int k, bool check_both,
-                RcppThread::ThreadPool &pool, int verbosity);
 
-
-/*
- * Add specific constraint weights & return the cumulative weight vector
- */
-vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
-             double alpha, vec &lp, double &neff,
-             const uvec &pop, double parity, const Graph g,
-             List constraints, int verbosity);
-
-/*
- * Split a map into two pieces with population lying between `lower` and `upper`
- */
-double split_map(const Graph &g, Tree &ust, const uvec &counties, Multigraph &cg,
-                 subview_col<uword> districts, int dist_ctr,
-                 std::vector<bool> &visited, std::vector<bool> &ignore, const uvec &pop,
-                 double total_pop, double &lower, double upper, double target, int k);
-
-/*
- * Cut spanning subtree into two pieces of roughly equal population
- */
-double cut_districts(Tree &ust, int k, int root, subview_col<uword> &districts,
-                     int dist_ctr, const uvec &pop, double total_pop,
-                     double lower, double upper, double target);
-
-/*
- * Choose k and multiplier for efficient, accurate sampling
- */
-void adapt_parameters(const Graph &g, int &k, int last_k, const vec &lp, double thresh,
-                      double tol, const umat &districts, const uvec &counties,
-                      Multigraph &cg, const uvec &pop,
-                      const vec &pop_left, double target, int verbosity);
 
 #endif

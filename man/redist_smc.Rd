@@ -2,7 +2,7 @@
 % Please edit documentation in R/redist_smc.R
 \name{redist_smc}
 \alias{redist_smc}
-\title{SMC Redistricting Sampler (McCartan and Imai 2023)}
+\title{Generalized SMCS Redistricting Sampler (O'Sullivan, McCartan and Imai forthcoming)}
 \usage{
 redist_smc(
   map,
@@ -12,18 +12,26 @@ redist_smc(
   constraints = list(),
   resample = TRUE,
   runs = 1L,
-  ncores = 0L,
+  ncores = 1L,
   init_particles = NULL,
+  init_seats = NULL,
+  init_weights = NULL,
+  sampling_space = c("graph_plan", "spanning_forest", "linking_edge"),
+  split_method = NULL,
+  split_params = NULL,
+  ms_params = list(),
   n_steps = NULL,
-  adapt_k_thresh = 0.99,
-  seq_alpha = 0.5,
-  truncate = (compactness != 1),
-  trunc_fn = redist_quantile_trunc,
+  seq_alpha = 1L,
   pop_temper = 0,
-  final_infl = 1,
   ref_name = NULL,
   verbose = FALSE,
-  silent = FALSE
+  silent = FALSE,
+  diagnostics = c("basic", "all"),
+  control = list(weight_type = "optimal", nproc = 1L),
+  adapt_k_thresh = 0.99,
+  truncate = (compactness != 1),
+  trunc_fn = redist_quantile_trunc,
+  final_infl = 1
 )
 }
 \arguments{
@@ -35,7 +43,7 @@ redist_smc(
 geographic unit) labels for each unit, which may be integers ranging from 1
 to the number of counties, or a factor or character vector.  If provided,
 the algorithm will only generate maps which split up to \code{ndists-1}
-counties. Even there are fewer counties than \code{ndists - 1}, the spanning
+counties. Even if there are fewer counties than \code{ndists - 1}, the spanning
 trees will change the results of the simulations. There is no strength
 parameter associated with this constraint. To adjust the number of county
 splits further, or to constrain a second type of administrative split,
@@ -61,49 +69,121 @@ standard errors. Output will only be shown for the first run. For
 compatibility with MCMC methods, runs are identified with the \code{chain}
 column in the output.}
 
-\item{ncores}{How many cores to use to parallelize plan generation within each
-run. The default, 0, will use the number of available cores on the machine
-as long as \code{nsims} and the number of units is large enough. If \code{runs>1}
-you will need to set this manually. If more than one core is used, the
+\item{ncores}{How many threads to use to parallelize plan generation within each
+process. The default value is 1 which is single-threading. If \code{ncores} is set
+to 0 it will use the number of available cores on the machine
+as long as \code{nsims} and the number of units is large enough.
+If more than one core is used, the
 sampler output will not be fully reproducible with \code{set.seed()}. If full
-reproducibility is desired, set \code{ncores=1}.}
+reproducibility is desired, set \code{ncores=1} and \code{nproc=1}.}
 
-\item{init_particles}{A matrix of partial plans to begin sampling from. For
-advanced use only.  The matrix must have \code{nsims} columns and a row for
-every precinct. It is important to ensure that the existing districts meet
-contiguity and population constraints, or there may be major issues when
-sampling.}
+\item{init_particles}{Either a \link{redist_plans} object or a matrix of partial
+plans to begin sampling from. For advanced use only. The matrix must have
+\code{nsims} columns and a row for every precinct. It is important to ensure that
+the existing districts meet contiguity and population constraints, or there
+may be major issues when sampling.}
+
+\item{init_seats}{A matrix of the number of seats per region of
+the partial plans to begin sampling from. For advanced use only. The matrix
+must have \code{nsims} columns, as many rows as there are regions in \code{init_particles}
+and each column must sum to the total number of seats in the map. Not needed
+if \code{init_particles} is a \link{redist_plans} object. If \code{init_particles} are passed
+but not \code{init_seats} then the number of seats will be attempted
+to be inferred.}
+
+\item{init_weights}{A vector of length \code{nsims} of unnormalized plan weights
+associated with \code{init_particles}. The weights must all be strictly positive.
+If no weights are passed in then they will all be set to 1. If the
+\code{init_plans} were not resampled then it is recommended to pass their weights in.
+Not needed if \code{init_particles} is a \link{redist_plans} object.}
+
+\item{sampling_space}{The space to sample the plans on. This does not affect
+the plans output by the function but the sample space used can have a large
+impact on computational cost/runtime and convergence. Current spaces supported
+right now are
+\itemize{
+\item graph_plan : graph partition space
+\item spanning_forest : spanning forest space
+\item linking_edge : linking edge forest space
+}}
+
+\item{split_method}{The method used for splitting spanning trees in the
+sampling process. When sampling on the space of graph partitions it must be
+the naive top k method but any method is allowed for forest space sampling.}
+
+\item{split_params}{A list of parameters related to splitting the plans.
+Options include
+\itemize{
+\item \code{splitting_schedule} What rule to use for selecting splitting
+sizes. The final target distribution is the same regardless of splitting
+schedule but the intermediate distributions can change. Current options
+include
+\itemize{
+\item \code{split_district_only} At each step split off a single district.
+\item \code{any_valid_sizes} At each step allow for regions to be split
+into any two sizes (assuming the sizes can eventually be split into
+districts.) Currently this is only supported for single member districting.
+}
+}
+Parameters for \code{split_method} Any relevant parameters for the
+\code{split_method}. These include the following
+\itemize{
+\item top_k parameters:
+\itemize{
+\item \code{adapt_k_thresh} The threshold value used in the heuristic to
+select a value \code{k_i} for each splitting iteration for graph space
+sampling if estimation is desired (the \code{k_i} can also be manually passed in.)
+Higher values are more accurate but may require more
+computation. Set to 1 for the most conservative sampling.
+Must be between 0 and 1.
+\item \code{manual_k_params} The \code{k_i} values to be used for each splitting
+iteration for graph space sampling. Beware when specifying manual values
+it is crucial they are close to the true values as too small \code{k_i} values
+will cause the algorithm to fail to sample from the target distribution
+correctly and too large values will cause a drastic performance hit. The
+input must either be a single integer to use for each step or a vector
+of integers equal to the number of smc steps.
+}
+\item exp_abs_dev
+\itemize{
+\item \code{splitting_alpha} When selecting an edge to cut in the
+tree a valid edge is selected with probability proportional to
+\code{exp(-splitting_alpha * max_dev)}. \code{splitting_alpha} can
+be any real number. Values closer to zero result in more stable weights
+and larger values result in more unstable weights.
+}
+}}
+
+\item{ms_params}{A list of mergesplit parameters.
+\itemize{
+\item \code{frequency}: How often to perform mergesplit rounds after SMC
+steps. Should either be an integer (meaning run after every _ smc steps)
+or a vector of 1 indexed step numbers indicating after which smc steps to
+run a mergesplit round. A value of -1 means just run a single mergesplit round
+after all smc steps have been run. A value of 1 means run after every smc step.
+\item \code{mh_accept_per_smc} Multiplier to the baseline number of mergesplit
+steps to be performed each round. For a mergesplit round the baseline number of
+steps is calculated as the ceiling of 1 over the previous mergesplit round
+acceptance rate (or smc step if no prior mergesplit rounds were done). The
+total number of steps is \code{ceiling(mh_accept_per_smc * baseline_num_steps)}.
+This should be thought of as specifying how many successful mergesplit steps
+are desired for each mergesplit round.
+\item \code{pair_rule} What probability to use to select regions to merge
+in the mergesplit kernel. Defaults to giving all pairs equal probability.
+}}
 
 \item{n_steps}{How many steps to run the SMC algorithm for.
-Each step splits off a new district. Defaults to all remaining districts.
+Each step splits off a new region. Defaults to all remaining districts.
 If fewer than the number of remaining splits, reference plans are disabled.}
-
-\item{adapt_k_thresh}{The threshold value used in the heuristic to select a
-value \code{k_i} for each splitting iteration. Higher values are more accurate
-but may require more computation. Set to 1 for the most conservative
-sampling. Must be between 0 and 1.}
 
 \item{seq_alpha}{The amount to adjust the weights by at each resampling step;
 higher values prefer exploitation, while lower values prefer exploration.
-Must be between 0 and 1.}
-
-\item{truncate}{Whether to truncate the importance sampling weights at the
-final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.
-Truncation only applied if \code{resample=TRUE}.}
-
-\item{trunc_fn}{A function which takes in a vector of weights and returns a
-truncated vector. If the \link[loo:loo]{loo} package is installed (strongly
-recommended), will default to Pareto-smoothed Importance Sampling (PSIS)
-rather than naive truncation.}
+Must be between 0 and 1. If any mergesplit steps are applied then it must be
+set to 1.}
 
 \item{pop_temper}{The strength of the automatic population tempering. Try
 values of 0.01-0.05 to start if the algorithm gets stuck on the final few
 splits.}
-
-\item{final_infl}{A multiplier for the population constraint on the final
-iteration. Used to loosen the constraint when the sampler is getting stuck
-on the final split. \code{pop_temper} should be tried first, since using
-\code{final_infl} will actually change the target distribution.}
 
 \item{ref_name}{a name for the existing plan, which will be added as a
 reference plan, or \code{FALSE} to not include the initial plan in the
@@ -113,16 +193,52 @@ output. Defaults to the column name of the existing plan.}
 Recommended.}
 
 \item{silent}{Whether to suppress all diagnostic information.}
+
+\item{diagnostics}{What amount of diagnostic information to save. Current
+options are
+\itemize{
+\item \code{basic} Saves the final plans and for each step the
+incremental weights and ancestors.
+\item \code{all} Saves everything \code{basic} does in addition to the
+intermediate plan and seat matrices after each splitting and mergesplit step.
+Use with caution as this can use a lot of memory very quickly.
+}}
+
+\item{control}{A list of optional advanced parameters.
+\itemize{
+\item \code{nproc}: The number of processes (independent instances of R)
+spawned to simulate the plans. The processes execute runs in parallel, each
+using \code{ncores} threads. If more than one process is used, the
+sampler output will not be fully reproducible with \code{set.seed()}. If full
+reproducibility is desired, set \code{nproc=1} and
+\code{ncores = 1}. If missing defaults to a single process.
+\item \code{weight_type} The type of SMC weights to use. Optimal weights typically
+have lower variance and lead to faster convergence but can be more
+computationally expensive, especially for computationally complex constraints
+or when \code{compactness} is not set to 1.
+}}
+
+\item{adapt_k_thresh}{Deprecated. Pass in through the \code{split_params} arg.
+The threshold value used in the heuristic to select a
+value \code{k_i} for each splitting iteration. Higher values are more accurate
+but may require more computation. Set to 1 for the most conservative
+sampling. Must be between 0 and 1.}
+
+\item{truncate}{Deprecated, do not use anymore.}
+
+\item{trunc_fn}{Deprecated, do not use anymore.}
+
+\item{final_infl}{Deprecated, do not use anymore.}
 }
 \value{
 \code{redist_smc} returns a \link{redist_plans} object containing the simulated
 plans.
 }
 \description{
-\code{redist_smc} uses a Sequential Monte Carlo algorithm (McCartan and Imai 2023)
-to generate representative samples of congressional or legislative
-redistricting plans according to contiguity, population, compactness, and
-administrative boundary constraints.
+\code{redist_smc} uses a Sequential Monte Carlo Sampler algorithm
+(O'Sullivan, McCartan and Imai forthcoming) to generate representative samples of
+congressional or legislative redistricting plans according to
+contiguity, population, compactness, and administrative boundary constraints.
 }
 \details{
 This function draws samples from a specific target measure controlled by
@@ -132,7 +248,7 @@ Key to ensuring good performance is monitoring the efficiency of the resampling
 process at each SMC stage.  Unless \code{silent=FALSE}, this function will print
 out the effective sample size of each resampling step to allow the user to
 monitor the efficiency.  If \code{verbose=TRUE} the function will also print
-out information on the \eqn{k_i} values automatically chosen and the
+out information on any relevant splitting parameters chosen and the
 acceptance rate (based on the population constraint) at each step.
 Users should also check diagnostics of the sample by running
 \code{summary.redist_plans()}.
@@ -140,10 +256,7 @@ Users should also check diagnostics of the sample by running
 Higher values of \code{compactness} sample more compact districts;
 setting this parameter to 1 is computationally efficient and generates nicely
 compact districts.  Values of other than 1 may lead to highly variable
-importance sampling weights.  In these cases, these weights are by default
-truncated using \code{\link[=redist_quantile_trunc]{redist_quantile_trunc()}} to stabilize the resulting
-estimates, but if truncation is used, a specific truncation function should
-probably be chosen by the user.
+importance sampling weights.
 }
 \examples{
 \donttest{
@@ -160,14 +273,9 @@ sampled_constr <- redist_smc(fl_map, 5000, constraints = constr)
 # Multiple parallel independent runs
 redist_smc(fl_map, 1000, runs = 2)
 
-# One run with multiple cores
-redist_smc(fl_map, 1000, ncores = 2)
+# Two runs with multiple processes
+redist_smc(fl_map, 1000, runs = 2, control = list(nproc = 2))
 }
 
-}
-\references{
-McCartan, C., & Imai, K. (2023). Sequential Monte Carlo for Sampling
-Balanced and Compact Redistricting Plans. \emph{Annals of Applied Statistics} 17(4).
-Available at \doi{10.1214/23-AOAS1763}.
 }
 \concept{simulate}

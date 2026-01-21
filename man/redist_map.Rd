@@ -11,10 +11,13 @@ redist_map(
   pop_tol = NULL,
   total_pop = c("pop", "population", "total_pop", "POP100"),
   ndists = NULL,
+  nseats = NULL,
+  seats_range = NULL,
   pop_bounds = NULL,
   adj = NULL,
   adj_col = "adj",
-  planarize = 3857
+  planarize = 3857,
+  existing_plan_seats = NULL
 )
 
 as_redist_map(x)
@@ -39,6 +42,13 @@ of precinct populations. Defaults to the \code{pop}, \code{population}, or
 \item{ndists}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the integer number of
 districts to partition the map into. Must be specified if \code{existing_plan} is not supplied.}
 
+\item{nseats}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the total number of
+legislative seats in the map. For single-member districting schemes this is equal to \code{ndists}.
+If not provided then defaults to \code{ndists}.}
+
+\item{seats_range}{The number of seats a district is allowed to have. For
+single member districting schemes this is always 1.}
+
 \item{pop_bounds}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} more specific
 population bounds, in the form of \code{c(lower, target, upper)}.}
 
@@ -49,6 +59,9 @@ from the data if it is coercible to a shapefile.}
 
 \item{planarize}{a number, indicating the CRS to project the shapefile to if
 it is latitude-longitude based. Set to NULL or FALSE to avoid planarizing.}
+
+\item{existing_plan_seats}{the number of seats for each district in the
+existing district assignment. Only needed for multi-member district plans.}
 
 \item{x}{an object to be coerced}
 }

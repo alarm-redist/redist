@@ -10,7 +10,14 @@ redist_ci(plans, x, district = 1L, conf = 0.9, by_chain = FALSE)
 
 redist_smc_ci(plans, x, district = 1L, conf = 0.9, by_chain = FALSE)
 
-redist_mcmc_ci(plans, x, district = 1L, conf = 0.9, by_chain = FALSE)
+redist_mcmc_ci(
+  plans,
+  x,
+  district = 1L,
+  conf = 0.9,
+  by_chain = FALSE,
+  use_coda = FALSE
+)
 }
 \arguments{
 \item{plans}{a \link{redist_plans} object.}
@@ -25,6 +32,8 @@ redist_mcmc_ci(plans, x, district = 1L, conf = 0.9, by_chain = FALSE)
 \item{by_chain}{Whether the confidence interval should indicate overall
 sampling uncertainty (\code{FALSE}) or per-chain sampling uncertainty (\code{TRUE}).
 In the latter case the intervals will be wider by a factor of \code{sqrt(runs)}.}
+
+\item{use_coda}{Whether or not to use the coda package to compute standard errors}
 }
 \value{
 A tibble with three columns: \code{X}, \code{X_lower}, and
@@ -54,7 +63,7 @@ library(dplyr)
 data(iowa)
 
 iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05)
-plans <- redist_mergesplit_parallel(iowa_map, nsims = 200, chains = 2, silent = TRUE) \%>\%
+plans <- redist_mergesplit(iowa_map, nsims = 200, chains = 2, silent = TRUE) \%>\%
     mutate(dem = group_frac(iowa_map, dem_08, dem_08 + rep_08)) \%>\%
     number_by(dem)
 redist_smc_ci(plans, dem)

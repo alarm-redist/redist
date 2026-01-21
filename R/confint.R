@@ -38,7 +38,7 @@
 #' data(iowa)
 #'
 #' iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05)
-#' plans <- redist_mergesplit_parallel(iowa_map, nsims = 200, chains = 2, silent = TRUE) %>%
+#' plans <- redist_mergesplit(iowa_map, nsims = 200, chains = 2, silent = TRUE) %>%
 #'     mutate(dem = group_frac(iowa_map, dem_08, dem_08 + rep_08)) %>%
 #'     number_by(dem)
 #' redist_smc_ci(plans, dem)
@@ -48,14 +48,14 @@
 #' @export
 redist_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE) {
     algo = attr(plans, "algorithm")
-    algos_ok = c("smc", "mergesplit", "flip")
+    algos_ok = c("smc", "smc_ms", "mergesplit", "flip")
 
     x = enquo(x)
 
     if (is.null(algo) || !algo %in% algos_ok) {
         cli::cli_abort("{.field algorithm} attribute missing from {.arg plans}.
                   Call {.fn redist_smc_ci} or {.fn redist_mcmc_ci} directly.")
-    } else if (algo == "smc") {
+    } else if (algo %in% c("smc", "smc_ms")) {
         redist_smc_ci(plans, !!x, district, conf, by_chain)
     } else { # MCMC
         redist_mcmc_ci(plans,!!x, district, conf, by_chain)
@@ -96,6 +96,10 @@ redist_smc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE)
             std_err <- sd(run_means) / sqrt(max(chain) - 1) # be slightly conservative
         }
     } else {
+        # See
+        # OLSSON, J. and DOUC, R. (2019). Numerically stable online estimation of variance in particle filters. Bernoulli
+        # 25 1504–1535.
+        # LEE, A. and WHITELEY, N. (2018). Variance estimation in the particle filter. Biometrika 105 609–625.
         std_errs <- apply(attr(plans, "diagnostics")[[1]]$ancestors, 2, function(anc) {
             sum_inner <- tapply(x - est, anc, sum)^2
             sqrt(mean(sum_inner[as.character(anc)])/N)
@@ -112,8 +116,9 @@ redist_smc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE)
 }
 
 #' @describeIn redist_ci Compute confidence intervals for MCMC output.
+#' @param use_coda Whether or not to use the coda package to compute standard errors
 #' @export
-redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE) {
+redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE, use_coda = FALSE) {
     plans <- subset_sampled(plans)
     x_orig <- enquo(x)
     x <- as.numeric(eval_tidy(enquo(x), plans))
@@ -123,6 +128,7 @@ redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE
         x <- x[plans$district == district]
     N <- length(x)
     est <- mean(x)
+    thin <- attr(plans, "diagnostics")[[1]]$thin
 
     if ("chain" %in% names(plans)) { # multiple runs
         chain <- plans$chain[plans$district == district]
@@ -137,12 +143,36 @@ redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE
                    ">" = "Increase the number of samples."))
     }
 
-    rlang::check_installed("coda", "to calculate MCMC standard errors.")
+    if(use_coda){
+        rlang::check_installed("coda", "to calculate MCMC standard errors.")
+        mcmc = coda::mcmc.list(tapply(x, chain, coda::mcmc, thin=thin))
+        std_err <- summary(mcmc)$statistics["Time-series SE"]
+        if (isTRUE(by_chain)) {
+            std_err <- std_err * sqrt(max(chain))
+        }
+    }else if("chain" %in% names(plans)) {
+         # multiple runs
+            if (is.null(district)) {
+                chain <- plans$chain
+            } else {
+                chain <- plans$chain[plans$district == district]
+            }
+            rhat <- diag_rhat(x, chain)
+            if (is.finite(rhat) && rhat > 1.05) {
+                cli::cli_warn(c("Runs have not converged for this statistic.",
+                           "i" = "R-hat is {round(rhat, 3)}",
+                           ">" = "Increase the number of samples."))
+            }
+            run_means <- tapply(x, chain, mean) %>%
+                `names<-`(NULL)
 
-    mcmc = coda::mcmc.list(tapply(x, chain, coda::mcmc))
-    std_err <- summary(mcmc)$statistics["Time-series SE"]
-    if (isTRUE(by_chain)) {
-        std_err <- std_err * sqrt(max(chain))
+            if (isTRUE(by_chain)) {
+                std_err <- sd(run_means)
+            } else {
+                std_err <- sd(run_means) / sqrt(max(chain) - 1) # be slightly conservative
+            }
+    }else{
+        cli::cli_abort("Can't do non-coda std errors for single MCMC chain!")
     }
 
     alpha <- (1 - conf)/2
