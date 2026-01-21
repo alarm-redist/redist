@@ -638,9 +638,35 @@ subset_sampled <- function(plans, matrix = TRUE) {
   # find what columns have character names
   nm_lengths <- nchar(colnames(plans_m))
 
+
+  any_na_chains <- FALSE
+  dummy_chain_val <- NULL
+
   if("chain" %in% names(plans)){
       # allows for the case where draws go from 1:nsims within each chain
-      draw_ints <- interaction(plans$draw, plans$chain, drop = TRUE)
+      # check if any chains are NA, if so fill them with dummy variable
+      if(any(is.na(plans$chain))){
+          any_na_chains <- TRUE
+          # replace the NA's with a fake negative value
+          potential_dummy_chain_val <- -1
+          while(is.null(dummy_chain_val)){
+              # set it as placeholder if there's no chain value with that
+              # already
+              if(!potential_dummy_chain_val %in% plans$chain){
+                  plans$chain[is.na(plans$chain)] <- potential_dummy_chain_val
+                  dummy_chain_val <- potential_dummy_chain_val
+              }
+              # else decrement the potential dummy chain value and try again
+              potential_dummy_chain_val <- potential_dummy_chain_val - 1
+          }
+      }
+
+      draw_ints <- as.integer(
+          interaction(
+              plans$draw,
+              plans$chain
+          )
+      )
       draw_ints <- match(draw_ints, unique(draw_ints))
   }else{
       draw_ints <- as.integer(plans$draw)
@@ -659,6 +685,11 @@ subset_sampled <- function(plans, matrix = TRUE) {
     out <- set_plan_matrix(out, plans_m[, idxs, drop = FALSE])
   }
 
+  # set the chain back to NA if needed
+  if(any_na_chains){
+      out$chain[out$chain == dummy_chain_val] <- NA
+  }
+
   out
 }
 
@@ -670,14 +701,35 @@ subset_ref <- function(plans, matrix = TRUE) {
     return(plans)
   }
 
+  any_na_chains <- FALSE
+  dummy_chain_val <- NULL
+
   nm_lengths <- nchar(colnames(plans_m))
   if("chain" %in% names(plans)){
+      # check if any chains are NA, if so fill them with dummy variable
+      if(any(is.na(plans$chain))){
+          any_na_chains <- TRUE
+          # replace the NA's with a fake negative value
+          potential_dummy_chain_val <- -1
+          while(is.null(dummy_chain_val)){
+              # set it as placeholder if there's no chain value with that
+              # already
+            if(!potential_dummy_chain_val %in% plans$chain){
+                plans$chain[is.na(plans$chain)] <- potential_dummy_chain_val
+                dummy_chain_val <- potential_dummy_chain_val
+            }
+              # else decrement the potential dummy chain value and try again
+              potential_dummy_chain_val <- potential_dummy_chain_val - 1
+          }
+      }
+
       draw_ints <- as.integer(
           interaction(
               plans$draw,
               plans$chain
           )
       )
+      draw_ints <- match(draw_ints, unique(draw_ints))
   }else{
       draw_ints <- as.integer(plans$draw)
   }
@@ -689,6 +741,11 @@ subset_ref <- function(plans, matrix = TRUE) {
   idxs <- which(nm_lengths[unique(draw_ints)] > 0)
   attr(out, "wgt") <- attr(out, "wgt")[idxs]
   out <- set_plan_matrix(out, plans_m[, idxs, drop = FALSE])
+
+  # set the chain back to NA if needed
+  if(any_na_chains){
+      out$chain[out$chain == dummy_chain_val] <- NA
+  }
 
   out
 }
