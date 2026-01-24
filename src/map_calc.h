@@ -123,7 +123,7 @@ arma::mat prec_cooccur(arma::umat m, arma::uvec idxs, int ncores=0);
 NumericMatrix group_pct(arma::umat m, arma::vec group_pop, arma::vec total_pop, int n_distr);
 
 /*
- * Compute the deviation from the equal population constraint.
+ * Tally a variable by district.
  */
 // [[Rcpp::export]]
 NumericMatrix pop_tally(IntegerMatrix districts, arma::vec pop, int n_distr);

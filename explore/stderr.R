@@ -1,16 +1,18 @@
 library(dplyr)
 library(tidyr)
+library(ggplot2)
 library(purrr)
 
 data(iowa)
 
 ia = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.02)
 
-plans = redist_smc(ia, 500, runs=8, seq_alpha=0.5, silent=F) %>%
+plans = redist_smc(ia, 250, runs=20, seq_alpha=0.9, silent=T) %>%
     mutate(dem = group_frac(ia, dem_08, dem_08 + rep_08),
-           comp = distr_compactness(ia),
-           splits = county_splits(ia, region)) %>%
+           comp = comp_polsby(pl(), ia),
+           splits = splits_admin(pl(), ia, region)) %>%
     number_by(dem)
+nchains = max(plans$chain, na.rm=TRUE)
 
 plot(plans, dem, sort=F, geom="boxplot")
 hist(plans, comp)
@@ -19,42 +21,45 @@ summary(plans)
 calc_se = function(x1) {
     run_means = tapply(x1, plans$chain[plans$district == 1], mean) %>%
         `names<-`(NULL)
-    std_err = sd(run_means)
+    std_err_chains = sd(run_means)
 
-    x1 = x1[coalesce(plans$chain[plans$district == 1] == 1, F)]
-    stopifnot(all.equal(mean(x1), run_means[1]))
+    std_errs_anc = map_dbl(seq_len(nchains), function(chain) {
+        x1 = x1[coalesce(plans$chain[plans$district == 1] == chain, F)]
+        # stopifnot(all.equal(mean(x1), run_means[chain]))
 
-    N = length(x1)
-    d = tibble(ancestor = factor(attr(plans, "diagnostics")[[1]]$ancestors, levels=1:N),
-               resid = x1 - mean(x1))
-               # resid = x1)
-    cross_sum = expand_grid(rename_with(d, \(x) paste0(x, "_i")),
-                rename_with(d, \(x) paste0(x, "_j"))) %>%
-        filter(ancestor_i != ancestor_j) %>%
-        summarize(sum(resid_i * resid_j)) %>%
-        pull()
+        N = length(x1)
 
-    # var_est = mean((x1 - mean(x1)))^2 - exp((4 - 3) * log(N) - (4 - 1) * log(N - 1)) * cross_sum
-    # var_est = mean(d$resid)^2 - exp((4 - 3) * log(N) - (4 - 1) * log(N - 1)) * cross_sum
-    var_est = - (N/(N-1))^2 * (cross_sum / N / (N-1))
-    # var_est = mean(d$resid)^2 - (N/(N-1))^2 * (cross_sum / N / (N-1)) #* mean(1/get_sampling_info(plans)$diagnostics[[1]]$accept_rate)
+        std_errs <- apply(attr(plans, "diagnostics")[[chain]]$ancestors, 2, function(anc) {
+            sum_inner <- tapply(x1 - mean(x1), anc, sum)^2
+            sqrt(mean(sum_inner[as.character(anc)])/N)
+        })
+        # quantile(std_errs, 0.75)
+        mean(std_errs)
+        # median(std_errs)
+    })
 
-    n_eff = attr(plans, "diagnostics")[[1]]$n_eff
-    tibble(true = std_err,
-           est1 = sqrt(var_est),
-           est2 = sd(x1) / sqrt(n_eff))
+    std_errs_neff = map_dbl(seq_len(nchains), function(chain) {
+        x1 = x1[coalesce(plans$chain[plans$district == 1] == chain, F)]
+        n_eff = attr(plans, "diagnostics")[[chain]]$n_eff
+        sd(x1) / sqrt(n_eff)
+    })
+
+    tibble(true = std_err_chains,
+           est1 = std_errs_anc,
+           est2 = std_errs_neff)
 }
 
-qs = seq(0.02, 0.98, 0.02)
+qs = seq(0.02, 0.98, 0.04)
 x1 = plans$comp[plans$district == 1]
+x1 = plans$dem[plans$district == 1]
 refs = quantile(x1, qs)
 
 calc_se(x1)
-ses = map_dfr(refs, ~ calc_se(x1 > .))
-ggplot(ses, aes(refs)) +
-    geom_line(aes(y=true), color="red", lty="dashed") +
-    geom_line(aes(y=est1)) +
-    geom_line(aes(y=est2), color="grey")
+ses = map_dfr(refs, ~ calc_se(x1 > .), .id="q")
+ggplot(ses, aes(q, group=q)) +
+    geom_boxplot(aes(y=est1), outlier.shape=NA) +
+    geom_boxplot(aes(y=est2), color="grey", outlier.shape=NA) +
+    geom_line(aes(y=true, group=1),  lty="dashed", lwd=1, color="red")
 
 
 res = map_dfr(cli::cli_progress_along(1:100), function(i) {
@@ -89,7 +94,7 @@ mean(res$se1) + 2*sd(res$se1)/sqrt(200)
 
 
 if (FALSE) {
-    library(tictoc)
+    # library(tictoc)
     library(ggplot2)
 
     pa = alarmdata::alarm_50state_map("PA")

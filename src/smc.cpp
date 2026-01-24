@@ -25,8 +25,6 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     double thresh = (double) control["adapt_k_thresh"];
     double alpha = (double) control["seq_alpha"];
     double pop_temper = (double) control["pop_temper"];
-    double est_label_mult = (double) control["est_label_mult"];
-    bool adjust_labels = (bool) control["adjust_labels"];
     double final_infl = (double) control["final_infl"];
     std::vector<int> lags = as<std::vector<int>>(control["lags"]);
 
@@ -44,7 +42,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     double tol = std::max(target - lower, upper - target) / target;
 
     if (verbosity >= 1) {
-        Rcout.imbue(std::locale(""));
+        Rcout.imbue(std::locale::classic());
         Rcout << std::fixed << std::setprecision(0);
         Rcout << "SEQUENTIAL MONTE CARLO\n";
         Rcout << "Sampling " << N << " " << V << "-unit ";
@@ -75,7 +73,6 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     }
 
     vec pop_left(N);
-    std::vector<Graph> dist_grs(N);
     if (n_drawn == 0) {
         pop_left.fill(total_pop);
     } else {
@@ -87,13 +84,10 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                     pop_left[i] += pop[j];
                 }
             }
-
-            dist_grs[i] = district_graph(g, districts.col(i), n_drawn+1, true);
         }
     }
 
     vec log_temper(N, fill::zeros);
-    vec log_labels(N, fill::zeros);
     vec lp(N, fill::zeros);
     umat ancestors(N, lags.size(), fill::zeros);
 
@@ -101,10 +95,8 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     std::vector<int> n_unique(n_steps);
     std::vector<double> n_eff(n_steps);
     std::vector<double> accept_rate(n_steps);
-    std::vector<double> sd_labels(n_steps);
     std::vector<double> sd_lp(n_steps);
     std::vector<double> sd_temper(n_steps);
-    std::vector<double> cor_labels(n_steps);
     vec cum_wgt(N, fill::value(1.0 / N));
     cum_wgt = cumsum(cum_wgt);
 
@@ -136,18 +128,12 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
         }
         split_maps(g, counties, cg, pop, districts, cum_wgt, lp, pop_left,
                    log_temper, pop_temper, accept_rate[i_split],
-                   n_distr, ctr, dist_grs, log_labels, ancestors, lags,
-                   adjust_labels, est_label_mult, n_unique[i_split],
+                   n_distr, ctr, ancestors, lags, n_unique[i_split],
                    lower, upper, target,
                    rho, cut_k[i_split], check_both, pool, verbosity);
 
-        vec inc_only = lp - log_labels;
-        sd_labels[i_split] = stddev(log_labels);
-        sd_lp[i_split] = stddev(inc_only);
+        sd_lp[i_split] = stddev(lp);
         sd_temper[i_split] = stddev(log_temper);
-        if (i_split >= 1) {
-            cor_labels[i_split] = ((mat) cor(log_labels, inc_only))(0, 0);
-        }
 
         // compute weights for next step
         cum_wgt = get_wgts(districts, n_distr, ctr, final, alpha, lp,
@@ -165,10 +151,6 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     cli_progress_done(bar);
 
     lp = lp - log_temper;
-    if (n_steps < n_distr - 1) {
-        lp -= log_labels;
-    }
-
 
     if (n_drawn + n_steps + 1 == n_distr) {
         // Set final district label to n_distr rather than 0
@@ -183,10 +165,8 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
         _["plans"] = districts,
         _["lp"] = lp,
         _["ancestors"] = ancestors,
-        _["sd_labels"] = sd_labels,
         _["sd_lp"] = sd_lp,
         _["sd_temper"] = sd_temper,
-        _["cor_labels"] = cor_labels,
         _["est_k"] = cut_k,
         _["step_n_eff"] = n_eff,
         _["unique_survive"] = n_unique,
@@ -358,9 +338,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 const uvec &pop, umat &districts, vec &cum_wgt, vec &lp,
                 vec &pop_left, vec &log_temper, double pop_temper,
                 double &accept_rate, int n_distr, int dist_ctr,
-                std::vector<Graph> &dist_grs, vec &log_labels,
-                umat &ancestors, const std::vector<int> &lags,
-                bool adjust_labels, double est_label_mult, int &n_unique,
+                umat &ancestors, const std::vector<int> &lags, int &n_unique,
                 double lower, double upper, double target,
                 double rho, int k, bool check_both,
                 RcppThread::ThreadPool &pool, int verbosity) {
@@ -369,16 +347,11 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
     const int new_size = n_distr - dist_ctr;
     const int n_cty = max(counties);
     const int n_lags = lags.size();
-    // heuristic for how many iterations to use in estimating labels, adjusted by user factor
-    const int n_est_label = std::floor((dist_ctr == n_distr-1 ? 100 : 30) *
-                                       (2 + dist_ctr) * est_label_mult);
 
     umat districts_new(V, N);
     vec pop_left_new(N);
     vec lp_new(N);
     vec log_temper_new(N);
-    vec log_labels_new(N);
-    std::vector<Graph> dist_grs_new(N);
     umat ancestors_new(N, n_lags);
     uvec uniques(N);
 
@@ -390,14 +363,17 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
     pool.parallelFor(0, N, [&] (int i) {
         int reject_ct = 0;
         bool ok = false;
-        int idx;
+        int idx = i;
         double inc_lp;
-            double lower_s = lower;
+        double lower_s = lower;
         double upper_s = upper;
+
+        Tree ust = init_tree(V);
+        std::vector<bool> visited(V);
+        std::vector<bool> ignore(V);
         while (!ok) {
             // resample
             idx = r_int_wgt(N, cum_wgt);
-            // idx = r_int_mixstrat(N, i, 0.05, cum_wgt);
             districts_new.col(i) = districts.col(idx);
             iters[i]++;
 
@@ -410,7 +386,8 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 RcppThread::checkUserInterrupt(++reject_ct % reject_check_int == 0);
                 continue;
             }
-            inc_lp = split_map(g, counties, cg, districts_new.col(i), dist_ctr,
+            inc_lp = split_map(g, ust, counties, cg, districts_new.col(i),
+                               dist_ctr, visited, ignore,
                                pop, pop_left(idx), lower_s, upper_s, target, k);
 
             // bad sample; try again
@@ -422,6 +399,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
             ok = true;
         }
         uniques[i] = idx;
+        clear_tree(ust);
 
         // save ancestors/lags
         for (int j = 0; j < n_lags; j++) {
@@ -432,28 +410,23 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
             }
         }
 
-        // make/update district graphs
-        if (adjust_labels) {
-            if (dist_ctr == 1) {
-                dist_grs_new[i] = init_tree(2);
-                dist_grs_new[i][0].push_back(1);
-                dist_grs_new[i][1].push_back(0);
-            } else {
-                dist_grs_new[i] = update_district_graph(g, dist_grs[idx],
-                                                        districts_new.col(i), dist_ctr+1);
+        // backwards kernel adjustment (for label counts)
+        std::vector<bool> gr_bool(n_distr, false);
+        for (int j = 0; j < V; j++) {
+            if (districts_new.col(i)[j] != 0) continue;
+            std::vector<int> nbors = g[j];
+            for (int nbor : nbors) {
+                int dist_k = districts_new.col(i)[nbor];
+                if (dist_k != 0) {
+                    gr_bool[dist_k] = true;
+                }
             }
-
-            // calculate label weight contribution
-            if (dist_ctr == 1) {
-                log_labels_new[i] = 0.0;
-            } else if (dist_ctr <= 13) {
-                log_labels_new[i] = log_labelings_exact(dist_grs_new[i]);
-            } else {
-                log_labels_new[i] = log_labelings_IS(dist_grs_new[i], n_est_label);
-            }
-        } else {
-            log_labels_new[i] = 0.0;
         }
+        int nbors_zero = 0;
+        for (int j = 0; j < n_distr; j++) {
+            nbors_zero += gr_bool[j];
+        }
+        inc_lp += std::log(nbors_zero);
 
 
         // handle log_st compactness calc when needed
@@ -480,7 +453,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         double pop_pen = std::sqrt((double) n_distr - 2) * std::log(1e-12 + dev);
         log_temper_new(i) = log_temper(idx) + pop_temper*pop_pen;
 
-        lp_new(i) = lp(idx) + inc_lp + log_labels_new[i] - log_labels[idx] + pop_temper*pop_pen;
+        lp_new(i) = lp(idx) + inc_lp + pop_temper*pop_pen;
 
         if (verbosity >= 3) {
             bar++;
@@ -498,8 +471,6 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
     pop_left = pop_left_new;
     lp = lp_new;
     log_temper = log_temper_new;
-    log_labels = log_labels_new;
-    dist_grs = dist_grs_new;
     ancestors = ancestors_new;
     n_unique = ((uvec) find_unique(uniques)).n_elem;
 }
@@ -507,18 +478,18 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
 /*
  * Split a map into two pieces with population lying between `lower` and `upper`
  */
-double split_map(const Graph &g, const uvec &counties, Multigraph &cg,
-                 subview_col<uword> districts, int dist_ctr, const uvec &pop,
+double split_map(const Graph &g, Tree &ust, const uvec &counties, Multigraph &cg,
+                 subview_col<uword> districts, int dist_ctr,
+                 std::vector<bool> &visited, std::vector<bool> &ignore, const uvec &pop,
                  double total_pop, double &lower, double upper, double target, int k) {
     int V = g.size();
 
-    Tree ust = init_tree(V);
-    std::vector<bool> ignore(V);
     for (int i = 0; i < V; i++) ignore[i] = districts(i) != 0;
 
     int root;
-    ust = sample_sub_ust(g, ust, V, root, ignore, pop, lower, upper, counties, cg);
-    if (ust.size() == 0) return -std::log(0.0);
+    clear_tree(ust);
+    int result = sample_sub_ust(g, ust, V, root, visited, ignore, pop, lower, upper, counties, cg);
+    if (result != 0) return -std::log(0.0);
 
     double new_pop = cut_districts(ust, k, root, districts, dist_ctr, pop, total_pop,
                           lower, upper, target);
@@ -608,7 +579,7 @@ void adapt_parameters(const Graph &g, int &k, int last_k, const vec &lp, double 
     int V = g.size();
     int k_max = std::min(10 + (int) (2.0 * V * tol), last_k + 4); // heuristic
     int N_max = districts.n_cols;
-    int N_adapt = std::min(60 + (int) std::floor(5000.0 / sqrt((double)V)), N_max);
+    int N_adapt = std::min(100, N_max);
 
     double lower = target * (1 - tol);
     double upper = target * (1 + tol);
@@ -619,15 +590,16 @@ void adapt_parameters(const Graph &g, int &k, int last_k, const vec &lp, double 
     int root;
     int max_ok = 0;
     std::vector<bool> ignore(V);
+    std::vector<bool> visited(V);
     int idx = 0;
     int max_V = 0;
+    Tree ust = init_tree(V);
     for (int i = 0; i < N_max && idx < N_adapt; i++, idx++) {
         if (std::isinf(lp(i))) { // skip if not valid
             idx--;
             continue;
         }
 
-        Tree ust = init_tree(V);
         int n_vtx = V;
         for (int j = 0; j < V; j++) {
             if (districts(j, i) != 0) {
@@ -637,8 +609,10 @@ void adapt_parameters(const Graph &g, int &k, int last_k, const vec &lp, double 
         }
         if (n_vtx > max_V) max_V = n_vtx;
 
-        ust = sample_sub_ust(g, ust, V, root, ignore, pop, lower, upper, counties, cg);
-        if (ust.size() == 0) {
+        clear_tree(ust);
+        int result = sample_sub_ust(g, ust, V, root, visited, ignore,
+                                    pop, lower, upper, counties, cg);
+        if (result != 0) {
             idx--;
             continue;
         }
@@ -690,4 +664,3 @@ void adapt_parameters(const Graph &g, int &k, int last_k, const vec &lp, double 
     k = std::min(std::max(max_ok + 1, k) + 1 - (distr_ok(k) > 0.99) + (thresh == 1),
                  max_V - 1);
 }
-

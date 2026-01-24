@@ -63,6 +63,7 @@
 #' @param init_name a name for the initial plan, or \code{FALSE} to not include
 #' the initial plan in the output.  Defaults to the column name of the
 #' existing plan, or "\code{<init>}" if the initial plan is sampled.
+#' @param silly_adj_fix Heuristic for fixing weird inputs.
 #' @param verbose Whether to print out intermediate information while sampling.
 #' Recommended.
 #' @param silent Whether to suppress all diagnostic information.
@@ -103,8 +104,9 @@ redist_mergesplit <- function(map, nsims,
                               thin = 1L, init_plan = NULL, counties = NULL, compactness = 1,
                               constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
                               adapt_k_thresh = 0.99, k = NULL, init_name = NULL,
+                              silly_adj_fix = FALSE,
                               verbose = FALSE, silent = FALSE) {
-    if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
+    if (!missing(constraint_fn)) cli::cli_warn("{.arg constraint_fn} is deprecated.")
 
     map <- validate_redist_map(map)
     V <- nrow(map)
@@ -114,20 +116,22 @@ redist_mergesplit <- function(map, nsims,
     thin <- as.integer(thin)
 
     if (compactness < 0)
-        cli_abort("{.arg compactness} must be non-negative.")
+        cli::cli_abort("{.arg compactness} must be non-negative.")
     if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
-        cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
+        cli::cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
     if (nsims <= warmup)
-        cli_abort("{.arg nsims} must be greater than {.arg warmup}.")
+        cli::cli_abort("{.arg nsims} must be greater than {.arg warmup}.")
     if (thin < 1 || thin > nsims - warmup)
-        cli_abort("{.arg thin} must be a positive integer, and no larger than {.arg nsims - warmup}.")
+        cli::cli_abort("{.arg thin} must be a positive integer, and no larger than {.arg nsims - warmup}.")
     if (nsims < 1)
-        cli_abort("{.arg nsims} must be positive.")
+        cli::cli_abort("{.arg nsims} must be positive.")
 
     exist_name <- attr(map, "existing_col")
     counties <- rlang::eval_tidy(rlang::enquo(counties), map)
+    orig_lookup = seq_len(ndists)
     if (is.null(init_plan) && !is.null(exist_name)) {
         init_plan <- vctrs::vec_group_id(get_existing(map))
+        orig_lookup = unique(get_existing(map))
         if (is.null(init_name)) init_name <- exist_name
     }  else if (!is.null(init_plan) && is.null(init_name)) {
         init_name <- "<init>"
@@ -140,25 +144,39 @@ redist_mergesplit <- function(map, nsims,
 
     # check init
     if (length(init_plan) != V)
-        cli_abort("{.arg init_plan} must be as long as the number of units as `map`.")
+        cli::cli_abort("{.arg init_plan} must be as long as the number of units as `map`.")
     if (max(init_plan) != ndists)
-        cli_abort("{.arg init_plan} must have the same number of districts as `map`.")
+        cli::cli_abort("{.arg init_plan} must have the same number of districts as `map`.")
     if (any(contiguity(adj, init_plan) != 1))
-        cli_warn("{.arg init_plan} should have contiguous districts.")
+        cli::cli_warn("{.arg init_plan} should have contiguous districts.")
 
     if (is.null(counties)) {
         counties <- rep(1, V)
     } else {
         if (any(is.na(counties)))
-            cli_abort("County vector must not contain missing values.")
+            cli::cli_abort("County vector must not contain missing values.")
 
         # handle discontinuous counties
-        component <- contiguity(adj, vctrs::vec_group_id(counties))
-        counties <- dplyr::if_else(component > 1,
-                                   paste0(as.character(counties), "-", component),
-                                   as.character(counties)) %>%
-            as.factor() %>%
-            as.integer()
+        if (silly_adj_fix) {
+            for (j in seq_len(ndists)) {
+                idx_distr = which(init_plan == j)
+                adj_distr = redist.reduce.adjacency(adj, idx_distr)
+                component <- contiguity(adj_distr, vctrs::vec_group_id(counties[idx_distr]))
+                counties[idx_distr] <- paste0(
+                    j, ":",
+                    dplyr::if_else(component > 1,
+                                   paste0(as.character(counties[idx_distr]), "-", component),
+                                   as.character(counties[idx_distr]))
+                )
+            }
+            counties = vctrs::vec_group_id(counties)
+        } else {
+            component <- contiguity(adj, vctrs::vec_group_id(counties))
+            counties <- dplyr::if_else(component > 1,
+                                       paste0(as.character(counties), "-", component),
+                                       as.character(counties)) |>
+                vctrs::vec_group_id()
+        }
     }
 
     # Other constraints
@@ -166,12 +184,12 @@ redist_mergesplit <- function(map, nsims,
         constraints <- new_redist_constr(eval_tidy(enquo(constraints), map))
     }
     if (any(c("edges_removed", "log_st") %in% names(constraints))) {
-        cli_warn(c("{.var edges_removed} or {.var log_st} constraint found in
+        cli::cli_warn(c("{.var edges_removed} or {.var log_st} constraint found in
            {.arg constraints} and will be ignored.",
             ">" = "Adjust using {.arg compactness} instead."))
     }
     if (any(c("poslby", "fry_hold") %in% names(constraints)) && compactness == 1) {
-        cli_warn("{.var polsby} or {.var fry_hold} constraint found in {.arg constraints}
+        cli::cli_warn("{.var polsby} or {.var fry_hold} constraint found in {.arg constraints}
                  with {.arg compactness != 1). This may disrupt efficient sampling.")
     }
     constraints <- as.list(constraints) # drop data attribute
@@ -185,10 +203,10 @@ redist_mergesplit <- function(map, nsims,
     pop <- map[[attr(map, "pop_col")]]
     init_pop <- pop_tally(matrix(init_plan, ncol = 1), pop, ndists)
     if (any(init_pop < pop_bounds[1]) | any(init_pop > pop_bounds[3]))
-        cli_abort("Provided initialization does not meet population bounds.")
+        cli::cli_abort("Provided initialization does not meet population bounds.")
     if (any(pop >= pop_bounds[3])) {
         too_big <- as.character(which(pop >= pop_bounds[3]))
-        cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
+        cli::cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
                     population larger than the maximum district size.",
             "x" = "Redistricting impossible."))
     }
@@ -207,6 +225,8 @@ redist_mergesplit <- function(map, nsims,
     l_diag <- list(
         runtime = as.numeric(t2_run - t1_run, units = "secs")
     )
+
+
     out <- new_redist_plans(algout$plans[, -warmup_idx, drop = FALSE],
                             map, "mergesplit", NULL, FALSE,
                             ndists = ndists,
@@ -219,7 +239,6 @@ redist_mergesplit <- function(map, nsims,
 
     warmup_idx <- c(seq_len(warmup %/% thin), length(acceptances))
     out <- out %>% mutate(mcmc_accept = rep(acceptances[-warmup_idx], each = ndists))
-
 
     if (!is.null(init_name) && !isFALSE(init_name)) {
         out <- add_reference(out, init_plan, init_name)

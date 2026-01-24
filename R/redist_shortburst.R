@@ -110,26 +110,23 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
 
     score_fn <- rlang::as_closure(score_fn)
     stopifnot(is.function(score_fn))
-    if (!is.numeric(stop_at)) {
-        stop_at <- Inf
-    }
 
     if (compactness < 0)
-        cli_abort("{.arg compactness} must be non-negative.")
+        cli::cli_abort("{.arg compactness} must be non-negative.")
     if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
-        cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
+        cli::cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
 
     if (burst_size(1) < 1 || max_bursts < 1)
-        cli_abort("{.arg burst_size} and {.arg max_bursts} must be positive.")
+        cli::cli_abort("{.arg burst_size} and {.arg max_bursts} must be positive.")
     if (thin < 1 || thin > max_bursts)
-        cli_abort("{.arg thin} must be a positive integer, and no larger than {.arg max_bursts}.")
+        cli::cli_abort("{.arg thin} must be a positive integer, and no larger than {.arg max_bursts}.")
 
     counties <- rlang::eval_tidy(rlang::enquo(counties), map)
     if (is.null(counties)) {
         counties <- rep(1, V)
     } else {
         if (any(is.na(counties)))
-            cli_abort("County vector must not contain missing values.")
+            cli::cli_abort("County vector must not contain missing values.")
 
         # handle discontinuous counties
         component <- contiguity(adj, vctrs::vec_group_id(counties))
@@ -140,7 +137,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
             as.integer()
 
         if (any(component > 1)) {
-            cli_warn("Counties were not contiguous; expect additional splits.")
+            cli::cli_warn("Counties were not contiguous; expect additional splits.")
         }
     }
 
@@ -152,11 +149,11 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
 
     # check init
     if (length(init_plan) != V)
-        cli_abort("{.arg init_plan} must be as long as the number of units as `map`.")
+        cli::cli_abort("{.arg init_plan} must be as long as the number of units as `map`.")
     if (max(init_plan) != ndists)
-        cli_abort("{.arg init_plan} must have the same number of districts as `map`.")
+        cli::cli_abort("{.arg init_plan} must have the same number of districts as `map`.")
     if (any(contiguity(adj, init_plan) != 1))
-        cli_warn("{.arg init_plan} should have contiguous districts.")
+        cli::cli_warn("{.arg init_plan} should have contiguous districts.")
 
 
     if (backend == "mergesplit") {
@@ -166,32 +163,24 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     }
 
     pop <- map[[attr(map, "pop_col")]]
-    if (any(pop >= get_target(map))) {
+    if ((backend == 'flip' && any(pop >= get_target(map))) ||
+        (backend == 'mergesplit' && any(pop >= pop_bounds[3]))) {
         too_big <- as.character(which(pop >= pop_bounds[3]))
-        cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
+        cli::cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
                     population larger than the district target.",
             "x" = "Redistricting impossible."))
     }
 
-    if (!inherits(constraints, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
+    if (!inherits(constraints, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
     constraints <- as.list(constraints)
 
     if (backend == "mergesplit") {
         control = list(adapt_k_thresh=adapt_k_thresh, do_mh=reversible)
         if (is.null(fixed_k)) {
-            # kind of hacky -- extract k=... from outupt
-            if (!requireNamespace("utils", quietly = TRUE)) stop()
-            out <- utils::capture.output({
-                x <- ms_plans(1, adj, init_plan, counties, pop, ndists, pop_bounds[2],
-                    pop_bounds[1], pop_bounds[3], compactness,
-                    list(), control, 0L, 1L, verbosity = 3)
-            }, type = "output")
-            rm(x)
-            k <- as.integer(stats::na.omit(stringr::str_match(out, "Using k = (\\d+)")[, 2]))
-            if (length(k) == 0)
-                cli_abort(c("Adaptive {.var k} not found. This error should not happen.",
-                    ">" = "Please file an issue at
-                            {.url https://github.com/alarm-redist/redist/issues/new}"))
+            x <- ms_plans(1, adj, init_plan, counties, pop, ndists, pop_bounds[2],
+                          pop_bounds[1], pop_bounds[3], compactness,
+                          list(), control, 0L, 1L, verbosity = 0)
+            k <- x$est_k
         } else {
             k = fixed_k
         }
@@ -204,10 +193,10 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     } else {
 
         if (flip_eprob <= 0 || flip_eprob >= 1) {
-            cli_abort("{.arg flip_eprob} must be in the interval (0, 1).")
+            cli::cli_abort("{.arg flip_eprob} must be in the interval (0, 1).")
         }
         if (flip_lambda < 0) {
-            cli_abort("{.arg flip_lambda} must be a nonnegative integer.")
+            cli::cli_abort("{.arg flip_lambda} must be a nonnegative integer.")
         }
 
         run_burst <- function(init, steps) {
@@ -227,6 +216,12 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     rescale <- 1 - maximize * 2
 
     cur_best_scores <- score_fn(matrix(init_plan, ncol = 1))
+    score_init = cur_best_scores
+    if (!is.numeric(stop_at)) {
+        stop_at <- -Inf
+    } else {
+        stop_at = rescale * stop_at
+    }
     if (!is.matrix(cur_best_scores)) {
         cur_best_scores = matrix(cur_best_scores, ncol=1)
         rownames(cur_best_scores) = "score"
@@ -271,7 +266,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         this_burst_size <- burst_size(burst)
         burst_sizes[burst] <- this_burst_size
         if (this_burst_size <= 0) {
-            cli_abort(c("Burst size must be at least 1.",
+            cli::cli_abort(c("Burst size must be at least 1.",
                         "x"="Found {this_burst_size} on iteration {burst}."))
         }
         keep <- seq_len(this_burst_size)
@@ -309,7 +304,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
             out_mat[, idx] <- cur_best[, out_idx]
             scores[idx, ] <- cur_best_scores[, out_idx] * rescale
 
-            if (any(colSums(cur_best_scores >= stop_at) == dim_score)) {
+            if (any(colSums(cur_best_scores <= stop_at) == dim_score)) {
                 converged = TRUE
                 break
             }
@@ -321,15 +316,15 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         storage.mode(out_mat) <- "integer"
 
         pareto_scores = t(cur_best_scores * rescale)
-        pareto_scores = pareto_scores[order(pareto_scores[, 1]), , drop=FALSE]
+        ord = order(pareto_scores[, 1])
 
         out <- new_redist_plans(out_mat[, out_idx, drop = FALSE], map, "shortburst",
             wgt = NULL, resampled = FALSE,
             n_bursts = burst,
             backend = backend,
             converged = converged,
-            pareto_front = cur_best,
-            pareto_scores = pareto_scores,
+            pareto_front = cur_best[, ord, drop=FALSE],
+            pareto_scores = pareto_scores[ord, , drop=FALSE],
             version = packageVersion("redist"),
             score_fn = deparse(substitute(score_fn)))
         score_mat = matrix(rep(scores[out_idx, ], each = ndists), ncol = dim_score)
@@ -339,7 +334,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
 
         out <- add_reference(out, init_plan, "<init>")
         idx_cols = ncol(out) - dim_score:1
-        out[1:ndists, idx_cols] <- matrix(rep(scores[1, ], each = ndists), ncol = dim_score)
+        out[1:ndists, idx_cols] <- matrix(rep(score_init, each = ndists), ncol = dim_score)
     } else {
         out <- new_redist_plans(cur_best, map, "shortburst",
                                 wgt = NULL, resampled = FALSE,
@@ -512,7 +507,7 @@ scorer_multisplits <- function(map, counties) {
 #' @rdname scorers
 #' @order 6
 #'
-#' @param perim_df perimeter distance dataframe from [prep_perims()]
+#' @param perim_df perimeter distance dataframe from [redistmetrics::prep_perims()]
 #' @param areas area of each precinct (ie `st_area(map)`)
 #' @param m the m-th from the bottom Polsby Popper to return as the score. Defaults to 1,
 #' the minimum Polsby Popper score

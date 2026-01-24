@@ -9,7 +9,7 @@
 #'
 #' @export
 is_contiguous <- function(x) {
-    if (!inherits(x, "redist_map")) cli_abort("{.arg x} must be a {.cls redist_map}")
+    if (!inherits(x, "redist_map")) cli::cli_abort("{.arg x} must be a {.cls redist_map}")
     all(contiguity(get_adj(x), rep(1, nrow(x))) == 1)
 }
 
@@ -91,12 +91,12 @@ merge_by <- function(.data, ..., by_existing = TRUE, drop_geom = TRUE, collapse_
 #' @export
 make_cores <- function(.data = cur_map(), boundary = 1, focus = NULL) {
     if (is.null(.data))
-        cli_abort("Must provide {.arg .data} if not called within a {.pkg dplyr} verb")
-    if (!inherits(.data, "redist_map")) cli_abort("{.arg .data} must be a {.cls redist_map}")
+        cli::cli_abort("Must provide {.arg .data} if not called within a {.pkg dplyr} verb")
+    if (!inherits(.data, "redist_map")) cli::cli_abort("{.arg .data} must be a {.cls redist_map}")
 
     existing <- get_existing(.data)
     if (is.null(existing))
-        cli_abort(c("No existing plan found from which to compute cores.",
+        cli::cli_abort(c("No existing plan found from which to compute cores.",
                     ">" = "Add one using the {.arg existing_plan} argument to {.fun redist_map}"))
 
     redist.identify.cores(adj = get_adj(.data),

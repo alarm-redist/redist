@@ -22,7 +22,7 @@ as_redist_map(x)
 \arguments{
 \item{...}{column elements to be bound into a \code{redist_map} object or a
 single \code{list} or \code{data.frame}.  These will be passed on to the
-\code{\link{tibble}} constructor.}
+\link[tibble:tibble]{tibble::tibble} constructor.}
 
 \item{existing_plan}{\code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the
 existing district assignment. Must be numeric or convertible to numeric.}
@@ -59,7 +59,7 @@ A redist_map object
 Sets up a redistricting problem.
 }
 \details{
-A \code{redist_map} object is a \code{\link{tibble}} which contains an
+A \code{redist_map} object is a \link[tibble:tibble]{tibble::tibble} which contains an
 adjacency list and additional information about the number of districts and
 population bounds.  It supports all of the \code{dplyr} generics, and will
 adjust the adjacency list and attributes according to these functions; i.e.,

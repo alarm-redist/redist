@@ -238,13 +238,14 @@ double eval_polsby(const subview_col<uword> &districts, int distr,
 
     double tot_perim = 0.0;
 
-    uvec idx = find(to == distr);
-    for (int e = 0; e < idx.size(); e++) {
-        if(from(idx(e)) == -1) {
-            tot_perim += perimeter(idx(e));
+    for (int e = 0; e < from.size(); e++) {
+        if(from(e) == -1) {
+            if(districts(to(e) - 1) == distr) {
+                tot_perim += perimeter(e);
+            }
         } else {
-            if (districts(from(idx(e))) != distr) {
-                tot_perim += perimeter(idx(e));
+            if(districts(from(e) - 1) == distr && districts(to(e) - 1) != distr) {
+                tot_perim += perimeter(e);
             }
         }
     }
@@ -438,7 +439,7 @@ NumericVector group_pct_top_k(const IntegerMatrix m, const NumericVector group_p
 
 
 /*
- * Compute the deviation from the equal population constraint.
+ * Tally a variable by district.
  */
 // TESTED
 NumericMatrix pop_tally(IntegerMatrix districts, vec pop, int n_distr) {
@@ -454,6 +455,26 @@ NumericMatrix pop_tally(IntegerMatrix districts, vec pop, int n_distr) {
     }
 
     return tally;
+}
+
+/*
+ * Create the projective distribution of a variable `x`
+ */
+// [[Rcpp::export]]
+NumericMatrix proj_distr_m(IntegerMatrix districts, const arma::vec x,
+                           IntegerVector draw_idx, int n_distr) {
+    int n = draw_idx.size();
+    int V = districts.nrow();
+
+    NumericMatrix out(V, n);
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < V; j++) {
+            int idx = draw_idx[i] - 1;
+            out(j, i) = x[n_distr*idx + districts(j, idx) - 1];
+        }
+    }
+
+    return out;
 }
 
 /*

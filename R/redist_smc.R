@@ -94,10 +94,6 @@
 #' iteration. Used to loosen the constraint when the sampler is getting stuck
 #' on the final split. `pop_temper` should be tried first, since using
 #' `final_infl` will actually change the target distribution.
-#' @param est_label_mult A multiplier for the number of importance samples to
-#' use in estimating the number of ways to sequentially label the districts.
-#' Lower values increase speed at the cost of accuracy.  Only applied when
-#' there are more than 13 districts.
 #' @param ref_name a name for the existing plan, which will be added as a
 #' reference plan, or `FALSE` to not include the initial plan in the
 #' output. Defaults to the column name of the existing plan.
@@ -139,27 +135,27 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
                        resample = TRUE, runs = 1L, ncores = 0L, init_particles = NULL,
                        n_steps = NULL, adapt_k_thresh = 0.99, seq_alpha = 0.5,
                        truncate = (compactness != 1), trunc_fn = redist_quantile_trunc,
-                       pop_temper = 0, final_infl = 1, est_label_mult = 1,
+                       pop_temper = 0, final_infl = 1,
                        ref_name = NULL, verbose = FALSE, silent = FALSE) {
     map <- validate_redist_map(map)
     V <- nrow(map)
     adj <- get_adj(map)
 
     if (compactness < 0)
-        cli_abort("{.arg compactness} must be non-negative.")
+        cli::cli_abort("{.arg compactness} must be non-negative.")
     if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
-        cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
+        cli::cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
     if (seq_alpha <= 0 | seq_alpha > 1)
-        cli_abort("{.arg seq_alpha} must lie in (0, 1].")
+        cli::cli_abort("{.arg seq_alpha} must lie in (0, 1].")
     if (nsims < 1)
-        cli_abort("{.arg nsims} must be positive.")
+        cli::cli_abort("{.arg nsims} must be positive.")
 
     counties <- rlang::eval_tidy(rlang::enquo(counties), map)
     if (is.null(counties)) {
         counties <- rep(1, V)
     } else {
         if (any(is.na(counties)))
-            cli_abort("County vector must not contain missing values.")
+            cli::cli_abort("County vector must not contain missing values.")
 
         # handle discontinuous counties
         component <- contiguity(adj, vctrs::vec_group_id(counties))
@@ -169,7 +165,7 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
             as.factor() %>%
             as.integer()
         if (any(component > 1)) {
-            cli_warn("Counties were not contiguous; expect additional splits.")
+            cli::cli_warn("Counties were not contiguous; expect additional splits.")
         }
     }
 
@@ -178,12 +174,12 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
         constraints <- new_redist_constr(eval_tidy(enquo(constraints), map))
     }
     if (any(c("edges_removed", "log_st") %in% names(constraints))) {
-        cli_warn(c("{.var edges_removed} or {.var log_st} constraint found in
+        cli::cli_warn(c("{.var edges_removed} or {.var log_st} constraint found in
            {.arg constraints} and will be ignored.",
             ">" = "Adjust using {.arg compactness} instead."))
     }
     if (any(c("poslby", "fry_hold") %in% names(constraints)) && compactness == 1) {
-        cli_warn("{.var polsby} or {.var fry_hold} constraint found in {.arg constraints}
+        cli::cli_warn("{.var polsby} or {.var fry_hold} constraint found in {.arg constraints}
                  with {.arg compactness == 1). This may disrupt efficient sampling.")
     }
     constraints <- as.list(constraints) # drop data attribute
@@ -197,7 +193,7 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
     ndists <- attr(map, "ndists")
     if (any(pop >= pop_bounds[3])) {
         too_big <- as.character(which(pop >= pop_bounds[3]))
-        cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
+        cli::cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
                     population larger than the district target.",
             "x" = "Redistricting impossible."))
     }
@@ -208,9 +204,9 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
         n_drawn <- 0L
     } else {
         if (nrow(init_particles) != V)
-            cli_abort("{.arg init_particles} must have as many rows as {.arg map} has precincts.")
+            cli::cli_abort("{.arg init_particles} must have as many rows as {.arg map} has precincts.")
         if (ncol(init_particles) != nsims)
-            cli_abort("{.arg init_particles} must have {.arg nsims} columns.")
+            cli::cli_abort("{.arg init_particles} must have {.arg nsims} columns.")
         n_drawn <- as.integer(max(init_particles[, 1]))
     }
     if (is.null(n_steps)) {
@@ -218,7 +214,7 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
     }
     final_dists <- n_drawn + n_steps + 1L
     if (final_dists > ndists) {
-        cli_abort("Too many districts already drawn to take {n_steps} steps.")
+        cli::cli_abort("Too many districts already drawn to take {n_steps} steps.")
     }
 
     # set up parallel
@@ -236,8 +232,6 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
     lags <- 1 + unique(round((ndists - 1)^0.8*seq(0, 0.7, length.out = 4)^0.9))
     control <- list(adapt_k_thresh = adapt_k_thresh,
                     seq_alpha = seq_alpha,
-                    est_label_mult = est_label_mult,
-                    adjust_labels = isTRUE(getOption("redist.adjust_labels", TRUE)),
                     pop_temper = pop_temper,
                     final_infl = final_infl,
                     lags = lags,
@@ -283,7 +277,7 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
         wgt <- exp(lr - mean(lr))
         n_eff <- length(wgt)*mean(wgt)^2/mean(wgt^2)
         if (any(is.na(lr))) {
-            cli_abort(c("Sampling probabilities have been corrupted.",
+            cli::cli_abort(c("Sampling probabilities have been corrupted.",
                 "*" = "Check that none of your constraint weights are too large.
                              The output of constraint functions multiplied by the weight
                              should generally fall in the -5 to 5 range.",
@@ -313,7 +307,6 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
             rs_idx <- resample_lowvar(mod_wgt)
             n_unique <- dplyr::n_distinct(rs_idx)
             algout$plans <- algout$plans[, rs_idx, drop = FALSE]
-            # algout$log_labels = algout$log_labels[rs_idx]
             algout$ancestors <- algout$ancestors[rs_idx, , drop = FALSE]
             storage.mode(algout$ancestors) <- "integer"
         }
@@ -321,7 +314,7 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
         t2_run <- Sys.time()
 
         if (!is.nan(n_eff) && n_eff/nsims <= 0.05)
-            cli_warn(c("Less than 5% resampling efficiency.",
+            cli::cli_warn(c("Less than 5% resampling efficiency.",
                        "*" = "Increase the number of samples.",
                        "*" = "Consider weakening or removing constraints.",
                        "i" = "If sampling efficiency drops precipitously in the final
@@ -336,14 +329,10 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
             n_eff = n_eff,
             step_n_eff = algout$step_n_eff,
             adapt_k_thresh = adapt_k_thresh,
-            est_label_mult = est_label_mult,
             est_k = algout$est_k,
             accept_rate = algout$accept_rate,
-            sd_labels = algout$sd_labels,
             sd_lp = c(algout$sd_lp, sd(lr)),
             sd_temper = algout$sd_temper,
-            cor_labels = algout$cor_labels,
-            # log_labels = algout$log_labels,
             unique_survive = c(algout$unique_survive, n_unique),
             ancestors = algout$ancestors,
             seq_alpha = seq_alpha,
@@ -355,7 +344,7 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
     }
     if (verbosity >= 2) {
         t2 <- Sys.time()
-        cli_text("{format(nsims*runs, big.mark=',')} plans sampled in
+        cli::cli_text("{format(nsims*runs, big.mark=',')} plans sampled in
                  {format(t2-t1, digits=2)}")
     }
 
@@ -367,7 +356,7 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
     # tempering warning
     temp_ratio = do.call(c, lapply(l_diag, function(x) x$sd_temper / head(x$sd_lp, -1)))
     if (any(temp_ratio > 0.5, na.rm=TRUE)) {
-        cli_warn(c("Population tempering is increasing the variance of the
+        cli::cli_warn(c("Population tempering is increasing the variance of the
                    resampling weights by over 50% at some steps.",
                    "*" = "Consider lowering {.arg pop_temper}."))
     }

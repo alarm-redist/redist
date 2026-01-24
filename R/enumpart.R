@@ -66,9 +66,9 @@ redist.prep.enumpart <- function(adj, ordered_path, weight_path = NULL,
     cli_warn('{.arg unordered_path} is deprecated and will be ignored.')
   }
 
-  if (is.null(weight_path) + is.null(total_pop) == 1L) {
-    cli_abort('You must provide both of {.arg weight_path} and {.arg total_pop} or neither.')
-  }
+    if (is.null(weight_path) + is.null(total_pop) == 1L) {
+        cli::cli_abort("You must provide both of {.arg weight_path} and {.arg total_pop} or neither.")
+    }
 
   # Remove any duplicates from adjacency list
   adj <- lapply(adj, unique)
@@ -132,20 +132,20 @@ redist.prep.enumpart <- function(adj, ordered_path, weight_path = NULL,
 redist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
                                 all = TRUE, n = NULL, weight_path = NULL,
                                 lower = NULL, upper = NULL, options = NULL) {
-  ndists <- as.integer(ndists)
-  n <- as.integer(n)
+    ndists <- as.integer(ndists)
+    n <- as.integer(n)
 
-  # use args based on types
-  if (is.null(options)) {
-    if (all) {
-      options <- c('-k', ndists, '-comp', '-allsols')
-    } else {
-      if (is.null(n)) {
-        cli_abort('{.arg n} must be specified when all is {.code FALSE}.')
-      }
-      options <- c('-k', ndists, '-comp', '-sample', n)
+    # use args based on types
+    if (is.null(options)) {
+        if (all) {
+            options <- c("-k", ndists, "-comp", "-allsols")
+        } else {
+            if (is.null(n)) {
+                cli::cli_abort("{.arg n} must be specified when all is {.code FALSE}.")
+            }
+            options <- c("-k", ndists, "-comp", "-sample", n)
+        }
     }
-  }
 
   if (!is.null(lower)) {
     options <- c(options, '-lower', as.character(lower))

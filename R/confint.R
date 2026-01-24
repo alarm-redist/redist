@@ -53,7 +53,7 @@ redist_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE) {
     x = enquo(x)
 
     if (is.null(algo) || !algo %in% algos_ok) {
-        cli_abort("{.field algorithm} attribute missing from {.arg plans}.
+        cli::cli_abort("{.field algorithm} attribute missing from {.arg plans}.
                   Call {.fn redist_smc_ci} or {.fn redist_mcmc_ci} directly.")
     } else if (algo == "smc") {
         redist_smc_ci(plans, !!x, district, conf, by_chain)
@@ -83,7 +83,7 @@ redist_smc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE)
         }
         rhat <- diag_rhat(x, chain)
         if (is.finite(rhat) && rhat > 1.05) {
-            cli_warn(c("Runs have not converged for this statistic.",
+            cli::cli_warn(c("Runs have not converged for this statistic.",
                        "i" = "R-hat is {round(rhat, 3)}",
                        ">" = "Increase the number of samples."))
         }
@@ -132,7 +132,7 @@ redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE
 
     rhat <- diag_rhat(x, chain, split=TRUE)
     if (is.finite(rhat) && rhat > 1.05) {
-        cli_warn(c("Runs have not converged for this statistic.",
+        cli::cli_warn(c("Runs have not converged for this statistic.",
                    "i" = "R-hat is {round(rhat, 3)}",
                    ">" = "Increase the number of samples."))
     }

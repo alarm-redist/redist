@@ -20,7 +20,7 @@ redist.reorder <- function(plans) {
         if (is.numeric(plans)) {
             plans <- as.matrix(plans, ncol = 1)
         } else {
-            cli_abort("{.arg plans} must be a matrix or integer vector.")
+            cli::cli_abort("{.arg plans} must be a matrix or integer vector.")
         }
     }
 

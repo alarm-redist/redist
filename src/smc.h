@@ -16,7 +16,6 @@
 #include "wilson.h"
 #include "tree_op.h"
 #include "map_calc.h"
-#include "labeling.h"
 
 /*
  * Main entry point.
@@ -38,9 +37,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 const uvec &pop, umat &districts, vec &cum_wgt, vec &lp,
                 vec &pop_left, vec &log_temper, double pop_temper,
                 double &accept_rate, int n_distr, int dist_ctr,
-                std::vector<Graph> &dist_grs, vec &log_labels,
-                umat &ancestors, const std::vector<int> &lags,
-                bool adjust_labels, double est_label_mult, int &n_unique,
+                umat &ancestors, const std::vector<int> &lags, int &n_unique,
                 double lower, double upper, double target,
                 double rho, int k, bool check_both,
                 RcppThread::ThreadPool &pool, int verbosity);
@@ -57,8 +54,9 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
 /*
  * Split a map into two pieces with population lying between `lower` and `upper`
  */
-double split_map(const Graph &g, const uvec &counties, Multigraph &cg,
-                 subview_col<uword> districts, int dist_ctr, const uvec &pop,
+double split_map(const Graph &g, Tree &ust, const uvec &counties, Multigraph &cg,
+                 subview_col<uword> districts, int dist_ctr,
+                 std::vector<bool> &visited, std::vector<bool> &ignore, const uvec &pop,
                  double total_pop, double &lower, double upper, double target, int k);
 
 /*

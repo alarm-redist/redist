@@ -31,8 +31,9 @@ Rcpp::List ms_plans(int N, List l, const arma::uvec init, const arma::uvec &coun
 /*
  * Split a map into two pieces with population lying between `lower` and `upper`
  */
-double split_map_ms(const Graph &g, const uvec &counties, Multigraph &cg,
+double split_map_ms(const Graph &g, Tree &ust, const uvec &counties, Multigraph &cg,
                     subview_col<uword> districts, int distr_1, int distr_2,
+                     std::vector<bool> &visited, std::vector<bool> &ignore,
                     const uvec &pop, double lower, double upper, double target,
                     int k);
 

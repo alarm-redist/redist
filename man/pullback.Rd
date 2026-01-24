@@ -15,7 +15,7 @@ pullback(plans, map = NULL)
 a new, re-indexed, \code{redist_plans} object
 }
 \description{
-Merging map units through \code{\link{merge_by}} or \code{\link{summarize}}
+Merging map units through \code{\link{merge_by}} or \link[dplyr:summarise]{dplyr::summarize}
 changes the indexing of each unit.  Use this function to take a set of
 redistricting plans from a \code{redist} algorithm and re-index them to
 be compatible with the original set of units.

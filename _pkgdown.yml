@@ -1,6 +1,8 @@
+url: http://alarm-redist.org/redist/
 template:
-  params:
-    bootswatch: yeti
+  bootstrap: 5
+  bootswatch: journal
+  bg: light
 home:
   title: An R package for legislative redistricting
   description: >

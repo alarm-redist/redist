@@ -19,9 +19,10 @@ void loop_erase(std::vector<int> &path, int proposal);
  * Random walk along `g` from `root` until something in `visited` is hit
  */
 // TESTED
-std::vector<std::vector<int>> walk_until_cty(Multigraph &mg, int root,
-                                             const std::vector<bool> &visited,
-                                             const std::vector<bool> &ignore);
+void walk_until_cty(Multigraph &mg, int root,
+                    std::vector<std::vector<int>> &path,
+                    const std::vector<bool> &visited,
+                    const std::vector<bool> &ignore);
 
 /*
  * Erase loops in `path` that would be created by adding `proposal` to path
@@ -38,19 +39,21 @@ Tree sample_ust(List l, const arma::uvec &pop, double lower, double upper,
     int V = g.size();
     Tree tree = init_tree(V);
     int root;
-    return sample_sub_ust(g, tree, V, root, ignore, pop, lower, upper, counties, cg);
+    std::vector<bool> visited(V);
+    sample_sub_ust(g, tree, V, root, visited, ignore, pop, lower, upper, counties, cg);
+    return tree;
 }
 
 /*
  * Sample a uniform spanning subtree of unvisited nodes using Wilson's algorithm
  */
 // TESTED
-Tree sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
-                    const std::vector<bool> &ignore, const uvec &pop,
-                    double lower, double upper,
-                    const uvec &counties, Multigraph &mg) {
+int sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
+                   std::vector<bool> &visited,
+                   const std::vector<bool> &ignore, const uvec &pop,
+                   double lower, double upper,
+                   const uvec &counties, Multigraph &mg) {
     int n_county = mg.size();
-    std::vector<bool> visited(V, false);
     std::vector<bool> c_visited(n_county, true);
     uvec county_pop(n_county, fill::zeros);
     int tot_pop = 0;
@@ -60,6 +63,7 @@ Tree sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
         if (ignore.at(i)) {
             visited[i] = true;
         } else {
+            visited[i] = false;
             remaining++;
             int county = counties(i) - 1;
             tot_pop += pop(i);
@@ -89,16 +93,15 @@ Tree sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
 
     // Connect counties
     Tree cty_tree = init_tree(n_county);
+    std::vector<std::vector<int>> path;
     while (c_remaining > 0) {
         int add = rvtx(c_visited, n_county, c_remaining, lower_c);
         // random walk from `add` until we hit the path
-        std::vector<std::vector<int>> path = walk_until_cty(mg, add,
-                                                            c_visited, ignore);
+        walk_until_cty(mg, add, path, c_visited, ignore);
         // update visited list and constructed tree
         int added = path.size();
         if (added == 0) { // bail
-            Tree null_tree;
-            return null_tree;
+            return 1;
         }
         c_remaining -= added;
         c_visited.at(add) = true;
@@ -169,8 +172,7 @@ Tree sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
             int added = walk_until(g, add, path, max_try, visited, ignore, counties);
             // update visited list and constructed tree
             if (added == 0) { // bail
-                Tree null_tree;
-                return null_tree;
+                return 1;
             }
             remaining -= added - 1; // minus 1 because ending vertex already in tree
             for (int i = 0; i < added - 1; i++) {
@@ -181,7 +183,7 @@ Tree sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
         }
     }
 
-    return tree;
+    return 0;
 }
 
 
@@ -232,10 +234,11 @@ int walk_until(const Graph &g, int root,
  * Random walk along `g` from `root` until something in `visited` is hit
  */
 // TESTED
-std::vector<std::vector<int>> walk_until_cty(Multigraph &mg, int root,
-                                             const std::vector<bool> &visited,
-                                             const std::vector<bool> &ignore) {
-    std::vector<std::vector<int>> path;
+void walk_until_cty(Multigraph &mg, int root,
+                    std::vector<std::vector<int>> &path,
+                    const std::vector<bool> &visited,
+                    const std::vector<bool> &ignore) {
+    path.clear();
 
     // walk until we hit something in `visited`
     int curr = root;
@@ -257,10 +260,8 @@ std::vector<std::vector<int>> walk_until_cty(Multigraph &mg, int root,
         curr = proposal;
     }
     if (i == max) {
-        path.erase(path.begin(), path.end());
+        path.clear();
     }
-
-    return path;
 }
 
 
