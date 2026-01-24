@@ -2,11 +2,10 @@
 % Please edit documentation in R/enumpart.R
 \name{redist.enumpart}
 \alias{redist.enumpart}
-\title{Enumerate All Parititions (Fifield et al. 2020)}
+\title{Enumerate All Partitions (Fifield et al. 2020)}
 \usage{
 redist.enumpart(
   adj,
-  unordered_path,
   ordered_path,
   out_path,
   ndists = 2,
@@ -17,13 +16,12 @@ redist.enumpart(
   upper = NULL,
   init = FALSE,
   read = TRUE,
-  total_pop = NULL
+  total_pop = NULL,
+  unordered_path
 )
 }
 \arguments{
 \item{adj}{zero indexed adjacency list.}
-
-\item{unordered_path}{valid path to output the unordered adjacency map to}
 
 \item{ordered_path}{valid path to output the ordered adjacency map to}
 
@@ -43,11 +41,13 @@ vertex weights, to be used along with \code{lower} and \code{upper}.}
 
 \item{upper}{An upper bound on each partition's total weight.}
 
-\item{init}{Runs redist.init.enumpart. Defaults to false. Should be run on first use.}
+\item{init}{Runs redist.init.enumpart. Defaults to FALSE. Should be run on first use.}
 
-\item{read}{boolean. Defaults to TRUE. reads}
+\item{read}{boolean. Defaults to TRUE. If TRUE, reads and returns the results.}
 
 \item{total_pop}{the vector of precinct populations}
+
+\item{unordered_path}{Deprecated.}
 }
 \value{
 List with entries district_membership and parity.

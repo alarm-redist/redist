@@ -103,8 +103,10 @@ order_by_NDS <- function(G, vertex_order_dict, order_vertex_set, result_edge_lis
 
 # Helper function to count multiple edges between vertices
 count_multiple <- function(G, v1, v2) {
-  # Get all edges between v1 and v2
-  length(igraph::E(G)[v1 %--% v2])
+  # Get all edges and their endpoints
+  el <- igraph::ends(G, igraph::E(G))
+  # Count edges between v1 and v2 (in either direction for undirected)
+  sum((el[, 1] == v1 & el[, 2] == v2) | (el[, 1] == v2 & el[, 2] == v1))
 }
 
 # Contract node v into node u (NetworkX-style contraction)
