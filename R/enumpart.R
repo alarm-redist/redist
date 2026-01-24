@@ -60,6 +60,8 @@ redist.init.enumpart <- function() {
 #' }
 redist.prep.enumpart <- function(adj, ordered_path, weight_path = NULL,
                                  total_pop = NULL, unordered_path) {
+  rlang::check_installed('igraph')
+
   if (!missing(unordered_path)) {
     cli_warn('{.arg unordered_path} is deprecated and will be ignored.')
   }
