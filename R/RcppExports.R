@@ -49,6 +49,14 @@ crsg <- function(adj_list, population, area, x_center, y_center, Ndistrict, targ
     .Call(`_redist_crsg`, adj_list, population, area, x_center, y_center, Ndistrict, target_pop, thresh, maxiter)
 }
 
+cyclewalk_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, compactness, constraints, control, thin, verbosity) {
+    .Call(`_redist_cyclewalk_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, compactness, constraints, control, thin, verbosity)
+}
+
+test_lct <- function() {
+    .Call(`_redist_test_lct`)
+}
+
 dist_dist_diff <- function(p, i_dist, j_dist, x_center, y_center, x, y) {
     .Call(`_redist_dist_dist_diff`, p, i_dist, j_dist, x_center, y_center, x, y)
 }

@@ -174,6 +174,40 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// cyclewalk_plans
+Rcpp::List cyclewalk_plans(int N, Rcpp::List l, const arma::uvec init, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double target, double lower, double upper, double compactness, Rcpp::List constraints, Rcpp::List control, int thin, int verbosity);
+RcppExport SEXP _redist_cyclewalk_plans(SEXP NSEXP, SEXP lSEXP, SEXP initSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP compactnessSEXP, SEXP constraintsSEXP, SEXP controlSEXP, SEXP thinSEXP, SEXP verbositySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type l(lSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec >::type init(initSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
+    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< double >::type compactness(compactnessSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type constraints(constraintsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type control(controlSEXP);
+    Rcpp::traits::input_parameter< int >::type thin(thinSEXP);
+    Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
+    rcpp_result_gen = Rcpp::wrap(cyclewalk_plans(N, l, init, counties, pop, n_distr, target, lower, upper, compactness, constraints, control, thin, verbosity));
+    return rcpp_result_gen;
+END_RCPP
+}
+// test_lct
+Rcpp::List test_lct();
+RcppExport SEXP _redist_test_lct() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(test_lct());
+    return rcpp_result_gen;
+END_RCPP
+}
 // dist_dist_diff
 double dist_dist_diff(int p, int i_dist, int j_dist, NumericVector x_center, NumericVector y_center, NumericVector x, NumericVector y);
 RcppExport SEXP _redist_dist_dist_diff(SEXP pSEXP, SEXP i_distSEXP, SEXP j_distSEXP, SEXP x_centerSEXP, SEXP y_centerSEXP, SEXP xSEXP, SEXP ySEXP) {
@@ -644,6 +678,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_cores", (DL_FUNC) &_redist_cores, 4},
     {"_redist_update_conncomp", (DL_FUNC) &_redist_update_conncomp, 3},
     {"_redist_crsg", (DL_FUNC) &_redist_crsg, 9},
+    {"_redist_cyclewalk_plans", (DL_FUNC) &_redist_cyclewalk_plans, 14},
+    {"_redist_test_lct", (DL_FUNC) &_redist_test_lct, 0},
     {"_redist_dist_dist_diff", (DL_FUNC) &_redist_dist_dist_diff, 7},
     {"_redist_log_st_map", (DL_FUNC) &_redist_log_st_map, 4},
     {"_redist_n_removed", (DL_FUNC) &_redist_n_removed, 3},
