@@ -2,15 +2,16 @@
  * CycleWalk MCMC Redistricting Sampler
  * Main entry point and MCMC loop
  *
- * ITERATION 2: LCT Partition State
- * - Partition initialized with spanning trees per district
- * - Cross-district edges tracked
- * - Still returns initial plan (proposals in Iterations 3-4)
+ * ITERATION 3: Internal Forest Walk
+ * - Internal forest walk proposal implemented
+ * - Spanning trees shuffled within districts
+ * - District assignments still unchanged (cycle walk in Iteration 4)
  ********************************************************/
 
 #include "cw_main.h"
 #include "cw_lct.h"
 #include "cw_partition.h"
+#include "cw_forest_walk.h"
 
 using namespace Rcpp;
 using namespace arma;
@@ -86,16 +87,29 @@ Rcpp::List cyclewalk_plans(
     }
 
     // Main MCMC loop
-    // TODO (Iterations 3-4): Add cycle walk / internal forest walk proposals
+    // Currently using internal forest walk only (cycle walk in Iteration 4)
+    int forest_walk_success = 0;
+    int forest_walk_fail = 0;
 
     int idx = 1;
     for (int i = 1; i <= N; i++) {
-        // STUB: No actual sampling - just copy init plan
-        mh_decisions(idx - 1) = 1;  // Pretend we accepted
+        // Run internal forest walk proposal
+        // This shuffles spanning trees within districts (no district changes)
+        int result = internal_forest_walk(partition);
+        if (result == 0) {
+            forest_walk_success++;
+        } else {
+            forest_walk_fail++;
+        }
+
+        // Internal forest walk always "accepts" (it's a valid tree move)
+        mh_decisions(idx - 1) = 1;
 
         // Copy current plan to output at thinning intervals
+        // Note: District assignments don't change with internal forest walk
+        // but we still output the plan for consistency
         if (i % thin == 0) {
-            plans.col(idx + 1) = init;  // STUB: always init
+            plans.col(idx + 1) = partition.get_plan();
             idx++;
         }
 
@@ -116,6 +130,11 @@ Rcpp::List cyclewalk_plans(
         }
     }
 
+    if (verbosity >= 2) {
+        Rcout << "\n[Forest Walk] Success: " << forest_walk_success
+              << ", Fail: " << forest_walk_fail << "\n";
+    }
+
     if (verbosity >= 1) {
         cli_progress_done(bar);
     }
@@ -126,7 +145,7 @@ Rcpp::List cyclewalk_plans(
         Named("plans") = plans,
         Named("mhdecisions") = mh_decisions,
         Named("algorithm") = "cyclewalk",
-        Named("version") = "0.2-partition"
+        Named("version") = "0.3-forest-walk"
     );
 
     return out;
