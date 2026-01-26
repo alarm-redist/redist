@@ -93,7 +93,10 @@ Rcpp::List cyclewalk_plans(
     int forest_walk_fail = 0;
     int cycle_walk_accept = 0;
     int cycle_walk_reject = 0;
-    int cycle_walk_fail = 0;
+    int cycle_walk_fail_no_adj = 0;      // -1: no adjacent districts
+    int cycle_walk_fail_few_edges = 0;   // -2: <2 boundary edges
+    int cycle_walk_fail_no_path = 0;     // -3: couldn't get paths
+    int cycle_walk_fail_no_cuts = 0;     // -4: no valid cut pairs
 
     double cycle_walk_prob = 0.1;  // 10% cycle walk, 90% forest walk
 
@@ -109,8 +112,14 @@ Rcpp::List cyclewalk_plans(
                 cycle_walk_accept++;
             } else if (result == 0) {
                 cycle_walk_reject++;
-            } else {
-                cycle_walk_fail++;
+            } else if (result == -1) {
+                cycle_walk_fail_no_adj++;
+            } else if (result == -2) {
+                cycle_walk_fail_few_edges++;
+            } else if (result == -3) {
+                cycle_walk_fail_no_path++;
+            } else if (result == -4) {
+                cycle_walk_fail_no_cuts++;
             }
         } else {
             // Internal forest walk - only changes spanning trees
@@ -154,8 +163,21 @@ Rcpp::List cyclewalk_plans(
         Rcout << "\n[Forest Walk] Success: " << forest_walk_success
               << ", Fail: " << forest_walk_fail << "\n";
         Rcout << "[Cycle Walk] Accept: " << cycle_walk_accept
-              << ", Reject: " << cycle_walk_reject
-              << ", Fail: " << cycle_walk_fail << "\n";
+              << ", Reject: " << cycle_walk_reject << "\n";
+        int total_fail = cycle_walk_fail_no_adj + cycle_walk_fail_few_edges +
+                         cycle_walk_fail_no_path + cycle_walk_fail_no_cuts;
+        if (total_fail > 0) {
+            Rcout << "[Cycle Walk Failures] Total: " << total_fail;
+            if (cycle_walk_fail_few_edges > 0)
+                Rcout << ", <2 edges: " << cycle_walk_fail_few_edges;
+            if (cycle_walk_fail_no_cuts > 0)
+                Rcout << ", no valid cuts: " << cycle_walk_fail_no_cuts;
+            if (cycle_walk_fail_no_path > 0)
+                Rcout << ", no path: " << cycle_walk_fail_no_path;
+            if (cycle_walk_fail_no_adj > 0)
+                Rcout << ", no adj: " << cycle_walk_fail_no_adj;
+            Rcout << "\n";
+        }
     }
 
     if (verbosity >= 1) {
