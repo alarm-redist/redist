@@ -2,9 +2,9 @@
  * CycleWalk MCMC Redistricting Sampler
  * Main entry point and MCMC loop
  *
- * ITERATION 4: Cycle Walk Proposal
- * - Full cycle walk proposal implemented
- * - Districts can now change via cycle resampling
+ * ITERATION 5: Constraint Integration
+ * - Full cycle walk proposal with MH acceptance
+ * - Constraints integrated via calc_gibbs_tgt
  * - Mixed with internal forest walk for better mixing
  ********************************************************/
 
@@ -104,7 +104,7 @@ Rcpp::List cyclewalk_plans(
         if (r_unif() < cycle_walk_prob) {
             // Cycle walk proposal - can change districts
             double accept_ratio;
-            result = cycle_walk(partition, lower, upper, accept_ratio);
+            result = cycle_walk(partition, lower, upper, target, constraints, accept_ratio);
             if (result == 1) {
                 cycle_walk_accept++;
             } else if (result == 0) {
@@ -168,7 +168,7 @@ Rcpp::List cyclewalk_plans(
         Named("plans") = plans,
         Named("mhdecisions") = mh_decisions,
         Named("algorithm") = "cyclewalk",
-        Named("version") = "0.4-cycle-walk"
+        Named("version") = "0.5-constraints"
     );
 
     return out;

@@ -10,6 +10,7 @@
 #define CW_PROPOSAL_H
 
 #include "cw_partition.h"
+#include "mcmc_gibbs.h"
 #include "random.h"
 #include <utility>
 
@@ -33,13 +34,22 @@ struct CycleWalkUpdate {
  * 2. Pick two random boundary edges between them
  * 3. Find the cycle formed by the paths + boundary edges
  * 4. Find valid cut pairs that satisfy population constraints
- * 5. Sample a cut pair and compute MH ratio
+ * 5. Sample a cut pair and compute MH ratio (including constraints)
  * 6. Accept/reject and update partition
+ *
+ * Parameters:
+ * - partition: The current partition state
+ * - lower, upper: Population bounds
+ * - target: Target population per district (parity)
+ * - constraints: List of constraint objects from R
+ * - accept_ratio: Output parameter for the acceptance ratio
  *
  * Returns: 1 if accepted, 0 if rejected, -1 if no valid proposal
  */
 int cycle_walk(LCTPartition& partition,
                double lower, double upper,
+               double target,
+               Rcpp::List constraints,
                double& accept_ratio);
 
 /*

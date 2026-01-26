@@ -210,6 +210,8 @@ void apply_update(LCTPartition& partition,
 
 int cycle_walk(LCTPartition& partition,
                double lower, double upper,
+               double target,
+               Rcpp::List constraints,
                double& accept_ratio) {
     accept_ratio = 0.0;
 
@@ -266,6 +268,30 @@ int cycle_walk(LCTPartition& partition,
     std::vector<int> old_district_roots = partition.district_roots;
     CrossEdgeMap old_cross_edges = partition.cross_edges;
 
+    // Calculate constraint penalty for OLD state (before update)
+    // Districts that changed: d1 and d2
+    std::vector<int> changed_districts = {d1, d2};
+    Rcpp::NumericVector psi_vec;
+    if (constraints.size() > 0) {
+        psi_vec = Rcpp::NumericVector(constraints.names());
+    }
+
+    // Get old plan as uvec for constraint evaluation
+    arma::uvec old_plan(partition.n_vertices);
+    for (int i = 0; i < partition.n_vertices; i++) {
+        old_plan(i) = old_node_to_district[i] + 1;  // 1-indexed
+    }
+    arma::subview_col<arma::uword> old_plan_view = old_plan.subvec(0, partition.n_vertices - 1);
+
+    double old_constraint_penalty = 0.0;
+    if (constraints.size() > 0) {
+        old_constraint_penalty = calc_gibbs_tgt(
+            old_plan_view, partition.n_districts, partition.n_vertices,
+            changed_districts, psi_vec, *(partition.pop), target,
+            *(partition.graph), constraints
+        );
+    }
+
     // Create the update
     CycleWalkUpdate update;
     update.changed_districts = {d1, d2};
@@ -304,17 +330,40 @@ int cycle_walk(LCTPartition& partition,
     // Apply the update
     apply_update(partition, update);
 
+    // Calculate constraint penalty for NEW state (after update)
+    arma::uvec new_plan = partition.get_plan();
+    arma::subview_col<arma::uword> new_plan_view = new_plan.subvec(0, partition.n_vertices - 1);
+
+    double new_constraint_penalty = 0.0;
+    if (constraints.size() > 0) {
+        // Reset psi_vec for new calculation
+        psi_vec = Rcpp::NumericVector(constraints.names());
+        new_constraint_penalty = calc_gibbs_tgt(
+            new_plan_view, partition.n_districts, partition.n_vertices,
+            changed_districts, psi_vec, *(partition.pop), target,
+            *(partition.graph), constraints
+        );
+    }
+
     // Compute new boundary edge count
     int new_boundary = (int)partition.get_cross_edges(d1, d2).size();
 
-    // Simple MH ratio based on boundary edges
-    // Full implementation would be more complex
+    // Compute log-MH ratio
+    double log_mh_ratio = 0.0;
+
+    // Boundary edge ratio (proposal ratio)
     if (new_boundary > 0 && old_boundary > 0) {
-        accept_ratio = (double)(old_boundary * (old_boundary - 1)) /
-                       (double)(new_boundary * (new_boundary - 1));
-    } else {
-        accept_ratio = 1.0;
+        log_mh_ratio += std::log((double)(old_boundary * (old_boundary - 1))) -
+                        std::log((double)(new_boundary * (new_boundary - 1)));
     }
+
+    // Constraint ratio (target ratio)
+    // Convention: subtract new, add old (because we want pi(new)/pi(old))
+    // and constraints are log-penalties (higher = worse)
+    log_mh_ratio += old_constraint_penalty - new_constraint_penalty;
+
+    // Convert to acceptance probability
+    accept_ratio = std::min(1.0, std::exp(log_mh_ratio));
 
     // MH accept/reject
     if (r_unif() < accept_ratio) {
