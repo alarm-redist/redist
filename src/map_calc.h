@@ -134,12 +134,6 @@ double eval_capacity(const subview_col<uword> &districts, int distr, const uvec 
                      const uvec &schools, const uvec &schools_capacity, int V);
 
 /*
- * Compute the capacity penalty for district `distr` for partial plans
- */
-double eval_capacity_partial(const subview_col<uword> &districts, int distr, const uvec &pop, 
-                     const uvec &schools, const uvec &schools_capacity, int V);
-
-/*
  * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,
  * given a collection of plans
  */
