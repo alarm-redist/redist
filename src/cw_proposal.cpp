@@ -114,14 +114,32 @@ std::vector<std::pair<int, int>> find_valid_cut_pairs(
         prefix[i + 1] = prefix[i] + cycle_pops[i];
     }
 
+    // The cycle consists of:
+    // - path1: tree edges in district d1 (positions 1 to initial_cut-1)
+    // - boundary edge e2 at position initial_cut (NOT a tree edge!)
+    // - path2: tree edges in district d2 (positions initial_cut+1 to n-1)
+    // - boundary edge e1 at position n/0 (NOT a tree edge!)
+    //
+    // We can ONLY cut tree edges, not boundary edges.
+    // Boundary edge e2 is at position initial_cut
+    // Boundary edge e1 is at position n (which wraps to 0)
+
     // Try all pairs of cut positions
     // A cut at position i means we cut before vertex i
     // So cutting at positions (i, j) where i < j gives us:
     //   - One part: vertices [i, j)
     //   - Other part: vertices [0, i) + [j, n)
     for (int i = 1; i < n; i++) {
+        // Skip boundary edge e2 at position initial_cut
+        if (i == initial_cut) continue;
+
         for (int j = i + 1; j <= n; j++) {
-            // Skip the initial cut (which is at position 0 and initial_cut)
+            // Skip boundary edge e1 at position n
+            if (j == n) continue;
+
+            // Skip the initial configuration (no change to districts)
+            // The initial config has cuts at positions 1 and initial_cut+1
+            // which corresponds to keeping the original district boundaries
             if (i == 1 && j == initial_cut + 1) continue;
 
             int pop1 = prefix[j] - prefix[i];
@@ -319,9 +337,7 @@ int cycle_walk(LCTPartition& partition,
     int v_cut2_to = get_cycle_vertex(cut2 % cycle_len);
 
     update.cuts.push_back({v_cut1_from, v_cut1_to});
-    if (cut2 < cycle_len) {
-        update.cuts.push_back({v_cut2_from, v_cut2_to});
-    }
+    update.cuts.push_back({v_cut2_from, v_cut2_to});
 
     // Links are the original boundary edges
     update.links.push_back({e1.u, e1.v});
