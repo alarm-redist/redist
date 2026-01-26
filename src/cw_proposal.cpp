@@ -271,9 +271,9 @@ std::vector<std::pair<int, int>> find_valid_cut_pairs(
             if (j == initial_cut) continue;
 
             // Skip the initial configuration (no change to districts)
-            // The initial config has cuts at positions 1 and initial_cut+1
-            // which corresponds to keeping the original district boundaries
-            if (i == 1 && j == initial_cut + 1) continue;
+            // Julia: delete!(possible_pairs, (1, initial_cut_index))
+            // where initial_cut_index = length(uPath) = initial_cut
+            if (i == 1 && j == initial_cut) continue;
 
             int pop1 = prefix[j] - prefix[i];
             int pop2 = total_pop - pop1;
@@ -404,7 +404,10 @@ int cycle_walk(LCTPartition& partition,
         return -4;  // No valid cut pairs found
     }
 
-    // Step 6: Sample a cut pair (uniform for now, should be weighted)
+    // Save number of valid pairs for MH ratio
+    int n_valid_pairs_fwd = (int)valid_pairs.size();
+
+    // Step 6: Sample a cut pair (uniform for unweighted graphs)
     int sample_idx = r_int((int)valid_pairs.size());
     auto [cut1, cut2] = valid_pairs[sample_idx];
 
@@ -505,8 +508,38 @@ int cycle_walk(LCTPartition& partition,
     // Compute new boundary edge count
     int new_boundary = (int)partition.get_cross_edges(d1, d2).size();
 
+    // Count adjacent district pairs before and after
+    // We count keys in cross_edges that involve d1 or d2
+    auto count_adj_dists_involving = [](const CrossEdgeMap& cross_edges, int d1, int d2) {
+        int count = 0;
+        for (const auto& [key, edges] : cross_edges) {
+            if (key.first == d1 || key.first == d2 ||
+                key.second == d1 || key.second == d2) {
+                if (!edges.empty()) count++;
+            }
+        }
+        return count;
+    };
+
+    int old_adj_dists_d1d2 = count_adj_dists_involving(old_cross_edges, d1, d2);
+    int new_adj_dists_d1d2 = count_adj_dists_involving(partition.cross_edges, d1, d2);
+    int delta_adj_dists = new_adj_dists_d1d2 - old_adj_dists_d1d2;
+
+    // Total number of adjacent district pairs (for proposal probability)
+    int old_adj_dists_total = 0;
+    for (const auto& [key, edges] : old_cross_edges) {
+        if (!edges.empty()) old_adj_dists_total++;
+    }
+
     // Compute log-MH ratio
     double log_mh_ratio = 0.0;
+
+    // Adjacent district ratio (accounts for change in number of adjacent pairs)
+    // Julia: prob = old_adj_dists/(old_adj_dists+delta_adj_dists)
+    if (old_adj_dists_total > 0 && old_adj_dists_total + delta_adj_dists > 0) {
+        log_mh_ratio += std::log((double)old_adj_dists_total) -
+                        std::log((double)(old_adj_dists_total + delta_adj_dists));
+    }
 
     // Boundary edge ratio (proposal ratio)
     if (new_boundary > 0 && old_boundary > 0) {
