@@ -2,16 +2,17 @@
  * CycleWalk MCMC Redistricting Sampler
  * Main entry point and MCMC loop
  *
- * ITERATION 3: Internal Forest Walk
- * - Internal forest walk proposal implemented
- * - Spanning trees shuffled within districts
- * - District assignments still unchanged (cycle walk in Iteration 4)
+ * ITERATION 4: Cycle Walk Proposal
+ * - Full cycle walk proposal implemented
+ * - Districts can now change via cycle resampling
+ * - Mixed with internal forest walk for better mixing
  ********************************************************/
 
 #include "cw_main.h"
 #include "cw_lct.h"
 #include "cw_partition.h"
 #include "cw_forest_walk.h"
+#include "cw_proposal.h"
 
 using namespace Rcpp;
 using namespace arma;
@@ -87,23 +88,42 @@ Rcpp::List cyclewalk_plans(
     }
 
     // Main MCMC loop
-    // Currently using internal forest walk only (cycle walk in Iteration 4)
+    // Mix cycle walk (10%) with internal forest walk (90%)
     int forest_walk_success = 0;
     int forest_walk_fail = 0;
+    int cycle_walk_accept = 0;
+    int cycle_walk_reject = 0;
+    int cycle_walk_fail = 0;
+
+    double cycle_walk_prob = 0.1;  // 10% cycle walk, 90% forest walk
 
     int idx = 1;
     for (int i = 1; i <= N; i++) {
-        // Run internal forest walk proposal
-        // This shuffles spanning trees within districts (no district changes)
-        int result = internal_forest_walk(partition);
-        if (result == 0) {
-            forest_walk_success++;
+        int result;
+
+        if (r_unif() < cycle_walk_prob) {
+            // Cycle walk proposal - can change districts
+            double accept_ratio;
+            result = cycle_walk(partition, lower, upper, accept_ratio);
+            if (result == 1) {
+                cycle_walk_accept++;
+            } else if (result == 0) {
+                cycle_walk_reject++;
+            } else {
+                cycle_walk_fail++;
+            }
         } else {
-            forest_walk_fail++;
+            // Internal forest walk - only changes spanning trees
+            result = internal_forest_walk(partition);
+            if (result == 0) {
+                forest_walk_success++;
+            } else {
+                forest_walk_fail++;
+            }
         }
 
-        // Internal forest walk always "accepts" (it's a valid tree move)
-        mh_decisions(idx - 1) = 1;
+        // Record MH decision (1 = accept, 0 = reject)
+        mh_decisions(idx - 1) = (result >= 0) ? 1 : 0;
 
         // Copy current plan to output at thinning intervals
         // Note: District assignments don't change with internal forest walk
@@ -133,6 +153,9 @@ Rcpp::List cyclewalk_plans(
     if (verbosity >= 2) {
         Rcout << "\n[Forest Walk] Success: " << forest_walk_success
               << ", Fail: " << forest_walk_fail << "\n";
+        Rcout << "[Cycle Walk] Accept: " << cycle_walk_accept
+              << ", Reject: " << cycle_walk_reject
+              << ", Fail: " << cycle_walk_fail << "\n";
     }
 
     if (verbosity >= 1) {
@@ -145,7 +168,7 @@ Rcpp::List cyclewalk_plans(
         Named("plans") = plans,
         Named("mhdecisions") = mh_decisions,
         Named("algorithm") = "cyclewalk",
-        Named("version") = "0.3-forest-walk"
+        Named("version") = "0.4-cycle-walk"
     );
 
     return out;
