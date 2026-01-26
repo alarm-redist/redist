@@ -212,13 +212,16 @@ std::vector<int> get_collapsed_cycle_weights(
         }
     }
 
-    // Build collapsed weights for path2 (reversed order in cycle)
+    // Build collapsed weights for path2 (forward order in cycle: v1 -> v2)
+    // Julia fills from end backwards: position end gets v2, position length(uPath)+1 gets v1
+    // In 0-indexed terms: position cycle_len-1 gets v2, position path1.size() gets v1
     for (size_t ii = 0; ii < path2.size(); ii++) {
         int pos = path1.size() + ii;
-        int vertex = path2[path2.size() - 1 - ii];  // Reversed
+        int vertex = path2[ii];  // Forward: v1, ..., v2
         collapsed_weights[pos] = v_cut_pop[vertex];
-        if (ii > 0) {
-            int next_vertex = path2[path2.size() - ii];  // Previous in reversed order
+        if (ii < path2.size() - 1) {
+            // Subtract the subtree population of the next vertex towards v2
+            int next_vertex = path2[ii + 1];
             collapsed_weights[pos] -= v_cut_pop[next_vertex];
         }
     }
@@ -453,12 +456,16 @@ int cycle_walk(LCTPartition& partition,
     // in the paths correspond to the cut positions
 
     // Get vertices at cut positions
+    // The cycle is: reverse(path1) then forward(path2)
+    // Position 0 = path1[end] = u2, position path1.size()-1 = path1[0] = u1
+    // Position path1.size() = path2[0] = v1, position cycle_len-1 = path2[end] = v2
     int cycle_len = (int)cycle_pops.size();
     auto get_cycle_vertex = [&](int pos) -> int {
         if (pos < (int)path1.size()) {
-            return path1[pos];
+            return path1[path1.size() - 1 - pos];  // Reversed path1: u2 -> u1
         } else {
-            return path2[path2.size() - 1 - (pos - path1.size())];
+            int path2_pos = pos - (int)path1.size();
+            return path2[path2_pos];  // Forward path2: v1 -> v2
         }
     };
 
