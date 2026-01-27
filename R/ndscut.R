@@ -464,266 +464,287 @@ remove_deg12 <- function(G) {
 
 # Get cycle edges in order
 get_cycle <- function(edge_list) {
-  result_edge_list <- list()
-  v <- as.numeric(edge_list[[1]][1])
-  prev_v <- -1
+  # Convert to a numeric 2‑column matrix for fast vector ops
+  edges <- do.call(rbind, lapply(edge_list, as.numeric))
 
-  while (length(result_edge_list) < length(edge_list)) {
-    vs <- Filter(function(x) as.numeric(x[1]) == v || as.numeric(x[2]) == v, edge_list)
-    next_v <- setdiff(union(as.numeric(vs[[1]]), as.numeric(vs[[2]])), c(prev_v, v))[1]
-    result_edge_list[[length(result_edge_list) + 1]] <- as.numeric(edge_minmax(v, next_v))
+  # Start at the first vertex of the first edge
+  v <- edges[1, 1]
+  prev_v <- NA
+
+  # Preallocate result
+  n <- nrow(edges)
+  result <- vector("list", n)
+
+  # Walk the cycle
+  for (i in seq_len(n)) {
+    # Find all edges touching v
+    idx <- which(edges[,1] == v | edges[,2] == v)
+
+    # Extract the two vertices from those edges
+    candidates <- unique(c(edges[idx, 1], edges[idx, 2]))
+
+    # Next vertex is whichever is not prev_v or v
+    next_v <- setdiff(candidates, c(prev_v, v))[1]
+
+    # Store edge in min–max order
+    result[[i]] <- sort(c(v, next_v))
+
     prev_v <- v
     v <- next_v
   }
 
-  result_edge_list
+  result
 }
+
 
 # Recover degree 1 and 2 vertices
 recover_deg12 <- function(deg1_edges, deg2_dict, deg2_cycle, result_edge_list) {
-  # Recover degree 2 vertices
-  found <- TRUE
 
-  while (found) {
-    found <- FALSE
+  # Helper: normalize edge
+  norm_edge <- function(e) sort(as.numeric(e))
 
-    for (i in seq_along(result_edge_list)) {
-      e <- edge_minmax(result_edge_list[[i]][1], result_edge_list[[i]][2])
-      key <- paste(e, collapse = '-')
+  # Helper: compute key
+  edge_key <- function(e) paste(norm_edge(e), collapse = "-")
 
-      if (key %in% names(deg2_dict)) {
-        found <- TRUE
+  # Precompute keys for result edges
+  get_keys <- function(edges) vapply(edges, edge_key, character(1))
 
-        # Process each walk for this edge
-        # Each walk corresponds to one occurrence of this edge in a multigraph
-        insert_pos <- i
-        for (x in deg2_dict[[key]]) {
-          # Find and remove this edge occurrence
-          edge_found <- FALSE
-          for (j in insert_pos:length(result_edge_list)) {
-            e_j <- edge_minmax(result_edge_list[[j]][1], result_edge_list[[j]][2])
-            if (all(e_j == e)) {
-              # Remove this occurrence
-              result_edge_list <- result_edge_list[-j]
-              insert_pos <- j
-              edge_found <- TRUE
-              break
-            }
-          }
-
-          if (!edge_found) {
-            # Edge not found, skip this walk
-            next
-          }
-
-          # Get vertices touched so far
-          if (insert_pos > 1) {
-            touched_vertices <- unique(unlist(result_edge_list[1:(insert_pos - 1)]))
-          } else {
-            touched_vertices <- c()
-          }
-
-          walk <- x$walk
-
-          # Build list of edges to insert
-          edges_to_insert <- list()
-          if (walk[1] %in% touched_vertices) {
-            # Insert walk edges in reverse order
-            for (j in (length(walk) - 1):1) {
-              edges_to_insert[[length(edges_to_insert) + 1]] <- c(walk[j], walk[j + 1])
-            }
-          } else {
-            # Insert walk edges in order
-            for (j in 1:(length(walk) - 1)) {
-              edges_to_insert[[length(edges_to_insert) + 1]] <- c(walk[j], walk[j + 1])
-            }
-          }
-
-          # Insert all edges at position insert_pos-1
-          if (insert_pos == 1) {
-            result_edge_list <- c(edges_to_insert, result_edge_list)
-            insert_pos <- insert_pos + length(edges_to_insert)
-          } else {
-            result_edge_list <- c(
-              result_edge_list[1:(insert_pos - 1)],
-              edges_to_insert,
-              result_edge_list[insert_pos:length(result_edge_list)]
-            )
-            insert_pos <- insert_pos + length(edges_to_insert)
-          }
-        }
-
-        # Remove processed entry
-        deg2_dict[[key]] <- NULL
-        break
-      }
-    }
-
-    # Handle cycles if no degree 2 paths were found
-    if (!found && length(deg2_cycle) > 0) {
-      for (v in names(deg2_cycle)) {
-        v_num <- as.numeric(v)
-
-        for (i in seq_along(result_edge_list)) {
-          if (v_num %in% result_edge_list[[i]]) {
-            found <- TRUE
-
-            # Build list of cycle edges to insert
-            edges_to_insert <- list()
-            for (cy in deg2_cycle[[v]]) {
-              for (j in 1:(length(cy) - 1)) {
-                c0 <- cy[j]
-                c1 <- cy[j + 1]
-                edges_to_insert[[length(edges_to_insert) + 1]] <- edge_minmax(c0, c1)
-              }
-            }
-
-            # Insert all edges at once after position i
-            if (i == length(result_edge_list)) {
-              result_edge_list <- c(result_edge_list, edges_to_insert)
-            } else {
-              result_edge_list <- c(
-                result_edge_list[1:i],
-                edges_to_insert,
-                result_edge_list[(i + 1):length(result_edge_list)]
-              )
-            }
-
-            # Remove processed entry
-            deg2_cycle[[v]] <- NULL
-            break
-          }
-        }
-
-        if (found) break
-      }
+  # Insert edges at a given position
+  insert_edges <- function(lst, pos, new_edges) {
+    if (pos <= 1) {
+      c(new_edges, lst)
+    } else if (pos >= length(lst)) {
+      c(lst, new_edges)
+    } else {
+      c(lst[1:(pos - 1)], new_edges, lst[pos:length(lst)])
     }
   }
 
-  # Recover degree 1 vertices
-  while (length(deg1_edges) > 0) {
+  # ------------------------------------------------------------
+  # Recover degree‑2 vertices
+  # ------------------------------------------------------------
+
+  repeat {
+    keys <- get_keys(result_edge_list)
     found <- FALSE
+
+    # Look for any edge whose key appears in deg2_dict
+    hit <- match(names(deg2_dict), keys, nomatch = 0)
+    hit <- hit[hit > 0]
+
+    if (length(hit) > 0) {
+      i <- hit[1]
+      key <- keys[i]
+      walks <- deg2_dict[[key]]
+      deg2_dict[[key]] <- NULL
+      found <- TRUE
+
+      insert_pos <- i
+
+      for (walk_info in walks) {
+        # Remove the matching edge occurrence
+        keys <- get_keys(result_edge_list)
+        j <- match(key, keys, nomatch = 0)
+        if (j == 0) next
+
+        result_edge_list <- result_edge_list[-j]
+        insert_pos <- j
+
+        # Determine touched vertices
+        touched <- if (insert_pos > 1)
+          unique(unlist(result_edge_list[1:(insert_pos - 1)]))
+        else
+          numeric(0)
+
+        walk <- walk_info$walk
+
+        # Build edges to insert
+        if (walk[1] %in% touched) {
+          seqs <- (length(walk) - 1):1
+        } else {
+          seqs <- 1:(length(walk) - 1)
+        }
+
+        edges_to_insert <- lapply(seqs, function(k) norm_edge(c(walk[k], walk[k + 1])))
+
+        # Insert
+        result_edge_list <- insert_edges(result_edge_list, insert_pos, edges_to_insert)
+        insert_pos <- insert_pos + length(edges_to_insert)
+      }
+
+    } else if (length(deg2_cycle) > 0) {
+      # ------------------------------------------------------------
+      # Handle cycles
+      # ------------------------------------------------------------
+      keys <- get_keys(result_edge_list)
+
+      for (v in names(deg2_cycle)) {
+        v_num <- as.numeric(v)
+
+        # Find first edge containing v
+        idx <- vapply(result_edge_list, function(e) v_num %in% e, logical(1))
+        i <- match(TRUE, idx, nomatch = 0)
+
+        if (i > 0) {
+          found <- TRUE
+
+          # Build cycle edges
+          edges_to_insert <- unlist(
+            lapply(deg2_cycle[[v]], function(cy) {
+              lapply(seq_len(length(cy) - 1),
+                     function(j) norm_edge(c(cy[j], cy[j + 1])))
+            }),
+            recursive = FALSE
+          )
+
+          result_edge_list <- insert_edges(result_edge_list, i + 1, edges_to_insert)
+          deg2_cycle[[v]] <- NULL
+          break
+        }
+      }
+    }
+
+    if (!found) break
+  }
+
+  # ------------------------------------------------------------
+  # Recover degree‑1 vertices
+  # ------------------------------------------------------------
+
+  while (length(deg1_edges) > 0) {
+    keys <- get_keys(result_edge_list)
+    placed <- FALSE
 
     for (e_idx in seq_along(deg1_edges)) {
       e <- deg1_edges[[e_idx]]
 
-      for (i in seq_along(result_edge_list)) {
-        if (e[1] %in% result_edge_list[[i]]) {
-          # Insert edge after position i
-          if (i == length(result_edge_list)) {
-            result_edge_list <- c(result_edge_list, list(e))
-          } else {
-            result_edge_list <- c(
-              result_edge_list[1:i],
-              list(e),
-              result_edge_list[(i + 1):length(result_edge_list)]
-            )
-          }
-          found <- TRUE
-          deg1_edges <- deg1_edges[-e_idx]
-          break
-        }
-      }
+      # Find first edge touching e[1]
+      idx <- vapply(result_edge_list, function(x) e[1] %in% x, logical(1))
+      i <- match(TRUE, idx, nomatch = 0)
 
-      if (found) break
+      if (i > 0) {
+        result_edge_list <- insert_edges(result_edge_list, i + 1, list(e))
+        deg1_edges <- deg1_edges[-e_idx]
+        placed <- TRUE
+        break
+      }
     }
 
-    if (!found) {
-      cli::cli_abort('Unable to find connection point for degree 1 edge')
+    if (!placed) {
+      cli::cli_abort("Unable to find connection point for degree 1 edge")
     }
   }
 
   result_edge_list
 }
+
 
 # Main function to order edges by cut
 get_order_by_cut <- function(edge_list) {
-  # Create igraph from edge list
-  # Convert to character to preserve vertex names across deletions
-  edges_df <- do.call(rbind, lapply(edge_list, as.character))
-  G <- igraph::graph_from_edgelist(edges_df, directed = FALSE)
 
-  # Handle multiple edges
+  # Convert to igraph
+  edges_chr <- do.call(rbind, lapply(edge_list, as.character))
+  G <- igraph::graph_from_edgelist(edges_chr, directed = FALSE)
   G <- igraph::simplify(G, remove.multiple = FALSE, remove.loops = FALSE)
 
-  # Remove degree 1 and 2 vertices
-  result <- remove_deg12(G)
-  G <- result$G
-  deg1_edges <- result$deg1_edges
-  deg2_dict <- result$deg2_dict
-  deg2_cycle <- result$deg2_cycle
-  is_cycle <- result$is_cycle
-  is_tree <- result$is_tree
+  # Remove degree‑1 and degree‑2 vertices
+  r <- remove_deg12(G)
+  G <- r$G
 
-  if (is_cycle) {
-    # Handle cycle case
-    edges_vec <- igraph::as_edgelist(G)
-    edges_list <- lapply(1:nrow(edges_vec), function(i) as.numeric(edges_vec[i, ]))
-    result_edge_list <- get_cycle(edges_list)
-    result_edge_list <- recover_deg12(deg1_edges, deg2_dict, deg2_cycle, result_edge_list)
-  } else if (is_tree) {
-    # Handle tree case
-    edges_vec <- igraph::as_edgelist(G)
-    result_edge_list <- lapply(1:nrow(edges_vec), function(i) as.numeric(edges_vec[i, ]))
-    result_edge_list <- recover_deg12(deg1_edges, deg2_dict, deg2_cycle, result_edge_list)
-  } else {
-    # Handle general graph case
-    G <- result$G
-    vertices <- get_farthest_two_vertices(G)
-    s <- vertices$s
-    t <- vertices$e
-
-    result_edge_list <- list()
-    vertex_order <- list()
-
-    for (v in as.numeric(igraph::V(G))) {
-      vertex_order[[as.character(v)]] <- -1
-    }
-
-    vertex_order[[as.character(s)]] <- 1
-    left <- c(s)
-    right <- c(t)
-    cut_set <- right
-
-    result <- split_graph(G, s, t, left, right, cut_set, vertex_order, result_edge_list)
-    vertex_order <- result$vertex_order
-    result_edge_list <- result$result_edge_list
-
-    result_edge_list <- recover_deg12(deg1_edges, deg2_dict, deg2_cycle, result_edge_list)
+  # Helper: convert igraph edges to numeric list
+  as_numeric_edges <- function(g) {
+    ed <- igraph::as_edgelist(g)
+    lapply(seq_len(nrow(ed)), function(i) as.numeric(ed[i, ]))
   }
 
-  # Ensure all edges are numeric
-  result_edge_list <- lapply(result_edge_list, as.numeric)
+  # ------------------------------------------------------------
+  # Case 1: graph reduces to a cycle
+  # ------------------------------------------------------------
+  if (r$is_cycle) {
+    base_edges <- as_numeric_edges(G)
+    result <- get_cycle(base_edges)
+    result <- recover_deg12(r$deg1_edges, r$deg2_dict, r$deg2_cycle, result)
+    return(lapply(result, as.numeric))
+  }
 
-  result_edge_list
+  # ------------------------------------------------------------
+  # Case 2: graph reduces to a tree
+  # ------------------------------------------------------------
+  if (r$is_tree) {
+    base_edges <- as_numeric_edges(G)
+    result <- recover_deg12(r$deg1_edges, r$deg2_dict, r$deg2_cycle, base_edges)
+    return(lapply(result, as.numeric))
+  }
+
+  # ------------------------------------------------------------
+  # Case 3: general graph
+  # ------------------------------------------------------------
+
+  # Find farthest pair
+  ft <- get_farthest_two_vertices(G)
+  s <- ft$s
+  t <- ft$e
+
+  # Initialize vertex order
+  verts <- as.numeric(igraph::V(G))
+  vertex_order <- setNames(rep(-1, length(verts)), as.character(verts))
+  vertex_order[[as.character(s)]] <- 1
+
+  # Initialize left/right/cut sets
+  left <- s
+  right <- t
+  cut_set <- right
+
+  # Split graph
+  split_res <- split_graph(
+    G, s, t,
+    left, right, cut_set,
+    vertex_order,
+    result_edge_list = list()
+  )
+
+  result <- recover_deg12(
+    r$deg1_edges,
+    r$deg2_dict,
+    r$deg2_cycle,
+    split_res$result_edge_list
+  )
+
+  lapply(result, as.numeric)
 }
+
 
 # Check the output and validate
 get_order_by_cut_with_check <- function(edge_list) {
+
   result_edge_list <- get_order_by_cut(edge_list)
 
-  # Create graphs for comparison
-  edges_df1 <- do.call(rbind, edge_list)
-  edges_df2 <- do.call(rbind, result_edge_list)
+  # Convert list-of-edges → 2‑column numeric matrix
+  edges1 <- do.call(rbind, lapply(edge_list, as.numeric))
+  edges2 <- do.call(rbind, lapply(result_edge_list, as.numeric))
 
-  G1 <- igraph::graph_from_edgelist(edges_df1, directed = FALSE)
-  G2 <- igraph::graph_from_edgelist(edges_df2, directed = FALSE)
+  # Build graphs
+  G1 <- igraph::graph_from_edgelist(edges1, directed = FALSE)
+  G2 <- igraph::graph_from_edgelist(edges2, directed = FALSE)
 
-  # Simplify for isomorphism check (keep multiple edges)
+  # Keep multiple edges, keep loops
   G1 <- igraph::simplify(G1, remove.multiple = FALSE, remove.loops = FALSE)
   G2 <- igraph::simplify(G2, remove.multiple = FALSE, remove.loops = FALSE)
 
+  # Structural check
   if (!igraph::isomorphic(G1, G2)) {
-    cli::cli_abort('Output graph is not isomorphic to input graph.')
+    cli::cli_abort("Output graph is not isomorphic to input graph.")
   }
 
-  # check contiguity before returning
+  # Connectivity check
   if (!igraph::is_connected(G2)) {
-    cli::cli_abort('Output edge order is not connected.')
+    cli::cli_abort("Output edge order is not connected.")
   }
 
   result_edge_list
 }
+
+
 
 # convert adjacency list to edge matrix
 adj_to_edges <- function(adj) {
