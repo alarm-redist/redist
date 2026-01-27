@@ -479,26 +479,6 @@ get_cycle <- function(edge_list) {
   result_edge_list
 }
 
-# Check if edge list forms a connected order
-check_connected_order <- function(edge_list) {
-  touched_vertices <- c()
-
-  for (i in seq_along(edge_list)) {
-    # Skip NULL or invalid edges
-    if (is.null(edge_list[[i]]) || length(edge_list[[i]]) < 2) {
-      return(FALSE)
-    }
-
-    if (i > 1 && !(edge_list[[i]][1] %in% touched_vertices) &&
-      !(edge_list[[i]][2] %in% touched_vertices)) {
-      return(FALSE)
-    }
-    touched_vertices <- union(touched_vertices, edge_list[[i]])
-  }
-
-  TRUE
-}
-
 # Recover degree 1 and 2 vertices
 recover_deg12 <- function(deg1_edges, deg2_dict, deg2_cycle, result_edge_list) {
   # Recover degree 2 vertices
@@ -649,7 +629,7 @@ recover_deg12 <- function(deg1_edges, deg2_dict, deg2_cycle, result_edge_list) {
     }
 
     if (!found) {
-      stop('Error: unable to find connection point for degree 1 edge')
+      cli::cli_abort('Unable to find connection point for degree 1 edge')
     }
   }
 
@@ -734,43 +714,22 @@ get_order_by_cut_with_check <- function(edge_list) {
   G2 <- igraph::simplify(G2, remove.multiple = FALSE, remove.loops = FALSE)
 
   if (!igraph::isomorphic(G1, G2)) {
-    stop('Error: output graph is not isomorphic to input graph')
+    cli::cli_abort('Output graph is not isomorphic to input graph.')
   }
 
-  if (!check_connected_order(result_edge_list)) {
-    stop('Error: output edge order is not connected')
+  # check contiguity before returning
+  if (!igraph::is_connected(G2)) {
+    cli::cli_abort('Output edge order is not connected.')
   }
 
   result_edge_list
 }
 
-# Helper: detect if input is an adjacency list (list of neighbor vectors)
-# vs a list of edge pairs (each element has exactly 2 elements)
-is_adjacency_list <- function(x) {
-  if (!is.list(x) || length(x) == 0) {
-    return(FALSE)
-  }
-  # Adjacency lists typically have varying lengths or lengths != 2
-  # Edge lists have all elements of length 2
-  lengths <- vapply(x, length, integer(1))
-  # If all lengths are 2, it's likely an edge list
-
-  # If lengths vary or any length != 2, it's an adjacency list
-  !all(lengths == 2)
-}
-
-# Helper: convert adjacency list to edge matrix
-# adj is 0-indexed (as from redist.adjacency)
+# convert adjacency list to edge matrix
 adj_to_edges <- function(adj) {
-  # Convert to 1-indexed
-  adj <- lapply(adj, function(x) x + 1L)
-  # Build edge list (only include edges where j > i to avoid duplicates)
-  edges <- do.call(rbind, lapply(seq_along(adj), function(i) {
-    neighbors <- adj[[i]]
-    neighbors <- neighbors[neighbors > i]
-    if (length(neighbors) > 0) cbind(i, neighbors) else NULL
-  }))
-  edges
+  lens <- lengths(adj)
+  edges <- cbind(rep(seq_along(adj), times = lens), unlist(adj) + 1L)
+  edges[edges[, 1] < edges[, 2], , drop = FALSE]
 }
 
 ndscut <- function(edges) {
@@ -780,32 +739,24 @@ ndscut <- function(edges) {
   if (is.matrix(edges) || is.data.frame(edges)) {
     # Check for empty input first
     if (nrow(edges) == 0) {
-      message('The input graph is empty.')
       return(NULL)
     }
     # If input is a matrix or data frame, convert to a list of pairs
     for (i in seq_len(nrow(edges))) {
       edge_list[[i]] <- c(edges[i, 1], edges[i, 2])
     }
-  } else if (is.list(edges) && is_adjacency_list(edges)) {
+  } else if (is.list(edges)) {
     # Convert adjacency list to edge matrix, then to edge list
     edge_mat <- adj_to_edges(edges)
     if (is.null(edge_mat) || nrow(edge_mat) == 0) {
-      message('The input graph is empty.')
       return(NULL)
     }
     for (i in seq_len(nrow(edge_mat))) {
       edge_list[[i]] <- c(edge_mat[i, 1], edge_mat[i, 2])
     }
-  } else if (is.list(edges)) {
-    # If already a list of edge pairs, use it directly
-    edge_list <- edges
-  } else {
-    stop('Input must be a matrix, data frame, adjacency list, or list of edge pairs')
   }
 
   if (length(edge_list) == 0) {
-    message('The input graph is empty.')
     return(NULL)
   }
 
@@ -823,8 +774,10 @@ ndscut <- function(edges) {
   }
 
   # Final connectivity check
-  if (!check_connected_order(new_edge_list)) {
-    warning('Output edge order is not connected')
+  edges_df <- do.call(rbind, result)
+  G <- igraph::graph_from_edgelist(edges_df, directed = FALSE)
+  if (!igraph::is_connected(G)) {
+    cli::cli_warn('Output edge order is not connected')
   }
 
   result

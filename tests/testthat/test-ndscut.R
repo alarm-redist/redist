@@ -39,7 +39,7 @@ test_that('ndscut preserves graph structure', {
 })
 
 test_that('ndscut handles empty input', {
-  expect_message(result <- ndscut(matrix(ncol = 2, nrow = 0)), 'empty')
+  result <- ndscut(matrix(ncol = 2, nrow = 0))
   expect_null(result)
 })
 
