@@ -1,5 +1,5 @@
 # Helper function to ensure edges are ordered (min, max)
-minmax <- function(e0, e1) {
+edge_minmax <- function(e0, e1) {
   c(min(e0, e1), max(e0, e1))
 }
 
@@ -23,82 +23,93 @@ get_farthest_two_vertices <- function(G) {
   list(s = s, e = e)
 }
 
+
+
 # Choose the next vertex in order based on scoring criteria
-choose_next <- function(G, vertex_order_dict, order_v_list) {
-  scores <- rep(0, length(order_v_list))
+choose_next <- function(G, vertex_order, order_v_list) {
 
-  for (i in 1:length(order_v_list)) {
-    # Get neighbors of the vertex (unique only, as multigraphs return duplicates)
-    vs <- unique(igraph::neighbors(G, as.character(order_v_list[i]))$name)
-    vs <- as.numeric(vs)
-
-    # Count neighbors that are already ordered
-    for (v in vs) {
-      if (vertex_order_dict[[as.character(v)]] >= 1) {
-        scores[i] <- scores[i] + 1
-      }
-    }
+  neigh_ids <- function(v) {
+    as.numeric(unique(igraph::neighbors(G, as.character(v))$name))
   }
+
+  vertex_order_vec <- unlist(vertex_order)
+
+  scores <- vapply(
+    order_v_list,
+    function(v) {
+      vs <- neigh_ids(v)
+      sum(vertex_order_vec[as.character(vs)] >= 1)
+    },
+    numeric(1)
+  )
 
   max_score <- max(scores)
-  n_scores <- rep(9999999, length(order_v_list))
+  candidates <- order_v_list[scores == max_score]
 
-  for (i in 1:length(order_v_list)) {
-    if (scores[i] == max_score) {
-      n_scores[i] <- 0
-      vs <- unique(igraph::neighbors(G, as.character(order_v_list[i]))$name)
-      vs <- as.numeric(vs)
+  n_scores <- vapply(
+    candidates,
+    function(v) {
+      vs <- neigh_ids(v)
+      ords <- vertex_order_vec[as.character(vs)]
+      sum(ords[ords >= 1])
+    },
+    numeric(1)
+  )
 
-      for (v in vs) {
-        if (vertex_order_dict[[as.character(v)]] >= 1) {
-          n_scores[i] <- n_scores[i] + vertex_order_dict[[as.character(v)]]
-        }
-      }
-    }
-  }
-
-  min_n_score <- min(n_scores)
-  order_v_list[which(n_scores == min_n_score)[1]]
+  candidates[which.min(n_scores)]
 }
 
 # Order vertices by NDS criterion
-order_by_NDS <- function(G, vertex_order_dict, order_vertex_set, result_edge_list) {
+order_by_NDS <- function(G, vertex_order, order_vertex_set, result_edge_list) {
+  # Convert once, keep names identical
+  vertex_order_vec <- unlist(vertex_order)
+
   order_v_list <- as.numeric(order_vertex_set)
 
-  v_count <- 1
-  for (v in names(vertex_order_dict)) {
-    if (vertex_order_dict[[v]] >= 1) {
-      v_count <- v_count + 1
-    }
-  }
+  # Count already-ordered vertices
+  v_count <- sum(vertex_order_vec >= 1) + 1
 
   while (length(order_v_list) > 0) {
-    v <- choose_next(G, vertex_order_dict, order_v_list)
+
+    v <- choose_next(G, vertex_order_vec, order_v_list)
+
     order_v_list <- order_v_list[order_v_list != v]
-    vertex_order_dict[[as.character(v)]] <- v_count
+    vertex_order_vec[as.character(v)] <- v_count
     v_count <- v_count + 1
 
-    # Get neighbors using vertex name (unique only, as multigraphs return duplicates)
-    vs <- unique(igraph::neighbors(G, as.character(v))$name)
-    vs <- as.numeric(vs)
+    # Neighbors (unique, numeric)
+    vs <- as.numeric(unique(igraph::neighbors(G, as.character(v))$name))
 
-    # Sort neighbors by their order
-    vs_order <- sapply(as.character(vs), function(w) vertex_order_dict[[w]])
-    vs <- vs[order(vs_order)]
+    # Order neighbors by their vertex order
+    vs <- vs[order(vertex_order_vec[as.character(vs)])]
 
-    for (w in vs) {
-      # Handle multiple edges between vertices (use vertex names)
-      edge_count <- count_multiple(G, as.character(v), as.character(w))
+    # Keep only neighbors already ordered
+    vs_done <- vs[vertex_order_vec[as.character(vs)] >= 1]
 
-      for (i in 1:edge_count) {
-        if (vertex_order_dict[[as.character(w)]] >= 1) {
-          result_edge_list[[length(result_edge_list) + 1]] <- c(v, w)
-        }
-      }
+    if (length(vs_done) > 0) {
+      edge_counts <- vapply(
+        vs_done,
+        function(w) count_multiple(G, as.character(v), as.character(w)),
+        integer(1)
+      )
+
+      new_edges <- Map(
+        function(w, k) replicate(k, c(v, w), simplify = FALSE),
+        vs_done,
+        edge_counts
+      )
+
+      result_edge_list <- c(
+        result_edge_list,
+        unlist(new_edges, recursive = FALSE)
+      )
     }
   }
 
-  list(vertex_order_dict = vertex_order_dict, result_edge_list = result_edge_list)
+  list(
+    vertex_order = vertex_order_vec,
+    result_edge_list  = result_edge_list
+  )
 }
 
 # Helper function to count multiple edges between vertices
@@ -112,262 +123,344 @@ count_multiple <- function(G, v1, v2) {
 # Contract node v into node u (NetworkX-style contraction)
 # Keeps u, removes v, adds edges from u to all neighbors of v
 contracted_nodes <- function(G, u, v) {
-  # Get neighbors of v (as character names)
-  v_neighbors <- igraph::neighbors(G, as.character(v))$name
 
-  # Add edges from u to each neighbor of v (except u itself)
-  for (neighbor in v_neighbors) {
-    if (neighbor != as.character(u)) {
-      # Count existing edges between v and neighbor
-      n_edges <- count_multiple(G, as.character(v), neighbor)
-      # Add same number of edges between u and neighbor
-      for (i in seq_len(n_edges)) {
-        G <- igraph::add_edges(G, c(as.character(u), neighbor))
-      }
+  u_chr <- as.character(u)
+  v_chr <- as.character(v)
+
+  # Neighbors of v (character names)
+  v_neighbors <- igraph::neighbors(G, v_chr)$name
+
+  # Exclude self-loops (u)
+  v_neighbors <- v_neighbors[v_neighbors != u_chr]
+
+  if (length(v_neighbors) > 0) {
+
+    # Count multiplicities v -- neighbor
+    edge_counts <- vapply(
+      v_neighbors,
+      function(w) count_multiple(G, v_chr, w),
+      integer(1)
+    )
+
+    # Build edge vector once: (u, w) repeated edge_counts times
+    new_edges <- unlist(
+      Map(
+        function(w, k) rep(c(u_chr, w), k),
+        v_neighbors,
+        edge_counts
+      )
+    )
+
+    if (length(new_edges) > 0) {
+      G <- igraph::add_edges(G, new_edges)
     }
   }
 
-  # Remove vertex v
-  G <- igraph::delete_vertices(G, as.character(v))
-
-  G
+  # Remove v
+  igraph::delete_vertices(G, v_chr)
 }
 
 # Split graph recursively using minimum node cuts
-split_graph <- function(G, s, t, left_vertex_set, right_vertex_set, cut_set, vertex_order_dict, result_edge_list) {
+split_graph <- function(G, s, t,
+                        left_vertex_set,
+                        right_vertex_set,
+                        cut_set,
+                        vertex_order,
+                        result_edge_list) {
+
+  # ---- Base-case helper
+  base_case <- function(G,
+                        left_vertex_set,
+                        right_vertex_set,
+                        cut_set,
+                        vertex_order,
+                        result_edge_list) {
+
+    order_vertex_set <- igraph::V(G)$name
+    order_vertex_set <- setdiff(order_vertex_set, as.character(left_vertex_set))
+    order_vertex_set <- setdiff(order_vertex_set, as.character(right_vertex_set))
+    order_vertex_set <- union(order_vertex_set, as.character(cut_set))
+    order_vertex_set <- as.numeric(order_vertex_set)
+
+    res <- order_by_NDS(G, vertex_order, order_vertex_set, result_edge_list)
+
+    list(
+      vertex_order     = res$vertex_order,
+      result_edge_list = res$result_edge_list
+    )
+  }
+
+  # ---- Work on contracted graph H
   H <- G
 
-  # Contract vertices to s and t (NetworkX-style contraction)
   # Contract left vertices into s
-  for (v in left_vertex_set) {
-    if (v != s && v != t && as.character(v) %in% igraph::V(H)$name) {
-      H <- contracted_nodes(H, s, v)
-    }
+  left_to_contract <- setdiff(left_vertex_set, c(s, t))
+  left_to_contract <- left_to_contract[
+    as.character(left_to_contract) %in% igraph::V(H)$name
+  ]
+
+  for (v in left_to_contract) {
+    H <- contracted_nodes(H, s, v)
   }
 
   # Contract right vertices into t
-  for (v in right_vertex_set) {
-    if (v != s && v != t && as.character(v) %in% igraph::V(H)$name) {
-      H <- contracted_nodes(H, t, v)
-    }
+  right_to_contract <- setdiff(right_vertex_set, c(s, t))
+  right_to_contract <- right_to_contract[
+    as.character(right_to_contract) %in% igraph::V(H)$name
+  ]
+
+  for (v in right_to_contract) {
+    H <- contracted_nodes(H, t, v)
   }
 
-  # Base case: small graph or direct edge
-  if (igraph::vcount(H) <= 10 || igraph::are_adjacent(H, as.character(s), as.character(t))) {
-    order_vertex_set <- igraph::V(G)$name
-    order_vertex_set <- setdiff(order_vertex_set, as.character(left_vertex_set))
-    order_vertex_set <- setdiff(order_vertex_set, as.character(right_vertex_set))
-    order_vertex_set <- union(order_vertex_set, as.character(cut_set))
-    order_vertex_set <- as.numeric(order_vertex_set)
+  # ---- Base case: small graph or direct edge
+  if (igraph::vcount(H) <= 10 ||
+      igraph::are_adjacent(H, as.character(s), as.character(t))) {
 
-    result <- order_by_NDS(G, vertex_order_dict, order_vertex_set, result_edge_list)
-    vertex_order_dict <- result$vertex_order_dict
-    result_edge_list <- result$result_edge_list
-
-    return(list(vertex_order_dict = vertex_order_dict, result_edge_list = result_edge_list))
+    return(base_case(
+      G,
+      left_vertex_set,
+      right_vertex_set,
+      cut_set,
+      vertex_order,
+      result_edge_list
+    ))
   }
 
-  # Find minimum s-t node cut
+  # ---- Minimum s–t node cut
   cut <- minimum_st_node_cut(H, s, t)
-
-  # Filter cut to only vertices that exist in H
   cut <- cut[as.character(cut) %in% igraph::V(H)$name]
 
-  # If no valid cut vertices, fall back to base case
   if (length(cut) == 0) {
-    order_vertex_set <- igraph::V(G)$name
-    order_vertex_set <- setdiff(order_vertex_set, as.character(left_vertex_set))
-    order_vertex_set <- setdiff(order_vertex_set, as.character(right_vertex_set))
-    order_vertex_set <- union(order_vertex_set, as.character(cut_set))
-    order_vertex_set <- as.numeric(order_vertex_set)
-
-    result <- order_by_NDS(G, vertex_order_dict, order_vertex_set, result_edge_list)
-    return(list(vertex_order_dict = result$vertex_order_dict, result_edge_list = result$result_edge_list))
+    return(base_case(
+      G,
+      left_vertex_set,
+      right_vertex_set,
+      cut_set,
+      vertex_order,
+      result_edge_list
+    ))
   }
 
-  # Remove cut vertices (convert to character names)
+  # ---- Remove cut vertices and decompose
   Hc <- igraph::delete_vertices(H, as.character(cut))
-
-  # Get connected components
   cc_list <- igraph::decompose(Hc)
-  ccs <- NULL
 
-  for (i in 1:length(cc_list)) {
-    cc_vertices <- as.numeric(igraph::V(cc_list[[i]]))
-    if (s %in% cc_vertices) {
-      ccs <- cc_vertices
-      cc_list <- cc_list[-i]
-      break
-    }
+  cc_vertices <- lapply(cc_list, function(cc) as.numeric(igraph::V(cc)))
+
+  # Component containing s
+  s_idx <- which(vapply(
+    cc_vertices,
+    function(vs) s %in% vs,
+    logical(1)
+  ))
+
+  ccs <- cc_vertices[[s_idx]]
+  other_ccs <- cc_vertices[-s_idx]
+
+  # ---- First recursive call (expand right side)
+  new_right_vertex_set <- union(right_vertex_set, cut)
+  if (length(other_ccs) > 0) {
+    new_right_vertex_set <- union(
+      new_right_vertex_set,
+      unlist(other_ccs)
+    )
   }
 
-  new_right_vertex_set <- right_vertex_set
-  new_right_vertex_set <- union(new_right_vertex_set, cut)
+  res <- split_graph(
+    G, s, t,
+    left_vertex_set,
+    new_right_vertex_set,
+    cut,
+    vertex_order,
+    result_edge_list
+  )
 
-  for (cc in cc_list) {
-    new_right_vertex_set <- union(new_right_vertex_set, as.numeric(igraph::V(cc)))
-  }
-
-  result <- split_graph(G, s, t, left_vertex_set, new_right_vertex_set, cut, vertex_order_dict, result_edge_list)
-  vertex_order_dict <- result$vertex_order_dict
-  result_edge_list <- result$result_edge_list
-
-  new_left_vertex_set <- left_vertex_set
-  new_left_vertex_set <- union(new_left_vertex_set, ccs)
+  # ---- Second recursive call (expand left side)
+  new_left_vertex_set <- union(left_vertex_set, ccs)
   new_left_vertex_set <- union(new_left_vertex_set, cut)
 
-  result <- split_graph(G, s, t, new_left_vertex_set, right_vertex_set, cut_set, vertex_order_dict, result_edge_list)
-
-  result
+  split_graph(
+    G, s, t,
+    new_left_vertex_set,
+    right_vertex_set,
+    cut_set,
+    res$vertex_order,
+    res$result_edge_list
+  )
 }
+
 
 # Find minimum s-t node cut (wrapper for igraph's st_min_cuts)
 minimum_st_node_cut <- function(G, s, t) {
-  # Convert undirected graph to directed (both directions) for st_min_cuts
-  # st_min_cuts only works with directed graphs
-  if (!igraph::is_directed(G)) {
-    G_dir <- igraph::as_directed(G, mode = 'mutual')
-  } else {
+
+  # st_min_cuts works on directed graphs
+  if (igraph::is_directed(G)) {
     G_dir <- G
+  } else {
+    G_dir <- igraph::as_directed(G, mode = "mutual")
   }
 
-  # Convert to vertex ids in the directed graph
-  s_id <- which(igraph::V(G_dir)$name == as.character(s))
-  t_id <- which(igraph::V(G_dir)$name == as.character(t))
+  vnames <- igraph::V(G_dir)$name
+  s_chr <- as.character(s)
+  t_chr <- as.character(t)
 
-  if (length(s_id) == 0 || length(t_id) == 0) {
+  # Match vertex names to ids
+  s_id <- match(s_chr, vnames)
+  t_id <- match(t_chr, vnames)
+
+  if (is.na(s_id) || is.na(t_id)) {
     return(numeric(0))
   }
 
-  # Find all s-t cuts and get the minimum one
   cuts <- igraph::st_min_cuts(G_dir, s_id, t_id)
+
   if (length(cuts$cuts) == 0) {
     return(numeric(0))
   }
 
-  min_cut <- cuts$cuts[[which.min(sapply(cuts$cuts, length))]]
-  # Convert vertex sequence back to numeric vertex names
-  as.numeric(igraph::V(G_dir)$name[as.numeric(min_cut)])
+  # Find smallest cut by size
+  cut_sizes <- lengths(cuts$cuts)
+  min_cut <- cuts$cuts[[which.min(cut_sizes)]]
+
+  as.numeric(vnames[as.integer(min_cut)])
 }
+
 
 # Remove degree 1 and 2 vertices and track them
 remove_deg12 <- function(G) {
+
   deg1_edges <- list()
-  deg2_dict <- list()
+  deg2_dict  <- list()
   deg2_cycle <- list()
 
-  # Remove degree 1 vertices
-  found <- TRUE
-  while (found) {
-    found <- FALSE
-    for (n in igraph::V(G)$name) {
-      if (igraph::degree(G, n) == 1) {
-        ns <- igraph::neighbors(G, n)$name
-        G <- igraph::delete_vertices(G, n)
-        deg1_edges[[length(deg1_edges) + 1]] <- c(as.numeric(ns[1]), as.numeric(n))
-        found <- TRUE
-        break
-      }
-    }
+  # ---- Helper: current degrees as named integer vector
+  get_deg <- function(G) {
+    igraph::degree(G, v = igraph::V(G), mode = "all")
   }
 
-  # Check if it's a tree (no edges left)
+  # ---- Remove degree-1 vertices iteratively
+  repeat {
+    deg <- get_deg(G)
+    deg1 <- names(deg)[deg == 1]
+
+    if (length(deg1) == 0) break
+
+    n <- deg1[1]
+    ns <- igraph::neighbors(G, n)$name
+
+    G <- igraph::delete_vertices(G, n)
+    deg1_edges[[length(deg1_edges) + 1]] <-
+      c(as.numeric(ns[1]), as.numeric(n))
+  }
+
+  # ---- Tree case (no edges left)
   if (igraph::ecount(G) == 0) {
+
     e <- deg1_edges[[length(deg1_edges)]]
-    # Add vertices back if they don't exist
-    existing_vertices <- igraph::V(G)$name
-    vertices_to_add <- setdiff(as.character(e), existing_vertices)
-    if (length(vertices_to_add) > 0) {
-      G <- igraph::add_vertices(G, length(vertices_to_add), name = vertices_to_add)
-    }
-    G <- igraph::add_edges(G, as.character(e))
     deg1_edges <- deg1_edges[-length(deg1_edges)]
+
+    existing <- igraph::V(G)$name
+    to_add <- setdiff(as.character(e), existing)
+
+    if (length(to_add) > 0) {
+      G <- igraph::add_vertices(G, length(to_add), name = to_add)
+    }
+
+    G <- igraph::add_edges(G, as.character(e))
+
     return(list(
-      G = G, deg1_edges = deg1_edges, deg2_dict = deg2_dict,
-      deg2_cycle = deg2_cycle, is_cycle = FALSE, is_tree = TRUE
+      G = G,
+      deg1_edges = deg1_edges,
+      deg2_dict  = deg2_dict,
+      deg2_cycle = deg2_cycle,
+      is_cycle   = FALSE,
+      is_tree    = TRUE
     ))
   }
 
-  # Handle degree 2 vertices
-  found <- TRUE
-  cycle <- FALSE
+  # ---- Remove degree-2 chains
+  repeat {
+    deg <- get_deg(G)
+    deg2 <- names(deg)[deg == 2]
 
-  while (found) {
-    found <- FALSE
-    for (n in igraph::V(G)$name) {
-      if (igraph::degree(G, n) == 2) {
-        walk <- c(n)
-        ns <- igraph::neighbors(G, n)$name
+    if (length(deg2) == 0) break
 
-        c <- ns[1]
-        walk <- c(c, walk)
+    n <- deg2[1]
+    walk <- n
+    ns <- igraph::neighbors(G, n)$name
 
-        while (igraph::degree(G, c) == 2) {
-          if (n == c) {
-            return(list(
-              G = G, deg1_edges = deg1_edges, deg2_dict = deg2_dict,
-              deg2_cycle = deg2_cycle, is_cycle = TRUE, is_tree = FALSE
-            ))
-          }
+    # ---- Walk in first direction
+    c <- ns[1]
+    walk <- c(c, walk)
 
-          nc <- igraph::neighbors(G, c)$name
-          if (nc[1] != walk[2]) {
-            c <- nc[1]
-          } else {
-            c <- nc[2]
-          }
-          walk <- c(c, walk)
-        }
+    while (igraph::degree(G, c) == 2) {
 
-        c <- ns[2]
-        walk <- c(walk, c)
-
-        while (igraph::degree(G, c) == 2) {
-          nc <- igraph::neighbors(G, c)$name
-          if (nc[1] != walk[length(walk) - 1]) {
-            c <- nc[1]
-          } else {
-            c <- nc[2]
-          }
-          walk <- c(walk, c)
-        }
-
-        # Remove internal vertices of walk
-        G <- igraph::delete_vertices(G, walk[2:(length(walk) - 1)])
-
-        # Convert walk back to numeric for storage
-        walk_numeric <- as.numeric(walk)
-
-        if (walk[1] == walk[length(walk)]) {
-          # It's a cycle
-          key <- as.character(walk[1])
-          if (!(key %in% names(deg2_cycle))) {
-            deg2_cycle[[key]] <- list()
-          }
-          deg2_cycle[[key]][[length(deg2_cycle[[key]]) + 1]] <- walk_numeric
-        } else {
-          # Add edge between endpoints
-          has_e <- igraph::are_adjacent(G, walk[1], walk[length(walk)])
-          G <- igraph::add_edges(G, c(walk[1], walk[length(walk)]))
-
-          key <- paste(minmax(as.numeric(walk[1]), as.numeric(walk[length(walk)])), collapse = '-')
-          if (!(key %in% names(deg2_dict))) {
-            deg2_dict[[key]] <- list()
-          }
-          deg2_dict[[key]][[length(deg2_dict[[key]]) + 1]] <- list(walk = walk_numeric, has_e = has_e)
-        }
-
-        found <- TRUE
-        break
+      if (c == n) {
+        return(list(
+          G = G,
+          deg1_edges = deg1_edges,
+          deg2_dict  = deg2_dict,
+          deg2_cycle = deg2_cycle,
+          is_cycle   = TRUE,
+          is_tree    = FALSE
+        ))
       }
+
+      nc <- igraph::neighbors(G, c)$name
+      c <- if (nc[1] != walk[2]) nc[1] else nc[2]
+      walk <- c(c, walk)
+    }
+
+    # ---- Walk in second direction
+    c <- ns[2]
+    walk <- c(walk, c)
+
+    while (igraph::degree(G, c) == 2) {
+      nc <- igraph::neighbors(G, c)$name
+      c <- if (nc[1] != walk[length(walk) - 1]) nc[1] else nc[2]
+      walk <- c(walk, c)
+    }
+
+    # ---- Remove internal vertices
+    internal <- walk[2:(length(walk) - 1)]
+    G <- igraph::delete_vertices(G, internal)
+
+    walk_num <- as.numeric(walk)
+
+    # ---- Cycle vs path
+    if (walk[1] == walk[length(walk)]) {
+
+      key <- walk[1]
+      deg2_cycle[[key]] <- c(deg2_cycle[[key]], list(walk_num))
+
+    } else {
+
+      has_e <- igraph::are_adjacent(G, walk[1], walk[length(walk)])
+      G <- igraph::add_edges(G, c(walk[1], walk[length(walk)]))
+
+      key <- paste(
+        edge_minmax(as.numeric(walk[1]), as.numeric(walk[length(walk)])),
+        collapse = "-"
+      )
+
+      deg2_dict[[key]] <- c(
+        deg2_dict[[key]],
+        list(list(walk = walk_num, has_e = has_e))
+      )
     }
   }
 
   list(
-    G = G, deg1_edges = deg1_edges, deg2_dict = deg2_dict,
-    deg2_cycle = deg2_cycle, is_cycle = FALSE, is_tree = FALSE
+    G = G,
+    deg1_edges = deg1_edges,
+    deg2_dict  = deg2_dict,
+    deg2_cycle = deg2_cycle,
+    is_cycle   = FALSE,
+    is_tree    = FALSE
   )
 }
+
 
 # Get cycle edges in order
 get_cycle <- function(edge_list) {
@@ -378,7 +471,7 @@ get_cycle <- function(edge_list) {
   while (length(result_edge_list) < length(edge_list)) {
     vs <- Filter(function(x) as.numeric(x[1]) == v || as.numeric(x[2]) == v, edge_list)
     next_v <- setdiff(union(as.numeric(vs[[1]]), as.numeric(vs[[2]])), c(prev_v, v))[1]
-    result_edge_list[[length(result_edge_list) + 1]] <- as.numeric(minmax(v, next_v))
+    result_edge_list[[length(result_edge_list) + 1]] <- as.numeric(edge_minmax(v, next_v))
     prev_v <- v
     v <- next_v
   }
@@ -390,7 +483,7 @@ get_cycle <- function(edge_list) {
 check_connected_order <- function(edge_list) {
   touched_vertices <- c()
 
-  for (i in 1:length(edge_list)) {
+  for (i in seq_along(edge_list)) {
     # Skip NULL or invalid edges
     if (is.null(edge_list[[i]]) || length(edge_list[[i]]) < 2) {
       return(FALSE)
@@ -415,7 +508,7 @@ recover_deg12 <- function(deg1_edges, deg2_dict, deg2_cycle, result_edge_list) {
     found <- FALSE
 
     for (i in seq_along(result_edge_list)) {
-      e <- minmax(result_edge_list[[i]][1], result_edge_list[[i]][2])
+      e <- edge_minmax(result_edge_list[[i]][1], result_edge_list[[i]][2])
       key <- paste(e, collapse = '-')
 
       if (key %in% names(deg2_dict)) {
@@ -428,7 +521,7 @@ recover_deg12 <- function(deg1_edges, deg2_dict, deg2_cycle, result_edge_list) {
           # Find and remove this edge occurrence
           edge_found <- FALSE
           for (j in insert_pos:length(result_edge_list)) {
-            e_j <- minmax(result_edge_list[[j]][1], result_edge_list[[j]][2])
+            e_j <- edge_minmax(result_edge_list[[j]][1], result_edge_list[[j]][2])
             if (all(e_j == e)) {
               # Remove this occurrence
               result_edge_list <- result_edge_list[-j]
@@ -501,7 +594,7 @@ recover_deg12 <- function(deg1_edges, deg2_dict, deg2_cycle, result_edge_list) {
               for (j in 1:(length(cy) - 1)) {
                 c0 <- cy[j]
                 c1 <- cy[j + 1]
-                edges_to_insert[[length(edges_to_insert) + 1]] <- minmax(c0, c1)
+                edges_to_insert[[length(edges_to_insert) + 1]] <- edge_minmax(c0, c1)
               }
             }
 
@@ -601,19 +694,19 @@ get_order_by_cut <- function(edge_list) {
     t <- vertices$e
 
     result_edge_list <- list()
-    vertex_order_dict <- list()
+    vertex_order <- list()
 
     for (v in as.numeric(igraph::V(G))) {
-      vertex_order_dict[[as.character(v)]] <- -1
+      vertex_order[[as.character(v)]] <- -1
     }
 
-    vertex_order_dict[[as.character(s)]] <- 1
+    vertex_order[[as.character(s)]] <- 1
     left <- c(s)
     right <- c(t)
     cut_set <- right
 
-    result <- split_graph(G, s, t, left, right, cut_set, vertex_order_dict, result_edge_list)
-    vertex_order_dict <- result$vertex_order_dict
+    result <- split_graph(G, s, t, left, right, cut_set, vertex_order, result_edge_list)
+    vertex_order <- result$vertex_order
     result_edge_list <- result$result_edge_list
 
     result_edge_list <- recover_deg12(deg1_edges, deg2_dict, deg2_cycle, result_edge_list)
@@ -720,11 +813,11 @@ ndscut <- function(edges) {
 
   # Create output
   result <- list()
-  for (i in 1:length(new_edge_list)) {
+  for (i in seq_along(new_edge_list)) {
     e <- new_edge_list[[i]]
     # Skip NULL or invalid edges
     if (!is.null(e) && length(e) >= 2) {
-      c <- minmax(e[1], e[2])
+      c <- edge_minmax(e[1], e[2])
       result[[length(result) + 1]] <- c(c[1], c[2])
     }
   }
