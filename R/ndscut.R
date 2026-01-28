@@ -525,50 +525,52 @@ recover_deg12 <- function(deg1_edges, deg2_dict, deg2_cycle, result_edge_list) {
     found <- FALSE
 
     # Look for any edge whose key appears in deg2_dict
-    hit <- match(names(deg2_dict), keys, nomatch = 0)
-    hit <- hit[hit > 0]
+    for (i in seq_along(result_edge_list)) {
+      e <- result_edge_list[[i]]
+      key <- edge_key(e)
+      
+      if (key %in% names(deg2_dict)) {
+        found <- TRUE
+        walks <- deg2_dict[[key]]
+        deg2_dict[[key]] <- NULL
 
-    if (length(hit) > 0) {
-      i <- hit[1]
-      key <- keys[i]
-      walks <- deg2_dict[[key]]
-      deg2_dict[[key]] <- NULL
-      found <- TRUE
+        for (walk_info in walks) {
+          # Remove the edge (search for it each time)
+          keys <- get_keys(result_edge_list)
+          j <- match(key, keys, nomatch = 0)
+          if (j == 0) next
+          
+          result_edge_list <- result_edge_list[-j]
+          
+          # Determine touched vertices using the ORIGINAL position i (before removal)
+          # but slicing result_edge_list AFTER the removal
+          touched <- if (i > 1)
+            unique(unlist(result_edge_list[1:(i - 1)]))
+          else
+            numeric(0)
 
-      insert_pos <- i
+          walk <- walk_info$walk
 
-      for (walk_info in walks) {
-        # Remove the matching edge occurrence
-        keys <- get_keys(result_edge_list)
-        j <- match(key, keys, nomatch = 0)
-        if (j == 0) next
+          # Build edges to insert
+          if (walk[1] %in% touched) {
+            seqs <- (length(walk) - 1):1
+          } else {
+            seqs <- 1:(length(walk) - 1)
+          }
 
-        result_edge_list <- result_edge_list[-j]
-        insert_pos <- j
+          edges_to_insert <- lapply(seqs, function(k) norm_edge(c(walk[k], walk[k + 1])))
+          
+          # Reverse because Python inserts one at a time (which reverses), but we insert as a block
+          edges_to_insert <- rev(edges_to_insert)
 
-        # Determine touched vertices
-        touched <- if (insert_pos > 1)
-          unique(unlist(result_edge_list[1:(insert_pos - 1)]))
-        else
-          numeric(0)
-
-        walk <- walk_info$walk
-
-        # Build edges to insert
-        if (walk[1] %in% touched) {
-          seqs <- (length(walk) - 1):1
-        } else {
-          seqs <- 1:(length(walk) - 1)
+          # Insert at position i (the original position)
+          result_edge_list <- insert_edges(result_edge_list, i, edges_to_insert)
         }
-
-        edges_to_insert <- lapply(seqs, function(k) norm_edge(c(walk[k], walk[k + 1])))
-
-        # Insert
-        result_edge_list <- insert_edges(result_edge_list, insert_pos, edges_to_insert)
-        insert_pos <- insert_pos + length(edges_to_insert)
+        break # for i
       }
-
-    } else if (length(deg2_cycle) > 0) {
+    }
+    
+    if (!found && length(deg2_cycle) > 0) {
       # handle special case for degree-2 cycles
       keys <- get_keys(result_edge_list)
 
