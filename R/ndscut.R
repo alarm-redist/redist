@@ -245,7 +245,7 @@ split_graph <- function(G, s, t,
   Hc <- igraph::delete_vertices(H, as.character(cut))
   cc_list <- igraph::decompose(Hc)
 
-  cc_vertices <- lapply(cc_list, function(cc) as.numeric(igraph::V(cc)))
+  cc_vertices <- lapply(cc_list, function(cc) as.numeric(igraph::V(cc)$name))
 
   # identify the component containing the start vertex s
   s_idx <- which(vapply(
@@ -670,7 +670,7 @@ get_order_by_cut <- function(edge_list) {
   t <- ft$e
 
   # Initialize vertex order
-  verts <- as.numeric(igraph::V(G))
+  verts <- as.numeric(igraph::V(G)$name)
   vertex_order <- setNames(rep(-1, length(verts)), as.character(verts))
   vertex_order[[as.character(s)]] <- 1
 
