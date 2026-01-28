@@ -55,14 +55,18 @@ redist_cyclewalk <- function(map, nsims,
     thin <- as.integer(thin)
 
     # Input validation
-    if (compactness < 0)
+    if (compactness < 0) {
         cli::cli_abort("{.arg compactness} must be non-negative.")
-    if (nsims <= warmup)
+    }
+    if (nsims <= warmup) {
         cli::cli_abort("{.arg nsims} must be greater than {.arg warmup}.")
-    if (thin < 1 || thin > nsims - warmup)
+    }
+    if (thin < 1 || thin > nsims - warmup) {
         cli::cli_abort("{.arg thin} must be a positive integer, and no larger than {.arg nsims - warmup}.")
-    if (nsims < 1)
+    }
+    if (nsims < 1) {
         cli::cli_abort("{.arg nsims} must be positive.")
+    }
 
     # Handle initial plan
     exist_name <- attr(map, "existing_col")
@@ -84,12 +88,15 @@ redist_cyclewalk <- function(map, nsims,
     }
 
     # Validate init_plan
-    if (length(init_plan) != V)
+    if (length(init_plan) != V) {
         cli::cli_abort("{.arg init_plan} must be as long as the number of units as `map`.")
-    if (max(init_plan) != ndists)
+    }
+    if (max(init_plan) != ndists) {
         cli::cli_abort("{.arg init_plan} must have the same number of districts as `map`.")
-    if (any(contiguity(adj, init_plan) != 1))
+    }
+    if (any(contiguity(adj, init_plan) != 1)) {
         cli::cli_warn("{.arg init_plan} should have contiguous districts.")
+    }
 
     # Handle counties
     if (is.null(counties)) {
@@ -114,8 +121,12 @@ redist_cyclewalk <- function(map, nsims,
 
     # Set verbosity
     verbosity <- 1
-    if (verbose) verbosity <- 3
-    if (silent) verbosity <- 0
+    if (verbose) {
+        verbosity <- 3
+    }
+    if (silent) {
+        verbosity <- 0
+    }
 
     # Population bounds
     pop_bounds <- attr(map, "pop_bounds")
@@ -123,8 +134,9 @@ redist_cyclewalk <- function(map, nsims,
 
     # Validate population
     init_pop <- pop_tally(matrix(init_plan, ncol = 1), pop, ndists)
-    if (any(init_pop < pop_bounds[1]) | any(init_pop > pop_bounds[3]))
+    if (any(init_pop < pop_bounds[1]) | any(init_pop > pop_bounds[3])) {
         cli::cli_abort("Provided initialization does not meet population bounds.")
+    }
     if (any(pop >= pop_bounds[3])) {
         too_big <- as.character(which(pop >= pop_bounds[3]))
         cli::cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
