@@ -251,3 +251,41 @@ test_that("MEW full integration test with larger sample", {
     expect_true(all(plans$total_pop >= pop_bounds[1]))
     expect_true(all(plans$total_pop <= pop_bounds[3]))
 })
+
+test_that("MEW parallel chains work correctly", {
+    skip_on_cran()
+    set.seed(1010)
+    
+    # Run 2 chains in parallel
+    plans <- redist_mew(fl_map, 100, warmup = 20, chains = 2, ncores = 2, silent = TRUE)
+    
+    # Check output structure
+    expect_s3_class(plans, "redist_plans")
+    expect_true("chain" %in% names(plans))
+    
+    # Check that we have 2 chains
+    expect_equal(length(unique(plans$chain)), 2)
+    
+    # Check that chains have equal number of samples
+    chain_counts <- table(plans$chain)
+    expect_equal(as.numeric(chain_counts[1]), as.numeric(chain_counts[2]))
+    
+    # Check diagnostics structure for multiple chains
+    diag <- attr(plans, "diagnostics")
+    expect_true(is.list(diag))
+    expect_equal(length(diag), 2)
+    
+    # Each chain should have its own diagnostics
+    expect_true(all(sapply(diag, function(x) "accept_rate" %in% names(x))))
+    expect_true(all(sapply(diag, function(x) "cycle_intersect_rate" %in% names(x))))
+    expect_true(all(sapply(diag, function(x) "runtime" %in% names(x))))
+    
+    # All plans should be valid
+    plans_mat <- get_plans_matrix(plans)
+    expect_true(all(apply(plans_mat, 2, function(x) length(unique(x)) == 3)))
+    
+    # Population constraints should be met
+    pop_bounds <- attr(fl_map, "pop_bounds")
+    expect_true(all(plans$total_pop >= pop_bounds[1]))
+    expect_true(all(plans$total_pop <= pop_bounds[3]))
+})

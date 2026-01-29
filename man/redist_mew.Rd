@@ -13,6 +13,8 @@ redist_mew(
   compactness = 1,
   constraints = list(),
   init_name = NULL,
+  chains = 1L,
+  ncores = NULL,
   verbose = FALSE,
   silent = FALSE
 )
@@ -42,6 +44,13 @@ information.}
 the initial plan in the output. Defaults to the column name of the existing
 plan, or \code{"<init>"} if the initial plan is sampled.}
 
+\item{chains}{The number of parallel chains to run. Each chain will have
+\code{nsims} draws. If \code{init_plan} is sampled, each chain will be initialized
+with its own sampled plan. Defaults to 1 (no parallelization).}
+
+\item{ncores}{The number of parallel processes to run. Defaults to the
+number of available cores. Only used if \code{chains > 1}.}
+
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}
 
@@ -60,7 +69,14 @@ population, compactness, and other custom constraints.
 \examples{
 data(fl25)
 fl_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1)
+
+# Single chain
 redist_mew(fl_map, 5000)
+
+\dontrun{
+# Multiple parallel chains
+redist_mew(fl_map, 5000, chains = 4, ncores = 4)
+}
 
 }
 \references{
