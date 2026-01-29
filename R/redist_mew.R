@@ -125,11 +125,6 @@ redist_mew <- function(map, nsims,
     if (!silent) {
         cli::cli_rule(left = "Sampling using Marked Edge Walk")
         cli::cli_alert_info("{ndists} districts on {V} units")
-        if (!is.null(pop_tol)) {
-            cli::cli_alert_info("Target population: {round(target_pop)} ± {scales::percent(pop_tol)}")
-        } else {
-            cli::cli_alert_info("Target population: {round(target_pop)}")
-        }
         if (!is.null(init_name) && init_name != FALSE) {
             cli::cli_alert_info("Initial plan: {init_name}")
         }
@@ -175,15 +170,6 @@ redist_mew <- function(map, nsims,
         plans_m_final <- plans_m
     }
 
-    # Build redist_plans object
-    n_out <- ncol(plans_m_final)
-    plans <- new_redist_plans(
-        plans = plans_m_final,
-        map = map,
-        algorithm = "mew",
-        wgt = rep(1, n_out)
-    )
-
     # Add diagnostics (but trim to match number of non-warmup samples)
     # Diagnostics are computed every 100 iterations, so we need to subset correctly
     diag_every <- 100
@@ -197,24 +183,24 @@ redist_mew <- function(map, nsims,
         diag_idx <- n_diag # Keep only last diagnostic
     }
 
-    attr(plans, "diagnostics") <- tibble::tibble(
+    l_diag <- tibble::tibble(
         accept_rate = plans_raw$accept_rate[diag_idx],
         cycle_intersect_rate = plans_raw$cycle_intersect_rate[diag_idx],
         avg_proposal_tries = plans_raw$avg_proposal_tries[diag_idx]
     )
 
-    if (!silent) {
-        cli::cli_alert_success("Sampling complete in {round(time_elapsed, 1)}s")
-        cli::cli_alert_info("Average acceptance rate: {scales::percent(mean(attr(plans, 'diagnostics')$accept_rate))}")
-    }
+    # Build redist_plans object
+    plans <- new_redist_plans(
+        plans = plans_m_final,
+        map = map,
+        algorithm = "mew",
+        wgt = rep(1, ncol(plans_m_final)),
+        diagnostics = l_diag
+    )
 
-    # Add reference plan if requested
-    # NOTE: Skipping for now due to district renumbering issues
-    # if (!is.null(init_name) && init_name != FALSE) {
-    #     init_out <- matrix(orig_lookup[init_plan], ncol = 1)
-    #     colnames(init_out) <- init_name
-    #     plans <- add_reference(plans, init_out, init_name)
-    # }
+    if (!is.null(init_name) && !isFALSE(init_name)) {
+        plans <- add_reference(plans, init_plan, init_name)
+    }
 
     plans
 }

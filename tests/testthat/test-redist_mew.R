@@ -232,7 +232,7 @@ test_that("MEW full integration test with larger sample", {
     # Check output structure
     expect_s3_class(plans, "redist_plans")
     n_draws <- length(unique(plans$draw))
-    expect_true(n_draws == 900)
+    expect_true(n_draws == 901) # 900 samples + init
 
     # Check diagnostics
     diag <- attr(plans, "diagnostics")
