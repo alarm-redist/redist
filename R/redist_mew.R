@@ -7,17 +7,14 @@
 #'
 #' @param map A [redist_map] object.
 #' @param nsims The number of samples to draw, including warmup.
-#' @param warmup The number of warmup samples to discard. Recommended to be at
-#'   least the first 20% of samples, and in any case no less than around 100
-#'   samples, unless initializing from a random plan.
+#' @param warmup The number of warmup samples to discard.
 #' @param thin Save every `thin`-th sample. Defaults to no thinning (1).
 #' @param init_plan The initial state of the map. If not provided, will default
 #'   to the reference map of the `map` object, or if none exists, will
 #'   sample a random initial state using [redist_smc()]. You can also
 #'   request a random initial state by setting `init_plan="sample"`.
 #' @param compactness Controls the compactness of the generated districts, with
-#'   higher values preferring more compact districts. Must be nonnegative. See
-#'   the 'Details' section for more information.
+#'   higher values preferring more compact districts. Must be nonnegative.
 #' @param constraints A [redist_constr] object or a list containing
 #'   information on sampling constraints. See [redist_constr] for more
 #'   information.
@@ -40,16 +37,13 @@
 #'   simulated plans.
 #'
 #' @references
-#' McWhorter, A., & DeFord, D. (2024). The Marked Edge Walk: A Novel MCMC
+#' McWhorter, A., & DeFord, D. (2025). The Marked Edge Walk: A Novel MCMC
 #' Algorithm for Sampling of Graph Partitions.
 #'
 #' @examples
 #' data(fl25)
-#'
 #' fl_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1)
-#'
-#' # Basic sampling
-#' sampled_basic <- redist_mew(fl_map, 5000)
+#' redist_mew(fl_map, 5000)
 #'
 #' @concept simulate
 #' @md

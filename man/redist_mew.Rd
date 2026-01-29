@@ -24,9 +24,7 @@ redist_mew(
 
 \item{nsims}{The number of samples to draw, including warmup.}
 
-\item{warmup}{The number of warmup samples to discard. Recommended to be at
-least the first 20\% of samples, and in any case no less than around 100
-samples, unless initializing from a random plan.}
+\item{warmup}{The number of warmup samples to discard.}
 
 \item{thin}{Save every \code{thin}-th sample. Defaults to no thinning (1).}
 
@@ -36,8 +34,7 @@ sample a random initial state using \code{\link[=redist_smc]{redist_smc()}}. You
 request a random initial state by setting \code{init_plan="sample"}.}
 
 \item{compactness}{Controls the compactness of the generated districts, with
-higher values preferring more compact districts. Must be nonnegative. See
-the 'Details' section for more information.}
+higher values preferring more compact districts. Must be nonnegative.}
 
 \item{constraints}{A \link{redist_constr} object or a list containing
 information on sampling constraints. See \link{redist_constr} for more
@@ -70,45 +67,16 @@ simulated plans.
 \code{redist_mew} uses a Markov Chain Monte Carlo algorithm based on marked
 edge walks on spanning trees (McWhorter and DeFord 2024) to generate
 congressional or legislative redistricting plans according to contiguity,
-population, compactness, and administrative boundary constraints.
+population, compactness, and other custom constraints.
 }
-\details{
-This function draws samples from a specific target measure, controlled by the
-\code{map}, \code{compactness}, and \code{constraints} parameters.
-}
-\section{Algorithm Details}{
-The MEW algorithm represents redistricting plans as a spanning tree of the
-dual graph along with a set of \code{k-1} marked edges (for \code{k} districts).
-Removing the marked edges from the tree creates \code{k} connected components,
-which correspond to the districts. The algorithm proposes new plans by:
-\enumerate{
-\item Updating the spanning tree through a \strong{cycle basis step}
-\item Updating the marked edges through a \strong{random walk step}
-}
-
-The Metropolis-Hastings acceptance probability accounts for the number of
-spanning trees through the Matrix-Tree theorem, ensuring detailed balance.
-
-Key to ensuring good performance is monitoring the acceptance rate, which
-is reported at the sample level in the output. Users should also check
-diagnostics of the sample by running \code{\link[=summary.redist_plans]{summary.redist_plans()}}.
-
-Higher values of \code{compactness} sample more compact districts;
-setting this parameter to 1 is computationally efficient and generates nicely
-compact districts.
-}
-
 \examples{
 data(fl25)
-
 fl_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1)
-
-# Basic sampling
-sampled_basic <- redist_mew(fl_map, 5000)
+redist_mew(fl_map, 5000)
 
 }
 \references{
-McWhorter, A., & DeFord, D. (2024). The Marked Edge Walk: A Novel MCMC
+McWhorter, A., & DeFord, D. (2025). The Marked Edge Walk: A Novel MCMC
 Algorithm for Sampling of Graph Partitions.
 }
 \concept{simulate}
