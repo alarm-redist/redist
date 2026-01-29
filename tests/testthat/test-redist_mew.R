@@ -176,22 +176,22 @@ test_that("MEW works on small grids", {
     skip_on_cran()
     set.seed(606)
 
-    # 3x3 grid
+    # 4x4 grid
     bb <- sf::st_sfc(sf::st_polygon(list(rbind(c(0, 0), c(1, 0), c(1, 1), c(0, 0)))))
-    grid <- sf::st_make_grid(bb, n = 3)
+    grid <- sf::st_make_grid(bb, n = 4)
     tb <- sf::st_as_sf(grid) %>%
         rename(geometry = x) %>%
-        mutate(pop = c(10, 15, 12, 18, 20, 14, 11, 16, 13))
+        mutate(pop = c(10, 15, 12, 18, 20, 14, 11, 16, 13, 17, 19, 12, 15, 18, 14, 16))
 
-    grid_map <- redist_map(tb, ndists = 3, pop_tol = 0.25, total_pop = pop) %>%
+    grid_map <- redist_map(tb, ndists = 4, pop_tol = 0.25, total_pop = pop) %>%
         suppressWarnings() %>%
         suppressMessages()
 
-    init_plan <- c(1, 1, 1, 2, 2, 2, 3, 3, 3)
+    init_plan <- c(1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4)
 
     out <- redist_mew(grid_map, 50, warmup = 10, init_plan = init_plan, silent = TRUE)
     expect_s3_class(out, "redist_plans")
-    expect_equal(max(as.matrix(out)), 3)
+    expect_equal(max(as.matrix(out)), 4)
 })
 
 test_that("MEW population constraints work on Iowa data", {
