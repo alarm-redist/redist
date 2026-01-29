@@ -19,9 +19,9 @@ skip_on_ci()
 # make 4x4 grid graph with unit population
 create_4x4_grid <- function() {
     grid_sf <- st_bbox(c(xmin = 0, ymin = 0, xmax = 4, ymax = 4)) |>
-        st_as_sfc() |>
-        st_make_grid(n = c(4, 4)) |>
-        st_sf(geometry = _)
+        sf::st_as_sfc() |>
+        sf::st_make_grid(n = c(4, 4)) |>
+        sf::st_sf(geometry = _)
 
     new_order <- c(13, 14, 9, 10, 15, 16, 11, 12, 5, 6, 1, 2, 7, 8, 3, 4)
     grid_sf <- grid_sf[new_order, ]
