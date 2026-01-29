@@ -212,16 +212,20 @@ std::vector<int> get_collapsed_cycle_weights(
         }
     }
 
-    // Build collapsed weights for path2 (forward order in cycle: v1 -> v2)
-    // Julia fills from end backwards: position end gets v2, position length(uPath)+1 gets v1
-    // In 0-indexed terms: position cycle_len-1 gets v2, position path1.size() gets v1
+    // Build collapsed weights for path2 (REVERSED order in cycle, matching Julia)
+    // Julia processes vPath from end to beginning, filling array backwards
+    // Position cycle_len-1 gets path2[end], working backwards to position path1.size()
     for (size_t ii = 0; ii < path2.size(); ii++) {
-        int pos = path1.size() + ii;
-        int vertex = path2[ii];  // Forward: v1, ..., v2
+        // Fill from end of cycle backwards
+        int pos = cycle_len - 1 - ii;
+
+        // Take vertices from end of path2 backwards (reversed)
+        int vertex = path2[path2.size() - 1 - ii];
         collapsed_weights[pos] = v_cut_pop[vertex];
-        if (ii < path2.size() - 1) {
-            // Subtract the subtree population of the next vertex towards v2
-            int next_vertex = path2[ii + 1];
+
+        if (ii > 0) {
+            // Subtract the next vertex in cycle order (previous in reversed path)
+            int next_vertex = path2[path2.size() - ii];
             collapsed_weights[pos] -= v_cut_pop[next_vertex];
         }
     }
@@ -239,53 +243,159 @@ std::vector<std::pair<int, int>> find_valid_cut_pairs(
     int n = (int)cycle_pops.size();
 
     // Compute prefix sums for efficient range queries
+    // prefix[i] = sum of cycle_pops[0..i-1]
     std::vector<int> prefix(n + 1, 0);
     for (int i = 0; i < n; i++) {
         prefix[i + 1] = prefix[i] + cycle_pops[i];
     }
 
-    // The cycle consists of:
-    // - path1: tree edges in district d1 (positions 1 to initial_cut-1)
-    // - boundary edge e2 at position initial_cut (NOT a tree edge!)
-    // - path2: tree edges in district d2 (positions initial_cut+1 to n-1)
-    // - boundary edge e1 at position n/0 (NOT a tree edge!)
+    // Match Julia's find_cuttable_edge_pairs exactly:
+    // Julia uses 1-indexed: cut1 = 1:path_length, cut2 = cut1:path_length-1
+    // For pair (cut1, cut2), pop1 = sum(cycle_weights[cut1:cut2])
     //
-    // We can ONLY cut tree edges, not boundary edges.
-    // Boundary edge e2 is at position initial_cut
-    // Boundary edge e1 is at position n (which wraps to 0)
+    // In 0-indexed C++, pair (cut1, cut2) represents:
+    // pop1 = sum of cycle_pops[cut1-1..cut2-1] = prefix[cut2] - prefix[cut1-1]
+    //
+    // Note: boundary edges at positions 1 and initial_cut+1 in Julia's indexing
+    // are NOT excluded - they're handled by cancellation in get_cuts_and_links.
+    // Only the identity pair (1, initial_cut) is removed.
 
-    // Try all pairs of cut positions
-    // A cut at position i means we cut before vertex i
-    // So cutting at positions (i, j) where i < j gives us:
-    //   - One part: vertices [i, j)
-    //   - Other part: vertices [0, i) + [j, n)
-    for (int i = 1; i < n; i++) {
-        // Skip boundary edge e2 at position initial_cut
-        if (i == initial_cut) continue;
+    static int global_valid_cut_count = 0;
+    global_valid_cut_count++;
+    bool do_debug = (global_valid_cut_count <= 2);
+    if (do_debug) {
+        Rcpp::Rcout << "\n[Valid Cut Debug]\n";
+        Rcpp::Rcout << "  n=" << n << ", initial_cut=" << initial_cut
+                    << ", total_pop=" << total_pop << "\n";
+        Rcpp::Rcout << "  Pop bounds: [" << lower << ", " << upper << "]\n";
+    }
 
-        for (int j = i + 1; j <= n; j++) {
-            // Skip boundary edge e1 at position n
-            if (j == n) continue;
-
-            // Skip boundary edge e2 at position initial_cut
-            if (j == initial_cut) continue;
-
-            // Skip the initial configuration (no change to districts)
+    for (int cut1 = 1; cut1 <= n; cut1++) {
+        for (int cut2 = cut1; cut2 <= n - 1; cut2++) {
+            // Skip the identity configuration (no change to districts)
             // Julia: delete!(possible_pairs, (1, initial_cut_index))
-            // where initial_cut_index = length(uPath) = initial_cut
-            if (i == 1 && j == initial_cut) continue;
+            if (cut1 == 1 && cut2 == initial_cut) continue;
 
-            int pop1 = prefix[j] - prefix[i];
+            // pop1 = sum of cycle_pops at positions cut1-1 to cut2-1 (0-indexed)
+            int pop1 = prefix[cut2] - prefix[cut1 - 1];
             int pop2 = total_pop - pop1;
 
             if (pop1 >= lower && pop1 <= upper &&
                 pop2 >= lower && pop2 <= upper) {
-                valid_pairs.push_back({i, j});
+                valid_pairs.push_back({cut1, cut2});
+                if (do_debug && valid_pairs.size() <= 5) {
+                    Rcpp::Rcout << "    Valid: (" << cut1 << ", " << cut2
+                                << ") -> pop1=" << pop1 << ", pop2=" << pop2 << "\n";
+                }
             }
         }
     }
 
+    if (do_debug) {
+        Rcpp::Rcout << "  Total valid pairs: " << valid_pairs.size() << "\n";
+    }
+
     return valid_pairs;
+}
+
+/*
+ * Get edge weight from graph.
+ * For now, assumes all edges have weight 1.0 (unweighted graph).
+ * TODO: Support weighted graphs by looking up edge weights.
+ */
+static double get_edge_weight(const Graph& g, int u, int v) {
+    // For unweighted graphs, all edges have weight 1.0
+    return 1.0;
+}
+
+/*
+ * Find the position of a link vertex in the cycle paths.
+ * Returns 1-indexed position matching Julia.
+ *
+ * Corresponds to Julia's get_link_path_ind()
+ */
+static int get_link_path_ind(
+    int link_vertex,
+    const std::vector<int>& path1,
+    const std::vector<int>& path2
+) {
+    int path1_len = (int)path1.size();
+    int path2_len = (int)path2.size();
+
+    // Check if link_vertex is at path1 end
+    if (path1[path1_len - 1] == link_vertex) {
+        return 1;
+    }
+    // Check if link_vertex is at path1 start
+    else if (path1[0] == link_vertex) {
+        return path1_len;
+    }
+    // Check if link_vertex is at path2 end
+    else if (path2[path2_len - 1] == link_vertex) {
+        return path1_len + path2_len;
+    }
+    // Check if link_vertex is at path2 start
+    else if (path2[0] == link_vertex) {
+        return path1_len + 1;
+    }
+
+    // Should never get here
+    throw std::runtime_error("Couldn't find link vertex in paths");
+}
+
+/*
+ * Determine if we should swap root assignments after the swap.
+ *
+ * This implements Julia's swap_assignment_check() logic.
+ * The function determines which district should get which new root
+ * based on population overlaps.
+ */
+static bool swap_assignment_check(
+    int path_ind,
+    int cut1,
+    int cut2,
+    const std::vector<int>& path1,
+    const std::vector<int>& path2,
+    const std::vector<int>& cycle_weights
+) {
+    int path1_len = (int)path1.size();
+    int cycle_len = (int)cycle_weights.size();
+
+    // Compute overlap1: population in the interval [cut1, cut2]
+    // that comes from path1 (the "u" district)
+    int overlap1 = 0;
+    int tot_pop = 0;
+    for (int w : cycle_weights) tot_pop += w;
+
+    // Case 1: If cut1 <= path1_len, add weights in [cut1, min(path1_len, cut2)]
+    if (cut1 <= path1_len) {
+        for (int i = cut1; i <= std::min(path1_len, cut2); i++) {
+            overlap1 += cycle_weights[i - 1];  // Convert to 0-indexed
+        }
+    }
+    // Case 2: If cut1 > path1_len+1, add weights from [path1_len+1, cut1-1]
+    else if (cut1 > path1_len + 1) {
+        for (int i = path1_len + 1; i < cut1; i++) {
+            overlap1 += cycle_weights[i - 1];
+        }
+    }
+
+    // Case 3: If cut2 < cycle_len, add weights from [max(path1_len+1, cut2+1), end]
+    if (cut2 < cycle_len) {
+        for (int i = std::max(path1_len + 1, cut2 + 1); i <= cycle_len; i++) {
+            overlap1 += cycle_weights[i - 1];
+        }
+    }
+
+    // Determine which path gets more of the interval
+    bool uPathToInterval = (2 * overlap1 > tot_pop);
+
+    // Check positions
+    bool l11_in_interval = (cut1 <= path_ind && path_ind <= cut2);
+    bool l11_in_uPath = (path_ind <= path1_len);
+
+    // XOR logic from Julia
+    return (l11_in_uPath != l11_in_interval) != uPathToInterval;
 }
 
 void apply_update(LCTPartition& partition,
@@ -310,11 +420,33 @@ void apply_update(LCTPartition& partition,
     int d1 = update.changed_districts.first;
     int d2 = update.changed_districts.second;
 
-    // Find new roots for the changed districts
+    // Find new roots for the changed districts (Bug #4 fix)
     // The new roots are the roots of the trees after cuts and links
+    // Use swap_link11 to determine which district gets which root
     if (!update.cuts.empty()) {
         int new_root1 = lct.find_root(update.cuts[0].first);
         int new_root2 = lct.find_root(update.cuts[0].second);
+
+        // Determine correct assignment using swap_link11 logic
+        // This matches Julia's complex XOR logic for root assignment
+        if (!update.links.empty()) {
+            int link11_vertex = update.links[0].first;
+            int link11_dist_cur = partition.node_to_district[link11_vertex];
+            int r11_new_root = lct.find_root(link11_vertex);
+
+            // Determine which new_root corresponds to link11's new tree
+            int r11_root_ind_new = (r11_new_root != new_root1) ? 2 : 1;
+            // Determine which district link11 currently belongs to
+            int r11_root_ind_cur = (link11_dist_cur != d1) ? 2 : 1;
+
+            // XOR logic: (r11_root_ind_new == r11_root_ind_cur) XOR !swap_link11
+            bool should_swap = (r11_root_ind_new == r11_root_ind_cur) != update.swap_link11;
+
+            if (should_swap) {
+                std::swap(new_root1, new_root2);
+            }
+        }
+
         partition.district_roots[d1] = new_root1;
         partition.district_roots[d2] = new_root2;
     }
@@ -366,6 +498,11 @@ int cycle_walk(LCTPartition& partition,
                double& accept_ratio) {
     accept_ratio = 0.0;
 
+    // Global debug counter (wraps around)
+    static int global_cw_count = 0;
+    global_cw_count++;
+    bool do_mh_debug = (global_cw_count <= 5);
+
     // Step 1: Pick random adjacent districts
     int d1, d2;
     if (!get_random_adjacent_districts(partition, d1, d2)) {
@@ -390,8 +527,30 @@ int cycle_walk(LCTPartition& partition,
     // Total population of the two districts
     int total_pop = partition.district_pop[d1] + partition.district_pop[d2];
 
+    // Verify cycle integrity
+    int cycle_pop_sum = 0;
+    for (int p : cycle_pops) cycle_pop_sum += p;
+    if (cycle_pop_sum != total_pop) {
+        Rcpp::Rcout << "[ERROR] Cycle pop sum mismatch: sum=" << cycle_pop_sum
+                    << ", total=" << total_pop << "\n";
+    }
+
     // Initial cut is at the boundary between path1 and path2
     int initial_cut = (int)path1.size();
+
+    // Debug: verify initial cut makes sense
+    if (do_mh_debug) {
+        Rcpp::Rcout << "\n[Cycle Debug]\n";
+        Rcpp::Rcout << "  Path1 len: " << path1.size() << ", Path2 len: " << path2.size() << "\n";
+        Rcpp::Rcout << "  Cycle len: " << cycle_pops.size() << "\n";
+        Rcpp::Rcout << "  Initial cut: " << initial_cut << "\n";
+        Rcpp::Rcout << "  Cycle pops: [";
+        for (size_t i = 0; i < cycle_pops.size(); i++) {
+            if (i > 0) Rcpp::Rcout << ", ";
+            Rcpp::Rcout << cycle_pops[i];
+        }
+        Rcpp::Rcout << "]\n";
+    }
 
     // Step 5: Find valid cut pairs
     std::vector<std::pair<int, int>> valid_pairs =
@@ -399,6 +558,9 @@ int cycle_walk(LCTPartition& partition,
 
     if (valid_pairs.empty()) {
         // No valid cuts found - restore roots and return
+        if (do_mh_debug) {
+            Rcpp::Rcout << "[CW Debug] No valid cuts found, returning -4\n";
+        }
         partition.lct.evert(partition.district_roots[d1]);
         partition.lct.evert(partition.district_roots[d2]);
         return -4;  // No valid cut pairs found
@@ -407,13 +569,71 @@ int cycle_walk(LCTPartition& partition,
     // Save number of valid pairs for MH ratio
     int n_valid_pairs_fwd = (int)valid_pairs.size();
 
-    // Step 6: Sample a cut pair (uniform for unweighted graphs)
-    int sample_idx = r_int((int)valid_pairs.size());
+    // Step 6: Sample a cut pair WEIGHTED by edge weights (Bug #3 fix)
+    // Build cumulative distribution weighted by 1/(w1*w2)
+
+    // Helper lambda to get edge at position
+    auto get_edge_at_position = [&](int edge_ind) -> std::pair<int, int> {
+        int path1_len = (int)path1.size();
+        int path2_len = (int)path2.size();
+
+        if (edge_ind == 1) {
+            return {path1[path1_len - 1], path2[path2_len - 1]};
+        } else if (edge_ind <= path1_len) {
+            return {path1[path1_len - edge_ind], path1[path1_len - edge_ind + 1]};
+        } else if (edge_ind == path1_len + 1) {
+            return {path1[0], path2[0]};
+        } else {
+            int ind = edge_ind - path1_len - 1;
+            return {path2[ind - 1], path2[ind]};
+        }
+    };
+
+    // Compute cumulative edge weight products for sampling
+    std::vector<double> cum_edge_weight_product(n_valid_pairs_fwd);
+    double cumsum = 0.0;
+
+    for (int i = 0; i < n_valid_pairs_fwd; i++) {
+        auto [c1, c2] = valid_pairs[i];
+
+        // Get edges for this cut pair
+        auto [e1_u, e1_v] = get_edge_at_position(c1);
+        auto [e2_u, e2_v] = get_edge_at_position(c2 + 1);
+
+        // Get edge weights (currently returns 1.0 for unweighted)
+        double w1 = get_edge_weight(*(partition.graph), e1_u, e1_v);
+        double w2 = get_edge_weight(*(partition.graph), e2_u, e2_v);
+
+        // Add 1/(w1*w2) to cumulative sum
+        cumsum += 1.0 / (w1 * w2);
+        cum_edge_weight_product[i] = cumsum;
+    }
+
+    // Sample proportional to 1/(w1*w2)
+    double rand_samp = r_unif() * cum_edge_weight_product[n_valid_pairs_fwd - 1];
+    int sample_idx = 0;
+    while (sample_idx < n_valid_pairs_fwd - 1 &&
+           rand_samp > cum_edge_weight_product[sample_idx]) {
+        sample_idx++;
+    }
+
     auto [cut1, cut2] = valid_pairs[sample_idx];
 
+    // Get the actual edges for selected cuts (for edge weight ratio)
+    auto [selected_e1_u, selected_e1_v] = get_edge_at_position(cut1);
+    auto [selected_e2_u, selected_e2_v] = get_edge_at_position(cut2 + 1);
+    double w1_cuts = get_edge_weight(*(partition.graph), selected_e1_u, selected_e1_v);
+    double w2_cuts = get_edge_weight(*(partition.graph), selected_e2_u, selected_e2_v);
+    double w1w2_cuts_inv = 1.0 / (w1_cuts * w2_cuts);
+
+    // Get edge weights for the boundary edges (links)
+    double w1_links = get_edge_weight(*(partition.graph), e1.u, e1.v);
+    double w2_links = get_edge_weight(*(partition.graph), e2.u, e2.v);
+    double w1w2_links_inv = 1.0 / (w1_links * w2_links);
+
+    double sum_edge_weight_products = cum_edge_weight_product[n_valid_pairs_fwd - 1];
+
     // Step 7: Compute MH acceptance ratio
-    // For now, use a simple ratio based on number of valid pairs
-    // Full implementation would account for boundary edge counts
     int old_boundary = (int)partition.get_cross_edges(d1, d2).size();
 
     // Store old state for potential revert
@@ -423,7 +643,6 @@ int cycle_walk(LCTPartition& partition,
     CrossEdgeMap old_cross_edges = partition.cross_edges;
 
     // Calculate constraint penalty for OLD state (before update)
-    // Districts that changed: d1 and d2
     std::vector<int> changed_districts = {d1, d2};
     Rcpp::NumericVector psi_vec;
     Rcpp::CharacterVector constr_names;
@@ -454,37 +673,56 @@ int cycle_walk(LCTPartition& partition,
     update.changed_districts = {d1, d2};
     update.valid = true;
 
-    // Determine cuts and links based on selected cut positions
-    // This is simplified - the full algorithm needs to track which edges
-    // in the paths correspond to the cut positions
+    // Get edges at selected cut positions
+    // Julia: e1 = get_node_indices_from_paths(edge_inds[1], ...)
+    //        e2 = get_node_indices_from_paths(edge_inds[2]+1, ...)
+    auto [fe1_u, fe1_v] = get_edge_at_position(cut1);
+    auto [fe2_u, fe2_v] = get_edge_at_position(cut2 + 1);
 
-    // Get vertices at cut positions
-    // The cycle is: reverse(path1) then forward(path2)
-    // Position 0 = path1[end] = u2, position path1.size()-1 = path1[0] = u1
-    // Position path1.size() = path2[0] = v1, position cycle_len-1 = path2[end] = v2
-    int cycle_len = (int)cycle_pops.size();
-    auto get_cycle_vertex = [&](int pos) -> int {
-        if (pos < (int)path1.size()) {
-            return path1[path1.size() - 1 - pos];  // Reversed path1: u2 -> u1
-        } else {
-            int path2_pos = pos - (int)path1.size();
-            return path2[path2_pos];  // Forward path2: v1 -> v2
-        }
+    // Julia's get_cuts_and_links - handle boundary edge cancellation
+    // Initial boundary edges (links candidates)
+    std::vector<std::pair<int, int>> links = {{e1.u, e1.v}, {e2.u, e2.v}};
+    // Selected cut edges
+    std::vector<std::pair<int, int>> cuts = {{fe1_u, fe1_v}, {fe2_u, fe2_v}};
+
+    // Helper to check if two edges are the same (order-independent)
+    auto edges_equal = [](std::pair<int, int> a, std::pair<int, int> b) {
+        return (a.first == b.first && a.second == b.second) ||
+               (a.first == b.second && a.second == b.first);
     };
 
-    // The cuts are at positions cut1 and cut2 in the cycle
-    // We cut edges (cycle[cut1-1], cycle[cut1]) and (cycle[cut2-1], cycle[cut2 % cycle_len])
-    int v_cut1_from = get_cycle_vertex(cut1 - 1);
-    int v_cut1_to = get_cycle_vertex(cut1 % cycle_len);
-    int v_cut2_from = get_cycle_vertex(cut2 - 1);
-    int v_cut2_to = get_cycle_vertex(cut2 % cycle_len);
+    // If a boundary edge is in cuts, it cancels (remove from both)
+    if (edges_equal(links[0], cuts[0]) || edges_equal(links[0], cuts[1])) {
+        // Remove link[0] and the matching cut
+        if (edges_equal(links[0], cuts[0])) {
+            cuts.erase(cuts.begin());
+        } else {
+            cuts.erase(cuts.begin() + 1);
+        }
+        links.erase(links.begin());
+    } else if (edges_equal(links[1], cuts[0]) || edges_equal(links[1], cuts[1])) {
+        // Remove link[1] and the matching cut
+        if (edges_equal(links[1], cuts[0])) {
+            cuts.erase(cuts.begin());
+        } else {
+            cuts.erase(cuts.begin() + 1);
+        }
+        links.erase(links.begin() + 1);
+    }
 
-    update.cuts.push_back({v_cut1_from, v_cut1_to});
-    update.cuts.push_back({v_cut2_from, v_cut2_to});
+    update.cuts = cuts;
+    update.links = links;
 
-    // Links are the original boundary edges
-    update.links.push_back({e1.u, e1.v});
-    update.links.push_back({e2.u, e2.v});
+    // Bug #4 Fix: Compute swap_link11 to determine correct root assignment
+    if (!links.empty()) {
+        int link11_vertex = links[0].first;  // First vertex of first link
+        int path_ind_l11 = get_link_path_ind(link11_vertex, path1, path2);
+        update.swap_link11 = swap_assignment_check(
+            path_ind_l11, cut1, cut2, path1, path2, cycle_pops
+        );
+    } else {
+        update.swap_link11 = false;
+    }
 
     // Apply the update
     apply_update(partition, update);
@@ -533,27 +771,62 @@ int cycle_walk(LCTPartition& partition,
 
     // Compute log-MH ratio
     double log_mh_ratio = 0.0;
+    double log_adj_ratio = 0.0;
+    double log_edge_ratio = 0.0;
+    double log_weight_ratio = 0.0;
+    double log_constraint_ratio = 0.0;
 
     // Adjacent district ratio (accounts for change in number of adjacent pairs)
     // Julia: prob = old_adj_dists/(old_adj_dists+delta_adj_dists)
     if (old_adj_dists_total > 0 && old_adj_dists_total + delta_adj_dists > 0) {
-        log_mh_ratio += std::log((double)old_adj_dists_total) -
+        log_adj_ratio = std::log((double)old_adj_dists_total) -
                         std::log((double)(old_adj_dists_total + delta_adj_dists));
+        log_mh_ratio += log_adj_ratio;
     }
 
     // Boundary edge ratio (proposal ratio)
     if (new_boundary > 0 && old_boundary > 0) {
-        log_mh_ratio += std::log((double)(old_boundary * (old_boundary - 1))) -
-                        std::log((double)(new_boundary * (new_boundary - 1)));
+        log_edge_ratio = std::log((double)(old_boundary * (old_boundary - 1))) -
+                         std::log((double)(new_boundary * (new_boundary - 1)));
+        log_mh_ratio += log_edge_ratio;
+    }
+
+    // Edge weight ratio (Bug #3 fix) - Julia lines 238-239
+    // prob *= sum_edge_weight_products
+    // prob /= (sum_edge_weight_products + w1w2_links_inv - w1w2_cuts_inv)
+    double new_sum_weights = sum_edge_weight_products + w1w2_links_inv - w1w2_cuts_inv;
+    if (sum_edge_weight_products > 0 && new_sum_weights > 0) {
+        log_weight_ratio = std::log(sum_edge_weight_products) - std::log(new_sum_weights);
+        log_mh_ratio += log_weight_ratio;
     }
 
     // Constraint ratio (target ratio)
-    // Convention: subtract new, add old (because we want pi(new)/pi(old))
-    // and constraints are log-penalties (higher = worse)
-    log_mh_ratio += old_constraint_penalty - new_constraint_penalty;
+    // MH ratio needs pi(new)/pi(old) = exp(log_pi_new - log_pi_old)
+    // calc_gibbs_tgt returns log(pi), where higher = better
+    log_constraint_ratio = new_constraint_penalty - old_constraint_penalty;
+    log_mh_ratio += log_constraint_ratio;
 
     // Convert to acceptance probability
     accept_ratio = std::min(1.0, std::exp(log_mh_ratio));
+
+    // Debug logging for first few iterations
+    if (do_mh_debug) {
+        Rcpp::Rcout << "\n[CW MH Debug]\n";
+        Rcpp::Rcout << "  Districts: " << d1 << ", " << d2 << "\n";
+        Rcpp::Rcout << "  Old boundary edges: " << old_boundary
+                    << ", New: " << new_boundary << "\n";
+        Rcpp::Rcout << "  Old adj dists: " << old_adj_dists_total
+                    << ", Delta: " << delta_adj_dists << "\n";
+        Rcpp::Rcout << "  Valid cut pairs (fwd): " << n_valid_pairs_fwd << "\n";
+        Rcpp::Rcout << "  Selected cuts: (" << cut1 << ", " << cut2 << ")\n";
+        Rcpp::Rcout << "  MH components:\n";
+        Rcpp::Rcout << "    log_adj_ratio: " << log_adj_ratio << "\n";
+        Rcpp::Rcout << "    log_edge_ratio: " << log_edge_ratio << "\n";
+        Rcpp::Rcout << "    log_weight_ratio: " << log_weight_ratio << "\n";
+        Rcpp::Rcout << "    log_constraint_ratio: " << log_constraint_ratio << "\n";
+        Rcpp::Rcout << "  Total log_mh_ratio: " << log_mh_ratio << "\n";
+        Rcpp::Rcout << "  Accept prob: " << accept_ratio << "\n";
+    }
 
     // MH accept/reject
     if (r_unif() < accept_ratio) {
@@ -576,6 +849,10 @@ int cycle_walk(LCTPartition& partition,
         partition.district_pop = old_district_pop;
         partition.district_roots = old_district_roots;
         partition.cross_edges = old_cross_edges;
+
+        // Revert LCT roots
+        partition.lct.evert(old_district_roots[d1]);
+        partition.lct.evert(old_district_roots[d2]);
 
         return 0;  // Rejected
     }

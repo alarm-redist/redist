@@ -21,9 +21,10 @@ struct CycleWalkUpdate {
     DistrictPair changed_districts;
     std::vector<std::pair<int, int>> links;  // Edges to add
     std::vector<std::pair<int, int>> cuts;   // Edges to remove
+    bool swap_link11;                         // Whether to swap root assignments
     bool valid;                               // Whether this is a valid proposal
 
-    CycleWalkUpdate() : valid(false) {}
+    CycleWalkUpdate() : swap_link11(false), valid(false) {}
 };
 
 /*
