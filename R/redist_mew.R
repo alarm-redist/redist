@@ -18,14 +18,6 @@
 #' @param constraints A [redist_constr] object or a list containing
 #'   information on sampling constraints. See [redist_constr] for more
 #'   information.
-#' @param adapt_k_thresh The threshold value used in the heuristic to adapt the
-#'   number of marked edges. Higher values are more conservative. Set to 0.9999
-#'   or 1 if the algorithm does not appear to be sampling from the target
-#'   distribution. Must be between 0 and 1.
-#' @param warmstart If `TRUE`, the algorithm will initialize the spanning
-#'   tree from the structure of `init_plan`. If `FALSE` (the
-#'   default), uses Wilson's algorithm to sample a uniform random spanning tree,
-#'   then finds marked edges that match `init_plan`.
 #' @param init_name A name for the initial plan, or `FALSE` to not include
 #'   the initial plan in the output. Defaults to the column name of the existing
 #'   plan, or `"<init>"` if the initial plan is sampled.
@@ -55,8 +47,6 @@ redist_mew <- function(map, nsims,
                        init_plan = NULL,
                        compactness = 1,
                        constraints = list(),
-                       adapt_k_thresh = 0.99,
-                       warmstart = FALSE,
                        init_name = NULL,
                        verbose = FALSE,
                        silent = FALSE) {
@@ -70,8 +60,6 @@ redist_mew <- function(map, nsims,
 
     if (compactness < 0)
         cli::cli_abort("{.arg compactness} must be non-negative.")
-    if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
-        cli::cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
     if (nsims <= warmup)
         cli::cli_abort("{.arg nsims} must be greater than {.arg warmup}.")
     if (thin < 1 || thin > nsims - warmup)
@@ -131,8 +119,6 @@ redist_mew <- function(map, nsims,
 
     # Setup control parameters
     control <- list(
-        adapt_k_thresh = adapt_k_thresh,
-        warmstart = warmstart,
         verbosity = ifelse(silent, 0L, ifelse(verbose, 2L, 1L))
     )
 
@@ -146,11 +132,6 @@ redist_mew <- function(map, nsims,
         }
         if (!is.null(init_name) && init_name != FALSE) {
             cli::cli_alert_info("Initial plan: {init_name}")
-        }
-        if (warmstart) {
-            cli::cli_alert_info("Using warmstart initialization")
-        } else {
-            cli::cli_alert_info("Initializing with Wilson's algorithm")
         }
     }
 

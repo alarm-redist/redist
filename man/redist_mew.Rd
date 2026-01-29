@@ -12,8 +12,6 @@ redist_mew(
   init_plan = NULL,
   compactness = 1,
   constraints = list(),
-  adapt_k_thresh = 0.99,
-  warmstart = FALSE,
   init_name = NULL,
   verbose = FALSE,
   silent = FALSE
@@ -39,16 +37,6 @@ higher values preferring more compact districts. Must be nonnegative.}
 \item{constraints}{A \link{redist_constr} object or a list containing
 information on sampling constraints. See \link{redist_constr} for more
 information.}
-
-\item{adapt_k_thresh}{The threshold value used in the heuristic to adapt the
-number of marked edges. Higher values are more conservative. Set to 0.9999
-or 1 if the algorithm does not appear to be sampling from the target
-distribution. Must be between 0 and 1.}
-
-\item{warmstart}{If \code{TRUE}, the algorithm will initialize the spanning
-tree from the structure of \code{init_plan}. If \code{FALSE} (the
-default), uses Wilson's algorithm to sample a uniform random spanning tree,
-then finds marked edges that match \code{init_plan}.}
 
 \item{init_name}{A name for the initial plan, or \code{FALSE} to not include
 the initial plan in the output. Defaults to the column name of the existing
