@@ -369,6 +369,29 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// mew_plans
+Rcpp::List mew_plans(int nsims, List adj, const arma::uvec& init, const arma::uvec& pop, int n_distr, double target, double lower, double upper, double rho, List constraints, List control, int thin, int verbosity);
+RcppExport SEXP _redist_mew_plans(SEXP nsimsSEXP, SEXP adjSEXP, SEXP initSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP constraintsSEXP, SEXP controlSEXP, SEXP thinSEXP, SEXP verbositySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type nsims(nsimsSEXP);
+    Rcpp::traits::input_parameter< List >::type adj(adjSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type init(initSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
+    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< double >::type rho(rhoSEXP);
+    Rcpp::traits::input_parameter< List >::type constraints(constraintsSEXP);
+    Rcpp::traits::input_parameter< List >::type control(controlSEXP);
+    Rcpp::traits::input_parameter< int >::type thin(thinSEXP);
+    Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
+    rcpp_result_gen = Rcpp::wrap(mew_plans(nsims, adj, init, pop, n_distr, target, lower, upper, rho, constraints, control, thin, verbosity));
+    return rcpp_result_gen;
+END_RCPP
+}
 // pareto_dominated
 LogicalVector pareto_dominated(arma::mat x);
 RcppExport SEXP _redist_pareto_dominated(SEXP xSEXP) {
@@ -658,6 +681,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_pop_tally", (DL_FUNC) &_redist_pop_tally, 3},
     {"_redist_max_dev", (DL_FUNC) &_redist_max_dev, 3},
     {"_redist_ms_plans", (DL_FUNC) &_redist_ms_plans, 15},
+    {"_redist_mew_plans", (DL_FUNC) &_redist_mew_plans, 13},
     {"_redist_pareto_dominated", (DL_FUNC) &_redist_pareto_dominated, 1},
     {"_redist_closest_adj_pop", (DL_FUNC) &_redist_closest_adj_pop, 3},
     {"_redist_rint1", (DL_FUNC) &_redist_rint1, 2},

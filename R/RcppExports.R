@@ -105,6 +105,10 @@ ms_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, r
     .Call(`_redist_ms_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, verbosity)
 }
 
+mew_plans <- function(nsims, adj, init, pop, n_distr, target, lower, upper, rho, constraints, control, thin, verbosity) {
+    .Call(`_redist_mew_plans`, nsims, adj, init, pop, n_distr, target, lower, upper, rho, constraints, control, thin, verbosity)
+}
+
 pareto_dominated <- function(x) {
     .Call(`_redist_pareto_dominated`, x)
 }
