@@ -186,7 +186,8 @@ redist_mew <- function(map, nsims,
     l_diag <- tibble::tibble(
         accept_rate = plans_raw$accept_rate[diag_idx],
         cycle_intersect_rate = plans_raw$cycle_intersect_rate[diag_idx],
-        avg_proposal_tries = plans_raw$avg_proposal_tries[diag_idx]
+        avg_proposal_tries = plans_raw$avg_proposal_tries[diag_idx],
+        runtime = time_elapsed
     )
 
     # Build redist_plans object
@@ -195,6 +196,10 @@ redist_mew <- function(map, nsims,
         map = map,
         algorithm = "mew",
         wgt = rep(1, ncol(plans_m_final)),
+        ndists = ndists,
+        compactness = compactness,
+        constraints = constraints,
+        version = packageVersion("redist"),
         diagnostics = l_diag
     )
 
