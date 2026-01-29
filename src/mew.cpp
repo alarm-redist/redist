@@ -69,6 +69,7 @@ Rcpp::List mew_plans(int nsims, List adj, const arma::uvec &init,
     int n_accept = 0;
     int n_cycle_intersect = 0;
     int total_tries = 0;
+    int n_failed_proposals = 0;  // Count proposals that hit MAX_TRIES
     
     // Progress bar
     SEXP pb = R_NilValue;
@@ -133,6 +134,14 @@ Rcpp::List mew_plans(int nsims, List adj, const arma::uvec &init,
                 }
             }
             // If reject, tree and marked_edges stay as tree_old and marked_old
+        } else {
+            // Proposal failed (hit MAX_TRIES)
+            n_failed_proposals++;
+            if (n_failed_proposals >= 50 && verbosity > 0 && n_failed_proposals % 50 == 0) {
+                Rcpp::Rcout << "Warning: " << n_failed_proposals 
+                           << " proposals have failed to meet population constraints. "
+                           << "Chain may be stuck." << std::endl;
+            }
         }
         // If !proposal.valid, automatically reject (keep current state)
         

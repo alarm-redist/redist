@@ -7,7 +7,7 @@
 redist_mew(
   map,
   nsims,
-  warmup = max(100, nsims\%/\%5),
+  warmup = 0L,
   thin = 1L,
   init_plan = NULL,
   compactness = 1,

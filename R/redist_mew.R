@@ -3,31 +3,7 @@
 #' `redist_mew` uses a Markov Chain Monte Carlo algorithm based on marked
 #' edge walks on spanning trees (McWhorter and DeFord 2024) to generate
 #' congressional or legislative redistricting plans according to contiguity,
-#' population, compactness, and administrative boundary constraints.
-#'
-#' This function draws samples from a specific target measure, controlled by the
-#' `map`, `compactness`, and `constraints` parameters.
-#'
-#' # Algorithm Details
-#'
-#' The MEW algorithm represents redistricting plans as a spanning tree of the
-#' dual graph along with a set of `k-1` marked edges (for `k` districts).
-#' Removing the marked edges from the tree creates `k` connected components,
-#' which correspond to the districts. The algorithm proposes new plans by:
-#'
-#' 1. Updating the spanning tree through a **cycle basis step**
-#' 2. Updating the marked edges through a **random walk step**
-#'
-#' The Metropolis-Hastings acceptance probability accounts for the number of
-#' spanning trees through the Matrix-Tree theorem, ensuring detailed balance.
-#'
-#' Key to ensuring good performance is monitoring the acceptance rate, which
-#' is reported at the sample level in the output. Users should also check
-#' diagnostics of the sample by running [summary.redist_plans()].
-#'
-#' Higher values of `compactness` sample more compact districts;
-#' setting this parameter to 1 is computationally efficient and generates nicely
-#' compact districts.
+#' population, compactness, and other custom constraints.
 #'
 #' @param map A [redist_map] object.
 #' @param nsims The number of samples to draw, including warmup.
@@ -80,7 +56,7 @@
 #' @order 1
 #' @export
 redist_mew <- function(map, nsims,
-                       warmup = max(100, nsims %/% 5),
+                       warmup = 0L,
                        thin = 1L,
                        init_plan = NULL,
                        compactness = 1,
@@ -122,9 +98,19 @@ redist_mew <- function(map, nsims,
     }
 
     if (length(init_plan) == 0L || isTRUE(init_plan == "sample")) {
-        init_plan <- as.integer(get_plans_matrix(
-            redist_smc(map, 10, resample = FALSE, ref_name = FALSE,
-                      silent = TRUE, ncores = 1))[, 1])
+        if (!silent) cli::cli_alert_info("Sampling initial plan with SMC...")
+        init_plan <- tryCatch({
+            as.integer(get_plans_matrix(
+                redist_smc(map, 10, resample = FALSE, ref_name = FALSE,
+                          silent = TRUE, ncores = 1))[, 1])
+        }, error = function(e) {
+            cli::cli_abort(c(
+                "Failed to generate initial plan using SMC.",
+                "i" = "This can happen on very small or difficult maps.",
+                "i" = "Try providing an {.arg init_plan} manually.",
+                "x" = conditionMessage(e)
+            ))
+        })
         if (is.null(init_name)) init_name <- "<init>"
     }
 
@@ -141,25 +127,13 @@ redist_mew <- function(map, nsims,
 
     # Process constraints
     if (inherits(constraints, "redist_constr")) {
-        constraints <- c(constraints, eval(formals(redist.mcmc)$constraints))
-    } else if (!is.list(constraints)) {
-        cli::cli_abort("{.arg constraints} must be a {.cls redist_constr} object or list.")
+        constraints <- as.list(constraints)
     }
 
     # Population parameters
+    pop_bounds <- attr(map, "pop_bounds")
     pop <- map[[attr(map, "pop_col")]]
-    pop_tol <- attr(map, "pop_tol")
-    total_pop <- sum(pop)
-    target_pop <- total_pop / ndists
 
-    # Handle NULL pop_tol (no constraint)
-    if (is.null(pop_tol)) {
-        lower_pop <- 0
-        upper_pop <- Inf
-    } else {
-        lower_pop <- target_pop * (1 - pop_tol)
-        upper_pop <- target_pop * (1 + pop_tol)
-    }
 
     # Setup control parameters
     control <- list(
@@ -194,9 +168,9 @@ redist_mew <- function(map, nsims,
         init = init_plan,
         pop = pop,
         n_distr = ndists,
-        target = target_pop,
-        lower = lower_pop,
-        upper = upper_pop,
+        target = pop_bounds[2],
+        lower = pop_bounds[1],
+        upper = pop_bounds[3],
         rho = compactness,
         constraints = constraints,
         control = control,
@@ -211,10 +185,20 @@ redist_mew <- function(map, nsims,
         plans_m[, i] <- orig_lookup[plans_m[, i]]
     }
 
-    # Remove warmup samples (keep first and last)
-    # warmup_idx includes warmup samples plus the last sample
-    warmup_idx <- c(seq_len(1 + warmup %/% thin), ncol(plans_m))
-    plans_m_final <- plans_m[, -warmup_idx, drop = FALSE]
+    # Remove warmup samples
+    # After thinning in C++, we have nsims/thin total samples
+    # We want to remove the first warmup/thin samples
+    if (warmup > 0) {
+        n_warmup_thinned <- ceiling(warmup / thin)
+        if (n_warmup_thinned < ncol(plans_m)) {
+            plans_m_final <- plans_m[, -(1:n_warmup_thinned), drop = FALSE]
+        } else {
+            # All samples are warmup - keep at least the last one
+            plans_m_final <- plans_m[, ncol(plans_m), drop = FALSE]
+        }
+    } else {
+        plans_m_final <- plans_m
+    }
 
     # Build redist_plans object
     n_out <- ncol(plans_m_final)
