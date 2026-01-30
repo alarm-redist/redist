@@ -41,6 +41,7 @@ Rcpp::List cyclewalk_plans(
     double compactness,             // Compactness parameter (rho)
     Rcpp::List constraints,         // Constraint specifications
     Rcpp::List control,             // Control parameters
+    Rcpp::List edge_weights,        // Edge weights (list of list(edge=c(u,v), weight=w))
     int thin,                       // Thinning interval
     int verbosity                   // Verbosity level (0=silent, 1=normal, 3=verbose)
 );

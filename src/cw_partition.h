@@ -16,6 +16,7 @@
 #include <map>
 #include <set>
 #include <utility>
+#include <unordered_map>
 
 /*
  * Edge between two vertices, with weight.
@@ -47,6 +48,36 @@ using EdgeSet = std::set<CWEdge>;
 using CrossEdgeMap = std::map<DistrictPair, EdgeSet>;
 
 /*
+ * Hash function for edge pairs (symmetric: (u,v) == (v,u)).
+ * Used for efficient edge weight lookup.
+ */
+struct EdgePairHash {
+    std::size_t operator()(const std::pair<int, int>& p) const {
+        int u = std::min(p.first, p.second);
+        int v = std::max(p.first, p.second);
+        // Combine hash values
+        return std::hash<int>()(u) ^ (std::hash<int>()(v) << 1);
+    }
+};
+
+/*
+ * Equality for edge pairs (symmetric: (u,v) == (v,u)).
+ */
+struct EdgePairEqual {
+    bool operator()(const std::pair<int, int>& a,
+                    const std::pair<int, int>& b) const {
+        return (a.first == b.first && a.second == b.second) ||
+               (a.first == b.second && a.second == b.first);
+    }
+};
+
+/*
+ * Map for sparse edge weight storage.
+ */
+using EdgeWeightMap = std::unordered_map<std::pair<int, int>, double,
+                                          EdgePairHash, EdgePairEqual>;
+
+/*
  * LCTPartition: Maintains the redistricting plan state.
  *
  * Each district is represented by a spanning tree stored in the LCT.
@@ -71,6 +102,10 @@ public:
     const Graph* graph;
     const arma::uvec* pop;
     const arma::uvec* counties;
+
+    // Edge weights (sparse storage - only non-default weights stored)
+    EdgeWeightMap edge_weights_;
+    double default_edge_weight_;  // Default weight for edges not in map
 
     // Constructor: empty partition (use init_from_plan to populate)
     LCTPartition(int n_vertices, int n_districts);
@@ -118,6 +153,20 @@ public:
      * Get the current plan as a vector of district assignments.
      */
     arma::uvec get_plan() const;
+
+    /*
+     * Set edge weights from R list.
+     * edge_weights_list: List where each element has $edge (length 2) and $weight (scalar)
+     * Stores weights in sparse map; missing edges default to 1.0
+     */
+    void set_edge_weights(const Rcpp::List& edge_weights_list);
+
+    /*
+     * Get edge weight between vertices u and v.
+     * Returns default_edge_weight_ (1.0) if edge not in weight map.
+     * Handles undirected edges: (u,v) == (v,u)
+     */
+    double get_edge_weight(int u, int v) const;
 
     /*
      * Debug: Print partition state.

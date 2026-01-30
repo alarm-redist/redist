@@ -70,14 +70,13 @@ int internal_forest_walk(LCTPartition& partition, int max_attempts) {
     double cum_weight = 0.0;
     for (int i = 1; i < path_len; i++) {
         // Weight of edge (path[i-1], path[i])
-        // For now, all edges have weight 1.0
-        double edge_weight = 1.0;
+        double edge_weight = partition.get_edge_weight(path[i - 1], path[i]);
         cum_weight += 1.0 / edge_weight;
         cumulative_weights[i] = cum_weight;
     }
 
     // Add weight for the proposed new edge (u, v)
-    double new_edge_weight = 1.0;
+    double new_edge_weight = partition.get_edge_weight(u, v);
     double total_weight = cum_weight + 1.0 / new_edge_weight;
 
     // Step 4: Sample a random position

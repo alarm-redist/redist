@@ -260,15 +260,16 @@ std::vector<std::pair<int, int>> find_valid_cut_pairs(
     // are NOT excluded - they're handled by cancellation in get_cuts_and_links.
     // Only the identity pair (1, initial_cut) is removed.
 
-    static int global_valid_cut_count = 0;
-    global_valid_cut_count++;
-    bool do_debug = (global_valid_cut_count <= 2);
-    if (do_debug) {
-        Rcpp::Rcout << "\n[Valid Cut Debug]\n";
-        Rcpp::Rcout << "  n=" << n << ", initial_cut=" << initial_cut
-                    << ", total_pop=" << total_pop << "\n";
-        Rcpp::Rcout << "  Pop bounds: [" << lower << ", " << upper << "]\n";
-    }
+    // Debug code disabled
+    // static int global_valid_cut_count = 0;
+    // global_valid_cut_count++;
+    // bool do_debug = (global_valid_cut_count <= 2);
+    // if (do_debug) {
+    //     Rcpp::Rcout << "\n[Valid Cut Debug]\n";
+    //     Rcpp::Rcout << "  n=" << n << ", initial_cut=" << initial_cut
+    //                 << ", total_pop=" << total_pop << "\n";
+    //     Rcpp::Rcout << "  Pop bounds: [" << lower << ", " << upper << "]\n";
+    // }
 
     for (int cut1 = 1; cut1 <= n; cut1++) {
         for (int cut2 = cut1; cut2 <= n - 1; cut2++) {
@@ -283,29 +284,21 @@ std::vector<std::pair<int, int>> find_valid_cut_pairs(
             if (pop1 >= lower && pop1 <= upper &&
                 pop2 >= lower && pop2 <= upper) {
                 valid_pairs.push_back({cut1, cut2});
-                if (do_debug && valid_pairs.size() <= 5) {
-                    Rcpp::Rcout << "    Valid: (" << cut1 << ", " << cut2
-                                << ") -> pop1=" << pop1 << ", pop2=" << pop2 << "\n";
-                }
+                // Debug code disabled
+                // if (do_debug && valid_pairs.size() <= 5) {
+                //     Rcpp::Rcout << "    Valid: (" << cut1 << ", " << cut2
+                //                 << ") -> pop1=" << pop1 << ", pop2=" << pop2 << "\n";
+                // }
             }
         }
     }
 
-    if (do_debug) {
-        Rcpp::Rcout << "  Total valid pairs: " << valid_pairs.size() << "\n";
-    }
+    // Debug code disabled
+    // if (do_debug) {
+    //     Rcpp::Rcout << "  Total valid pairs: " << valid_pairs.size() << "\n";
+    // }
 
     return valid_pairs;
-}
-
-/*
- * Get edge weight from graph.
- * For now, assumes all edges have weight 1.0 (unweighted graph).
- * TODO: Support weighted graphs by looking up edge weights.
- */
-static double get_edge_weight(const Graph& g, int u, int v) {
-    // For unweighted graphs, all edges have weight 1.0
-    return 1.0;
 }
 
 /*
@@ -498,10 +491,10 @@ int cycle_walk(LCTPartition& partition,
                double& accept_ratio) {
     accept_ratio = 0.0;
 
-    // Global debug counter (wraps around)
-    static int global_cw_count = 0;
-    global_cw_count++;
-    bool do_mh_debug = (global_cw_count <= 5);
+    // Debug code disabled
+    // static int global_cw_count = 0;
+    // global_cw_count++;
+    // bool do_mh_debug = (global_cw_count <= 5);
 
     // Step 1: Pick random adjacent districts
     int d1, d2;
@@ -538,19 +531,19 @@ int cycle_walk(LCTPartition& partition,
     // Initial cut is at the boundary between path1 and path2
     int initial_cut = (int)path1.size();
 
-    // Debug: verify initial cut makes sense
-    if (do_mh_debug) {
-        Rcpp::Rcout << "\n[Cycle Debug]\n";
-        Rcpp::Rcout << "  Path1 len: " << path1.size() << ", Path2 len: " << path2.size() << "\n";
-        Rcpp::Rcout << "  Cycle len: " << cycle_pops.size() << "\n";
-        Rcpp::Rcout << "  Initial cut: " << initial_cut << "\n";
-        Rcpp::Rcout << "  Cycle pops: [";
-        for (size_t i = 0; i < cycle_pops.size(); i++) {
-            if (i > 0) Rcpp::Rcout << ", ";
-            Rcpp::Rcout << cycle_pops[i];
-        }
-        Rcpp::Rcout << "]\n";
-    }
+    // Debug code disabled
+    // if (do_mh_debug) {
+    //     Rcpp::Rcout << "\n[Cycle Debug]\n";
+    //     Rcpp::Rcout << "  Path1 len: " << path1.size() << ", Path2 len: " << path2.size() << "\n";
+    //     Rcpp::Rcout << "  Cycle len: " << cycle_pops.size() << "\n";
+    //     Rcpp::Rcout << "  Initial cut: " << initial_cut << "\n";
+    //     Rcpp::Rcout << "  Cycle pops: [";
+    //     for (size_t i = 0; i < cycle_pops.size(); i++) {
+    //         if (i > 0) Rcpp::Rcout << ", ";
+    //         Rcpp::Rcout << cycle_pops[i];
+    //     }
+    //     Rcpp::Rcout << "]\n";
+    // }
 
     // Step 5: Find valid cut pairs
     std::vector<std::pair<int, int>> valid_pairs =
@@ -558,9 +551,10 @@ int cycle_walk(LCTPartition& partition,
 
     if (valid_pairs.empty()) {
         // No valid cuts found - restore roots and return
-        if (do_mh_debug) {
-            Rcpp::Rcout << "[CW Debug] No valid cuts found, returning -4\n";
-        }
+        // Debug code disabled
+        // if (do_mh_debug) {
+        //     Rcpp::Rcout << "[CW Debug] No valid cuts found, returning -4\n";
+        // }
         partition.lct.evert(partition.district_roots[d1]);
         partition.lct.evert(partition.district_roots[d2]);
         return -4;  // No valid cut pairs found
@@ -600,9 +594,9 @@ int cycle_walk(LCTPartition& partition,
         auto [e1_u, e1_v] = get_edge_at_position(c1);
         auto [e2_u, e2_v] = get_edge_at_position(c2 + 1);
 
-        // Get edge weights (currently returns 1.0 for unweighted)
-        double w1 = get_edge_weight(*(partition.graph), e1_u, e1_v);
-        double w2 = get_edge_weight(*(partition.graph), e2_u, e2_v);
+        // Get edge weights from partition
+        double w1 = partition.get_edge_weight(e1_u, e1_v);
+        double w2 = partition.get_edge_weight(e2_u, e2_v);
 
         // Add 1/(w1*w2) to cumulative sum
         cumsum += 1.0 / (w1 * w2);
@@ -622,13 +616,13 @@ int cycle_walk(LCTPartition& partition,
     // Get the actual edges for selected cuts (for edge weight ratio)
     auto [selected_e1_u, selected_e1_v] = get_edge_at_position(cut1);
     auto [selected_e2_u, selected_e2_v] = get_edge_at_position(cut2 + 1);
-    double w1_cuts = get_edge_weight(*(partition.graph), selected_e1_u, selected_e1_v);
-    double w2_cuts = get_edge_weight(*(partition.graph), selected_e2_u, selected_e2_v);
+    double w1_cuts = partition.get_edge_weight(selected_e1_u, selected_e1_v);
+    double w2_cuts = partition.get_edge_weight(selected_e2_u, selected_e2_v);
     double w1w2_cuts_inv = 1.0 / (w1_cuts * w2_cuts);
 
     // Get edge weights for the boundary edges (links)
-    double w1_links = get_edge_weight(*(partition.graph), e1.u, e1.v);
-    double w2_links = get_edge_weight(*(partition.graph), e2.u, e2.v);
+    double w1_links = partition.get_edge_weight(e1.u, e1.v);
+    double w2_links = partition.get_edge_weight(e2.u, e2.v);
     double w1w2_links_inv = 1.0 / (w1_links * w2_links);
 
     double sum_edge_weight_products = cum_edge_weight_product[n_valid_pairs_fwd - 1];
@@ -809,24 +803,24 @@ int cycle_walk(LCTPartition& partition,
     // Convert to acceptance probability
     accept_ratio = std::min(1.0, std::exp(log_mh_ratio));
 
-    // Debug logging for first few iterations
-    if (do_mh_debug) {
-        Rcpp::Rcout << "\n[CW MH Debug]\n";
-        Rcpp::Rcout << "  Districts: " << d1 << ", " << d2 << "\n";
-        Rcpp::Rcout << "  Old boundary edges: " << old_boundary
-                    << ", New: " << new_boundary << "\n";
-        Rcpp::Rcout << "  Old adj dists: " << old_adj_dists_total
-                    << ", Delta: " << delta_adj_dists << "\n";
-        Rcpp::Rcout << "  Valid cut pairs (fwd): " << n_valid_pairs_fwd << "\n";
-        Rcpp::Rcout << "  Selected cuts: (" << cut1 << ", " << cut2 << ")\n";
-        Rcpp::Rcout << "  MH components:\n";
-        Rcpp::Rcout << "    log_adj_ratio: " << log_adj_ratio << "\n";
-        Rcpp::Rcout << "    log_edge_ratio: " << log_edge_ratio << "\n";
-        Rcpp::Rcout << "    log_weight_ratio: " << log_weight_ratio << "\n";
-        Rcpp::Rcout << "    log_constraint_ratio: " << log_constraint_ratio << "\n";
-        Rcpp::Rcout << "  Total log_mh_ratio: " << log_mh_ratio << "\n";
-        Rcpp::Rcout << "  Accept prob: " << accept_ratio << "\n";
-    }
+    // Debug logging disabled
+    // if (do_mh_debug) {
+    //     Rcpp::Rcout << "\n[CW MH Debug]\n";
+    //     Rcpp::Rcout << "  Districts: " << d1 << ", " << d2 << "\n";
+    //     Rcpp::Rcout << "  Old boundary edges: " << old_boundary
+    //                 << ", New: " << new_boundary << "\n";
+    //     Rcpp::Rcout << "  Old adj dists: " << old_adj_dists_total
+    //                 << ", Delta: " << delta_adj_dists << "\n";
+    //     Rcpp::Rcout << "  Valid cut pairs (fwd): " << n_valid_pairs_fwd << "\n";
+    //     Rcpp::Rcout << "  Selected cuts: (" << cut1 << ", " << cut2 << ")\n";
+    //     Rcpp::Rcout << "  MH components:\n";
+    //     Rcpp::Rcout << "    log_adj_ratio: " << log_adj_ratio << "\n";
+    //     Rcpp::Rcout << "    log_edge_ratio: " << log_edge_ratio << "\n";
+    //     Rcpp::Rcout << "    log_weight_ratio: " << log_weight_ratio << "\n";
+    //     Rcpp::Rcout << "    log_constraint_ratio: " << log_constraint_ratio << "\n";
+    //     Rcpp::Rcout << "  Total log_mh_ratio: " << log_mh_ratio << "\n";
+    //     Rcpp::Rcout << "  Accept prob: " << accept_ratio << "\n";
+    // }
 
     // MH accept/reject
     if (r_unif() < accept_ratio) {

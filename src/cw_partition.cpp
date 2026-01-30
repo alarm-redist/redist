@@ -39,7 +39,8 @@ LCTPartition::LCTPartition(int n_vertices, int n_districts)
       district_pop(n_districts, 0),
       graph(nullptr),
       pop(nullptr),
-      counties(nullptr) {}
+      counties(nullptr),
+      default_edge_weight_(1.0) {}
 
 int LCTPartition::init_from_plan(const Graph& g,
                                   const arma::uvec& plan,
@@ -247,3 +248,75 @@ void LCTPartition::print_state(int verbosity) const {
         }
     }
 }
+
+// ============================================================
+// Edge Weight Methods
+// ============================================================
+
+void LCTPartition::set_edge_weights(const Rcpp::List& edge_weights_list) {
+    edge_weights_.clear();
+
+    if (edge_weights_list.size() == 0) {
+        return;  // No weights specified, use defaults
+    }
+
+    // Each element should be a list with $edge and $weight
+    for (int i = 0; i < edge_weights_list.size(); i++) {
+        Rcpp::List entry = edge_weights_list[i];
+
+        // Extract edge (2-element vector)
+        if (!entry.containsElementNamed("edge")) {
+            Rcpp::stop("Edge weight entry %d missing 'edge' field", i + 1);
+        }
+        Rcpp::IntegerVector edge = entry["edge"];
+        if (edge.size() != 2) {
+            Rcpp::stop("Edge weight entry %d: 'edge' must be length 2", i + 1);
+        }
+
+        // Extract weight (scalar)
+        if (!entry.containsElementNamed("weight")) {
+            Rcpp::stop("Edge weight entry %d missing 'weight' field", i + 1);
+        }
+        double weight = Rcpp::as<double>(entry["weight"]);
+
+        if (weight <= 0) {
+            Rcpp::stop("Edge weight entry %d: weight must be positive", i + 1);
+        }
+
+        // Convert from 1-indexed R to 0-indexed C++
+        int u = edge[0] - 1;
+        int v = edge[1] - 1;
+
+        // Validate vertices
+        if (u < 0 || u >= n_vertices || v < 0 || v >= n_vertices) {
+            Rcpp::stop("Edge weight entry %d: vertices out of range [1, %d]",
+                       i + 1, n_vertices);
+        }
+
+        // Check edge exists in graph
+        const std::vector<int>& neighbors = (*graph)[u];
+        if (std::find(neighbors.begin(), neighbors.end(), v) == neighbors.end()) {
+            Rcpp::stop("Edge weight entry %d: edge (%d, %d) not in adjacency graph",
+                       i + 1, edge[0], edge[1]);
+        }
+
+        // Store weight (canonicalized order)
+        auto key = std::make_pair(std::min(u, v), std::max(u, v));
+        edge_weights_[key] = weight;
+    }
+}
+
+double LCTPartition::get_edge_weight(int u, int v) const {
+    // Canonicalize edge order (undirected graph)
+    auto key = std::make_pair(std::min(u, v), std::max(u, v));
+
+    // Lookup in weight map
+    auto it = edge_weights_.find(key);
+    if (it != edge_weights_.end()) {
+        return it->second;
+    }
+
+    // Default weight if not found
+    return default_edge_weight_;
+}
+

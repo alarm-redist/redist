@@ -13,6 +13,7 @@ redist_cyclewalk(
   counties = NULL,
   compactness = 1,
   constraints = list(),
+  edge_weights = NULL,
   init_name = NULL,
   verbose = FALSE,
   silent = FALSE
@@ -41,6 +42,13 @@ the algorithm will generate maps that tend to follow county lines.}
 higher values preferring more compact districts. Must be nonnegative.}
 
 \item{constraints}{A \link{redist_constr} object or list of constraints.}
+
+\item{edge_weights}{Optional list of edge weights for the graph. Each element
+should be a list with two fields: \code{edge} (a length-2 numeric vector of
+vertex indices) and \code{weight} (a positive number). Edges not specified
+default to weight 1.0. Higher weights make edges less likely to be cut or
+linked in proposals (cost interpretation). Example:
+\code{list(list(edge = c(1, 2), weight = 2.0))}.}
 
 \item{init_name}{A name for the initial plan, or \code{FALSE} to not include
 the initial plan in the output. Defaults to the column name of the

@@ -38,6 +38,7 @@ Rcpp::List cyclewalk_plans(
     double compactness,
     Rcpp::List constraints,
     Rcpp::List control,
+    Rcpp::List edge_weights,  // NEW: Edge weights
     int thin,
     int verbosity
 ) {
@@ -79,6 +80,14 @@ Rcpp::List cyclewalk_plans(
 
     if (init_result != 0) {
         Rcpp::stop("Failed to initialize partition - Wilson's algorithm failed.");
+    }
+
+    // Set edge weights if provided
+    if (edge_weights.size() > 0) {
+        partition.set_edge_weights(edge_weights);
+        if (verbosity >= 1) {
+            Rcout << "Using " << edge_weights.size() << " custom edge weights.\n";
+        }
     }
 
     if (verbosity >= 1) {

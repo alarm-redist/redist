@@ -23,6 +23,12 @@
 #' @param compactness Controls the compactness of the generated districts, with
 #'   higher values preferring more compact districts. Must be nonnegative.
 #' @param constraints A [redist_constr] object or list of constraints.
+#' @param edge_weights Optional list of edge weights for the graph. Each element
+#'   should be a list with two fields: \code{edge} (a length-2 numeric vector of
+#'   vertex indices) and \code{weight} (a positive number). Edges not specified
+#'   default to weight 1.0. Higher weights make edges less likely to be cut or
+#'   linked in proposals (cost interpretation). Example:
+#'   \code{list(list(edge = c(1, 2), weight = 2.0))}.
 #' @param init_name A name for the initial plan, or `FALSE` to not include
 #'   the initial plan in the output. Defaults to the column name of the
 #'   existing plan, or `<init>` if the initial plan is sampled.
@@ -44,6 +50,7 @@ redist_cyclewalk <- function(map, nsims,
                              thin = 1L, init_plan = NULL,
                              counties = NULL, compactness = 1,
                              constraints = list(),
+                             edge_weights = NULL,
                              init_name = NULL,
                              verbose = FALSE, silent = FALSE) {
 
@@ -119,6 +126,13 @@ redist_cyclewalk <- function(map, nsims,
     }
     constraints <- as.list(constraints)
 
+    # Handle edge weights
+    if (!is.null(edge_weights)) {
+        edge_weights <- validate_edge_weights(edge_weights, adj, V)
+    } else {
+        edge_weights <- list()  # Empty list for C++
+    }
+
     # Set verbosity
     verbosity <- 1
     if (verbose) {
@@ -162,6 +176,7 @@ redist_cyclewalk <- function(map, nsims,
         compactness = compactness,
         constraints = constraints,
         control = control,
+        edge_weights = edge_weights,
         thin = thin,
         verbosity = verbosity
     )
@@ -208,3 +223,68 @@ redist_cyclewalk <- function(map, nsims,
 
     out
 }
+
+# Validate edge weights format and values
+validate_edge_weights <- function(edge_weights, adj, V) {
+    if (!is.list(edge_weights)) {
+        cli::cli_abort("{.arg edge_weights} must be a list.")
+    }
+
+    if (length(edge_weights) == 0) {
+        return(list())  # Empty list is valid (no custom weights)
+    }
+
+    # Each element should be a list with $edge and $weight
+    for (i in seq_along(edge_weights)) {
+        entry <- edge_weights[[i]]
+
+        if (!is.list(entry)) {
+            cli::cli_abort("Entry {i} of {.arg edge_weights} must be a list.")
+        }
+
+        # Check for edge field
+        if (!"edge" %in% names(entry)) {
+            cli::cli_abort("Entry {i} of {.arg edge_weights} missing {.field edge} field.")
+        }
+
+        # Check for weight field
+        if (!"weight" %in% names(entry)) {
+            cli::cli_abort("Entry {i} of {.arg edge_weights} missing {.field weight} field.")
+        }
+
+        edge <- entry$edge
+        weight <- entry$weight
+
+        # Validate edge format
+        if (!is.numeric(edge) || length(edge) != 2) {
+            cli::cli_abort("Entry {i}: {.field edge} must be a numeric vector of length 2.")
+        }
+
+        u <- as.integer(edge[1])
+        v <- as.integer(edge[2])
+
+        # Validate vertices in range
+        if (u < 1 || u > V || v < 1 || v > V) {
+            cli::cli_abort("Entry {i}: vertices {u} and {v} out of range [1, {V}].")
+        }
+
+        # Check edge exists in adjacency
+        # Note: adj is 0-indexed (neighbors stored as 0, 1, 2, ...)
+        # but user input is 1-indexed, so check (v-1) in adj[[u]]
+        if (!((v - 1) %in% adj[[u]])) {
+            cli::cli_abort("Entry {i}: edge ({u}, {v}) not in adjacency graph.")
+        }
+
+        # Validate weight
+        if (!is.numeric(weight) || length(weight) != 1) {
+            cli::cli_abort("Entry {i}: {.field weight} must be a single number.")
+        }
+
+        if (weight <= 0) {
+            cli::cli_abort("Entry {i}: {.field weight} must be positive, got {weight}.")
+        }
+    }
+
+    edge_weights
+}
+
