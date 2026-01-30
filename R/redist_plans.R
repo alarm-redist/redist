@@ -391,7 +391,7 @@ get_mh_acceptance_rate <- function(plans) {
     if (!inherits(plans, "redist_plans")) cli::cli_abort("Not a {.cls redist_plans}")
     alg <- attr(plans, "algorithm")
 
-    if (alg %in% c("flip", "mergesplit")) {
+    if (alg %in% c("flip", "mergesplit", "cyclewalk")) {
         attr(plans, "mh_acceptance")
     } else {
         NA_real_
@@ -560,6 +560,7 @@ print.redist_plans <- function(x, ...) {
     alg_name <- c(mcmc = "Flip Markov chain Monte Carlo",
         smc = "Sequential Monte Carlo",
         mergesplit = "Merge-split Markov chain Monte Carlo",
+        cyclewalk = "Cycle Walk Markov chain Monte Carlo",
         rsg = "random seed-and-grow",
         crsg = "compact random seed-and-grow",
         enumpart = "Enumpart",
