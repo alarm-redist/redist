@@ -57,8 +57,16 @@ Rcpp::List cyclewalk_plans(
     plans.col(0) = init;
     plans.col(1) = init;
 
-    // Initialize MH decisions (all accept for stub)
+    // Initialize MH decisions
     IntegerVector mh_decisions(N / thin + 1);
+
+    // Initialize diagnostic vectors
+    std::vector<double> diag_accept_prob;
+    std::vector<int> diag_cycle_length;
+    std::vector<int> diag_n_valid_cuts;
+    diag_accept_prob.reserve(N);
+    diag_cycle_length.reserve(N);
+    diag_n_valid_cuts.reserve(N);
 
     // Progress bar setup
     RObject bar = R_NilValue;
@@ -115,8 +123,15 @@ Rcpp::List cyclewalk_plans(
 
         if (r_unif() < cycle_walk_prob) {
             // Cycle walk proposal - can change districts
-            double accept_ratio;
-            result = cycle_walk(partition, lower, upper, target, constraints, accept_ratio);
+            CycleWalkDiagnostics diag;
+            result = cycle_walk(partition, lower, upper, target, constraints, diag);
+            
+            // Collect diagnostics
+            diag_accept_prob.push_back(diag.accept_prob);
+            diag_cycle_length.push_back(diag.cycle_length);
+            diag_n_valid_cuts.push_back(diag.n_valid_cuts);
+            
+            // Update failure mode counters
             if (result == 1) {
                 cycle_walk_accept++;
             } else if (result == 0) {
@@ -133,6 +148,12 @@ Rcpp::List cyclewalk_plans(
         } else {
             // Internal forest walk - only changes spanning trees
             result = internal_forest_walk(partition);
+            
+            // Forest walk doesn't generate cycle walk diagnostics - use NA/0
+            diag_accept_prob.push_back(NA_REAL);
+            diag_cycle_length.push_back(0);
+            diag_n_valid_cuts.push_back(0);
+            
             if (result == 0) {
                 forest_walk_success++;
             } else {
@@ -194,10 +215,24 @@ Rcpp::List cyclewalk_plans(
     }
 
     // Return results as a List
+    // Create diagnostic list
+    List diagnostics = List::create(
+        Named("accept_prob") = NumericVector(diag_accept_prob.begin(), diag_accept_prob.end()),
+        Named("cycle_length") = IntegerVector(diag_cycle_length.begin(), diag_cycle_length.end()),
+        Named("n_valid_cuts") = IntegerVector(diag_n_valid_cuts.begin(), diag_n_valid_cuts.end()),
+        Named("failure_modes") = List::create(
+            Named("no_adj") = cycle_walk_fail_no_adj,
+            Named("few_edges") = cycle_walk_fail_few_edges,
+            Named("no_path") = cycle_walk_fail_no_path,
+            Named("no_cuts") = cycle_walk_fail_no_cuts
+        )
+    );
+
     // Always return a List for easy iteration and extension
     List out = List::create(
         Named("plans") = plans,
         Named("mhdecisions") = mh_decisions,
+        Named("diagnostics") = diagnostics,
         Named("algorithm") = "cyclewalk",
         Named("version") = "0.5-constraints"
     );

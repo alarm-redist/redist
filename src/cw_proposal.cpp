@@ -467,29 +467,36 @@ int cycle_walk(LCTPartition& partition,
                double lower, double upper,
                double target,
                Rcpp::List constraints,
-               double& accept_ratio) {
-    accept_ratio = 0.0;
+               CycleWalkDiagnostics& diagnostics) {
+    // Initialize diagnostics
+    diagnostics = CycleWalkDiagnostics();
 
     // Step 1: Pick random adjacent districts
     int d1, d2;
     if (!get_random_adjacent_districts(partition, d1, d2)) {
+        diagnostics.status = -1;
         return -1;  // No adjacent districts
     }
 
     // Step 2: Pick two random boundary edges
     CWEdge e1(0, 0), e2(0, 0);
     if (!get_random_edge_pair(partition, d1, d2, e1, e2)) {
+        diagnostics.status = -2;
         return -2;  // Need at least 2 boundary edges
     }
 
     // Step 3: Get the cycle paths
     std::vector<int> path1, path2;
     if (!get_cycle_paths(partition, e1, e2, path1, path2)) {
+        diagnostics.status = -3;
         return -3;  // Couldn't get cycle paths
     }
 
     // Step 4: Get collapsed cycle weights (subtree populations)
     std::vector<int> cycle_pops = get_collapsed_cycle_weights(partition, path1, path2);
+
+    // Track cycle length
+    diagnostics.cycle_length = (int)cycle_pops.size();
 
     // Total population of the two districts
     int total_pop = partition.district_pop[d1] + partition.district_pop[d2];
@@ -509,8 +516,12 @@ int cycle_walk(LCTPartition& partition,
     std::vector<std::pair<int, int>> valid_pairs =
         find_valid_cut_pairs(cycle_pops, initial_cut, total_pop, lower, upper);
 
+    // Track number of valid cuts
+    diagnostics.n_valid_cuts = (int)valid_pairs.size();
+
     if (valid_pairs.empty()) {
         // No valid cuts found - restore roots and return
+        diagnostics.status = -4;
         partition.lct.evert(partition.district_roots[d1]);
         partition.lct.evert(partition.district_roots[d2]);
         return -4;  // No valid cut pairs found
@@ -757,13 +768,18 @@ int cycle_walk(LCTPartition& partition,
     log_mh_ratio += log_constraint_ratio;
 
     // Convert to acceptance probability
-    accept_ratio = std::min(1.0, std::exp(log_mh_ratio));
+    double accept_ratio = std::min(1.0, std::exp(log_mh_ratio));
+
+    // Track acceptance probability in diagnostics
+    diagnostics.accept_prob = accept_ratio;
 
     // MH accept/reject
     if (r_unif() < accept_ratio) {
-        return 1;  // Accepted
+        diagnostics.status = 1;  // Accepted
+        return 1;
     } else {
         // Reject - revert the update
+        diagnostics.status = 0;  // Rejected
         // First undo LCT changes: cut the links, relink the cuts
         LinkCutTree& lct = partition.lct;
         for (const auto& link : update.links) {

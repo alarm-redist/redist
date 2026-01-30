@@ -190,15 +190,24 @@ redist_cyclewalk <- function(map, nsims,
     acceptances <- if (!is.null(algout$mhdecisions)) {
         as.logical(algout$mhdecisions)
     } else {
-        rep(TRUE, ncol(algout$plans))
+        rep(NA, ncol(algout$plans))
     }
 
     # Calculate warmup indices to remove
     warmup_idx <- c(seq_len(1 + warmup %/% thin), ncol(algout$plans))
 
+    # Extract and process diagnostics from C++
     l_diag <- list(
         runtime = as.numeric(t2_run - t1_run, units = "secs")
     )
+
+    # Add detailed diagnostics if available
+    if (!is.null(algout$diagnostics)) {
+        l_diag$accept_prob <- algout$diagnostics$accept_prob
+        l_diag$cycle_length <- algout$diagnostics$cycle_length
+        l_diag$n_valid_cuts <- algout$diagnostics$n_valid_cuts
+        l_diag$failure_modes <- algout$diagnostics$failure_modes
+    }
 
     # Create redist_plans object
     out <- new_redist_plans(

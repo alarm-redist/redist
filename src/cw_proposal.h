@@ -28,6 +28,19 @@ struct CycleWalkUpdate {
 };
 
 /*
+ * CycleWalkDiagnostics: Stores diagnostic information from a cycle walk attempt.
+ */
+struct CycleWalkDiagnostics {
+    int status;           // 1=accept, 0=reject, <0=failure code
+    double accept_prob;   // MH acceptance probability [0, 1]
+    int cycle_length;     // Length of cycle found (0 if no cycle)
+    int n_valid_cuts;     // Number of valid cut pairs (0 if none)
+
+    CycleWalkDiagnostics() 
+        : status(0), accept_prob(0.0), cycle_length(0), n_valid_cuts(0) {}
+};
+
+/*
  * Perform one cycle walk step.
  *
  * Algorithm:
@@ -43,15 +56,15 @@ struct CycleWalkUpdate {
  * - lower, upper: Population bounds
  * - target: Target population per district (parity)
  * - constraints: List of constraint objects from R
- * - accept_ratio: Output parameter for the acceptance ratio
+ * - diagnostics: Output parameter for diagnostic information
  *
- * Returns: 1 if accepted, 0 if rejected, -1 if no valid proposal
+ * Returns: 1 if accepted, 0 if rejected, <0 if failed (see diagnostics.status)
  */
 int cycle_walk(LCTPartition& partition,
                double lower, double upper,
                double target,
                Rcpp::List constraints,
-               double& accept_ratio);
+               CycleWalkDiagnostics& diagnostics);
 
 /*
  * Get a random pair of adjacent districts.
