@@ -200,13 +200,13 @@ test_that('adjacency check works correctly with 0-indexed adj list', {
 
   expect_silent(
     redist_cyclewalk(fl_map,
-      nsims = 5, edge_weights = ew1
+      nsims = 5, edge_weights = ew1, silent = TRUE
     )
   )
 
   expect_silent(
     redist_cyclewalk(fl_map,
-      nsims = 5, edge_weights = ew2
+      nsims = 5, edge_weights = ew2, silent = TRUE
     )
   )
 })
