@@ -7,6 +7,7 @@
 redist_cyclewalk(
   map,
   nsims,
+  chains = 1,
   warmup = 0,
   thin = 1L,
   init_plan = NULL,
@@ -14,6 +15,9 @@ redist_cyclewalk(
   compactness = 1,
   constraints = list(),
   edge_weights = NULL,
+  ncores = NULL,
+  cl_type = "PSOCK",
+  return_all = TRUE,
   init_name = NULL,
   verbose = FALSE,
   silent = FALSE
@@ -22,16 +26,22 @@ redist_cyclewalk(
 \arguments{
 \item{map}{A \link{redist_map} object.}
 
-\item{nsims}{The number of samples to draw, not including warmup.}
+\item{nsims}{The number of samples to draw per chain, not including warmup.}
+
+\item{chains}{The number of parallel chains to run. Each chain will have
+\code{nsims} draws. If \code{init_plan} is sampled, each chain will be initialized
+with its own sampled plan. Defaults to 1.}
 
 \item{warmup}{The number of warmup samples to discard.}
 
 \item{thin}{Save every \code{thin}-th sample. Defaults to no thinning (1).}
 
-\item{init_plan}{The initial state of the map. If not provided, will default to
-the reference map of the \code{map} object, or if none exists, will sample
-a random initial state using \link{redist_smc}. You can also request
-a random initial state by setting \code{init_plan="sample"}.}
+\item{init_plan}{The initial state of the map, provided as a single vector
+to be shared across all chains, or a matrix with \code{chains} columns.
+If not provided, will default to the reference map of the \code{map} object, or if
+none exists, will sample a random initial state using \link{redist_smc}. You can
+also request a random initial state for each chain by setting
+\code{init_plan="sample"}.}
 
 \item{counties}{A vector containing county (or other administrative or
 geographic unit) labels for each unit, which may be integers ranging from 1
@@ -50,6 +60,15 @@ default to weight 1.0. Higher weights make edges less likely to be cut or
 linked in proposals (cost interpretation). Example:
 \code{list(list(edge = c(1, 2), weight = 2.0))}.}
 
+\item{ncores}{The number of parallel processes to run. Defaults to the
+number of available cores, capped at the number of chains.}
+
+\item{cl_type}{The cluster type (see \code{\link[parallel:makeCluster]{parallel::makeCluster()}}). Safest is \code{"PSOCK"},
+but \code{"FORK"} may be appropriate in some settings.}
+
+\item{return_all}{If \code{TRUE} return all sampled plans; otherwise, just return
+the final plan from each chain.}
+
 \item{init_name}{A name for the initial plan, or \code{FALSE} to not include
 the initial plan in the output. Defaults to the column name of the
 existing plan, or \verb{<init>} if the initial plan is sampled.}
@@ -59,7 +78,9 @@ existing plan, or \verb{<init>} if the initial plan is sampled.}
 \item{silent}{Whether to suppress all diagnostic information.}
 }
 \value{
-A \link{redist_plans} object containing the simulated plans.
+A \link{redist_plans} object containing the simulated plans. If \code{chains > 1},
+the output will include a \code{chain} column indicating which chain each plan
+came from.
 }
 \description{
 \code{redist_cyclewalk} uses a Markov Chain Monte Carlo algorithm based on
@@ -75,6 +96,9 @@ This function draws samples from a specific target measure, controlled by the
 data(fl25)
 fl_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1)
 sampled <- redist_cyclewalk(fl_map, 100)
+
+# Multiple chains for convergence diagnostics
+sampled_chains <- redist_cyclewalk(fl_map, 200, chains = 2, ncores = 2)
 
 }
 \concept{simulate}

@@ -9,13 +9,18 @@
 #' `map`, `compactness`, and `constraints` parameters.
 #'
 #' @param map A [redist_map] object.
-#' @param nsims The number of samples to draw, not including warmup.
+#' @param nsims The number of samples to draw per chain, not including warmup.
+#' @param chains The number of parallel chains to run. Each chain will have
+#'   `nsims` draws. If `init_plan` is sampled, each chain will be initialized
+#'   with its own sampled plan. Defaults to 1.
 #' @param warmup The number of warmup samples to discard.
 #' @param thin Save every `thin`-th sample. Defaults to no thinning (1).
-#' @param init_plan The initial state of the map. If not provided, will default to
-#'   the reference map of the `map` object, or if none exists, will sample
-#'   a random initial state using [redist_smc]. You can also request
-#'   a random initial state by setting `init_plan="sample"`.
+#' @param init_plan The initial state of the map, provided as a single vector
+#'   to be shared across all chains, or a matrix with `chains` columns.
+#'   If not provided, will default to the reference map of the `map` object, or if
+#'   none exists, will sample a random initial state using [redist_smc]. You can
+#'   also request a random initial state for each chain by setting
+#'   `init_plan="sample"`.
 #' @param counties A vector containing county (or other administrative or
 #'   geographic unit) labels for each unit, which may be integers ranging from 1
 #'   to the number of counties, or a factor or character vector. If provided,
@@ -24,33 +29,48 @@
 #'   higher values preferring more compact districts. Must be nonnegative.
 #' @param constraints A [redist_constr] object or list of constraints.
 #' @param edge_weights Optional list of edge weights for the graph. Each element
-#'   should be a list with two fields: \code{edge} (a length-2 numeric vector of
-#'   vertex indices) and \code{weight} (a positive number). Edges not specified
+#'   should be a list with two fields: `edge` (a length-2 numeric vector of
+#'   vertex indices) and `weight` (a positive number). Edges not specified
 #'   default to weight 1.0. Higher weights make edges less likely to be cut or
 #'   linked in proposals (cost interpretation). Example:
-#'   \code{list(list(edge = c(1, 2), weight = 2.0))}.
+#'   `list(list(edge = c(1, 2), weight = 2.0))`.
+#' @param ncores The number of parallel processes to run. Defaults to the
+#'   number of available cores, capped at the number of chains.
+#' @param cl_type The cluster type (see [parallel::makeCluster()]). Safest is `"PSOCK"`,
+#'   but `"FORK"` may be appropriate in some settings.
+#' @param return_all If `TRUE` return all sampled plans; otherwise, just return
+#'   the final plan from each chain.
 #' @param init_name A name for the initial plan, or `FALSE` to not include
 #'   the initial plan in the output. Defaults to the column name of the
 #'   existing plan, or `<init>` if the initial plan is sampled.
 #' @param verbose Whether to print out intermediate information while sampling.
 #' @param silent Whether to suppress all diagnostic information.
 #'
-#' @returns A [redist_plans] object containing the simulated plans.
+#' @returns A [redist_plans] object containing the simulated plans. If `chains > 1`,
+#'   the output will include a `chain` column indicating which chain each plan
+#'   came from.
 #'
 #' @examples
 #' data(fl25)
 #' fl_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1)
 #' sampled <- redist_cyclewalk(fl_map, 100)
 #'
+#' # Multiple chains for convergence diagnostics
+#' sampled_chains <- redist_cyclewalk(fl_map, 200, chains = 2, ncores = 2)
+#'
 #' @concept simulate
 #' @md
 #' @export
 redist_cyclewalk <- function(map, nsims,
+                             chains = 1,
                              warmup = 0,
                              thin = 1L, init_plan = NULL,
                              counties = NULL, compactness = 1,
                              constraints = list(),
                              edge_weights = NULL,
+                             ncores = NULL,
+                             cl_type = "PSOCK",
+                             return_all = TRUE,
                              init_name = NULL,
                              verbose = FALSE, silent = FALSE) {
 
@@ -60,6 +80,7 @@ redist_cyclewalk <- function(map, nsims,
     ndists <- attr(map, "ndists")
     warmup <- max(warmup, 0L)
     thin <- as.integer(thin)
+    chains <- as.integer(chains)
 
     # Input validation
     if (compactness < 0) {
@@ -74,34 +95,70 @@ redist_cyclewalk <- function(map, nsims,
     if (nsims < 1) {
         cli::cli_abort("{.arg nsims} must be positive.")
     }
+    if (chains < 1) {
+        cli::cli_abort("{.arg chains} must be positive.")
+    }
 
-    # Handle initial plan
+    # Set up initial plans for chains
     exist_name <- attr(map, "existing_col")
     counties <- rlang::eval_tidy(rlang::enquo(counties), map)
-    orig_lookup <- seq_len(ndists)
 
-    if (is.null(init_plan) && !is.null(exist_name)) {
-        init_plan <- vctrs::vec_group_id(get_existing(map))
-        orig_lookup <- unique(get_existing(map))
-        if (is.null(init_name)) init_name <- exist_name
-    } else if (!is.null(init_plan) && is.null(init_name)) {
-        init_name <- "<init>"
+    # Handle different init_plan scenarios
+    if (is.null(init_plan)) {
+        if (!is.null(exist_name)) {
+            init_plans <- matrix(rep(vctrs::vec_group_id(get_existing(map)), chains), ncol = chains)
+            if (is.null(init_name)) {
+                init_names <- rep(exist_name, chains)
+            } else {
+                init_names <- rep(init_name, chains)
+            }
+        } else {
+            init_plan <- "sample"
+        }
     }
 
-    if (length(init_plan) == 0L || isTRUE(init_plan == "sample")) {
-        init_plan <- as.integer(get_plans_matrix(
-            redist_smc(map, 10, counties, resample = FALSE, ref_name = FALSE, silent = TRUE, ncores = 1))[, 1])
-        if (is.null(init_name)) init_name <- "<init>"
+    if (is.null(init_plan) || (is.character(init_plan) && init_plan == "sample")) {
+        if (verbose) {
+            cli::cli_inform("Sampling initial plans with SMC\n")
+        }
+        init_plans <- get_plans_matrix(
+            redist_smc(map, chains, counties, compactness, constraints,
+                      resample = TRUE, ref_name = FALSE, verbose = verbose,
+                      silent = TRUE, ncores = 1))
+        if (is.null(init_name)) {
+            init_names <- paste0("<sample ", seq_len(chains), ">")
+        } else {
+            init_names <- paste(init_name, seq_len(chains))
+        }
+    } else if (!is.null(init_plan)) {
+        if (is.matrix(init_plan)) {
+            if (ncol(init_plan) != chains) {
+                cli::cli_abort("{.arg init_plan} matrix must have {chains} column{?s}.")
+            }
+            init_plans <- init_plan
+        } else {
+            init_plans <- matrix(rep(as.integer(init_plan), chains), ncol = chains)
+        }
+
+        if (is.null(init_name)) {
+            init_names <- paste0("<init ", seq_len(chains), ">")
+        } else if (is.matrix(init_plan) && chains > 1) {
+            # Matrix with unique inits per chain - add suffixes
+            init_names <- paste(init_name, seq_len(chains))
+        } else {
+            # Single vector replicated across chains
+            init_names <- rep(init_name, chains)
+        }
     }
 
-    # Validate init_plan
-    if (length(init_plan) != V) {
+    # Validate init_plans
+    if (nrow(init_plans) != V) {
         cli::cli_abort("{.arg init_plan} must be as long as the number of units as `map`.")
     }
-    if (max(init_plan) != ndists) {
+    if (max(init_plans) != ndists) {
         cli::cli_abort("{.arg init_plan} must have the same number of districts as `map`.")
     }
-    if (any(contiguity(adj, init_plan) != 1)) {
+    if (any(apply(init_plans, 2, function(x) contiguity(adj, x)) != 1)) {
         cli::cli_warn("{.arg init_plan} should have contiguous districts.")
     }
 
@@ -130,24 +187,20 @@ redist_cyclewalk <- function(map, nsims,
     if (!is.null(edge_weights)) {
         edge_weights <- validate_edge_weights(edge_weights, adj, V)
     } else {
-        edge_weights <- list()  # Empty list for C++
+        edge_weights <- list()
     }
 
     # Set verbosity
     verbosity <- 1
-    if (verbose) {
-        verbosity <- 3
-    }
-    if (silent) {
-        verbosity <- 0
-    }
+    if (verbose) verbosity <- 3
+    if (silent) verbosity <- 0
 
     # Population bounds
     pop_bounds <- attr(map, "pop_bounds")
     pop <- map[[attr(map, "pop_col")]]
 
-    # Validate population
-    init_pop <- pop_tally(matrix(init_plan, ncol = 1), pop, ndists)
+    # Validate population for all init plans
+    init_pop <- pop_tally(init_plans, pop, ndists)
     if (any(init_pop < pop_bounds[1]) | any(init_pop > pop_bounds[3])) {
         cli::cli_abort("Provided initialization does not meet population bounds.")
     }
@@ -158,76 +211,148 @@ redist_cyclewalk <- function(map, nsims,
             "x" = "Redistricting impossible."))
     }
 
-    # Call C++ implementation
-    t1_run <- Sys.time()
+    # Set up parallel cluster if needed
+    if (is.null(ncores)) ncores <- parallel::detectCores()
+    ncores <- min(ncores, chains)
 
-    control <- list()  # For future control parameters
+    if (ncores > 1 && chains > 1) {
+        `%oper%` <- `%dorng%`
+        if (!silent) {
+            of <- ifelse(Sys.info()[['sysname']] == 'Windows',
+                        tempfile(pattern = paste0('cw_', substr(Sys.time(), 1, 10)), fileext = '.txt'),
+                        '')
+            cl <- parallel::makeCluster(ncores, type = cl_type, outfile = of, methods = FALSE,
+                                       useXDR = .Platform$endian != "little")
+        } else {
+            cl <- parallel::makeCluster(ncores, type = cl_type, methods = FALSE,
+                                       useXDR = .Platform$endian != "little")
+        }
 
-    algout <- cyclewalk_plans(
-        N = nsims,
-        l = adj,
-        init = init_plan,
-        counties = counties,
-        pop = pop,
-        n_distr = ndists,
-        target = pop_bounds[2],
-        lower = pop_bounds[1],
-        upper = pop_bounds[3],
-        compactness = compactness,
-        constraints = constraints,
-        control = control,
-        edge_weights = edge_weights,
-        thin = thin,
-        verbosity = verbosity
-    )
-
-    t2_run <- Sys.time()
-
-    # Process output
-    storage.mode(algout$plans) <- "integer"
-
-    # Handle MH decisions if present
-    acceptances <- if (!is.null(algout$mhdecisions)) {
-        as.logical(algout$mhdecisions)
+        doParallel::registerDoParallel(cl)
+        on.exit(parallel::stopCluster(cl))
     } else {
-        rep(NA, ncol(algout$plans))
+        `%oper%` <- `%do%`
     }
 
-    # Calculate warmup indices to remove
-    warmup_idx <- c(seq_len(1 + warmup %/% thin), ncol(algout$plans))
+    # Run chains (in parallel or sequentially)
+    out_par <- foreach::foreach(chain = seq_len(chains), .inorder = FALSE,
+                                .packages = "redist") %oper% {
+        if (!silent) cat("Starting chain ", chain, "\n", sep = "")
+        run_verbosity <- if (chain == 1 || verbosity == 3) verbosity else 0
 
-    # Extract and process diagnostics from C++
-    l_diag <- list(
-        runtime = as.numeric(t2_run - t1_run, units = "secs")
-    )
+        t1_run <- Sys.time()
+        control <- list()
 
-    # Add detailed diagnostics if available
-    if (!is.null(algout$diagnostics)) {
-        l_diag$accept_prob <- algout$diagnostics$accept_prob
-        l_diag$cycle_length <- algout$diagnostics$cycle_length
-        l_diag$n_valid_cuts <- algout$diagnostics$n_valid_cuts
-        l_diag$failure_modes <- algout$diagnostics$failure_modes
+        algout <- cyclewalk_plans(
+            N = nsims,
+            l = adj,
+            init = init_plans[, chain],
+            counties = counties,
+            pop = pop,
+            n_distr = ndists,
+            target = pop_bounds[2],
+            lower = pop_bounds[1],
+            upper = pop_bounds[3],
+            compactness = compactness,
+            constraints = constraints,
+            control = control,
+            edge_weights = edge_weights,
+            thin = thin,
+            verbosity = run_verbosity
+        )
+
+        t2_run <- Sys.time()
+
+        # Process output for this chain
+        storage.mode(algout$plans) <- "integer"
+
+        acceptances <- if (!is.null(algout$mhdecisions)) {
+            as.logical(algout$mhdecisions)
+        } else {
+            rep(NA, ncol(algout$plans))
+        }
+
+        # Extract diagnostics
+        l_diag <- list(
+            runtime = as.numeric(t2_run - t1_run, units = "secs")
+        )
+
+        if (!is.null(algout$diagnostics)) {
+            l_diag$accept_prob <- algout$diagnostics$accept_prob
+            l_diag$cycle_length <- algout$diagnostics$cycle_length
+            l_diag$n_valid_cuts <- algout$diagnostics$n_valid_cuts
+            l_diag$failure_modes <- algout$diagnostics$failure_modes
+        }
+
+        # Calculate warmup indices
+        warmup_idx <- c(seq_len(1 + warmup %/% thin), ncol(algout$plans))
+        if (return_all) {
+            algout$plans <- algout$plans[, -warmup_idx, drop = FALSE]
+            warmup_idx_acc <- c(seq_len(warmup %/% thin), length(acceptances))
+            algout$mhdecisions <- acceptances[-warmup_idx_acc]
+        } else {
+            algout$plans <- algout$plans[, ncol(algout$plans) - 1L, drop = FALSE]
+            algout$mhdecisions <- as.logical(acceptances[length(acceptances) - 1L])
+        }
+
+        algout$l_diag <- l_diag
+        algout$mh <- mean(as.logical(algout$mhdecisions), na.rm = TRUE)
+        algout
     }
 
-    # Create redist_plans object
+    # Combine results from all chains
+    plans <- lapply(out_par, function(algout) algout$plans)
+    each_len <- ncol(plans[[1]])
+    plans <- do.call(cbind, plans)
+    storage.mode(plans) <- "integer"
+
+    mh <- sapply(out_par, function(algout) algout$mh)
+    l_diag <- lapply(out_par, function(algout) algout$l_diag)
+    acceptances <- sapply(out_par, function(algout) algout$mhdecisions)
+
+    # Create output
     out <- new_redist_plans(
-        algout$plans[, -warmup_idx, drop = FALSE],
-        map, "cyclewalk", NULL, FALSE,
-        ndists = ndists,
+        plans = plans,
+        map = map,
+        algorithm = "cyclewalk",
+        wgt = NULL,
+        resampled = FALSE,
         compactness = compactness,
         constraints = constraints,
+        ndists = ndists,
+        mh_acceptance = mh,
         version = packageVersion("redist"),
-        diagnostics = l_diag,
-        mh_acceptance = mean(acceptances, na.rm = TRUE)
+        diagnostics = l_diag
     )
 
-    # Add acceptance info
-    warmup_idx_acc <- c(seq_len(warmup %/% thin), length(acceptances))
-    out <- out |> dplyr::mutate(mcmc_accept = rep(acceptances[-warmup_idx_acc], each = ndists))
+    # Add chain column and acceptance info
+    if (chains > 1) {
+        out <- out |>
+            dplyr::mutate(chain = rep(seq_len(chains), each = each_len * ndists),
+                         mcmc_accept = rep(acceptances, each = ndists))
+    } else {
+        out <- out |>
+            dplyr::mutate(mcmc_accept = rep(acceptances, each = ndists))
+    }
 
-    # Add reference plan if requested
-    if (!is.null(init_name) && !isFALSE(init_name)) {
-        out <- add_reference(out, init_plan, init_name)
+    # Add reference plans if requested
+    if (!is.null(init_names) && !isFALSE(init_name)) {
+        if (chains == 1) {
+            out <- add_reference(out, init_plans[, 1], init_names[1])
+        } else if (all(init_names[1] == init_names)) {
+            # Shared init across chains - add once without chain assignment
+            out <- add_reference(out, init_plans[, 1], init_names[1])
+        } else {
+            # Unique init per chain
+            out <- Reduce(function(cur, idx) {
+                add_reference(cur, init_plans[, idx], init_names[idx]) |>
+                    dplyr::mutate(chain = dplyr::coalesce(chain, idx))
+            }, rev(seq_len(chains)), init = out)
+        }
+    }
+
+    if (chains > 1) {
+        out <- dplyr::relocate(out, chain, .after = "draw")
     }
 
     out
@@ -296,4 +421,3 @@ validate_edge_weights <- function(edge_weights, adj, V) {
 
     edge_weights
 }
-

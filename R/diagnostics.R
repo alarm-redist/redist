@@ -32,6 +32,19 @@
 #' * **Bottleneck**: An asterisk will appear in the right column if a bottleneck
 #' appears likely, based on the values of the other statistics.
 #'
+#' For CycleWalk MCMC, additional diagnostic statistics include:
+#'
+#' * **Cycle walk percentage**: the fraction of iterations that attempted a cycle walk
+#' proposal (vs. forest walk). Typically around 10%.
+#' * **Success rate**: the fraction of cycle walk attempts that found a valid cycle
+#' and cut. Low values (< 30%) may indicate tight constraints.
+#' * **Mean acceptance probability**: average MH acceptance probability for successful
+#' cycle walk proposals.
+#' * **Mean cycle length**: average length of cycles found (typically 3-16).
+#' * **Mean valid cuts**: average number of valid cut pairs found per cycle.
+#' * **Failures**: breakdown of why cycle walk proposals failed (no adjacent districts,
+#' too few boundary edges, no path found, or no valid cuts).
+#'
 #' In the event of problematic diagnostics, the function will provide
 #' suggestions for improvement.
 #'
@@ -210,19 +223,78 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
             code <- str_glue("plot(<map object>, rowMeans(as.matrix({name}) == <bottleneck iteration>))")
             cli::cat_line("    ", cli::code_highlight(code, "Material"))
         }
-    } else if (algo %in% c("mergesplit", 'flip')) {
+    } else if (algo %in% c("mergesplit", 'flip', 'cyclewalk')) {
 
         if (algo == 'mergesplit') {
             cli::cli_text("{.strong Merge-Split MCMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
                  districts on {fmt_comma(nrow(plans_m))} units")
-        } else {
+        } else if (algo == 'flip') {
             cli::cli_text("{.strong Flip MCMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
+                 districts on {fmt_comma(nrow(plans_m))} units")
+        } else {  # cyclewalk
+            cli::cli_text("{.strong CycleWalk MCMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
                  districts on {fmt_comma(nrow(plans_m))} units")
         }
 
 
         accept_rate <- sprintf("%0.1f%%", 100*attr(object, "mh_acceptance"))
         cli::cli_text("Chain acceptance rate{?s}: {accept_rate}")
+
+        # CycleWalk-specific diagnostics
+        if (algo == 'cyclewalk' && !is.null(all_diagn[[1]]$accept_prob)) {
+            cat("\n")
+            cli::cli_text("{.strong CycleWalk diagnostics:}")
+
+            for (i in seq_along(all_diagn)) {
+                diagn <- all_diagn[[i]]
+
+                # Calculate statistics across all iterations
+                cycle_walk_iters <- which(!is.na(diagn$accept_prob))
+                n_cycle <- length(cycle_walk_iters)
+                n_total <- length(diagn$accept_prob)
+
+                if (n_cycle > 0) {
+                    # Success rate among cycle walk attempts
+                    successful <- diagn$accept_prob[cycle_walk_iters] > 0
+                    success_rate <- mean(successful)
+
+                    # Stats for successful proposals
+                    if (any(successful)) {
+                        succ_idx <- cycle_walk_iters[successful]
+                        mean_accept <- mean(diagn$accept_prob[succ_idx])
+                        mean_cycle_len <- mean(diagn$cycle_length[succ_idx])
+                        mean_valid_cuts <- mean(diagn$n_valid_cuts[succ_idx])
+                    } else {
+                        mean_accept <- 0
+                        mean_cycle_len <- 0
+                        mean_valid_cuts <- 0
+                    }
+
+                    # Failure mode breakdown
+                    fm <- diagn$failure_modes
+                    n_failures <- n_cycle - sum(successful)
+
+                    if (length(all_diagn) > 1) {
+                        cli::cli_text("  Chain {i}:")
+                    }
+                    cli::cli_text("  \u2022 Cycle walk: {sprintf('%0.1f%%', 100*n_cycle/n_total)} of iterations ({n_cycle}/{n_total})")
+                    cli::cli_text("  \u2022 Success rate: {sprintf('%0.1f%%', 100*success_rate)} of cycle walk attempts")
+
+                    if (any(successful)) {
+                        cli::cli_text("  \u2022 Mean acceptance prob: {sprintf('%0.3f', mean_accept)} (successful proposals)")
+                        cli::cli_text("  \u2022 Mean cycle length: {sprintf('%0.1f', mean_cycle_len)}")
+                        cli::cli_text("  \u2022 Mean valid cuts: {sprintf('%0.1f', mean_valid_cuts)}")
+                    }
+
+                    if (n_failures > 0 && !is.null(fm)) {
+                        cli::cli_text("  \u2022 Failures: {fm$no_adj} no adj, {fm$few_edges} few edges, {fm$no_path} no path, {fm$no_cuts} no cuts")
+                    }
+
+                    if (length(all_diagn) > 1 && i < length(all_diagn)) cat("\n")
+                }
+            }
+            cat("\n")
+        }
 
         cli::cli_text("Plan diversity 80% range: {div_rg[1]} to {div_rg[2]}")
         if (div_bad) cli::cli_alert_danger("{.strong WARNING:} Low plan diversity")
@@ -270,12 +342,22 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
                           div_q90 = div_rg[2])
         }
 
-        cli::cli_li(cli::col_grey("
-            Watch out for low acceptance rates (less than 10%).
-            R-hat values for summary statistics should be between 1 and 1.05.
-            For district-level statistics (like district partisan leans), you
-            should call `match_numbers()` or `number_by()` before examining
-            the R-hat values."))
+        if (algo == 'cyclewalk') {
+            cli::cli_li(cli::col_grey("
+                Watch out for low acceptance rates (less than 10%) and low cycle walk
+                success rates (less than 30%).
+                R-hat values for summary statistics should be between 1 and 1.05.
+                For district-level statistics (like district partisan leans), you
+                should call `match_numbers()` or `number_by()` before examining
+                the R-hat values."))
+        } else {
+            cli::cli_li(cli::col_grey("
+                Watch out for low acceptance rates (less than 10%).
+                R-hat values for summary statistics should be between 1 and 1.05.
+                For district-level statistics (like district partisan leans), you
+                should call `match_numbers()` or `number_by()` before examining
+                the R-hat values."))
+        }
 
         if (div_bad) {
             cli::cli_li("{.strong Low diversity:} Increase the number of samples.
@@ -285,8 +367,14 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
                         the population tolerance.")
         }
         if (warn_converge) {
-            cli::cli_li("{.strong Chain convergence:} Increase the number of samples.
-                        If you are experiencing low plan diversity, address that issue first.")
+            if (algo == 'cyclewalk') {
+                cli::cli_li("{.strong Chain convergence:} Increase the number of samples or run for more iterations.
+                            If you are experiencing low plan diversity or low cycle walk success rates, address those issues first.
+                            Consider adjusting the compactness parameter or population tolerance.")
+            } else {
+                cli::cli_li("{.strong Chain convergence:} Increase the number of samples.
+                            If you are experiencing low plan diversity, address that issue first.")
+            }
         }
     } else {
         cli::cli_abort("{.fn summary} is not supported for the {toupper(algo)} algorithm.")

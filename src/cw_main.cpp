@@ -79,10 +79,6 @@ Rcpp::List cyclewalk_plans(
     }
 
     // === ITERATION 2: Initialize LCT Partition ===
-    if (verbosity >= 1) {
-        Rcout << "\nInitializing partition with spanning trees...\n";
-    }
-
     LCTPartition partition(V, n_distr);
     int init_result = partition.init_from_plan(g, init, pop, counties, lower, upper);
 
@@ -93,14 +89,9 @@ Rcpp::List cyclewalk_plans(
     // Set edge weights if provided
     if (edge_weights.size() > 0) {
         partition.set_edge_weights(edge_weights);
-        if (verbosity >= 1) {
-            Rcout << "Using " << edge_weights.size() << " custom edge weights.\n";
-        }
     }
 
     if (verbosity >= 1) {
-        partition.print_state(verbosity);
-        Rcout << "\n";
         bar = cli_progress_bar(N, cli_config(false));
     }
 
