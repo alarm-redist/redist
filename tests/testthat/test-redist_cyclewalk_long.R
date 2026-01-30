@@ -127,7 +127,8 @@ test_that("cycle walk distribution with spanning forest weighting (gamma=1)", {
 
     # Create constraint with spanning forest weighting
     # This should change the distribution to weight by 1/spanning_trees
-    constr <- redist_constr(grid)
+    constr <- redist_constr(grid) |>
+        add_constr_log_st(strength = 1.0)
 
     # Run many iterations
     result <- redist_cyclewalk(
@@ -169,10 +170,18 @@ test_that("cycle walk distribution with spanning forest weighting (gamma=1)", {
 
     # For now, just check we get valid cut edge counts
     # The distribution may differ from Julia due to algorithm differences
-    expect_true(all(cut_edge_counts %in% c(8, 10, 11, 12)),
-    info = paste("Invalid cut edge counts found:",
-    paste(unique(cut_edge_counts[!cut_edge_counts %in% c(8, 10, 11, 12)]),
-    collapse = ", ")))
+    expect_true(all(cut_edge_counts %in% c(8, 10, 11, 12)))
+
+    # Check each probability matches expected
+    for (ce in names(expected)) {
+        expect_true(
+            is_close(observed[ce], expected[ce]),
+            info = paste("Cut edges =", ce,
+                         ": observed =", round(observed[ce], 4),
+                         ", expected =", round(expected[ce], 4),
+                         ", ratio =", round(observed[ce]/expected[ce], 3))
+        )
+    }
 })
 
 test_that("longer chain produces stable distribution", {
