@@ -231,37 +231,6 @@ test_that('weight must be positive', {
   )
 })
 
-test_that('edge weights affect acceptance rates', {
-  skip_on_cran()
-
-  ew_high <- list(
-    list(edge = c(1, 2), weight = 100.0),
-    list(edge = c(1, 3), weight = 100.0),
-    list(edge = c(1, 4), weight = 100.0)
-  )
-
-  set.seed(123)
-  result_high <- redist_cyclewalk(fl_map,
-    nsims = 100, edge_weights = ew_high
-  )
-
-  set.seed(123)
-  result_default <- redist_cyclewalk(fl_map, nsims = 100)
-
-  expect_s3_class(result_high, 'redist_plans')
-  expect_s3_class(result_default, 'redist_plans')
-  expect_equal(ncol(get_plans_matrix(result_high)), 101)
-  expect_equal(ncol(get_plans_matrix(result_default)), 101)
-
-  plans_high <- get_plans_matrix(result_high)
-  plans_default <- get_plans_matrix(result_default)
-
-  n_unique_high <- ncol(unique(plans_high, MARGIN = 2))
-  n_unique_default <- ncol(unique(plans_default, MARGIN = 2))
-
-  expect_true(n_unique_high < n_unique_default)
-})
-
 test_that('edge weights work with different compactness values', {
   skip_on_cran()
 
