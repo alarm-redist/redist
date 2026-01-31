@@ -15,6 +15,11 @@
 #'   with its own sampled plan. Defaults to 1.
 #' @param warmup The number of warmup samples to discard.
 #' @param thin Save every `thin`-th sample. Defaults to no thinning (1).
+#' @param instep Number of MCMC iterations per recorded sample (default 10).
+#'   Higher values improve mixing but increase runtime. Matches Julia's `instep`.
+#' @param cycle_walk_frac Fraction of proposals that are cycle walks vs internal
+#'   forest walks (default 0.1). Cycle walks change the partition; forest walks
+#'   only change the spanning tree representation.
 #' @param init_plan The initial state of the map, provided as a single vector
 #'   to be shared across all chains, or a matrix with `chains` columns.
 #'   If not provided, will default to the reference map of the `map` object, or if
@@ -80,6 +85,7 @@ redist_cyclewalk <- function(map, nsims,
     ndists <- attr(map, "ndists")
     warmup <- max(warmup, 0L)
     thin <- as.integer(thin)
+    instep <- as.integer(instep)
     chains <- as.integer(chains)
 
     # Input validation
@@ -91,6 +97,10 @@ redist_cyclewalk <- function(map, nsims,
     }
     if (thin < 1 || thin > nsims - warmup) {
         cli::cli_abort("{.arg thin} must be a positive integer, and no larger than {.arg nsims - warmup}.")
+    }
+    }
+    if (cycle_walk_frac < 0 || cycle_walk_frac > 1) {
+        cli::cli_abort("{.arg cycle_walk_frac} must be between 0 and 1.")
     }
     if (nsims < 1) {
         cli::cli_abort("{.arg nsims} must be positive.")

@@ -38,8 +38,10 @@ Rcpp::List cyclewalk_plans(
     double compactness,
     Rcpp::List constraints,
     Rcpp::List control,
-    Rcpp::List edge_weights,  // NEW: Edge weights
+    Rcpp::List edge_weights,
     int thin,
+    int instep,
+    double cycle_walk_frac,
     int verbosity
 ) {
     // Re-seed RNG for reproducibility
@@ -104,68 +106,63 @@ Rcpp::List cyclewalk_plans(
     }
 
     // Main MCMC loop
-    // Mix cycle walk (10%) with internal forest walk (90%)
     int forest_walk_success = 0;
     int forest_walk_fail = 0;
     int cycle_walk_accept = 0;
     int cycle_walk_reject = 0;
-    int cycle_walk_fail_no_adj = 0;      // -1: no adjacent districts
-    int cycle_walk_fail_few_edges = 0;   // -2: <2 boundary edges
-    int cycle_walk_fail_no_path = 0;     // -3: couldn't get paths
-    int cycle_walk_fail_no_cuts = 0;     // -4: no valid cut pairs
-
-    double cycle_walk_prob = 0.1;  // 10% cycle walk, 90% forest walk
+    int cycle_walk_fail_no_adj = 0;
+    int cycle_walk_fail_few_edges = 0;
+    int cycle_walk_fail_no_path = 0;
+    int cycle_walk_fail_no_cuts = 0;
 
     int idx = 1;
     for (int i = 1; i <= N; i++) {
-        int result;
+        // Run instep MCMC iterations per recorded sample
+        for (int step = 0; step < instep; step++) {
+            int result;
 
-        if (r_unif() < cycle_walk_prob) {
-            // Cycle walk proposal - can change districts
-            CycleWalkDiagnostics diag;
-            result = cycle_walk(partition, lower, upper, target, constraints, diag);
+            if (r_unif() < cycle_walk_frac) {
+                // Cycle walk proposal - can change districts
+                CycleWalkDiagnostics diag;
+                result = cycle_walk(partition, lower, upper, target, constraints, diag);
 
-            // Collect diagnostics
-            diag_accept_prob.push_back(diag.accept_prob);
-            diag_cycle_length.push_back(diag.cycle_length);
-            diag_n_valid_cuts.push_back(diag.n_valid_cuts);
+                diag_accept_prob.push_back(diag.accept_prob);
+                diag_cycle_length.push_back(diag.cycle_length);
+                diag_n_valid_cuts.push_back(diag.n_valid_cuts);
 
-            // Update failure mode counters
-            if (result == 1) {
-                cycle_walk_accept++;
-            } else if (result == 0) {
-                cycle_walk_reject++;
-            } else if (result == -1) {
-                cycle_walk_fail_no_adj++;
-            } else if (result == -2) {
-                cycle_walk_fail_few_edges++;
-            } else if (result == -3) {
-                cycle_walk_fail_no_path++;
-            } else if (result == -4) {
-                cycle_walk_fail_no_cuts++;
-            }
-        } else {
-            // Internal forest walk - only changes spanning trees
-            result = internal_forest_walk(partition);
-
-            // Forest walk doesn't generate cycle walk diagnostics - use NA/0
-            diag_accept_prob.push_back(NA_REAL);
-            diag_cycle_length.push_back(0);
-            diag_n_valid_cuts.push_back(0);
-
-            if (result == 0) {
-                forest_walk_success++;
+                if (result == 1) {
+                    cycle_walk_accept++;
+                } else if (result == 0) {
+                    cycle_walk_reject++;
+                } else if (result == -1) {
+                    cycle_walk_fail_no_adj++;
+                } else if (result == -2) {
+                    cycle_walk_fail_few_edges++;
+                } else if (result == -3) {
+                    cycle_walk_fail_no_path++;
+                } else if (result == -4) {
+                    cycle_walk_fail_no_cuts++;
+                }
             } else {
-                forest_walk_fail++;
+                // Internal forest walk - only changes spanning trees
+                result = internal_forest_walk(partition);
+
+                diag_accept_prob.push_back(NA_REAL);
+                diag_cycle_length.push_back(0);
+                diag_n_valid_cuts.push_back(0);
+
+                if (result == 0) {
+                    forest_walk_success++;
+                } else {
+                    forest_walk_fail++;
+                }
             }
         }
 
-        // Record MH decision (1 = accept, 0 = reject)
-        mh_decisions(idx - 1) = (result >= 0) ? 1 : 0;
+        // Record MH decision for the last step
+        mh_decisions(idx - 1) = 1;  // After instep iterations, record current state
 
         // Copy current plan to output at thinning intervals
-        // Note: District assignments don't change with internal forest walk
-        // but we still output the plan for consistency
         if (i % thin == 0) {
             plans.col(idx + 1) = partition.get_plan();
             idx++;
