@@ -7,9 +7,9 @@
 
 #' Redistricting Optimization through Short Bursts
 #'
-#' This function uses [redist_mergesplit()] or [redist_flip()] to optimize a
-#' redistrict plan according to a user-provided criteria. It does so by running
-#' the Markov chain for "short bursts" of usually 10 iterations, and then
+#' This function uses [redist_mergesplit()], [redist_flip()], or [redist_cyclewalk()]
+#' to optimize a redistrict plan according to a user-provided criteria. It does so
+#' by running the Markov chain for "short bursts" of usually 10 iterations, and then
 #' starting the chain anew from the best plan in the burst, according to the
 #' criteria. This implements the ideas in the below-referenced paper, "Voting
 #' Rights, Markov Chains, and Optimization by Short Bursts."
@@ -24,9 +24,9 @@
 #'   threshold for each dimension, which must all be met for the algorithm to
 #'   stop.
 #' @param burst_size The size of each burst. 10 is recommended for the
-#'   `mergesplit` backend and 50 for the `flip` backend. Can also provide
-#'   burst schedule function which takes the current iteration (an integer)
-#'   and returns the desired burst size. This can be a random function.
+#'   `mergesplit` and `cyclewalk` backends, and 50 for the `flip` backend. Can
+#'   also provide burst schedule function which takes the current iteration (an
+#'   integer) and returns the desired burst size. This can be a random function.
 #' @param max_bursts The maximum number of bursts to run before returning.
 #' @param maximize If `TRUE`, try to maximize the score; otherwise, try to
 #'   minimize it. When `score_fn` returns a row vector per plan, `maximize` can
@@ -58,11 +58,15 @@
 #' one (generally, the Pareto frontier). Recommended for monitoring purposes.
 #' @param thin Save every `thin`-th sample. Defaults to no thinning (1). Ignored
 #' if `return_all=TRUE`.
-#' @param backend the MCMC algorithm to use within each burst, either
-#' "mergesplit" or "flip".
+#' @param backend The MCMC algorithm to use within each burst: `"mergesplit"`,
+#'   `"flip"`, or `"cyclewalk"`.
 #' @param flip_lambda The parameter determining the number of swaps to attempt each iteration of flip mcmc.
 #' The number of swaps each iteration is equal to Pois(lambda) + 1. The default is 0.
 #' @param flip_eprob  The probability of keeping an edge connected in flip mcmc. The default is 0.05.
+#' @param cw_instep Number of MCMC iterations per recorded sample for cyclewalk
+#'   backend (default 10).
+#' @param cw_cycle_walk_frac Fraction of proposals that are cycle walks vs
+#'   forest walks for cyclewalk backend (default 0.1).
 #' @param verbose Whether to print out intermediate information while sampling.
 #' Recommended for monitoring purposes.
 #'
@@ -86,13 +90,15 @@
 #' @md
 #' @export
 redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
-                              burst_size = ifelse(backend == "mergesplit", 10L, 50L),
+                              burst_size = ifelse(backend == "flip", 50L, 10L),
                               max_bursts = 500L, maximize = TRUE, init_plan = NULL,
                               counties = NULL,  constraints = redist_constr(map),
                               compactness = 1, adapt_k_thresh = 0.95,
                               reversible=TRUE, fixed_k=NULL,
-                              return_all = TRUE, thin = 1L, backend = "mergesplit",
+                              return_all = TRUE, thin = 1L,
+                              backend = "mergesplit",
                               flip_lambda = 0, flip_eprob = 0.05,
+                              cw_instep = 10L, cw_cycle_walk_frac = 0.1,
                               verbose = TRUE) {
 
     map <- validate_redist_map(map)
@@ -106,7 +112,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         burst_size <- function(i) per_burst
     }
     max_bursts <- as.integer(max_bursts)
-    match.arg(backend, c("flip", "mergesplit"))
+    match.arg(backend, c("flip", "mergesplit", "cyclewalk"))
 
     score_fn <- rlang::as_closure(score_fn)
     stopifnot(is.function(score_fn))
@@ -156,7 +162,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         cli::cli_warn("{.arg init_plan} should have contiguous districts.")
 
 
-    if (backend == "mergesplit") {
+    if (backend == "mergesplit" || backend == "cyclewalk") {
         pop_bounds <- attr(map, "pop_bounds")
     } else {
         pop_tol <- get_pop_tol(map)
@@ -164,7 +170,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
 
     pop <- map[[attr(map, "pop_col")]]
     if ((backend == 'flip' && any(pop >= get_target(map))) ||
-        (backend == 'mergesplit' && any(pop >= pop_bounds[3]))) {
+        (backend %in% c('mergesplit', 'cyclewalk') && any(pop >= pop_bounds[3]))) {
         too_big <- as.character(which(pop >= pop_bounds[3]))
         cli::cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
                     population larger than the district target.",
@@ -190,8 +196,30 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
                 pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
                 constraints, control, k, 1L, verbosity = 0)$plans[, -1L]
         }
+    } else if (backend == "cyclewalk") {
+        run_burst <- function(init, steps) {
+            cyclewalk_plans(
+                N = steps,
+                l = adj,
+                init = init,
+                counties = counties,
+                pop = pop,
+                n_distr = ndists,
+                target = pop_bounds[2],
+                lower = pop_bounds[1],
+                upper = pop_bounds[3],
+                compactness = compactness,
+                constraints = constraints,
+                control = list(),
+                edge_weights = list(),
+                thin = 1L,
+                instep = cw_instep,
+                cycle_walk_frac = cw_cycle_walk_frac,
+                verbosity = 0
+            )$plans[, -1L]
+        }
     } else {
-
+        # flip backend
         if (flip_eprob <= 0 || flip_eprob >= 1) {
             cli::cli_abort("{.arg flip_eprob} must be in the interval (0, 1).")
         }
@@ -243,6 +271,8 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         }
         if (backend == "mergesplit") {
             cat("MERGE-SPLIT SHORT BURSTS\n")
+        } else if (backend == "cyclewalk") {
+            cat("CYCLEWALK SHORT BURSTS\n")
         } else {
             cat("FLIP SHORT BURSTS\n")
         }
