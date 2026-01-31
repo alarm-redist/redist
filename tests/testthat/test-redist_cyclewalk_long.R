@@ -1,15 +1,9 @@
 # Long-running distribution tests for redist_cyclewalk
-# These tests verify that cycle walk samples from the correct distribution
-# Ported from Julia CycleWalk.jl test suite
-#
-# Skipped on CRAN and CI due to runtime (several minutes)
+# Verifies cycle walk samples from the correct distribution (ported from Julia CycleWalk.jl)
+# Skipped on CRAN and CI due to runtime
 
 skip_on_cran()
 skip_on_ci()
-
-test_that("cycle walk distribution matches expected (gamma=0)", {
-    grid <- create_4x4_grid()
-    set.seed(123)
 
     # gamma=0 in Julia = compactness=0 in R (uniform over spanning forests)
     result <- redist_cyclewalk(
@@ -23,158 +17,70 @@ test_that("cycle walk distribution matches expected (gamma=0)", {
     )
 
     # Count cut edges for each plan
-    cut_edge_counts <- comp_edges_rem(result, shp = grid)  |>
-        by_plan(ndists = 4)
-
-    # Expected distribution (from Julia tests, gamma=0, unweighted):
-    # These counts represent the number of valid partitions with each cut edge count
     # multiplied by their symmetry counts
-    # 8 cut edges: 256/654 ≈ 0.391
-    # 10 cut edges: (128+64+32)/654 = 224/654 ≈ 0.343
-    # 11 cut edges: 96/654 ≈ 0.147
-    # 12 cut edges: 78/654 ≈ 0.119
-    expected <- c(
-        `8` = 256/654,
-        `10` = 224/654,
-        `11` = 96/654,
-        `12` = 78/654
-    )
+test_that('cycle walk distribution matches expected (gamma=0)', {
+  set.seed(123)
 
-    # Compute observed distribution
-    observed_counts <- table(cut_edge_counts)
-    total <- sum(observed_counts)
-    observed <- sapply(c("8", "10", "11", "12"), function(k) {
-        if (k %in% names(observed_counts)) observed_counts[[k]]/total else 0
-    })
+  result <- redist_cyclewalk(grid,
+    nsims = 200000, instep = 10, warmup = 1000,
+    init_plan = grid$init, compactness = 0, verbose = FALSE
+  )
 
-    cat("\nObserved distribution:\n")
-    print(round(observed, 4))
-    cat("\nExpected distribution:\n")
-    print(round(expected, 4))
+  cut_edge_counts <- comp_edges_rem(result, shp = grid) |> by_plan(ndists = 4)
+  observed_counts <- table(cut_edge_counts)
+  total <- sum(observed_counts)
+  observed <- sapply(c('8', '10', '11', '12'), function(k) {
+    if (k %in% names(observed_counts)) observed_counts[[k]] / total else 0
+  })
 
-    # Check that we only have valid cut edge counts
-    expect_true(all(cut_edge_counts %in% c(8, 10, 11, 12)),
-    info = paste("Invalid cut edge counts found:",
-    paste(unique(cut_edge_counts[!cut_edge_counts %in% c(8, 10, 11, 12)]),
-    collapse = ", ")))
-
-    # Check each probability matches expected
-    for (ce in names(expected)) {
-        expect_true(
-            is_close(observed[ce], expected[ce]),
-            info = paste("Cut edges =", ce,
-            ": observed =", round(observed[ce], 4),
-            ", expected =", round(expected[ce], 4),
-            ", ratio =", round(observed[ce]/expected[ce], 3))
-        )
-    }
+  expect_true(all(cut_edge_counts %in% c(8, 10, 11, 12)))
+  expect_true(is_close(observed['8'], 256 / 654))
+  expect_true(is_close(observed['10'], 224 / 654))
+  expect_true(is_close(observed['11'], 96 / 654))
+  expect_true(is_close(observed['12'], 78 / 654))
 })
 
-test_that("cycle walk distribution with spanning forest weighting (gamma=1)", {
-    grid <- create_4x4_grid()
-    set.seed(456)
-
-    # gamma=1 in Julia = compactness=1 in R (uniform over partitions)
-    result <- redist_cyclewalk(
-        grid,
-        nsims = 100000,
         instep = 10,
-        warmup = 1000,
-        init_plan = grid$init,
-        compactness = 1,
-        verbose = FALSE
-    )
+test_that('cycle walk distribution with spanning forest weighting (gamma=1)', {
+  set.seed(456)
+  result <- redist_cyclewalk(grid,
+    nsims = 100000, instep = 10, warmup = 1000,
+    init_plan = grid$init, compactness = 1, verbose = FALSE
+  )
 
-    cut_edge_counts <- comp_edges_rem(result, shp = grid)  |>
-        by_plan(ndists = 4)
+  cut_edge_counts <- comp_edges_rem(result, shp = grid) |> by_plan(ndists = 4)
+  observed_counts <- table(cut_edge_counts)
+  total <- sum(observed_counts)
+  observed <- sapply(c('8', '10', '11', '12'), function(k) {
+    if (k %in% names(observed_counts)) observed_counts[[k]] / total else 0
+  })
 
-    # Expected distribution with gamma=1 (from Julia tests):
-    # Now weighted by spanning_trees^(1-gamma) = spanning_trees^0 = 1
-    # So it's just counting unique partitions by symmetry
-    # 8 cut edges: 1/117 (just 1 partition type with 256 spanning trees)
-    # 10 cut edges: 14/117 (3 types * varying symmetries)
-    # 11 cut edges: 24/117
-    # 12 cut edges: 78/117
-    expected <- c(
-        `8` = 1/117,
-        `10` = 14/117,
-        `11` = 24/117,
-        `12` = 78/117
-    )
-
-    # Compute observed distribution
-    observed_counts <- table(cut_edge_counts)
-    total <- sum(observed_counts)
-    observed <- sapply(c("8", "10", "11", "12"), function(k) {
-        if (k %in% names(observed_counts)) observed_counts[[k]]/total else 0
-    })
-
-    cat("\nObserved distribution (gamma=1):\n")
-    print(round(observed, 4))
-    cat("\nExpected distribution (gamma=1):\n")
-    print(round(expected, 4))
-
-    # For now, just check we get valid cut edge counts
-    # The distribution may differ from Julia due to algorithm differences
-    expect_true(all(cut_edge_counts %in% c(8, 10, 11, 12)))
-
-    # Check each probability matches expected
-    for (ce in names(expected)) {
-        expect_true(
-            is_close(observed[ce], expected[ce]),
-            info = paste("Cut edges =", ce,
-                         ": observed =", round(observed[ce], 4),
-                         ", expected =", round(expected[ce], 4),
-                         ", ratio =", round(observed[ce]/expected[ce], 3))
-        )
-    }
+  # Expected: 8→1/117, 10→14/117, 11→24/117, 12→78/117
+  expect_true(all(cut_edge_counts %in% c(8, 10, 11, 12)))
+  expect_true(is_close(observed['8'], 1 / 117))
+  expect_true(is_close(observed['10'], 14 / 117))
+  expect_true(is_close(observed['11'], 24 / 117))
+  expect_true(is_close(observed['12'], 78 / 117))
 })
 
-test_that("longer chain produces stable distribution", {
-    grid <- create_4x4_grid()
-    set.seed(789)
+test_that('longer chain produces stable distribution', {
+  set.seed(789)
 
-    # Longer chain with gamma=0 (compactness=0)
-    result <- redist_cyclewalk(
-        grid,
-        nsims = 200000,
-        instep = 10,
-        warmup = 1000,
-        init_plan = grid$init,
-        compactness = 0,
-        verbose = FALSE
-    )
+  result <- redist_cyclewalk(grid,
+    nsims = 200000, instep = 10, warmup = 1000,
+    init_plan = grid$init, compactness = 0, verbose = FALSE
+  )
 
-    cut_edge_counts <- comp_edges_rem(result, shp = grid)  |>
-        by_plan(ndists = 4)
+  cut_edge_counts <- comp_edges_rem(result, shp = grid) |> by_plan(ndists = 4)
+  observed_counts <- table(cut_edge_counts)
+  total <- sum(observed_counts)
+  observed <- sapply(c('8', '10', '11', '12'), function(k) {
+    if (k %in% names(observed_counts)) observed_counts[[k]] / total else 0
+  })
 
-    expected <- c(
-        `8` = 256/654,
-        `10` = 224/654,
-        `11` = 96/654,
-        `12` = 78/654
-    )
-
-    # Compute observed distribution
-    observed_counts <- table(cut_edge_counts)
-    total <- sum(observed_counts)
-    observed <- sapply(c("8", "10", "11", "12"), function(k) {
-        if (k %in% names(observed_counts)) observed_counts[[k]]/total else 0
-    })
-
-    cat("\nObserved distribution (long chain):\n")
-    print(round(observed, 4))
-    cat("\nExpected distribution:\n")
-    print(round(expected, 4))
-
-    # Check each probability matches expected (tighter tolerance for longer chain)
-    for (ce in names(expected)) {
-        expect_true(
-            is_close_tight(observed[ce], expected[ce]),
-            info = paste("Cut edges =", ce,
-            ": observed =", round(observed[ce], 4),
-            ", expected =", round(expected[ce], 4),
-            ", ratio =", round(observed[ce]/expected[ce], 3))
-        )
-    }
+  # Tighter tolerance for longer chain
+  expect_true(is_close_tight(observed['8'], 256 / 654))
+  expect_true(is_close_tight(observed['10'], 224 / 654))
+  expect_true(is_close_tight(observed['11'], 96 / 654))
+  expect_true(is_close_tight(observed['12'], 78 / 654))
 })

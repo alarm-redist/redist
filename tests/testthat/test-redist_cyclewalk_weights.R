@@ -1,8 +1,5 @@
 # Tests for redist_cyclewalk edge weights
-
-data(fl25)
-fl_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1) |>
-  suppressMessages()
+# fl_map already created in setup.R
 
 test_that('redist_cyclewalk works with NULL edge_weights', {
   set.seed(02139)
@@ -185,7 +182,6 @@ test_that('edge must exist in adjacency graph', {
 })
 
 test_that('adjacency check works correctly with 0-indexed adj list', {
-
   ew1 <- list(list(edge = c(1, 2), weight = 2.0))
   ew2 <- list(list(edge = c(2, 1), weight = 2.0))
 
@@ -363,15 +359,13 @@ test_that('very small weights work', {
   expect_equal(ncol(get_plans_matrix(result)), 11)
 })
 
-# County-based edge weights tests
+# County-based edge weights tests (uses ia from setup_cyclewalk.R)
 
 test_that('counties parameter auto-generates edge weights', {
   skip_on_cran()
-  data(iowa)
-  iowa_map <- redist_map(iowa, ndists = 4, pop_tol = 0.1)
 
   set.seed(123)
-  result <- redist_cyclewalk(iowa_map, 20, counties = iowa$region, silent = TRUE)
+  result <- redist_cyclewalk(ia, 20, counties = iowa$region, silent = TRUE)
 
   expect_s3_class(result, 'redist_plans')
   expect_equal(ncol(get_plans_matrix(result)), 21)
@@ -379,19 +373,13 @@ test_that('counties parameter auto-generates edge weights', {
 
 test_that('edge_weights as number sets county weight multiplier', {
   skip_on_cran()
-  data(iowa)
-  iowa_map <- redist_map(iowa, ndists = 4, pop_tol = 0.1)
 
-  # Custom 5x multiplier
   set.seed(123)
-  result <- redist_cyclewalk(iowa_map, 20, counties = iowa$region,
-                              edge_weights = 5, silent = TRUE)
+  result <- redist_cyclewalk(ia, 20, counties = iowa$region, edge_weights = 5, silent = TRUE)
   expect_s3_class(result, 'redist_plans')
 
-  # Custom 20x multiplier
   set.seed(123)
-  result2 <- redist_cyclewalk(iowa_map, 20, counties = iowa$region,
-                               edge_weights = 20, silent = TRUE)
+  result2 <- redist_cyclewalk(ia, 20, counties = iowa$region, edge_weights = 20, silent = TRUE)
   expect_s3_class(result2, 'redist_plans')
 })
 
@@ -404,16 +392,13 @@ test_that('edge_weights as number requires counties', {
 
 test_that('explicit edge_weights list overrides county auto-generation', {
   skip_on_cran()
-  data(iowa)
-  iowa_map <- redist_map(iowa, ndists = 4, pop_tol = 0.1)
 
-  adj <- redist.adjacency(iowa)
-  custom_weights <- list(
-    list(edge = c(1, adj[[1]][1] + 1), weight = 3.0)
-  )
+  custom_weights <- list(list(edge = c(1, ia$adj[[1]][1] + 1), weight = 3.0))
 
   set.seed(123)
-  result <- redist_cyclewalk(iowa_map, 20, counties = iowa$region,
-                              edge_weights = custom_weights, silent = TRUE)
+  result <- redist_cyclewalk(ia, 20,
+    counties = iowa$region,
+    edge_weights = custom_weights, silent = TRUE
+  )
   expect_s3_class(result, 'redist_plans')
 })
