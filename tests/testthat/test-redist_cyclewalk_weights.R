@@ -1,15 +1,10 @@
 # Tests for redist_cyclewalk edge weights
 
-library(testthat)
-library(redist)
-
 data(fl25)
 fl_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1) |>
   suppressMessages()
 
 test_that('redist_cyclewalk works with NULL edge_weights', {
-  skip_on_cran()
-
   set.seed(02139)
   result <- redist_cyclewalk(fl_map, nsims = 20)
 
@@ -19,8 +14,6 @@ test_that('redist_cyclewalk works with NULL edge_weights', {
 })
 
 test_that('redist_cyclewalk works with single edge weight', {
-  skip_on_cran()
-
   ew <- list(list(edge = c(1, 2), weight = 2.0))
 
   set.seed(02139)
@@ -34,8 +27,6 @@ test_that('redist_cyclewalk works with single edge weight', {
 })
 
 test_that('redist_cyclewalk works with multiple edge weights', {
-  skip_on_cran()
-
   ew <- list(
     list(edge = c(1, 2), weight = 2.0),
     list(edge = c(1, 3), weight = 3.0),

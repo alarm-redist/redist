@@ -2,64 +2,12 @@
 # These tests verify that cycle walk samples from the correct distribution
 # Ported from Julia CycleWalk.jl test suite
 #
-# These tests are skipped by default. To run them:
-#   testthat::test_file("tests/testthat/test_redist_cyclewalk_long.R")
-#
-# Or from command line:
-#   Rscript -e "devtools::test(filter='cyclewalk_long')"
-
-library(testthat)
-library(redist)
+# Skipped on CRAN and CI due to runtime (several minutes)
 
 skip_on_cran()
 skip_on_ci()
 
-# setup ----
-
-# make 4x4 grid graph with unit population
-create_4x4_grid <- function() {
-    grid_sf <- st_bbox(c(xmin = 0, ymin = 0, xmax = 4, ymax = 4)) |>
-        sf::st_as_sfc() |>
-        sf::st_make_grid(n = c(4, 4)) |>
-        sf::st_sf(geometry = _)
-
-    new_order <- c(13, 14, 9, 10, 15, 16, 11, 12, 5, 6, 1, 2, 7, 8, 3, 4)
-    grid_sf <- grid_sf[new_order, ]
-
-    grid_sf$adj <- redist.adjacency(grid_sf)
-    grid_sf$pop <- rep(1L, 16)
-    grid_sf$init <- c(1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 4L, 4L, 4L, 4L)
-    grid_sf$id <- 1:16
-
-    # make pop = 4 only possible choice
-    redist_map(
-        grid_sf,
-        existing_plan = init,
-        pop_bounds = c(3.99, 4, 4.01),
-        adj = grid_sf$adj
-    ) |>
-      suppressWarnings()
-}
-
-# check if observed is close to expected
-# For large probabilities (>1%), use 10% relative tolerance
-# For small probabilities, use 40% relative tolerance
-is_close <- function(obs, exp) {
-    if (exp > 0.01) {
-        ratio <- obs / exp
-        ratio >= 0.9 && ratio <= 1.1
-    } else {
-        ratio <- obs / exp
-        ratio >= 0.6 && ratio <= 1.4
-    }
-}
-
-# ============================================================
-# Distribution tests
-# ============================================================
-
-test_that("cycle walk distribution matches expected (unweighted, gamma=0)", {
-    skip_on_cran()
+test_that("cycle walk distribution matches expected (gamma=0)", {
     grid <- create_4x4_grid()
     set.seed(123)
 
@@ -123,8 +71,6 @@ test_that("cycle walk distribution matches expected (unweighted, gamma=0)", {
 })
 
 test_that("cycle walk distribution with spanning forest weighting (gamma=1)", {
-    skip_on_cran()
-
     grid <- create_4x4_grid()
     set.seed(456)
 
@@ -185,8 +131,6 @@ test_that("cycle walk distribution with spanning forest weighting (gamma=1)", {
 })
 
 test_that("longer chain produces stable distribution", {
-    skip_on_cran()
-
     grid <- create_4x4_grid()
     set.seed(789)
 
@@ -223,13 +167,7 @@ test_that("longer chain produces stable distribution", {
     cat("\nExpected distribution:\n")
     print(round(expected, 4))
 
-    # With longer chain, should have tighter tolerance
-    is_close_tight <- function(obs, exp) {
-        ratio <- obs / exp
-        ratio >= 0.95 && ratio <= 1.05
-    }
-
-    # Check each probability matches expected (tighter tolerance)
+    # Check each probability matches expected (tighter tolerance for longer chain)
     for (ce in names(expected)) {
         expect_true(
             is_close_tight(observed[ce], expected[ce]),

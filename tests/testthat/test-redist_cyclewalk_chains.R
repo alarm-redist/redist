@@ -28,7 +28,6 @@ test_that('multiple chains work with default ncores', {
 })
 
 test_that('chains with explicit ncores', {
-  skip_on_cran()
   set.seed(789)
   data(fl25)
   fl_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1)
@@ -62,8 +61,7 @@ test_that('init_plan as single vector replicates across chains', {
   expect_equal(length(unique(result$chain[!is.na(result$chain)])), 2)
   # Should have the init plan in the result
   expect_true('shared_init' %in% result$draw)
-  # Init plan appears once with chain=NA (shared across all chains)
-  # Each plan has ndists rows
+
   ndists <- attr(fl_map, 'ndists')
   expect_equal(sum(result$draw == 'shared_init'), ndists)
   # The shared init has NA for chain
@@ -134,7 +132,6 @@ test_that("init_plan='sample' generates unique inits per chain", {
 })
 
 test_that('return_all=FALSE returns only final plans', {
-  skip_on_cran()
   set.seed(444)
   data(fl25)
   fl_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1)
