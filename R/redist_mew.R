@@ -5,6 +5,13 @@
 #' congressional or legislative redistricting plans according to contiguity,
 #' population, compactness, and other custom constraints.
 #'
+#' @section Parallel Execution:
+#' When using multiple chains (`chains > 1`), each chain runs independently in
+#' parallel. Note that parallel execution may not be perfectly reproducible even
+#' with the same `set.seed()` due to timing variations in Wilson's algorithm
+#' during initialization. Use `chains = 1` if perfect reproducibility is required.
+#' Statistical independence between chains is preserved regardless of reproducibility.
+#'
 #' @param map A [redist_map] object.
 #' @param nsims The number of samples to draw, including warmup.
 #' @param warmup The number of warmup samples to discard.

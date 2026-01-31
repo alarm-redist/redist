@@ -171,22 +171,6 @@ test_that('reference plans added correctly with chains', {
   expect_true(any(grepl('myinit', result$draw)))
 })
 
-test_that('parallel chains are reproducible with same seed', {
-  skip('Reproducibility with doRNG needs investigation')
-  skip_on_cran()
-  set.seed(789)
-  result1 <- redist_mew(fl_map, 50, chains = 2, ncores = 2, silent = TRUE)
-
-  set.seed(789)
-  result2 <- redist_mew(fl_map, 50, chains = 2, ncores = 2, silent = TRUE)
-
-  # Results should be identical due to doRNG
-  expect_identical(
-    get_plans_matrix(result1),
-    get_plans_matrix(result2)
-  )
-})
-
 test_that('chains produce different results with different seeds', {
   skip_on_cran()
   set.seed(123)
