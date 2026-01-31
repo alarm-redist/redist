@@ -6,25 +6,38 @@
 #include "cw_forest_walk.h"
 #include <algorithm>
 
-bool get_random_internal_edge(const LCTPartition& partition,
+bool get_random_internal_edge(LCTPartition& partition,
                                int& u, int& v,
                                int max_attempts) {
     const Graph& g = *(partition.graph);
     int V = partition.n_vertices;
+    
+    // Build list of all edges (as pairs where u < v)
+    // This is O(E) but only done once per call
+    std::vector<std::pair<int, int>> all_edges;
+    for (int i = 0; i < V; i++) {
+        for (int j : g[i]) {
+            if (j > i) {  // Only count each edge once
+                all_edges.push_back({i, j});
+            }
+        }
+    }
+    
+    if (all_edges.empty()) return false;
 
     // Try to find an internal edge (both endpoints in same district)
+    // Pick uniformly at random from all edges, like Julia does
     for (int attempt = 0; attempt < max_attempts; attempt++) {
-        // Pick a random vertex
-        u = r_int(V);
-        int d_u = partition.node_to_district[u];
+        // Pick a random edge uniformly
+        int edge_idx = r_int((int)all_edges.size());
+        u = all_edges[edge_idx].first;
+        v = all_edges[edge_idx].second;
 
-        // Pick a random neighbor
-        if (g[u].empty()) continue;
-        int neighbor_idx = r_int((int)g[u].size());
-        v = g[u][neighbor_idx];
-
-        // Check if same district (internal edge)
-        if (partition.node_to_district[v] == d_u) {
+        // Check if same district (internal edge) by checking same root
+        int root_u = partition.lct.find_root(u);
+        int root_v = partition.lct.find_root(v);
+        
+        if (root_u == root_v) {
             return true;
         }
     }
@@ -117,13 +130,16 @@ int internal_forest_walk(LCTPartition& partition, int max_attempts) {
     int cut_child = path[edge_idx + 1];
     lct.cut(cut_child);
 
+    // Find the new root BEFORE linking (like Julia does)
+    // After cutting, v is in a different component from u
+    // We need v's root to update the partition
+    int new_root = lct.find_root(v);
+
     // Link u to v (u is already the root after evert)
-    // Actually, after cutting, v might be in a different component
-    // We need to link u (root of its component) to v
     lct.link(u, v);
 
     // Step 7: Update partition - the district root may have changed
-    int new_root = lct.find_root(v);
+    // Use the new_root we found before linking
     int district = partition.node_to_district[v];
     partition.district_roots[district] = new_root;
 

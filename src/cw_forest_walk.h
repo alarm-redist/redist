@@ -33,7 +33,7 @@ int internal_forest_walk(LCTPartition& partition, int max_attempts = 100);
  * Get a random internal edge (endpoints in same district).
  * Returns true if found, false if no internal edge exists.
  */
-bool get_random_internal_edge(const LCTPartition& partition,
+bool get_random_internal_edge(LCTPartition& partition,
                                int& u, int& v,
                                int max_attempts = 100);
 

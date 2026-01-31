@@ -166,14 +166,18 @@ bool get_cycle_paths(LCTPartition& partition,
 
     LinkCutTree& lct = partition.lct;
 
-    // Path in district d1: from u1 to u2
+    // Path in district d1: from u2 to u1 (root)
     // First evert u1 to make it the root
     lct.evert(u1);
     path1 = lct.find_path(u2);
+    // find_path returns root-to-u, but Julia wants u-to-root, so reverse
+    std::reverse(path1.begin(), path1.end());
 
-    // Path in district d2: from v1 to v2
+    // Path in district d2: from v2 to v1 (root)
     lct.evert(v1);
     path2 = lct.find_path(v2);
+    // Same: reverse to get v2-to-root ordering like Julia
+    std::reverse(path2.begin(), path2.end());
 
     return !path1.empty() && !path2.empty();
 }
@@ -192,41 +196,50 @@ std::vector<int> get_collapsed_cycle_weights(
     int cycle_len = (int)(path1.size() + path2.size());
     std::vector<int> collapsed_weights(cycle_len);
 
-    // Get subtree populations rooted at u1 (first vertex of path1)
-    int u1 = path1[0];
+    // After reversal in get_cycle_paths:
+    // path1 = [u2, ..., u1] where u1 is the root (at the END after reversal)
+    // path2 = [v2, ..., v1] where v1 is the root (at the END after reversal)
+    // Julia uses uPath[1] = u1 (BEFORE reversal) = path1.back() (AFTER reversal)
+    
+    // Get subtree populations rooted at u1 (LAST vertex of path1 after reversal)
+    int u1 = path1.back();
     std::map<int, int> u_cut_pop = compute_subtree_pops(partition, u1);
 
-    // Get subtree populations rooted at v1 (first vertex of path2)
-    int v1 = path2[0];
+    // Get subtree populations rooted at v1 (LAST vertex of path2 after reversal)
+    int v1 = path2.back();
     std::map<int, int> v_cut_pop = compute_subtree_pops(partition, v1);
 
-    // Build collapsed weights for path1 (reversed order in cycle)
-    // The cycle goes: path1_reversed, then path2_reversed
-    // So position 0 is path1[end], position path1.size()-1 is path1[0]
+    // Build collapsed weights for path1
+    // After reversal: path1 = [u2, ..., u1] (same as Julia's uPath_rev)
+    // Julia iterates: uPath_rev[1] → collapsed[1], uPath_rev[2] → collapsed[2], etc.
+    // In C++ (0-indexed): path1[0] → collapsed[0], path1[1] → collapsed[1], etc.
     for (size_t ii = 0; ii < path1.size(); ii++) {
-        int vertex = path1[path1.size() - 1 - ii];  // Reversed
+        int vertex = path1[ii];  // Direct mapping, same order as Julia's uPath_rev
         collapsed_weights[ii] = u_cut_pop[vertex];
         if (ii > 0) {
-            int next_vertex = path1[path1.size() - ii];  // Previous in reversed order
-            collapsed_weights[ii] -= u_cut_pop[next_vertex];
+            int prev_vertex = path1[ii - 1];  // Previous vertex in path (closer to u2)
+            collapsed_weights[ii] -= u_cut_pop[prev_vertex];
         }
     }
 
-    // Build collapsed weights for path2 (REVERSED order in cycle, matching Julia)
-    // Julia processes vPath from end to beginning, filling array backwards
-    // Position cycle_len-1 gets path2[end], working backwards to position path1.size()
+    // Build collapsed weights for path2
+    // After reversal: path2 = [v2, ..., v1]
+    // Julia fills from end: vPath[end] → collapsed[end], vPath[end-1] → collapsed[end-1], etc.
+    // Julia's vPath = [v1, ..., v2], so vPath[end] = v2
+    // Our path2 = [v2, ..., v1], so we need path2[0]=v2 → collapsed[end], etc.
     for (size_t ii = 0; ii < path2.size(); ii++) {
         // Fill from end of cycle backwards
         int pos = cycle_len - 1 - ii;
-
-        // Take vertices from end of path2 backwards (reversed)
-        int vertex = path2[path2.size() - 1 - ii];
+        
+        // path2[ii] gives us vertices from v2 towards v1
+        // We want collapsed[end] = v2, collapsed[end-1] = next towards v1, etc.
+        int vertex = path2[ii];
         collapsed_weights[pos] = v_cut_pop[vertex];
-
+        
         if (ii > 0) {
-            // Subtract the next vertex in cycle order (previous in reversed path)
-            int next_vertex = path2[path2.size() - ii];
-            collapsed_weights[pos] -= v_cut_pop[next_vertex];
+            // Previous vertex in path2 is closer to v2
+            int prev_vertex = path2[ii - 1];
+            collapsed_weights[pos] -= v_cut_pop[prev_vertex];
         }
     }
 
@@ -366,8 +379,10 @@ static bool swap_assignment_check(
     bool l11_in_interval = (cut1 <= path_ind && path_ind <= cut2);
     bool l11_in_uPath = (path_ind <= path1_len);
 
-    // XOR logic from Julia
-    return (l11_in_uPath != l11_in_interval) != uPathToInterval;
+    // XOR logic from Julia: (l11_in_uPath XOR l11_in_interval) XOR !uPathToInterval
+    // This is equivalent to: !((l11_in_uPath XOR l11_in_interval) XOR uPathToInterval)
+    // Or: (l11_in_uPath != l11_in_interval) == uPathToInterval
+    return (l11_in_uPath != l11_in_interval) == uPathToInterval;
 }
 
 void apply_update(LCTPartition& partition,
@@ -376,13 +391,13 @@ void apply_update(LCTPartition& partition,
 
     LinkCutTree& lct = partition.lct;
 
-    // Apply cuts
+    // Apply cuts (Julia does NOT evert before cutting)
     for (const auto& cut : update.cuts) {
-        lct.evert(cut.first);
+        // Julia: cut!(partition.lct.nodes[cut[2]])
         lct.cut(cut.second);
     }
 
-    // Apply links
+    // Apply links (Julia: evert!(link[1]); link!(link[1], link[2]))
     for (const auto& link : update.links) {
         lct.evert(link.first);
         lct.link(link.first, link.second);
@@ -412,7 +427,8 @@ void apply_update(LCTPartition& partition,
             int r11_root_ind_cur = (link11_dist_cur != d1) ? 2 : 1;
 
             // XOR logic: (r11_root_ind_new == r11_root_ind_cur) XOR !swap_link11
-            bool should_swap = (r11_root_ind_new == r11_root_ind_cur) != update.swap_link11;
+            // This is equivalent to: (equal AND swap) OR (!equal AND !swap)
+            bool should_swap = (r11_root_ind_new == r11_root_ind_cur) == update.swap_link11;
 
             if (should_swap) {
                 std::swap(new_root1, new_root2);
@@ -533,20 +549,37 @@ int cycle_walk(LCTPartition& partition,
     // Step 6: Sample a cut pair WEIGHTED by edge weights (Bug #3 fix)
     // Build cumulative distribution weighted by 1/(w1*w2)
 
-    // Helper lambda to get edge at position
+    // Helper lambda to get edge at position (1-indexed like Julia)
+    // After reversal: path1 = [u2, ..., u1], path2 = [v2, ..., v1]
+    // Julia uses: uPath = [u1, ..., u2], vPath = [v1, ..., v2]
+    // Mapping: uPath[end-k] corresponds to path1[k] for k=0,1,...
+    //          vPath[end-k] corresponds to path2[k] for k=0,1,...
     auto get_edge_at_position = [&](int edge_ind) -> std::pair<int, int> {
         int path1_len = (int)path1.size();
         int path2_len = (int)path2.size();
 
         if (edge_ind == 1) {
-            return {path1[path1_len - 1], path2[path2_len - 1]};
-        } else if (edge_ind <= path1_len) {
-            return {path1[path1_len - edge_ind], path1[path1_len - edge_ind + 1]};
-        } else if (edge_ind == path1_len + 1) {
+            // Julia: (uPath[end], vPath[end]) = (u2, v2)
+            // path1[0] = u2, path2[0] = v2
             return {path1[0], path2[0]};
+        } else if (edge_ind <= path1_len) {
+            // Julia: (uPath[end-edge_ind+1], uPath[end-edge_ind+2])
+            // For edge_ind=2: (uPath[end-1], uPath[end]) = (prev of u2, u2)
+            // path1[1] = prev of u2, path1[0] = u2
+            // So: (path1[edge_ind-1], path1[edge_ind-2])
+            return {path1[edge_ind - 1], path1[edge_ind - 2]};
+        } else if (edge_ind == path1_len + 1) {
+            // Julia: (uPath[1], vPath[1]) = (u1, v1)
+            // path1[end] = u1, path2[end] = v1
+            return {path1[path1_len - 1], path2[path2_len - 1]};
         } else {
+            // Julia: ind = edge_ind - length(uPath) - 1
+            //        (vPath[ind], vPath[ind+1])
+            // For edge_ind = path1_len + 2: ind = 1, (vPath[1], vPath[2]) = (v1, next)
+            // path2[end] = v1, path2[end-1] = next
+            // So: (path2[path2_len - ind], path2[path2_len - ind - 1])
             int ind = edge_ind - path1_len - 1;
-            return {path2[ind - 1], path2[ind]};
+            return {path2[path2_len - ind], path2[path2_len - ind - 1]};
         }
     };
 
@@ -642,7 +675,22 @@ int cycle_walk(LCTPartition& partition,
 
     // Julia's get_cuts_and_links - handle boundary edge cancellation
     // Initial boundary edges (links candidates)
-    std::vector<std::pair<int, int>> links = {{e1.u, e1.v}, {e2.u, e2.v}};
+    // IMPORTANT: Use (u1,v1) and (u2,v2) ordering to match Julia's behavior
+    // where link[0][0] is the endpoint in district d1
+    // Extract the d1 endpoints from the boundary edges
+    int e1_d1, e1_d2, e2_d1, e2_d2;
+    if (partition.get_district(e1.u) == d1) {
+        e1_d1 = e1.u; e1_d2 = e1.v;
+    } else {
+        e1_d1 = e1.v; e1_d2 = e1.u;
+    }
+    if (partition.get_district(e2.u) == d1) {
+        e2_d1 = e2.u; e2_d2 = e2.v;
+    } else {
+        e2_d1 = e2.v; e2_d2 = e2.u;
+    }
+    
+    std::vector<std::pair<int, int>> links = {{e1_d1, e1_d2}, {e2_d1, e2_d2}};
     // Selected cut edges
     std::vector<std::pair<int, int>> cuts = {{fe1_u, fe1_v}, {fe2_u, fe2_v}};
 
@@ -737,6 +785,9 @@ int cycle_walk(LCTPartition& partition,
     double log_weight_ratio = 0.0;
     double log_constraint_ratio = 0.0;
 
+    // DEBUG: Collect info for debug later (after we know total cuts)
+    bool do_mh_debug = false;  // Will be set true for interesting transitions
+
     // Adjacent district ratio (accounts for change in number of adjacent pairs)
     // Julia: prob = old_adj_dists/(old_adj_dists+delta_adj_dists)
     if (old_adj_dists_total > 0 && old_adj_dists_total + delta_adj_dists > 0) {
@@ -762,10 +813,25 @@ int cycle_walk(LCTPartition& partition,
     }
 
     // Constraint ratio (target ratio)
-    // MH ratio needs pi(new)/pi(old) = exp(log_pi_new - log_pi_old)
-    // calc_gibbs_tgt returns log(pi), where higher = better
-    log_constraint_ratio = new_constraint_penalty - old_constraint_penalty;
+    // Julia computes exp(old_energy - new_energy), so we need old - new
+    // This means higher energy states are DOWN-weighted
+    // calc_gibbs_tgt returns log(pi), where higher = higher energy
+    log_constraint_ratio = old_constraint_penalty - new_constraint_penalty;
     log_mh_ratio += log_constraint_ratio;
+
+    // Count total cut edges in old and new states
+    int old_total_cuts = 0, new_total_cuts = 0;
+    for (const auto& [key, edges] : old_cross_edges) {
+        old_total_cuts += edges.size();
+    }
+    for (const auto& [key, edges] : partition.cross_edges) {
+        new_total_cuts += edges.size();
+    }
+    
+    // Mark variables as used (debug tracking disabled for production)
+    (void)old_total_cuts;
+    (void)new_total_cuts;
+    (void)do_mh_debug;
 
     // Convert to acceptance probability
     double accept_ratio = std::min(1.0, std::exp(log_mh_ratio));
@@ -774,7 +840,16 @@ int cycle_walk(LCTPartition& partition,
     diagnostics.accept_prob = accept_ratio;
 
     // MH accept/reject
-    if (r_unif() < accept_ratio) {
+    double rand_val = r_unif();
+    bool do_accept = rand_val < accept_ratio;
+    
+    // Debug output disabled for production
+    // if (debug_count <= 5) {
+    //     Rcpp::Rcout << "  -> rand=" << std::fixed << std::setprecision(3) << rand_val 
+    //                 << (do_accept ? " ACCEPT" : " reject") << "\n";
+    // }
+    
+    if (do_accept) {
         diagnostics.status = 1;  // Accepted
         return 1;
     } else {
@@ -783,8 +858,9 @@ int cycle_walk(LCTPartition& partition,
         // First undo LCT changes: cut the links, relink the cuts
         LinkCutTree& lct = partition.lct;
         for (const auto& link : update.links) {
-            lct.evert(link.first);
-            lct.cut(link.second);
+            // Julia: evert!(link[2]), cut!(link[1])
+            lct.evert(link.second);
+            lct.cut(link.first);
         }
         for (const auto& cut : update.cuts) {
             lct.evert(cut.first);

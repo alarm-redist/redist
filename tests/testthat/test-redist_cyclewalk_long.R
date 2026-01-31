@@ -63,10 +63,25 @@ test_that("cycle walk distribution matches expected (unweighted, gamma=0)", {
     grid <- create_4x4_grid()
     set.seed(123)
 
-    # Run many iterations like Julia test (50,000 cycle steps)
+    # Julia test setup:
+    # - cycle_steps=200_000 outer iterations
+    # - instep=10 (10 MCMC steps per outer loop)
+    # - Total: 2 million MCMC steps, 200K recorded samples
+    #
+    # Our approach: use thin=10 to match Julia's thinning
+    # nsims=200000, thin=10 means we run 200K*10 = 2M MCMC steps
+    # and record 200K/10 = 20K samples (after thinning)
+    #
+    # Actually thin works differently - it keeps every 10th sample from nsims
+    # So nsims=200000, thin=10 -> ~20K final samples from 200K steps
+    #
+    # To get 2M steps with 200K samples, we need nsims that accounts for thinning
+    # Let's use nsims=2000000 (2M steps) with thin=10 for 200K samples
     result <- redist_cyclewalk(
         grid,
-        nsims = 50000,
+        nsims = 2000000,
+        thin = 10,
+        warmup = 10000,
         init_plan = grid$init,
         verbose = FALSE
     )
@@ -130,10 +145,13 @@ test_that("cycle walk distribution with spanning forest weighting (gamma=1)", {
     constr <- redist_constr(grid) |>
         add_constr_log_st(strength = 1.0)
 
-    # Run many iterations
+    # Julia uses cycle_steps=100_000 with instep=10 = 1M MCMC steps
+    # We use nsims=1000000, thin=10 for similar behavior
     result <- redist_cyclewalk(
         grid,
-        nsims = 50000,
+        nsims = 1000000,
+        thin = 10,
+        warmup = 10000,
         init_plan = grid$init,
         constraints = constr,
         verbose = FALSE
@@ -190,10 +208,12 @@ test_that("longer chain produces stable distribution", {
     grid <- create_4x4_grid()
     set.seed(789)
 
-    # Run very long chain (200,000 iterations like Julia test)
+    # Run 2M MCMC steps like Julia test (2M steps with thin=10 = 200K samples)
     result <- redist_cyclewalk(
         grid,
-        nsims = 200000,
+        nsims = 2000000,
+        thin = 10,
+        warmup = 10000,
         init_plan = grid$init,
         verbose = FALSE
     )
