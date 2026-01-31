@@ -26,6 +26,8 @@
 #'   with its own sampled plan. Defaults to 1 (no parallelization).
 #' @param ncores The number of parallel processes to run. Defaults to the
 #'   number of available cores. Only used if `chains > 1`.
+#' @param cl_type The cluster type (see [parallel::makeCluster()]). Safest is `"PSOCK"`,
+#'   but `"FORK"` may be appropriate in some settings. Only used if `chains > 1`.
 #' @param verbose Whether to print out intermediate information while sampling.
 #'   Recommended.
 #' @param silent Whether to suppress all diagnostic information.
@@ -58,6 +60,7 @@ redist_mew <- function(map, nsims,
                        init_name = NULL,
                        chains = 1L,
                        ncores = NULL,
+                       cl_type = 'PSOCK',
                        verbose = FALSE,
                        silent = FALSE) {
   map <- validate_redist_map(map)
@@ -224,12 +227,12 @@ redist_mew <- function(map, nsims,
     )
     if (!silent) {
       cl <- parallel::makeCluster(ncores,
-        outfile = of, methods = FALSE,
+        type = cl_type, outfile = of, methods = FALSE,
         useXDR = .Platform$endian != 'little'
       )
     } else {
       cl <- parallel::makeCluster(ncores,
-        methods = FALSE,
+        type = cl_type, methods = FALSE,
         useXDR = .Platform$endian != 'little'
       )
     }

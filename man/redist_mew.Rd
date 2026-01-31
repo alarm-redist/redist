@@ -15,6 +15,7 @@ redist_mew(
   init_name = NULL,
   chains = 1L,
   ncores = NULL,
+  cl_type = "PSOCK",
   verbose = FALSE,
   silent = FALSE
 )
@@ -51,6 +52,9 @@ with its own sampled plan. Defaults to 1 (no parallelization).}
 \item{ncores}{The number of parallel processes to run. Defaults to the
 number of available cores. Only used if \code{chains > 1}.}
 
+\item{cl_type}{The cluster type (see \code{\link[parallel:makeCluster]{parallel::makeCluster()}}). Safest is \code{"PSOCK"},
+but \code{"FORK"} may be appropriate in some settings. Only used if \code{chains > 1}.}
+
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}
 
@@ -70,13 +74,9 @@ population, compactness, and other custom constraints.
 data(fl25)
 fl_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1)
 
-# Single chain
-redist_mew(fl_map, 5000)
+redist_mew(fl_map, 200)
 
-\dontrun{
-# Multiple parallel chains
-redist_mew(fl_map, 5000, chains = 4, ncores = 4)
-}
+redist_mew(fl_map, 200, chains = 2, ncores = 2)
 
 }
 \references{
