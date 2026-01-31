@@ -31,8 +31,10 @@
 #'   to the number of counties, or a factor or character vector. If provided and
 #'   `edge_weights` is NULL, automatically creates edge weights that upweight
 #'   intra-county edges by 10x, encouraging plans that follow county lines.
-#' @param compactness Controls the compactness of the generated districts, with
-#'   higher values preferring more compact districts. Must be nonnegative.
+#' @param compactness Controls the compactness of the generated districts via
+#'   a log spanning tree constraint. A value of 1 samples uniformly over
+#'   partitions (equivalent to gamma=1 in the CycleWalk paper), while 0
+#'   samples uniformly over spanning forests. Must be nonnegative.
 #' @param constraints A [redist_constr] object or list of constraints.
 #' @param edge_weights Edge weights for the graph. Can be:
 #'   - A single number: used as the intra-county weight multiplier (requires
@@ -197,8 +199,28 @@ redist_cyclewalk <- function(map, nsims,
 
     # Handle constraints
     if (!inherits(constraints, "redist_constr")) {
-        constraints <- new_redist_constr(rlang::eval_tidy(rlang::enquo(constraints), map))
+        if (length(constraints) == 0) {
+            # Empty list or NULL - use map data for constraint evaluation
+            constraints <- redist_constr(map)
+        } else {
+            constraints <- new_redist_constr(rlang::eval_tidy(rlang::enquo(constraints), map))
+        }
     }
+
+    # Warn if user manually added log_st or edges_removed
+    if (any(c("edges_removed", "log_st") %in% names(constraints))) {
+        cli::cli_warn(c("{.var edges_removed} or {.var log_st} constraint found in
+           {.arg constraints} and will be ignored.",
+            ">" = "Adjust using {.arg compactness} instead."))
+    }
+
+    # Add log_st constraint if compactness > 0
+    # compactness=1 is equivalent to gamma=1 in the CycleWalk paper,
+    # which samples uniformly over partitions (rather than spanning forests)
+    if (compactness > 0) {
+        constraints <- add_constr_log_st(constraints, strength = compactness)
+    }
+
     constraints <- as.list(constraints)
 
     # Handle edge weights
@@ -288,7 +310,6 @@ redist_cyclewalk <- function(map, nsims,
             target = pop_bounds[2],
             lower = pop_bounds[1],
             upper = pop_bounds[3],
-            compactness = compactness,
             constraints = constraints,
             control = control,
             edge_weights = edge_weights,

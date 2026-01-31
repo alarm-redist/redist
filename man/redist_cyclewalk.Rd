@@ -58,8 +58,10 @@ to the number of counties, or a factor or character vector. If provided and
 \code{edge_weights} is NULL, automatically creates edge weights that upweight
 intra-county edges by 10x, encouraging plans that follow county lines.}
 
-\item{compactness}{Controls the compactness of the generated districts, with
-higher values preferring more compact districts. Must be nonnegative.}
+\item{compactness}{Controls the compactness of the generated districts via
+a log spanning tree constraint. A value of 1 samples uniformly over
+partitions (equivalent to gamma=1 in the CycleWalk paper), while 0
+samples uniformly over spanning forests. Must be nonnegative.}
 
 \item{constraints}{A \link{redist_constr} object or list of constraints.}
 

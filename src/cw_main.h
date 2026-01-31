@@ -38,11 +38,12 @@ Rcpp::List cyclewalk_plans(
     double target,                  // Target population per district
     double lower,                   // Lower population bound
     double upper,                   // Upper population bound
-    double compactness,             // Compactness parameter (rho)
     Rcpp::List constraints,         // Constraint specifications
     Rcpp::List control,             // Control parameters
     Rcpp::List edge_weights,        // Edge weights (list of list(edge=c(u,v), weight=w))
     int thin,                       // Thinning interval
+    int instep,                     // MCMC iterations per recorded sample
+    double cycle_walk_frac,         // Fraction of cycle walk vs forest walk
     int verbosity                   // Verbosity level (0=silent, 1=normal, 3=verbose)
 );
 

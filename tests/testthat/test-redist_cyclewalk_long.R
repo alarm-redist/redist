@@ -63,16 +63,14 @@ test_that("cycle walk distribution matches expected (unweighted, gamma=0)", {
     grid <- create_4x4_grid()
     set.seed(123)
 
-    # Julia test setup:
-    # - cycle_steps=200_000 outer iterations
-    # - instep=10 (10 MCMC steps per outer loop)
-    # - Total: 2 million MCMC steps, 200K recorded samples
+    # gamma=0 in Julia = compactness=0 in R (uniform over spanning forests)
     result <- redist_cyclewalk(
         grid,
         nsims = 200000,
         instep = 10,
         warmup = 1000,
         init_plan = grid$init,
+        compactness = 0,
         verbose = FALSE
     )
 
@@ -130,19 +128,14 @@ test_that("cycle walk distribution with spanning forest weighting (gamma=1)", {
     grid <- create_4x4_grid()
     set.seed(456)
 
-    # Create constraint with spanning forest weighting
-    # This should change the distribution to weight by 1/spanning_trees
-    constr <- redist_constr(grid) |>
-        add_constr_log_st(strength = 1.0)
-
-    # Julia uses cycle_steps=100_000 with instep=10 = 1M MCMC steps
+    # gamma=1 in Julia = compactness=1 in R (uniform over partitions)
     result <- redist_cyclewalk(
         grid,
         nsims = 100000,
         instep = 10,
         warmup = 1000,
         init_plan = grid$init,
-        constraints = constr,
+        compactness = 1,
         verbose = FALSE
     )
 
@@ -197,13 +190,14 @@ test_that("longer chain produces stable distribution", {
     grid <- create_4x4_grid()
     set.seed(789)
 
-    # Run 2M MCMC steps like Julia test (200K samples * instep=10)
+    # Longer chain with gamma=0 (compactness=0)
     result <- redist_cyclewalk(
         grid,
         nsims = 200000,
         instep = 10,
         warmup = 1000,
         init_plan = grid$init,
+        compactness = 0,
         verbose = FALSE
     )
 

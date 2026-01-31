@@ -35,7 +35,6 @@ Rcpp::List cyclewalk_plans(
     double target,
     double lower,
     double upper,
-    double compactness,
     Rcpp::List constraints,
     Rcpp::List control,
     Rcpp::List edge_weights,

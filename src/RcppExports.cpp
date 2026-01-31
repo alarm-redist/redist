@@ -175,8 +175,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // cyclewalk_plans
-Rcpp::List cyclewalk_plans(int N, Rcpp::List l, const arma::uvec init, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double target, double lower, double upper, double compactness, Rcpp::List constraints, Rcpp::List control, Rcpp::List edge_weights, int thin, int instep, double cycle_walk_frac, int verbosity);
-RcppExport SEXP _redist_cyclewalk_plans(SEXP NSEXP, SEXP lSEXP, SEXP initSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP compactnessSEXP, SEXP constraintsSEXP, SEXP controlSEXP, SEXP edge_weightsSEXP, SEXP thinSEXP, SEXP instepSEXP, SEXP cycle_walk_fracSEXP, SEXP verbositySEXP) {
+Rcpp::List cyclewalk_plans(int N, Rcpp::List l, const arma::uvec init, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double target, double lower, double upper, Rcpp::List constraints, Rcpp::List control, Rcpp::List edge_weights, int thin, int instep, double cycle_walk_frac, int verbosity);
+RcppExport SEXP _redist_cyclewalk_plans(SEXP NSEXP, SEXP lSEXP, SEXP initSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP constraintsSEXP, SEXP controlSEXP, SEXP edge_weightsSEXP, SEXP thinSEXP, SEXP instepSEXP, SEXP cycle_walk_fracSEXP, SEXP verbositySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -189,7 +189,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type target(targetSEXP);
     Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
     Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
-    Rcpp::traits::input_parameter< double >::type compactness(compactnessSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type constraints(constraintsSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type control(controlSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type edge_weights(edge_weightsSEXP);
@@ -197,7 +196,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type instep(instepSEXP);
     Rcpp::traits::input_parameter< double >::type cycle_walk_frac(cycle_walk_fracSEXP);
     Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
-    rcpp_result_gen = Rcpp::wrap(cyclewalk_plans(N, l, init, counties, pop, n_distr, target, lower, upper, compactness, constraints, control, edge_weights, thin, instep, cycle_walk_frac, verbosity));
+    rcpp_result_gen = Rcpp::wrap(cyclewalk_plans(N, l, init, counties, pop, n_distr, target, lower, upper, constraints, control, edge_weights, thin, instep, cycle_walk_frac, verbosity));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -681,7 +680,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_cores", (DL_FUNC) &_redist_cores, 4},
     {"_redist_update_conncomp", (DL_FUNC) &_redist_update_conncomp, 3},
     {"_redist_crsg", (DL_FUNC) &_redist_crsg, 9},
-    {"_redist_cyclewalk_plans", (DL_FUNC) &_redist_cyclewalk_plans, 17},
+    {"_redist_cyclewalk_plans", (DL_FUNC) &_redist_cyclewalk_plans, 16},
     {"_redist_test_lct", (DL_FUNC) &_redist_test_lct, 0},
     {"_redist_dist_dist_diff", (DL_FUNC) &_redist_dist_dist_diff, 7},
     {"_redist_log_st_map", (DL_FUNC) &_redist_log_st_map, 4},
