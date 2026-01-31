@@ -218,10 +218,10 @@ arma::uvec LCTPartition::get_plan() const {
 }
 
 void LCTPartition::print_state(int verbosity) const {
-    Rcpp::Rcout << "[LCTPartition] " << n_districts << " districts, "
-                << n_vertices << " vertices\n";
+    if (verbosity >= 3) {
+        Rcpp::Rcout << "[LCTPartition] " << n_districts << " districts, "
+                    << n_vertices << " vertices\n";
 
-    if (verbosity >= 1) {
         Rcpp::Rcout << "[LCTPartition] District roots: ";
         for (int i = 0; i < n_districts; i++) {
             Rcpp::Rcout << district_roots[i];
@@ -238,9 +238,7 @@ void LCTPartition::print_state(int verbosity) const {
 
         Rcpp::Rcout << "[LCTPartition] Adjacent district pairs: "
                     << cross_edges.size() << "\n";
-    }
 
-    if (verbosity >= 2) {
         for (const auto& kv : cross_edges) {
             Rcpp::Rcout << "[LCTPartition] Districts " << kv.first.first + 1
                         << "-" << kv.first.second + 1
