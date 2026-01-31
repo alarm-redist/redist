@@ -53,10 +53,6 @@ cyclewalk_plans <- function(N, l, init, counties, pop, n_distr, target, lower, u
     .Call(`_redist_cyclewalk_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, constraints, control, edge_weights, thin, instep, cycle_walk_frac, verbosity)
 }
 
-test_lct <- function() {
-    .Call(`_redist_test_lct`)
-}
-
 dist_dist_diff <- function(p, i_dist, j_dist, x_center, y_center, x, y) {
     .Call(`_redist_dist_dist_diff`, p, i_dist, j_dist, x_center, y_center, x, y)
 }

@@ -200,16 +200,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// test_lct
-Rcpp::List test_lct();
-RcppExport SEXP _redist_test_lct() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(test_lct());
-    return rcpp_result_gen;
-END_RCPP
-}
 // dist_dist_diff
 double dist_dist_diff(int p, int i_dist, int j_dist, NumericVector x_center, NumericVector y_center, NumericVector x, NumericVector y);
 RcppExport SEXP _redist_dist_dist_diff(SEXP pSEXP, SEXP i_distSEXP, SEXP j_distSEXP, SEXP x_centerSEXP, SEXP y_centerSEXP, SEXP xSEXP, SEXP ySEXP) {
@@ -681,7 +671,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_update_conncomp", (DL_FUNC) &_redist_update_conncomp, 3},
     {"_redist_crsg", (DL_FUNC) &_redist_crsg, 9},
     {"_redist_cyclewalk_plans", (DL_FUNC) &_redist_cyclewalk_plans, 16},
-    {"_redist_test_lct", (DL_FUNC) &_redist_test_lct, 0},
     {"_redist_dist_dist_diff", (DL_FUNC) &_redist_dist_dist_diff, 7},
     {"_redist_log_st_map", (DL_FUNC) &_redist_log_st_map, 4},
     {"_redist_n_removed", (DL_FUNC) &_redist_n_removed, 3},

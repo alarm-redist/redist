@@ -407,9 +407,7 @@ void apply_update(LCTPartition& partition,
     int d1 = update.changed_districts.first;
     int d2 = update.changed_districts.second;
 
-    // Find new roots for the changed districts (Bug #4 fix)
-    // The new roots are the roots of the trees after cuts and links
-    // Use swap_link11 to determine which district gets which root
+    // Find new roots for the changed districts
     if (!update.cuts.empty()) {
         int new_root1 = lct.find_root(update.cuts[0].first);
         int new_root2 = lct.find_root(update.cuts[0].second);
@@ -546,38 +544,19 @@ int cycle_walk(LCTPartition& partition,
     // Save number of valid pairs for MH ratio
     int n_valid_pairs_fwd = (int)valid_pairs.size();
 
-    // Step 6: Sample a cut pair WEIGHTED by edge weights (Bug #3 fix)
+    // Step 6: Sample a cut pair weighted by edge weights
     // Build cumulative distribution weighted by 1/(w1*w2)
-
-    // Helper lambda to get edge at position (1-indexed like Julia)
-    // After reversal: path1 = [u2, ..., u1], path2 = [v2, ..., v1]
-    // Julia uses: uPath = [u1, ..., u2], vPath = [v1, ..., v2]
-    // Mapping: uPath[end-k] corresponds to path1[k] for k=0,1,...
-    //          vPath[end-k] corresponds to path2[k] for k=0,1,...
     auto get_edge_at_position = [&](int edge_ind) -> std::pair<int, int> {
         int path1_len = (int)path1.size();
         int path2_len = (int)path2.size();
 
         if (edge_ind == 1) {
-            // Julia: (uPath[end], vPath[end]) = (u2, v2)
-            // path1[0] = u2, path2[0] = v2
             return {path1[0], path2[0]};
         } else if (edge_ind <= path1_len) {
-            // Julia: (uPath[end-edge_ind+1], uPath[end-edge_ind+2])
-            // For edge_ind=2: (uPath[end-1], uPath[end]) = (prev of u2, u2)
-            // path1[1] = prev of u2, path1[0] = u2
-            // So: (path1[edge_ind-1], path1[edge_ind-2])
             return {path1[edge_ind - 1], path1[edge_ind - 2]};
         } else if (edge_ind == path1_len + 1) {
-            // Julia: (uPath[1], vPath[1]) = (u1, v1)
-            // path1[end] = u1, path2[end] = v1
             return {path1[path1_len - 1], path2[path2_len - 1]};
         } else {
-            // Julia: ind = edge_ind - length(uPath) - 1
-            //        (vPath[ind], vPath[ind+1])
-            // For edge_ind = path1_len + 2: ind = 1, (vPath[1], vPath[2]) = (v1, next)
-            // path2[end] = v1, path2[end-1] = next
-            // So: (path2[path2_len - ind], path2[path2_len - ind - 1])
             int ind = edge_ind - path1_len - 1;
             return {path2[path2_len - ind], path2[path2_len - ind - 1]};
         }
@@ -722,9 +701,9 @@ int cycle_walk(LCTPartition& partition,
     update.cuts = cuts;
     update.links = links;
 
-    // Bug #4 Fix: Compute swap_link11 to determine correct root assignment
+    // Compute swap_link11 to determine correct root assignment
     if (!links.empty()) {
-        int link11_vertex = links[0].first;  // First vertex of first link
+        int link11_vertex = links[0].first;
         int path_ind_l11 = get_link_path_ind(link11_vertex, path1, path2);
         update.swap_link11 = swap_assignment_check(
             path_ind_l11, cut1, cut2, path1, path2, cycle_pops
@@ -785,11 +764,7 @@ int cycle_walk(LCTPartition& partition,
     double log_weight_ratio = 0.0;
     double log_constraint_ratio = 0.0;
 
-    // DEBUG: Collect info for debug later (after we know total cuts)
-    bool do_mh_debug = false;  // Will be set true for interesting transitions
-
     // Adjacent district ratio (accounts for change in number of adjacent pairs)
-    // Julia: prob = old_adj_dists/(old_adj_dists+delta_adj_dists)
     if (old_adj_dists_total > 0 && old_adj_dists_total + delta_adj_dists > 0) {
         log_adj_ratio = std::log((double)old_adj_dists_total) -
                         std::log((double)(old_adj_dists_total + delta_adj_dists));
@@ -803,9 +778,7 @@ int cycle_walk(LCTPartition& partition,
         log_mh_ratio += log_edge_ratio;
     }
 
-    // Edge weight ratio (Bug #3 fix) - Julia lines 238-239
-    // prob *= sum_edge_weight_products
-    // prob /= (sum_edge_weight_products + w1w2_links_inv - w1w2_cuts_inv)
+    // Edge weight ratio for weighted graphs
     double new_sum_weights = sum_edge_weight_products + w1w2_links_inv - w1w2_cuts_inv;
     if (sum_edge_weight_products > 0 && new_sum_weights > 0) {
         log_weight_ratio = std::log(sum_edge_weight_products) - std::log(new_sum_weights);
@@ -813,25 +786,8 @@ int cycle_walk(LCTPartition& partition,
     }
 
     // Constraint ratio (target ratio)
-    // Julia computes exp(old_energy - new_energy), so we need old - new
-    // This means higher energy states are DOWN-weighted
-    // calc_gibbs_tgt returns log(pi), where higher = higher energy
     log_constraint_ratio = old_constraint_penalty - new_constraint_penalty;
     log_mh_ratio += log_constraint_ratio;
-
-    // Count total cut edges in old and new states
-    int old_total_cuts = 0, new_total_cuts = 0;
-    for (const auto& [key, edges] : old_cross_edges) {
-        old_total_cuts += edges.size();
-    }
-    for (const auto& [key, edges] : partition.cross_edges) {
-        new_total_cuts += edges.size();
-    }
-    
-    // Mark variables as used (debug tracking disabled for production)
-    (void)old_total_cuts;
-    (void)new_total_cuts;
-    (void)do_mh_debug;
 
     // Convert to acceptance probability
     double accept_ratio = std::min(1.0, std::exp(log_mh_ratio));
@@ -842,12 +798,6 @@ int cycle_walk(LCTPartition& partition,
     // MH accept/reject
     double rand_val = r_unif();
     bool do_accept = rand_val < accept_ratio;
-    
-    // Debug output disabled for production
-    // if (debug_count <= 5) {
-    //     Rcpp::Rcout << "  -> rand=" << std::fixed << std::setprecision(3) << rand_val 
-    //                 << (do_accept ? " ACCEPT" : " reject") << "\n";
-    // }
     
     if (do_accept) {
         diagnostics.status = 1;  // Accepted

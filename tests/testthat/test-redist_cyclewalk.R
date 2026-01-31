@@ -1,5 +1,4 @@
 # Tests for redist_cyclewalk
-# Run with: testthat::test_file("tests/test_redist_cyclewalk.R")
 
 library(testthat)
 library(redist)
@@ -8,11 +7,6 @@ library(redist)
 data(iowa)
 ia <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
 
-test_that("LCT unit tests pass", {
-    res <- redist:::test_lct()
-    expect_equal(res$n_passed, res$n_tests)
-    expect_equal(res$n_tests, 11)
-})
 test_that("redist_cyclewalk runs on Iowa data", {
     skip_on_cran()
 
