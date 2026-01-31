@@ -196,8 +196,8 @@ test_that('diagnostics collected per chain', {
   expect_true(all(sapply(diag, function(x) 'accept_prob' %in% names(x))))
   expect_true(all(sapply(diag, function(x) 'cycle_length' %in% names(x))))
   expect_true(all(sapply(diag, function(x) 'n_valid_cuts' %in% names(x))))
-  # Each chain's diagnostic vectors should have length 50 (number of iterations)
-  expect_true(all(sapply(diag, function(x) length(x$accept_prob) == 50)))
+  # Each chain's diagnostic vectors should have length nsims * instep (default instep=10)
+  expect_true(all(sapply(diag, function(x) length(x$accept_prob) == 50 * 10)))
 })
 
 test_that('chains validation rejects invalid values', {

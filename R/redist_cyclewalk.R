@@ -69,7 +69,10 @@
 redist_cyclewalk <- function(map, nsims,
                              chains = 1,
                              warmup = 0,
-                             thin = 1L, init_plan = NULL,
+                             thin = 1L,
+                             instep = 10L,
+                             cycle_walk_frac = 0.1,
+                             init_plan = NULL,
                              counties = NULL, compactness = 1,
                              constraints = list(),
                              edge_weights = NULL,
@@ -98,6 +101,8 @@ redist_cyclewalk <- function(map, nsims,
     if (thin < 1 || thin > nsims - warmup) {
         cli::cli_abort("{.arg thin} must be a positive integer, and no larger than {.arg nsims - warmup}.")
     }
+    if (instep < 1) {
+        cli::cli_abort("{.arg instep} must be a positive integer.")
     }
     if (cycle_walk_frac < 0 || cycle_walk_frac > 1) {
         cli::cli_abort("{.arg cycle_walk_frac} must be between 0 and 1.")
@@ -268,6 +273,8 @@ redist_cyclewalk <- function(map, nsims,
             control = control,
             edge_weights = edge_weights,
             thin = thin,
+            instep = instep,
+            cycle_walk_frac = cycle_walk_frac,
             verbosity = run_verbosity
         )
 
