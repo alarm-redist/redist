@@ -8,9 +8,8 @@ test_that('redist_cyclewalk runs on Iowa data', {
 
 test_that('redist_cyclewalk respects population bounds', {
   set.seed(1)
+  result <- redist_cyclewalk(ia, nsims = 20)
 
-    pop_bounds <- attr(ia, "pop_bounds")
-    pops <- result |>
   pop_bounds <- attr(ia, 'pop_bounds')
   pops <- result |>
     dplyr::group_by(draw) |>
