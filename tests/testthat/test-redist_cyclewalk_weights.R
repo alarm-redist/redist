@@ -371,3 +371,58 @@ test_that('very small weights work', {
   expect_s3_class(result, 'redist_plans')
   expect_equal(ncol(get_plans_matrix(result)), 11)
 })
+
+# County-based edge weights tests
+
+test_that('counties parameter auto-generates edge weights', {
+  skip_on_cran()
+  data(iowa)
+  iowa_map <- redist_map(iowa, ndists = 4, pop_tol = 0.1)
+
+  set.seed(123)
+  result <- redist_cyclewalk(iowa_map, 20, counties = iowa$region, silent = TRUE)
+
+  expect_s3_class(result, 'redist_plans')
+  expect_equal(ncol(get_plans_matrix(result)), 21)
+})
+
+test_that('edge_weights as number sets county weight multiplier', {
+  skip_on_cran()
+  data(iowa)
+  iowa_map <- redist_map(iowa, ndists = 4, pop_tol = 0.1)
+
+  # Custom 5x multiplier
+  set.seed(123)
+  result <- redist_cyclewalk(iowa_map, 20, counties = iowa$region,
+                              edge_weights = 5, silent = TRUE)
+  expect_s3_class(result, 'redist_plans')
+
+  # Custom 20x multiplier
+  set.seed(123)
+  result2 <- redist_cyclewalk(iowa_map, 20, counties = iowa$region,
+                               edge_weights = 20, silent = TRUE)
+  expect_s3_class(result2, 'redist_plans')
+})
+
+test_that('edge_weights as number requires counties', {
+  expect_error(
+    redist_cyclewalk(fl_map, nsims = 5, edge_weights = 5),
+    'requires.*counties'
+  )
+})
+
+test_that('explicit edge_weights list overrides county auto-generation', {
+  skip_on_cran()
+  data(iowa)
+  iowa_map <- redist_map(iowa, ndists = 4, pop_tol = 0.1)
+
+  adj <- redist.adjacency(iowa)
+  custom_weights <- list(
+    list(edge = c(1, adj[[1]][1] + 1), weight = 3.0)
+  )
+
+  set.seed(123)
+  result <- redist_cyclewalk(iowa_map, 20, counties = iowa$region,
+                              edge_weights = custom_weights, silent = TRUE)
+  expect_s3_class(result, 'redist_plans')
+})

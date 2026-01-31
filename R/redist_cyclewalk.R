@@ -28,17 +28,20 @@
 #'   `init_plan="sample"`.
 #' @param counties A vector containing county (or other administrative or
 #'   geographic unit) labels for each unit, which may be integers ranging from 1
-#'   to the number of counties, or a factor or character vector. If provided,
-#'   the algorithm will generate maps that tend to follow county lines.
+#'   to the number of counties, or a factor or character vector. If provided and
+#'   `edge_weights` is NULL, automatically creates edge weights that upweight
+#'   intra-county edges by 10x, encouraging plans that follow county lines.
 #' @param compactness Controls the compactness of the generated districts, with
 #'   higher values preferring more compact districts. Must be nonnegative.
 #' @param constraints A [redist_constr] object or list of constraints.
-#' @param edge_weights Optional list of edge weights for the graph. Each element
-#'   should be a list with two fields: `edge` (a length-2 numeric vector of
-#'   vertex indices) and `weight` (a positive number). Edges not specified
-#'   default to weight 1.0. Higher weights make edges less likely to be cut or
-#'   linked in proposals (cost interpretation). Example:
-#'   `list(list(edge = c(1, 2), weight = 2.0))`.
+#' @param edge_weights Edge weights for the graph. Can be:
+#'   - A single number: used as the intra-county weight multiplier (requires
+#'     `counties`). For example, `edge_weights = 5` with `counties` upweights
+#'     intra-county edges by 5x.
+#'   - A list of edge weight specifications, each with `edge` (length-2 vertex
+#'     indices) and `weight` (positive number). Unspecified edges default to 1.0.
+#'   - NULL (default): if `counties` is provided, auto-generates 10x weights for
+#'     intra-county edges; otherwise no weighting.
 #' @param ncores The number of parallel processes to run. Defaults to the
 #'   number of available cores, capped at the number of chains.
 #' @param cl_type The cluster type (see [parallel::makeCluster()]). Safest is `"PSOCK"`,
@@ -199,8 +202,25 @@ redist_cyclewalk <- function(map, nsims,
     constraints <- as.list(constraints)
 
     # Handle edge weights
-    if (!is.null(edge_weights)) {
+    # If edge_weights is a single number and counties provided, use as intra-county weight
+    # If edge_weights is a list, validate and use directly
+    # If NULL and counties provided, default to 10x for intra-county edges
+    if (is.numeric(edge_weights) && length(edge_weights) == 1) {
+        if (all(counties == 1L)) {
+            cli::cli_abort("{.arg edge_weights} as a number requires {.arg counties} to be specified.")
+        }
+        edge_weights <- build_county_edge_weights(adj, counties, weight = edge_weights)
+        if (!silent) {
+            cli::cli_inform("Using county-based edge weights ({edge_weights[[1]]$weight}x for intra-county edges).")
+        }
+    } else if (!is.null(edge_weights)) {
         edge_weights <- validate_edge_weights(edge_weights, adj, V)
+    } else if (!all(counties == 1L)) {
+        # Build edge weights from counties: upweight intra-county edges by 10x
+        edge_weights <- build_county_edge_weights(adj, counties, weight = 10.0)
+        if (!silent) {
+            cli::cli_inform("Using county-based edge weights (10x for intra-county edges).")
+        }
     } else {
         edge_weights <- list()
     }
@@ -433,6 +453,29 @@ validate_edge_weights <- function(edge_weights, adj, V) {
 
         if (weight <= 0) {
             cli::cli_abort("Entry {i}: {.field weight} must be positive, got {weight}.")
+        }
+    }
+
+    edge_weights
+}
+
+# Build edge weights from county assignments
+# Edges within the same county get the specified weight; others default to 1.0
+build_county_edge_weights <- function(adj, counties, weight = 10.0) {
+    edge_weights <- list()
+    V <- length(adj)
+
+    for (u in seq_len(V)) {
+        # adj is 0-indexed, so neighbors are stored as 0, 1, 2, ...
+        for (v_idx in adj[[u]]) {
+            v <- v_idx + 1L  # convert to 1-indexed
+            # Only process each edge once (u < v)
+            if (u < v && counties[u] == counties[v]) {
+                edge_weights <- c(edge_weights, list(list(
+                    edge = c(u, v),
+                    weight = weight
+                )))
+            }
         }
     }
 
