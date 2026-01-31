@@ -103,6 +103,7 @@ Rcpp::List cyclewalk_plans(
     int cycle_walk_fail_no_cuts = 0;
 
     int idx = 1;
+    try {
     for (int i = 1; i <= N; i++) {
         // Run instep MCMC iterations per recorded sample
         for (int step = 0; step < instep; step++) {
@@ -170,6 +171,10 @@ Rcpp::List cyclewalk_plans(
             if (verbosity >= 1) cli_progress_set(bar, N);
             break;
         }
+    }
+    } catch (Rcpp::internal::InterruptedException& e) {
+        if (verbosity >= 1) cli_progress_done(bar);
+        throw;  // Re-throw to let R handle it
     }
 
     if (verbosity >= 2) {
