@@ -337,10 +337,7 @@ double eval_qps(const subview_col<uword> &districts, int distr,
  */
 double eval_log_st(const subview_col<uword> &districts, const Graph g,
                    arma::uvec counties, int ndists) {
-    // Convert column vector to matrix (required by redistmetrics::log_st_map)
-    arma::umat districts_mat(districts.n_elem, 1);
-    districts_mat.col(0) = districts;
-    return (double) redistmetrics::log_st_map(g, districts_mat, counties, ndists)[0];
+    return (double) redistmetrics::log_st_map(g, districts, counties, ndists)[0];
 }
 
 /*
