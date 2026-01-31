@@ -70,6 +70,14 @@ edge walks on spanning trees (McWhorter and DeFord 2024) to generate
 congressional or legislative redistricting plans according to contiguity,
 population, compactness, and other custom constraints.
 }
+\section{Parallel Execution}{
+
+When using multiple chains (\code{chains > 1}), each chain runs independently in
+parallel. Note that parallel execution may not be perfectly reproducible even
+with the same \code{set.seed()}. Use \code{chains = 1} if perfect reproducibility is required.
+Statistical independence between chains is preserved regardless of reproducibility.
+}
+
 \examples{
 data(fl25)
 fl_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1)
