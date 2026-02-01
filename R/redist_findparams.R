@@ -35,7 +35,7 @@ run_sims <- function(i, params, map, nsims, init_plan,
     }
 
     if (!("pop_tol" %in% names)) {
-        pop_tol <- 1
+        pop_tol <- 100
     } else {
         pop_tol <- p_sub$pop_tol
     }
