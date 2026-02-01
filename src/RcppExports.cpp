@@ -557,8 +557,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // swMH
-List swMH(List aList, NumericVector cdvec, NumericVector popvec, int nsims, List constraints, double eprob, double pct_dist_parity, NumericVector beta_sequence, NumericVector beta_weights, int lambda, double beta, std::string adapt_beta, int adjswap, int exact_mh, int adapt_eprob, int adapt_lambda, int num_hot_steps, int num_annealing_steps, int num_cold_steps, bool verbose);
-RcppExport SEXP _redist_swMH(SEXP aListSEXP, SEXP cdvecSEXP, SEXP popvecSEXP, SEXP nsimsSEXP, SEXP constraintsSEXP, SEXP eprobSEXP, SEXP pct_dist_paritySEXP, SEXP beta_sequenceSEXP, SEXP beta_weightsSEXP, SEXP lambdaSEXP, SEXP betaSEXP, SEXP adapt_betaSEXP, SEXP adjswapSEXP, SEXP exact_mhSEXP, SEXP adapt_eprobSEXP, SEXP adapt_lambdaSEXP, SEXP num_hot_stepsSEXP, SEXP num_annealing_stepsSEXP, SEXP num_cold_stepsSEXP, SEXP verboseSEXP) {
+List swMH(List aList, NumericVector cdvec, NumericVector popvec, int nsims, List constraints, double eprob, double pop_lower, double pop_upper, NumericVector beta_sequence, NumericVector beta_weights, int lambda, double beta, std::string adapt_beta, int adjswap, int exact_mh, int adapt_eprob, int adapt_lambda, int num_hot_steps, int num_annealing_steps, int num_cold_steps, bool verbose);
+RcppExport SEXP _redist_swMH(SEXP aListSEXP, SEXP cdvecSEXP, SEXP popvecSEXP, SEXP nsimsSEXP, SEXP constraintsSEXP, SEXP eprobSEXP, SEXP pop_lowerSEXP, SEXP pop_upperSEXP, SEXP beta_sequenceSEXP, SEXP beta_weightsSEXP, SEXP lambdaSEXP, SEXP betaSEXP, SEXP adapt_betaSEXP, SEXP adjswapSEXP, SEXP exact_mhSEXP, SEXP adapt_eprobSEXP, SEXP adapt_lambdaSEXP, SEXP num_hot_stepsSEXP, SEXP num_annealing_stepsSEXP, SEXP num_cold_stepsSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -568,7 +568,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type nsims(nsimsSEXP);
     Rcpp::traits::input_parameter< List >::type constraints(constraintsSEXP);
     Rcpp::traits::input_parameter< double >::type eprob(eprobSEXP);
-    Rcpp::traits::input_parameter< double >::type pct_dist_parity(pct_dist_paritySEXP);
+    Rcpp::traits::input_parameter< double >::type pop_lower(pop_lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type pop_upper(pop_upperSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type beta_sequence(beta_sequenceSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type beta_weights(beta_weightsSEXP);
     Rcpp::traits::input_parameter< int >::type lambda(lambdaSEXP);
@@ -582,7 +583,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type num_annealing_steps(num_annealing_stepsSEXP);
     Rcpp::traits::input_parameter< int >::type num_cold_steps(num_cold_stepsSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(swMH(aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parity, beta_sequence, beta_weights, lambda, beta, adapt_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, num_hot_steps, num_annealing_steps, num_cold_steps, verbose));
+    rcpp_result_gen = Rcpp::wrap(swMH(aList, cdvec, popvec, nsims, constraints, eprob, pop_lower, pop_upper, beta_sequence, beta_weights, lambda, beta, adapt_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, num_hot_steps, num_annealing_steps, num_cold_steps, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -672,7 +673,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_smc_plans", (DL_FUNC) &_redist_smc_plans, 15},
     {"_redist_splits", (DL_FUNC) &_redist_splits, 4},
     {"_redist_dist_cty_splits", (DL_FUNC) &_redist_dist_cty_splits, 3},
-    {"_redist_swMH", (DL_FUNC) &_redist_swMH, 20},
+    {"_redist_swMH", (DL_FUNC) &_redist_swMH, 21},
     {"_redist_tree_pop", (DL_FUNC) &_redist_tree_pop, 5},
     {"_redist_var_info_vec", (DL_FUNC) &_redist_var_info_vec, 3},
     {"_redist_sample_ust", (DL_FUNC) &_redist_sample_ust, 6},
