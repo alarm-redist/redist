@@ -130,7 +130,6 @@
 #' the initial plan in the output.  Defaults to the column name of the
 #' existing plan, or "\code{<init>}" if the initial plan is sampled.
 #' @param verbose Whether to print initialization statement. Default is \code{TRUE}.
-#' @param nthin Deprecated. Use `thin`.
 #'
 #' @return A \code{\link{redist_plans}} object containing the simulated plans.
 #' @concept simulate
@@ -156,12 +155,8 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
                         thin = 1, eprob = 0.05, lambda = 0, temper = FALSE,
                         betaseq = "powerlaw", betaseqlength = 10, betaweights = NULL,
                         adapt_lambda = FALSE, adapt_eprob = FALSE, exact_mh = FALSE,
-                        adjswaps = TRUE, init_name = NULL, verbose = TRUE, nthin) {
+                        adjswaps = TRUE, init_name = NULL, verbose = TRUE) {
 
-    if (!missing(nthin)) {
-        thin <- nthin
-        .Deprecated(msg = 'Argument `nthin` is deprecated in favor of `thin` in redist 4.2.0 for consistency.')
-    }
     if (verbose) {
         ## Initialize ##
         cli::cli({
