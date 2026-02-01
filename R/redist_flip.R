@@ -140,7 +140,6 @@
 #' the initial plan in the output.  Defaults to the column name of the
 #' existing plan, or "\code{<init>}" if the initial plan is sampled.
 #' @param verbose Whether to print initialization statement. Default is \code{TRUE}.
-#' @param nthin Deprecated. Use `thin`.
 #'
 #' @return A \code{\link{redist_plans}} object containing the simulated plans.
 #'   If `chains > 1`, the output will include a `chain` column indicating which
