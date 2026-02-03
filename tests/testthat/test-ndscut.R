@@ -1,6 +1,8 @@
 skip_if_not_installed('igraph')
 
-result_to_matrix <- function(result) do.call(rbind, result)
+result_to_matrix <- function(result) {
+    do.call(rbind, result)
+}
 
 check_isomorphic <- function(edges1, edges2) {
   G1 <- igraph::graph_from_edgelist(edges1, directed = FALSE)
