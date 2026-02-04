@@ -29,13 +29,13 @@ run_sims <- function(i, params, map, nsims, init_plan,
     }
 
     if ("lambda" %in% names) {
-        lambda <- p_sub$eprob
+        lambda <- p_sub$lambda
     } else {
         lambda <- 0
     }
 
     if (!("pop_tol" %in% names)) {
-        pop_tol <- 100
+        pop_tol <- 1
     } else {
         pop_tol <- p_sub$pop_tol
     }
@@ -85,8 +85,18 @@ run_sims <- function(i, params, map, nsims, init_plan,
     inds <- which(1 - attr(out, "distance_original") < maxdist_startval)
     cuts <- c(0, round(quantile(1:length(inds), (1:nstartval_store)/nstartval_store)))
     if (length(inds) == 0) {
-        cat(paste0("No maps available under parameter set ", i, ".\n"))
-        startval <- NULL
+        message_text <- paste0("No maps available under parameter set ", i, ".\n")
+        cat(message_text)
+        printout <- paste("## -------------------------------------\n",
+            "## -------------------------------------\n",
+            "## Parameter Values for Simulation", i, "\n",
+            "## No valid maps generated under these parameters\n",
+            "## -------------------------------------\n",
+            "## -------------------------------------\n\n")
+        if (logarg) {
+            sink()
+        }
+        return(list(printout = printout, startval = NULL))
     } else {
         startval <- matrix(NA, nrow(get_plans_matrix(out)), nstartval_store)
         for (i in 1:nstartval_store) {

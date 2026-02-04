@@ -156,18 +156,13 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         cli::cli_warn("{.arg init_plan} should have contiguous districts.")
 
 
-    if (backend == "mergesplit") {
-        pop_bounds <- attr(map, "pop_bounds")
-    } else {
-        pop_tol <- get_pop_tol(map)
-    }
+    pop_bounds <- attr(map, "pop_bounds")
 
     pop <- map[[attr(map, "pop_col")]]
-    if ((backend == 'flip' && any(pop >= get_target(map))) ||
-        (backend == 'mergesplit' && any(pop >= pop_bounds[3]))) {
+    if (any(pop >= pop_bounds[3])) {
         too_big <- as.character(which(pop >= pop_bounds[3]))
         cli::cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
-                    population larger than the district target.",
+                    population larger than the maximum district size.",
             "x" = "Redistricting impossible."))
     }
 
@@ -201,7 +196,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
 
         run_burst <- function(init, steps) {
             skinny_flips(adj = adj, init_plan = init, total_pop = pop,
-                pop_tol = pop_tol, nsims = steps,
+                pop_bounds = pop_bounds, nsims = steps,
                 eprob = flip_eprob, lambda = flip_lambda,
                 constraints = constraints)
         }
