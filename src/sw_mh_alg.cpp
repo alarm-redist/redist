@@ -54,7 +54,8 @@ List swMH(List aList,
           int nsims,
           List constraints,
           double eprob,
-          double pct_dist_parity,
+          double pop_lower,
+          double pop_upper,
           NumericVector beta_sequence,
           NumericVector beta_weights,
           int lambda = 0,
@@ -82,7 +83,9 @@ List swMH(List aList,
 
      eprob: edgecut probability
 
-     pct_dist_parity: strength of population parity requirement
+     pop_lower: lower bound for district population
+
+     pop_upper: upper bound for district population
 
      beta_sequence: sequence of betas to anneal ove
 
@@ -160,11 +163,10 @@ List swMH(List aList,
         }
     }
 
-    // Define parity, min and max popoulations
+    // Define parity, min and max populations
     double parity = sum(popvec) / (max(cdvec) + 1);
-    double dist_parity = parity * pct_dist_parity;
-    double min_parity = parity - dist_parity;
-    double max_parity = parity + dist_parity;
+    double min_parity = pop_lower;
+    double max_parity = pop_upper;
 
     // Set counter variable
     int k = 0;
@@ -524,7 +526,8 @@ List swMH(List aList,
     }
 
     out["algorithm"] = "mcmc";
-    out["pct_dist_parity"] = pct_dist_parity;
+    out["pop_lower"] = pop_lower;
+    out["pop_upper"] = pop_upper;
     out["nsims"] = nsims;
     out["adj"] = aList;
     out["psi_store"] = psi_store;
