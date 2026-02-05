@@ -4,7 +4,7 @@ library(dplyr)
 
 # constants ----
 n <- 7L
-n_chains <- 12L
+n_chains <- 8L
 
 # targets from Philip ----
 target <- structure(
@@ -65,10 +65,12 @@ init_plans <- redist_smc(map, nsims = 100) |>
 
 plans <- redist_cyclewalk(
   map = map,
-  nsims = 5e6,
+  nsims = 2e6,
   chains = n_chains,
-  thin = 500,
-  warmup = 5e5,
+  ncores = n_chains / 2,
+  thin = 100,
+  warmup = 1e6,
+  compactness = 0,
   init_plan = init_plans[, seq_len(n_chains)]
 )
 
@@ -78,7 +80,7 @@ plans <- plans |>
   )
 
 res <- tibble(
-  edges = unique(plans$edges_rem),
+  edges = sort(unique(plans$edges_rem)),
   est_prop = as.vector(
     table(
       plans |> subset_sampled() |> pull(edges_rem)
@@ -88,4 +90,8 @@ res <- tibble(
 )
 
 target |>
-  full_join(res, by = 'edges')
+  full_join(res, by = 'edges') |>
+  mutate(
+    est_prop = tidyr::replace_na(est_prop, 0),
+    diff = est_prop - true_prop
+  )
