@@ -117,7 +117,7 @@ make_valid_plot <- function(pl_cw, target, conf = 0.9, by_chain = TRUE) {
     geom_col(aes(x = edges, y = true), fill = PAL[1]) +
     geom_pointrange(aes(x = edges, y = est, ymin = low, ymax = high),
       color = '#444444',
-      linewidth = 0.7, size = 1.5
+      linewidth = 0.7
     ) +
     scale_y_continuous(str_glue('Proportion of plans'),
       labels = scales::label_percent(),
