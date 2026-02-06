@@ -6,19 +6,12 @@ data(fl25_enum)
 
 # Set up redistricting problem
 map <- redist_map(fl25, pop_tol = 0.1, ndists = 3)
-# Generate 2,000 simulated plans using MEW
-# Parallel runs to evaluate diagnostics
-# Add summary statistics
-
-constr <- redist_constr(map) |>
-  add_constr_log_st(strength = 1)
 
 set.seed(08450)
 plans_sim <- redist_mew(map,
   nsims = 1e5, chains = 8L, thin = 100,
   warmup = 1e4,
-  compactness = 0,
-  constraints = constr
+  compactness = 1
 ) |>
   mutate(
     comp_edges = comp_edges_rem(pl(), map),

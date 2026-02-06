@@ -14,5 +14,6 @@
 #include "tree_op.h"
 #include "map_calc.h"
 #include <kirchhoff_inline.h>
+#include "mcmc_gibbs.h"
 
 #endif

@@ -44,6 +44,7 @@ struct MEWProposal {
     MarkedEdgeProposal marked;      // Marked edge update
     int n_rejects;                  // Number of rejections before valid proposal
     bool valid;                     // Whether proposal meets population constraints
+    uvec partition;                 // Cached partition from population check
 };
 
 /*
@@ -75,7 +76,7 @@ std::vector<Edge> find_cycle(const Tree &tree, int u, int v);
  */
 
 // Find connected components after removing marked edges from tree
-// Returns partition assignment (0-indexed district labels)
+// Returns partition assignment (1-indexed district labels)
 uvec tree_to_partition(const Tree &tree, const MarkedEdgeSet &marked_edges,
                        int V, int n_distr);
 
@@ -84,38 +85,8 @@ std::vector<std::vector<int>> tree_components_list(const Tree &tree,
                                                     const MarkedEdgeSet &marked_edges);
 
 /*
- * Laplacian and spanning tree counting
- */
-
-// Build sparse Laplacian matrix from edge list
-arma::sp_mat build_laplacian(const std::vector<Edge> &edges, int n_vertices);
-
-// Compute log(det(L_reduced)) for spanning tree count
-// Uses Cholesky decomposition
-double log_det_laplacian(const arma::sp_mat &L);
-
-// Compute log number of spanning trees from edge list
-double log_spanning_trees(const std::vector<Edge> &edges, int n_vertices);
-
-/*
- * Quotient graph construction
- */
-
-// Build quotient (district-level) edges from graph and partition
-std::vector<Edge> build_quotient_edges(const Graph &g, const uvec &partition,
-                                       int n_distr);
-
-// Get edges within each district (induced subgraphs)
-std::vector<std::vector<Edge>> district_induced_edges(const Graph &g,
-                                                       const std::vector<std::vector<int>> &components);
-
-/*
  * MEW-specific computations
  */
-
-// Compute log-ratio of spanning tree counts (key MEW acceptance term)
-double calculate_taus(const Graph &g, const Tree &tree_old, const Tree &tree_new,
-                     const MarkedEdgeSet &marked_old, const MarkedEdgeSet &marked_new);
 
 // Compute forward/backward transition probability ratio
 double transition_probability(const std::vector<Edge> &cycle_edges,
@@ -158,26 +129,5 @@ MEWProposal mew_proposal(const Graph &g, const Tree &tree,
                         const uvec &pop, int n_distr,
                         double target, double lower, double upper);
 
-/*
- * Initialization
- */
-
-// Find marked edges from a partition
-MarkedEdgeSet find_marked_edges_from_plan(const Tree &tree, const uvec &plan,
-                                         int n_distr);
-
-/*
- * Energy/constraint functions
- */
-
-// Compute energy ratio for acceptance
-double compute_energy_ratio(const Graph &g,
-                           const Tree &tree_old,
-                           const MarkedEdgeSet &marked_old,
-                           const Tree &tree_new,
-                           const MarkedEdgeSet &marked_new,
-                           const uvec &pop,
-                           double rho,
-                           List constraints);
 
 #endif

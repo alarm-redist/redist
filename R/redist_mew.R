@@ -21,6 +21,15 @@
 #'   request a random initial state by setting `init_plan="sample"`.
 #' @param compactness Controls the compactness of the generated districts, with
 #'   higher values preferring more compact districts. Must be nonnegative.
+#'   A value of 1 (the default) retains the spanning tree measure.
+#'   A value of 0 samples uniformly over partitions.
+#' @param counties A vector containing county (or other administrative or
+#'   geographic unit) labels for each unit, which may be integers ranging from 1
+#'   to the number of counties, or a factor or character vector.  If provided,
+#'   the spanning tree compactness measure will respect county boundaries.
+#'   To constrain county splits further, consider using
+#'   [add_constr_splits()], [add_constr_multisplits()], and
+#'   [add_constr_total_splits()].
 #' @param constraints A [redist_constr] object or a list containing
 #'   information on sampling constraints. See [redist_constr] for more
 #'   information.
@@ -62,6 +71,7 @@ redist_mew <- function(map, nsims,
                        thin = 1L,
                        init_plan = NULL,
                        compactness = 1,
+                       counties = NULL,
                        constraints = list(),
                        init_name = NULL,
                        chains = 1L,
@@ -178,6 +188,27 @@ redist_mew <- function(map, nsims,
   if (inherits(constraints, 'redist_constr')) {
     constraints <- as.list(constraints)
   }
+  if (any(c('edges_removed', 'log_st') %in% names(constraints))) {
+    cli::cli_warn(c('{.var edges_removed} or {.var log_st} constraint found in
+       {.arg constraints} and will be ignored.',
+        '>' = 'Adjust using {.arg compactness} instead.'))
+  }
+
+  # Process counties (matching mergesplit pattern)
+  counties <- rlang::eval_tidy(rlang::enquo(counties), map)
+  if (is.null(counties)) {
+    counties <- rep(1L, V)
+  } else {
+    if (any(is.na(counties)))
+      cli::cli_abort('County vector must not contain missing values.')
+
+    # Handle discontinuous counties
+    component <- contiguity(adj, vctrs::vec_group_id(counties))
+    counties <- dplyr::if_else(component > 1,
+                               paste0(as.character(counties), '-', component),
+                               as.character(counties)) |>
+      vctrs::vec_group_id()
+  }
 
   pop_bounds <- attr(map, 'pop_bounds')
   pop <- map[[attr(map, 'pop_col')]]
@@ -208,6 +239,7 @@ redist_mew <- function(map, nsims,
       nsims = nsims,
       adj = adj,
       init = init_plans[, 1],
+      counties = counties,
       pop = pop,
       n_distr = ndists,
       target = pop_bounds[2],
@@ -256,6 +288,7 @@ redist_mew <- function(map, nsims,
         nsims = nsims,
         adj = adj,
         init = init_plans[, chain],
+        counties = counties,
         pop = pop,
         n_distr = ndists,
         target = pop_bounds[2],
