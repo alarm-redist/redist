@@ -70,7 +70,6 @@ plans <- redist_cyclewalk(
   ncores = n_chains / 2,
   thin = 100,
   warmup = 1e6,
-  compactness = 0,
   init_plan = init_plans[, seq_len(n_chains)]
 )
 

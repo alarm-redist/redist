@@ -480,6 +480,8 @@ void apply_update(LCTPartition& partition,
 int cycle_walk(LCTPartition& partition,
                double lower, double upper,
                double target,
+               double compactness,
+               const arma::uvec& counties,
                Rcpp::List constraints,
                CycleWalkDiagnostics& diagnostics) {
     // Initialize diagnostics
@@ -763,6 +765,7 @@ int cycle_walk(LCTPartition& partition,
     double log_edge_ratio = 0.0;
     double log_weight_ratio = 0.0;
     double log_constraint_ratio = 0.0;
+    double log_st_ratio = 0.0;
 
     // Adjacent district ratio (accounts for change in number of adjacent pairs)
     if (old_adj_dists_total > 0 && old_adj_dists_total + delta_adj_dists > 0) {
@@ -788,6 +791,34 @@ int cycle_walk(LCTPartition& partition,
     // Constraint ratio (target ratio)
     log_constraint_ratio = old_constraint_penalty - new_constraint_penalty;
     log_mh_ratio += log_constraint_ratio;
+
+    if (compactness != 1.0) {
+        double log_st = 0.0;
+        int n_cty = arma::max(counties);
+        const Graph& g = *(partition.graph);
+
+        arma::umat plans_mat(partition.n_vertices, 2);
+        plans_mat.col(0) = old_plan;
+        plans_mat.col(1) = new_plan;
+
+        int distr_1 = d1 + 1;
+        int distr_2 = d2 + 1;
+
+        for (int j = 1; j <= n_cty; j++) {
+            log_st += log_st_distr(g, plans_mat, counties, 0, distr_1, j);
+            log_st += log_st_distr(g, plans_mat, counties, 0, distr_2, j);
+            log_st -= log_st_distr(g, plans_mat, counties, 1, distr_1, j);
+            log_st -= log_st_distr(g, plans_mat, counties, 1, distr_2, j);
+        }
+
+        log_st += log_st_contr(g, plans_mat, counties, n_cty, 0, distr_1);
+        log_st += log_st_contr(g, plans_mat, counties, n_cty, 0, distr_2);
+        log_st -= log_st_contr(g, plans_mat, counties, n_cty, 1, distr_1);
+        log_st -= log_st_contr(g, plans_mat, counties, n_cty, 1, distr_2);
+
+        log_st_ratio = (1.0 - compactness) * log_st;
+        log_mh_ratio += log_st_ratio;
+    }
 
     // Convert to acceptance probability
     double accept_ratio = std::min(1.0, std::exp(log_mh_ratio));

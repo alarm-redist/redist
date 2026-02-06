@@ -13,6 +13,7 @@
 #include "mcmc_gibbs.h"
 #include "random.h"
 #include <utility>
+#include <kirchhoff_inline.h>
 
 /*
  * CycleWalkUpdate: Stores information about a proposed update.
@@ -36,7 +37,7 @@ struct CycleWalkDiagnostics {
     int cycle_length;     // Length of cycle found (0 if no cycle)
     int n_valid_cuts;     // Number of valid cut pairs (0 if none)
 
-    CycleWalkDiagnostics() 
+    CycleWalkDiagnostics()
         : status(0), accept_prob(0.0), cycle_length(0), n_valid_cuts(0) {}
 };
 
@@ -55,6 +56,8 @@ struct CycleWalkDiagnostics {
  * - partition: The current partition state
  * - lower, upper: Population bounds
  * - target: Target population per district (parity)
+ * - compactness: Compactness parameter
+ * - counties: County assignments for log_st computation
  * - constraints: List of constraint objects from R
  * - diagnostics: Output parameter for diagnostic information
  *
@@ -63,6 +66,8 @@ struct CycleWalkDiagnostics {
 int cycle_walk(LCTPartition& partition,
                double lower, double upper,
                double target,
+               double compactness,
+               const arma::uvec& counties,
                Rcpp::List constraints,
                CycleWalkDiagnostics& diagnostics);
 

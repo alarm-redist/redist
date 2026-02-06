@@ -38,6 +38,7 @@ Rcpp::List cyclewalk_plans(
     double target,                  // Target population per district
     double lower,                   // Lower population bound
     double upper,                   // Upper population bound
+    double compactness,             // Compactness parameter (0=uniform over partitions)
     Rcpp::List constraints,         // Constraint specifications
     Rcpp::List control,             // Control parameters
     Rcpp::List edge_weights,        // Edge weights (list of list(edge=c(u,v), weight=w))

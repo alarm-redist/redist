@@ -23,6 +23,7 @@ Rcpp::List cyclewalk_plans(
     double target,
     double lower,
     double upper,
+    double compactness,
     Rcpp::List constraints,
     Rcpp::List control,
     Rcpp::List edge_weights,
@@ -112,7 +113,7 @@ Rcpp::List cyclewalk_plans(
             if (r_unif() < cycle_walk_frac) {
                 // Cycle walk proposal - can change districts
                 CycleWalkDiagnostics diag;
-                result = cycle_walk(partition, lower, upper, target, constraints, diag);
+                result = cycle_walk(partition, lower, upper, target, compactness, counties, constraints, diag);
 
                 diag_accept_prob.push_back(diag.accept_prob);
                 diag_cycle_length.push_back(diag.cycle_length);

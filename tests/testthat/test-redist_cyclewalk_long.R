@@ -8,10 +8,9 @@ skip_on_ci()
 test_that('cycle walk distribution matches expected (gamma=0)', {
   set.seed(123)
 
-  # gamma=0 in Julia = compactness=0 in R (uniform over spanning forests)
   result <- redist_cyclewalk(grid,
     nsims = 200000, instep = 10, warmup = 1000,
-    init_plan = grid$init, compactness = 0, verbose = FALSE
+    init_plan = grid$init, compactness = 1, verbose = FALSE
   )
 
   cut_edge_counts <- comp_edges_rem(result, shp = grid) |> by_plan(ndists = 4)
@@ -32,10 +31,9 @@ test_that('cycle walk distribution matches expected (gamma=0)', {
 test_that('cycle walk distribution with spanning forest weighting (gamma=1)', {
   set.seed(456)
 
-  # gamma=1 in Julia = compactness=1 in R (uniform over partitions)
   result <- redist_cyclewalk(grid,
     nsims = 100000, instep = 10, warmup = 1000,
-    init_plan = grid$init, compactness = 1, verbose = FALSE
+    init_plan = grid$init, compactness = 0, verbose = FALSE
   )
 
   cut_edge_counts <- comp_edges_rem(result, shp = grid) |> by_plan(ndists = 4)
@@ -59,6 +57,7 @@ test_that('longer chain produces stable distribution', {
   result <- redist_cyclewalk(grid,
     nsims = 200000, instep = 10, warmup = 1000,
     init_plan = grid$init, compactness = 0, verbose = FALSE
+    init_plan = grid$init, compactness = 1, verbose = FALSE
   )
 
   cut_edge_counts <- comp_edges_rem(result, shp = grid) |> by_plan(ndists = 4)
