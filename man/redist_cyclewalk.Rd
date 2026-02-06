@@ -9,8 +9,7 @@ redist_cyclewalk(
   nsims,
   chains = 1,
   warmup = 0,
-  thin = 1L,
-  instep = 10L,
+  thin = 10L,
   cycle_walk_frac = 0.1,
   init_plan = NULL,
   counties = NULL,
@@ -37,9 +36,6 @@ with its own sampled plan. Defaults to 1.}
 \item{warmup}{The number of warmup samples to discard.}
 
 \item{thin}{Save every \code{thin}-th sample. Defaults to no thinning (1).}
-
-\item{instep}{Number of MCMC iterations per recorded sample (default 10).
-Higher values improve mixing but increase runtime. Matches Julia's \code{instep}.}
 
 \item{cycle_walk_frac}{Fraction of proposals that are cycle walks vs internal
 forest walks (default 0.1). Cycle walks change the partition; forest walks
