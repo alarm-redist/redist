@@ -56,7 +56,6 @@ test_that('longer chain produces stable distribution', {
 
   result <- redist_cyclewalk(grid,
     nsims = 200000, instep = 10, warmup = 1000,
-    init_plan = grid$init, compactness = 0, verbose = FALSE
     init_plan = grid$init, compactness = 1, verbose = FALSE
   )
 
