@@ -106,6 +106,9 @@ Rcpp::List cyclewalk_plans(
     int idx = 1;
     try {
     for (int i = 1; i <= N; i++) {
+        // Track whether any cycle_walk was accepted during instep iterations
+        bool any_cycle_walk_accepted = false;
+
         // Run instep MCMC iterations per recorded sample
         for (int step = 0; step < instep; step++) {
             int result;
@@ -121,6 +124,7 @@ Rcpp::List cyclewalk_plans(
 
                 if (result == 1) {
                     cycle_walk_accept++;
+                    any_cycle_walk_accepted = true;
                 } else if (result == 0) {
                     cycle_walk_reject++;
                 } else if (result == -1) {
@@ -148,11 +152,10 @@ Rcpp::List cyclewalk_plans(
             }
         }
 
-        // Record MH decision for the last step
-        mh_decisions(idx - 1) = 1;  // After instep iterations, record current state
-
         // Copy current plan to output at thinning intervals
         if (i % thin == 0) {
+            // Record whether any cycle_walk was accepted during these instep iterations
+            mh_decisions(idx - 1) = any_cycle_walk_accepted ? 1 : 0;
             plans.col(idx + 1) = partition.get_plan();
             idx++;
         }
