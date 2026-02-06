@@ -1,3 +1,6 @@
+skip_on_cran()
+skip_on_ci()
+
 # remove this chunk once merged in w/ cyclewalk ----
 
 # 4x4 grid with unit population for distribution tests
@@ -12,14 +15,26 @@ grid_sf$init <- c(1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 4L, 4L, 4L, 4L
 grid <- redist_map(grid_sf, existing_plan = init, pop_bounds = c(3.99, 4, 4.01),
                    adj = grid_sf$adj) |> suppressWarnings()
 
+is_close <- function(obs, exp) {
+    ratio <- obs / exp
+    if (exp > 0.01) {
+        ratio >= 0.9 && ratio <= 1.1
+    } else {
+        ratio >= 0.6 && ratio <= 1.4
+    }
+}
+
 # end setup ----
 
-test_that('cycle walk distribution matches expected (gamma=0)', {
+test_that('MEW distribution matches expected (log st)', {
   set.seed(123)
 
-  result <- redist_cyclewalk(grid,
-    nsims = 2000000, warmup = 10000,
-    init_plan = grid$init, compactness = 1, verbose = FALSE
+  result <- redist_mew(grid,
+    nsims = 2000000 / 8, warmup = 10000, thin = 1000,
+    chains = 8,
+    init_plan = grid$init,
+    compactness = 1,
+    verbose = FALSE
   )
 
   cut_edge_counts <- comp_edges_rem(result, shp = grid) |> by_plan(ndists = 4)
