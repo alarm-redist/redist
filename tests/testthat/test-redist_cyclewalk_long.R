@@ -9,7 +9,7 @@ test_that('cycle walk distribution matches expected (gamma=0)', {
   set.seed(123)
 
   result <- redist_cyclewalk(grid,
-    nsims = 200000, instep = 10, warmup = 1000,
+    nsims = 2000000, warmup = 10000,
     init_plan = grid$init, compactness = 1, verbose = FALSE
   )
 
@@ -32,7 +32,7 @@ test_that('cycle walk distribution with spanning forest weighting (gamma=1)', {
   set.seed(456)
 
   result <- redist_cyclewalk(grid,
-    nsims = 100000, instep = 10, warmup = 1000,
+    nsims = 1000000, warmup = 10000,
     init_plan = grid$init, compactness = 0, verbose = FALSE
   )
 
@@ -55,7 +55,7 @@ test_that('longer chain produces stable distribution', {
   set.seed(789)
 
   result <- redist_cyclewalk(grid,
-    nsims = 200000, instep = 10, warmup = 1000,
+    nsims = 2000000, warmup = 10000,
     init_plan = grid$init, compactness = 1, verbose = FALSE
   )
 

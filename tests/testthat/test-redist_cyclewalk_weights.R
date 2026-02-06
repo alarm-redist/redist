@@ -3,7 +3,7 @@
 
 test_that('redist_cyclewalk works with NULL edge_weights', {
   set.seed(02139)
-  result <- redist_cyclewalk(fl_map, nsims = 20)
+  result <- redist_cyclewalk(fl_map, nsims = 200)
 
   expect_s3_class(result, 'redist_plans')
   expect_equal(ncol(get_plans_matrix(result)), 21)
@@ -15,7 +15,7 @@ test_that('redist_cyclewalk works with single edge weight', {
 
   set.seed(02139)
   result <- redist_cyclewalk(fl_map,
-    nsims = 20, edge_weights = ew
+    nsims = 200, edge_weights = ew
   )
 
   expect_s3_class(result, 'redist_plans')
@@ -32,7 +32,7 @@ test_that('redist_cyclewalk works with multiple edge weights', {
 
   set.seed(02139)
   result <- redist_cyclewalk(fl_map,
-    nsims = 20, edge_weights = ew
+    nsims = 200, edge_weights = ew
   )
 
   expect_s3_class(result, 'redist_plans')
@@ -48,12 +48,12 @@ test_that('edge weights can be specified in either direction', {
 
   set.seed(02139)
   result1 <- redist_cyclewalk(fl_map,
-    nsims = 10, edge_weights = ew1
+    nsims = 100, edge_weights = ew1
   )
 
   set.seed(02139)
   result2 <- redist_cyclewalk(fl_map,
-    nsims = 10, edge_weights = ew2
+    nsims = 100, edge_weights = ew2
   )
 
   expect_s3_class(result1, 'redist_plans')
@@ -72,7 +72,7 @@ test_that('edge weights prints custom weight count when verbose', {
 
   expect_output(
     redist_cyclewalk(fl_map,
-      nsims = 5, edge_weights = ew,
+      nsims = 50, edge_weights = ew,
       verbose = TRUE, silent = FALSE
     ),
     'Using 2 custom edge weights'
@@ -82,7 +82,7 @@ test_that('edge weights prints custom weight count when verbose', {
 test_that('edge_weights must be a list', {
   expect_error(
     redist_cyclewalk(fl_map,
-      nsims = 5, edge_weights = 'not a list'
+      nsims = 50, edge_weights = 'not a list'
     ),
     'must be a list'
   )
@@ -93,7 +93,7 @@ test_that('edge_weights entries must be lists', {
 
   expect_error(
     redist_cyclewalk(fl_map,
-      nsims = 5, edge_weights = ew
+      nsims = 50, edge_weights = ew
     ),
     'Entry 1.*must be a list'
   )
@@ -104,7 +104,7 @@ test_that("edge_weights entries must have 'edge' field", {
 
   expect_error(
     redist_cyclewalk(fl_map,
-      nsims = 5, edge_weights = ew
+      nsims = 50, edge_weights = ew
     ),
     'missing.*edge.*field'
   )
@@ -115,7 +115,7 @@ test_that("edge_weights entries must have 'weight' field", {
 
   expect_error(
     redist_cyclewalk(fl_map,
-      nsims = 5, edge_weights = ew
+      nsims = 50, edge_weights = ew
     ),
     'missing.*weight.*field'
   )
@@ -126,7 +126,7 @@ test_that('edge field must be numeric vector of length 2', {
 
   expect_error(
     redist_cyclewalk(fl_map,
-      nsims = 5, edge_weights = ew
+      nsims = 50, edge_weights = ew
     ),
     'must be a numeric vector of length 2'
   )
@@ -135,7 +135,7 @@ test_that('edge field must be numeric vector of length 2', {
 
   expect_error(
     redist_cyclewalk(fl_map,
-      nsims = 5, edge_weights = ew
+      nsims = 50, edge_weights = ew
     ),
     'must be a numeric vector of length 2'
   )
@@ -146,7 +146,7 @@ test_that('vertices must be in range', {
 
   expect_error(
     redist_cyclewalk(fl_map,
-      nsims = 5, edge_weights = ew
+      nsims = 50, edge_weights = ew
     ),
     'out of range'
   )
@@ -155,7 +155,7 @@ test_that('vertices must be in range', {
 
   expect_error(
     redist_cyclewalk(fl_map,
-      nsims = 5, edge_weights = ew
+      nsims = 50, edge_weights = ew
     ),
     'out of range'
   )
@@ -164,7 +164,7 @@ test_that('vertices must be in range', {
 
   expect_error(
     redist_cyclewalk(fl_map,
-      nsims = 5, edge_weights = ew
+      nsims = 50, edge_weights = ew
     ),
     'out of range'
   )
@@ -175,7 +175,7 @@ test_that('edge must exist in adjacency graph', {
 
   expect_error(
     redist_cyclewalk(fl_map,
-      nsims = 5, edge_weights = ew
+      nsims = 50, edge_weights = ew
     ),
     'not in adjacency graph'
   )
@@ -187,13 +187,13 @@ test_that('adjacency check works correctly with 0-indexed adj list', {
 
   expect_silent(
     redist_cyclewalk(fl_map,
-      nsims = 5, edge_weights = ew1, silent = TRUE
+      nsims = 50, edge_weights = ew1, silent = TRUE
     )
   )
 
   expect_silent(
     redist_cyclewalk(fl_map,
-      nsims = 5, edge_weights = ew2, silent = TRUE
+      nsims = 50, edge_weights = ew2, silent = TRUE
     )
   )
 })
@@ -203,7 +203,7 @@ test_that('weight must be positive', {
 
   expect_error(
     redist_cyclewalk(fl_map,
-      nsims = 5, edge_weights = ew
+      nsims = 50, edge_weights = ew
     ),
     'weight must be positive'
   )
@@ -212,7 +212,7 @@ test_that('weight must be positive', {
 
   expect_error(
     redist_cyclewalk(fl_map,
-      nsims = 5, edge_weights = ew
+      nsims = 50, edge_weights = ew
     ),
     'weight must be positive'
   )
@@ -225,13 +225,13 @@ test_that('edge weights work with different compactness values', {
 
   set.seed(02139)
   result1 <- redist_cyclewalk(fl_map,
-    nsims = 20, edge_weights = ew,
+    nsims = 200, edge_weights = ew,
     compactness = 0.5
   )
 
   set.seed(02139)
   result2 <- redist_cyclewalk(fl_map,
-    nsims = 20, edge_weights = ew,
+    nsims = 200, edge_weights = ew,
     compactness = 2.0
   )
 
@@ -250,7 +250,7 @@ test_that('edge weights work with constraints', {
     add_constr_pop_dev(strength = 10)
 
   result <- redist_cyclewalk(fl_map,
-    nsims = 20, edge_weights = ew,
+    nsims = 200, edge_weights = ew,
     constraints = constr
   )
 
@@ -268,7 +268,7 @@ test_that('all plans remain contiguous with edge weights', {
   )
 
   result <- redist_cyclewalk(fl_map,
-    nsims = 50, edge_weights = ew
+    nsims = 500, edge_weights = ew
   )
 
   plans_mat <- get_plans_matrix(result)
@@ -286,7 +286,7 @@ test_that('all plans respect population bounds with edge weights', {
 
   set.seed(1)
   result <- redist_cyclewalk(fl_map,
-    nsims = 50, edge_weights = ew
+    nsims = 500, edge_weights = ew
   )
 
   expect_equal(ncol(get_plans_matrix(result)), 51)
@@ -310,7 +310,7 @@ test_that('empty edge_weights list works', {
   ew <- list()
 
   result <- redist_cyclewalk(fl_map,
-    nsims = 10, edge_weights = ew
+    nsims = 100, edge_weights = ew
   )
 
   expect_s3_class(result, 'redist_plans')
@@ -326,7 +326,7 @@ test_that('fractional weights work', {
   )
 
   result <- redist_cyclewalk(fl_map,
-    nsims = 20, edge_weights = ew
+    nsims = 200, edge_weights = ew
   )
 
   expect_s3_class(result, 'redist_plans')
@@ -339,7 +339,7 @@ test_that('very large weights work', {
   ew <- list(list(edge = c(1, 2), weight = 1000000.0))
 
   result <- redist_cyclewalk(fl_map,
-    nsims = 10, edge_weights = ew
+    nsims = 100, edge_weights = ew
   )
 
   expect_s3_class(result, 'redist_plans')
@@ -352,7 +352,7 @@ test_that('very small weights work', {
   ew <- list(list(edge = c(1, 2), weight = 0.001))
 
   result <- redist_cyclewalk(fl_map,
-    nsims = 10, edge_weights = ew
+    nsims = 100, edge_weights = ew
   )
 
   expect_s3_class(result, 'redist_plans')
@@ -365,7 +365,7 @@ test_that('counties parameter auto-generates edge weights', {
   skip_on_cran()
 
   set.seed(123)
-  result <- redist_cyclewalk(ia, 20, counties = iowa$region, silent = TRUE)
+  result <- redist_cyclewalk(ia, 200, counties = iowa$region, silent = TRUE)
 
   expect_s3_class(result, 'redist_plans')
   expect_equal(ncol(get_plans_matrix(result)), 21)
@@ -375,7 +375,7 @@ test_that('edge_weights as number sets county weight multiplier', {
   skip_on_cran()
 
   set.seed(123)
-  result <- redist_cyclewalk(ia, 20, counties = iowa$region, edge_weights = 5, silent = TRUE)
+  result <- redist_cyclewalk(ia, 200, counties = iowa$region, edge_weights = 5, silent = TRUE)
   expect_s3_class(result, 'redist_plans')
 
   set.seed(123)
@@ -385,7 +385,7 @@ test_that('edge_weights as number sets county weight multiplier', {
 
 test_that('edge_weights as number requires counties', {
   expect_error(
-    redist_cyclewalk(fl_map, nsims = 5, edge_weights = 5),
+    redist_cyclewalk(fl_map, nsims = 50, edge_weights = 5),
     'requires.*counties'
   )
 })
@@ -396,7 +396,7 @@ test_that('explicit edge_weights list overrides county auto-generation', {
   custom_weights <- list(list(edge = c(1, ia$adj[[1]][1] + 1), weight = 3.0))
 
   set.seed(123)
-  result <- redist_cyclewalk(ia, 20,
+  result <- redist_cyclewalk(ia, 200,
     counties = iowa$region,
     edge_weights = custom_weights, silent = TRUE
   )

@@ -2,7 +2,7 @@ test_that('single chain maintains backward compatibility', {
   skip_on_cran()
   set.seed(123)
 
-  result <- redist_cyclewalk(fl_map, 30, init_name = FALSE)
+  result <- redist_cyclewalk(fl_map, 300, init_name = FALSE)
 
   expect_s3_class(result, 'redist_plans')
   expect_false('chain' %in% names(result))
@@ -14,7 +14,7 @@ test_that('multiple chains work with default ncores', {
   skip_on_cran()
   set.seed(456)
 
-  result <- redist_cyclewalk(fl_map, 30, chains = 2, init_name = FALSE)
+  result <- redist_cyclewalk(fl_map, 300, chains = 2, init_name = FALSE)
 
   expect_s3_class(result, 'redist_plans')
   expect_true('chain' %in% names(result))
@@ -26,7 +26,7 @@ test_that('multiple chains work with default ncores', {
 test_that('chains with explicit ncores', {
   set.seed(789)
 
-  result <- redist_cyclewalk(fl_map, 30, chains = 2, ncores = 2, init_name = FALSE)
+  result <- redist_cyclewalk(fl_map, 300, chains = 2, ncores = 2, init_name = FALSE)
 
   expect_s3_class(result, 'redist_plans')
   expect_true('chain' %in% names(result))
@@ -130,7 +130,7 @@ test_that('edge weights work with chains', {
 
   ew <- list(list(edge = c(1, 2), weight = 2.0), list(edge = c(1, 4), weight = 3.0))
 
-  result <- redist_cyclewalk(fl_map, 30, chains = 2, edge_weights = ew, init_name = FALSE)
+  result <- redist_cyclewalk(fl_map, 300, chains = 2, edge_weights = ew, init_name = FALSE)
 
   expect_s3_class(result, 'redist_plans')
   expect_equal(length(unique(result$chain)), 2)
@@ -152,8 +152,8 @@ test_that('diagnostics collected per chain', {
   expect_true(all(sapply(diag, function(x) 'accept_prob' %in% names(x))))
   expect_true(all(sapply(diag, function(x) 'cycle_length' %in% names(x))))
   expect_true(all(sapply(diag, function(x) 'n_valid_cuts' %in% names(x))))
-  # Each chain's diagnostic vectors should have length nsims * instep (default instep=10)
-  expect_true(all(sapply(diag, function(x) length(x$accept_prob) == 50 * 10)))
+  # Each chain's diagnostic vectors should have length nsims
+  expect_true(all(sapply(diag, function(x) length(x$accept_prob) == 50)))
 })
 
 test_that('chains validation rejects invalid values', {
