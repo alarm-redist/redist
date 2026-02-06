@@ -209,7 +209,7 @@ test_that('summary works with multiple chains', {
   skip_on_cran()
   set.seed(151)
 
-  result <- redist_cyclewalk(fl_map, 50, chains = 2, init_name = FALSE)
+  result <- redist_cyclewalk(fl_map, 500, chains = 2, init_name = FALSE)
 
   # Add a summary statistic for R-hat calculation
   result <- result %>%
