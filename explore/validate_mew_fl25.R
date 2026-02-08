@@ -9,7 +9,7 @@ map <- redist_map(fl25, pop_tol = 0.1, ndists = 3)
 
 set.seed(08450)
 plans_sim <- redist_mew(map,
-  nsims = 1e5, chains = 8L, thin = 100,
+  nsims = 1e6, chains = 8L, thin = 1000,
   warmup = 1e4,
   compactness = 1
 ) |>

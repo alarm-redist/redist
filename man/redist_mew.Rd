@@ -11,6 +11,7 @@ redist_mew(
   thin = 1L,
   init_plan = NULL,
   compactness = 1,
+  counties = NULL,
   constraints = list(),
   init_name = NULL,
   chains = 1L,
@@ -35,7 +36,17 @@ sample a random initial state using \code{\link[=redist_smc]{redist_smc()}}. You
 request a random initial state by setting \code{init_plan="sample"}.}
 
 \item{compactness}{Controls the compactness of the generated districts, with
-higher values preferring more compact districts. Must be nonnegative.}
+higher values preferring more compact districts. Must be nonnegative.
+A value of 1 (the default) retains the spanning tree measure.
+A value of 0 samples uniformly over partitions.}
+
+\item{counties}{A vector containing county (or other administrative or
+geographic unit) labels for each unit, which may be integers ranging from 1
+to the number of counties, or a factor or character vector.  If provided,
+the spanning tree compactness measure will respect county boundaries.
+To constrain county splits further, consider using
+\code{\link[=add_constr_splits]{add_constr_splits()}}, \code{\link[=add_constr_multisplits]{add_constr_multisplits()}}, and
+\code{\link[=add_constr_total_splits]{add_constr_total_splits()}}.}
 
 \item{constraints}{A \link{redist_constr} object or a list containing
 information on sampling constraints. See \link{redist_constr} for more
