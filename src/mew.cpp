@@ -111,10 +111,10 @@ Rcpp::List mew_plans(int nsims, List adj, const arma::uvec &init,
             total_tries += proposal.n_rejects + 1;
 
             // Only accept/reject if proposal is valid
-            // Invalid proposals (timed out) are automatically rejected
+            // Invalid proposals (timed out after MAX_TRIES) are automatically rejected
             if (proposal.valid) {
-                // 1. Transition probability ratio (proposal correction)
-                double log_q_ratio = std::log(transition_probability(
+                // Compute transition probability ratio
+                double trans_prob = transition_probability(
                     proposal.cycle.cycle_edges,
                     proposal.cycle.edge_plus,
                     proposal.marked.old_edge,
@@ -123,7 +123,8 @@ Rcpp::List mew_plans(int nsims, List adj, const arma::uvec &init,
                     proposal.marked.marked_new,
                     tree_old,
                     proposal.cycle.tree_new
-                ));
+                );
+                double log_q_ratio = std::log(trans_prob);
 
                 // 2. Get proposed partition (cached from population check)
                 uvec partition_new = proposal.partition;
@@ -149,8 +150,7 @@ Rcpp::List mew_plans(int nsims, List adj, const arma::uvec &init,
                     }
                 }
 
-                // 4. Log spanning tree compactness (kirchhoff, matching mergesplit)
-                //    log_st = old - new (positive when new plan has fewer spanning trees)
+                // 4. Log spanning tree correction (Kirchhoff matrix-tree theorem)
                 double log_st = 0.0;
                 if (rho != 1) {
                     for (int d : changed_districts) {

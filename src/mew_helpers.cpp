@@ -101,26 +101,12 @@ std::vector<Edge> find_cycle(const Tree &tree, int u, int v) {
             return cycle_edges;
         }
 
-        // Explore neighbors (children in directed tree)
+        // Explore neighbors (tree is stored bidirectionally)
         for (int neighbor : tree[curr]) {
             if (!visited[neighbor]) {
                 visited[neighbor] = true;
                 parent[neighbor] = curr;
                 q.push(neighbor);
-            }
-        }
-
-        // Also explore parent direction (who points to curr?)
-        for (int other = 0; other < V; other++) {
-            if (!visited[other]) {
-                for (int child : tree[other]) {
-                    if (child == curr) {
-                        visited[other] = true;
-                        parent[other] = curr;
-                        q.push(other);
-                        break;
-                    }
-                }
             }
         }
     }
@@ -143,28 +129,12 @@ void dfs_component(const Tree &tree, int u, std::vector<bool> &visited,
     visited[u] = true;
     component.push_back(u);
 
-    // Tree is directed (edges point away from root), but we need to traverse it as undirected
-    // Follow edges to children
+    // Tree is stored bidirectionally, so tree[u] contains all neighbors
     for (int v : tree[u]) {
         Edge e = make_edge(u, v);
         // Only traverse if edge is not marked and neighbor not visited
         if (marked_edges.find(e) == marked_edges.end() && !visited[v]) {
             dfs_component(tree, v, visited, component, marked_edges);
-        }
-    }
-
-    // Also follow edges from parents (find who points to u)
-    for (size_t other = 0; other < tree.size(); other++) {
-        if ((int)other != u && !visited[other]) {
-            for (int child : tree[other]) {
-                if (child == u) {
-                    Edge e = make_edge(other, u);
-                    if (marked_edges.find(e) == marked_edges.end()) {
-                        dfs_component(tree, other, visited, component, marked_edges);
-                    }
-                    break;
-                }
-            }
         }
     }
 }
@@ -190,13 +160,8 @@ uvec tree_to_partition(const Tree &tree, const MarkedEdgeSet &marked_edges,
                        int V, int n_distr) {
     auto components = tree_components_list(tree, marked_edges);
 
-    // Verify we got the expected number of components
-    if ((int)components.size() != n_distr) {
-        std::ostringstream msg;
-        msg << "tree_to_partition: Expected " << n_distr << " components but got "
-            << components.size() << ". Marked edges: " << marked_edges.size();
-        Rcpp::warning(msg.str());
-    }
+    // Wrong component count can happen when a duplicate marked edge shrinks
+    // the set.  The population check in mew_proposal will reject these.
 
     uvec partition(V);
     for (size_t i = 0; i < components.size(); i++) {
@@ -233,18 +198,25 @@ double transition_probability(const std::vector<Edge> &cycle_edges,
     int v = marked_new.second;
 
     // Compute pm: accounts for degree changes in marked edge step
+    // Formula from McWhorter & DeFord (2024), Section 3.2
+    //
+    // NOTE: The paper's formula assumes sampling neighbors from the NEW tree (T').
+    // The Julia implementation samples from the OLD tree (T) but uses
+    // the NEW tree formula.
+    // If correcting this in the future, the formula for OLD tree sampling would
+    // invert the degree ratios: d_u/d_u_p instead of d_u_p/d_u.
     double pm = 1.0;
 
-    // Check if marked edge vertices are same (both endpoints of same edge)
     if ((u == w && v == x) || (u == x && v == w)) {
-        // Both endpoints same - more complex degree calculation
+        // Both endpoints same (identity move on marked edges)
         int d_u = tree_old[u].size();
         int d_u_p = tree_new[u].size();
         int d_v = tree_old[v].size();
         int d_v_p = tree_new[v].size();
 
-        pm = ((double)(d_u + d_v) / (d_u_p + d_v_p)) *
-             ((double)d_u_p / d_u) * ((double)d_v_p / d_v);
+        pm = ((double)d_u_p / d_u) *
+             ((double)(d_u + d_v) / (d_u_p + d_v_p)) *
+             ((double)d_v_p / d_v);
     } else {
         // One endpoint shared
         int shared = -1;
@@ -262,8 +234,6 @@ double transition_probability(const std::vector<Edge> &cycle_edges,
     }
 
     // Compute pt: accounts for cycle/marked edge intersection
-    std::set<Edge> cycle_set(cycle_edges.begin(), cycle_edges.end());
-
     // Count edges in cycle but not in marked_old
     int l = 0;
     for (const Edge &e : cycle_edges) {
@@ -316,10 +286,11 @@ CycleProposal cycle_basis_step(const Graph &g, const Tree &tree,
     // Find cycle formed by adding this edge to tree
     std::vector<Edge> cycle_edges = find_cycle(tree, edge_plus.first, edge_plus.second);
 
-    // Find edges in cycle that are not marked
+    // Find edges in cycle that are not marked (including edge_plus).
+    // Choosing edge_minus == edge_plus is a valid "identity" move on the tree.
     std::vector<Edge> possible_cuts;
     for (const Edge &e : cycle_edges) {
-        if (e != edge_plus && marked_edges.find(e) == marked_edges.end()) {
+        if (marked_edges.find(e) == marked_edges.end()) {
             possible_cuts.push_back(e);
         }
     }
@@ -368,69 +339,23 @@ MarkedEdgeProposal marked_edge_step(const Tree &tree,
     Edge old_edge = *it;
 
     // Sample one endpoint of the marked edge
-    int chosen_vertex = (r_int(2) == 0) ? old_edge.first : old_edge.second;
+    int endpoint_choice = r_int(2);
+    int chosen_vertex = (endpoint_choice == 0) ? old_edge.first : old_edge.second;
 
-    // Get neighbors of chosen vertex in tree (both parents and children)
-    // Tree is directed with edges pointing away from root
-    std::vector<int> neighbors;
-    for (int child : tree[chosen_vertex]) {
-        neighbors.push_back(child);
-    }
-    // Check other vertices for parent relationship
-    for (size_t u = 0; u < tree.size(); u++) {
-        if ((int)u != chosen_vertex) {
-            for (int child : tree[u]) {
-                if (child == chosen_vertex) {
-                    neighbors.push_back(u);
-                    break;
-                }
-            }
-        }
-    }
-
+    // Sample one neighbor uniformly at random.
+    // If new_edge == old_edge, it's a valid identity move.
+    const std::vector<int>& neighbors = tree[chosen_vertex];
     if (neighbors.empty()) {
         Rcpp::stop("Chosen vertex has no neighbors in tree");
     }
-
-    // Sample one neighbor
     int neighbor_idx = r_int(neighbors.size());
     int neighbor = neighbors[neighbor_idx];
-
-    // Create new edge
     Edge new_edge = make_edge(chosen_vertex, neighbor);
 
-    // Check if new edge is already marked (would reduce set size)
-    // If so, pick a different neighbor
-    int max_attempts = neighbors.size();
-    int attempts = 0;
-    while (marked_edges.find(new_edge) != marked_edges.end() && attempts < max_attempts) {
-        neighbor_idx = r_int(neighbors.size());
-        neighbor = neighbors[neighbor_idx];
-        new_edge = make_edge(chosen_vertex, neighbor);
-        attempts++;
-    }
-
-    // If all neighbors are marked edges, just return old edge (no change)
-    if (marked_edges.find(new_edge) != marked_edges.end()) {
-        MarkedEdgeProposal proposal;
-        proposal.old_edge = old_edge;
-        proposal.new_edge = old_edge;  // No change
-        proposal.marked_new = marked_edges;  // No change
-        return proposal;
-    }
-
-    // Update marked edge set
+    // Update marked edge set: remove old, insert new
     MarkedEdgeSet marked_new = marked_edges;
     marked_new.erase(old_edge);
     marked_new.insert(new_edge);
-
-    // Verify size is maintained (k-1 marked edges)
-    if (marked_new.size() != marked_edges.size()) {
-        std::ostringstream msg;
-        msg << "marked_edge_step: Set size changed from " << marked_edges.size()
-            << " to " << marked_new.size();
-        Rcpp::stop(msg.str());
-    }
 
     MarkedEdgeProposal proposal;
     proposal.old_edge = old_edge;
@@ -444,30 +369,29 @@ MEWProposal mew_proposal(const Graph &g, const Tree &tree,
                         const MarkedEdgeSet &marked_edges,
                         const uvec &pop, int n_distr,
                         double target, double lower, double upper) {
-    const int MAX_TRIES = 1000;
     int V = g.size();
+    const int MAX_TRIES = 50000;
 
-    for (int tries = 0; tries < MAX_TRIES; tries++) {
+    // Keep trying until we get a valid proposal
+    Tree current_tree = tree;
+    MarkedEdgeSet current_marked = marked_edges;
+    int n_rejects = 0;
+
+    while (n_rejects < MAX_TRIES) {
         // Propose tree update
-        CycleProposal cycle_prop = cycle_basis_step(g, tree, marked_edges);
+        CycleProposal cycle_prop = cycle_basis_step(g, current_tree, current_marked);
 
         // If cycle proposal is invalid (all edges marked), skip this iteration
         if (!cycle_prop.valid) {
+            n_rejects++;
             continue;
         }
 
-        // Propose marked edge update on OLD tree (critical for detailed balance)
-        // Must use 'tree' not 'cycle_prop.tree_new' to maintain reversibility
-        MarkedEdgeProposal marked_prop = marked_edge_step(tree, marked_edges);
+        // Propose marked edge update using OLD tree
+        // See note in transition_probability about potential bias from this choice
+        MarkedEdgeProposal marked_prop = marked_edge_step(current_tree, current_marked);
 
-        // Check if new marked edge is valid
-        // Cannot be edge_plus (not yet in tree) or edge_minus (removed from tree)
-        if (marked_prop.new_edge == cycle_prop.edge_plus ||
-            marked_prop.new_edge == cycle_prop.edge_minus) {
-            continue;  // Invalid proposal, try again
-        }
-
-        // Convert to partition and check population
+        // Convert to partition
         uvec partition = tree_to_partition(cycle_prop.tree_new, marked_prop.marked_new, V, n_distr);
 
         // Compute district populations
@@ -493,24 +417,31 @@ MEWProposal mew_proposal(const Graph &g, const Tree &tree,
             MEWProposal proposal;
             proposal.cycle = cycle_prop;
             proposal.marked = marked_prop;
-            proposal.n_rejects = tries;
+            proposal.n_rejects = n_rejects;
             proposal.valid = true;
-            proposal.partition = partition;  // Cache for reuse in acceptance step
+            proposal.partition = partition;
             return proposal;
         }
+
+        // Invalid - reset and try again
+        current_tree = tree;
+        current_marked = marked_edges;
+        n_rejects++;
     }
 
-    // Max tries exceeded - return invalid proposal
-    // This will be automatically rejected in MH step
+    // Failed to find valid proposal after MAX_TRIES
     MEWProposal proposal;
     proposal.cycle.tree_new = tree;
     proposal.cycle.edge_plus = make_edge(0, 0);
-    proposal.marked.marked_new = marked_edges;
+    proposal.cycle.edge_minus = make_edge(0, 0);
+    proposal.cycle.cycle_edges.clear();
+    proposal.cycle.valid = false;
     proposal.marked.old_edge = make_edge(0, 0);
     proposal.marked.new_edge = make_edge(0, 0);
-    proposal.n_rejects = MAX_TRIES;
-    proposal.valid = false;
-
+    proposal.marked.marked_new = marked_edges;
+    proposal.n_rejects = n_rejects;
+    proposal.valid = false;  // Mark as invalid to trigger rejection in main loop
+    proposal.partition = tree_to_partition(tree, marked_edges, V, n_distr);
     return proposal;
 }
 
