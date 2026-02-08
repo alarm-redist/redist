@@ -29,10 +29,13 @@ is_close <- function(obs, exp) {
 test_that('MEW distribution matches expected (log st)', {
   set.seed(123)
 
+  init_plans <- redist_smc(grid, nsims = 100) |>
+    get_plans_matrix()
+
   result <- redist_mew(grid,
     nsims = 2000000 / 8, warmup = 10000, thin = 1000,
     chains = 8,
-    init_plan = grid$init,
+    init_plan = init_plans[, 1:8],
     compactness = 1,
     verbose = FALSE
   )
@@ -43,6 +46,7 @@ test_that('MEW distribution matches expected (log st)', {
   observed <- sapply(c('8', '10', '11', '12'), function(k) {
     if (k %in% names(observed_counts)) observed_counts[[k]] / total else 0
   })
+  target <- c('8' = 256 / 654, '10' = 224 / 654, '11' = 96 / 654, '12' = 78 / 654)
 
   # Expected: 8→256/654, 10→224/654, 11→96/654, 12→78/654
   expect_true(all(cut_edge_counts %in% c(8, 10, 11, 12)))
@@ -50,4 +54,6 @@ test_that('MEW distribution matches expected (log st)', {
   expect_true(is_close(observed['10'], 224 / 654))
   expect_true(is_close(observed['11'], 96 / 654))
   expect_true(is_close(observed['12'], 78 / 654))
+  print(observed)
+  print(target)
 })
