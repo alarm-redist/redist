@@ -50,10 +50,41 @@ test_that('MEW distribution matches expected (log st)', {
 
   # Expected: 8→256/654, 10→224/654, 11→96/654, 12→78/654
   expect_true(all(cut_edge_counts %in% c(8, 10, 11, 12)))
-  expect_true(is_close(observed['8'], 256 / 654))
-  expect_true(is_close(observed['10'], 224 / 654))
-  expect_true(is_close(observed['11'], 96 / 654))
-  expect_true(is_close(observed['12'], 78 / 654))
+  expect_true(is_close(observed['8'], target['8']))
+  expect_true(is_close(observed['10'], target['10']))
+  expect_true(is_close(observed['11'], target['11']))
+  expect_true(is_close(observed['12'], target['12']))
+  print(observed)
+  print(target)
+})
+
+
+test_that('uniform distribution over plans', {
+  set.seed(456)
+
+  result <- redist_mew(grid,
+    nsims = 2000000 / 8, warmup = 10000, thin = 1000,
+    chains = 8,
+    init_plan = init_plans[, 1:8],
+    compactness = 0,
+    verbose = FALSE
+  )
+
+  cut_edge_counts <- comp_edges_rem(result, shp = grid) |> by_plan(ndists = 4)
+  observed_counts <- table(cut_edge_counts)
+  total <- sum(observed_counts)
+  observed <- sapply(c('8', '10', '11', '12'), function(k) {
+    if (k %in% names(observed_counts)) observed_counts[[k]] / total else 0
+  })
+
+  target <- c('8' = 1 / 117, '10' = 14 / 117, '11' = 24 / 117, '12' = 78 / 117)
+
+  # Expected: 8→1/117, 10→14/117, 11→24/117, 12→78/117
+  expect_true(all(cut_edge_counts %in% c(8, 10, 11, 12)))
+  expect_true(is_close(observed['8'], target['8']))
+  expect_true(is_close(observed['10'], target['10']))
+  expect_true(is_close(observed['11'], target['11']))
+  expect_true(is_close(observed['12'], target['12']))
   print(observed)
   print(target)
 })
