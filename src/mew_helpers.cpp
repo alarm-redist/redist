@@ -252,7 +252,42 @@ double transition_probability(const std::vector<Edge> &cycle_edges,
 
     double pt = (l_p > 0) ? ((double)l / l_p) : 0.0;
 
+    // MH ratio: q(x'->x)/q(x->x') = pt * pm
+    // pt = |C\M| / |C\M'| corrects for cycle step asymmetry.
+    // pm = deg_T'(v)/deg_T(v) corrects for marked step degree asymmetry.
     return pt * pm;
+}
+
+/*
+ * Quotient graph spanning tree count
+ * Computes log(τ(Q)) where Q is the inter-district multigraph.
+ * Uses Kirchhoff's matrix-tree theorem: τ(Q) = det(L*) where L* is
+ * any cofactor of the Laplacian of Q.
+ */
+double log_st_quotient_graph(const Graph &g, const arma::uvec &plan, int n_distr) {
+    arma::mat L(n_distr, n_distr, arma::fill::zeros);
+    int V = g.size();
+
+    for (int u = 0; u < V; u++) {
+        int du = plan(u);
+        for (int v : g[u]) {
+            if (u < v) {
+                int dv = plan(v);
+                if (du != dv) {
+                    L(du - 1, du - 1) += 1.0;
+                    L(dv - 1, dv - 1) += 1.0;
+                    L(du - 1, dv - 1) -= 1.0;
+                    L(dv - 1, du - 1) -= 1.0;
+                }
+            }
+        }
+    }
+
+    // Kirchhoff: τ = det of any (n-1)×(n-1) cofactor of L
+    arma::mat L_minor = L.submat(0, 0, n_distr - 2, n_distr - 2);
+    double det_val = arma::det(L_minor);
+    if (det_val <= 0) return 0.0;
+    return std::log(det_val);
 }
 
 /*
@@ -387,8 +422,7 @@ MEWProposal mew_proposal(const Graph &g, const Tree &tree,
             continue;
         }
 
-        // Propose marked edge update using OLD tree
-        // See note in transition_probability about potential bias from this choice
+        // Propose marked edge update using OLD tree (matching Julia's proposal function).
         MarkedEdgeProposal marked_prop = marked_edge_step(current_tree, current_marked);
 
         // Convert to partition

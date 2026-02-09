@@ -163,7 +163,21 @@ Rcpp::List mew_plans(int nsims, List adj, const arma::uvec &init,
                     }
                 }
 
-                // 5. Gibbs target constraints
+                // 5. Quotient graph spanning tree correction
+                // The extended state space has N(P) = prod(tau(D_d)) * tau(Q)
+                // states per partition P. The chain is naturally proportional to
+                // N(P), but the target with compactness weighting is proportional
+                // to prod(tau(D_d)) only. The quotient correction removes tau(Q).
+                double log_quotient = 0.0;
+                if (!changed_districts.empty()) {
+                    arma::uvec plan_old = plans_pair.col(0);
+                    arma::uvec plan_new = plans_pair.col(1);
+                    double log_q_old = log_st_quotient_graph(g, plan_old, n_distr);
+                    double log_q_new = log_st_quotient_graph(g, plan_new, n_distr);
+                    log_quotient = log_q_old - log_q_new;
+                }
+
+                // 6. Gibbs target constraints
                 double log_energy_ratio = 0.0;
                 if (constraints.size() > 0) {
                     std::fill(new_psi.begin(), new_psi.end(), 0.0);
@@ -180,8 +194,8 @@ Rcpp::List mew_plans(int nsims, List adj, const arma::uvec &init,
                     log_energy_ratio = old_tgt - new_tgt;
                 }
 
-                // 6. Combined log acceptance probability
-                double log_alpha = log_q_ratio + (1.0 - rho) * log_st + log_energy_ratio;
+                // 7. Combined log acceptance probability
+                double log_alpha = log_q_ratio + (1.0 - rho) * log_st + log_quotient + log_energy_ratio;
 
                 // Accept/reject
                 bool accept = (std::log(r_unif()) < log_alpha);

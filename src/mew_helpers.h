@@ -98,6 +98,9 @@ double transition_probability(const std::vector<Edge> &cycle_edges,
                              const Tree &tree_old,
                              const Tree &tree_new);
 
+// Compute log spanning tree count of the quotient (inter-district) graph
+double log_st_quotient_graph(const Graph &g, const arma::uvec &plan, int n_distr);
+
 /*
  * Initialization
  */
