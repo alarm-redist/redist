@@ -124,6 +124,8 @@ Rcpp::List mew_plans(int nsims, List adj, const arma::uvec &init,
                     tree_old,
                     proposal.cycle.tree_new
                 );
+                // If trans_prob == 0, reverse transition is impossible (m' = e+); reject
+                if (trans_prob > 0.0) {
                 double log_q_ratio = std::log(trans_prob);
 
                 // 2. Get proposed partition (cached from population check)
@@ -211,6 +213,7 @@ Rcpp::List mew_plans(int nsims, List adj, const arma::uvec &init,
                         n_cycle_intersect++;
                     }
                 }
+                } // end if (trans_prob > 0)
                 // If reject, tree and marked_edges stay as tree_old and marked_old
             } else {
                 // Proposal failed (hit MAX_TRIES)

@@ -422,8 +422,9 @@ MEWProposal mew_proposal(const Graph &g, const Tree &tree,
             continue;
         }
 
-        // Propose marked edge update using OLD tree (matching Julia's proposal function).
-        MarkedEdgeProposal marked_prop = marked_edge_step(current_tree, current_marked);
+        // Propose marked edge update using NEW tree T' (paper Section 3, step 2:
+        // "Choose a neighbor v in N_{T'}(u)").
+        MarkedEdgeProposal marked_prop = marked_edge_step(cycle_prop.tree_new, current_marked);
 
         // Convert to partition
         uvec partition = tree_to_partition(cycle_prop.tree_new, marked_prop.marked_new, V, n_distr);
