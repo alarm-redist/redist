@@ -109,7 +109,11 @@ make_valid_plot <- function(pl_mew, target, conf = 0.9, by_chain = TRUE) {
         edges = k,
         true = target$true_prop[target$edges == k]
       )
-  })
+  }) |>
+      mutate(
+          okay = low <= true & high >= true
+      )
+  return(d_hist)
 
   d_hist |>
     ggplot() +
