@@ -3,7 +3,7 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">redist</a>
 
@@ -41,7 +41,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Freeze Parts of a Map</h1>
-      <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/main/R/freeze.R" class="external-link"><code>R/freeze.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/v4.3.1/R/freeze.R" class="external-link"><code>R/freeze.R</code></a></small>
       <div class="d-none name"><code>redist.freeze.Rd</code></div>
     </div>
 
@@ -109,6 +109,20 @@ existing plan, if one exists.</p></dd>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">map</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan <span class="op">=</span> <span class="va">cd_2010</span>, pop_tol <span class="op">=</span> <span class="fl">0.02</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">map</span> <span class="op">&lt;-</span> <span class="va">map</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="merge_by.html">merge_by</a></span><span class="op">(</span><span class="fu">freeze</span><span class="op">(</span><span class="va">cd_2010</span> <span class="op">==</span> <span class="fl">1</span>, .data <span class="op">=</span> <span class="va">.</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>There was 1 warning in `dplyr::summarize()`.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> In argument: `dplyr::across(where(is.numeric), sum, na.rm = TRUE)`.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> In group 1: `cd_2010 = 1`, `freeze(cd_2010 == 1, .data = .) = 3`.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Caused by warning:</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> The `...` argument of `across()` is deprecated as of dplyr 1.1.0.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Supply arguments directly to `.fns` through an anonymous function instead.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span>   # Previously</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span>   across(a:b, mean, na.rm = TRUE)</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span>   # Now</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span>   across(a:b, \(x) mean(x, na.rm = TRUE))</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> The deprecated feature was likely used in the <span style="color: #0000BB;">redist</span> package.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span>   Please report the issue at <span style="color: #0000BB; font-style: italic;">&lt;https://github.com/alarm-redist/redist/issues&gt;</span>.</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
@@ -121,7 +135,7 @@ existing plan, if one exists.</p></dd>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

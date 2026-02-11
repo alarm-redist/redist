@@ -21,7 +21,7 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">redist</a>
 
@@ -74,7 +74,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Map Pre-processing for Special Constraints</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/main/vignettes/map-preproc.Rmd" class="external-link"><code>vignettes/map-preproc.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/v4.3.1/vignettes/map-preproc.Rmd" class="external-link"><code>vignettes/map-preproc.Rmd</code></a></small>
       <div class="d-none name"><code>map-preproc.Rmd</code></div>
     </div>
 
@@ -142,8 +142,8 @@ Island in the southwest part of the county is not connected to the rest
 of the county by land.</p>
 <p>We”ll start by looking at some maps of the county and the
 districts.</p>
-<p><img src="map-preproc_files/figure-html/water-plot-1.png" width="768"></p>
-<p><img src="map-preproc_files/figure-html/city-distr-plot-1.png" width="700"></p>
+<p><img src="map-preproc_files/figure-html/water-plot-1.png" class="r-plt" alt="" width="768"></p>
+<p><img src="map-preproc_files/figure-html/city-distr-plot-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level2">
 <h2 id="creating-the-redist_map-object">Creating the <code>redist_map</code> object<a class="anchor" aria-label="anchor" href="#creating-the-redist_map-object"></a>
@@ -182,7 +182,7 @@ the county. We can explore this graph, and zoom in on the city of
 Seattle, using <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">king</span>, adj <span class="op">=</span> <span class="cn">TRUE</span>, centroids <span class="op">=</span> <span class="cn">FALSE</span>, zoom_to <span class="op">=</span> <span class="op">(</span><span class="va">city</span> <span class="op">==</span> <span class="st">"SEA"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="map-preproc_files/figure-html/king-adj-1.png" width="700"></p>
+<p><img src="map-preproc_files/figure-html/king-adj-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level2">
 <h2 id="subsetting">Subsetting<a class="anchor" aria-label="anchor" href="#subsetting"></a>
@@ -240,7 +240,7 @@ subsetting to the water precincts and plotting labels.</p>
 <span><span class="co">#&gt; Warning: Your subset was not based on districts.</span></span>
 <span><span class="co">#&gt; → Please use `set_pop_tol()` to update your <span style="color: #0000BB;">&lt;redist_map&gt;</span> or create a new</span></span>
 <span><span class="co">#&gt;   <span style="color: #0000BB;">&lt;redist_map&gt;</span> with the correct number of districts.</span></span></code></pre></div>
-<p><img src="map-preproc_files/figure-html/king-water-1.png" width="700"></p>
+<p><img src="map-preproc_files/figure-html/king-water-1.png" class="r-plt" alt="" width="700"></p>
 <p>We see that by removing all water precincts except WVPS34 and WVSP34,
 we can maintain a connection between the island and the mainland
 (incidentally, the state ferry connecting the island to Seattle runs
@@ -253,13 +253,13 @@ through these precincts).</p>
 <span><span class="va">water_prec</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/setops.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="va">water_prec</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"WVPS34"</span>, <span class="st">"WVSP34"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">king_land</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">king</span>, <span class="op">!</span><span class="op">(</span><span class="va">id</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">water_prec</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">king_land</span><span class="op">)</span></span></code></pre></div>
-<p><img src="map-preproc_files/figure-html/king-land-1.png" width="700"></p>
+<p><img src="map-preproc_files/figure-html/king-land-1.png" class="r-plt" alt="" width="700"></p>
 <p>Zooming in again to view the adjacency graph in the city of Seattle,
 we see that the graph has been appropriately edited to remove the water
 precincts.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">king_land</span>, adj <span class="op">=</span> <span class="cn">TRUE</span>, centroids <span class="op">=</span> <span class="cn">FALSE</span>, zoom_to <span class="op">=</span> <span class="op">(</span><span class="va">city</span> <span class="op">==</span> <span class="st">"SEA"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="map-preproc_files/figure-html/seattle-land-adj-1.png" width="700"></p>
+<p><img src="map-preproc_files/figure-html/seattle-land-adj-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 </div>
 <div class="section level2">
@@ -275,6 +275,20 @@ and <code><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="
 <p>For example, we could merge our King County data by city.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/merge_by.html">merge_by</a></span><span class="op">(</span><span class="va">king_land</span>, <span class="va">city</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: There was 1 warning in `dplyr::summarize()`.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> In argument: `dplyr::across(where(is.numeric), sum, na.rm = TRUE)`.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> In group 1: `distr = 1`, `city = "BOT"`.</span></span>
+<span><span class="co">#&gt; Caused by warning:</span></span>
+<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> The `...` argument of `across()` is deprecated as of dplyr 1.1.0.</span></span>
+<span><span class="co">#&gt; Supply arguments directly to `.fns` through an anonymous function instead.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   # Previously</span></span>
+<span><span class="co">#&gt;   across(a:b, mean, na.rm = TRUE)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   # Now</span></span>
+<span><span class="co">#&gt;   across(a:b, \(x) mean(x, na.rm = TRUE))</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> The deprecated feature was likely used in the <span style="color: #0000BB;">redist</span> package.</span></span>
+<span><span class="co">#&gt;   Please report the issue at <span style="color: #0000BB; font-style: italic;">&lt;https://github.com/alarm-redist/redist/issues&gt;</span>.</span></span>
 <span><span class="co">#&gt; A <span style="color: #0000BB;">&lt;redist_map&gt;</span> with 60 units and 11 fields</span></span>
 <span><span class="co">#&gt; To be partitioned into 9 districts with population between 214,505.7 - 1.663204% and 214,505.7 + 1.663204%</span></span>
 <span><span class="co">#&gt; Merged from another map with reindexing: int [1:2541] 41 41 46 41 41 ...</span></span>
@@ -314,7 +328,7 @@ geometry through merging, you can simply set
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">king_merged</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/merge_by.html">merge_by</a></span><span class="op">(</span><span class="va">king_land</span>, <span class="va">city</span>, drop_geom <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">king_merged</span>, adj <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="map-preproc_files/figure-html/merged-city-1.png" width="700"></p>
+<p><img src="map-preproc_files/figure-html/merged-city-1.png" class="r-plt" alt="" width="700"></p>
 <p>We will see more uses of <code><a href="../reference/merge_by.html">merge_by()</a></code> in the sections
 below.</p>
 </div>
@@ -349,7 +363,7 @@ municipalities.</p>
 <span><span class="va">king_land</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>is_unsplit <span class="op">=</span> <span class="op">!</span><span class="fu"><a href="../reference/is_county_split.html">is_county_split</a></span><span class="op">(</span><span class="va">distr</span>, <span class="va">city</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">is_unsplit</span><span class="op">)</span></span></code></pre></div>
-<p><img src="map-preproc_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
+<p><img src="map-preproc_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="700"></p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="va">king_unsplit</span> <span class="op">&lt;-</span> <span class="va">king_land</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
@@ -429,7 +443,7 @@ geometry object, <code>king_land</code>.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 1            1    <span style="text-decoration: underline;">214</span>053</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 899 more rows</span></span></span>
 <span><span class="fu"><a href="../reference/redist.plot.plans.html">redist.plot.plans</a></span><span class="op">(</span><span class="fu"><a href="../reference/pullback.html">pullback</a></span><span class="op">(</span><span class="va">plans</span><span class="op">)</span>, draws <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, shp <span class="op">=</span> <span class="va">king_land</span><span class="op">)</span></span></code></pre></div>
-<p><img src="map-preproc_files/figure-html/unsplit-plan-1.png" width="768"></p>
+<p><img src="map-preproc_files/figure-html/unsplit-plan-1.png" class="r-plt" alt="" width="768"></p>
 <p>Notice how the <code>Merged from another map...</code> line
 disappears and the number of map units changes after using
 <code><a href="../reference/pullback.html">pullback()</a></code>. Notice also that each of the sampled plans
@@ -484,7 +498,7 @@ inside each district are merged together after applying
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>core <span class="op">=</span> <span class="fu"><a href="../reference/redist.identify.cores.html">make_cores</a></span><span class="op">(</span>boundary <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/merge_by.html">merge_by</a></span><span class="op">(</span><span class="va">core</span>, drop_geom <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">king_cores</span><span class="op">)</span></span></code></pre></div>
-<p><img src="map-preproc_files/figure-html/cores-1.png" width="700"></p>
+<p><img src="map-preproc_files/figure-html/cores-1.png" class="r-plt" alt="" width="700"></p>
 <p>If we sample redistrict plans from this modified map, we observe that
 the simulated plans generally follow the same location and shape as the
 original plan. Sampling is also faster, since there are fewer units in
@@ -492,7 +506,7 @@ the map.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">plans</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">king_cores</span>, <span class="fl">100</span>, silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/redist.plot.plans.html">redist.plot.plans</a></span><span class="op">(</span><span class="va">plans</span>, draws <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, shp <span class="op">=</span> <span class="va">king_cores</span><span class="op">)</span></span></code></pre></div>
-<p><img src="map-preproc_files/figure-html/core-plans-1.png" width="700"></p>
+<p><img src="map-preproc_files/figure-html/core-plans-1.png" class="r-plt" alt="" width="700"></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
@@ -505,7 +519,7 @@ the map.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

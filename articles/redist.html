@@ -21,7 +21,7 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">redist</a>
 
@@ -74,7 +74,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Introduction to redist</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/main/vignettes/redist.Rmd" class="external-link"><code>vignettes/redist.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/v4.3.1/vignettes/redist.Rmd" class="external-link"><code>vignettes/redist.Rmd</code></a></small>
       <div class="d-none name"><code>redist.Rmd</code></div>
     </div>
 
@@ -357,7 +357,7 @@ redistricting algorithms to function properly.</p>
 <code>redist_map</code> object.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">iowa_map</span>, adj<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span></span></code></pre></div>
-<p><img src="redist_files/figure-html/iowa-adj-1.png" width="768"></p>
+<p><img src="redist_files/figure-html/iowa-adj-1.png" class="r-plt" alt="" width="768"></p>
 </div>
 <div class="section level3">
 <h3 id="pre-processing">Pre-processing<a class="anchor" aria-label="anchor" href="#pre-processing"></a>
@@ -392,14 +392,14 @@ relatively balanced between Democrats and Republicans (at least in the
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">iowa_map</span>, fill <span class="op">=</span> <span class="va">pop</span> <span class="op">/</span> <span class="va">areas</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span><span class="op">(</span>name<span class="op">=</span><span class="st">"Population density (people / sq. mi)"</span>, </span>
 <span>                         trans<span class="op">=</span><span class="st">"sqrt"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="redist_files/figure-html/iowa-chloro-1.png" width="700"></p>
+<p><img src="redist_files/figure-html/iowa-chloro-1.png" class="r-plt" alt="" width="700"></p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">iowa_map</span>, fill <span class="op">=</span> <span class="va">dem_08</span> <span class="op">/</span> <span class="va">tot_08</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient2</a></span><span class="op">(</span>name<span class="op">=</span><span class="st">"Pct. Democratic '08"</span>,  midpoint<span class="op">=</span><span class="fl">0.5</span><span class="op">)</span></span></code></pre></div>
-<p><img src="redist_files/figure-html/iowa-chloro-2.png" width="700"></p>
+<p><img src="redist_files/figure-html/iowa-chloro-2.png" class="r-plt" alt="" width="700"></p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">iowa_map</span>, fill <span class="op">=</span> <span class="va">wvap</span> <span class="op">/</span> <span class="va">vap</span>, by_distr <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="redist_files/figure-html/iowa-chloro-3.png" width="700"></p>
+<p><img src="redist_files/figure-html/iowa-chloro-3.png" class="r-plt" alt="" width="700"></p>
 </div>
 </div>
 <div class="section level2">
@@ -459,7 +459,7 @@ added using <code><a href="../reference/add_reference.html">add_reference()</a><
 <code><a href="../reference/redist.plot.plans.html">redist.plot.plans()</a></code>.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/redist.plot.plans.html">redist.plot.plans</a></span><span class="op">(</span><span class="va">iowa_plans</span>, draws<span class="op">=</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span>, shp<span class="op">=</span><span class="va">iowa_map</span><span class="op">)</span></span></code></pre></div>
-<p><img src="redist_files/figure-html/ia-sim-plans-1.png" width="700"></p>
+<p><img src="redist_files/figure-html/ia-sim-plans-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level2">
 <h2 id="analyze">Analyzing the simulated plans<a class="anchor" aria-label="anchor" href="#analyze"></a>
@@ -610,7 +610,7 @@ customization.</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="va">plan_sum</span>, <span class="va">max_dev</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">comp</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_layout.html" class="external-link">plot_layout</a></span><span class="op">(</span>guides<span class="op">=</span><span class="st">"collect"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="redist_files/figure-html/dev-comp-plot-1.png" width="700"></p>
+<p><img src="redist_files/figure-html/dev-comp-plot-1.png" class="r-plt" alt="" width="700"></p>
 <p>We can see that the adopted plan has nearly complete population
 parity, and that its districts are roughly as compact on average as
 those simulated by the SMC algorithm.</p>
@@ -624,7 +624,7 @@ match the reference plan as closely as possible.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">pct_dem</span>, sort<span class="op">=</span><span class="cn">FALSE</span>, size<span class="op">=</span><span class="fl">0.5</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Ignoring unknown labels:</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">shape</span> : <span style="color: #0000BB;">"Plan"</span></span></span></code></pre></div>
-<p><img src="redist_files/figure-html/signature-1.png" width="700"></p>
+<p><img src="redist_files/figure-html/signature-1.png" class="r-plt" alt="" width="700"></p>
 <p>We see that districts 1 and 2 look normal, but it appears that,
 relative to our ensemble, district 4 (NW Iowa) is more Democratic, and
 district 3 (SW Iowa, Des Moines) is less Democratic. However, the
@@ -642,7 +642,7 @@ voters than would otherwise be expected.</p>
 <span><span class="fu"><a href="../reference/redist.plot.scatter.html">redist.plot.scatter</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">pct_min</span>, <span class="va">pct_dem</span>, </span>
 <span>                    color<span class="op">=</span><span class="va">pal</span><span class="op">[</span><span class="fu"><a href="../reference/subset_sampled.html">subset_sampled</a></span><span class="op">(</span><span class="va">iowa_plans</span><span class="op">)</span><span class="op">$</span><span class="va">district</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_color_manual</a></span><span class="op">(</span>values<span class="op">=</span><span class="st">"black"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="redist_files/figure-html/scatter-1.png" width="700"></p>
+<p><img src="redist_files/figure-html/scatter-1.png" class="r-plt" alt="" width="700"></p>
 <p>From here, it is easy to keep exploring, using the functionality of
 <code>redist_plans</code> and the built-in plotting functions. More
 complex model-based analyses could also be performed using the
@@ -660,7 +660,7 @@ district-level or plan-level statistics.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>
