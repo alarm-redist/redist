@@ -33,10 +33,10 @@ library(ggplot2)
 
 # The `redist` package {#package}
 To install `redist`, follow the instructions in the
-[README](../index.html#installation-instructions).
+[README](https://alarm-redist.org/redist/#installation-instructions).
 
 For more information on package components, check out the 
-[full documentation](../reference/index.html).
+[full documentation](https://alarm-redist.org/redist/).
 
 ## Algorithms
 The package contains a variety of redistricting simulation and enumeration

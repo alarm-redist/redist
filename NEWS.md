@@ -1,3 +1,8 @@
+# redist 4.3.2
+
+* Allows for parallel flip with `chains` argument in `redist_flip()`.
+* Fixes URL issues causing a note on CRAN. We have pointed the links to our website directly.
+
 # redist 4.3.0
 * Improves SMC performance by pre-allocating some memory while drawing spanning trees.
 * Replaces SMC label-counting adjustments (exact and importance-sampling-based) with a new backward kernel that eliminates approximation error and requires far less computation
