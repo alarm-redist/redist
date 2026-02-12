@@ -1,9 +1,9 @@
 Package: redist
-Version: 4.3.0
-Date: 2025-07-07
+Version: 4.3.1
+Date: 2025-09-30
 Title: Simulation Methods for Legislative Redistricting
 Authors@R: c(
-    person("Christopher T.", "Kenny", email = "christopherkenny@fas.harvard.edu", 
+    person("Christopher T.", "Kenny", email = "ctkenny@proton.me", 
            role = c("aut", "cre"), comment = c(ORCID = "0000-0002-9386-6860")),
     person("Cory", "McCartan", email = "mccartan@psu.edu", role = "aut",
            comment = c(ORCID = "0000-0002-6251-669X")),
@@ -67,7 +67,7 @@ NeedsCompilation: yes
 BugReports: https://github.com/alarm-redist/redist/issues
 URL: https://alarm-redist.org/redist/
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 VignetteBuilder: knitr
 Encoding: UTF-8
 Config/testthat/edition: 3

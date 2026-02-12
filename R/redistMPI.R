@@ -254,13 +254,19 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
                 append = TRUE)
 
             ## Run algorithm
+            # Compute population bounds from pop_tol
+            parity <- sum(preprocout$data$total_pop) / max(cds)
+            pop_lower <- parity * (1 - preprocout$params$pctdistparity)
+            pop_upper <- parity * (1 + preprocout$params$pctdistparity)
+
             temp <- swMH(aList = preprocout$data$adjlist,
                 cdvec = cds,
                 popvec = preprocout$data$total_pop,
                 constraints = list(),
                 nsims = nsimsAdj[j],
                 eprob = eprob,
-                pct_dist_parity = preprocout$params$pctdistparity,
+                pop_lower = pop_lower,
+                pop_upper = pop_upper,
                 beta_sequence = preprocout$params$betaseq,
                 beta_weights = preprocout$params$betaweights,
                 lambda = lambda,

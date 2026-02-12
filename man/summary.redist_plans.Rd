@@ -58,6 +58,20 @@ a need to increase \code{adapt_k_thresh}.
 appears likely, based on the values of the other statistics.
 }
 
+For CycleWalk MCMC, additional diagnostic statistics include:
+\itemize{
+\item \strong{Cycle walk percentage}: the fraction of iterations that attempted a cycle walk
+proposal (vs. forest walk). Typically around 10\%.
+\item \strong{Success rate}: the fraction of cycle walk attempts that found a valid cycle
+and cut. Low values (< 30\%) may indicate tight constraints.
+\item \strong{Mean acceptance probability}: average MH acceptance probability for successful
+cycle walk proposals.
+\item \strong{Mean cycle length}: average length of cycles found (typically 3-16).
+\item \strong{Mean valid cuts}: average number of valid cut pairs found per cycle.
+\item \strong{Failures}: breakdown of why cycle walk proposals failed (no adjacent districts,
+too few boundary edges, no path found, or no valid cuts).
+}
+
 In the event of problematic diagnostics, the function will provide
 suggestions for improvement.
 }

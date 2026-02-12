@@ -280,7 +280,7 @@ and `merge_by()`.
 # District Cores
 A common requirement in redistricting is that districts after redistricting
 resemble the original districts, or 
-["preserve the cores" of previous districts](https://www.ncsl.org/redistricting-and-census),
+["preserve the cores" of previous districts](https://documents.ncsl.org/wwwncsl/Redistricting-Census/Redistricting-Law-2020_NCSL%20FINAL.pdf),
 to ensure relative continuity of representation. The `redist` package
 operationalizes this idea by explicitly constructing the cores of a set of
 districts with  `make_cores()`, and merging them together with `merge_by()`.

@@ -6,7 +6,7 @@
 #' @param adj zero indexed adjacency list
 #' @param init_plan initial plan
 #' @param total_pop total population
-#' @param pop_tol maximum population deviance allowed
+#' @param pop_bounds population bounds vector (lower, target, upper)
 #' @param nsims number of steps to take
 #' @param eprob edge cut probability
 #' @param lambda number of components to swap
@@ -16,7 +16,7 @@
 #'
 #' @noRd
 #'
-skinny_flips <- function(adj, init_plan, total_pop, pop_tol, nsims, eprob, lambda, constraints) {
+skinny_flips <- function(adj, init_plan, total_pop, pop_bounds, nsims, eprob, lambda, constraints) {
 
     algout <- swMH(aList = adj,
         cdvec = init_plan,
@@ -24,7 +24,8 @@ skinny_flips <- function(adj, init_plan, total_pop, pop_tol, nsims, eprob, lambd
         constraints = as.list(constraints),
         nsims = nsims,
         eprob = eprob,
-        pct_dist_parity = pop_tol,
+        pop_lower = pop_bounds[1],
+        pop_upper = pop_bounds[3],
         beta_sequence = c(1, 1, 1, 1),
         beta_weights = c(1, 1, 1, 1),
         lambda = lambda,
