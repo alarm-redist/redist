@@ -176,7 +176,6 @@ alg <- redist_flip(map_ia, nsims = 500, constraints = cons)
 #> Starting chain 1
 #> ℹ Starting swMH().
 #> ■                                  0% | ETA: 2s
-#> ■■■■■■■■■■■■■■■■■■■■■■■■          75% | ETA:  0s | MH Acceptance: 0.95
 #> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | ETA:  0s | MH Acceptance: 0.95
 #> 
 

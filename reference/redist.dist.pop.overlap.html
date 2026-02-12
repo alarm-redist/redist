@@ -47,7 +47,7 @@ split."><meta property="og:image" content="http://alarm-redist.org/redist/logo.p
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Compare the Population Overlap Across Plans at the District Level</h1>
-      <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/main/R/pop_overlap.R" class="external-link"><code>R/pop_overlap.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/v4.3.2/R/pop_overlap.R" class="external-link"><code>R/pop_overlap.R</code></a></small>
       <div class="d-none name"><code>redist.dist.pop.overlap.Rd</code></div>
     </div>
 
@@ -104,9 +104,6 @@ Michael Crespin, Political Analysis (2005) 13(3): 253-260</p>
 <span class="r-in"><span><span class="va">plans</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="fl">2</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> SEQUENTIAL MONTE CARLO</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Sampling 2 99-unit maps with 4 districts and population between 753973 and 769205.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Split [0/3] <span style="color: #00BB00;">■                               </span> | ETA?</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Split [3/3] <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> | ETA 0s</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="va">plans_mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_plans_matrix.html">get_plans_matrix</a></span><span class="op">(</span><span class="va">plans</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">ov</span> <span class="op">&lt;-</span> <span class="fu">redist.dist.pop.overlap</span><span class="op">(</span><span class="va">plans_mat</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>, <span class="va">plans_mat</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span>, <span class="va">iowa_map</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">ov</span>, <span class="fl">2</span><span class="op">)</span></span></span>

@@ -256,20 +256,20 @@ redist_smc(fl_map, 1000, ncores = 2)
 #> Plans have 3 districts from a 25-unit map, and were drawn using Sequential
 #> Monte Carlo.
 #> With plans resampled from weights
-#> Plans matrix: int [1:25, 1:1000] 3 2 2 2 2 3 1 1 3 1 ...
+#> Plans matrix: int [1:25, 1:1000] 2 3 3 3 1 3 1 1 2 1 ...
 #> # A tibble: 3,000 × 3
 #>    draw  district total_pop
 #>  * <fct>    <int>     <dbl>
-#>  1 1            1     55024
-#>  2 1            2     58845
-#>  3 1            3     61174
-#>  4 2            1     57208
-#>  5 2            2     54128
-#>  6 2            3     63707
-#>  7 3            1     57892
-#>  8 3            2     55321
-#>  9 3            3     61830
-#> 10 4            1     56832
+#>  1 1            1     63707
+#>  2 1            2     58683
+#>  3 1            3     52653
+#>  4 2            1     53024
+#>  5 2            2     58164
+#>  6 2            3     63855
+#>  7 3            1     55024
+#>  8 3            2     58845
+#>  9 3            3     61174
+#> 10 4            1     56279
 #> # ℹ 2,990 more rows
 # }
 ```

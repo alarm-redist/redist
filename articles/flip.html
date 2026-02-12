@@ -74,7 +74,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Redistricting with Flip MCMC</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/main/vignettes/flip.Rmd" class="external-link"><code>vignettes/flip.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/v4.3.2/vignettes/flip.Rmd" class="external-link"><code>vignettes/flip.Rmd</code></a></small>
       <div class="d-none name"><code>flip.Rmd</code></div>
     </div>
 
@@ -359,12 +359,6 @@ specify the number of districts, <code>ndists</code>.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">■                               </span>   1% | ETA: 0s</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.75</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="color: #BB0000; font-weight: bold;">redist_flip()</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -375,6 +369,12 @@ specify the number of districts, <code>ndists</code>.</p>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">■                               </span>   1% | ETA: 0s</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.69</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="color: #BB0000; font-weight: bold;">redist_flip()</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────────────</span></span></span>
@@ -573,10 +573,7 @@ advice, we’ll use the following example:</p>
 <span><span class="co">#&gt; ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span></span>
 <span><span class="co">#&gt; Starting chain 1</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">■                               </span>   1% | ETA: 0s</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.55</span></span>
-<span><span class="co">#&gt; </span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="acceptance-ratios">Acceptance Ratios<a class="anchor" aria-label="anchor" href="#acceptance-ratios"></a>
 </h3>
@@ -616,6 +613,9 @@ movements between sequential iterations of the algorithm.</p>
 <span><span class="co">#&gt; ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">■■■■■■■■■■                      </span>  30% | ETA:  0s | MH Acceptance: 0.43</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.46</span></span>
+<span><span class="co">#&gt; </span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">sims_new</span><span class="op">$</span><span class="va">mhdecisions</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 0.46</span></span></code></pre></div>
 <p>In this example, we’ve increased each of these.

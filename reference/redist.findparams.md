@@ -166,7 +166,7 @@ redist.findparams(map_fl,
 #> ℹ Preprocessing data.
 #> Starting chain 1
 #> ℹ Starting swMH().
-#> ■■■■■■■■■■■■■■■■■■■■■             68% | ETA:  1s | MH Acceptance: 0.99
+#> ■                                  0% | ETA: 8s
 #> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | ETA:  0s | MH Acceptance: 0.99
 #> 
 #> No maps available under parameter set 1.
@@ -177,6 +177,9 @@ redist.findparams(map_fl,
 #> ℹ Preprocessing data.
 #> Starting chain 1
 #> ℹ Starting swMH().
+#> ■■■■■■■■■■■■■                     40% | ETA:  1s | MH Acceptance: 0.96
+#> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | ETA:  0s | MH Acceptance: 0.96
+#> 
 #> No maps available under parameter set 2.
 #> 
 #> ── redist_flip() ───────────────────────────────────────────────────────────────
@@ -185,7 +188,7 @@ redist.findparams(map_fl,
 #> ℹ Preprocessing data.
 #> Starting chain 1
 #> ℹ Starting swMH().
-#> ■■■■                              10% | ETA: 2s
+#> ■■■■■■■■■■■■■■■■■■■■■■■■■         81% | ETA:  0s | MH Acceptance: 0.93
 #> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | ETA:  0s | MH Acceptance: 0.93
 #> 
 #> No maps available under parameter set 3.

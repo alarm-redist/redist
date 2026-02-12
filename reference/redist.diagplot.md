@@ -82,7 +82,7 @@ alg_253 <- redist_flip(fl_map, nsims = 10000)
 #> Starting chain 1
 #> ℹ Starting swMH().
 #> ■                                  0% | ETA:10s
-#> ■■■■■■■■■                         26% | ETA:  2s | MH Acceptance: 0.78
+#> ■■■■■■■■■■■■■■■■■■■■■■■■■         79% | ETA:  0s | MH Acceptance: 0.78
 #> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | ETA:  0s | MH Acceptance: 0.78
 #> 
 
@@ -109,7 +109,7 @@ alg_253_2 <- redist_flip(fl_map, nsims = 10000)
 #> ℹ Preprocessing data.
 #> Starting chain 1
 #> ℹ Starting swMH().
-#> ■                                  0% | ETA:11s
+#> ■■■■■■■■■■■■                      38% | ETA:  1s | MH Acceptance: 0.78
 #> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | ETA:  0s | MH Acceptance: 0.78
 #> 
 

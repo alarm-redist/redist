@@ -319,12 +319,6 @@ flip_chains <- lapply(1:nchains, function(x){
 #> 
 #> ℹ Starting swMH().
 #> 
-#> ■                                  1% | ETA: 0s
-#> 
-#> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | ETA:  0s | MH Acceptance: 0.75
-#> 
-#> 
-#> 
 #> 
 #> ── redist_flip() ───────────────────────────────────────────────────────────────
 #> 
@@ -335,6 +329,12 @@ flip_chains <- lapply(1:nchains, function(x){
 #> ℹ Preprocessing data.
 #> 
 #> ℹ Starting swMH().
+#> 
+#> ■                                  1% | ETA: 0s
+#> 
+#> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | ETA:  0s | MH Acceptance: 0.69
+#> 
+#> 
 #> 
 #> 
 #> ── redist_flip() ───────────────────────────────────────────────────────────────
@@ -580,9 +580,6 @@ sims <- redist_flip(map = iowa_map,  nsims = 100)
 #> ℹ Preprocessing data.
 #> Starting chain 1
 #> ℹ Starting swMH().
-#> ■                                  1% | ETA: 0s
-#> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | ETA:  0s | MH Acceptance: 0.55
-#> 
 ```
 
 ### Acceptance Ratios
@@ -624,6 +621,9 @@ sims_new <- redist_flip(map = iowa_map, nsims = 100, constraints = cons,
 #> ── Automated Redistricting Simulation Using Markov Chain Monte Carlo ──
 #> ℹ Preprocessing data.
 #> ℹ Starting swMH().
+#> ■■■■■■■■■■                        30% | ETA:  0s | MH Acceptance: 0.43
+#> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | ETA:  0s | MH Acceptance: 0.46
+#> 
 mean(sims_new$mhdecisions, na.rm = TRUE)
 #> [1] 0.46
 ```
