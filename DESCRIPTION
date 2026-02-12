@@ -1,6 +1,6 @@
 Package: redist
-Version: 4.3.1
-Date: 2025-09-30
+Version: 4.3.2
+Date: 2026-02-10
 Title: Simulation Methods for Legislative Redistricting
 Authors@R: c(
     person("Christopher T.", "Kenny", email = "ctkenny@proton.me", 
