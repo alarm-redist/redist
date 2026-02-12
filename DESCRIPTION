@@ -41,7 +41,6 @@ Imports:
     doParallel,
     foreach,
     doRNG,
-    servr,
     sys,
     ggplot2,
     patchwork

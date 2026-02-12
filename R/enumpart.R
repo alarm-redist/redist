@@ -22,7 +22,7 @@ redist.init.enumpart <- function() {
         writeLines(text = makecontent, con = system.file("enumpart/Makefile", package = "redist"))
     }
 
-    servr::make(dir = system.file("enumpart", package = "redist"), verbose = FALSE)
+    sys::exec_wait("make", args = c("-C", system.file("enumpart", package = "redist")))
 
     # Necessary to avoid bad CRAN submissions:
     if (Sys.info()[["sysname"]] == "Windows") {
