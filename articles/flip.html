@@ -21,11 +21,11 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">redist</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">4.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">4.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,7 +74,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Redistricting with Flip MCMC</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/v4.3.1/vignettes/flip.Rmd" class="external-link"><code>vignettes/flip.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/main/vignettes/flip.Rmd" class="external-link"><code>vignettes/flip.Rmd</code></a></small>
       <div class="d-none name"><code>flip.Rmd</code></div>
     </div>
 
@@ -125,6 +125,7 @@ Redistricting Simulation Using Markov Chain Monte Carlo</a>.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span></span>
+<span><span class="co">#&gt; Starting chain 1</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">■■■■■■                          </span>  17% | ETA:  0s | MH Acceptance: 1.00</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 1.00</span></span>
@@ -259,6 +260,7 @@ parity deviation of 0.05 (with <code>pop_tol</code>).</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span></span>
+<span><span class="co">#&gt; Starting chain 1</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">■                               </span>   1% | ETA: 0s</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.65</span></span>
@@ -305,6 +307,7 @@ constraint, as below:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span></span>
+<span><span class="co">#&gt; Starting chain 1</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span></code></pre></div>
 <p>The first arguments as the same, but this adds three key arguments.
 First, setting <code>constraint</code> to any combination of the nine
@@ -346,7 +349,54 @@ specify the number of districts, <code>ndists</code>.</p>
 <span><span class="va">flip_chains</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">nchains</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">{</span></span>
 <span>  <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span><span class="va">map_ia</span>, nsims <span class="op">=</span> <span class="va">nsims</span>,</span>
 <span>              constraints <span class="op">=</span> <span class="va">constr</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="op">}</span><span class="op">)</span></span></code></pre></div>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="color: #BB0000; font-weight: bold;">redist_flip()</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span></span>
+<span><span class="co">#&gt; Sampling initial plans with SMC</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">■                               </span>   1% | ETA: 0s</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.75</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="color: #BB0000; font-weight: bold;">redist_flip()</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Sampling initial plans with SMC</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="color: #BB0000; font-weight: bold;">redist_flip()</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Sampling initial plans with SMC</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="color: #BB0000; font-weight: bold;">redist_flip()</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Sampling initial plans with SMC</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span></code></pre></div>
 <p>In Unix-based systems, this can be run considerably faster by running
 this in parallel.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
@@ -389,10 +439,8 @@ flip.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">■                               </span>   1% | ETA: 0s</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.80</span></span>
-<span><span class="co">#&gt; </span></span></code></pre></div>
+<span><span class="co">#&gt; Starting chain 1</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span></code></pre></div>
 <p><code>redist_flip</code>’s constraint includes a relatively weak
 compactness constraint by default because simulating compact maps is far
 more efficient and completely non-compact maps are not super useful for
@@ -409,6 +457,7 @@ object</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span></span>
+<span><span class="co">#&gt; Starting chain 1</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span></code></pre></div>
 <p><code>redist_flip</code> outputs a <code>redist_plans</code>
 object.</p>
@@ -523,6 +572,7 @@ advice, we’ll use the following example:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span></span>
+<span><span class="co">#&gt; Starting chain 1</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">■                               </span>   1% | ETA: 0s</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.55</span></span>
@@ -560,6 +610,12 @@ movements between sequential iterations of the algorithm.</p>
 <div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sims_new</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">iowa_map</span>, nsims <span class="op">=</span> <span class="fl">100</span>, constraints <span class="op">=</span> <span class="va">cons</span>, </span>
 <span>                        eprob <span class="op">=</span> <span class="fl">0.10</span>, lambda <span class="op">=</span> <span class="fl">2</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="color: #BB0000; font-weight: bold;">redist_flip()</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">sims_new</span><span class="op">$</span><span class="va">mhdecisions</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 0.46</span></span></code></pre></div>
 <p>In this example, we’ve increased each of these.
@@ -651,6 +707,7 @@ set up.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span></span>
+<span><span class="co">#&gt; Starting chain 1</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span></code></pre></div>
 <p>Now, the interesting this here is that adding more constraints
 actually increased the acceptance probability. This is because
@@ -673,6 +730,7 @@ about.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span></span>
+<span><span class="co">#&gt; Starting chain 1</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span></code></pre></div>
 <p>For example, this new set of constraints might be a good place to
 simulate at.</p>

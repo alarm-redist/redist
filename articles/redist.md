@@ -21,10 +21,10 @@ library(ggplot2)
 ## The `redist` package
 
 To install `redist`, follow the instructions in the
-[README](http://alarm-redist.org/redist/index.html#installation-instructions).
+[README](https://alarm-redist.org/redist/#installation-instructions).
 
 For more information on package components, check out the [full
-documentation](http://alarm-redist.org/redist/reference/index.md).
+documentation](https://alarm-redist.org/redist/).
 
 ### Algorithms
 

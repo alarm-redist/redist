@@ -92,18 +92,18 @@ rsg_plan <- redist.rsg(iowa$adj, iowa$pop, ndists = 4, pop_tol = 0.05)$plan
 #> redist.rsg(): Automated Redistricting Starts
 #> 
 #> 
-#>  4 districts built using 99 precincts in 0.05 seconds...
+#>  4 districts built using 99 precincts in 0.04 seconds...
 #> 
 redist_plans(rsg_plan, iowa, "rsg")
 #> A <redist_plans> containing 1 sampled plan
 #> Plans have 4 districts from a 99-unit map, and were drawn using random
 #> seed-and-grow.
-#> Plans matrix: int [1:99, 1] 1 1 2 3 4 2 2 1 2 2 ...
+#> Plans matrix: int [1:99, 1] 1 2 4 2 2 4 4 1 4 4 ...
 #> # A tibble: 4 × 3
 #>   draw  district total_pop
 #> * <fct>    <int>     <dbl>
-#> 1 1            1    735276
-#> 2 1            2    777906
-#> 3 1            3    763285
-#> 4 1            4    769888
+#> 1 1            1    771608
+#> 2 1            2    769552
+#> 3 1            3    775846
+#> 4 1            4    729349
 ```

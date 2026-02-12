@@ -216,9 +216,6 @@ fl_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1)
 sampled_basic <- redist_smc(fl_map, 5000)
 #> SEQUENTIAL MONTE CARLO
 #> Sampling 5000 25-unit maps with 3 districts and population between 52513 and 64182.
-#> Split [0/2] ■                                | ETA?
-#> Split [2/2] ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  | ETA 0s
-#> 
 
 constr <- redist_constr(fl_map)
 constr <- add_constr_incumbency(constr, strength = 100, incumbents = c(3, 6, 25))
@@ -232,20 +229,20 @@ redist_smc(fl_map, 1000, runs = 2)
 #> Plans have 3 districts from a 25-unit map, and were drawn using Sequential
 #> Monte Carlo.
 #> With plans resampled from weights
-#> Plans matrix: int [1:25, 1:2000] 2 3 3 2 3 2 1 1 2 1 ...
+#> Plans matrix: int [1:25, 1:2000] 2 1 1 1 2 1 2 3 2 3 ...
 #> # A tibble: 6,000 × 4
 #>    draw  chain district total_pop
 #>    <fct> <int>    <int>     <dbl>
-#>  1 1         1        1     61214
-#>  2 1         1        2     58792
-#>  3 1         1        3     55037
-#>  4 2         1        1     57208
-#>  5 2         1        2     56621
-#>  6 2         1        3     61214
-#>  7 3         1        1     55024
-#>  8 3         1        2     57892
-#>  9 3         1        3     62127
-#> 10 4         1        1     58845
+#>  1 1         1        1     52653
+#>  2 1         1        2     60679
+#>  3 1         1        3     61711
+#>  4 2         1        1     62770
+#>  5 2         1        2     56227
+#>  6 2         1        3     56046
+#>  7 3         1        1     57349
+#>  8 3         1        2     55024
+#>  9 3         1        3     62670
+#> 10 4         1        1     54084
 #> # ℹ 5,990 more rows
 
 # One run with multiple cores
@@ -259,20 +256,20 @@ redist_smc(fl_map, 1000, ncores = 2)
 #> Plans have 3 districts from a 25-unit map, and were drawn using Sequential
 #> Monte Carlo.
 #> With plans resampled from weights
-#> Plans matrix: int [1:25, 1:1000] 2 1 1 1 1 2 3 3 2 3 ...
+#> Plans matrix: int [1:25, 1:1000] 3 2 2 2 2 3 1 1 3 1 ...
 #> # A tibble: 3,000 × 3
 #>    draw  district total_pop
 #>  * <fct>    <int>     <dbl>
-#>  1 1            1     58845
-#>  2 1            2     61174
-#>  3 1            3     55024
-#>  4 2            1     55024
-#>  5 2            2     57236
-#>  6 2            3     62783
-#>  7 3            1     59294
-#>  8 3            2     60428
-#>  9 3            3     55321
-#> 10 4            1     58845
+#>  1 1            1     55024
+#>  2 1            2     58845
+#>  3 1            3     61174
+#>  4 2            1     57208
+#>  5 2            2     54128
+#>  6 2            3     63707
+#>  7 3            1     57892
+#>  8 3            2     55321
+#>  9 3            3     61830
+#> 10 4            1     56832
 #> # ℹ 2,990 more rows
 # }
 ```

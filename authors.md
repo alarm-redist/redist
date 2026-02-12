@@ -20,7 +20,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/alarm-redist/redist/blob/v4.3.1/inst/CITATION)
+[`inst/CITATION`](https://github.com/alarm-redist/redist/blob/main/inst/CITATION)
 
 Kenny C, McCartan C, Fifield B, Imai K (2022). *redist: Simulation
 Methods for Legislative Redistricting*. R package,

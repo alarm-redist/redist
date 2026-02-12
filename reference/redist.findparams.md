@@ -164,178 +164,58 @@ redist.findparams(map_fl,
 #> 
 #> ── Automated Redistricting Simulation Using Markov Chain Monte Carlo ──
 #> ℹ Preprocessing data.
+#> Starting chain 1
 #> ℹ Starting swMH().
-#> ■                                  0% | ETA: 8s
+#> ■■■■■■■■■■■■■■■■■■■■■             68% | ETA:  1s | MH Acceptance: 0.99
 #> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | ETA:  0s | MH Acceptance: 0.99
 #> 
+#> No maps available under parameter set 1.
 #> 
 #> ── redist_flip() ───────────────────────────────────────────────────────────────
 #> 
 #> ── Automated Redistricting Simulation Using Markov Chain Monte Carlo ──
 #> ℹ Preprocessing data.
+#> Starting chain 1
 #> ℹ Starting swMH().
-#> ■■                                 4% | ETA: 2s
-#> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | ETA:  0s | MH Acceptance: 0.96
-#> 
+#> No maps available under parameter set 2.
 #> 
 #> ── redist_flip() ───────────────────────────────────────────────────────────────
 #> 
 #> ── Automated Redistricting Simulation Using Markov Chain Monte Carlo ──
 #> ℹ Preprocessing data.
+#> Starting chain 1
 #> ℹ Starting swMH().
-#> ■■■■■■■■■■■■■■■                   48% | ETA:  1s | MH Acceptance: 0.93
-#> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | ETA:  0s | MH Acceptance: 0.92
+#> ■■■■                              10% | ETA: 2s
+#> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | ETA:  0s | MH Acceptance: 0.93
 #> 
+#> No maps available under parameter set 3.
 #>  ## -------------------------------------
 #>  ## -------------------------------------
 #>  ## Parameter Values for Simulation 1 
-#> ## Edgecut probability = 0.01
-#> ## Lambda = 0
-#> ## No hard population constraint applied
-#> ## -------------------------------------
-#> ## Diagnostics:
-#> ## Metropolis-Hastings Acceptance Ratio = 0.993
-#> ## Mean population parity distance = 0.851
-#> ## Median population parity distance = 0.828
-#> ## Population parity range = 0.029 1.93
-#> ## MCMC Iteration quantiles of population parity median = 0.876 0.807 0.876 0.768
-#> 
-#> ## Mean share of geographies equal to initial assignment = 0.352
-#> ## Median share of geographies equal to initial assignment = 0.36
-#> ## Range of share of geographies equal to initial assignment = 0 0.96
-#> ## MCMC Iteration quantiles of geography distance to initial assignment = 0.4 0.4 0.32 0.24
-#> ## -------------------------------------
-#> ## -------------------------------------
+#>  ## No valid maps generated under these parameters
+#>  ## -------------------------------------
+#>  ## -------------------------------------
 #> 
 #>  ## -------------------------------------
 #>  ## -------------------------------------
-#>  ## Parameter Values for Simulation 1 
-#> ## Edgecut probability = 0.05
-#> ## Lambda = 0
-#> ## No hard population constraint applied
-#> ## -------------------------------------
-#> ## Diagnostics:
-#> ## Metropolis-Hastings Acceptance Ratio = 0.96
-#> ## Mean population parity distance = 0.837
-#> ## Median population parity distance = 0.835
-#> ## Population parity range = 0.008 1.868
-#> ## MCMC Iteration quantiles of population parity median = 0.717 0.963 0.808 0.586
-#> 
-#> ## Mean share of geographies equal to initial assignment = 0.325
-#> ## Median share of geographies equal to initial assignment = 0.32
-#> ## Range of share of geographies equal to initial assignment = 0 0.96
-#> ## MCMC Iteration quantiles of geography distance to initial assignment = 0.36 0.36 0.28 0.28
-#> ## -------------------------------------
-#> ## -------------------------------------
+#>  ## Parameter Values for Simulation 2 
+#>  ## No valid maps generated under these parameters
+#>  ## -------------------------------------
+#>  ## -------------------------------------
 #> 
 #>  ## -------------------------------------
 #>  ## -------------------------------------
-#>  ## Parameter Values for Simulation 1 
-#> ## Edgecut probability = 0.1
-#> ## Lambda = 0
-#> ## No hard population constraint applied
-#> ## -------------------------------------
-#> ## Diagnostics:
-#> ## Metropolis-Hastings Acceptance Ratio = 0.923
-#> ## Mean population parity distance = 0.899
-#> ## Median population parity distance = 0.893
-#> ## Population parity range = 0.009 1.946
-#> ## MCMC Iteration quantiles of population parity median = 0.875 0.891 0.912 0.889
-#> 
-#> ## Mean share of geographies equal to initial assignment = 0.313
-#> ## Median share of geographies equal to initial assignment = 0.28
-#> ## Range of share of geographies equal to initial assignment = 0 0.96
-#> ## MCMC Iteration quantiles of geography distance to initial assignment = 0.28 0.24 0.32 0.36
-#> ## -------------------------------------
-#> ## -------------------------------------
+#>  ## Parameter Values for Simulation 3 
+#>  ## No valid maps generated under these parameters
+#>  ## -------------------------------------
+#>  ## -------------------------------------
 #> 
 #> $diagnostics
-#> [1] " ## -------------------------------------\n ## -------------------------------------\n ## Parameter Values for Simulation 1 \n## Edgecut probability = 0.01\n## Lambda = 0\n## No hard population constraint applied\n## -------------------------------------\n## Diagnostics:\n## Metropolis-Hastings Acceptance Ratio = 0.993\n## Mean population parity distance = 0.851\n## Median population parity distance = 0.828\n## Population parity range = 0.029 1.93\n## MCMC Iteration quantiles of population parity median = 0.876 0.807 0.876 0.768\n\n## Mean share of geographies equal to initial assignment = 0.352\n## Median share of geographies equal to initial assignment = 0.36\n## Range of share of geographies equal to initial assignment = 0 0.96\n## MCMC Iteration quantiles of geography distance to initial assignment = 0.4 0.4 0.32 0.24\n## -------------------------------------\n## -------------------------------------\n\n ## -------------------------------------\n ## -------------------------------------\n ## Parameter Values for Simulation 1 \n## Edgecut probability = 0.05\n## Lambda = 0\n## No hard population constraint applied\n## -------------------------------------\n## Diagnostics:\n## Metropolis-Hastings Acceptance Ratio = 0.96\n## Mean population parity distance = 0.837\n## Median population parity distance = 0.835\n## Population parity range = 0.008 1.868\n## MCMC Iteration quantiles of population parity median = 0.717 0.963 0.808 0.586\n\n## Mean share of geographies equal to initial assignment = 0.325\n## Median share of geographies equal to initial assignment = 0.32\n## Range of share of geographies equal to initial assignment = 0 0.96\n## MCMC Iteration quantiles of geography distance to initial assignment = 0.36 0.36 0.28 0.28\n## -------------------------------------\n## -------------------------------------\n\n ## -------------------------------------\n ## -------------------------------------\n ## Parameter Values for Simulation 1 \n## Edgecut probability = 0.1\n## Lambda = 0\n## No hard population constraint applied\n## -------------------------------------\n## Diagnostics:\n## Metropolis-Hastings Acceptance Ratio = 0.923\n## Mean population parity distance = 0.899\n## Median population parity distance = 0.893\n## Population parity range = 0.009 1.946\n## MCMC Iteration quantiles of population parity median = 0.875 0.891 0.912 0.889\n\n## Mean share of geographies equal to initial assignment = 0.313\n## Median share of geographies equal to initial assignment = 0.28\n## Range of share of geographies equal to initial assignment = 0 0.96\n## MCMC Iteration quantiles of geography distance to initial assignment = 0.28 0.24 0.32 0.36\n## -------------------------------------\n## -------------------------------------\n\n"
+#> [1] " ## -------------------------------------\n ## -------------------------------------\n ## Parameter Values for Simulation 1 \n ## No valid maps generated under these parameters\n ## -------------------------------------\n ## -------------------------------------\n\n ## -------------------------------------\n ## -------------------------------------\n ## Parameter Values for Simulation 2 \n ## No valid maps generated under these parameters\n ## -------------------------------------\n ## -------------------------------------\n\n ## -------------------------------------\n ## -------------------------------------\n ## Parameter Values for Simulation 3 \n ## No valid maps generated under these parameters\n ## -------------------------------------\n ## -------------------------------------\n\n"
 #> 
 #> $startvals
 #> $startvals[[1]]
-#>       [,1]
-#>  [1,]    3
-#>  [2,]    1
-#>  [3,]    2
-#>  [4,]    1
-#>  [5,]    1
-#>  [6,]    2
-#>  [7,]    1
-#>  [8,]    1
-#>  [9,]    2
-#> [10,]    3
-#> [11,]    2
-#> [12,]    2
-#> [13,]    2
-#> [14,]    2
-#> [15,]    2
-#> [16,]    2
-#> [17,]    2
-#> [18,]    2
-#> [19,]    1
-#> [20,]    1
-#> [21,]    2
-#> [22,]    1
-#> [23,]    2
-#> [24,]    1
-#> [25,]    1
-#> 
-#> $startvals[[2]]
-#>       [,1]
-#>  [1,]    2
-#>  [2,]    2
-#>  [3,]    2
-#>  [4,]    2
-#>  [5,]    2
-#>  [6,]    3
-#>  [7,]    2
-#>  [8,]    2
-#>  [9,]    1
-#> [10,]    2
-#> [11,]    2
-#> [12,]    2
-#> [13,]    2
-#> [14,]    2
-#> [15,]    2
-#> [16,]    2
-#> [17,]    2
-#> [18,]    2
-#> [19,]    2
-#> [20,]    2
-#> [21,]    2
-#> [22,]    2
-#> [23,]    3
-#> [24,]    2
-#> [25,]    2
-#> 
-#> $startvals[[3]]
-#>       [,1]
-#>  [1,]    1
-#>  [2,]    3
-#>  [3,]    3
-#>  [4,]    3
-#>  [5,]    1
-#>  [6,]    1
-#>  [7,]    1
-#>  [8,]    1
-#>  [9,]    1
-#> [10,]    2
-#> [11,]    2
-#> [12,]    2
-#> [13,]    2
-#> [14,]    1
-#> [15,]    2
-#> [16,]    3
-#> [17,]    3
-#> [18,]    1
-#> [19,]    3
-#> [20,]    3
-#> [21,]    1
-#> [22,]    3
-#> [23,]    1
-#> [24,]    3
-#> [25,]    3
+#> NULL
 #> 
 #> 
 # }

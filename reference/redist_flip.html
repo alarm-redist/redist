@@ -13,11 +13,11 @@ tempering functionality to improve the mixing of the Markov Chain."><meta proper
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">redist</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">4.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">4.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,7 +51,7 @@ tempering functionality to improve the mixing of the Markov Chain."><meta proper
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>'Flip' Markov Chain Monte Carlo Redistricting Simulation (Fifield et al. 2020)</h1>
-      <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/v4.3.1/R/redist_flip.R" class="external-link"><code>R/redist_flip.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/main/R/redist_flip.R" class="external-link"><code>R/redist_flip.R</code></a></small>
       <div class="d-none name"><code>redist_flip.Rd</code></div>
     </div>
 
@@ -69,8 +69,9 @@ tempering functionality to improve the mixing of the Markov Chain.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">redist_flip</span><span class="op">(</span></span>
 <span>  <span class="va">map</span>,</span>
 <span>  <span class="va">nsims</span>,</span>
+<span>  chains <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  warmup <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  <span class="va">init_plan</span>,</span>
+<span>  init_plan <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  constraints <span class="op">=</span> <span class="fu"><a href="constraints.html">add_constr_edges_rem</a></span><span class="op">(</span><span class="fu"><a href="redist_constr.html">redist_constr</a></span><span class="op">(</span><span class="va">map</span><span class="op">)</span>, <span class="fl">0.4</span><span class="op">)</span>,</span>
 <span>  thin <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  eprob <span class="op">=</span> <span class="fl">0.05</span>,</span>
@@ -83,9 +84,11 @@ tempering functionality to improve the mixing of the Markov Chain.</p>
 <span>  adapt_eprob <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  exact_mh <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  adjswaps <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  ncores <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  cl_type <span class="op">=</span> <span class="st">"PSOCK"</span>,</span>
+<span>  return_all <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  init_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  <span class="va">nthin</span></span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -98,7 +101,13 @@ tempering functionality to improve the mixing of the Markov Chain.</p>
 
 
 <dt id="arg-nsims">nsims<a class="anchor" aria-label="anchor" href="#arg-nsims"></a></dt>
-<dd><p>The number of samples to draw, not including warmup.</p></dd>
+<dd><p>The number of samples to draw per chain, not including warmup.</p></dd>
+
+
+<dt id="arg-chains">chains<a class="anchor" aria-label="anchor" href="#arg-chains"></a></dt>
+<dd><p>The number of parallel chains to run. Each chain will have
+<code>nsims</code> draws. If <code>init_plan</code> is sampled, each chain will be initialized
+with its own sampled plan. Defaults to 1.</p></dd>
 
 
 <dt id="arg-warmup">warmup<a class="anchor" aria-label="anchor" href="#arg-warmup"></a></dt>
@@ -106,11 +115,12 @@ tempering functionality to improve the mixing of the Markov Chain.</p>
 
 
 <dt id="arg-init-plan">init_plan<a class="anchor" aria-label="anchor" href="#arg-init-plan"></a></dt>
-<dd><p>A vector containing the congressional district labels
-of each geographic unit. The default is <code>NULL</code>. If not provided,
-a random initial plan will be generated using <code>redist_smc</code>. You can also
-request to initialize using <code>redist.rsg</code> by supplying 'rsg', though this is
-not recommended behavior.</p></dd>
+<dd><p>The initial state of the map, provided as a single vector
+to be shared across all chains, or a matrix with <code>chains</code> columns.
+If not provided, will default to the reference map of the <code>map</code> object, or if
+none exists, will sample a random initial state using <code>redist_smc</code>. You can
+also request a random initial state for each chain by setting
+<code>init_plan="sample"</code>.</p></dd>
 
 
 <dt id="arg-constraints">constraints<a class="anchor" aria-label="anchor" href="#arg-constraints"></a></dt>
@@ -175,6 +185,21 @@ values adjacent to current constraint are proposed. The default is
 <code>TRUE</code>.</p></dd>
 
 
+<dt id="arg-ncores">ncores<a class="anchor" aria-label="anchor" href="#arg-ncores"></a></dt>
+<dd><p>The number of parallel processes to run. Defaults to the
+number of available cores, capped at the number of chains.</p></dd>
+
+
+<dt id="arg-cl-type">cl_type<a class="anchor" aria-label="anchor" href="#arg-cl-type"></a></dt>
+<dd><p>The cluster type (see <code><a href="https://rdrr.io/r/parallel/makeCluster.html" class="external-link">parallel::makeCluster()</a></code>). Safest is
+<code>"PSOCK"</code>, but <code>"FORK"</code> may be faster on non-Windows systems.</p></dd>
+
+
+<dt id="arg-return-all">return_all<a class="anchor" aria-label="anchor" href="#arg-return-all"></a></dt>
+<dd><p>If <code>TRUE</code> return all sampled plans; otherwise, just return
+the final plan from each chain.</p></dd>
+
+
 <dt id="arg-init-name">init_name<a class="anchor" aria-label="anchor" href="#arg-init-name"></a></dt>
 <dd><p>a name for the initial plan, or <code>FALSE</code> to not include
 the initial plan in the output.  Defaults to the column name of the
@@ -184,14 +209,12 @@ existing plan, or "<code>&lt;init&gt;</code>" if the initial plan is sampled.</p
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Whether to print initialization statement. Default is <code>TRUE</code>.</p></dd>
 
-
-<dt id="arg-nthin">nthin<a class="anchor" aria-label="anchor" href="#arg-nthin"></a></dt>
-<dd><p>Deprecated. Use <code>thin</code>.</p></dd>
-
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <code><a href="redist_plans.html">redist_plans</a></code> object containing the simulated plans.</p>
+    <p>A <code><a href="redist_plans.html">redist_plans</a></code> object containing the simulated plans.
+If <code>chains &gt; 1</code>, the output will include a <code>chain</code> column indicating which
+chain each plan came from.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -294,10 +317,16 @@ Computational and Graphical Statistics</em>, 29(4), 715-728.</p>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Starting chain 1</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■                               </span>   1% | ETA: 0s</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.68</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Multiple chains for convergence diagnostics</span></span></span>
+<span class="r-in"><span><span class="va">sims_chains</span> <span class="op">&lt;-</span> <span class="fu">redist_flip</span><span class="op">(</span><span class="va">iowa_map</span>, nsims <span class="op">=</span> <span class="fl">20</span>, chains <span class="op">=</span> <span class="fl">2</span>, ncores <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="color: #BB0000; font-weight: bold;">redist_flip()</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────────────</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

@@ -79,9 +79,10 @@ alg_253 <- redist_flip(fl_map, nsims = 10000)
 #> 
 #> ── Automated Redistricting Simulation Using Markov Chain Monte Carlo ──
 #> ℹ Preprocessing data.
+#> Starting chain 1
 #> ℹ Starting swMH().
-#> ■                                  0% | ETA:11s
-#> ■■■■■■■■■■■■■■■■■■■■■■■■          77% | ETA:  1s | MH Acceptance: 0.78
+#> ■                                  0% | ETA:10s
+#> ■■■■■■■■■                         26% | ETA:  2s | MH Acceptance: 0.78
 #> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | ETA:  0s | MH Acceptance: 0.78
 #> 
 
@@ -106,8 +107,9 @@ alg_253_2 <- redist_flip(fl_map, nsims = 10000)
 #> 
 #> ── Automated Redistricting Simulation Using Markov Chain Monte Carlo ──
 #> ℹ Preprocessing data.
+#> Starting chain 1
 #> ℹ Starting swMH().
-#> ■■■■■■■                           20% | ETA:  2s | MH Acceptance: 0.78
+#> ■                                  0% | ETA:11s
 #> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | ETA:  0s | MH Acceptance: 0.78
 #> 
 

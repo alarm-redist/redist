@@ -13,11 +13,11 @@ Rights, Markov Chains, and Optimization by Short Bursts."'><meta property="og:im
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">redist</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">4.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">4.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,7 +51,7 @@ Rights, Markov Chains, and Optimization by Short Bursts."'><meta property="og:im
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Redistricting Optimization through Short Bursts</h1>
-      <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/v4.3.1/R/redist_shortburst.R" class="external-link"><code>R/redist_shortburst.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/main/R/redist_shortburst.R" class="external-link"><code>R/redist_shortburst.R</code></a></small>
       <div class="d-none name"><code>redist_shortburst.Rd</code></div>
     </div>
 
@@ -225,17 +225,17 @@ preprint arXiv:2011.02288.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Burst  Improve?    score </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     5            0.788288</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    10            0.788288</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    15     🥳     0.810811</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    20            0.810811</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    25            0.810811</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    30            0.810811</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    35            0.810811</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    36     🙂     0.819820</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    40            0.819820</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    44     😀     0.824324</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    45            0.824324</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    46     🎇     0.828829</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    50            0.828829</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    12     🎇     0.815315</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    14     💥     0.819820</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    15            0.819820</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    20            0.819820</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    22     🎃     0.833333</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    25            0.833333</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    30            0.833333</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    35            0.833333</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    40            0.833333</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    45            0.833333</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    50            0.833333</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> A <span style="color: #0000BB;">&lt;redist_plans&gt;</span> containing 50 sampled plans and 1 reference plan</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Plans have 4 districts from a 99-unit map, and were drawn using short bursts.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Plans matrix: int [1:99, 1:51] 1 1 2 3 4 2 2 4 2 2 ...</span>
@@ -258,20 +258,18 @@ preprint arXiv:2011.02288.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Sampling up to 50 bursts of 10 iterations each.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Burst  Improve?    score </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     5            0.211712</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     7     🎆     0.216216</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    10            0.216216</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    15            0.216216</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    19     🌈     0.265766</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    20            0.265766</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    23     🙂     0.274775</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    25            0.274775</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    30            0.274775</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    35            0.274775</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    37     😎     0.279279</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    38     🎉     0.288288</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    40            0.288288</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    45            0.288288</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    50            0.288288</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     6     😎     0.261261</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     7     💥     0.288288</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    10            0.288288</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    15            0.288288</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    20            0.288288</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    24     🎇     0.301802</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    25            0.301802</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    30            0.301802</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    35            0.301802</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    40            0.301802</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    45            0.301802</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    50            0.301802</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> A <span style="color: #0000BB;">&lt;redist_plans&gt;</span> containing 50 sampled plans and 1 reference plan</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Plans have 4 districts from a 99-unit map, and were drawn using short bursts.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Plans matrix: int [1:99, 1:51] 1 1 2 3 4 2 2 4 2 2 ...</span>

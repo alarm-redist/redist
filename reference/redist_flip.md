@@ -14,8 +14,9 @@ mixing of the Markov Chain.
 redist_flip(
   map,
   nsims,
+  chains = 1,
   warmup = 0,
-  init_plan,
+  init_plan = NULL,
   constraints = add_constr_edges_rem(redist_constr(map), 0.4),
   thin = 1,
   eprob = 0.05,
@@ -28,9 +29,11 @@ redist_flip(
   adapt_eprob = FALSE,
   exact_mh = FALSE,
   adjswaps = TRUE,
+  ncores = NULL,
+  cl_type = "PSOCK",
+  return_all = TRUE,
   init_name = NULL,
-  verbose = TRUE,
-  nthin
+  verbose = TRUE
 )
 ```
 
@@ -44,7 +47,13 @@ redist_flip(
 
 - nsims:
 
-  The number of samples to draw, not including warmup.
+  The number of samples to draw per chain, not including warmup.
+
+- chains:
+
+  The number of parallel chains to run. Each chain will have `nsims`
+  draws. If `init_plan` is sampled, each chain will be initialized with
+  its own sampled plan. Defaults to 1.
 
 - warmup:
 
@@ -52,11 +61,12 @@ redist_flip(
 
 - init_plan:
 
-  A vector containing the congressional district labels of each
-  geographic unit. The default is `NULL`. If not provided, a random
-  initial plan will be generated using `redist_smc`. You can also
-  request to initialize using `redist.rsg` by supplying 'rsg', though
-  this is not recommended behavior.
+  The initial state of the map, provided as a single vector to be shared
+  across all chains, or a matrix with `chains` columns. If not provided,
+  will default to the reference map of the `map` object, or if none
+  exists, will sample a random initial state using `redist_smc`. You can
+  also request a random initial state for each chain by setting
+  `init_plan="sample"`.
 
 - constraints:
 
@@ -118,6 +128,23 @@ redist_flip(
   Flag to restrict swaps of beta so that only values adjacent to current
   constraint are proposed. The default is `TRUE`.
 
+- ncores:
+
+  The number of parallel processes to run. Defaults to the number of
+  available cores, capped at the number of chains.
+
+- cl_type:
+
+  The cluster type (see
+  [`parallel::makeCluster()`](https://rdrr.io/r/parallel/makeCluster.html)).
+  Safest is `"PSOCK"`, but `"FORK"` may be faster on non-Windows
+  systems.
+
+- return_all:
+
+  If `TRUE` return all sampled plans; otherwise, just return the final
+  plan from each chain.
+
 - init_name:
 
   a name for the initial plan, or `FALSE` to not include the initial
@@ -128,15 +155,12 @@ redist_flip(
 
   Whether to print initialization statement. Default is `TRUE`.
 
-- nthin:
-
-  Deprecated. Use `thin`.
-
 ## Value
 
 A
 [`redist_plans`](http://alarm-redist.org/redist/reference/redist_plans.md)
-object containing the simulated plans.
+object containing the simulated plans. If `chains > 1`, the output will
+include a `chain` column indicating which chain each plan came from.
 
 ## Details
 
@@ -282,8 +306,14 @@ sims <- redist_flip(map = iowa_map, nsims = 100)
 #> 
 #> ── Automated Redistricting Simulation Using Markov Chain Monte Carlo ──
 #> ℹ Preprocessing data.
+#> Starting chain 1
 #> ℹ Starting swMH().
-#> ■                                  1% | ETA: 0s
-#> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | ETA:  0s | MH Acceptance: 0.68
+
+# Multiple chains for convergence diagnostics
+sims_chains <- redist_flip(iowa_map, nsims = 20, chains = 2, ncores = 2)
 #> 
+#> ── redist_flip() ───────────────────────────────────────────────────────────────
+#> 
+#> ── Automated Redistricting Simulation Using Markov Chain Monte Carlo ──
+#> ℹ Preprocessing data.
 ```

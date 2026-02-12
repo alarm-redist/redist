@@ -1,5 +1,48 @@
 # Changelog
 
+## redist 4.3.2
+
+- Allows for parallel flip with `chains` argument in
+  [`redist_flip()`](http://alarm-redist.org/redist/reference/redist_flip.md).
+- Fixes URL issues causing a note on CRAN. We have pointed the links to
+  our website directly.
+
+## redist 4.3.0
+
+- Improves SMC performance by pre-allocating some memory while drawing
+  spanning trees.
+- Replaces SMC label-counting adjustments (exact and
+  importance-sampling-based) with a new backward kernel that eliminates
+  approximation error and requires far less computation
+- 4.2.0 introduced some regressions in
+  [`redist_shortburst()`](http://alarm-redist.org/redist/reference/redist_shortburst.md)
+  along with the new features. The following issues are fixed:
+  - the returned `redist_plans` object would store the wrong score for
+    the ‘’ input. This issue only impacted the returned object and the
+    correct score was used during the shortburst process.
+    ([\#180](https://github.com/alarm-redist/redist/issues/180))
+  - the function would return immediately if `stop_at` was specified and
+    `minimize = FALSE`.
+    ([\#181](https://github.com/alarm-redist/redist/issues/181))
+- Add [`summary()`](https://rdrr.io/r/base/summary.html) support for
+  plans sampled with the `flip` algorithm. This does not replace the
+  full flip diagnostic suite, but provides an easy way to compute
+  r-hats.
+
+## redist 4.2.0
+
+- Deprecate functionality that is provided by `redistmetrics` package.
+- Improve contiguity checking speed drastically.
+- Support for multiple independent scoring functions in
+  [`redist_shortburst()`](http://alarm-redist.org/redist/reference/redist_shortburst.md).
+  With multiple scorers, the algorithm will stochastically explore to
+  try to find the largest Pareto frontier for the scores. The frontier
+  can be accessed with `attr(<plans obj>, "pareto_score")`.
+- Removes the MPI vignette which relied on older implementations of
+  `redist.mcmc()`, which was replaced by `redist.flip()` a few years
+  ago, and finally
+  [`redist_flip()`](http://alarm-redist.org/redist/reference/redist_flip.md).
+
 ## redist 4.1.1
 
 - Resolves a sanitizer error for CRAN

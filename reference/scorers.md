@@ -114,8 +114,8 @@ scorer_frac_kept(iowa_map)
 #> {
 #>     (edges - n_removed(adj, plans, ndists))/edges
 #> }
-#> <bytecode: 0x557c82c2e768>
-#> <environment: 0x557c741f3580>
+#> <bytecode: 0x562d88522480>
+#> <environment: 0x562d8f979bd0>
 #> attr(,"class")
 #> [1] "redist_scorer" "function"     
 scorer_status_quo(iowa_map)
@@ -123,8 +123,8 @@ scorer_status_quo(iowa_map)
 #> {
 #>     1 - 0.5 * var_info_vec(plans, existing_plan, pop)/log(ndists)
 #> }
-#> <bytecode: 0x557c74178e58>
-#> <environment: 0x557c74179670>
+#> <bytecode: 0x562d91c8b3b0>
+#> <environment: 0x562d91c8bbc8>
 #> attr(,"class")
 #> [1] "redist_scorer" "function"     
 scorer_group_pct(iowa_map, dem_08, tot_08, k = 2)
@@ -132,8 +132,8 @@ scorer_group_pct(iowa_map, dem_08, tot_08, k = 2)
 #> {
 #>     group_pct_top_k(plans, group_pop, total_pop, k, ndists)
 #> }
-#> <bytecode: 0x557c74119118>
-#> <environment: 0x557c741199d8>
+#> <bytecode: 0x562d8f652000>
+#> <environment: 0x562d8f6528c0>
 #> attr(,"class")
 #> [1] "redist_scorer" "function"     
 1.5*scorer_frac_kept(iowa_map) + 0.4*scorer_status_quo(iowa_map)
@@ -141,8 +141,8 @@ scorer_group_pct(iowa_map, dem_08, tot_08, k = 2)
 #> {
 #>     fn1(plans) + fn2(plans)
 #> }
-#> <bytecode: 0x557c74065b68>
-#> <environment: 0x557c7405a898>
+#> <bytecode: 0x562d97976ce0>
+#> <environment: 0x562d9327d318>
 #> attr(,"class")
 #> [1] "redist_scorer" "function"     
 1.5*scorer_frac_kept(iowa_map) + scorer_frac_kept(iowa_map)*scorer_status_quo(iowa_map)
@@ -150,8 +150,8 @@ scorer_group_pct(iowa_map, dem_08, tot_08, k = 2)
 #> {
 #>     fn1(plans) + fn2(plans)
 #> }
-#> <bytecode: 0x557c74065b68>
-#> <environment: 0x557c71f3b700>
+#> <bytecode: 0x562d97976ce0>
+#> <environment: 0x562d96427568>
 #> attr(,"class")
 #> [1] "redist_scorer" "function"     
 cbind(
@@ -164,8 +164,8 @@ cbind(
 #>         fn(plans)
 #>     }), list(deparse.level = deparse.level)))
 #> }
-#> <bytecode: 0x557c71ed9e60>
-#> <environment: 0x557c71eda9c0>
+#> <bytecode: 0x562d95a44178>
+#> <environment: 0x562d96d96088>
 #> attr(,"class")
 #> [1] "redist_scorer" "function"     
 # }

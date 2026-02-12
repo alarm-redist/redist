@@ -179,17 +179,17 @@ redist_shortburst(iowa_map, scorer_frac_kept(iowa_map), max_bursts = 50)
 #> Burst  Improve?    score 
 #>     5            0.788288
 #>    10            0.788288
-#>    15     🥳     0.810811
-#>    20            0.810811
-#>    25            0.810811
-#>    30            0.810811
-#>    35            0.810811
-#>    36     🙂     0.819820
-#>    40            0.819820
-#>    44     😀     0.824324
-#>    45            0.824324
-#>    46     🎇     0.828829
-#>    50            0.828829
+#>    12     🎇     0.815315
+#>    14     💥     0.819820
+#>    15            0.819820
+#>    20            0.819820
+#>    22     🎃     0.833333
+#>    25            0.833333
+#>    30            0.833333
+#>    35            0.833333
+#>    40            0.833333
+#>    45            0.833333
+#>    50            0.833333
 #> A <redist_plans> containing 50 sampled plans and 1 reference plan
 #> Plans have 4 districts from a 99-unit map, and were drawn using short bursts.
 #> Plans matrix: int [1:99, 1:51] 1 1 2 3 4 2 2 4 2 2 ...
@@ -212,20 +212,18 @@ redist_shortburst(iowa_map, ~ 1 - scorer_frac_kept(iowa_map)(.), max_bursts = 50
 #> Sampling up to 50 bursts of 10 iterations each.
 #> Burst  Improve?    score 
 #>     5            0.211712
-#>     7     🎆     0.216216
-#>    10            0.216216
-#>    15            0.216216
-#>    19     🌈     0.265766
-#>    20            0.265766
-#>    23     🙂     0.274775
-#>    25            0.274775
-#>    30            0.274775
-#>    35            0.274775
-#>    37     😎     0.279279
-#>    38     🎉     0.288288
-#>    40            0.288288
-#>    45            0.288288
-#>    50            0.288288
+#>     6     😎     0.261261
+#>     7     💥     0.288288
+#>    10            0.288288
+#>    15            0.288288
+#>    20            0.288288
+#>    24     🎇     0.301802
+#>    25            0.301802
+#>    30            0.301802
+#>    35            0.301802
+#>    40            0.301802
+#>    45            0.301802
+#>    50            0.301802
 #> A <redist_plans> containing 50 sampled plans and 1 reference plan
 #> Plans have 4 districts from a 99-unit map, and were drawn using short bursts.
 #> Plans matrix: int [1:99, 1:51] 1 1 2 3 4 2 2 4 2 2 ...

@@ -103,14 +103,14 @@ summary(plans)
 #> `adapt_k_thresh`=0.99 • `seq_alpha`=0.5
 #> `pop_temper`=0
 #> 
-#> Plan diversity 80% range: 0.48 to 0.82
+#> Plan diversity 80% range: 0.46 to 0.80
 #> 
 #> Sampling diagnostics for SMC run 1 of 1 (100 samples)
 #>          Eff. samples (%) Acc. rate Log wgt. sd  Max. unique Est. k 
-#> Split 1        98 (97.9%)     19.5%        0.28    62 ( 98%)     16 
-#> Split 2        97 (96.7%)     28.2%        0.35    60 ( 95%)     10 
-#> Split 3        96 (95.7%)      9.5%        0.41    56 ( 89%)      8 
-#> Resample       84 (83.6%)       NA%        0.41    82 (130%)     NA 
+#> Split 1        98 (98.1%)     14.2%        0.27    64 (101%)     17 
+#> Split 2        97 (97.0%)     31.8%        0.35    56 ( 89%)     10 
+#> Split 3        94 (94.2%)     14.5%        0.47    55 ( 87%)      6 
+#> Resample       77 (77.4%)       NA%        0.47    78 (123%)     NA 
 #> 
 #> •  Watch out for low effective samples, very low acceptance rates (less than
 #> 1%), large std. devs. of the log weights (more than 3 or so), and low numbers

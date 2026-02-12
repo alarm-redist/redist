@@ -44,6 +44,7 @@ sims <- redist_flip(map = fl_map, nsims = 6, constraints = constr)
 #> 
 #> ── Automated Redistricting Simulation Using Markov Chain Monte Carlo ──
 #> ℹ Preprocessing data.
+#> Starting chain 1
 #> ℹ Starting swMH().
 #> ■■■■■■                            17% | ETA:  0s | MH Acceptance: 1.00
 #> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | ETA:  0s | MH Acceptance: 1.00
@@ -199,6 +200,7 @@ sims <- redist_flip(map_ia, nsims = 100)
 #> 
 #> ── Automated Redistricting Simulation Using Markov Chain Monte Carlo ──
 #> ℹ Preprocessing data.
+#> Starting chain 1
 #> ℹ Starting swMH().
 #> ■                                  1% | ETA: 0s
 #> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | ETA:  0s | MH Acceptance: 0.65
@@ -256,6 +258,7 @@ sims_comp <- redist_flip(map_ia, nsims = 100, constraints = constr)
 #> 
 #> ── Automated Redistricting Simulation Using Markov Chain Monte Carlo ──
 #> ℹ Preprocessing data.
+#> Starting chain 1
 #> ℹ Starting swMH().
 ```
 
@@ -307,6 +310,53 @@ flip_chains <- lapply(1:nchains, function(x){
   redist_flip(map_ia, nsims = nsims,
               constraints = constr, verbose = FALSE)
 })
+#> 
+#> ── redist_flip() ───────────────────────────────────────────────────────────────
+#> 
+#> ── Automated Redistricting Simulation Using Markov Chain Monte Carlo ──
+#> Sampling initial plans with SMC
+#> ℹ Preprocessing data.
+#> 
+#> ℹ Starting swMH().
+#> 
+#> ■                                  1% | ETA: 0s
+#> 
+#> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | ETA:  0s | MH Acceptance: 0.75
+#> 
+#> 
+#> 
+#> 
+#> ── redist_flip() ───────────────────────────────────────────────────────────────
+#> 
+#> ── Automated Redistricting Simulation Using Markov Chain Monte Carlo ──
+#> 
+#> 
+#> Sampling initial plans with SMC
+#> ℹ Preprocessing data.
+#> 
+#> ℹ Starting swMH().
+#> 
+#> 
+#> ── redist_flip() ───────────────────────────────────────────────────────────────
+#> 
+#> ── Automated Redistricting Simulation Using Markov Chain Monte Carlo ──
+#> 
+#> 
+#> Sampling initial plans with SMC
+#> ℹ Preprocessing data.
+#> 
+#> ℹ Starting swMH().
+#> 
+#> 
+#> ── redist_flip() ───────────────────────────────────────────────────────────────
+#> 
+#> ── Automated Redistricting Simulation Using Markov Chain Monte Carlo ──
+#> 
+#> 
+#> Sampling initial plans with SMC
+#> ℹ Preprocessing data.
+#> 
+#> ℹ Starting swMH().
 ```
 
 In Unix-based systems, this can be run considerably faster by running
@@ -359,10 +409,8 @@ tidy_sims <- redist_flip(iowa_map, nsims = 100)
 #> 
 #> ── Automated Redistricting Simulation Using Markov Chain Monte Carlo ──
 #> ℹ Preprocessing data.
+#> Starting chain 1
 #> ℹ Starting swMH().
-#> ■                                  1% | ETA: 0s
-#> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | ETA:  0s | MH Acceptance: 0.80
-#> 
 ```
 
 `redist_flip`’s constraint includes a relatively weak compactness
@@ -385,6 +433,7 @@ tidy_sims_no_comp <- redist_flip(iowa_map, nsims = 100, constraints = cons)
 #> 
 #> ── Automated Redistricting Simulation Using Markov Chain Monte Carlo ──
 #> ℹ Preprocessing data.
+#> Starting chain 1
 #> ℹ Starting swMH().
 ```
 
@@ -529,6 +578,7 @@ sims <- redist_flip(map = iowa_map,  nsims = 100)
 #> 
 #> ── Automated Redistricting Simulation Using Markov Chain Monte Carlo ──
 #> ℹ Preprocessing data.
+#> Starting chain 1
 #> ℹ Starting swMH().
 #> ■                                  1% | ETA: 0s
 #> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | ETA:  0s | MH Acceptance: 0.55
@@ -568,6 +618,12 @@ small movements between sequential iterations of the algorithm.
 ``` r
 sims_new <- redist_flip(map = iowa_map, nsims = 100, constraints = cons, 
                         eprob = 0.10, lambda = 2, verbose = FALSE)
+#> 
+#> ── redist_flip() ───────────────────────────────────────────────────────────────
+#> 
+#> ── Automated Redistricting Simulation Using Markov Chain Monte Carlo ──
+#> ℹ Preprocessing data.
+#> ℹ Starting swMH().
 mean(sims_new$mhdecisions, na.rm = TRUE)
 #> [1] 0.46
 ```
@@ -673,6 +729,7 @@ sims <- redist_flip(iowa_map, 100, constraints = cons)
 #> 
 #> ── Automated Redistricting Simulation Using Markov Chain Monte Carlo ──
 #> ℹ Preprocessing data.
+#> Starting chain 1
 #> ℹ Starting swMH().
 ```
 
@@ -698,6 +755,7 @@ sims <- redist_flip(iowa_map, 100, constraints = cons)
 #> 
 #> ── Automated Redistricting Simulation Using Markov Chain Monte Carlo ──
 #> ℹ Preprocessing data.
+#> Starting chain 1
 #> ℹ Starting swMH().
 ```
 

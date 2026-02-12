@@ -17,11 +17,11 @@ guarantee a maximum number of county splits."><meta property="og:image" content=
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">redist</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">4.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">4.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,7 +55,7 @@ guarantee a maximum number of county splits."><meta property="og:image" content=
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Merge-Split/Recombination MCMC Redistricting Sampler (Carter et al. 2019)</h1>
-      <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/v4.3.1/R/redist_ms.R" class="external-link"><code>R/redist_ms.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/main/R/redist_ms.R" class="external-link"><code>R/redist_ms.R</code></a></small>
       <div class="d-none name"><code>redist_mergesplit.Rd</code></div>
     </div>
 
@@ -220,14 +220,17 @@ Markov chains for redistricting. arXiv preprint arXiv:1911.05725.</p>
 <span class="r-in"><span><span class="va">sampled_basic</span> <span class="op">&lt;-</span> <span class="fu">redist_mergesplit</span><span class="op">(</span><span class="va">fl_map</span>, <span class="fl">10000</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> MARKOV CHAIN MONTE CARLO</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Sampling 10000 25-unit maps with 3 districts and population between 52513 and 64182.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Acceptance rate: 3.37%</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■                               </span>   0% | ETA: 0s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.04</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Acceptance rate: 2.54%</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">sampled_constr</span> <span class="op">&lt;-</span> <span class="fu">redist_mergesplit</span><span class="op">(</span><span class="va">fl_map</span>, <span class="fl">10000</span>, constraints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>    incumbency <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>strength <span class="op">=</span> <span class="fl">1000</span>, incumbents <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">6</span>, <span class="fl">25</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> MARKOV CHAIN MONTE CARLO</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Sampling 10000 25-unit maps with 3 districts and population between 52513 and 64182.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Acceptance rate: 2.08%</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Acceptance rate: 1.85%</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

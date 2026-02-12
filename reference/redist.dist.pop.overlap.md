@@ -51,6 +51,9 @@ iowa_map <- redist_map(iowa, total_pop = pop, pop_tol = 0.01, ndists = 4)
 plans <- redist_smc(iowa_map, 2)
 #> SEQUENTIAL MONTE CARLO
 #> Sampling 2 99-unit maps with 4 districts and population between 753973 and 769205.
+#> Split [0/3] ■                                | ETA?
+#> Split [3/3] ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  | ETA 0s
+#> 
 plans_mat <- get_plans_matrix(plans)
 ov <- redist.dist.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map)
 round(ov, 2)

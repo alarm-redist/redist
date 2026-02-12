@@ -172,13 +172,16 @@ fl_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1)
 sampled_basic <- redist_mergesplit(fl_map, 10000)
 #> MARKOV CHAIN MONTE CARLO
 #> Sampling 10000 25-unit maps with 3 districts and population between 52513 and 64182.
-#> Acceptance rate: 3.37%
+#> ■                                  0% | ETA: 0s
+#> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | ETA:  0s | MH Acceptance: 0.04
+#> 
+#> Acceptance rate: 2.54%
 
 sampled_constr <- redist_mergesplit(fl_map, 10000, constraints = list(
     incumbency = list(strength = 1000, incumbents = c(3, 6, 25))
 ))
 #> MARKOV CHAIN MONTE CARLO
 #> Sampling 10000 25-unit maps with 3 districts and population between 52513 and 64182.
-#> Acceptance rate: 2.08%
+#> Acceptance rate: 1.85%
 # }
 ```
