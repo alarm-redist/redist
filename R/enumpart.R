@@ -22,14 +22,7 @@ redist.init.enumpart <- function() {
         writeLines(text = makecontent, con = system.file("enumpart/Makefile", package = "redist"))
     }
 
-    servr::make(dir = system.file("enumpart", package = "redist"), verbose = FALSE)
-
-    if (Sys.info()[["sysname"]] == "Windows") {
-        sys::exec_wait("python", args = c("-m", "pip", "install", "networkx", "--user"))
-    } else {
-        sys::exec_wait("python3", args = c("-m", "pip", "install", "networkx", "--user"))
-    }
-
+    sys::exec_wait("make", args = c("-C", system.file("enumpart", package = "redist")))
 
     # Necessary to avoid bad CRAN submissions:
     if (Sys.info()[["sysname"]] == "Windows") {
@@ -45,16 +38,14 @@ redist.init.enumpart <- function() {
 #' Prepares a run of the enumpart algorithm by ordering edges
 #'
 #' @param adj zero indexed adjacency list
-#' @param unordered_path valid path to output the unordered adjacency map to
 #' @param ordered_path valid path to output the ordered adjacency map to
 #' @param weight_path A path (not including ".dat") to store a space-delimited
-#' file containing a vector of vertex weights. Only supply with total_pop.
-#' @param total_pop the vector of precinct populations. Only supply with weight_path
-#'
+#'   file containing a vector of vertex weights. Only supply with total_pop.
+#' @param total_pop the vector of precinct populations. Only supply with weight_path.
+#' @param unordered_path Deprecated.
 #'
 #' @return 0 on success
 #' @export
-#' @importFrom sys exec_wait
 #'
 #' @references
 #' Benjamin Fifield, Kosuke Imai, Jun Kawahara, and Christopher T Kenny.
@@ -65,57 +56,47 @@ redist.init.enumpart <- function() {
 #' temp <- tempdir()
 #' data(fl25)
 #' adj <- redist.adjacency(fl25)
-#' redist.prep.enumpart(adj = adj, unordered_path = paste0(temp, "/unordered"),
-#'     ordered_path = paste0(temp, "/ordered"))
+#' redist.prep.enumpart(adj = adj, ordered_path = paste0(temp, "/ordered"))
 #' }
-redist.prep.enumpart <- function(adj, unordered_path, ordered_path,
-                                 weight_path = NULL, total_pop = NULL) {
+redist.prep.enumpart <- function(adj, ordered_path, weight_path = NULL,
+                                 total_pop = NULL, unordered_path) {
+    rlang::check_installed("igraph")
+
+    if (!missing(unordered_path)) {
+        cli_warn("{.arg unordered_path} is deprecated and will be ignored.")
+    }
 
     if (is.null(weight_path) + is.null(total_pop) == 1L) {
         cli::cli_abort("You must provide both of {.arg weight_path} and {.arg total_pop} or neither.")
     }
 
-    # Return the list to 1 indexing
-    adj <- lapply(adj, function(x) {x + 1})
-
-    # Remove any duplicates:
+    # Remove any duplicates from adjacency list
     adj <- lapply(adj, unique)
 
-    ## Sink
-    adj_map <- c()
-    for (k in 1:length(adj)) {
-        sub <- adj[[k]]
-        sub <- sub[sub > k]
-        if (length(sub) > 0) {
-            for (l in 1:length(sub)) {
-                adj_map <- rbind(adj_map, c(k, sub[l]))
-            }
-        }
+    # Order edges using R implementation (no Python needed)
+    ordered_edges <- ndscut(adj)
+
+    if (is.null(ordered_edges)) {
+        cli_abort("Failed to order edges - graph may be empty or disconnected.")
     }
 
-    utils::write.table(data.frame(adj_map), file = paste0(unordered_path, ".dat"),
-        quote = FALSE, row.names = FALSE, col.names = FALSE)
+    # Convert result to matrix for writing
+    ordered_mat <- do.call(rbind, ordered_edges)
 
-    ## Order edges
-
-    if (Sys.info()[["sysname"]] == "Windows") {
-        res <- sys::exec_wait("python",
-            args = system.file("python/ndscut.py", package = "redist"),
-            std_in = paste0(unordered_path, ".dat"),
-            std_out = paste0(ordered_path, ".dat"))
-    } else {
-        res <- sys::exec_wait("python3",
-            args = system.file("python/ndscut.py", package = "redist"),
-            std_in = paste0(unordered_path, ".dat"),
-            std_out = paste0(ordered_path, ".dat"))
-    }
+    # Write ordered edges
+    utils::write.table(data.frame(ordered_mat),
+                       file = paste0(ordered_path, ".dat"),
+                       quote = FALSE, row.names = FALSE, col.names = FALSE
+    )
 
     if (!is.null(weight_path)) {
-        utils::write.table(t(total_pop), file = paste0(weight_path, ".dat"),
-            quote = FALSE, row.names = FALSE, col.names = FALSE)
+        utils::write.table(t(total_pop),
+                           file = paste0(weight_path, ".dat"),
+                           quote = FALSE, row.names = FALSE, col.names = FALSE
+        )
     }
 
-    res
+    0L
 }
 
 #' Runs the enumpart algorithm
@@ -143,11 +124,13 @@ redist.prep.enumpart <- function(adj, unordered_path, ordered_path,
 #'
 #' @examples \dontrun{
 #' temp <- tempdir()
-#' redist.run.enumpart(ordered_path = paste0(temp, "/ordered"),
-#'     out_path = paste0(temp, "/enumerated"))
+#' redist.run.enumpart(
+#'   ordered_path = paste0(temp, "/ordered"),
+#'   out_path = paste0(temp, "/enumerated")
+#' )
 #' }
 redist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
-                                all = TRUE, n  = NULL, weight_path = NULL,
+                                all = TRUE, n = NULL, weight_path = NULL,
                                 lower = NULL, upper = NULL, options = NULL) {
     ndists <- as.integer(ndists)
     n <- as.integer(n)
@@ -165,7 +148,7 @@ redist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
     }
 
     if (!is.null(lower)) {
-        options <-  c(options, "-lower", as.character(lower))
+        options <- c(options, "-lower", as.character(lower))
     }
     if (!is.null(upper)) {
         options <- c(options, "-upper", as.character(upper))
@@ -179,8 +162,9 @@ redist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
 
     ## Run enumpart
     res <- sys::exec_wait(paste0(system.file("enumpart", package = "redist"), "/enumpart"),
-        args = options,
-        std_out = paste0(out_path, ".dat"), std_err = TRUE)
+                          args = options,
+                          std_out = paste0(out_path, ".dat"), std_err = TRUE
+    )
 
     res
 }
@@ -206,7 +190,7 @@ redist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
 #' temp <- tempdir()
 #' cds <- redist.read.enumpart(out_path = paste0(temp, "/enumerated"))
 #' }
-redist.read.enumpart <- function(out_path, skip = 0,  n_max = -1L) {
+redist.read.enumpart <- function(out_path, skip = 0, n_max = -1L) {
     sols <- readLines(paste0(out_path, ".dat"), n = n_max)
     if (skip > 0) sols <- sols[-seq_len(skip)]
     sols <- apply(do.call("cbind", strsplit(sols, " ")), 2, as.numeric)
@@ -227,7 +211,7 @@ is_last <- function(i, v, edges) {
         return(TRUE)
     }
     for (j in (i + 1):nrow(edges)) {
-        if (v ==  edges[j, 1] | v == edges[j, 2]) {
+        if (v == edges[j, 1] | v == edges[j, 2]) {
             return(FALSE)
         }
     }
@@ -253,7 +237,7 @@ is_last <- function(i, v, edges) {
 #' @examples \dontrun{
 #' data(fl25)
 #' adj <- redist.adjacency(fl25)
-#' redist.prep.enumpart(adj, "unordered", "ordered")
+#' redist.prep.enumpart(adj, ordered_path = "ordered")
 #' redist.calc.frontier.size("ordered")
 #' }
 redist.calc.frontier.size <- function(ordered_path) {
@@ -293,26 +277,26 @@ redist.calc.frontier.size <- function(ordered_path) {
     )
 }
 
-#' Enumerate All Parititions (Fifield et al. 2020)
+#' Enumerate All Partitions (Fifield et al. 2020)
 #'
 #' Single function for standard enumeration analysis, using ZDD methodology
 #' (Fifield, Imai, Kawahara, and Kenny 2020).
 #'
 #' @param adj zero indexed adjacency list.
-#' @param unordered_path valid path to output the unordered adjacency map to
 #' @param ordered_path valid path to output the ordered adjacency map to
 #' @param out_path Valid path to output the enumerated districts
 #' @param ndists number of districts to enumerate
 #' @param all boolean. TRUE outputs all districts. FALSE samples n districts.
 #' @param n integer. Number of districts to output if all is FALSE. Returns
-#' districts selected from uniform random distribution.
+#'   districts selected from uniform random distribution.
 #' @param weight_path A path (not including ".dat") to a space-delimited file containing a vector of
-#' vertex weights, to be used along with \code{lower} and \code{upper}.
+#'   vertex weights, to be used along with \code{lower} and \code{upper}.
 #' @param lower A lower bound on each partition's total weight, implemented by rejection sampling.
 #' @param upper An upper bound on each partition's total weight.
-#' @param init Runs redist.init.enumpart. Defaults to false. Should be run on first use.
-#' @param read boolean. Defaults to TRUE. reads
+#' @param init Runs redist.init.enumpart. Defaults to FALSE. Should be run on first use.
+#' @param read boolean. Defaults to TRUE. If TRUE, reads and returns the results.
 #' @param total_pop the vector of precinct populations
+#' @param unordered_path Deprecated.
 #'
 #' @return List with entries district_membership and parity.
 #'
@@ -323,28 +307,36 @@ redist.calc.frontier.size <- function(ordered_path) {
 #'
 #' @concept enumerate
 #' @export
-redist.enumpart <- function(adj, unordered_path, ordered_path,
-                            out_path, ndists = 2, all = TRUE, n = NULL,
-                            weight_path = NULL, lower = NULL, upper = NULL,
-                            init = FALSE, read = TRUE, total_pop = NULL) {
+redist.enumpart <- function(adj, ordered_path, out_path, ndists = 2,
+                            all = TRUE, n = NULL, weight_path = NULL,
+                            lower = NULL, upper = NULL, init = FALSE,
+                            read = TRUE, total_pop = NULL, unordered_path) {
+    if (!missing(unordered_path)) {
+        cli_warn("{.arg unordered_path} is deprecated and will be ignored.")
+    }
+
     if (init) {
         redist.init.enumpart()
     }
 
-    prep <- redist.prep.enumpart(adj = adj,
-        unordered_path = unordered_path,
+    prep <- redist.prep.enumpart(
+        adj = adj,
         ordered_path = ordered_path,
         weight_path = weight_path,
-        total_pop = total_pop)
+        total_pop = total_pop
+    )
+
     if (!prep) {
-        run <- redist.run.enumpart(ordered_path = ordered_path,
+        run <- redist.run.enumpart(
+            ordered_path = ordered_path,
             out_path = out_path,
             ndists = ndists,
             all = all,
             n = n,
             weight_path = weight_path,
             lower = lower,
-            upper = upper)
+            upper = upper
+        )
     }
 
     if (read) {

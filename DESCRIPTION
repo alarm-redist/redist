@@ -41,7 +41,6 @@ Imports:
     doParallel,
     foreach,
     doRNG,
-    servr,
     sys,
     ggplot2,
     patchwork
@@ -59,10 +58,11 @@ Suggests:
     units,
     RSpectra,
     testthat (>= 3.0.0),
-    spelling
+    spelling,
+    igraph
 LinkingTo: Rcpp, RcppArmadillo, RcppThread, cli, redistmetrics
 License: GPL (>= 2)
-SystemRequirements: C++17, python
+SystemRequirements: C++17
 NeedsCompilation: yes
 BugReports: https://github.com/alarm-redist/redist/issues
 URL: https://alarm-redist.org/redist/
