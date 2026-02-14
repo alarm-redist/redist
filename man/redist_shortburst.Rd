@@ -8,7 +8,7 @@ redist_shortburst(
   map,
   score_fn = NULL,
   stop_at = NULL,
-  burst_size = ifelse(backend == "mergesplit", 10L, 50L),
+  burst_size = ifelse(backend == "flip", 50L, 10L),
   max_bursts = 500L,
   maximize = TRUE,
   init_plan = NULL,
@@ -23,6 +23,8 @@ redist_shortburst(
   backend = "mergesplit",
   flip_lambda = 0,
   flip_eprob = 0.05,
+  cw_instep = 10L,
+  cw_cycle_walk_frac = 0.1,
   verbose = TRUE
 )
 }
@@ -40,9 +42,9 @@ threshold for each dimension, which must all be met for the algorithm to
 stop.}
 
 \item{burst_size}{The size of each burst. 10 is recommended for the
-\code{mergesplit} backend and 50 for the \code{flip} backend. Can also provide
-burst schedule function which takes the current iteration (an integer)
-and returns the desired burst size. This can be a random function.}
+\code{mergesplit} and \code{cyclewalk} backends, and 50 for the \code{flip} backend. Can
+also provide burst schedule function which takes the current iteration (an
+integer) and returns the desired burst size. This can be a random function.}
 
 \item{max_bursts}{The maximum number of bursts to run before returning.}
 
@@ -86,13 +88,19 @@ one (generally, the Pareto frontier). Recommended for monitoring purposes.}
 \item{thin}{Save every \code{thin}-th sample. Defaults to no thinning (1). Ignored
 if \code{return_all=TRUE}.}
 
-\item{backend}{the MCMC algorithm to use within each burst, either
-"mergesplit" or "flip".}
+\item{backend}{The MCMC algorithm to use within each burst: \code{"mergesplit"},
+\code{"flip"}, or \code{"cyclewalk"}.}
 
 \item{flip_lambda}{The parameter determining the number of swaps to attempt each iteration of flip mcmc.
 The number of swaps each iteration is equal to Pois(lambda) + 1. The default is 0.}
 
 \item{flip_eprob}{The probability of keeping an edge connected in flip mcmc. The default is 0.05.}
+
+\item{cw_instep}{Number of MCMC iterations per recorded sample for cyclewalk
+backend (default 10).}
+
+\item{cw_cycle_walk_frac}{Fraction of proposals that are cycle walks vs
+forest walks for cyclewalk backend (default 0.1).}
 
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended for monitoring purposes.}
@@ -102,9 +110,9 @@ a \code{redist_plans} object containing the final best plan
 (or the best plans after each burst, if \code{return_all=TRUE}.
 }
 \description{
-This function uses \code{\link[=redist_mergesplit]{redist_mergesplit()}} or \code{\link[=redist_flip]{redist_flip()}} to optimize a
-redistrict plan according to a user-provided criteria. It does so by running
-the Markov chain for "short bursts" of usually 10 iterations, and then
+This function uses \code{\link[=redist_mergesplit]{redist_mergesplit()}}, \code{\link[=redist_flip]{redist_flip()}}, or \code{\link[=redist_cyclewalk]{redist_cyclewalk()}}
+to optimize a redistrict plan according to a user-provided criteria. It does so
+by running the Markov chain for "short bursts" of usually 10 iterations, and then
 starting the chain anew from the best plan in the burst, according to the
 criteria. This implements the ideas in the below-referenced paper, "Voting
 Rights, Markov Chains, and Optimization by Short Bursts."

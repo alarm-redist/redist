@@ -6,23 +6,23 @@
 \usage{
 redist.prep.enumpart(
   adj,
-  unordered_path,
   ordered_path,
   weight_path = NULL,
-  total_pop = NULL
+  total_pop = NULL,
+  unordered_path
 )
 }
 \arguments{
 \item{adj}{zero indexed adjacency list}
-
-\item{unordered_path}{valid path to output the unordered adjacency map to}
 
 \item{ordered_path}{valid path to output the ordered adjacency map to}
 
 \item{weight_path}{A path (not including ".dat") to store a space-delimited
 file containing a vector of vertex weights. Only supply with total_pop.}
 
-\item{total_pop}{the vector of precinct populations. Only supply with weight_path}
+\item{total_pop}{the vector of precinct populations. Only supply with weight_path.}
+
+\item{unordered_path}{Deprecated.}
 }
 \value{
 0 on success
@@ -35,8 +35,7 @@ Prepares a run of the enumpart algorithm by ordering edges
 temp <- tempdir()
 data(fl25)
 adj <- redist.adjacency(fl25)
-redist.prep.enumpart(adj = adj, unordered_path = paste0(temp, "/unordered"),
-    ordered_path = paste0(temp, "/ordered"))
+redist.prep.enumpart(adj = adj, ordered_path = paste0(temp, '/ordered'))
 }
 }
 \references{

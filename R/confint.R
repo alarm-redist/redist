@@ -48,7 +48,7 @@
 #' @export
 redist_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE) {
     algo = attr(plans, "algorithm")
-    algos_ok = c("smc", "mergesplit", "flip", "mew")
+    algos_ok = c("smc", "mergesplit", "cyclewalk", "flip", "mew")
 
     x = enquo(x)
 
