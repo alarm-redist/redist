@@ -5,6 +5,9 @@ library(dplyr)
 # constants ----
 n <- 7L
 n_chains <- 8L
+n_sim <- 3e6
+n_warm <- 1e6
+n_thin <- 1000
 
 # targets from Philip ----
 target <- structure(
@@ -65,11 +68,11 @@ init_plans <- redist_smc(map, nsims = 100) |>
 
 plans <- redist_mew(
   map = map,
-  nsims = 2e6,
+  nsims = n_sim,
   chains = n_chains,
   ncores = n_chains / 2,
-  thin = 100,
-  warmup = 1e6,
+  thin = n_thin,
+  warmup = n_warm,
   init_plan = init_plans[, seq_len(n_chains)]
 )
 
@@ -113,7 +116,7 @@ make_valid_plot <- function(pl_mew, target, conf = 0.9, by_chain = TRUE) {
       mutate(
           okay = low <= true & high >= true
       )
-  return(d_hist)
+  print(d_hist)
 
   d_hist |>
     ggplot() +
@@ -127,7 +130,7 @@ make_valid_plot <- function(pl_mew, target, conf = 0.9, by_chain = TRUE) {
       expand = expansion(mult = c(0, 0.04))
     ) +
     coord_cartesian(ylim = c(0, NA)) +
-    labs(title = str_glue('{scales::label_comma()(1e6)} samples per run'), x = 'Number of edges removed') +
+    labs(title = str_glue('{scales::label_comma()({n_sim})} samples per run with {scales::label_comma()({n_warm})} as warmup and thinning  = {n_thin} over {n_chains}'), x = 'Number of edges removed') +
     theme_bw(base_family = 'Times', base_size = 10)
 }
 
