@@ -254,6 +254,17 @@ split_graph <- function(G, s, t,
         logical(1)
     ))
 
+    if (length(s_idx) == 0) {
+        return(base_case(
+            G,
+            left_vertex_set,
+            right_vertex_set,
+            cut_set,
+            vertex_order,
+            result_edge_list
+        ))
+    }
+
     ccs <- cc_vertices[[s_idx]]
     other_ccs <- cc_vertices[-s_idx]
 
@@ -290,39 +301,80 @@ split_graph <- function(G, s, t,
 }
 
 
-# Find minimum s-t node cut (wrapper for igraph's st_min_cuts)
+# Find minimum s-t node cut using node-splitting technique.
+# Each non-{s,t} vertex v is split into v_in -> v_out (capacity 1).
+# Original edges become large-capacity cross edges.
+# Min s-t edge cut in the split graph = min s-t node cut in original.
 minimum_st_node_cut <- function(G, s, t) {
 
-    # igraph's st_min_cuts requires a directed graph
-    if (igraph::is_directed(G)) {
-        G_dir <- G
-    } else {
-        G_dir <- igraph::as_directed(G, mode = "mutual")
-    }
-
-    vnames <- igraph::V(G_dir)$name
+    vnames <- igraph::V(G)$name
+    n <- length(vnames)
     s_chr <- as.character(s)
     t_chr <- as.character(t)
 
-    # Match vertex names to ids
-    s_id <- match(s_chr, vnames)
-    t_id <- match(t_chr, vnames)
-
-    if (is.na(s_id) || is.na(t_id)) {
+    if (!(s_chr %in% vnames) || !(t_chr %in% vnames)) {
         return(numeric(0))
     }
 
-    cuts <- igraph::st_min_cuts(G_dir, s_id, t_id)
+    in_node <- function(v) paste0(v, "_i")
+    out_node <- function(v) paste0(v, "_o")
 
-    if (length(cuts$cuts) == 0) {
-        return(numeric(0))
+    large_cap <- igraph::ecount(G) + n + 1L
+    from_vec <- character(0)
+    to_vec <- character(0)
+    cap_vec <- numeric(0)
+    non_st <- setdiff(vnames, c(s_chr, t_chr))
+
+    # Internal edges for non-{s,t} vertices: capacity 1
+    for (v in non_st) {
+        from_vec <- c(from_vec, in_node(v))
+        to_vec <- c(to_vec, out_node(v))
+        cap_vec <- c(cap_vec, 1)
     }
 
-    # find the smallest cut by number of vertices
-    cut_sizes <- lengths(cuts$cuts)
-    min_cut <- cuts$cuts[[which.min(cut_sizes)]]
+    # Internal edges for s and t: large capacity (effectively unsplittable)
+    for (v in c(s_chr, t_chr)) {
+        from_vec <- c(from_vec, in_node(v))
+        to_vec <- c(to_vec, out_node(v))
+        cap_vec <- c(cap_vec, large_cap)
+    }
 
-    as.numeric(vnames[as.integer(min_cut)])
+    # Cross edges from original graph edges
+    el <- igraph::as_edgelist(G)
+    for (j in seq_len(nrow(el))) {
+        u <- el[j, 1]
+        v <- el[j, 2]
+        from_vec <- c(from_vec, out_node(u), out_node(v))
+        to_vec <- c(to_vec, in_node(v), in_node(u))
+        cap_vec <- c(cap_vec, large_cap, large_cap)
+    }
+
+    # Build directed split graph
+    edge_vec <- c(rbind(from_vec, to_vec))
+    split_G <- igraph::make_graph(edge_vec, directed = TRUE)
+    igraph::E(split_G)$capacity <- cap_vec
+
+    # Max flow from s_out to t_in
+    src <- which(igraph::V(split_G)$name == out_node(s_chr))
+    tgt <- which(igraph::V(split_G)$name == in_node(t_chr))
+    flow_res <- igraph::max_flow(split_G, source = src, target = tgt)
+
+    if (flow_res$value == 0) return(numeric(0))
+
+    # Cut vertices: non-{s,t} vertices whose internal edge crosses the partition
+    p1 <- as.integer(flow_res$partition1)
+    split_names <- igraph::V(split_G)$name
+
+    cut_verts <- numeric(0)
+    for (v in non_st) {
+        v_in_id <- which(split_names == in_node(v))
+        v_out_id <- which(split_names == out_node(v))
+        if (v_in_id %in% p1 && !(v_out_id %in% p1)) {
+            cut_verts <- c(cut_verts, as.numeric(v))
+        }
+    }
+
+    cut_verts
 }
 
 
