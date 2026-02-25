@@ -130,7 +130,7 @@ make_valid_plot <- function(pl_mew, target, conf = 0.9, by_chain = TRUE) {
       expand = expansion(mult = c(0, 0.04))
     ) +
     coord_cartesian(ylim = c(0, NA)) +
-    labs(title = str_glue('{scales::label_comma()({n_sim})} samples per run with {scales::label_comma()({n_warm})} as warmup and thinning  = {n_thin} over {n_chains}'), x = 'Number of edges removed') +
+    labs(title = str_glue('{scales::label_comma()({n_sim})} samples per run with {scales::label_comma()({n_warm})} as warmup and thinning  by {n_thin} over {n_chains}'), x = 'Number of edges removed') +
     theme_bw(base_family = 'Times', base_size = 10)
 }
 
