@@ -78,6 +78,7 @@ List draw_a_tree_on_a_region(
     Rcpp::IntegerMatrix const &region_sizes,
     bool verbose
 ){
+    
     // unpack control params
     Graph g = list_to_graph(adj_list);
     Multigraph cg = county_graph(g, counties);
@@ -91,6 +92,8 @@ List draw_a_tree_on_a_region(
         adj_list, counties, pop, 
         ndists, ndists, std::vector<int>{},
         lower, target, upper);
+
+
 
 
     int global_rng_seed2 = (int) Rcpp::sample(INT_MAX, 1)[0];
@@ -524,10 +527,10 @@ List draw_trees_on_a_region(
     int const num_tree, int num_threads,
     bool const verbose
 ){
-
     // Create adj params 
-    MapParams map_params(adj_list, counties, pop, 
-        ndists, ndists, std::vector<int>{},
+    MapParams map_params(
+        adj_list, counties, pop, 
+        ndists, ndists, std::vector<int>{1},
         lower, target, upper);
     // count how many times we had to call sample_sub_ust
 
@@ -536,6 +539,7 @@ List draw_trees_on_a_region(
     RcppThread::ThreadPool pool(num_threads);
 
 
+    
     // create list of trees to return 
     std::vector<std::vector<Graph>> thread_undirected_trees(num_threads == 0 ? 1 : num_threads); 
     std::vector<int> thread_attempts(num_threads == 0 ? 1 : num_threads,0);
@@ -544,7 +548,7 @@ List draw_trees_on_a_region(
     int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
     std::atomic<int> thread_id_counter{0};
 
-
+    
     int global_rng_seed = (int) Rcpp::sample(INT_MAX, 1)[0];
     int num_rng_states = num_threads > 0 ? num_threads : 1;
     std::vector<RNGState> rng_states;rng_states.reserve(num_rng_states);
@@ -553,6 +557,8 @@ List draw_trees_on_a_region(
         // same seed with i*3 long_jumps for state
         rng_states.emplace_back(global_rng_seed, i*3);
     }
+
+    int check_int = 200;
 
     RcppThread::ProgressBar bar(num_tree, 1);
     // Parallel thread pool where all objects in memory shared by default
@@ -601,6 +607,7 @@ List draw_trees_on_a_region(
             );
             
             ++thread_attempts[thread_id];
+            RcppThread::checkUserInterrupt(++thread_attempts[thread_id] % check_int == 0);
         }
 
         // go through the tree from the root and add the backwards edge and sort 

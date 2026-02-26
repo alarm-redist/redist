@@ -180,6 +180,9 @@ class MapParams {
         largest_district_size(*max_element(district_seat_sizes.begin(), district_seat_sizes.end())),
         district_seat_sizes(district_seat_sizes),
         is_district([ndists, total_seats, &district_seat_sizes]() {
+            if(district_seat_sizes.size() == 0){
+                throw Rcpp::exception("District Seat Sizes vector must be non-empty!\n");
+            }
             // vector where index i is true iff i seats is a district 
             std::vector<bool> is_district_vec(total_seats + 1, false);
             if(ndists > total_seats){

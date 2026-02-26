@@ -32,7 +32,9 @@ Plan(num_regions, pop,
             );
 
             if(!result.first){
-                throw Rcpp::exception("Could not draw a tree on a region after 1000000 attempts");
+                REprintf("Failed to draw tree on region %d after 1000000 attempts\n", region_id);
+                Rprint(true);
+                throw Rcpp::exception("Forest Space - Could not draw a tree on a region after 1000000 attempts");
             } 
         }
     

@@ -572,18 +572,20 @@ double compute_log_optimal_incremental_weights(
             log_of_sum_term += score_ratio;
         }
 
-        
+        double merged_plan_score = 0.0;
         if(scoring_function.any_soft_plan_constraints){
-            double merged_plan_score = scoring_function.compute_merged_plan_score(plan, region1_id, region2_id, is_final_split).second;
+            merged_plan_score = scoring_function.compute_merged_plan_score(plan, region1_id, region2_id, is_final_split).second;
             if(DEBUG_WEIGHTS_VERBOSE){
                 REprintf(
                     "For Regions (%u, %u) Merged Entire Plan Score %f \n",
                     region1_id, region2_id, merged_plan_score
                 );
             }
-            // term is e^- score(merged plan) so we subtract the log score 
-            log_of_sum_term -= merged_plan_score;
         }
+        // term is e^- score(current plan) / e^- score(merged plan) 
+        // so we add the current plan score and subtract the log score 
+        // meaning add the difference 
+        log_of_sum_term += (plan_score - merged_plan_score);
 
         if(DEBUG_WEIGHTS_VERBOSE){
         int region1_size = plan.region_sizes[region1_id];
@@ -642,10 +644,8 @@ double compute_log_optimal_incremental_weights(
         Rcpp::stop("Error! weight is negative infinity for some reason \n");
     }
 
-    // Extra term if needed
-
-    // Now subtract the plan score 
-    incremental_weight =  -std::log(incremental_weight) - plan_score;
+    // Now take the log 
+    incremental_weight =  -std::log(incremental_weight);
 
     if(DEBUG_WEIGHTS_VERBOSE){
         REprintf("Weight=%f, log weight = %f\n", std::exp(incremental_weight), incremental_weight);

@@ -213,7 +213,7 @@ int sample_sub_ust(
     // Generate tree within each county
     if (remaining > 0) {
         path.clear(); path.resize(remaining + 2);
-        int max_try = 50 * remaining * ((int) std::log(remaining));
+        int max_try = 50 * remaining * (static_cast<int> (std::log(remaining)) + 1);
         while (remaining > 0) {
             int add = rvtx(visited, V, remaining, lower_i, rng_state);
             // random walk from `add` until we hit the path

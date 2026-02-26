@@ -671,7 +671,7 @@ std::pair<bool, int> Plan::draw_tree_on_region(
             visited, ignore, county_tree, county_stack, county_pop, county_members, 
             c_visited, cty_pop_below, county_path, path,
             rng_state
-        );            
+        );  
 
         tree_drawn = result == 0;
 
