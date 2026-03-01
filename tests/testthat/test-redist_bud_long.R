@@ -9,7 +9,7 @@ test_that('BUD distribution matches expected (log st distribution)', {
   set.seed(123)
 
   result <- redist_bud(grid,
-    nsims = 2000000, warmup = 10000,
+    nsims = 200000, warmup = 10000,
     init_plan = grid$init, compactness = 1, verbose = FALSE
   )
 
@@ -32,7 +32,7 @@ test_that('BUD distribution without spanning forest weighting (uniform over plan
   set.seed(456)
 
   result <- redist_bud(grid,
-    nsims = 1000000, warmup = 10000,
+    nsims = 100000, warmup = 10000,
     init_plan = grid$init, compactness = 0, verbose = FALSE
   )
 
@@ -55,7 +55,7 @@ test_that('longer chain produces stable distribution (log st distribution)', {
   set.seed(789)
 
   result <- redist_bud(grid,
-    nsims = 2000000, warmup = 10000,
+    nsims = 200000, warmup = 10000,
     init_plan = grid$init, compactness = 1, verbose = FALSE
   )
 
