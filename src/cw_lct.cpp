@@ -64,21 +64,31 @@ void LinkCutTree::set_child(LCTNode* p, int idx, LCTNode* c) {
 void LinkCutTree::push_reversed(LCTNode* n) {
     if (n == nullptr) return;
 
-    // Recursively push to ancestors first
-    if (n->parent != nullptr) {
-        push_reversed(n->parent);
+    // Build stack of ancestors (iterative instead of recursive to prevent stack overflow)
+    std::vector<LCTNode*> stack;
+    LCTNode* cur = n;
+    int guard = 0;
+    while (cur != nullptr) {
+        if (++guard > 10000) {
+            throw std::runtime_error("LCT push_reversed: parent cycle detected");
+        }
+        stack.push_back(cur);
+        cur = cur->parent;
     }
 
-    // If reversed flag is set, swap children and push to them
-    if (n->reversed) {
-        std::swap(n->children[0], n->children[1]);
-        if (n->children[0] != nullptr) {
-            n->children[0]->reversed = !n->children[0]->reversed;
+    // Process from top (root) down to n
+    for (int i = (int)stack.size() - 1; i >= 0; i--) {
+        LCTNode* node = stack[i];
+        if (node->reversed) {
+            std::swap(node->children[0], node->children[1]);
+            if (node->children[0] != nullptr) {
+                node->children[0]->reversed = !node->children[0]->reversed;
+            }
+            if (node->children[1] != nullptr) {
+                node->children[1]->reversed = !node->children[1]->reversed;
+            }
+            node->reversed = false;
         }
-        if (n->children[1] != nullptr) {
-            n->children[1]->reversed = !n->children[1]->reversed;
-        }
-        n->reversed = false;
     }
 }
 
@@ -115,7 +125,11 @@ void LinkCutTree::splay(LCTNode* n) {
     // First push all reversal flags down to n
     push_reversed(n);
 
+    int guard = 0;
     while (n->parent != nullptr) {
+        if (++guard > 10000) {
+            throw std::runtime_error("LCT splay: infinite loop detected");
+        }
         LCTNode* p = n->parent;
 
         if (p->parent == nullptr) {
@@ -162,7 +176,11 @@ void LinkCutTree::expose(LCTNode* n) {
     splay(n);
     replace_right_subtree(n);
 
+    int guard = 0;
     while (n->path_parent != nullptr) {
+        if (++guard > 10000) {
+            throw std::runtime_error("LCT expose: infinite loop detected");
+        }
         LCTNode* p = n->path_parent;
         splay(p);
         replace_right_subtree(p, n);
@@ -230,7 +248,11 @@ LCTNode* LinkCutTree::find_root(LCTNode* u) {
     // The root is the leftmost node in the splay tree
     LCTNode* r = u;
     push_reversed(r);
+    int guard = 0;
     while (r->children[0] != nullptr) {
+        if (++guard > 10000) {
+            throw std::runtime_error("LCT find_root: infinite loop detected");
+        }
         r = r->children[0];
         push_reversed(r);
     }
@@ -266,7 +288,11 @@ std::vector<int> LinkCutTree::find_path(LCTNode* u) {
     // Traverse the splay tree in-order to get the path from root to u
     std::vector<int> path;
     LCTNode* root = u;
+    int guard = 0;
     while (root->parent != nullptr) {
+        if (++guard > 10000) {
+            throw std::runtime_error("LCT find_path: infinite loop detected");
+        }
         root = root->parent;
     }
     traverse_inorder(root, path, false);
