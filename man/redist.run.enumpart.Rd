@@ -47,8 +47,8 @@ Runs the enumpart algorithm
 \dontrun{
 temp <- tempdir()
 redist.run.enumpart(
-  ordered_path = paste0(temp, '/ordered'),
-  out_path = paste0(temp, '/enumerated')
+  ordered_path = paste0(temp, "/ordered"),
+  out_path = paste0(temp, "/enumerated")
 )
 }
 }
