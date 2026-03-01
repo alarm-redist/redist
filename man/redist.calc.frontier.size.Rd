@@ -7,26 +7,19 @@
 redist.calc.frontier.size(ordered_path)
 }
 \arguments{
-\item{ordered_path}{path to ordered path created by redist.prep.enumpart}
+\item{ordered_path}{Path to ordered edge file created by
+\code{redist.prep.enumpart()}.}
 }
 \value{
-List, four objects
-\itemize{
-\item \code{max} numeric, maximum frontier size
-\item \code{average} numeric, average frontier size
-\item \code{average_sq} numeric, average((frontier size)^2)
-\item \code{sequence} numeric vector, lists out all sizes for every frontier
-}
+A list with \code{max}, \code{average}, \code{average_sq}, and \code{sequence}.
 }
 \description{
-Calculate Frontier Size
+\strong{Deprecated}: Use \code{\link[=redist_enumpart_frontier]{redist_enumpart_frontier()}} instead.
 }
-\examples{
-\dontrun{
-data(fl25)
-adj <- redist.adjacency(fl25)
-redist.prep.enumpart(adj, ordered_path = 'ordered')
-redist.calc.frontier.size('ordered')
-}
+\references{
+Fifield, B., Imai, K., Kawahara, J., & Kenny, C. T. (2020).
+The essential role of empirical validation in legislative redistricting
+simulation. \emph{Statistics and Public Policy}, 7(1), 52-68.
 }
 \concept{enumerate}
+\keyword{internal}

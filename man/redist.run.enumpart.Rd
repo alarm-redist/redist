@@ -2,7 +2,7 @@
 % Please edit documentation in R/enumpart.R
 \name{redist.run.enumpart}
 \alias{redist.run.enumpart}
-\title{Runs the enumpart algorithm}
+\title{Run the enumpart algorithm}
 \usage{
 redist.run.enumpart(
   ordered_path,
@@ -17,44 +17,36 @@ redist.run.enumpart(
 )
 }
 \arguments{
-\item{ordered_path}{Path used in redist.prep.enumpart (not including ".dat")}
+\item{ordered_path}{Path used in \code{redist.prep.enumpart()} (not including
+\code{".dat"}).}
 
-\item{out_path}{Valid path to output the enumerated districts}
+\item{out_path}{Valid path to output the enumerated districts.}
 
-\item{ndists}{number of districts to enumerate}
+\item{ndists}{Number of districts to enumerate.}
 
-\item{all}{boolean. TRUE outputs all districts. FALSE samples n districts.}
+\item{all}{If \code{TRUE}, outputs all districts. If \code{FALSE}, draws \code{n}
+districts uniformly at random.}
 
-\item{n}{integer. Number of districts to output if all is FALSE. Returns
-districts selected from uniform random distribution.}
+\item{n}{Number of districts to output if \code{all} is \code{FALSE}.}
 
-\item{weight_path}{A path (not including ".dat") to a space-delimited file containing a vector of
-vertex weights, to be used along with \code{lower} and \code{upper}.}
+\item{weight_path}{A path (not including \code{".dat"}) to a vertex weights file.}
 
-\item{lower}{A lower bound on each partition's total weight, implemented by rejection sampling.}
+\item{lower}{A lower bound on each partition's total weight.}
 
 \item{upper}{An upper bound on each partition's total weight.}
 
-\item{options}{Additional enumpart arguments. Not recommended for use.}
+\item{options}{Additional enumpart arguments. Not recommended.}
 }
 \value{
-0 on success
+0 on success.
 }
 \description{
-Runs the enumpart algorithm
-}
-\examples{
-\dontrun{
-temp <- tempdir()
-redist.run.enumpart(
-  ordered_path = paste0(temp, '/ordered'),
-  out_path = paste0(temp, '/enumerated')
-)
-}
+\strong{Deprecated}: Use \code{\link[=redist_enumpart]{redist_enumpart()}} instead.
 }
 \references{
-Benjamin Fifield, Kosuke Imai, Jun Kawahara, and Christopher T Kenny.
-"The Essential Role of Empirical Validation in Legislative Redistricting Simulation."
-Forthcoming, Statistics and Public Policy.
+Fifield, B., Imai, K., Kawahara, J., & Kenny, C. T. (2020).
+The essential role of empirical validation in legislative redistricting
+simulation. \emph{Statistics and Public Policy}, 7(1), 52-68.
 }
 \concept{enumerate}
+\keyword{internal}

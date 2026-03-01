@@ -89,8 +89,8 @@ test_that('ndscut produces equivalent frontier size for FL25', {
     quote = FALSE, row.names = FALSE, col.names = FALSE
   )
 
-  py_frontier <- redist.calc.frontier.size(py_path)
-  r_frontier <- redist.calc.frontier.size(r_path)
+  py_frontier <- redist_enumpart_frontier(ordered_path = py_path)
+  r_frontier <- redist_enumpart_frontier(ordered_path = r_path)
 
   # R should produce equivalent or better frontier size
   expect_equal(r_frontier$max, py_frontier$max)
@@ -158,8 +158,8 @@ test_that('ndscut produces equivalent frontier size for Iowa', {
                      quote = FALSE, row.names = FALSE, col.names = FALSE
   )
 
-  py_frontier <- redist.calc.frontier.size(py_path)
-  r_frontier <- redist.calc.frontier.size(r_path)
+  py_frontier <- redist_enumpart_frontier(ordered_path = py_path)
+  r_frontier <- redist_enumpart_frontier(ordered_path = r_path)
 
   # R should produce equivalent or better frontier size
   expect_equal(r_frontier$max, py_frontier$max)

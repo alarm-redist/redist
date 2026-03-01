@@ -7,27 +7,23 @@
 redist.read.enumpart(out_path, skip = 0, n_max = -1L)
 }
 \arguments{
-\item{out_path}{out_path specified in redist.run.enumpart}
+\item{out_path}{\code{out_path} specified in \code{redist.run.enumpart()}.}
 
-\item{skip}{number of lines to skip}
+\item{skip}{Number of lines to skip.}
 
-\item{n_max}{max number of lines to read}
+\item{n_max}{Maximum number of lines to read.}
 }
 \value{
-district_membership matrix
+A district membership matrix (1-indexed).
 }
 \description{
-Read Results from enumpart
-}
-\examples{
-\dontrun{
-temp <- tempdir()
-cds <- redist.read.enumpart(out_path = paste0(temp, '/enumerated'))
-}
+\strong{Deprecated}: Use \code{\link[=redist_enumpart]{redist_enumpart()}} instead, which reads results
+automatically.
 }
 \references{
-Benjamin Fifield, Kosuke Imai, Jun Kawahara, and Christopher T Kenny.
-"The Essential Role of Empirical Validation in Legislative Redistricting Simulation."
-Forthcoming, Statistics and Public Policy.
+Fifield, B., Imai, K., Kawahara, J., & Kenny, C. T. (2020).
+The essential role of empirical validation in legislative redistricting
+simulation. \emph{Statistics and Public Policy}, 7(1), 52-68.
 }
 \concept{enumerate}
+\keyword{internal}

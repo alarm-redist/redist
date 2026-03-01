@@ -1,3 +1,7 @@
+# redist (development)
+
+* Old `enumpart` functions are deprecated in favor of `redist_enumpart()` which provides a more consistent syntax.
+
 # redist 4.3.2
 
 * Allows for parallel flip with `chains` argument in `redist_flip()`.
