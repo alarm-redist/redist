@@ -38,6 +38,32 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// bud_plans
+Rcpp::List bud_plans(int N, Rcpp::List l, const arma::uvec init, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double target, double lower, double upper, double compactness, Rcpp::List constraints, Rcpp::List control, Rcpp::List edge_weights, int thin, int instep, int verbosity);
+RcppExport SEXP _redist_bud_plans(SEXP NSEXP, SEXP lSEXP, SEXP initSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP compactnessSEXP, SEXP constraintsSEXP, SEXP controlSEXP, SEXP edge_weightsSEXP, SEXP thinSEXP, SEXP instepSEXP, SEXP verbositySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type l(lSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec >::type init(initSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
+    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< double >::type compactness(compactnessSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type constraints(constraintsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type control(controlSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type edge_weights(edge_weightsSEXP);
+    Rcpp::traits::input_parameter< int >::type thin(thinSEXP);
+    Rcpp::traits::input_parameter< int >::type instep(instepSEXP);
+    Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
+    rcpp_result_gen = Rcpp::wrap(bud_plans(N, l, init, counties, pop, n_distr, target, lower, upper, compactness, constraints, control, edge_weights, thin, instep, verbosity));
+    return rcpp_result_gen;
+END_RCPP
+}
 // coarsen_adjacency
 List coarsen_adjacency(List adj, IntegerVector groups);
 RcppExport SEXP _redist_coarsen_adjacency(SEXP adjSEXP, SEXP groupsSEXP) {
@@ -662,6 +688,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_redist_reduce_adj", (DL_FUNC) &_redist_reduce_adj, 3},
     {"_redist_collapse_adj", (DL_FUNC) &_redist_collapse_adj, 2},
+    {"_redist_bud_plans", (DL_FUNC) &_redist_bud_plans, 16},
     {"_redist_coarsen_adjacency", (DL_FUNC) &_redist_coarsen_adjacency, 2},
     {"_redist_get_plan_graph", (DL_FUNC) &_redist_get_plan_graph, 4},
     {"_redist_color_graph", (DL_FUNC) &_redist_color_graph, 2},
