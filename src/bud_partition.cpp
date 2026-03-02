@@ -461,7 +461,7 @@ void BUDPartition::sample_marked_edges() {
     }
 }
 
-std::vector<DistrictPair> BUDPartition::get_district_path(int d1, int d2) const {
+std::vector<std::pair<int,int>> BUDPartition::get_district_path(int d1, int d2) const {
     // BFS on district tree
     std::vector<int> parent(n_districts, -1);
     std::vector<bool> visited(n_districts, false);
@@ -482,14 +482,14 @@ std::vector<DistrictPair> BUDPartition::get_district_path(int d1, int d2) const 
         }
     }
 
-    // Reconstruct path as district pairs
-    std::vector<DistrictPair> path;
+    // Reconstruct path as DIRECTED pairs (from→to following d1→d2 direction)
+    std::vector<std::pair<int,int>> path;
     if (!visited[d2]) return path; // d2 not reachable
     int cur = d2;
     while (cur != d1) {
         int p = parent[cur];
-        if (p < 0) return std::vector<DistrictPair>(); // safety
-        path.push_back({std::min(p, cur), std::max(p, cur)});
+        if (p < 0) return std::vector<std::pair<int,int>>(); // safety
+        path.push_back({p, cur});  // directed: parent→child
         cur = p;
     }
     std::reverse(path.begin(), path.end());

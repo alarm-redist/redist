@@ -139,7 +139,7 @@ public:
      * Get the district-level path between two districts using BFS.
      * Returns list of district pairs along the path.
      */
-    std::vector<DistrictPair> get_district_path(int d1, int d2) const;
+    std::vector<std::pair<int,int>> get_district_path(int d1, int d2) const;
 
     /*
      * Rebuild district tree adjacency from marked_edges.

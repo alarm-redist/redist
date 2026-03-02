@@ -276,7 +276,10 @@ redist_bud <- function(map, nsims,
     }
 
     l_diag <- list(
-      runtime = as.numeric(t2_run - t1_run, units = 'secs')
+      runtime = as.numeric(t2_run - t1_run, units = 'secs'),
+      accept = algout$diagnostics$accept,
+      reject = algout$diagnostics$reject,
+      trivial = algout$diagnostics$trivial
     )
 
     # Calculate warmup indices

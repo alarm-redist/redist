@@ -243,6 +243,30 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
         accept_rate <- sprintf("%0.1f%%", 100*attr(object, "mh_acceptance"))
         cli::cli_text("Chain acceptance rate{?s}: {accept_rate}")
 
+        # BUD-specific diagnostics
+        if (algo == 'bud' && !is.null(all_diagn[[1]]$accept)) {
+            cat("\n")
+            cli::cli_text("{.strong BUD diagnostics:}")
+            for (i in seq_along(all_diagn)) {
+                diagn <- all_diagn[[i]]
+                n_accept <- diagn$accept
+                n_reject <- diagn$reject
+                n_trivial <- diagn$trivial
+                n_total <- n_accept + n_reject + n_trivial
+                if (length(all_diagn) > 1) {
+                    cli::cli_text("  Chain {i}:")
+                }
+                cat(sprintf("  Accepted: %d, Rejected: %d, Trivial: %d (total: %d)\n",
+                            n_accept, n_reject, n_trivial, n_total))
+                if (n_total > 0) {
+                    cat(sprintf("  Proposal success rate: %0.1f%%\n",
+                                100 * n_accept / n_total))
+                }
+                if (length(all_diagn) > 1 && i < length(all_diagn)) cat("\n")
+            }
+            cat("\n")
+        }
+
         # CycleWalk-specific diagnostics
         if (algo == 'cyclewalk' && !is.null(all_diagn[[1]]$accept_prob)) {
             cat("\n")

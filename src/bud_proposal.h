@@ -20,7 +20,7 @@
  * Stores information needed to accept a proposal.
  */
 struct BUDUpdate {
-    std::vector<DistrictPair> district_path; // old district path edges
+    std::vector<std::pair<int,int>> district_path; // old district path edges (DIRECTED: from→to)
     int link_u, link_v;                      // the non-tree edge to link
     int cut_ind;                             // which cut is the actual cut (0-based)
     std::vector<std::pair<int, int>> cuts;   // all cuts in cycle order

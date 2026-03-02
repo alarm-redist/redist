@@ -166,9 +166,10 @@ static int internal_forest_walk_edge(BUDPartition& partition, int u, int v) {
 //    Julia: link_district_path! in balanced_up_down_walk.jl:104
 // ============================================================
 static void link_district_path(BUDPartition& partition,
-                                const std::vector<DistrictPair>& district_path) {
+                                const std::vector<std::pair<int,int>>& district_path) {
     for (auto& dp : district_path) {
-        auto it = partition.marked_edges.find(dp);
+        DistrictPair key = {std::min(dp.first, dp.second), std::max(dp.first, dp.second)};
+        auto it = partition.marked_edges.find(key);
         if (it == partition.marked_edges.end()) continue;
         int n1 = it->second.first;
         int n2 = it->second.second;
@@ -183,12 +184,13 @@ static void link_district_path(BUDPartition& partition,
 //    Julia: cut_district_path! in balanced_up_down_walk.jl:122
 // ============================================================
 static void cut_district_path(BUDPartition& partition,
-                               const std::vector<DistrictPair>& district_path) {
+                               const std::vector<std::pair<int,int>>& district_path) {
     std::set<int> dists;
     for (auto& dp : district_path) {
         dists.insert(dp.first);
         dists.insert(dp.second);
-        auto it = partition.marked_edges.find(dp);
+        DistrictPair key = {std::min(dp.first, dp.second), std::max(dp.first, dp.second)};
+        auto it = partition.marked_edges.find(key);
         if (it == partition.marked_edges.end()) continue;
         int n1 = it->second.first;
         int n2 = it->second.second;
@@ -325,6 +327,7 @@ static void cycle_cut_and_link(
 }
 
 // ============================================================
+// ============================================================
 // 8. get_balanced_cuts: find valid balanced cut positions
 //    Julia: getBalancedCuts in balanced_up_down_walk.jl:2
 // ============================================================
@@ -368,7 +371,9 @@ static BalancedCutsResult get_balanced_cuts(
 
         // Check if cuttable
         int new_root = tmp.find_root(cut_to);
-        if (cuttable_huh(partition.cuttable_info.node_closures[new_root], sub_dists)) {
+        bool closure_says = cuttable_huh(partition.cuttable_info.node_closures[new_root], sub_dists);
+
+        if (closure_says) {
             int edge_ind = ii - 1; // 0-based index into cycle_path
             result.edge_inds.push_back(edge_ind);
 
@@ -466,6 +471,9 @@ static double get_path_cut_log_prob_recursive(
     if (km1_positions.empty()) return -1e18;
 
     int marked_ei = marked_edge_inds[0];
+
+    // The marked edge must be in km1_positions
+
     int low_edge_ind = -1;
     for (int i = 0; i < (int)edge_inds.size(); i++) {
         if (edge_inds[i] == marked_ei) { low_edge_ind = i; break; }
@@ -706,7 +714,7 @@ static std::pair<double, BUDUpdate> bud_proposal(
     int d2 = partition.node_to_district[v];
 
     // Get district path
-    std::vector<DistrictPair> district_path = partition.get_district_path(d1, d2);
+    std::vector<std::pair<int,int>> district_path = partition.get_district_path(d1, d2);
     if (district_path.empty()) {
         return {0.0, update};
     }
@@ -816,6 +824,12 @@ static std::pair<double, BUDUpdate> bud_proposal(
         partition, bcuts.edge_inds, marked_edge_inds, cycle_path, node_perm,
         collapsed_pop, lower, upper, sub_dists);
 
+    // Guard: if backward probability is -inf, reject
+    if (backward_prob < -1e17) {
+        cut_district_path(partition, district_path);
+        return {0.0, update};
+    }
+
     Rcpp::checkUserInterrupt();
 
     // Cut and link on the cycle (cut selected edge, link endpoints)
@@ -879,28 +893,10 @@ static std::pair<double, BUDUpdate> bud_proposal(
         partition, new_edge_inds, new_cycle_path, new_node_perm,
         collapsed_pop, lower, upper, sub_dists);
 
-    // DIAGNOSTIC: verify forward probability by recomputing as backward
-    // The probability of the sampled marked edges should equal forward_prob
-    {
-        // Build new_marked_edge_inds from new_marked_edges
-        // new_marked_edges are positions in the rotated cycle that are cross-district
-        // For the backward check, we need the subset of new_edge_inds that match
-        std::set<int> nme_set(new_marked_edges.begin(), new_marked_edges.end());
-        std::vector<int> verify_marked_edge_inds;
-        for (int i = 0; i < (int)new_edge_inds.size() - 1; i++) {
-            if (nme_set.count(new_edge_inds[i])) {
-                verify_marked_edge_inds.push_back(new_edge_inds[i]);
-            }
-        }
-        double verify_backward = get_path_cut_log_prob(
-            partition, new_edge_inds, verify_marked_edge_inds,
-            new_cycle_path, new_node_perm, collapsed_pop, lower, upper, sub_dists);
-        if (std::abs(verify_backward - forward_prob) > 0.001) {
-            Rcpp::Rcout << "[FWD_CHECK_FAIL] sub_dists=" << sub_dists
-                        << " forward=" << forward_prob
-                        << " verify_backward=" << verify_backward
-                        << " diff=" << (verify_backward - forward_prob) << "\n";
-        }
+    // Guard: if forward marking failed, reject the proposal.
+    if (forward_prob < -1e17 || (int)new_marked_edges.size() != sub_dists - 1) {
+        cut_district_path(partition, district_path);
+        return {0.0, update};
     }
 
     Rcpp::checkUserInterrupt();
@@ -1065,7 +1061,8 @@ void apply_bud_update(BUDPartition& partition, const BUDUpdate& update) {
 
     std::vector<std::pair<int,int>> links;
     for (auto& dp : update.district_path) {
-        auto it = partition.marked_edges.find(dp);
+        DistrictPair key = {std::min(dp.first, dp.second), std::max(dp.first, dp.second)};
+        auto it = partition.marked_edges.find(key);
         if (it != partition.marked_edges.end()) {
             links.push_back(it->second);
         }
@@ -1076,10 +1073,7 @@ void apply_bud_update(BUDPartition& partition, const BUDUpdate& update) {
     for (int li = 0; li < (int)links.size(); li++) {
         auto [l1, l2] = links[li];
         if (cuts_set.count({l1, l2}) || cuts_set.count({l2, l1})) continue;
-        if (partition.lct.same_tree(l1, l2)) {
-            Rcpp::Rcout << "SAME_TREE GUARD FIRED: link " << l1 << "-" << l2 << std::endl;
-            continue;
-        }
+        if (partition.lct.same_tree(l1, l2)) continue;
         partition.lct.evert(l1);
         partition.lct.link(l1, l2);
         actually_linked[li] = true;
@@ -1280,34 +1274,6 @@ static double compute_log_wst(const CrossEdgeMap& cross_edges, int n_districts) 
     return val;
 }
 
-// Ground truth WST: compute from plan and graph directly (for debugging)
-static double compute_log_wst_from_plan(const Graph& g, const std::vector<int>& node_to_district,
-                                        int n_vertices, int n_districts) {
-    if (n_districts <= 1) return 0.0;
-    int k = n_districts;
-    arma::mat L(k, k, arma::fill::zeros);
-    for (int u = 0; u < n_vertices; u++) {
-        int du = node_to_district[u];
-        for (int v : g[u]) {
-            if (v > u) {
-                int dv = node_to_district[v];
-                if (du != dv) {
-                    int i = std::min(du, dv), j = std::max(du, dv);
-                    L(i, j) -= 1.0;
-                    L(j, i) -= 1.0;
-                    L(i, i) += 1.0;
-                    L(j, j) += 1.0;
-                }
-            }
-        }
-    }
-    arma::mat L_star = L.submat(0, 0, k - 2, k - 2);
-    double val, sign;
-    arma::log_det(val, sign, L_star);
-    if (sign <= 0) return -std::numeric_limits<double>::infinity();
-    return val;
-}
-
 // ============================================================
 // 17. bud_step: full BUD step with MH acceptance and energy
 //     Forest-preserving approach:
@@ -1476,35 +1442,11 @@ int bud_step(BUDPartition& partition,
     double log_wst_old = compute_log_wst(old_cross_edges, partition.n_districts);
     double log_wst_new = compute_log_wst(partition.cross_edges, partition.n_districts);
 
-    // Verify WST from plan directly (DEBUG)
-    if (compactness == 98.0) {
-        double log_wst_old_verify = compute_log_wst_from_plan(
-            *(partition.graph), old_node_to_district, partition.n_vertices, partition.n_districts);
-        double log_wst_new_verify = compute_log_wst_from_plan(
-            *(partition.graph), partition.node_to_district, partition.n_vertices, partition.n_districts);
-        if (std::abs(log_wst_old - log_wst_old_verify) > 0.01 ||
-            std::abs(log_wst_new - log_wst_new_verify) > 0.01) {
-            Rcpp::Rcout << "[WST_ERR] old: " << log_wst_old << " vs " << log_wst_old_verify
-                        << ", new: " << log_wst_new << " vs " << log_wst_new_verify << "\n";
-        }
-    }
-
     // MH acceptance: p * wst_correction * st_correction * energy_ratio
     double log_mh = std::log(p);
-    // compactness == 99.0: natural distribution test (only use p, no corrections)
-    if (compactness != 99.0 && compactness != 98.0) {
-        log_mh += log_wst_old - log_wst_new;
-        log_mh += log_st_ratio;
-        log_mh += old_constraint - new_constraint;
-    }
-    if (compactness == 98.0) {
-        // Use verified WST for diagnostic mode
-        double log_wst_old_v = compute_log_wst_from_plan(
-            *(partition.graph), old_node_to_district, partition.n_vertices, partition.n_districts);
-        double log_wst_new_v = compute_log_wst_from_plan(
-            *(partition.graph), partition.node_to_district, partition.n_vertices, partition.n_districts);
-        log_mh += log_wst_old_v - log_wst_new_v;
-    }
+    log_mh += log_wst_old - log_wst_new;
+    log_mh += log_st_ratio;
+    log_mh += old_constraint - new_constraint;
 
     double accept_prob = std::min(1.0, std::exp(log_mh));
     accept_prob_out = accept_prob;
