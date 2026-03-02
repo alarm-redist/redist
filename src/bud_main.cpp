@@ -1,5 +1,5 @@
 /********************************************************
- * Biased Up-Down Walk MCMC Redistricting Sampler
+ * Balanced Up-Down Walk MCMC Redistricting Sampler
  * Main entry point and MCMC loop
  *
  * Modeled on cw_main.cpp (CycleWalk MCMC loop)
