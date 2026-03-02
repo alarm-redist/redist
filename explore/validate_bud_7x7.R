@@ -65,11 +65,11 @@ init_plans <- redist_smc(map, nsims = 100) |>
 
 plans <- redist_bud(
   map = map,
-  nsims = 2e6,
+  nsims = 1e6,
   chains = n_chains,
-  ncores = n_chains / 2,
+  ncores = n_chains,
   thin = 100,
-  warmup = 1e6,
+  warmup = 1e4,
   init_plan = init_plans[, seq_len(n_chains)]
 )
 

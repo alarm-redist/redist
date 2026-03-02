@@ -1,5 +1,5 @@
 /********************************************************
- * BUD MCMC Redistricting Sampler
+ * Biased Up-Down Walk MCMC Redistricting Sampler
  * Main entry point and MCMC loop
  *
  * Modeled on cw_main.cpp (CycleWalk MCMC loop)
@@ -8,11 +8,6 @@
 #include "bud_main.h"
 #include "bud_partition.h"
 #include "bud_proposal.h"
-
-#ifdef _WIN32
-#include <R.h>
-extern "C" void R_ProcessEvents(void);
-#endif
 
 using namespace Rcpp;
 using namespace arma;
@@ -136,9 +131,6 @@ Rcpp::List bud_plans(
             }
         }
         Rcpp::checkUserInterrupt();
-#ifdef _WIN32
-        R_ProcessEvents();
-#endif
 
         // Break if we've filled the output
         if (idx == n_out - 1) {

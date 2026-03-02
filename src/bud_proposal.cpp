@@ -1,9 +1,6 @@
 /********************************************************
  * BUD MCMC Redistricting Sampler
  * BUD Proposal Implementation
- *
- * Faithful translation of BUD.jl/src/proposals/balanced_up_down_walk.jl
- * and BUD.jl/src/proposals/update.jl
  ********************************************************/
 
 #include "bud_proposal.h"
@@ -29,7 +26,6 @@ static void safe_link(LinkCutTree& lct, int u, int v, const char* /*site*/) {
 }
 
 // Helper: check if u and v are actual neighbors (directly connected) in the LCT
-// This is the C++ equivalent of Julia's neighbors_huh
 static bool neighbors_in_lct(LinkCutTree& lct, int u, int v) {
     if (!lct.same_tree(u, v)) return false;
     lct.evert(u);
@@ -40,7 +36,6 @@ static bool neighbors_in_lct(LinkCutTree& lct, int u, int v) {
 
 // ============================================================
 // 1. get_edge_for_cycle: pick random non-tree, non-marked edge
-//    Julia: get_edge_for_cycle in balanced_up_down_walk.jl:86
 // ============================================================
 static bool get_edge_for_cycle(BUDPartition& partition,
                                 int& u_out, int& v_out,
@@ -94,7 +89,6 @@ static bool get_edge_for_cycle(BUDPartition& partition,
 
 // ============================================================
 // 2. internal_forest_walk_edge: forest walk using given edge
-//    Julia: internal_forest_walk!(partition.lcp, rng; edge=(u, v))
 //    Also updates forest_edges for BUDPartition.
 // ============================================================
 static int internal_forest_walk_edge(BUDPartition& partition, int u, int v) {
@@ -163,7 +157,6 @@ static int internal_forest_walk_edge(BUDPartition& partition, int u, int v) {
 
 // ============================================================
 // 3. link_district_path: link marked edges in main LCT
-//    Julia: link_district_path! in balanced_up_down_walk.jl:104
 // ============================================================
 static void link_district_path(BUDPartition& partition,
                                 const std::vector<std::pair<int,int>>& district_path) {
@@ -181,7 +174,6 @@ static void link_district_path(BUDPartition& partition,
 
 // ============================================================
 // 4. cut_district_path: cut marked edges, update roots
-//    Julia: cut_district_path! in balanced_up_down_walk.jl:122
 // ============================================================
 static void cut_district_path(BUDPartition& partition,
                                const std::vector<std::pair<int,int>>& district_path) {
@@ -211,7 +203,6 @@ static void cut_district_path(BUDPartition& partition,
 
 // ============================================================
 // 5. compute_collapsed_pops: fragment populations for cycle path
-//    Julia: get_collapsed_cycle_weights! in balanced_up_down_walk.jl:171
 //    Also computes fragment_map: for each vertex in affected districts,
 //    which cycle_path vertex is its fragment root.
 // ============================================================
@@ -264,7 +255,6 @@ static std::vector<int> compute_collapsed_pops(
 
 // ============================================================
 // 6. setup_cycle_lct: build tmp_cycle from path with collapsed pops
-//    Julia: part of get_collapsed_cycle_weights!
 // ============================================================
 static std::vector<int> setup_cycle_lct(
     BUDPartition& partition,
@@ -299,7 +289,6 @@ static std::vector<int> setup_cycle_lct(
 
 // ============================================================
 // 7. cycle_cut_and_link: cut/link on tmp cycle LCT
-//    Julia: cut_and_link! in tree_operations.jl:260
 // ============================================================
 static void cycle_cut_and_link(
     BUDPartition& partition,
@@ -310,7 +299,7 @@ static void cycle_cut_and_link(
 ) {
     LinkCutTree& tmp = partition.tmp_cycle_lct;
 
-    // Make link_from the root before cutting (Julia: make_root!(cut[1]))
+    // Make link_from the root before cutting
     tmp.evert(link_from);
 
     // Cut
@@ -329,7 +318,6 @@ static void cycle_cut_and_link(
 // ============================================================
 // ============================================================
 // 8. get_balanced_cuts: find valid balanced cut positions
-//    Julia: getBalancedCuts in balanced_up_down_walk.jl:2
 // ============================================================
 static BalancedCutsResult get_balanced_cuts(
     BUDPartition& partition,
@@ -359,8 +347,6 @@ static BalancedCutsResult get_balanced_cuts(
     // Walk around cycle
     int ext_len = (int)ext_path.size();
     for (int ii = 1; ii <= n; ii++) {
-        // Julia: ii goes from 2 to length(ext_path)-1 (1-based)
-        // C++: ii goes from 1 to n (0-based into ext_path at ii)
         int cut_to = ext_path[ii + 1];     // ext_path[ii+1]
         int link_from = ext_path[ii];      // ext_path[ii]
         int link_to = ext_path[ii - 1];    // ext_path[ii-1]
@@ -391,7 +377,6 @@ static BalancedCutsResult get_balanced_cuts(
 // ============================================================
 // 9. find_km1_cuttable_positions: find cut positions where first
 //    part is balanced and rest is (k-1)-cuttable
-//    Julia: inside get_path_cut_log_prob! and mark_edges!
 // ============================================================
 static std::vector<int> find_km1_cuttable_positions(
     CuttableInfo& ci,
@@ -431,8 +416,6 @@ static std::vector<int> find_km1_cuttable_positions(
 
 // ============================================================
 // 10. get_path_cut_log_prob_recursive: backward probability
-//     Julia: get_path_cut_log_prob! in balanced_up_down_walk.jl:245
-//     C++ uses copies, so we work in local coordinates.
 // ============================================================
 static double get_path_cut_log_prob_recursive(
     BUDPartition& partition,
@@ -480,7 +463,7 @@ static double get_path_cut_log_prob_recursive(
     }
     if (low_edge_ind < 0) return -1e18;
 
-    // Cut the edge (Julia: just cut, no evert or recompute — existing closures valid)
+    // Cut the edge
     int cut_v1 = cycle_path[marked_ei];
     int cut_v2 = cycle_path[marked_ei + 1];
     partition.tmp_cycle_lct.cut(cut_v2);
@@ -501,11 +484,8 @@ static double get_path_cut_log_prob_recursive(
         partition, r_edge_inds, r_marked_edge_inds, r_cycle_path, r_node_perm,
         collapsed_pop, lower, upper, num_dists - 1);
 
-    // Re-link (Julia: evert!(cut_edge[1]); link!(cut_edge[1], cut_edge[2]))
+    // Re-link
     safe_link(partition.tmp_cycle_lct, cut_v1, cut_v2, "get_path_cut_log_prob_relink");
-
-    // Julia only undoes array reversals (using views). Since C++ uses copies,
-    // no array undo is needed. No evert or recompute in Julia's undo step.
 
     log_prob += -std::log((double)km1_positions.size());
     return log_prob;
@@ -513,7 +493,6 @@ static double get_path_cut_log_prob_recursive(
 
 // ============================================================
 // 11. get_path_cut_log_prob: wrapper
-//     Julia: get_path_cut_log_prob in balanced_up_down_walk.jl:225
 // ============================================================
 static double get_path_cut_log_prob(
     BUDPartition& partition,
@@ -543,10 +522,6 @@ static double get_path_cut_log_prob(
 
 // ============================================================
 // 12. mark_edges_recursive: forward sampling
-//     Julia: mark_edges! in balanced_up_down_walk.jl:354
-//     C++ uses copies (not views), so we work in local coordinates
-//     without accumulating offsets. Edge positions are relative to
-//     the current cycle_path.
 // ============================================================
 static std::pair<std::vector<int>, double> mark_edges_recursive(
     BUDPartition& partition,
@@ -595,7 +570,7 @@ static std::pair<std::vector<int>, double> mark_edges_recursive(
         if (edge_inds[i] == marked_edge) { low_edge_ind = i; break; }
     }
 
-    // Cut (Julia: just cut, no evert or recompute)
+    // Cut
     int cut_v1 = cycle_path[marked_edge];
     int cut_v2 = cycle_path[marked_edge + 1];
     partition.tmp_cycle_lct.cut(cut_v2);
@@ -631,7 +606,6 @@ static std::pair<std::vector<int>, double> mark_edges_recursive(
 
 // ============================================================
 // 13. mark_edges_forward: wrapper
-//     Julia: mark_edges in balanced_up_down_walk.jl:334
 // ============================================================
 static std::pair<std::vector<int>, double> mark_edges_forward(
     BUDPartition& partition,
@@ -660,7 +634,6 @@ static std::pair<std::vector<int>, double> mark_edges_forward(
 
 // ============================================================
 // 14. swap_marked_edge: trivial swap
-//     Julia: swap_marked_edge! in balanced_marked_tree.jl:229
 // ============================================================
 static void swap_marked_edge(BUDPartition& partition,
                               int cut_from, int cut_to,
@@ -687,7 +660,6 @@ static void swap_marked_edge(BUDPartition& partition,
 
 // ============================================================
 // 15. bud_proposal: main proposal function
-//     Julia: balanced_up_down_walk! in balanced_up_down_walk.jl:477
 //     Returns: (proposal_probability, update)
 //     If prob == 0, changes are already applied (forest walk / trivial)
 // ============================================================
@@ -1020,7 +992,7 @@ arma::uvec compute_new_plan(const BUDPartition& partition, const BUDUpdate& upda
 
 // ============================================================
 // 16b. apply_bud_update: apply accepted update to partition
-//      Uses incremental LCT updates (Julia-style: cut all first, then link)
+//      Uses incremental LCT updates
 //      to preserve the random spanning forest.
 // ============================================================
 void apply_bud_update(BUDPartition& partition, const BUDUpdate& update) {
@@ -1217,7 +1189,7 @@ static void revert_bud_update(BUDPartition& partition, const BUDUpdate& update,
         partition.lct.evert(l2);
         partition.lct.cut(l1);
     }
-    // Undo LCT cuts (reverse order)  
+    // Undo LCT cuts (reverse order)
     for (int ci = (int)update.cuts.size() - 1; ci >= 0; ci--) {
         if (!actually_cut[ci]) continue;
         auto [n1, n2] = update.cuts[ci];

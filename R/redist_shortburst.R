@@ -7,8 +7,8 @@
 
 #' Redistricting Optimization through Short Bursts
 #'
-#' This function uses [redist_mergesplit()], [redist_flip()], or [redist_cyclewalk()]
-#' to optimize a redistrict plan according to a user-provided criteria. It does so
+#' This function uses [redist_mergesplit()], [redist_flip()], [redist_cyclewalk()],
+#' or [redist_bud()] to optimize a redistrict plan according to a user-provided criteria.It does so
 #' by running the Markov chain for "short bursts" of usually 10 iterations, and then
 #' starting the chain anew from the best plan in the burst, according to the
 #' criteria. This implements the ideas in the below-referenced paper, "Voting
@@ -59,7 +59,7 @@
 #' @param thin Save every `thin`-th sample. Defaults to no thinning (1). Ignored
 #' if `return_all=TRUE`.
 #' @param backend The MCMC algorithm to use within each burst: `"mergesplit"`,
-#'   `"flip"`, or `"cyclewalk"`.
+#'   `"flip"`, `"cyclewalk"`, or `"bud"`.
 #' @param flip_lambda The parameter determining the number of swaps to attempt each iteration of flip mcmc.
 #' The number of swaps each iteration is equal to Pois(lambda) + 1. The default is 0.
 #' @param flip_eprob  The probability of keeping an edge connected in flip mcmc. The default is 0.05.
@@ -112,7 +112,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         burst_size <- function(i) per_burst
     }
     max_bursts <- as.integer(max_bursts)
-    match.arg(backend, c("flip", "mergesplit", "cyclewalk"))
+    match.arg(backend, c("flip", "mergesplit", "cyclewalk", "bud"))
 
     score_fn <- rlang::as_closure(score_fn)
     stopifnot(is.function(score_fn))
@@ -212,6 +212,27 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
                 verbosity = 0
             )$plans[, -1L]
         }
+    } else if (backend == "bud") {
+        run_burst <- function(init, steps) {
+            bud_plans(
+                N = steps,
+                l = adj,
+                init = init,
+                counties = counties,
+                pop = pop,
+                n_distr = ndists,
+                target = pop_bounds[2],
+                lower = pop_bounds[1],
+                upper = pop_bounds[3],
+                compactness = compactness,
+                constraints = constraints,
+                control = list(),
+                edge_weights = list(),
+                thin = 1L,
+                instep = 1L,
+                verbosity = 0
+            )$plans[, -1L]
+        }
     } else {
         # flip backend
         if (flip_eprob <= 0 || flip_eprob >= 1) {
@@ -267,6 +288,8 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
             cat("MERGE-SPLIT SHORT BURSTS\n")
         } else if (backend == "cyclewalk") {
             cat("CYCLEWALK SHORT BURSTS\n")
+        } else if (backend == "bud") {
+            cat("BUD SHORT BURSTS\n")
         } else {
             cat("FLIP SHORT BURSTS\n")
         }
