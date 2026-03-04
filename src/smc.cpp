@@ -100,7 +100,7 @@ void run_smc_step(
         int const smc_step_num, int const step_num, bool const is_final_split,
         umat &ancestors, const std::vector<int> &lags,
         RcppThread::ThreadPool &pool,
-        int verbosity, int diagnostic_level
+        int verbosity, int diagnostic_level, int const max_split_tries
 ) {
     // important constants
     const int M = old_plan_ensemble->nsims;
@@ -116,6 +116,7 @@ void run_smc_step(
     // wants to quit the program
     const int reject_check_int = 200; // check for interrupts every _ rejections
     const int check_int = 50; // check for interrupts every _ iterations
+    const bool check_max_split_tries = max_split_tries > 0; // only check if greater than 0
 
     // The new region in the split plans is the number of regions in a split plan minus
     // one so the number of regions in a presplit plan
@@ -177,10 +178,6 @@ void run_smc_step(
             // REprintf("Thread ID %d\n", thread_id);
         }
 
-        // if(RcppThread::isInterrupted()){
-        //     return;
-        // }
-
         if (thread_id < 0 || thread_id >= num_threads) {
             RcppThread::Rcerr << "Thread id thing broke, thread id is " << thread_id
             << " but num threads is  " << num_threads << std::endl;
@@ -191,9 +188,12 @@ void run_smc_step(
         int idx;
         int reject_ct = 0;
         RcppThread::checkUserInterrupt(i % check_int == 0);
-        // .
+        
 
         while (!ok) {
+            if(check_max_split_tries && reject_ct >= max_split_tries){
+                throw Rcpp::exception("Failed to split a single plan after `max_split_tries` attempts!\n");
+            }
             // increase the number of tries for particle i by 1
             draw_tries_vec[i]++;
             // sample previous plan
@@ -265,7 +265,6 @@ void run_smc_step(
                     Rprintf("Success, updating Plan %d\n", i);
                 }
                 RcppThread::checkUserInterrupt(i % check_int == 0);
-                // Rcpp::checkUserInterrupt();
                 // means idx was ok
                 // record index of new plan's parent
                 parent_index_vec[i] = idx;
@@ -274,9 +273,6 @@ void run_smc_step(
             }else{ // else bad sample so try again
                  // check for user interrupt
                 RcppThread::checkUserInterrupt(++reject_ct % reject_check_int == 0);
-                // if(++reject_ct % reject_check_int == 0){
-                //     Rcpp::checkUserInterrupt();
-                // }
                  // if diagnostic level 2 or higher get unsuccessful count
                  if(diagnostic_level >= 0){
                      // not atomic so technically not thread safe but doesn't seem to differ in practice
@@ -364,7 +360,7 @@ void run_merge_split_step_on_all_plans(
     int verbosity
 ){
     int const num_regions = plan_ptrs_vec[0]->num_regions;
-    const int check_int = 50; // check for interrupts every _ iterations
+    const int check_int = 15; // check for interrupts every _ iterations
     int nsims = (int) plan_ptrs_vec.size();
     if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Going to run %d steps!\n", nsteps_to_run);
 
@@ -448,6 +444,8 @@ void run_merge_split_step_on_all_plans(
                 false, nullptr
             );
         }
+
+        RcppThread::checkUserInterrupt(i % check_int == 0);
 
 
         if (verbosity >= 3) {
@@ -603,6 +601,8 @@ List run_redist_smc(
     std::string wgt_type = as<std::string>(control["weight_type"]);
     // whether or not to cache the weights 
     bool const using_caching = as<bool>(control["cache_weights"]);
+    // max tries value 
+    int const max_split_tries = as<int>(control["max_split_tries"]);
 
 
     // total number of steps to run
@@ -903,7 +903,7 @@ List run_redist_smc(
                 smc_step_num, step_num, is_final_splitting_step,
                 ancestors, lags,
                 pool,
-                verbosity, diagnostic_mode ? 3 : 0
+                verbosity, diagnostic_mode ? 3 : 0, max_split_tries
             );
             if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Ran smc step %d!\n", smc_step_num);
             if(smc_step_num == 0 && initial_num_regions == 1){
@@ -1143,20 +1143,19 @@ List run_redist_smc(
         }
         Rcpp::checkUserInterrupt();
 
-
-
     }
     } catch (RcppThread::UserInterruptException e) {
         cli_progress_done(bar);
+        Rcpp::Rcerr << "c++ threaded call interrupted!" << "\n";
         return R_NilValue;
     }catch (Rcpp::internal::InterruptedException e) {
         cli_progress_done(bar);
+        Rcpp::Rcerr << "c++ call interrupted!"  << "\n";
         return R_NilValue;
     }catch (const std::exception &e) {
         cli_progress_done(bar);
         Rcpp::Rcerr << "Standard exception: " << e.what() << "\n";
         return R_NilValue;
-
     }
     catch (...) {
         Rcpp::Rcerr << "Unknown exception caught!\n";

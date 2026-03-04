@@ -187,6 +187,11 @@
 #' have lower variance and lead to faster convergence but can be more
 #' computationally expensive, especially for computationally complex constraints
 #' or when `compactness` is not set to 1.
+#'  \item \code{max_split_tries} The maximum number of times to try splitting
+#' plans before giving up. If more than `max_split_tries` attempts at splitting
+#' are made without a success then an exception will be thrown. This can be
+#' useful for maps and constraints where it might become impossible to split
+#' plans after a certain step. Defaults to not checking.
 #' }
 #' @param adapt_k_thresh Deprecated. Pass in through the `split_params` arg.
 #' The threshold value used in the heuristic to select a
@@ -461,6 +466,7 @@ redist_smc <- function(
   nproc <- control_params_list[["nproc"]]
   weight_type <- control_params_list[["weight_type"]]
   cache_weights <- control_params_list[["cache_weights"]]
+  max_split_tries <- control_params_list[["max_split_tries"]]
 
   multiprocess <- nproc > 1
   # make sure we're not spawning more proccesses than runs
@@ -522,6 +528,7 @@ redist_smc <- function(
   cpp_control_list <- list(
     weight_type = weight_type,
     cache_weights = cache_weights,
+    max_split_tries = max_split_tries,
     lags = lags,
     seq_alpha = seq_alpha,
     pop_temper = pop_temper,
@@ -537,8 +544,7 @@ redist_smc <- function(
   # add the splitting parameters
   cpp_control_list <- c(cpp_control_list, forward_kernel_params)
 
-  # variable to handle cancelling gracefully
-  should_stop <- FALSE
+
 
 
   t1 <- Sys.time()
@@ -548,9 +554,6 @@ redist_smc <- function(
     .packages = "redist"
   ) %oper%
     {
-      if (should_stop){
-          return(NULL)
-      }
       if (chain == 1) {
         is_chain1 <- TRUE
       }
@@ -588,9 +591,7 @@ redist_smc <- function(
 
       if (length(algout) == 0) {
           # means user cancelled or something went wrong
-        cli::cli_process_done()
-          should_stop <- TRUE
-        return(NULL)
+          cli::cli_abort("Process Interrupted!")
       }
 
       # Make integer since arma::umat passed back to R as double
@@ -787,7 +788,7 @@ redist_smc <- function(
     }
   t2 <- Sys.time()
 
-  if (verbosity >= 1 && !should_stop) {
+  if (verbosity >= 1) {
     cli::cli_text(
       "{format(nsims*runs, big.mark=',')} plans sampled in
                  {format(t2-t1, digits=2)}"
@@ -1054,9 +1055,14 @@ get_init_plan_params <- function(
 #'     - `weight_type`: Must be either simple or optimal. Defaults to optimal
 #' @noRd
 extract_control_params <- function(control, compactness) {
-  control_param_names <- c("nproc", "weight_type", "cache_weights")
+  control_param_names <- c("nproc", "weight_type", "cache_weights", "max_split_tries")
 
-  if (is.list(control) && any(names(control) %in% control_param_names)) {
+
+  default_nproc <- 1L
+  default_weight_type <- "optimal"
+  default_cache_weights <- compactness != 1
+  default_max_split_tries <- 0L
+
     if ("nproc" %in% names(control)) {
       nproc <- control[["nproc"]]
       if (!rlang::is_scalar_integerish(nproc)) {
@@ -1069,8 +1075,8 @@ extract_control_params <- function(control, compactness) {
         )
       }
     } else {
-      # default to 1
-      nproc <- 1L
+      # default value
+      nproc <- default_nproc
     }
 
     if ("weight_type" %in% names(control)) {
@@ -1081,7 +1087,7 @@ extract_control_params <- function(control, compactness) {
       )
     } else {
       # else default to optimal
-      weight_type <- "optimal"
+      weight_type <- default_weight_type
     }
 
   if ("cache_weights" %in% names(control)) {
@@ -1090,20 +1096,32 @@ extract_control_params <- function(control, compactness) {
         cli::cli_abort("{.arg cache_weights} must be a scalar boolean")
       }
   } else {
-      # else default to caching if compactness is not 1
-      cache_weights <- compactness != 1
+      # else default
+      cache_weights <- default_cache_weights
   }
 
+  if ("max_split_tries" %in% names(control)) {
+      max_split_tries <- control[["max_split_tries"]]
+      if (!rlang::is_scalar_integerish(max_split_tries)) {
+          cli::cli_abort(
+              "{.arg max_split_tries} in {.arg control} must be a single integer!"
+          )
+      } else if (max_split_tries <= 0) {
+          cli::cli_abort(
+              "{.arg max_split_tries} in {.arg control} must be a positive integer!"
+          )
+      }
   } else {
-    nproc <- 1L
-    weight_type <- "optimal"
-    cache_weights <- compactness != 1
+      # default to 0 meaning don't check
+      max_split_tries <- default_max_split_tries
   }
+
 
   control_params <- list(
     nproc = nproc,
     weight_type = weight_type,
-    cache_weights = cache_weights
+    cache_weights = cache_weights,
+    max_split_tries = max_split_tries
   )
 
   control_params
