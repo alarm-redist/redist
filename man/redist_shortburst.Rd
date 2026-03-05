@@ -89,7 +89,7 @@ one (generally, the Pareto frontier). Recommended for monitoring purposes.}
 if \code{return_all=TRUE}.}
 
 \item{backend}{The MCMC algorithm to use within each burst: \code{"mergesplit"},
-\code{"flip"}, or \code{"cyclewalk"}.}
+\code{"flip"}, \code{"cyclewalk"}, or \code{"bud"}.}
 
 \item{flip_lambda}{The parameter determining the number of swaps to attempt each iteration of flip mcmc.
 The number of swaps each iteration is equal to Pois(lambda) + 1. The default is 0.}
@@ -110,8 +110,8 @@ a \code{redist_plans} object containing the final best plan
 (or the best plans after each burst, if \code{return_all=TRUE}.
 }
 \description{
-This function uses \code{\link[=redist_mergesplit]{redist_mergesplit()}}, \code{\link[=redist_flip]{redist_flip()}}, or \code{\link[=redist_cyclewalk]{redist_cyclewalk()}}
-to optimize a redistrict plan according to a user-provided criteria. It does so
+This function uses \code{\link[=redist_mergesplit]{redist_mergesplit()}}, \code{\link[=redist_flip]{redist_flip()}}, \code{\link[=redist_cyclewalk]{redist_cyclewalk()}},
+or \code{\link[=redist_bud]{redist_bud()}} to optimize a redistrict plan according to a user-provided criteria.It does so
 by running the Markov chain for "short bursts" of usually 10 iterations, and then
 starting the chain anew from the best plan in the burst, according to the
 criteria. This implements the ideas in the below-referenced paper, "Voting
