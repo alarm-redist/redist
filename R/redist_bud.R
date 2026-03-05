@@ -24,11 +24,21 @@
 #'   `init_plan="sample"`.
 #' @param counties A vector containing county (or other administrative or
 #'   geographic unit) labels for each unit, which may be integers ranging from 1
-#'   to the number of counties, or a factor or character vector.
+#'   to the number of counties, or a factor or character vector. If provided and
+#'   `edge_weights` is NULL, automatically creates edge weights that upweight
+#'   intra-county edges by 10x, encouraging plans that follow county lines.
 #' @param compactness Controls the compactness of the generated districts, with
 #'   higher values preferring more compact districts. Must be nonnegative. A
 #'   value of 0 samples uniformly over partitions. Default is `1`.
 #' @param constraints A [redist_constr] object or list of constraints.
+#' @param edge_weights Edge weights for the graph. Can be:
+#'   - A single number: used as the intra-county weight multiplier (requires
+#'     `counties`). For example, `edge_weights = 5` with `counties` upweights
+#'     intra-county edges by 5x.
+#'   - A list of edge weight specifications, each with `edge` (length-2 vertex
+#'     indices) and `weight` (positive number). Unspecified edges default to 1.0.
+#'   - NULL (default): if `counties` is provided, auto-generates 10x weights for
+#'     intra-county edges; otherwise no weighting.
 #' @param ncores The number of parallel processes to run. Defaults to the
 #'   number of available cores, capped at the number of chains.
 #' @param cl_type The cluster type (see [parallel::makeCluster()]). Safest is `"PSOCK"`,
@@ -60,6 +70,7 @@ redist_bud <- function(map, nsims,
                        init_plan = NULL,
                        counties = NULL, compactness = 1,
                        constraints = list(),
+                       edge_weights = NULL,
                        ncores = NULL,
                        cl_type = 'PSOCK',
                        return_all = TRUE,
@@ -184,6 +195,26 @@ redist_bud <- function(map, nsims,
   }
   constraints <- as.list(constraints)
 
+  # Handle edge weights
+  if (is.numeric(edge_weights) && length(edge_weights) == 1) {
+    if (all(counties == 1L)) {
+      cli::cli_abort('{.arg edge_weights} as a number requires {.arg counties} to be specified.')
+    }
+    edge_weights <- build_county_edge_weights(adj, counties, weight = edge_weights)
+    if (!silent) {
+      cli::cli_inform('Using county-based edge weights ({edge_weights[[1]]$weight}x for intra-county edges).')
+    }
+  } else if (!is.null(edge_weights)) {
+    edge_weights <- validate_edge_weights(edge_weights, adj, V)
+  } else if (!all(counties == 1L)) {
+    edge_weights <- build_county_edge_weights(adj, counties, weight = 10.0)
+    if (!silent) {
+      cli::cli_inform('Using county-based edge weights (10x for intra-county edges).')
+    }
+  } else {
+    edge_weights <- list()
+  }
+
   # Set verbosity
   verbosity <- 1
   if (verbose) verbosity <- 3
@@ -258,7 +289,7 @@ redist_bud <- function(map, nsims,
       compactness = compactness,
       constraints = constraints,
       control = control,
-      edge_weights = list(),
+      edge_weights = edge_weights,
       thin = thin,
       instep = 1L,
       verbosity = run_verbosity

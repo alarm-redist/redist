@@ -14,6 +14,7 @@ redist_bud(
   counties = NULL,
   compactness = 1,
   constraints = list(),
+  edge_weights = NULL,
   ncores = NULL,
   cl_type = "PSOCK",
   return_all = TRUE,
@@ -44,13 +45,26 @@ also request a random initial state for each chain by setting
 
 \item{counties}{A vector containing county (or other administrative or
 geographic unit) labels for each unit, which may be integers ranging from 1
-to the number of counties, or a factor or character vector.}
+to the number of counties, or a factor or character vector. If provided and
+\code{edge_weights} is NULL, automatically creates edge weights that upweight
+intra-county edges by 10x, encouraging plans that follow county lines.}
 
 \item{compactness}{Controls the compactness of the generated districts, with
 higher values preferring more compact districts. Must be nonnegative. A
 value of 0 samples uniformly over partitions. Default is \code{1}.}
 
 \item{constraints}{A \link{redist_constr} object or list of constraints.}
+
+\item{edge_weights}{Edge weights for the graph. Can be:
+\itemize{
+\item A single number: used as the intra-county weight multiplier (requires
+\code{counties}). For example, \code{edge_weights = 5} with \code{counties} upweights
+intra-county edges by 5x.
+\item A list of edge weight specifications, each with \code{edge} (length-2 vertex
+indices) and \code{weight} (positive number). Unspecified edges default to 1.0.
+\item NULL (default): if \code{counties} is provided, auto-generates 10x weights for
+intra-county edges; otherwise no weighting.
+}}
 
 \item{ncores}{The number of parallel processes to run. Defaults to the
 number of available cores, capped at the number of chains.}
