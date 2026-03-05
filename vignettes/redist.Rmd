@@ -53,7 +53,7 @@ preprint arXiv:1911.01503.]
 
 The other algorithms are
 
-- `redist.enumpart()` for efficient enumeration of small maps.^[from
+- `redist_enumpart()` for efficient enumeration of small maps.^[from
 [The Essential Role of Empirical Validation in Legislative Redistricting Simulation](https://imai.fas.harvard.edu/research/files/enumerate.pdf)]
 - `redist_shortburst()` for optimizing a plan according to a user-provided
 criterion.^[from Cannon, S., Goldbloom-Helzner, A., Gupta, V., Matthews, J. N.,

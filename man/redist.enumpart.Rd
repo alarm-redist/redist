@@ -2,7 +2,7 @@
 % Please edit documentation in R/enumpart.R
 \name{redist.enumpart}
 \alias{redist.enumpart}
-\title{Enumerate All Partitions (Fifield et al. 2020)}
+\title{Enumerate All Partitions}
 \usage{
 redist.enumpart(
   adj,
@@ -21,44 +21,46 @@ redist.enumpart(
 )
 }
 \arguments{
-\item{adj}{zero indexed adjacency list.}
+\item{adj}{Zero-indexed adjacency list.}
 
-\item{ordered_path}{valid path to output the ordered adjacency map to}
+\item{ordered_path}{Valid path to output the ordered adjacency map to.}
 
-\item{out_path}{Valid path to output the enumerated districts}
+\item{out_path}{Valid path to output the enumerated districts.}
 
-\item{ndists}{number of districts to enumerate}
+\item{ndists}{Number of districts to enumerate.}
 
-\item{all}{boolean. TRUE outputs all districts. FALSE samples n districts.}
+\item{all}{If \code{TRUE}, outputs all districts. If \code{FALSE}, draws \code{n}
+districts uniformly at random.}
 
-\item{n}{integer. Number of districts to output if all is FALSE. Returns
-districts selected from uniform random distribution.}
+\item{n}{Number of districts to output if \code{all} is \code{FALSE}.}
 
-\item{weight_path}{A path (not including ".dat") to a space-delimited file containing a vector of
-vertex weights, to be used along with \code{lower} and \code{upper}.}
+\item{weight_path}{A path (not including \code{".dat"}) to a vertex weights file.}
 
-\item{lower}{A lower bound on each partition's total weight, implemented by rejection sampling.}
+\item{lower}{A lower bound on each partition's total weight.}
 
 \item{upper}{An upper bound on each partition's total weight.}
 
-\item{init}{Runs redist.init.enumpart. Defaults to FALSE. Should be run on first use.}
+\item{init}{If \code{TRUE}, runs initialization first.}
 
-\item{read}{boolean. Defaults to TRUE. If TRUE, reads and returns the results.}
+\item{read}{If \code{TRUE}, reads and returns the results.}
 
-\item{total_pop}{the vector of precinct populations}
+\item{total_pop}{The vector of precinct populations.}
 
-\item{unordered_path}{Deprecated.}
+\item{unordered_path}{Deprecated, ignored.}
 }
 \value{
-List with entries district_membership and parity.
+A list with \code{plans} (district membership matrix) and \code{parity}.
 }
 \description{
+\strong{Deprecated}: Use \code{\link[=redist_enumpart]{redist_enumpart()}} instead.
+
 Single function for standard enumeration analysis, using ZDD methodology
 (Fifield, Imai, Kawahara, and Kenny 2020).
 }
 \references{
-Fifield, B., Imai, K., Kawahara, J., & Kenny, C. T. (2020). The essential
-role of empirical validation in legislative redistricting simulation.
-\emph{Statistics and Public Policy}, 7(1), 52-68.
+Fifield, B., Imai, K., Kawahara, J., & Kenny, C. T. (2020).
+The essential role of empirical validation in legislative redistricting
+simulation. \emph{Statistics and Public Policy}, 7(1), 52-68.
 }
 \concept{enumerate}
+\keyword{internal}
