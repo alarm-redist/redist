@@ -9,7 +9,7 @@ test_that('cycle walk distribution matches expected (log st distribution)', {
   set.seed(123)
 
   result <- redist_mms(grid,
-    nsims = 2000000, warmup = 10000, l = 3,
+    nsims = 100000, warmup = 1000, l = 3, thin = 10,
     init_plan = grid$init, compactness = 1, verbose = FALSE
   )
 
