@@ -1,10 +1,3 @@
-#####################################################
-# Author: Christopher T. Kenny
-# Institution: Harvard University
-# Date Created: 2026/03
-# Purpose: tidy R wrapper for Multi-Merge-Split MCMC sampler
-####################################################
-
 #' Multi-Merge-Split MCMC Redistricting Sampler
 #'
 #' `redist_mms` uses a Markov Chain Monte Carlo algorithm that generalizes

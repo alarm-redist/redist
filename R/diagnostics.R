@@ -223,7 +223,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
             code <- str_glue("plot(<map object>, rowMeans(as.matrix({name}) == <bottleneck iteration>))")
             cli::cat_line("    ", cli::code_highlight(code, "Material"))
         }
-    } else if (algo %in% c("mergesplit", 'flip', 'cyclewalk')) {
+    } else if (algo %in% c("mergesplit", 'flip', 'cyclewalk', 'mms')) {
 
         if (algo == 'mergesplit') {
             cli::cli_text("{.strong Merge-Split MCMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
@@ -231,8 +231,11 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
         } else if (algo == 'flip') {
             cli::cli_text("{.strong Flip MCMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
                  districts on {fmt_comma(nrow(plans_m))} units")
-        } else {  # cyclewalk
+        } else if (algo == 'cyclewalk') {
             cli::cli_text("{.strong CycleWalk MCMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
+                 districts on {fmt_comma(nrow(plans_m))} units")
+        } else if (algo == 'mms') {
+            cli::cli_text("{.strong Multi Merge-Split MCMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
                  districts on {fmt_comma(nrow(plans_m))} units")
         }
 
