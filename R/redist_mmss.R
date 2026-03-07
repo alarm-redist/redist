@@ -1,6 +1,6 @@
 #' Multi-Merge-Split MCMC Redistricting Sampler
 #'
-#' `redist_mms` uses a Markov Chain Monte Carlo algorithm that generalizes
+#' `redist_mmss` uses a Markov Chain Monte Carlo algorithm that generalizes
 #' the merge-split sampler (Carter et al. 2019) to merge and re-split `l`
 #' districts at each step. When `l=2`, this reduces to the standard merge-split
 #' algorithm. When `l=ndists`, this functions similar to a much less efficient SMC.
@@ -84,8 +84,8 @@
 #' @examples
 #' data(fl25)
 #' fl_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1)
-#' sampled <- redist_mms(fl_map, 100, l = 3)
-redist_mms <- function(map,
+#' sampled <- redist_mmss(fl_map, 100, l = 3)
+redist_mmss <- function(map,
                        nsims,
                        warmup = 0,
                        thin = 1L,
@@ -289,7 +289,7 @@ redist_mms <- function(map,
         `%oper%` <- `%dorng%`
         if (!silent) {
             of <- ifelse(Sys.info()[["sysname"]] == "Windows",
-                         tempfile(pattern = paste0("mms_", substr(Sys.time(), 1, 10)), fileext = ".txt"),
+                         tempfile(pattern = paste0("mmss_", substr(Sys.time(), 1, 10)), fileext = ".txt"),
                          "")
             cl <- parallel::makeCluster(ncores,
                                         type = cl_type, outfile = of, methods = FALSE,
@@ -314,7 +314,7 @@ redist_mms <- function(map,
         run_verbosity <- if (chain == 1 || verbosity == 3) verbosity else 0
 
         t1_run <- Sys.time()
-        algout <- mms_plans(nsims, adj, init_plans[, chain], counties, pop,
+        algout <- mmss_plans(nsims, adj, init_plans[, chain], counties, pop,
                             ndists, pop_bounds[2], pop_bounds[1], pop_bounds[3],
                             compactness, constraints, control, k, thin, l, run_verbosity)
         t2_run <- Sys.time()
@@ -359,7 +359,7 @@ redist_mms <- function(map,
     out <- new_redist_plans(
         plans = plans,
         map = map,
-        algorithm = "mms",
+        algorithm = "mmss",
         wgt = NULL,
         resampled = FALSE,
         compactness = compactness,

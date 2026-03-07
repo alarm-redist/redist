@@ -1,5 +1,5 @@
-#ifndef MMS_H
-#define MMS_H
+#ifndef MMSS_H
+#define MMSS_H
 
 #include "merge_split.h"
 

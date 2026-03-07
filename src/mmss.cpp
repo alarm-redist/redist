@@ -172,7 +172,7 @@ static bool cut_one_mms(Tree &ust, int k, int root,
 
 
 /*
- * Main MMS MCMC loop.
+ * Main MMSS MCMC loop.
  */
 // [[Rcpp::export]]
 Rcpp::List mms_plans(int N, List l, const arma::uvec init, const arma::uvec &counties,
