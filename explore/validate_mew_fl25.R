@@ -37,9 +37,9 @@ plans_enum <- redist_plans(plans_enum, map, algorithm = 'enumpart') |>
 ## Plan compactness
 comp_rg <- sort(unique(plans_enum$comp_edges))
 
-# `redist_smc_ci()` checks R-hat diagnostics and computes interval estimates
+# checks R-hat diagnostics and computes interval estimates
 d_comp_est <- map(comp_rg, function(bin) {
-  redist_smc_ci(plans_sim, comp_edges == bin, conf = 0.95) |>
+  redist_mcmc_ci(plans_sim, comp_edges == bin, conf = 0.95) |>
     rename(est = 1, lower = 2, upper = 3) |>
     mutate(comp_edges = bin, .before = est)
 }) |>
