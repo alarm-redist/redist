@@ -396,9 +396,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// mms_plans
-Rcpp::List mms_plans(int N, List l, const arma::uvec init, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double target, double lower, double upper, double rho, List constraints, List control, int k, int thin, int l_merge, int verbosity);
-RcppExport SEXP _redist_mms_plans(SEXP NSEXP, SEXP lSEXP, SEXP initSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP constraintsSEXP, SEXP controlSEXP, SEXP kSEXP, SEXP thinSEXP, SEXP l_mergeSEXP, SEXP verbositySEXP) {
+// mmss_plans
+Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double target, double lower, double upper, double rho, List constraints, List control, int k, int thin, int l_merge, int verbosity);
+RcppExport SEXP _redist_mmss_plans(SEXP NSEXP, SEXP lSEXP, SEXP initSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP constraintsSEXP, SEXP controlSEXP, SEXP kSEXP, SEXP thinSEXP, SEXP l_mergeSEXP, SEXP verbositySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -418,7 +418,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type thin(thinSEXP);
     Rcpp::traits::input_parameter< int >::type l_merge(l_mergeSEXP);
     Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
-    rcpp_result_gen = Rcpp::wrap(mms_plans(N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, l_merge, verbosity));
+    rcpp_result_gen = Rcpp::wrap(mmss_plans(N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, l_merge, verbosity));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -713,7 +713,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_pop_tally", (DL_FUNC) &_redist_pop_tally, 3},
     {"_redist_max_dev", (DL_FUNC) &_redist_max_dev, 3},
     {"_redist_ms_plans", (DL_FUNC) &_redist_ms_plans, 15},
-    {"_redist_mms_plans", (DL_FUNC) &_redist_mms_plans, 16},
+    {"_redist_mmss_plans", (DL_FUNC) &_redist_mmss_plans, 16},
     {"_redist_pareto_dominated", (DL_FUNC) &_redist_pareto_dominated, 1},
     {"_redist_closest_adj_pop", (DL_FUNC) &_redist_closest_adj_pop, 3},
     {"_redist_rint1", (DL_FUNC) &_redist_rint1, 2},

@@ -7,7 +7,7 @@
 
 #' Redistricting Optimization through Short Bursts
 #'
-#' This function uses [redist_mergesplit()], [redist_flip()], or [redist_cyclewalk()]
+#' This function uses [redist_mergesplit()], [redist_flip()], [redist_cyclewalk()], or [redist_mmss()]
 #' to optimize a redistrict plan according to a user-provided criteria. It does so
 #' by running the Markov chain for "short bursts" of usually 10 iterations, and then
 #' starting the chain anew from the best plan in the burst, according to the
@@ -59,7 +59,7 @@
 #' @param thin Save every `thin`-th sample. Defaults to no thinning (1). Ignored
 #' if `return_all=TRUE`.
 #' @param backend The MCMC algorithm to use within each burst: `"mergesplit"`,
-#'   `"flip"`, or `"cyclewalk"`.
+#'   `"flip"`, `"cyclewalk"`, or `"mmss"`.
 #' @param flip_lambda The parameter determining the number of swaps to attempt each iteration of flip mcmc.
 #' The number of swaps each iteration is equal to Pois(lambda) + 1. The default is 0.
 #' @param flip_eprob  The probability of keeping an edge connected in flip mcmc. The default is 0.05.
@@ -67,6 +67,8 @@
 #'   backend (default 10).
 #' @param cw_cycle_walk_frac Fraction of proposals that are cycle walks vs
 #'   forest walks for cyclewalk backend (default 0.1).
+#' @param mmss_l The number of districts to merge and re-split at each step for
+#'   the `mmss` backend (default 3). Must be at least 2.
 #' @param verbose Whether to print out intermediate information while sampling.
 #' Recommended for monitoring purposes.
 #'
@@ -99,6 +101,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
                               backend = "mergesplit",
                               flip_lambda = 0, flip_eprob = 0.05,
                               cw_instep = 10L, cw_cycle_walk_frac = 0.1,
+                              mmss_l = 3L,
                               verbose = TRUE) {
 
     map <- validate_redist_map(map)
@@ -112,7 +115,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         burst_size <- function(i) per_burst
     }
     max_bursts <- as.integer(max_bursts)
-    match.arg(backend, c("flip", "mergesplit", "cyclewalk"))
+    match.arg(backend, c("flip", "mergesplit", "cyclewalk", "mmss"))
 
     score_fn <- rlang::as_closure(score_fn)
     stopifnot(is.function(score_fn))
@@ -212,6 +215,21 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
                 verbosity = 0
             )$plans[, -1L]
         }
+    } else if (backend == "mmss") {
+        mmss_l <- as.integer(mmss_l)
+        if (mmss_l < 2L) cli::cli_abort("{.arg mmss_l} must be at least 2.")
+        if (mmss_l > ndists) cli::cli_abort("{.arg mmss_l} must be at most the number of districts ({ndists}).")
+        control <- list(adapt_k_thresh = adapt_k_thresh, do_mh = TRUE)
+        x <- ms_plans(1, adj, init_plan, counties, pop, ndists, pop_bounds[2],
+                      pop_bounds[1], pop_bounds[3], compactness,
+                      list(), control, 0L, 1L, verbosity = 0)
+        k <- x$est_k
+
+        run_burst <- function(init, steps) {
+            mmss_plans(steps, adj, init, counties, pop, ndists,
+                pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
+                constraints, control, k, 1L, mmss_l, verbosity = 0)$plans[, -1L]
+        }
     } else {
         # flip backend
         if (flip_eprob <= 0 || flip_eprob >= 1) {
@@ -267,6 +285,8 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
             cat("MERGE-SPLIT SHORT BURSTS\n")
         } else if (backend == "cyclewalk") {
             cat("CYCLEWALK SHORT BURSTS\n")
+        } else if (backend == "mmss") {
+            cat("MMSS SHORT BURSTS\n")
         } else {
             cat("FLIP SHORT BURSTS\n")
         }

@@ -109,8 +109,8 @@ ms_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, r
     .Call(`_redist_ms_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, verbosity)
 }
 
-mms_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, l_merge, verbosity) {
-    .Call(`_redist_mms_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, l_merge, verbosity)
+mmss_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, l_merge, verbosity) {
+    .Call(`_redist_mmss_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, l_merge, verbosity)
 }
 
 pareto_dominated <- function(x) {

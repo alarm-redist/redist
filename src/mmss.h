@@ -10,7 +10,7 @@
  * `l_merge` districts at each step.  When l_merge=2 this reduces to
  * standard merge-split.
  */
-Rcpp::List mms_plans(int N, List l, const arma::uvec init,
+Rcpp::List mmss_plans(int N, List l, const arma::uvec init,
                      const arma::uvec &counties, const arma::uvec &pop,
                      int n_distr, double target, double lower, double upper,
                      double rho, List constraints, List control,

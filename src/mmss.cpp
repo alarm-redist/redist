@@ -7,7 +7,7 @@
  * re-splitting them using the merge-split proposal.
  ********************************************************/
 
-#include "mms.h"
+#include "mmss.h"
 
 /*
  * Select `l` connected districts from the district graph via random BFS.
@@ -175,7 +175,7 @@ static bool cut_one_mms(Tree &ust, int k, int root,
  * Main MMSS MCMC loop.
  */
 // [[Rcpp::export]]
-Rcpp::List mms_plans(int N, List l, const arma::uvec init, const arma::uvec &counties,
+Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &counties,
                      const arma::uvec &pop, int n_distr, double target, double lower,
                      double upper, double rho, List constraints, List control,
                      int k, int thin, int l_merge, int verbosity) {
