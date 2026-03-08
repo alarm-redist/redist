@@ -106,8 +106,8 @@ if (FALSE) {
         toc()
 
         tic()
-        plans_ms = redist_mergesplit_parallel(pa, 2000, chains=4, warmup=1000,
-                                              counties=county, verbose=FALSE)
+        plans_ms = redist_mergesplit(pa, 2000, chains=4, warmup=1000,
+                                     counties=county, verbose=FALSE)
         is
         toc()
     }

@@ -25,6 +25,7 @@ redist_shortburst(
   flip_eprob = 0.05,
   cw_instep = 10L,
   cw_cycle_walk_frac = 0.1,
+  mmss_l = 3L,
   verbose = TRUE
 )
 }
@@ -89,7 +90,7 @@ one (generally, the Pareto frontier). Recommended for monitoring purposes.}
 if \code{return_all=TRUE}.}
 
 \item{backend}{The MCMC algorithm to use within each burst: \code{"mergesplit"},
-\code{"flip"}, or \code{"cyclewalk"}.}
+\code{"flip"}, \code{"cyclewalk"}, or \code{"mmss"}.}
 
 \item{flip_lambda}{The parameter determining the number of swaps to attempt each iteration of flip mcmc.
 The number of swaps each iteration is equal to Pois(lambda) + 1. The default is 0.}
@@ -102,6 +103,9 @@ backend (default 10).}
 \item{cw_cycle_walk_frac}{Fraction of proposals that are cycle walks vs
 forest walks for cyclewalk backend (default 0.1).}
 
+\item{mmss_l}{The number of districts to merge and re-split at each step for
+the \code{mmss} backend (default 3). Must be at least 2.}
+
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended for monitoring purposes.}
 }
@@ -110,7 +114,7 @@ a \code{redist_plans} object containing the final best plan
 (or the best plans after each burst, if \code{return_all=TRUE}.
 }
 \description{
-This function uses \code{\link[=redist_mergesplit]{redist_mergesplit()}}, \code{\link[=redist_flip]{redist_flip()}}, or \code{\link[=redist_cyclewalk]{redist_cyclewalk()}}
+This function uses \code{\link[=redist_mergesplit]{redist_mergesplit()}}, \code{\link[=redist_flip]{redist_flip()}}, \code{\link[=redist_cyclewalk]{redist_cyclewalk()}}, or \code{\link[=redist_mmss]{redist_mmss()}}
 to optimize a redistrict plan according to a user-provided criteria. It does so
 by running the Markov chain for "short bursts" of usually 10 iterations, and then
 starting the chain anew from the best plan in the burst, according to the

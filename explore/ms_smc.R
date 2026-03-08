@@ -1,11 +1,11 @@
 map = alarmdata::alarm_50state_map("CT") |>
     set_pop_tol(0.05)
 
-# pl1 = redist_mergesplit_parallel(map, 2200, warmup=200, chains=2)
+# pl1 = redist_mergesplit(map, 2200, warmup=200, chains=2)
 # pl2 = redist_mergesplit(map, 2200, warmup=200)
 perims = prep_perims(map)
 
-pl_ms = redist_mergesplit_parallel(map, 25*2000+1000, warmup=1000, chains=4L,
+pl_ms = redist_mergesplit(map, 25*2000+1000, warmup=1000, chains=4L,
                                    thin=25, init_plan="sample", adapt_k_thresh=1) |>
     mutate(polsby = comp_polsby(pl(), map, perim_df=perims, ncores=4),
            dem = group_frac(map, ndv, ndv + nrv)) |>

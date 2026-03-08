@@ -418,7 +418,7 @@ redist.plot.plans <- function(plans, draws, shp, qty = NULL, interactive = FALSE
 #' data(iowa)
 #'
 #' iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05)
-#' plans <- redist_mergesplit_parallel(iowa_map, nsims = 200, chains = 2, silent = TRUE) %>%
+#' plans <- redist_mergesplit(iowa_map, nsims = 200, chains = 2, silent = TRUE) %>%
 #'     mutate(dem = group_frac(iowa_map, dem_08, dem_08 + rep_08)) %>%
 #'     number_by(dem)
 #' redist.plot.trace(plans, dem, district = 1)

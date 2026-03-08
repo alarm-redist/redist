@@ -34,10 +34,15 @@
 #' least the first 20% of samples, and in any case no less than around 100
 #' samples, unless initializing from a random plan.
 #' @param thin Save every `thin`-th sample. Defaults to no thinning (1).
-#' @param init_plan The initial state of the map. If not provided, will default to
-#' the reference map of the \code{map} object, or if none exists, will sample
-#' a random initial state using \code{\link{redist_smc}}. You can also request
-#' a random initial state by setting \code{init_plan="sample"}.
+#' @param init_plan The initial state of the map, provided as a single vector
+#' to be shared across all chains, or a matrix with `chains` columns.
+#' If not provided, will default to the reference map of the \code{map} object,
+#' or if none exists, will sample a random initial state using
+#' \code{\link{redist_smc}}. You can also request a random initial state by
+#' setting \code{init_plan="sample"}.
+#' @param chains The number of chains to run. Each chain will have `nsims`
+#' draws. If `init_plan` is sampled, each chain will be initialized with its
+#' own sampled plan. Defaults to 1.
 #' @param counties A vector containing county (or other administrative or
 #' geographic unit) labels for each unit, which may be integers ranging from 1
 #' to the number of counties, or a factor or character vector.  If provided,
@@ -60,6 +65,13 @@
 #' Must be between 0 and 1.
 #' @param k The number of edges to consider cutting after drawing a spanning
 #' tree. Should be selected automatically in nearly all cases.
+#' @param ncores The number of parallel processes to run. Defaults to the
+#' number of available cores, capped at the number of chains. Only used when
+#' `chains > 1`.
+#' @param cl_type The cluster type (see [parallel::makeCluster()]). Safest is
+#' `"PSOCK"`, but `"FORK"` may be appropriate in some settings.
+#' @param return_all If `TRUE` return all sampled plans; otherwise, just return
+#' the final plan from each chain.
 #' @param init_name a name for the initial plan, or \code{FALSE} to not include
 #' the initial plan in the output.  Defaults to the column name of the
 #' existing plan, or "\code{<init>}" if the initial plan is sampled.
@@ -69,7 +81,9 @@
 #' @param silent Whether to suppress all diagnostic information.
 #'
 #' @return \code{redist_mergesplit} returns an object of class
-#' \code{\link{redist_plans}} containing the simulated plans.
+#' \code{\link{redist_plans}} containing the simulated plans. When
+#' `chains > 1`, an additional `chain` column is included indicating which
+#' chain each plan was drawn from.
 #'
 #' @references
 #' Carter, D., Herschlag, G., Hunter, Z., and Mattingly, J. (2019). A
@@ -93,6 +107,8 @@
 #' sampled_constr <- redist_mergesplit(fl_map, 10000, constraints = list(
 #'     incumbency = list(strength = 1000, incumbents = c(3, 6, 25))
 #' ))
+#'
+#' sampled_parallel <- redist_mergesplit(fl_map, nsims = 100, chains = 2)
 #' }
 #'
 #' @concept simulate
@@ -101,10 +117,12 @@
 #' @export
 redist_mergesplit <- function(map, nsims,
                               warmup = if (is.null(init_plan)) 10 else max(100, nsims %/% 5),
-                              thin = 1L, init_plan = NULL, counties = NULL, compactness = 1,
+                              thin = 1L, init_plan = NULL, chains = 1L,
+                              counties = NULL, compactness = 1,
                               constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
-                              adapt_k_thresh = 0.99, k = NULL, init_name = NULL,
-                              silly_adj_fix = FALSE,
+                              adapt_k_thresh = 0.99, k = NULL,
+                              ncores = NULL, cl_type = "PSOCK", return_all = TRUE,
+                              init_name = NULL, silly_adj_fix = FALSE,
                               verbose = FALSE, silent = FALSE) {
     if (!missing(constraint_fn)) cli::cli_warn("{.arg constraint_fn} is deprecated.")
 
@@ -114,6 +132,7 @@ redist_mergesplit <- function(map, nsims,
     ndists <- attr(map, "ndists")
     warmup <- max(warmup, 0L)
     thin <- as.integer(thin)
+    chains <- as.integer(chains)
 
     if (compactness < 0)
         cli::cli_abort("{.arg compactness} must be non-negative.")
@@ -125,29 +144,58 @@ redist_mergesplit <- function(map, nsims,
         cli::cli_abort("{.arg thin} must be a positive integer, and no larger than {.arg nsims - warmup}.")
     if (nsims < 1)
         cli::cli_abort("{.arg nsims} must be positive.")
+    if (chains < 1)
+        cli::cli_abort("{.arg chains} must be positive.")
 
     exist_name <- attr(map, "existing_col")
     counties <- rlang::eval_tidy(rlang::enquo(counties), map)
-    orig_lookup = seq_len(ndists)
-    if (is.null(init_plan) && !is.null(exist_name)) {
-        init_plan <- vctrs::vec_group_id(get_existing(map))
-        orig_lookup = unique(get_existing(map))
-        if (is.null(init_name)) init_name <- exist_name
-    }  else if (!is.null(init_plan) && is.null(init_name)) {
-        init_name <- "<init>"
+
+    # Build init_plans matrix (V x chains)
+    if (is.null(init_plan)) {
+        if (!is.null(exist_name)) {
+            init_plans <- matrix(rep(vctrs::vec_group_id(get_existing(map)), chains), ncol = chains)
+            if (is.null(init_name)) {
+                init_names <- rep(exist_name, chains)
+            } else {
+                init_names <- rep(init_name, chains)
+            }
+        } else {
+            init_plan <- "sample"
+        }
     }
-    if (length(init_plan) == 0L || isTRUE(init_plan == "sample")) {
-        init_plan <- as.integer(get_plans_matrix(
-            redist_smc(map, 10, counties, resample = FALSE, ref_name = FALSE, silent = TRUE, ncores = 1))[, 1])
-        if (is.null(init_name)) init_name <- "<init>"
+
+    if (isTRUE(init_plan == "sample")) {
+        if (!silent) cli::cli_inform("Sampling initial plans with SMC")
+        init_plans <- get_plans_matrix(
+            redist_smc(map, chains, counties, compactness, constraints,
+                       resample = TRUE, adapt_k_thresh = adapt_k_thresh,
+                       ref_name = FALSE, verbose = verbose, silent = silent, ncores = 1))
+        if (is.null(init_name)) {
+            init_names <- if (chains == 1) "<init>" else paste0("<init> ", seq_len(chains))
+        } else {
+            init_names <- paste(init_name, seq_len(chains))
+        }
+    } else if (!is.null(init_plan) && !is.character(init_plan)) {
+        if (is.matrix(init_plan)) {
+            if (ncol(init_plan) < chains)
+                cli::cli_abort("{.arg init_plan} matrix must have at least {chains} column{?s}.")
+            init_plans <- init_plan[, seq_len(chains), drop = FALSE]
+        } else {
+            init_plans <- matrix(rep(as.integer(init_plan), chains), ncol = chains)
+        }
+        if (is.null(init_name)) {
+            init_names <- if (chains == 1) "<init>" else paste0("<init> ", seq_len(chains))
+        } else {
+            init_names <- rep(init_name, chains)
+        }
     }
 
     # check init
-    if (length(init_plan) != V)
+    if (nrow(init_plans) != V)
         cli::cli_abort("{.arg init_plan} must be as long as the number of units as `map`.")
-    if (max(init_plan) != ndists)
+    if (max(init_plans) != ndists)
         cli::cli_abort("{.arg init_plan} must have the same number of districts as `map`.")
-    if (any(contiguity(adj, init_plan) != 1))
+    if (any(apply(init_plans, 2, function(x) contiguity(adj, x)) != 1))
         cli::cli_warn("{.arg init_plan} should have contiguous districts.")
 
     if (is.null(counties)) {
@@ -156,11 +204,10 @@ redist_mergesplit <- function(map, nsims,
         if (any(is.na(counties)))
             cli::cli_abort("County vector must not contain missing values.")
 
-        # handle discontinuous counties
         if (silly_adj_fix) {
             for (j in seq_len(ndists)) {
-                idx_distr = which(init_plan == j)
-                adj_distr = redist.reduce.adjacency(adj, idx_distr)
+                idx_distr <- which(init_plans[, 1] == j)
+                adj_distr <- redist.reduce.adjacency(adj, idx_distr)
                 component <- contiguity(adj_distr, vctrs::vec_group_id(counties[idx_distr]))
                 counties[idx_distr] <- paste0(
                     j, ":",
@@ -169,7 +216,7 @@ redist_mergesplit <- function(map, nsims,
                                    as.character(counties[idx_distr]))
                 )
             }
-            counties = vctrs::vec_group_id(counties)
+            counties <- vctrs::vec_group_id(counties)
         } else {
             component <- contiguity(adj, vctrs::vec_group_id(counties))
             counties <- dplyr::if_else(component > 1,
@@ -197,11 +244,10 @@ redist_mergesplit <- function(map, nsims,
     verbosity <- 1
     if (verbose) verbosity <- 3
     if (silent) verbosity <- 0
-    if (is.null(k)) k <- 0
 
     pop_bounds <- attr(map, "pop_bounds")
     pop <- map[[attr(map, "pop_col")]]
-    init_pop <- pop_tally(matrix(init_plan, ncol = 1), pop, ndists)
+    init_pop <- pop_tally(init_plans, pop, ndists)
     if (any(init_pop < pop_bounds[1]) | any(init_pop > pop_bounds[3]))
         cli::cli_abort("Provided initialization does not meet population bounds.")
     if (any(pop >= pop_bounds[3])) {
@@ -211,37 +257,145 @@ redist_mergesplit <- function(map, nsims,
             "x" = "Redistricting impossible."))
     }
 
-    t1_run <- Sys.time()
-    control = list(adapt_k_thresh=adapt_k_thresh, do_mh=TRUE)
-    algout <- ms_plans(nsims, adj, init_plan, counties, pop, ndists,
-                       pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
-                       constraints, control, k, thin, verbosity)
-    t2_run <- Sys.time()
+    control <- list(adapt_k_thresh = adapt_k_thresh, do_mh = TRUE)
 
-    storage.mode(algout$plans) <- "integer"
-    acceptances <- as.logical(algout$mhdecisions)
+    # Pre-estimate k (shared across all chains)
+    if (is.null(k) || k <= 0) {
+        k <- ms_plans(1, adj, init_plans[, 1], counties, pop, ndists, pop_bounds[2],
+                      pop_bounds[1], pop_bounds[3], compactness,
+                      list(), control, 0L, 1L, verbosity = 0)$est_k
+    }
+    k <- as.integer(k)
 
-    warmup_idx <- c(seq_len(1 + warmup %/% thin), ncol(algout$plans))
-    l_diag <- list(
-        runtime = as.numeric(t2_run - t1_run, units = "secs")
-    )
+    if (chains == 1L) {
+        # Single-chain path
+        t1_run <- Sys.time()
+        algout <- ms_plans(nsims, adj, init_plans[, 1], counties, pop, ndists,
+                           pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
+                           constraints, control, k, thin, verbosity)
+        t2_run <- Sys.time()
 
+        storage.mode(algout$plans) <- "integer"
+        acceptances <- as.logical(algout$mhdecisions)
 
-    out <- new_redist_plans(algout$plans[, -warmup_idx, drop = FALSE],
-                            map, "mergesplit", NULL, FALSE,
-                            ndists = ndists,
-                            compactness = compactness,
-                            constraints = constraints,
-                            adapt_k_thresh = adapt_k_thresh,
-                            version = packageVersion("redist"),
-                            diagnostics = l_diag,
-                            mh_acceptance = mean(acceptances))
+        warmup_idx <- c(seq_len(1 + warmup %/% thin), ncol(algout$plans))
+        l_diag <- list(runtime = as.numeric(t2_run - t1_run, units = "secs"))
 
-    warmup_idx <- c(seq_len(warmup %/% thin), length(acceptances))
-    out <- out %>% mutate(mcmc_accept = rep(acceptances[-warmup_idx], each = ndists))
+        plans <- if (return_all) {
+            algout$plans[, -warmup_idx, drop = FALSE]
+        } else {
+            algout$plans[, ncol(algout$plans) - 1L, drop = FALSE]
+        }
 
-    if (!is.null(init_name) && !isFALSE(init_name)) {
-        out <- add_reference(out, init_plan, init_name)
+        warmup_idx_acc <- c(seq_len(warmup %/% thin), length(acceptances))
+        if (!return_all) {
+            acceptances <- acceptances[length(acceptances) - 1L]
+        } else {
+            acceptances <- acceptances[-warmup_idx_acc]
+        }
+
+        out <- new_redist_plans(plans, map, "mergesplit", NULL, FALSE,
+                                ndists = ndists,
+                                compactness = compactness,
+                                constraints = constraints,
+                                adapt_k_thresh = adapt_k_thresh,
+                                version = packageVersion("redist"),
+                                diagnostics = list(l_diag),
+                                mh_acceptance = mean(acceptances))
+        out <- out %>% mutate(mcmc_accept = rep(acceptances, each = ndists))
+
+        if (!is.null(init_names) && !isFALSE(init_name)) {
+            out <- add_reference(out, init_plans[, 1], init_names[1])
+        }
+    } else {
+        # Multi-chain parallel path
+        if (is.null(ncores)) ncores <- parallel::detectCores()
+        ncores <- min(ncores, chains)
+
+        if (ncores > 1) {
+            `%oper%` <- `%dorng%`
+            of <- ifelse(Sys.info()[["sysname"]] == "Windows",
+                         tempfile(pattern = paste0("ms_", substr(Sys.time(), 1, 10)), fileext = ".txt"),
+                         "")
+            if (!silent) {
+                cl <- parallel::makeCluster(ncores, type = cl_type, outfile = of,
+                                            methods = FALSE,
+                                            useXDR = .Platform$endian != "little")
+            } else {
+                cl <- parallel::makeCluster(ncores, type = cl_type,
+                                            methods = FALSE,
+                                            useXDR = .Platform$endian != "little")
+            }
+            doParallel::registerDoParallel(cl)
+            on.exit(parallel::stopCluster(cl))
+        } else {
+            `%oper%` <- `%do%`
+        }
+
+        out_par <- foreach::foreach(chain = seq_len(chains), .inorder = FALSE,
+                                    .packages = "redist") %oper% {
+            if (!silent) cat("Starting chain ", chain, "\n", sep = "")
+            run_verbosity <- if (chain == 1 || verbosity == 3) verbosity else 0
+            t1_run <- Sys.time()
+            algout <- ms_plans(nsims, adj, init_plans[, chain], counties, pop,
+                               ndists, pop_bounds[2], pop_bounds[1], pop_bounds[3],
+                               compactness, constraints, control, k, thin, run_verbosity)
+            t2_run <- Sys.time()
+
+            algout$l_diag <- list(runtime = as.numeric(t2_run - t1_run, units = "secs"))
+            algout$mh <- mean(as.logical(algout$mhdecisions))
+
+            warmup_idx <- c(seq_len(1 + warmup %/% thin), nsims %/% thin + 2L)
+            if (return_all) {
+                algout$plans <- algout$plans[, -warmup_idx, drop = FALSE]
+            } else {
+                algout$plans <- algout$plans[, nsims + 1L, drop = FALSE]
+            }
+            storage.mode(algout$plans) <- "integer"
+
+            warmup_idx_acc <- c(seq_len(warmup %/% thin), nsims %/% thin + 1L)
+            if (!return_all) {
+                algout$mhdecisions <- as.logical(algout$mhdecisions[nsims])
+            } else {
+                algout$mhdecisions <- as.logical(algout$mhdecisions[-warmup_idx_acc])
+            }
+
+            algout
+        }
+
+        plans <- lapply(out_par, function(algout) algout$plans)
+        each_len <- ncol(plans[[1]])
+        plans <- do.call(cbind, plans)
+        storage.mode(plans) <- "integer"
+
+        mh <- sapply(out_par, function(algout) algout$mh)
+        l_diag <- lapply(out_par, function(algout) algout$l_diag)
+        acceptances <- sapply(out_par, function(algout) algout$mhdecisions)
+
+        out <- new_redist_plans(plans = plans, map = map, algorithm = "mergesplit",
+                                wgt = NULL, resampled = FALSE,
+                                compactness = compactness,
+                                constraints = constraints,
+                                ndists = ndists,
+                                adapt_k_thresh = adapt_k_thresh,
+                                mh_acceptance = mh,
+                                version = packageVersion("redist"),
+                                diagnostics = l_diag) %>%
+            mutate(chain = rep(seq_len(chains), each = each_len * ndists),
+                   mcmc_accept = rep(acceptances, each = ndists))
+
+        if (!is.null(init_names) && !isFALSE(init_name)) {
+            if (all(init_names[1] == init_names)) {
+                out <- add_reference(out, init_plans[, 1], init_names[1])
+            } else {
+                out <- Reduce(function(cur, idx) {
+                    add_reference(cur, init_plans[, idx], init_names[idx]) %>%
+                        mutate(chain = dplyr::coalesce(chain, idx))
+                }, rev(seq_len(chains)), init = out)
+            }
+        }
+
+        out <- dplyr::relocate(out, chain, .after = "draw")
     }
 
     out

@@ -725,7 +725,7 @@ get_order_by_cut <- function(edge_list) {
 
     # Initialize vertex order
     verts <- as.numeric(igraph::V(G)$name)
-    vertex_order <- setNames(rep(-1, length(verts)), as.character(verts))
+    vertex_order <- stats::setNames(rep(-1, length(verts)), as.character(verts))
     vertex_order[[as.character(s)]] <- 1
 
     # Initialize left/right/cut sets
