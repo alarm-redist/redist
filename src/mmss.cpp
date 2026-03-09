@@ -107,7 +107,8 @@ static bool cut_one_mms(Tree &ust, int k, int root,
                         const uvec &pop, double total_pop,
                         double peel_lower, double peel_upper,
                         double remain_lower, double remain_upper,
-                        double peel_target) {
+                        double peel_target,
+                        int &valid_count) {
     int V = ust.size();
 
     std::vector<int> pop_below(V, 0);
@@ -123,21 +124,32 @@ static bool cut_one_mms(Tree &ust, int k, int root,
             region_verts.push_back(i);
     }
 
+    valid_count = 0;
     if (region_verts.empty()) return false;
 
-    // Pick a random vertex (= random edge in the tree)
-    int pick = r_int(region_verts.size());
-    int cut_at = region_verts[pick];
+    // Enumerate all valid-cut vertices
+    std::vector<int> valid_verts;
+    for (int v : region_verts) {
+        double below = pop_below[v];
+        double above = total_pop - below;
+        bool subtree_is_peel = (peel_lower <= below && below <= peel_upper &&
+                                remain_lower <= above && above <= remain_upper);
+        bool subtree_is_remain = (remain_lower <= below && below <= remain_upper &&
+                                  peel_lower <= above && above <= peel_upper);
+        if (subtree_is_peel || subtree_is_remain) valid_verts.push_back(v);
+    }
+
+    valid_count = valid_verts.size();
+    if (valid_count == 0) return false;
+
+    // Pick uniformly from valid cuts only
+    int pick = r_int(valid_count);
+    int cut_at = valid_verts[pick];
     double below = pop_below[cut_at];
     double above = total_pop - below;
 
-    // Check which assignment of labels is valid
     bool subtree_is_peel = (peel_lower <= below && below <= peel_upper &&
                             remain_lower <= above && above <= remain_upper);
-    bool subtree_is_remain = (remain_lower <= below && below <= remain_upper &&
-                              peel_lower <= above && above <= peel_upper);
-
-    if (!subtree_is_peel && !subtree_is_remain) return false;
 
     // Remove edge from tree
     std::vector<int> *siblings = &ust[parent[cut_at]];
@@ -163,6 +175,63 @@ static bool cut_one_mms(Tree &ust, int k, int root,
 
 
 /*
+ * Estimate p_s^edge = E[fraction of valid-cut edges per UST] on a subgraph.
+ * Draws K spanning trees, counts valid cuts in each, returns log(mean fraction).
+ * Used to correct the MH ratio for per-step retry (steps s >= 1).
+ */
+static double log_p_edge_estimate(const Graph &g, const uvec &pop,
+                                  const std::vector<bool> &ignore,
+                                  double region_pop,
+                                  double peel_lower, double peel_upper,
+                                  double remain_lower, double remain_upper,
+                                  const uvec &counties, Multigraph &cg,
+                                  int K_est) {
+    int V = g.size();
+    int region_size = 0;
+    for (int v = 0; v < V; v++) if (!ignore[v]) region_size++;
+    if (region_size <= 1) return 0.0;
+
+    int total_valid = 0;
+    int trees_drawn = 0;
+    Tree ust_tmp = init_tree(V);
+    std::vector<bool> visited_tmp(V);
+
+    double ust_lo = std::min(peel_lower, remain_lower);
+    double ust_hi = std::max(peel_upper, remain_upper);
+
+    for (int kk = 0; kk < K_est; kk++) {
+        clear_tree(ust_tmp);
+        int root_tmp;
+        int result = sample_sub_ust(g, ust_tmp, V, root_tmp, visited_tmp, ignore,
+                                    pop, ust_lo, ust_hi, counties, cg);
+        if (result != 0) continue;
+        trees_drawn++;
+
+        std::vector<int> pop_below_tmp(V, 0);
+        std::vector<int> parent_tmp(V);
+        parent_tmp[root_tmp] = -1;
+        tree_pop(ust_tmp, root_tmp, pop, pop_below_tmp, parent_tmp);
+
+        for (int v = 0; v < V; v++) {
+            if (ignore[v] || v == root_tmp) continue;
+            double below = pop_below_tmp[v];
+            double above = region_pop - below;
+            bool ok = (peel_lower <= below && below <= peel_upper &&
+                       remain_lower <= above && above <= remain_upper) ||
+                      (remain_lower <= below && below <= remain_upper &&
+                       peel_lower <= above && above <= peel_upper);
+            if (ok) total_valid++;
+        }
+    }
+
+    if (trees_drawn == 0) return -23.0; // ~log(1e-10)
+
+    double p_hat = (double) total_valid / ((double) trees_drawn * (region_size - 1));
+    return std::log(std::max(p_hat, 1e-10));
+}
+
+
+/*
  * Main MMSS MCMC loop.
  */
 // [[Rcpp::export]]
@@ -174,6 +243,14 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
 
     double thresh = (double) control["adapt_k_thresh"];
     bool do_mh = (bool) control["do_mh"];
+    int max_retries = 200;
+    if (control.containsElementNamed("max_retries")) {
+        max_retries = (int) control["max_retries"];
+    }
+    int K_est = 25;
+    if (control.containsElementNamed("k_est")) {
+        K_est = (int) control["k_est"];
+    }
 
     Graph g = list_to_graph(l);
     Multigraph cg = county_graph(g, counties);
@@ -246,102 +323,117 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
         // Save the current plan for label restoration
         uvec saved_plan = districts.col(idx + 1);
 
-        // 2. Sequential split with retries of the ENTIRE sequence.
-        // Retrying the complete split as one unit preserves q ∝ T*T*B
-        // because each complete attempt is independent and the overall
-        // success probability p_any depends only on the merged region
-        // (same for forward and reverse), so the retry constant cancels
-        // in the MH ratio.
-        bool split_failed = true;
+        // 2. Per-step retry with MH correction.
+        // Each split step retries independently until success. For steps s>=1,
+        // we estimate the per-step success probability on both forward and
+        // reverse subgraphs and include a correction in the MH ratio.
+        // Step s=0 uses the same merged region G[R] for fwd/rev, so cancels.
+        bool split_failed = false;
         double fwd_boundary_lp = 0.0;
-        const int MAX_SPLIT_ATTEMPTS = 500;
+        std::vector<double> log_p_fwd(l_merge - 1, 0.0);
 
-        for (int attempt = 0; attempt < MAX_SPLIT_ATTEMPTS; attempt++) {
-            // Reset to pre-merge state for each complete attempt
-            districts.col(idx + 1) = saved_plan;
-            fwd_boundary_lp = 0.0;
-            bool attempt_ok = true;
+        // Save per-step state for restoration during retry
+        uvec step_saved = saved_plan;
 
-            for (int s = 0; s < l_merge - 1; s++) {
-                int peel = sel_districts[s];
-                int remain = sel_districts[l_merge - 1];
+        for (int s = 0; s < l_merge - 1 && !split_failed; s++) {
+            int peel = sel_districts[s];
+            int remain = sel_districts[l_merge - 1];
 
-                // Temporarily relabel "middle" remaining districts -> remain label
+            // Temporarily relabel "middle" remaining districts -> remain label
+            for (int v = 0; v < V; v++) {
+                for (int t = s + 1; t < l_merge - 1; t++) {
+                    if ((int) districts(v, idx + 1) == sel_districts[t]) {
+                        districts(v, idx + 1) = remain;
+                        break;
+                    }
+                }
+            }
+
+            // set ignore for vertices not in the two-label region
+            double region_pop = 0.0;
+            for (int v = 0; v < V; v++) {
+                ignore[v] = ((int) districts(v, idx + 1) != peel &&
+                             (int) districts(v, idx + 1) != remain);
+                if (!ignore[v]) region_pop += pop(v);
+            }
+
+            // population bounds for this split step
+            int remaining_splits = l_merge - 1 - s;
+            double peel_lower = std::max(lower, region_pop - remaining_splits * upper);
+            double peel_upper = std::min(upper, region_pop - remaining_splits * lower);
+            double remain_lower, remain_upper;
+            if (remaining_splits > 1) {
+                remain_lower = remaining_splits * lower;
+                remain_upper = remaining_splits * upper;
+            } else {
+                remain_lower = lower;
+                remain_upper = upper;
+            }
+
+            if (peel_lower > peel_upper) {
+                split_failed = true;
+                break;
+            }
+
+            double ust_lower = std::min(peel_lower, remain_lower);
+            double ust_upper = std::max(peel_upper, remain_upper);
+
+            // Save state at start of this step for retry restoration
+            uvec step_state(V);
+            for (int v = 0; v < V; v++) step_state(v) = districts(v, idx + 1);
+
+            // Per-step retry: draw trees until a valid cut is found
+            bool step_ok = false;
+            for (int tree_attempt = 0; tree_attempt < max_retries; tree_attempt++) {
+                // Reset this step's assignments
                 for (int v = 0; v < V; v++) {
-                    for (int t = s + 1; t < l_merge - 1; t++) {
-                        if ((int) districts(v, idx + 1) == sel_districts[t]) {
-                            districts(v, idx + 1) = remain;
+                    if (!ignore[v]) districts(v, idx + 1) = step_state(v);
+                }
+
+                clear_tree(ust);
+                int root;
+                int result = sample_sub_ust(g, ust, V, root, visited, ignore,
+                                            pop, ust_lower, ust_upper, counties, cg);
+                if (result != 0) continue;
+
+                int valid_count = 0;
+                auto col_ref = districts.col(idx + 1);
+                if (cut_one_mms(ust, k, root, col_ref,
+                                peel, remain, pop, region_pop,
+                                peel_lower, peel_upper,
+                                remain_lower, remain_upper,
+                                target, valid_count)) {
+                    step_ok = true;
+                    break;
+                }
+            }
+
+            if (!step_ok) { split_failed = true; break; }
+
+            // forward boundary AFTER cut
+            fwd_boundary_lp += log_boundary(g, districts.col(idx + 1), peel, remain);
+
+            // Estimate log p_s^edge for s >= 1 (s=0 cancels in MH ratio)
+            if (s >= 1) {
+                log_p_fwd[s] = log_p_edge_estimate(g, pop, ignore, region_pop,
+                                                    peel_lower, peel_upper,
+                                                    remain_lower, remain_upper,
+                                                    counties, cg, K_est);
+            }
+
+            // Restore remaining vertices' original labels for next step
+            for (int v = 0; v < V; v++) {
+                if ((int) districts(v, idx + 1) == remain) {
+                    int orig = saved_plan(v);
+                    for (int t = s + 1; t < l_merge; t++) {
+                        if (orig == sel_districts[t]) {
+                            districts(v, idx + 1) = orig;
                             break;
                         }
                     }
                 }
-
-                // set ignore for vertices not in the two-label region
-                double region_pop = 0.0;
-                for (int v = 0; v < V; v++) {
-                    ignore[v] = ((int) districts(v, idx + 1) != peel &&
-                                 (int) districts(v, idx + 1) != remain);
-                    if (!ignore[v]) region_pop += pop(v);
-                }
-
-                // population bounds for this split step
-                int remaining_splits = l_merge - 1 - s;
-                double peel_lower = std::max(lower, region_pop - remaining_splits * upper);
-                double peel_upper = std::min(upper, region_pop - remaining_splits * lower);
-                double remain_lower, remain_upper;
-                if (remaining_splits > 1) {
-                    remain_lower = remaining_splits * lower;
-                    remain_upper = remaining_splits * upper;
-                } else {
-                    remain_lower = lower;
-                    remain_upper = upper;
-                }
-
-                if (peel_lower > peel_upper) {
-                    attempt_ok = false;
-                    break;
-                }
-
-                // Sample UST and try random edge cut (single try per step)
-                double ust_lower = std::min(peel_lower, remain_lower);
-                double ust_upper = std::max(peel_upper, remain_upper);
-                int root;
-                clear_tree(ust);
-                int result = sample_sub_ust(g, ust, V, root, visited, ignore,
-                                            pop, ust_lower, ust_upper, counties, cg);
-                if (result != 0) { attempt_ok = false; break; }
-
-                auto col_ref = districts.col(idx + 1);
-                if (!cut_one_mms(ust, k, root, col_ref,
-                                 peel, remain, pop, region_pop,
-                                 peel_lower, peel_upper,
-                                 remain_lower, remain_upper, target)) {
-                    attempt_ok = false;
-                    break;
-                }
-
-                // forward boundary AFTER cut
-                fwd_boundary_lp += log_boundary(g, districts.col(idx + 1), peel, remain);
-
-                // Restore remaining vertices' original labels for next step
-                for (int v = 0; v < V; v++) {
-                    if ((int) districts(v, idx + 1) == remain) {
-                        int orig = saved_plan(v);
-                        for (int t = s + 1; t < l_merge; t++) {
-                            if (orig == sel_districts[t]) {
-                                districts(v, idx + 1) = orig;
-                                break;
-                            }
-                        }
-                    }
-                }
-            } // end steps loop
-
-            if (attempt_ok) {
-                split_failed = false;
-                break;
             }
-        } // end retry loop
+        } // end per-step loop
 
         if (split_failed) {
             districts.col(idx + 1) = districts.col(idx);
@@ -372,8 +464,9 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
             }
         }
 
-        // 3. Reverse proposal boundary terms
+        // 3. Reverse proposal boundary terms + p_s^edge estimation
         double rev_boundary_lp = 0.0;
+        std::vector<double> log_p_rev(l_merge - 1, 0.0);
         {
             uvec old_plan = districts.col(idx);
             umat work_mat(V, 1);
@@ -389,6 +482,29 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
             }
             // reveal old plan's districts sequentially
             for (int s = 0; s < l_merge - 1; s++) {
+                // Estimate reverse p_s^edge BEFORE revealing step s (s >= 1)
+                if (s >= 1) {
+                    std::vector<bool> ignore_rev(V, true);
+                    double region_pop_rev = 0.0;
+                    for (int v = 0; v < V; v++) {
+                        if ((int) work_mat(v, 0) == 0) {
+                            ignore_rev[v] = false;
+                            region_pop_rev += pop(v);
+                        }
+                    }
+
+                    int remaining_splits = l_merge - 1 - s;
+                    double p_lo = std::max(lower, region_pop_rev - remaining_splits * upper);
+                    double p_hi = std::min(upper, region_pop_rev - remaining_splits * lower);
+                    double r_lo = (remaining_splits > 1) ? remaining_splits * lower : lower;
+                    double r_hi = (remaining_splits > 1) ? remaining_splits * upper : upper;
+
+                    log_p_rev[s] = log_p_edge_estimate(g, pop, ignore_rev, region_pop_rev,
+                                                        p_lo, p_hi, r_lo, r_hi,
+                                                        counties, cg, K_est);
+                }
+
+                // Reveal this step's district and compute boundary
                 int dist_label = sel_districts[s];
                 for (int v = 0; v < V; v++) {
                     if ((int) old_plan(v) == dist_label && work_mat(v, 0) == 0) {
@@ -401,6 +517,12 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
 
         // proposal ratio = log q(y->x) - log q(x->y)
         prop_lp = rev_boundary_lp - fwd_boundary_lp;
+
+        // Per-step retry correction: for s >= 1, account for differing
+        // per-step success probabilities between forward and reverse subgraphs
+        for (int s = 1; s < l_merge - 1; s++) {
+            prop_lp += log_p_fwd[s] - log_p_rev[s];
+        }
 
         // 4. Compactness (tau)
         if (rho != 1) {

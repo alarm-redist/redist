@@ -17,6 +17,7 @@ redist_mmss(
   constraints = list(),
   adapt_k_thresh = 0.99,
   k = NULL,
+  max_retries = 200L,
   ncores = NULL,
   cl_type = "PSOCK",
   return_all = TRUE,
@@ -71,6 +72,11 @@ Must be between 0 and 1.}
 
 \item{k}{The number of edges to consider cutting after drawing a spanning
 tree. Should be selected automatically in nearly all cases.}
+
+\item{max_retries}{The maximum number of spanning trees to draw per split
+step before giving up. Higher values reduce proposal failures at the cost
+of more computation per step. The default of 200 is sufficient for most
+problems; increase for very tight population tolerances or large districts.}
 
 \item{ncores}{The number of parallel processes to run. Defaults to the
 number of available cores, capped at the number of chains. Only used when
