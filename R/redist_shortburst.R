@@ -220,7 +220,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         if (mmss_l < 2L) cli::cli_abort("{.arg mmss_l} must be at least 2.")
         if (mmss_l > ndists) cli::cli_abort("{.arg mmss_l} must be at most the number of districts ({ndists}).")
         control <- list(adapt_k_thresh = adapt_k_thresh, do_mh = TRUE,
-                        max_retries = 200L)
+                        max_retries = 200L, exact_mh = FALSE)
         x <- ms_plans(1, adj, init_plan, counties, pop, ndists, pop_bounds[2],
                       pop_bounds[1], pop_bounds[3], compactness,
                       list(), control, 0L, 1L, verbosity = 0)

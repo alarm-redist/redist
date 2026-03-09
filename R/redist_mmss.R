@@ -56,6 +56,11 @@
 #'   step before giving up. Higher values reduce proposal failures at the cost
 #'   of more computation per step. The default of 200 is sufficient for most
 #'   problems; increase for very tight population tolerances or large districts.
+#' @param exact_mh If `FALSE` (the default), use per-step retry with an
+#'   estimated correction factor in the Metropolis-Hastings ratio, which is
+#'   faster and passes empirical validation. If `TRUE`, use exact
+#'   whole-sequence retry, which preserves detailed balance exactly but is
+#'   substantially slower for `l >= 3`.
 #' @param ncores The number of parallel processes to run. Defaults to the
 #'   number of available cores, capped at the number of chains. Only used when
 #'   `chains > 1`.
@@ -100,6 +105,7 @@ redist_mmss <- function(map,
                        constraints = list(),
                        adapt_k_thresh = 0.99, k = NULL,
                        max_retries = 200L,
+                       exact_mh = FALSE,
                        ncores = NULL,
                        cl_type = "PSOCK",
                        return_all = TRUE,
@@ -276,7 +282,8 @@ redist_mmss <- function(map,
     }
 
     control <- list(adapt_k_thresh = adapt_k_thresh, do_mh = TRUE,
-                    max_retries = as.integer(max_retries))
+                    max_retries = as.integer(max_retries),
+                    exact_mh = exact_mh)
 
     # Estimate k from a single trial (shared across chains)
     if (k <= 0L) {

@@ -251,6 +251,10 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     if (control.containsElementNamed("k_est")) {
         K_est = (int) control["k_est"];
     }
+    bool exact_mh = true;
+    if (control.containsElementNamed("exact_mh")) {
+        exact_mh = (bool) control["exact_mh"];
+    }
 
     Graph g = list_to_graph(l);
     Multigraph cg = county_graph(g, counties);
@@ -269,7 +273,7 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
 
     if (verbosity >= 1) {
         Rcout.imbue(std::locale::classic());
-        Rcout << "MARKOV CHAIN MONTE CARLO (Multi-Merge-Split, l=" << l_merge << ")\n";
+        Rcout << "MARKOV CHAIN MONTE CARLO (Multiple Merge Sequential Split, l=" << l_merge << ")\n";
         Rcout << std::fixed << std::setprecision(0);
         Rcout << "Sampling " << N << " " << V << "-unit maps with " << n_distr
               << " districts and population between " << lower << " and " << upper << ".\n";
@@ -323,23 +327,107 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
         // Save the current plan for label restoration
         uvec saved_plan = districts.col(idx + 1);
 
-        // 2. Per-step retry with MH correction.
+        bool split_failed = false;
+        double fwd_boundary_lp = 0.0;
+        double rev_boundary_lp = 0.0;
+        double prop_correction = 0.0;
+
+        if (exact_mh) {
+        // ====== EXACT PATH: whole-sequence retry ======
+        // Retrying the complete split as one unit preserves q ∝ T*T*B
+        // because each complete attempt is independent and the overall
+        // success probability depends only on the merged region (same for
+        // forward and reverse), so the retry constant cancels in the MH ratio.
+        split_failed = true;
+
+        for (int attempt = 0; attempt < max_retries; attempt++) {
+            districts.col(idx + 1) = saved_plan;
+            fwd_boundary_lp = 0.0;
+            bool attempt_ok = true;
+
+            for (int s = 0; s < l_merge - 1; s++) {
+                int peel = sel_districts[s];
+                int remain = sel_districts[l_merge - 1];
+
+                for (int v = 0; v < V; v++) {
+                    for (int t = s + 1; t < l_merge - 1; t++) {
+                        if ((int) districts(v, idx + 1) == sel_districts[t]) {
+                            districts(v, idx + 1) = remain;
+                            break;
+                        }
+                    }
+                }
+
+                double region_pop = 0.0;
+                for (int v = 0; v < V; v++) {
+                    ignore[v] = ((int) districts(v, idx + 1) != peel &&
+                                 (int) districts(v, idx + 1) != remain);
+                    if (!ignore[v]) region_pop += pop(v);
+                }
+
+                int remaining_splits = l_merge - 1 - s;
+                double peel_lower = std::max(lower, region_pop - remaining_splits * upper);
+                double peel_upper = std::min(upper, region_pop - remaining_splits * lower);
+                double remain_lower, remain_upper;
+                if (remaining_splits > 1) {
+                    remain_lower = remaining_splits * lower;
+                    remain_upper = remaining_splits * upper;
+                } else {
+                    remain_lower = lower;
+                    remain_upper = upper;
+                }
+
+                if (peel_lower > peel_upper) { attempt_ok = false; break; }
+
+                double ust_lower = std::min(peel_lower, remain_lower);
+                double ust_upper = std::max(peel_upper, remain_upper);
+
+                clear_tree(ust);
+                int root;
+                int result = sample_sub_ust(g, ust, V, root, visited, ignore,
+                                            pop, ust_lower, ust_upper, counties, cg);
+                if (result != 0) { attempt_ok = false; break; }
+
+                int valid_count = 0;
+                auto col_ref = districts.col(idx + 1);
+                if (!cut_one_mms(ust, k, root, col_ref,
+                                 peel, remain, pop, region_pop,
+                                 peel_lower, peel_upper,
+                                 remain_lower, remain_upper,
+                                 target, valid_count)) {
+                    attempt_ok = false;
+                    break;
+                }
+
+                fwd_boundary_lp += log_boundary(g, districts.col(idx + 1), peel, remain);
+
+                for (int v = 0; v < V; v++) {
+                    if ((int) districts(v, idx + 1) == remain) {
+                        int orig = saved_plan(v);
+                        for (int t = s + 1; t < l_merge; t++) {
+                            if (orig == sel_districts[t]) {
+                                districts(v, idx + 1) = orig;
+                                break;
+                            }
+                        }
+                    }
+                }
+            } // end steps loop
+
+            if (attempt_ok) { split_failed = false; break; }
+        } // end retry loop
+
+        } else {
+        // ====== APPROXIMATE PATH: per-step retry with MH correction ======
         // Each split step retries independently until success. For steps s>=1,
         // we estimate the per-step success probability on both forward and
         // reverse subgraphs and include a correction in the MH ratio.
-        // Step s=0 uses the same merged region G[R] for fwd/rev, so cancels.
-        bool split_failed = false;
-        double fwd_boundary_lp = 0.0;
         std::vector<double> log_p_fwd(l_merge - 1, 0.0);
-
-        // Save per-step state for restoration during retry
-        uvec step_saved = saved_plan;
 
         for (int s = 0; s < l_merge - 1 && !split_failed; s++) {
             int peel = sel_districts[s];
             int remain = sel_districts[l_merge - 1];
 
-            // Temporarily relabel "middle" remaining districts -> remain label
             for (int v = 0; v < V; v++) {
                 for (int t = s + 1; t < l_merge - 1; t++) {
                     if ((int) districts(v, idx + 1) == sel_districts[t]) {
@@ -349,7 +437,6 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                 }
             }
 
-            // set ignore for vertices not in the two-label region
             double region_pop = 0.0;
             for (int v = 0; v < V; v++) {
                 ignore[v] = ((int) districts(v, idx + 1) != peel &&
@@ -357,7 +444,6 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                 if (!ignore[v]) region_pop += pop(v);
             }
 
-            // population bounds for this split step
             int remaining_splits = l_merge - 1 - s;
             double peel_lower = std::max(lower, region_pop - remaining_splits * upper);
             double peel_upper = std::min(upper, region_pop - remaining_splits * lower);
@@ -370,22 +456,16 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                 remain_upper = upper;
             }
 
-            if (peel_lower > peel_upper) {
-                split_failed = true;
-                break;
-            }
+            if (peel_lower > peel_upper) { split_failed = true; break; }
 
             double ust_lower = std::min(peel_lower, remain_lower);
             double ust_upper = std::max(peel_upper, remain_upper);
 
-            // Save state at start of this step for retry restoration
             uvec step_state(V);
             for (int v = 0; v < V; v++) step_state(v) = districts(v, idx + 1);
 
-            // Per-step retry: draw trees until a valid cut is found
             bool step_ok = false;
             for (int tree_attempt = 0; tree_attempt < max_retries; tree_attempt++) {
-                // Reset this step's assignments
                 for (int v = 0; v < V; v++) {
                     if (!ignore[v]) districts(v, idx + 1) = step_state(v);
                 }
@@ -410,10 +490,8 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
 
             if (!step_ok) { split_failed = true; break; }
 
-            // forward boundary AFTER cut
             fwd_boundary_lp += log_boundary(g, districts.col(idx + 1), peel, remain);
 
-            // Estimate log p_s^edge for s >= 1 (s=0 cancels in MH ratio)
             if (s >= 1) {
                 log_p_fwd[s] = log_p_edge_estimate(g, pop, ignore, region_pop,
                                                     peel_lower, peel_upper,
@@ -421,7 +499,6 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                                                     counties, cg, K_est);
             }
 
-            // Restore remaining vertices' original labels for next step
             for (int v = 0; v < V; v++) {
                 if ((int) districts(v, idx + 1) == remain) {
                     int orig = saved_plan(v);
@@ -434,6 +511,53 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                 }
             }
         } // end per-step loop
+
+        // Compute p_edge correction for the approximate path
+        if (!split_failed) {
+            std::vector<double> log_p_rev(l_merge - 1, 0.0);
+            uvec old_plan = districts.col(idx);
+            umat work_mat(V, 1);
+            work_mat.col(0) = old_plan;
+            for (int v = 0; v < V; v++) {
+                for (int d : sel_districts) {
+                    if ((int) work_mat(v, 0) == d) {
+                        work_mat(v, 0) = 0;
+                        break;
+                    }
+                }
+            }
+            for (int s = 0; s < l_merge - 1; s++) {
+                if (s >= 1) {
+                    std::vector<bool> ignore_rev(V, true);
+                    double region_pop_rev = 0.0;
+                    for (int v = 0; v < V; v++) {
+                        if ((int) work_mat(v, 0) == 0) {
+                            ignore_rev[v] = false;
+                            region_pop_rev += pop(v);
+                        }
+                    }
+                    int remaining_splits = l_merge - 1 - s;
+                    double p_lo = std::max(lower, region_pop_rev - remaining_splits * upper);
+                    double p_hi = std::min(upper, region_pop_rev - remaining_splits * lower);
+                    double r_lo = (remaining_splits > 1) ? remaining_splits * lower : lower;
+                    double r_hi = (remaining_splits > 1) ? remaining_splits * upper : upper;
+                    log_p_rev[s] = log_p_edge_estimate(g, pop, ignore_rev, region_pop_rev,
+                                                        p_lo, p_hi, r_lo, r_hi,
+                                                        counties, cg, K_est);
+                }
+                int dist_label = sel_districts[s];
+                for (int v = 0; v < V; v++) {
+                    if ((int) old_plan(v) == dist_label && work_mat(v, 0) == 0) {
+                        work_mat(v, 0) = dist_label;
+                    }
+                }
+            }
+            for (int s = 1; s < l_merge - 1; s++) {
+                prop_correction += log_p_fwd[s] - log_p_rev[s];
+            }
+        }
+
+        } // end approximate path
 
         if (split_failed) {
             districts.col(idx + 1) = districts.col(idx);
@@ -464,14 +588,11 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
             }
         }
 
-        // 3. Reverse proposal boundary terms + p_s^edge estimation
-        double rev_boundary_lp = 0.0;
-        std::vector<double> log_p_rev(l_merge - 1, 0.0);
+        // 3. Reverse proposal boundary terms (needed for both paths)
         {
             uvec old_plan = districts.col(idx);
             umat work_mat(V, 1);
             work_mat.col(0) = old_plan;
-            // merge old districts to 0
             for (int v = 0; v < V; v++) {
                 for (int d : sel_districts) {
                     if ((int) work_mat(v, 0) == d) {
@@ -480,31 +601,7 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                     }
                 }
             }
-            // reveal old plan's districts sequentially
             for (int s = 0; s < l_merge - 1; s++) {
-                // Estimate reverse p_s^edge BEFORE revealing step s (s >= 1)
-                if (s >= 1) {
-                    std::vector<bool> ignore_rev(V, true);
-                    double region_pop_rev = 0.0;
-                    for (int v = 0; v < V; v++) {
-                        if ((int) work_mat(v, 0) == 0) {
-                            ignore_rev[v] = false;
-                            region_pop_rev += pop(v);
-                        }
-                    }
-
-                    int remaining_splits = l_merge - 1 - s;
-                    double p_lo = std::max(lower, region_pop_rev - remaining_splits * upper);
-                    double p_hi = std::min(upper, region_pop_rev - remaining_splits * lower);
-                    double r_lo = (remaining_splits > 1) ? remaining_splits * lower : lower;
-                    double r_hi = (remaining_splits > 1) ? remaining_splits * upper : upper;
-
-                    log_p_rev[s] = log_p_edge_estimate(g, pop, ignore_rev, region_pop_rev,
-                                                        p_lo, p_hi, r_lo, r_hi,
-                                                        counties, cg, K_est);
-                }
-
-                // Reveal this step's district and compute boundary
                 int dist_label = sel_districts[s];
                 for (int v = 0; v < V; v++) {
                     if ((int) old_plan(v) == dist_label && work_mat(v, 0) == 0) {
@@ -515,14 +612,8 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
             }
         }
 
-        // proposal ratio = log q(y->x) - log q(x->y)
-        prop_lp = rev_boundary_lp - fwd_boundary_lp;
-
-        // Per-step retry correction: for s >= 1, account for differing
-        // per-step success probabilities between forward and reverse subgraphs
-        for (int s = 1; s < l_merge - 1; s++) {
-            prop_lp += log_p_fwd[s] - log_p_rev[s];
-        }
+        // proposal ratio = log q(y->x) - log q(x->y) + correction (0 for exact)
+        prop_lp = rev_boundary_lp - fwd_boundary_lp + prop_correction;
 
         // 4. Compactness (tau)
         if (rho != 1) {

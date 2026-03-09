@@ -1,11 +1,9 @@
-# Long-running distribution tests for redist_mms
-# Verifies cycle walk samples from the correct distribution (ported from Julia CycleWalk.jl)
 # Skipped on CRAN and CI due to runtime
 
 skip_on_cran()
 skip_on_ci()
 
-test_that('cycle walk distribution matches expected (log st distribution)', {
+test_that('MMSS distribution matches expected (log st distribution)', {
   set.seed(123)
 
   result <- redist_mmss(grid,
@@ -28,7 +26,7 @@ test_that('cycle walk distribution matches expected (log st distribution)', {
   expect_true(is_close(observed['12'], 78 / 654))
 })
 
-# test_that('cycle walk distribution without spanning forest weighting (uniform over plans)', {
+# test_that('MMSS distribution without spanning forest weighting (uniform over plans)', {
 #   set.seed(456)
 #
 #   result <- redist_mmss(grid,
@@ -51,7 +49,7 @@ test_that('cycle walk distribution matches expected (log st distribution)', {
 #   expect_true(is_close(observed['12'], 78 / 117))
 # })
 #
-# test_that('longer chain produces stable distribution (log st distribution)', {
+# test_that('MMSS longer chain produces stable distribution (log st distribution)', {
 #   set.seed(789)
 #
 #   result <- redist_mmss(grid,
