@@ -1,12 +1,3 @@
-/********************************************************
- * Author: Christopher T. Kenny
- * Institution: Harvard University
- * Date Created: 2026/03
- * Purpose: Multi-Merge-Split MCMC redistricting sampler
- * Generalizes merge-split by merging l>=2 districts and
- * re-splitting them using the merge-split proposal.
- ********************************************************/
-
 #include "mmss.h"
 
 /*
@@ -263,7 +254,7 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
         // in the MH ratio.
         bool split_failed = true;
         double fwd_boundary_lp = 0.0;
-        const int MAX_SPLIT_ATTEMPTS = 50;
+        const int MAX_SPLIT_ATTEMPTS = 500;
 
         for (int attempt = 0; attempt < MAX_SPLIT_ATTEMPTS; attempt++) {
             // Reset to pre-merge state for each complete attempt
