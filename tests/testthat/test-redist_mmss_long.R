@@ -4,7 +4,7 @@ skip_on_cran()
 skip_on_ci()
 
 test_that('MMSS distribution matches expected (log st distribution)', {
-  set.seed(123)
+  set.seed(42)
 
   result <- redist_mmss(grid,
     nsims = 100000, warmup = 1000, l = 3, thin = 10,

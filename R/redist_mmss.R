@@ -46,12 +46,6 @@
 #'   the 'Details' section for more information, and computational
 #'   considerations.
 #' @param constraints A [redist_constr] object or list of constraints.
-#' @param adapt_k_thresh The threshold value used in the heuristic to select a
-#'   value `k_i` for each splitting iteration. Set to 0.9999 or 1 if
-#'   the algorithm does not appear to be sampling from the target distribution.
-#'   Must be between 0 and 1.
-#' @param k The number of edges to consider cutting after drawing a spanning
-#'   tree. Should be selected automatically in nearly all cases.
 #' @param max_retries The maximum number of spanning trees to draw per split
 #'   step before giving up. Higher values reduce proposal failures at the cost
 #'   of more computation per step. The default of 200 is sufficient for most
@@ -61,6 +55,11 @@
 #'   faster and passes empirical validation. If `TRUE`, use exact
 #'   whole-sequence retry, which preserves detailed balance exactly but is
 #'   substantially slower for `l >= 3`.
+#' @param valid_cuts_only Controls whether tree cuts are sampled only from
+#'   valid (population-feasible) edges, or uniformly from all non-root edges
+#'   with rejection. Defaults to `!exact_mh`. Set explicitly to `TRUE` with
+#'   `exact_mh = FALSE` if you know that every spanning tree has exactly one
+#'   valid cut which eliminates the correction term entirely.
 #' @param ncores The number of parallel processes to run. Defaults to the
 #'   number of available cores, capped at the number of chains. Only used when
 #'   `chains > 1`.
@@ -103,9 +102,9 @@ redist_mmss <- function(map,
                        chains = 1L,
                        counties = NULL, compactness = 1,
                        constraints = list(),
-                       adapt_k_thresh = 0.99, k = NULL,
                        max_retries = 200L,
                        exact_mh = FALSE,
+                       valid_cuts_only = !exact_mh,
                        ncores = NULL,
                        cl_type = "PSOCK",
                        return_all = TRUE,
@@ -124,9 +123,6 @@ redist_mmss <- function(map,
     # Input validation
     if (compactness < 0) {
         cli::cli_abort("{.arg compactness} must be non-negative.")
-    }
-    if (adapt_k_thresh < 0 | adapt_k_thresh > 1) {
-        cli::cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
     }
     if (nsims <= warmup) {
         cli::cli_abort("{.arg nsims} must be greater than {.arg warmup}.")
@@ -262,9 +258,6 @@ redist_mmss <- function(map,
     if (silent) {
         verbosity <- 0
     }
-    if (is.null(k)) {
-        k <- 0L
-    }
 
     # Population bounds
     pop_bounds <- attr(map, "pop_bounds")
@@ -281,16 +274,11 @@ redist_mmss <- function(map,
                          "x" = "Redistricting impossible."))
     }
 
-    control <- list(adapt_k_thresh = adapt_k_thresh, do_mh = TRUE,
-                    max_retries = as.integer(max_retries),
-                    exact_mh = exact_mh)
-
-    # Estimate k from a single trial (shared across chains)
-    if (k <= 0L) {
-        k <- ms_plans(1L, adj, init_plans[, 1], counties, pop, ndists,
-                      pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
-                      list(), control, 0L, 1L, verbosity = 0)$est_k
-    }
+    control <- list(
+        max_retries = as.integer(max_retries),
+        exact_mh = exact_mh,
+        valid_cuts_only = valid_cuts_only
+    )
 
     # Set up parallel cluster if needed
     if (is.null(ncores)) {
@@ -329,7 +317,7 @@ redist_mmss <- function(map,
         t1_run <- Sys.time()
         algout <- mmss_plans(nsims, adj, init_plans[, chain], counties, pop,
                             ndists, pop_bounds[2], pop_bounds[1], pop_bounds[3],
-                            compactness, constraints, control, k, thin, l, run_verbosity)
+                            compactness, constraints, control, thin, l, run_verbosity)
         t2_run <- Sys.time()
 
         # Process output for this chain
@@ -378,7 +366,6 @@ redist_mmss <- function(map,
         compactness = compactness,
         constraints = constraints,
         ndists = ndists,
-        adapt_k_thresh = adapt_k_thresh,
         mh_acceptance = mh,
         version = packageVersion("redist"),
         diagnostics = l_diag

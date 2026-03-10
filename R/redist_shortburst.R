@@ -69,6 +69,10 @@
 #'   forest walks for cyclewalk backend (default 0.1).
 #' @param mmss_l The number of districts to merge and re-split at each step for
 #'   the `mmss` backend (default 3). Must be at least 2.
+#' @param mmss_valid_cuts_only If `TRUE` (the default for the `mmss` backend),
+#'   sample cuts only from population-feasible edges in each spanning tree.
+#'   Set to `FALSE` to sample uniformly from all edges with rejection, which
+#'   requires a correction term but may be useful for comparison.
 #' @param verbose Whether to print out intermediate information while sampling.
 #' Recommended for monitoring purposes.
 #'
@@ -102,6 +106,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
                               flip_lambda = 0, flip_eprob = 0.05,
                               cw_instep = 10L, cw_cycle_walk_frac = 0.1,
                               mmss_l = 3L,
+                              mmss_valid_cuts_only = TRUE,
                               verbose = TRUE) {
 
     map <- validate_redist_map(map)
@@ -219,17 +224,13 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         mmss_l <- as.integer(mmss_l)
         if (mmss_l < 2L) cli::cli_abort("{.arg mmss_l} must be at least 2.")
         if (mmss_l > ndists) cli::cli_abort("{.arg mmss_l} must be at most the number of districts ({ndists}).")
-        control <- list(adapt_k_thresh = adapt_k_thresh, do_mh = TRUE,
-                        max_retries = 200L, exact_mh = FALSE)
-        x <- ms_plans(1, adj, init_plan, counties, pop, ndists, pop_bounds[2],
-                      pop_bounds[1], pop_bounds[3], compactness,
-                      list(), control, 0L, 1L, verbosity = 0)
-        k <- x$est_k
+        control <- list(max_retries = 200L, exact_mh = FALSE,
+                        valid_cuts_only = mmss_valid_cuts_only)
 
         run_burst <- function(init, steps) {
             mmss_plans(steps, adj, init, counties, pop, ndists,
                 pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
-                constraints, control, k, 1L, mmss_l, verbosity = 0)$plans[, -1L]
+                constraints, control, 1L, mmss_l, verbosity = 0)$plans[, -1L]
         }
     } else {
         # flip backend

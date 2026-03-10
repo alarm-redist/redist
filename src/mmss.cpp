@@ -90,25 +90,29 @@ static double log_prob_perm(const std::vector<int> &districts, int n_distr,
 
 /*
  * Cut a spanning tree to peel off one district from a two-label region.
- * Uses a RANDOM EDGE mechanism: pick a uniformly random non-root vertex
- * from the spanning tree and cut the edge to its parent.
  *
- * This gives q(A,B) ∝ T(A)*T(B)*B(A,B) by the matrix-tree theorem,
- * regardless of whether the population bounds are symmetric or asymmetric.
- * The T factors cancel in the MH ratio, leaving only the boundary ratio.
+ * Two picking strategies are supported via `from_valid_only`:
  *
- * For l=2 (symmetric bounds), this is equivalent to the original merge-split
- * mechanism.  For l>2 with asymmetric intermediate steps, this is correct
- * whereas root-district-only is biased.
+ * FALSE (exact path): pick a uniformly random non-root vertex from ALL region
+ *   vertices and return false if it is not a valid cut.  This gives
+ *   q(A,B) ∝ T(A)*T(B)*B(A,B) by the matrix-tree theorem, so the T factors
+ *   cancel in the MH ratio and only log_boundary() is needed.  The caller
+ *   retries the entire sequence on failure (whole-sequence retry).
+ *
+ * TRUE (approximate path): enumerate valid-cut vertices first, then pick
+ *   uniformly from them only — never returning false on a tree that has at
+ *   least one valid cut.  This changes the proposal distribution by a factor
+ *   of 1/p_s^edge relative to the exact proposal, which the caller corrects
+ *   via log_p_edge_estimate() for steps s >= 1 (per-step retry).
  */
-static bool cut_one_mms(Tree &ust, int k, int root,
+static bool cut_one_mms(Tree &ust, int root,
                         subview_col<uword> &districts,
                         int peel_label, int remain_label,
                         const uvec &pop, double total_pop,
                         double peel_lower, double peel_upper,
                         double remain_lower, double remain_upper,
                         double peel_target,
-                        int &valid_count) {
+                        bool from_valid_only) {
     int V = ust.size();
 
     std::vector<int> pop_below(V, 0);
@@ -124,30 +128,38 @@ static bool cut_one_mms(Tree &ust, int k, int root,
             region_verts.push_back(i);
     }
 
-    valid_count = 0;
     if (region_verts.empty()) return false;
 
-    // Enumerate all valid-cut vertices
-    std::vector<int> valid_verts;
-    for (int v : region_verts) {
-        double below = pop_below[v];
+    int cut_at;
+    if (from_valid_only) {
+        // Approximate path: enumerate valid cuts, pick uniformly from them.
+        std::vector<int> valid_verts;
+        for (int v : region_verts) {
+            double below = pop_below[v];
+            double above = total_pop - below;
+            bool ok = (peel_lower <= below && below <= peel_upper &&
+                       remain_lower <= above && above <= remain_upper) ||
+                      (remain_lower <= below && below <= remain_upper &&
+                       peel_lower <= above && above <= peel_upper);
+            if (ok) valid_verts.push_back(v);
+        }
+        if (valid_verts.empty()) return false;
+        cut_at = valid_verts[r_int(valid_verts.size())];
+    } else {
+        // Exact path: pick a random vertex from all region vertices.
+        // Return false if it is not a valid cut; the caller retries the whole sequence.
+        cut_at = region_verts[r_int(region_verts.size())];
+        double below = pop_below[cut_at];
         double above = total_pop - below;
-        bool subtree_is_peel = (peel_lower <= below && below <= peel_upper &&
-                                remain_lower <= above && above <= remain_upper);
-        bool subtree_is_remain = (remain_lower <= below && below <= remain_upper &&
-                                  peel_lower <= above && above <= peel_upper);
-        if (subtree_is_peel || subtree_is_remain) valid_verts.push_back(v);
+        bool ok = (peel_lower <= below && below <= peel_upper &&
+                   remain_lower <= above && above <= remain_upper) ||
+                  (remain_lower <= below && below <= remain_upper &&
+                   peel_lower <= above && above <= peel_upper);
+        if (!ok) return false;
     }
 
-    valid_count = valid_verts.size();
-    if (valid_count == 0) return false;
-
-    // Pick uniformly from valid cuts only
-    int pick = r_int(valid_count);
-    int cut_at = valid_verts[pick];
     double below = pop_below[cut_at];
     double above = total_pop - below;
-
     bool subtree_is_peel = (peel_lower <= below && below <= peel_upper &&
                             remain_lower <= above && above <= remain_upper);
 
@@ -161,7 +173,7 @@ static bool cut_one_mms(Tree &ust, int k, int root,
     }
     parent[cut_at] = -1;
 
-    // Assign labels based on which assignment is valid
+    // Assign labels
     if (subtree_is_peel) {
         assign_district(ust, districts, cut_at, peel_label);
         assign_district(ust, districts, root, remain_label);
@@ -238,11 +250,9 @@ static double log_p_edge_estimate(const Graph &g, const uvec &pop,
 Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &counties,
                      const arma::uvec &pop, int n_distr, double target, double lower,
                      double upper, double rho, List constraints, List control,
-                     int k, int thin, int l_merge, int verbosity) {
+                     int thin, int l_merge, int verbosity) {
     seed_rng((int) Rcpp::sample(INT_MAX, 1)[0]);
 
-    double thresh = (double) control["adapt_k_thresh"];
-    bool do_mh = (bool) control["do_mh"];
     int max_retries = 200;
     if (control.containsElementNamed("max_retries")) {
         max_retries = (int) control["max_retries"];
@@ -254,6 +264,10 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     bool exact_mh = true;
     if (control.containsElementNamed("exact_mh")) {
         exact_mh = (bool) control["exact_mh"];
+    }
+    bool valid_cuts_only = !exact_mh; // correct default for each path
+    if (control.containsElementNamed("valid_cuts_only")) {
+        valid_cuts_only = (bool) control["valid_cuts_only"];
     }
 
     Graph g = list_to_graph(l);
@@ -281,12 +295,6 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
             Rcout << "Sampling hierarchically with respect to the "
                   << cg.size() << " administrative units.\n";
     }
-
-    if (k <= 0) {
-        adapt_ms_parameters(g, n_distr, k, thresh, tol, init, counties, cg, pop, target);
-    }
-    if (verbosity >= 3)
-        Rcout << "Using k = " << k << "\n";
 
     Graph dist_g = district_graph(g, init, n_distr);
     Graph new_dist_g;
@@ -388,13 +396,12 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                                             pop, ust_lower, ust_upper, counties, cg);
                 if (result != 0) { attempt_ok = false; break; }
 
-                int valid_count = 0;
                 auto col_ref = districts.col(idx + 1);
-                if (!cut_one_mms(ust, k, root, col_ref,
+                if (!cut_one_mms(ust, root, col_ref,
                                  peel, remain, pop, region_pop,
                                  peel_lower, peel_upper,
                                  remain_lower, remain_upper,
-                                 target, valid_count)) {
+                                 target, /*from_valid_only=*/valid_cuts_only)) {
                     attempt_ok = false;
                     break;
                 }
@@ -476,13 +483,12 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                                             pop, ust_lower, ust_upper, counties, cg);
                 if (result != 0) continue;
 
-                int valid_count = 0;
                 auto col_ref = districts.col(idx + 1);
-                if (cut_one_mms(ust, k, root, col_ref,
+                if (cut_one_mms(ust, root, col_ref,
                                 peel, remain, pop, region_pop,
                                 peel_lower, peel_upper,
                                 remain_lower, remain_upper,
-                                target, valid_count)) {
+                                target, /*from_valid_only=*/valid_cuts_only)) {
                     step_ok = true;
                     break;
                 }
@@ -662,7 +668,7 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
         prop_lp += log_psum_rev - log_psum_fwd;
 
         // 7. Accept/reject
-        if (!do_mh || prop_lp >= 0 || std::log(r_unif()) <= prop_lp) {
+        if (prop_lp >= 0 || std::log(r_unif()) <= prop_lp) {
             n_accept++;
             districts.col(idx) = districts.col(idx + 1);
             dist_g = new_dist_g;
@@ -694,7 +700,6 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
 
     Rcpp::List out;
     out["plans"] = districts;
-    out["est_k"] = k;
     out["mhdecisions"] = mh_decisions;
 
     return out;
