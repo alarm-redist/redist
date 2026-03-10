@@ -116,6 +116,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
         cols <- names(object)
         addl_cols <- setdiff(cols, c("chain", "draw", "district", "total_pop"))
         warn_converge <- FALSE
+        rhats <- NULL
         if ("chain" %in% cols && length(addl_cols) > 0) {
             idx <- seq_len(n_samp)
             if ("district" %in% cols) idx <- as.integer(district) + (idx - 1)*n_distr
@@ -187,6 +188,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
             }
         }
         out <- bind_rows(run_dfs)
+        out <- list(out, rhat = rhats)
 
         cli::cli_li(cli::col_grey("
             Watch out for low effective samples, very low acceptance rates (less than 1%),
