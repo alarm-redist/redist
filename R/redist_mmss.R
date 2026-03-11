@@ -58,7 +58,7 @@
 #' @param valid_cuts_only Controls whether tree cuts are sampled only from
 #'   valid (population-feasible) edges, or uniformly from all non-root edges
 #'   with rejection. Defaults to `!exact_mh`. Set explicitly to `TRUE` with
-#'   `exact_mh = FALSE` if you know that every spanning tree has exactly one
+#'   `exact_mh = TRUE` if you know that every spanning tree has exactly one
 #'   valid cut which eliminates the correction term entirely.
 #' @param ncores The number of parallel processes to run. Defaults to the
 #'   number of available cores, capped at the number of chains. Only used when
