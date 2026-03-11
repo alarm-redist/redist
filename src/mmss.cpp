@@ -238,8 +238,11 @@ static double log_p_edge_estimate(const Graph &g, const uvec &pop,
 
     if (trees_drawn == 0) return -23.0; // ~log(1e-10)
 
-    double p_hat = (double) total_valid / ((double) trees_drawn * (region_size - 1));
-    return std::log(std::max(p_hat, 1e-10));
+    // Return log of expected *count* of valid-cut vertices per tree (= p_hat * (region_size-1)),
+    // not just p_hat. The log-ratio log_p_fwd[s] - log_p_rev[s] then automatically
+    // includes the (|Ṽ_s|-1) correction missing from the paper's eq-approx.
+    double q_hat = (double) total_valid / (double) trees_drawn;
+    return std::log(std::max(q_hat, 1e-10));
 }
 
 
@@ -615,6 +618,32 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                     }
                 }
                 rev_boundary_lp += log_boundary(g, work_mat.col(0), 0, dist_label);
+            }
+        }
+
+        // For the exact MH path with l_merge >= 3: apply the region-size correction
+        // that the paper incorrectly claims cancels. For s >= 1, the forward region
+        // size |Ṽ_s^fwd| = |R| - sum_{j<s}|V_{d_j}^new| differs from the reverse
+        // |Ṽ_s^rev| = |R| - sum_{j<s}|V_{d_j}^old| whenever district sizes change.
+        // The missing factor is prod_{s=1}^{l-2} (|Ṽ_s^fwd|-1)/(|Ṽ_s^rev|-1).
+        if (exact_mh && l_merge >= 3) {
+            int total_region = 0;
+            for (int v = 0; v < V; v++) {
+                for (int d : sel_districts) {
+                    if ((int) saved_plan(v) == d) { total_region++; break; }
+                }
+            }
+            int fwd_cumsize = 0, rev_cumsize = 0;
+            for (int s = 1; s < l_merge - 1; s++) {
+                int fwd_s = 0, rev_s = 0;
+                for (int v = 0; v < V; v++) {
+                    if ((int) districts(v, idx + 1) == sel_districts[s - 1]) fwd_s++;
+                    if ((int) districts(v, idx)     == sel_districts[s - 1]) rev_s++;
+                }
+                fwd_cumsize += fwd_s;
+                rev_cumsize += rev_s;
+                prop_correction += std::log((double)(total_region - fwd_cumsize - 1) /
+                                            (double)(total_region - rev_cumsize - 1));
             }
         }
 
