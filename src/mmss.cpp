@@ -238,9 +238,8 @@ static double log_p_edge_estimate(const Graph &g, const uvec &pop,
 
     if (trees_drawn == 0) return -23.0; // ~log(1e-10)
 
-    // Return log of expected *count* of valid-cut vertices per tree (= p_hat * (region_size-1)),
-    // not just p_hat. The log-ratio log_p_fwd[s] - log_p_rev[s] then automatically
-    // includes the (|Ṽ_s|-1) correction missing from the paper's eq-approx.
+    // Return log of expected *count* of valid-cut vertices per tree (= p_hat * (region_size-1)).
+    // The log-ratio log_p_fwd[s] - log_p_rev[s] is the paper's approximate correction (eq. 163).
     double q_hat = (double) total_valid / (double) trees_drawn;
     return std::log(std::max(q_hat, 1e-10));
 }
@@ -345,10 +344,12 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
 
         if (exact_mh) {
         // ====== EXACT PATH: whole-sequence retry ======
-        // Retrying the complete split as one unit preserves q ∝ T*T*B
-        // because each complete attempt is independent and the overall
-        // success probability depends only on the merged region (same for
-        // forward and reverse), so the retry constant cancels in the MH ratio.
+        // Retrying the complete split as one unit preserves q ∝ T*T*B.
+        // For l_merge == 2 the retry factor cancels exactly, since the success
+        // probability depends only on the merged region (same for forward and
+        // reverse). For l_merge >= 3 the cancellation is approximate because
+        // intermediate subgraph shapes can differ; the residual is corrected
+        // below via the region-size factor (lines 629-648).
         split_failed = true;
 
         for (int attempt = 0; attempt < max_retries; attempt++) {
@@ -622,10 +623,10 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
         }
 
         // For the exact MH path with l_merge >= 3: apply the region-size correction
-        // that the paper incorrectly claims cancels. For s >= 1, the forward region
-        // size |Ṽ_s^fwd| = |R| - sum_{j<s}|V_{d_j}^new| differs from the reverse
+        // from eq. 135. For s >= 1, the forward region size
+        // |Ṽ_s^fwd| = |R| - sum_{j<s}|V_{d_j}^new| differs from the reverse
         // |Ṽ_s^rev| = |R| - sum_{j<s}|V_{d_j}^old| whenever district sizes change.
-        // The missing factor is prod_{s=1}^{l-2} (|Ṽ_s^fwd|-1)/(|Ṽ_s^rev|-1).
+        // The correction factor is prod_{s=1}^{l-2} (|Ṽ_s^fwd|-1)/(|Ṽ_s^rev|-1).
         if (exact_mh && l_merge >= 3) {
             int total_region = 0;
             for (int v = 0; v < V; v++) {
