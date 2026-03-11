@@ -648,7 +648,7 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
             }
         }
 
-        // proposal ratio = log q(y->x) - log q(x->y) + correction (0 for exact)
+        // MH proposal log-ratio: log q(y->x) - log q(x->y) + path-specific correction
         prop_lp = rev_boundary_lp - fwd_boundary_lp + prop_correction;
 
         // 4. Compactness (tau)
