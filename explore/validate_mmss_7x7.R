@@ -65,7 +65,7 @@ init_plans <- redist_smc(map, nsims = 100) |>
 
 plans <- redist_mmss(
     map = map,
-    nsims = 1e5,
+    nsims = 2e5,
     chains = n_chains,
     ncores = n_chains,
     l = 3,
