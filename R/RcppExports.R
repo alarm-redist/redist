@@ -113,14 +113,6 @@ mmss_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper,
     .Call(`_redist_mmss_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, thin, l_merge, verbosity)
 }
 
-count_single_tree_partitions_impl <- function(tree, pop, l_split, lower, upper, method = "auto") {
-    .Call(`_redist_count_single_tree_partitions_impl`, tree, pop, l_split, lower, upper, method)
-}
-
-diag_single_tree_partitions_impl <- function(l, pop, plans, n_distr, pop_tol, l_split, n_trees_per_region) {
-    .Call(`_redist_diag_single_tree_partitions_impl`, l, pop, plans, n_distr, pop_tol, l_split, n_trees_per_region)
-}
-
 pareto_dominated <- function(x) {
     .Call(`_redist_pareto_dominated`, x)
 }
