@@ -190,9 +190,10 @@ static bool cut_one_mms(Tree &ust, int root,
 
 
 /*
- * Estimate p_s^edge = E[fraction of valid-cut edges per UST] on a subgraph.
- * Draws K spanning trees, counts valid cuts in each, returns log(mean fraction).
- * Used to correct the MH ratio for per-step retry (steps s >= 1).
+ * Estimate p_s^edge = Pr[UST on the subgraph contains at least one valid cut].
+ * Draws K spanning trees, records whether each has any valid cut, and returns
+ * the log of that fraction. Used to correct the MH ratio for per-step retry
+ * (steps s >= 1).
  */
 static double log_p_edge_estimate(const Graph &g, const uvec &pop,
                                   const std::vector<bool> &ignore,
@@ -206,7 +207,7 @@ static double log_p_edge_estimate(const Graph &g, const uvec &pop,
     for (int v = 0; v < V; v++) if (!ignore[v]) region_size++;
     if (region_size <= 1) return 0.0;
 
-    int total_valid = 0;
+    int trees_with_valid_cut = 0;
     int trees_drawn = 0;
     Tree ust_tmp = init_tree(V);
     std::vector<bool> visited_tmp(V);
@@ -227,6 +228,7 @@ static double log_p_edge_estimate(const Graph &g, const uvec &pop,
         parent_tmp[root_tmp] = -1;
         tree_pop(ust_tmp, root_tmp, pop, pop_below_tmp, parent_tmp);
 
+        int valid_cuts_this_tree = 0;
         for (int v = 0; v < V; v++) {
             if (ignore[v] || v == root_tmp) continue;
             double below = pop_below_tmp[v];
@@ -234,16 +236,17 @@ static double log_p_edge_estimate(const Graph &g, const uvec &pop,
             bool ok = (peel_lower <= below && below <= peel_upper &&
                        remain_lower <= above && above <= remain_upper) ||
                       (remain_lower <= below && below <= remain_upper &&
-                       peel_lower <= above && above <= peel_upper);
-            if (ok) total_valid++;
+                        peel_lower <= above && above <= peel_upper);
+            if (ok) valid_cuts_this_tree++;
         }
+        if (valid_cuts_this_tree > 0) trees_with_valid_cut++;
     }
 
     if (trees_drawn == 0) return -23.0; // ~log(1e-10)
 
-    // Return log of expected *count* of valid-cut vertices per tree (= p_hat * (region_size-1)).
+    // Return log of the fraction of UST draws that contain at least one valid cut.
     // The log-ratio log_p_fwd[s] - log_p_rev[s] is the paper's approximate correction (eq. 163).
-    double q_hat = (double) total_valid / (double) trees_drawn;
+    double q_hat = (double) trees_with_valid_cut / (double) trees_drawn;
     return std::log(std::max(q_hat, 1e-10));
 }
 
