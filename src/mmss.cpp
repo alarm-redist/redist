@@ -641,7 +641,33 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
             }
         }
 
-        // MH proposal log-ratio: log q(y->x) - log q(x->y)
+        // For the exact MH path with l_merge >= 3: apply the region-size correction
+        // from eq. 135. For s >= 1, the forward region size
+        // |Γ_s^fwd| = |R| - sum_{j<s}|V_{d_j}^new| differs from the reverse
+        // |Γ_s^rev| = |R| - sum_{j<s}|V_{d_j}^old| whenever district sizes change.
+        // The correction factor is prod_{s=1}^{l-2} (|Γ_s^fwd|-1)/(|Γ_s^rev|-1).
+        if (exact_mh && l_merge >= 3) {
+            int total_region = 0;
+            for (int v = 0; v < V; v++) {
+                for (int d : sel_districts) {
+                    if ((int) saved_plan(v) == d) { total_region++; break; }
+                }
+            }
+            int fwd_cumsize = 0, rev_cumsize = 0;
+            for (int s = 1; s < l_merge - 1; s++) {
+                int fwd_s = 0, rev_s = 0;
+                for (int v = 0; v < V; v++) {
+                    if ((int) districts(v, idx + 1) == sel_districts[s - 1]) fwd_s++;
+                    if ((int) districts(v, idx)     == sel_districts[s - 1]) rev_s++;
+                }
+                fwd_cumsize += fwd_s;
+                rev_cumsize += rev_s;
+                prop_correction += std::log((double)(total_region - fwd_cumsize - 1) /
+                                            (double)(total_region - rev_cumsize - 1));
+            }
+        }
+
+        // MH proposal log-ratio: log q(y->x) - log q(x->y) + path-specific correction
         prop_lp = rev_boundary_lp - fwd_boundary_lp + prop_correction;
 
         // 4. Compactness (tau)
