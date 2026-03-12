@@ -50,6 +50,10 @@
 #'   step before giving up. Higher values reduce proposal failures at the cost
 #'   of more computation per step. The default of 200 is sufficient for most
 #'   problems; increase for very tight population tolerances or large districts.
+#' @param k_est The number of spanning trees to draw when estimating
+#'   \eqn{p_s^{\text{edge}}} for the approximate MH correction (used only when
+#'   `exact_mh = FALSE`). Higher values give a less biased correction factor.
+#'   Default is 25. Increase for large \eqn{\ell} or tight population tolerances.
 #' @param exact_mh If `FALSE` (the default), use per-step retry with an
 #'   estimated correction factor in the Metropolis-Hastings ratio, which is
 #'   faster and passes empirical validation. If `TRUE`, use exact
@@ -103,6 +107,7 @@ redist_mmss <- function(map,
                        counties = NULL, compactness = 1,
                        constraints = list(),
                        max_retries = 200L,
+                       k_est = 25L,
                        exact_mh = FALSE,
                        valid_cuts_only = !exact_mh,
                        ncores = NULL,
@@ -276,6 +281,7 @@ redist_mmss <- function(map,
 
     control <- list(
         max_retries = as.integer(max_retries),
+        k_est = as.integer(k_est),
         exact_mh = exact_mh,
         valid_cuts_only = valid_cuts_only
     )
@@ -325,7 +331,14 @@ redist_mmss <- function(map,
         acceptances <- as.logical(algout$mhdecisions)
 
         l_diag <- list(
-            runtime = as.numeric(t2_run - t1_run, units = "secs")
+            runtime = as.numeric(t2_run - t1_run, units = "secs"),
+            n_m_hit = algout$n_m_hit,
+            max_valid_cuts_s0 = algout$max_valid_cuts_s0,
+            max_valid_cuts_s1 = algout$max_valid_cuts_s1,
+            mean_valid_cuts_s0 = algout$mean_valid_cuts_s0,
+            mean_valid_cuts_s1 = algout$mean_valid_cuts_s1,
+            valid_cuts_dist_s0 = algout$valid_cuts_dist_s0,
+            valid_cuts_dist_s1 = algout$valid_cuts_dist_s1
         )
 
         warmup_idx <- c(seq_len(1 + warmup %/% thin), ncol(algout$plans))

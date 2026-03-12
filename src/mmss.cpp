@@ -112,7 +112,8 @@ static bool cut_one_mms(Tree &ust, int root,
                         double peel_lower, double peel_upper,
                         double remain_lower, double remain_upper,
                         double peel_target,
-                        bool from_valid_only) {
+                        bool from_valid_only,
+                        int &n_valid_cuts) {
     int V = ust.size();
 
     std::vector<int> pop_below(V, 0);
@@ -143,11 +144,13 @@ static bool cut_one_mms(Tree &ust, int root,
                        peel_lower <= above && above <= peel_upper);
             if (ok) valid_verts.push_back(v);
         }
+        n_valid_cuts = (int) valid_verts.size();
         if (valid_verts.empty()) return false;
         cut_at = valid_verts[r_int(valid_verts.size())];
     } else {
         // Exact path: pick a random vertex from all region vertices.
         // Return false if it is not a valid cut; the caller retries the whole sequence.
+        n_valid_cuts = 0;
         cut_at = region_verts[r_int(region_verts.size())];
         double below = pop_below[cut_at];
         double above = total_pop - below;
@@ -301,6 +304,21 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     Graph dist_g = district_graph(g, init, n_distr);
     Graph new_dist_g;
     int n_accept = 0;
+    // Diagnostics for approximate path.
+    // n_cuts_dist[k] counts successfully-sampled USTs with exactly k valid cuts
+    // (k=3 means 3 or more). Index 0 captures trees where cut_one_mms failed
+    // (no valid cuts found), i.e. the rejected attempts before a winning tree.
+    int n_m_hit = 0;
+    // Step s=0 spans the full merged region G[R]; valid-cut multiplicity
+    // cancels between forward and reverse, so it doesn't bias the chain.
+    int n_cuts_dist_s0[4] = {0, 0, 0, 0};
+    int max_valid_cuts_s0 = 0;
+    long long n_valid_trees_s0 = 0, n_valid_sum_s0 = 0;
+    // Steps s>=1 span peeled subregions; extra valid cuts here create bias
+    // because the single-valid-cut assumption may not hold for these trees.
+    int n_cuts_dist_s1[4] = {0, 0, 0, 0};
+    int max_valid_cuts_s1 = 0;
+    long long n_valid_trees_s1 = 0, n_valid_sum_s1 = 0;
 
     CharacterVector psi_names = CharacterVector::create(
         "pop_dev", "splits", "multisplits", "total_splits",
@@ -401,11 +419,13 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                 if (result != 0) { attempt_ok = false; break; }
 
                 auto col_ref = districts.col(idx + 1);
+                int dummy_nvalid = 0;
                 if (!cut_one_mms(ust, root, col_ref,
                                  peel, remain, pop, region_pop,
                                  peel_lower, peel_upper,
                                  remain_lower, remain_upper,
-                                 target, /*from_valid_only=*/valid_cuts_only)) {
+                                 target, /*from_valid_only=*/valid_cuts_only,
+                                 dummy_nvalid)) {
                     attempt_ok = false;
                     break;
                 }
@@ -488,17 +508,33 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                 if (result != 0) continue;
 
                 auto col_ref = districts.col(idx + 1);
+                int nvc = 0;
                 if (cut_one_mms(ust, root, col_ref,
                                 peel, remain, pop, region_pop,
                                 peel_lower, peel_upper,
                                 remain_lower, remain_upper,
-                                target, /*from_valid_only=*/valid_cuts_only)) {
+                                target, /*from_valid_only=*/valid_cuts_only, nvc)) {
                     step_ok = true;
+                    if (s == 0) {
+                        n_cuts_dist_s0[std::min(nvc, 3)]++;
+                        n_valid_trees_s0++;
+                        n_valid_sum_s0 += nvc;
+                        if (nvc > max_valid_cuts_s0) max_valid_cuts_s0 = nvc;
+                    } else {
+                        n_cuts_dist_s1[std::min(nvc, 3)]++;
+                        n_valid_trees_s1++;
+                        n_valid_sum_s1 += nvc;
+                        if (nvc > max_valid_cuts_s1) max_valid_cuts_s1 = nvc;
+                    }
                     break;
+                } else {
+                    // nvc == 0: no valid cuts found in this tree
+                    if (s == 0) n_cuts_dist_s0[0]++;
+                    else        n_cuts_dist_s1[0]++;
                 }
             }
 
-            if (!step_ok) { split_failed = true; break; }
+            if (!step_ok) { n_m_hit++; split_failed = true; break; }
 
             fwd_boundary_lp += log_boundary(g, districts.col(idx + 1), peel, remain);
 
@@ -726,11 +762,67 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     if (verbosity >= 1) {
         Rcout << "Acceptance rate: " << std::setprecision(2)
               << (100.0 * n_accept) / (N - 1) << "%\n";
+        if (!exact_mh) {
+            if (n_m_hit > 0) {
+                Rcout << "WARNING: " << n_m_hit
+                      << " proposal step(s) exhausted max_retries=" << max_retries
+                      << ". Consider increasing max_retries or k_est.\n";
+            }
+            long long n_s0 = n_cuts_dist_s0[0] + n_cuts_dist_s0[1] +
+                             n_cuts_dist_s0[2] + n_cuts_dist_s0[3];
+            long long n_s1 = n_cuts_dist_s1[0] + n_cuts_dist_s1[1] +
+                             n_cuts_dist_s1[2] + n_cuts_dist_s1[3];
+            if (n_s0 > 0) {
+                double mean_vc0 = n_valid_trees_s0 > 0
+                    ? (double) n_valid_sum_s0 / n_valid_trees_s0 : 0.0;
+                Rcout << std::setprecision(2)
+                      << "Valid cuts (s=0, full region; cancels in MH): "
+                      << "0=" << n_cuts_dist_s0[0]
+                      << ", 1=" << n_cuts_dist_s0[1]
+                      << ", 2=" << n_cuts_dist_s0[2]
+                      << ", 3+=" << n_cuts_dist_s0[3]
+                      << "; mean=" << mean_vc0
+                      << ", max=" << max_valid_cuts_s0 << ".\n";
+            }
+            if (n_s1 > 0) {
+                double mean_vc1 = n_valid_trees_s1 > 0
+                    ? (double) n_valid_sum_s1 / n_valid_trees_s1 : 0.0;
+                Rcout << std::setprecision(2)
+                      << "Valid cuts (s>=1, subregions; affects single-cut assumption): "
+                      << "0=" << n_cuts_dist_s1[0]
+                      << ", 1=" << n_cuts_dist_s1[1]
+                      << ", 2=" << n_cuts_dist_s1[2]
+                      << ", 3+=" << n_cuts_dist_s1[3]
+                      << "; mean=" << mean_vc1
+                      << ", max=" << max_valid_cuts_s1 << ".\n";
+                if (max_valid_cuts_s1 > 1) {
+                    Rcout << "NOTE: max valid cuts (s>=1) > 1; "
+                             "single-valid-cut assumption does not hold exactly.\n";
+                }
+            }
+        }
     }
 
     Rcpp::List out;
     out["plans"] = districts;
     out["mhdecisions"] = mh_decisions;
+    out["n_m_hit"] = n_m_hit;
+    out["max_valid_cuts_s0"] = max_valid_cuts_s0;
+    out["max_valid_cuts_s1"] = max_valid_cuts_s1;
+    out["mean_valid_cuts_s0"] = n_valid_trees_s0 > 0 ? (double) n_valid_sum_s0 / n_valid_trees_s0 : 0.0;
+    out["mean_valid_cuts_s1"] = n_valid_trees_s1 > 0 ? (double) n_valid_sum_s1 / n_valid_trees_s1 : 0.0;
+    out["valid_cuts_dist_s0"] = Rcpp::IntegerVector::create(
+        Rcpp::Named("0")    = n_cuts_dist_s0[0],
+        Rcpp::Named("1")    = n_cuts_dist_s0[1],
+        Rcpp::Named("2")    = n_cuts_dist_s0[2],
+        Rcpp::Named("3+")   = n_cuts_dist_s0[3]
+    );
+    out["valid_cuts_dist_s1"] = Rcpp::IntegerVector::create(
+        Rcpp::Named("0")    = n_cuts_dist_s1[0],
+        Rcpp::Named("1")    = n_cuts_dist_s1[1],
+        Rcpp::Named("2")    = n_cuts_dist_s1[2],
+        Rcpp::Named("3+")   = n_cuts_dist_s1[3]
+    );
 
     return out;
 }

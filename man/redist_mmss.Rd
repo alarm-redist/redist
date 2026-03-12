@@ -16,6 +16,7 @@ redist_mmss(
   compactness = 1,
   constraints = list(),
   max_retries = 200L,
+  k_est = 25L,
   exact_mh = FALSE,
   valid_cuts_only = !exact_mh,
   ncores = NULL,
@@ -69,6 +70,11 @@ considerations.}
 step before giving up. Higher values reduce proposal failures at the cost
 of more computation per step. The default of 200 is sufficient for most
 problems; increase for very tight population tolerances or large districts.}
+
+\item{k_est}{The number of spanning trees to draw when estimating
+\eqn{p_s^{\text{edge}}} for the approximate MH correction (used only when
+\code{exact_mh = FALSE}). Higher values give a less biased correction factor.
+Default is 25. Increase for large \eqn{\ell} or tight population tolerances.}
 
 \item{exact_mh}{If \code{FALSE} (the default), use per-step retry with an
 estimated correction factor in the Metropolis-Hastings ratio, which is

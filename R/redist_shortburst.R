@@ -69,6 +69,11 @@
 #'   forest walks for cyclewalk backend (default 0.1).
 #' @param mmss_l The number of districts to merge and re-split at each step for
 #'   the `mmss` backend (default 3). Must be at least 2.
+#' @param mmss_k_est The number of spanning trees used to estimate
+#'   \eqn{p_s^{\text{edge}}} for the approximate MH correction in the `mmss`
+#'   backend. Higher values give a less biased correction. Default is 25.
+#'   Lower values (e.g. 5) speed up sampling at the cost of a rougher
+#'   correction; set to 0 to skip the correction entirely (no target guarantee).
 #' @param mmss_valid_cuts_only If `TRUE` (the default for the `mmss` backend),
 #'   sample cuts only from population-feasible edges in each spanning tree.
 #'   Set to `FALSE` to sample uniformly from all edges with rejection, which
@@ -106,6 +111,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
                               flip_lambda = 0, flip_eprob = 0.05,
                               cw_instep = 10L, cw_cycle_walk_frac = 0.1,
                               mmss_l = 3L,
+                              mmss_k_est = 25L,
                               mmss_valid_cuts_only = TRUE,
                               verbose = TRUE) {
 
@@ -225,6 +231,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         if (mmss_l < 2L) cli::cli_abort("{.arg mmss_l} must be at least 2.")
         if (mmss_l > ndists) cli::cli_abort("{.arg mmss_l} must be at most the number of districts ({ndists}).")
         control <- list(max_retries = 200L, exact_mh = FALSE,
+                        k_est = as.integer(mmss_k_est),
                         valid_cuts_only = mmss_valid_cuts_only)
 
         run_burst <- function(init, steps) {
