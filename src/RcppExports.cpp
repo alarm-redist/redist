@@ -421,6 +421,39 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// count_single_tree_partitions_impl
+Rcpp::List count_single_tree_partitions_impl(Tree tree, const arma::uvec& pop, int l_split, double lower, double upper, std::string method);
+RcppExport SEXP _redist_count_single_tree_partitions_impl(SEXP treeSEXP, SEXP popSEXP, SEXP l_splitSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP methodSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Tree >::type tree(treeSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< int >::type l_split(l_splitSEXP);
+    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< std::string >::type method(methodSEXP);
+    rcpp_result_gen = Rcpp::wrap(count_single_tree_partitions_impl(tree, pop, l_split, lower, upper, method));
+    return rcpp_result_gen;
+END_RCPP
+}
+// diag_single_tree_partitions_impl
+Rcpp::List diag_single_tree_partitions_impl(List l, const arma::uvec& pop, const Rcpp::IntegerMatrix& plans, int n_distr, double pop_tol, int l_split, int n_trees_per_region);
+RcppExport SEXP _redist_diag_single_tree_partitions_impl(SEXP lSEXP, SEXP popSEXP, SEXP plansSEXP, SEXP n_distrSEXP, SEXP pop_tolSEXP, SEXP l_splitSEXP, SEXP n_trees_per_regionSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type l(lSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::IntegerMatrix& >::type plans(plansSEXP);
+    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
+    Rcpp::traits::input_parameter< double >::type pop_tol(pop_tolSEXP);
+    Rcpp::traits::input_parameter< int >::type l_split(l_splitSEXP);
+    Rcpp::traits::input_parameter< int >::type n_trees_per_region(n_trees_per_regionSEXP);
+    rcpp_result_gen = Rcpp::wrap(diag_single_tree_partitions_impl(l, pop, plans, n_distr, pop_tol, l_split, n_trees_per_region));
+    return rcpp_result_gen;
+END_RCPP
+}
 // pareto_dominated
 LogicalVector pareto_dominated(arma::mat x);
 RcppExport SEXP _redist_pareto_dominated(SEXP xSEXP) {
@@ -713,6 +746,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_max_dev", (DL_FUNC) &_redist_max_dev, 3},
     {"_redist_ms_plans", (DL_FUNC) &_redist_ms_plans, 15},
     {"_redist_mmss_plans", (DL_FUNC) &_redist_mmss_plans, 15},
+    {"_redist_count_single_tree_partitions_impl", (DL_FUNC) &_redist_count_single_tree_partitions_impl, 6},
+    {"_redist_diag_single_tree_partitions_impl", (DL_FUNC) &_redist_diag_single_tree_partitions_impl, 7},
     {"_redist_pareto_dominated", (DL_FUNC) &_redist_pareto_dominated, 1},
     {"_redist_closest_adj_pop", (DL_FUNC) &_redist_closest_adj_pop, 3},
     {"_redist_rint1", (DL_FUNC) &_redist_rint1, 2},
