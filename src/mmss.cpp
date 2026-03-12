@@ -88,6 +88,166 @@ static double log_prob_perm(const std::vector<int> &districts, int n_distr,
 }
 
 
+static double total_pop_of(const std::vector<int> &verts, const uvec &pop) {
+    double total = 0.0;
+    for (int v : verts) total += pop(v);
+    return total;
+}
+
+
+static void collect_subtree_vertices(const Tree &tree, int root,
+                                     std::vector<int> &verts) {
+    std::vector<int> stack = {root};
+    while (!stack.empty()) {
+        int v = stack.back();
+        stack.pop_back();
+        verts.push_back(v);
+        for (int child : tree[v]) stack.push_back(child);
+    }
+}
+
+
+static Tree restrict_tree_to_vertices(const Tree &tree,
+                                      const std::vector<bool> &keep) {
+    int V = tree.size();
+    Tree restricted = init_tree(V);
+    for (int v = 0; v < V; v++) {
+        if (!keep[v]) continue;
+        for (int child : tree[v]) {
+            if (keep[child]) restricted[v].push_back(child);
+        }
+    }
+    return restricted;
+}
+
+
+/*
+ * Estimate the top-k sequence for the exact path.  Draws K_est spanning trees
+ * on G[R], walks each through the split sequence by cutting at the best valid
+ * vertex and restricting to the remainder.  For each step s, also draws one
+ * fresh G̃_s UST to count valid cuts in that subgraph directly — this gives
+ * the correct distribution for k_seq[s] since the actual forward proposal
+ * draws fresh G̃_s USTs, not restricted G[R]-trees.
+ */
+static std::vector<int> estimate_k_sequence(const Graph &g, const uvec &pop,
+                                            const std::vector<int> &region_verts,
+                                            int l_merge, int K_est,
+                                            double total_pop_full,
+                                            int n_districts, double pop_dev,
+                                            const uvec &counties,
+                                            Multigraph &cg) {
+    std::vector<int> k_seq(l_merge - 1, 1);
+    if (l_merge <= 1 || K_est <= 0 || region_verts.size() <= 1) return k_seq;
+
+    int V = g.size();
+    double pbar = total_pop_full / n_districts;
+    double region_total = total_pop_of(region_verts, pop);
+
+    std::vector<bool> ignore(V, true);
+    std::vector<bool> visited(V, false);
+    for (int v : region_verts) ignore[v] = false;
+
+    for (int kk = 0; kk < K_est; kk++) {
+        Tree current_tree = init_tree(V);
+        int current_root;
+        int result = sample_sub_ust(g, current_tree, V, current_root, visited, ignore,
+                                    pop, 0.0, region_total, counties, cg);
+        if (result != 0) continue;
+
+        std::vector<int> current_region = region_verts;
+        double current_pop = region_total;
+        bool tree_alive = true;
+
+        for (int s = 0; s < l_merge - 1 && tree_alive; s++) {
+            int remaining_splits = l_merge - 1 - s;
+            double peel_lower = std::max(pbar * (1 - pop_dev),
+                                         current_pop - remaining_splits * pbar * (1 + pop_dev));
+            double peel_upper = std::min(pbar * (1 + pop_dev),
+                                         current_pop - remaining_splits * pbar * (1 - pop_dev));
+            if (peel_lower > peel_upper) { tree_alive = false; break; }
+
+            std::vector<int> pop_below(V, 0);
+            std::vector<int> parent(V, -1);
+            tree_pop(current_tree, current_root, pop, pop_below, parent);
+
+            int best_v = -1;
+            double best_dev = std::numeric_limits<double>::infinity();
+            for (int v : current_region) {
+                if (v == current_root) continue;
+                double below = pop_below[v];
+                double above = current_pop - below;
+                bool ok = (peel_lower <= below && below <= peel_upper) ||
+                          (peel_lower <= above && above <= peel_upper);
+                if (!ok) continue;
+                double dev = std::min(std::abs(below - pbar), std::abs(above - pbar));
+                if (dev < best_dev) { best_dev = dev; best_v = v; }
+            }
+
+            if (best_v < 0) { tree_alive = false; break; }
+
+            // Draw a fresh G̃_s UST to count valid cuts from the correct distribution.
+            // The restricted G[R]-tree has a different distribution than the fresh
+            // G̃_s USTs that cut_one_mms actually draws in the forward proposal.
+            {
+                std::vector<bool> ignore_s(V, true);
+                for (int v : current_region) ignore_s[v] = false;
+
+                Tree fresh_tree = init_tree(V);
+                std::vector<bool> fresh_visited(V, false);
+                int fresh_root;
+                int fresh_result = sample_sub_ust(g, fresh_tree, V, fresh_root,
+                                                  fresh_visited, ignore_s, pop,
+                                                  0.0, current_pop, counties, cg);
+                if (fresh_result == 0) {
+                    std::vector<int> fresh_pop_below(V, 0);
+                    std::vector<int> fresh_parent(V, -1);
+                    tree_pop(fresh_tree, fresh_root, pop, fresh_pop_below, fresh_parent);
+
+                    int fresh_valid = 0;
+                    for (int v : current_region) {
+                        if (v == fresh_root) continue;
+                        double below = fresh_pop_below[v];
+                        double above = current_pop - below;
+                        bool ok = (peel_lower <= below && below <= peel_upper) ||
+                                  (peel_lower <= above && above <= peel_upper);
+                        if (ok) fresh_valid++;
+                    }
+                    k_seq[s] = std::max(k_seq[s], fresh_valid);
+                }
+            }
+
+            double below_best = pop_below[best_v];
+            double above_best = current_pop - below_best;
+            bool peel_is_below = (peel_lower <= below_best && below_best <= peel_upper);
+
+            std::vector<int> subtree_vertices;
+            collect_subtree_vertices(current_tree, best_v, subtree_vertices);
+
+            std::vector<bool> keep(V, false);
+            if (peel_is_below) {
+                for (int v : current_region) keep[v] = true;
+                for (int v : subtree_vertices) keep[v] = false;
+                current_pop = above_best;
+            } else {
+                for (int v : subtree_vertices) keep[v] = true;
+                current_root = best_v;
+                current_pop = below_best;
+            }
+
+            current_tree = restrict_tree_to_vertices(current_tree, keep);
+            current_region.clear();
+            current_region.reserve(V);
+            for (int v = 0; v < V; v++) {
+                if (keep[v]) current_region.push_back(v);
+            }
+            if (current_region.size() <= 1) tree_alive = false;
+        }
+    }
+
+    return k_seq;
+}
+
+
 static double log_p_edge_estimate(const Graph &g, const uvec &pop,
                                   const std::vector<bool> &ignore,
                                   double region_pop,
@@ -142,19 +302,21 @@ static double log_p_edge_estimate(const Graph &g, const uvec &pop,
 /*
  * Cut a spanning tree to peel off one district from a two-label region.
  *
- * Two picking strategies are supported via `from_valid_only`:
+ * Two picking strategies are supported via `from_valid_only` and `k_topk`:
  *
- * FALSE (exact path): pick a uniformly random non-root vertex from ALL region
- *   vertices and return false if it is not a valid cut.  This gives
- *   q(A,B) ∝ T(A)*T(B)*B(A,B) by the matrix-tree theorem, so the T factors
- *   cancel in the MH ratio and only log_boundary() is needed.  The caller
- *   retries the entire sequence on failure (whole-sequence retry).
+ * from_valid_only=TRUE, k_topk=0 (approximate path):
+ *   Enumerate valid-cut vertices, pick uniformly from them — never returning
+ *   false on a tree that has at least one valid cut.  This changes the
+ *   proposal distribution by a factor of 1/E[#valid cuts] relative to the
+ *   exact proposal, which the caller corrects via log_p_edge_estimate() for
+ *   steps s >= 1 (per-step retry).
  *
- * TRUE (approximate path): enumerate valid-cut vertices, pick uniformly from
- *   them only — never returning false on a tree that has at least one valid
- *   cut.  This changes the proposal distribution by a factor of
- *   1/E[#valid cuts] relative to the exact proposal, which the caller corrects
- *   via log_p_edge_estimate() for steps s >= 1 (per-step retry).
+ * from_valid_only=TRUE, k_topk>0 (exact path):
+ *   Sort all region vertices by |pop_below - target|, pick uniformly from the
+ *   top-k_topk, then return false if the chosen vertex is not a valid cut.
+ *   With k_topk >= max valid cuts (from estimate_k_sequence), this succeeds
+ *   whenever the tree has any valid cut.  The T factors still cancel via the
+ *   matrix-tree theorem because the top-k set is determined by the tree.
  */
 static bool cut_one_mms(Tree &ust, int root,
                         subview_col<uword> &districts,
@@ -164,7 +326,8 @@ static bool cut_one_mms(Tree &ust, int root,
                         double remain_lower, double remain_upper,
                         double peel_target,
                         bool from_valid_only,
-                        int &n_valid_cuts) {
+                        int &n_valid_cuts,
+                        int k_topk = 0) {
     int V = ust.size();
 
     std::vector<int> pop_below(V, 0);
@@ -184,7 +347,7 @@ static bool cut_one_mms(Tree &ust, int root,
 
     int cut_at;
     if (from_valid_only) {
-        // Approximate path: enumerate valid cuts, pick uniformly from them.
+        // Enumerate valid cuts (needed by both branches for n_valid_cuts and approx path)
         std::vector<int> valid_verts;
         for (int v : region_verts) {
             double below = pop_below[v];
@@ -196,8 +359,33 @@ static bool cut_one_mms(Tree &ust, int root,
             if (ok) valid_verts.push_back(v);
         }
         n_valid_cuts = (int) valid_verts.size();
-        if (valid_verts.empty()) return false;
-        cut_at = valid_verts[r_int(valid_verts.size())];
+
+        if (k_topk == 0) {
+            // Approximate path: pick uniformly from valid cuts only.
+            if (valid_verts.empty()) return false;
+            cut_at = valid_verts[r_int(valid_verts.size())];
+        } else {
+            // Exact path: pick uniformly from top-k by deviation, fail if invalid.
+            std::vector<std::pair<double, int>> dev_verts;
+            dev_verts.reserve(region_verts.size());
+            for (int v : region_verts) {
+                double below = pop_below[v];
+                double dev = std::min(std::abs(below - peel_target),
+                                      std::abs(total_pop - below - peel_target));
+                dev_verts.push_back({dev, v});
+            }
+            std::sort(dev_verts.begin(), dev_verts.end());
+            int k_actual = std::min(k_topk, (int) dev_verts.size());
+            if (k_actual <= 0) return false;
+            cut_at = dev_verts[r_int(k_actual)].second;
+            double below = pop_below[cut_at];
+            double above = total_pop - below;
+            bool ok = (peel_lower <= below && below <= peel_upper &&
+                       remain_lower <= above && above <= remain_upper) ||
+                      (remain_lower <= below && below <= remain_upper &&
+                       peel_lower <= above && above <= peel_upper);
+            if (!ok) return false;
+        }
     } else {
         n_valid_cuts = 0;
         cut_at = region_verts[r_int(region_verts.size())];
@@ -279,6 +467,7 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     double mha;
 
     double tol = std::max(target - lower, upper - target) / target;
+    double total_pop = arma::accu(pop);
 
     if (verbosity >= 1) {
         Rcout.imbue(std::locale::classic());
@@ -345,6 +534,23 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
         // Save the current plan for label restoration
         uvec saved_plan = districts.col(idx + 1);
 
+        // Collect region vertices and estimate top-k sequence for exact path.
+        std::vector<int> region_verts;
+        region_verts.reserve(V);
+        for (int v = 0; v < V; v++) {
+            for (int d : sel_districts) {
+                if ((int) saved_plan(v) == d) {
+                    region_verts.push_back(v);
+                    break;
+                }
+            }
+        }
+        std::vector<int> k_seq(std::max(l_merge - 1, 0), 1);
+        if (exact_mh && l_merge > 1) {
+            k_seq = estimate_k_sequence(g, pop, region_verts, l_merge, K_est,
+                                        total_pop, n_distr, tol, counties, cg);
+        }
+
         bool split_failed = false;
         double fwd_boundary_lp = 0.0;
         double rev_boundary_lp = 0.0;
@@ -408,8 +614,8 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                                  peel, remain, pop, region_pop,
                                  peel_lower, peel_upper,
                                  remain_lower, remain_upper,
-                                 target, /*from_valid_only=*/valid_cuts_only,
-                                 dummy_nvalid)) {
+                                 target, /*from_valid_only=*/true,
+                                 dummy_nvalid, k_seq[s])) {
                     attempt_ok = false;
                     break;
                 }
