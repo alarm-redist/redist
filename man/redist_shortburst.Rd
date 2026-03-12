@@ -26,6 +26,7 @@ redist_shortburst(
   cw_instep = 10L,
   cw_cycle_walk_frac = 0.1,
   mmss_l = 3L,
+  mmss_k_est = 25L,
   mmss_valid_cuts_only = TRUE,
   verbose = TRUE
 )
@@ -106,6 +107,12 @@ forest walks for cyclewalk backend (default 0.1).}
 
 \item{mmss_l}{The number of districts to merge and re-split at each step for
 the \code{mmss} backend (default 3). Must be at least 2.}
+
+\item{mmss_k_est}{The number of spanning trees used to estimate
+\eqn{p_s^{\text{edge}}} for the approximate MH correction in the \code{mmss}
+backend. Higher values give a less biased correction. Default is 25.
+Lower values (e.g. 5) speed up sampling at the cost of a rougher
+correction; set to 0 to skip the correction entirely (no target guarantee).}
 
 \item{mmss_valid_cuts_only}{If \code{TRUE} (the default for the \code{mmss} backend),
 sample cuts only from population-feasible edges in each spanning tree.
