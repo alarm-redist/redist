@@ -50,20 +50,16 @@
 #'   step before giving up. Higher values reduce proposal failures at the cost
 #'   of more computation per step. The default of 200 is sufficient for most
 #'   problems; increase for very tight population tolerances or large districts.
-#' @param k_est The number of spanning trees to draw when estimating
-#'   \eqn{p_s^{\text{edge}}} for the approximate MH correction (used only when
-#'   `exact_mh = FALSE`). Higher values give a less biased correction factor.
-#'   Default is 25. Increase for large \eqn{\ell} or tight population tolerances.
-#' @param exact_mh If `FALSE` (the default), use per-step retry with an
-#'   estimated correction factor in the Metropolis-Hastings ratio, which is
-#'   faster and passes empirical validation. If `TRUE`, use exact
-#'   whole-sequence retry, which preserves detailed balance exactly but is
-#'   substantially slower for `l >= 3`.
-#' @param valid_cuts_only Controls whether tree cuts are sampled only from
-#'   valid (population-feasible) edges, or uniformly from all non-root edges
-#'   with rejection. Defaults to `!exact_mh`. Set explicitly to `TRUE` with
-#'   `exact_mh = TRUE` if you know that every spanning tree has exactly one
-#'   valid cut which eliminates the correction term entirely.
+#' @param k_est The number of spanning trees to draw from the merged region
+#'   when estimating the pre-fixed \eqn{k_s} sequence used by the top-k cut
+#'   proposal. The same estimated sequence is reused across all retries within
+#'   an MCMC step. Default is 25.
+#' @param exact_mh If `FALSE` (the default), retry failed trees one split step
+#'   at a time for faster proposals. If `TRUE`, retry the whole split sequence
+#'   as a unit, which is typically slower but more conservative.
+#' @param valid_cuts_only Controls whether tree cuts are proposed via the
+#'   top-k valid-cut heuristic (`TRUE`) or by sampling uniformly from all
+#'   non-root edges with rejection (`FALSE`). Defaults to `TRUE`.
 #' @param ncores The number of parallel processes to run. Defaults to the
 #'   number of available cores, capped at the number of chains. Only used when
 #'   `chains > 1`.
@@ -109,7 +105,7 @@ redist_mmss <- function(map,
                        max_retries = 200L,
                        k_est = 25L,
                        exact_mh = FALSE,
-                       valid_cuts_only = !exact_mh,
+                       valid_cuts_only = TRUE,
                        ncores = NULL,
                        cl_type = "PSOCK",
                        return_all = TRUE,
