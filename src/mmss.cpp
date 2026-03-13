@@ -248,39 +248,53 @@ static std::vector<int> estimate_k_sequence(const Graph &g, const uvec &pop,
 }
 
 
-static double log_p_edge_estimate(const Graph &g, const uvec &pop,
-                                  const std::vector<bool> &ignore,
-                                  double region_pop,
-                                  double peel_lower, double peel_upper,
-                                  double remain_lower, double remain_upper,
-                                  const uvec &counties, Multigraph &cg,
-                                  int K_est) {
+/*
+ * Estimate the top-k parameter for a single split step (approximate path).
+ *
+ * Draws K_est fresh USTs on the subgraph defined by ignore[], counts valid
+ * cuts in each, and returns the maximum (at least 1).  The max is the correct
+ * statistic for the top-k proposal: with k_topk >= max_T[k_T], every tree
+ * that has any valid cut will succeed, and the proposal probability is
+ * τ(A)τ(B)|C(A,B)| / (τ(G̃_s) · k_topk) per Lemma 1 of the paper.
+ *
+ * Used for the approximate path at steps s >= 1. At s = 0, k_0 cancels
+ * between the forward and reverse proposals (both use G[R]), so no estimation
+ * is needed and valid-cuts-only (k_topk = 0) is used instead.
+ */
+static int estimate_k_step(const Graph &g, const uvec &pop,
+                            const std::vector<bool> &ignore,
+                            double region_pop,
+                            double peel_lower, double peel_upper,
+                            double remain_lower, double remain_upper,
+                            const uvec &counties, Multigraph &cg,
+                            int K_est) {
     int V = g.size();
     int region_size = 0;
     for (int v = 0; v < V; v++) if (!ignore[v]) region_size++;
-    if (region_size <= 1 || K_est <= 0) return 0.0;
+    if (region_size <= 1 || K_est <= 0) return 1;
 
-    Tree ust_tmp = init_tree(V);
-    std::vector<bool> visited_tmp(V);
     double ust_lo = std::min(peel_lower, remain_lower);
     double ust_hi = std::max(peel_upper, remain_upper);
 
-    int trees_drawn = 0;
-    double valid_sum = 0.0;
+    Tree ust_tmp = init_tree(V);
+    std::vector<bool> visited_tmp(V);
+    std::vector<int> pop_below_tmp(V, 0);
+    std::vector<int> parent_tmp(V, -1);
+
+    int max_valid = 1;
 
     for (int kk = 0; kk < K_est; kk++) {
         clear_tree(ust_tmp);
         int root_tmp;
-        int result = sample_sub_ust(g, ust_tmp, V, root_tmp, visited_tmp, ignore,
-                                    pop, ust_lo, ust_hi, counties, cg);
-        if (result != 0) continue;
-        trees_drawn++;
+        if (sample_sub_ust(g, ust_tmp, V, root_tmp, visited_tmp, ignore,
+                           pop, ust_lo, ust_hi, counties, cg) != 0)
+            continue;
 
-        std::vector<int> pop_below_tmp(V, 0);
-        std::vector<int> parent_tmp(V, -1);
+        std::fill(pop_below_tmp.begin(), pop_below_tmp.end(), 0);
+        std::fill(parent_tmp.begin(), parent_tmp.end(), -1);
         tree_pop(ust_tmp, root_tmp, pop, pop_below_tmp, parent_tmp);
 
-        int valid_cuts_this_tree = 0;
+        int valid_count = 0;
         for (int v = 0; v < V; v++) {
             if (ignore[v] || v == root_tmp) continue;
             double below = pop_below_tmp[v];
@@ -289,13 +303,12 @@ static double log_p_edge_estimate(const Graph &g, const uvec &pop,
                        remain_lower <= above && above <= remain_upper) ||
                       (remain_lower <= below && below <= remain_upper &&
                        peel_lower <= above && above <= peel_upper);
-            if (ok) valid_cuts_this_tree++;
+            if (ok) valid_count++;
         }
-        valid_sum += valid_cuts_this_tree;
+        max_valid = std::max(max_valid, valid_count);
     }
 
-    if (trees_drawn == 0) return std::log(1e-10);
-    return std::log(std::max(valid_sum / trees_drawn, 1e-10));
+    return max_valid;
 }
 
 
@@ -361,11 +374,16 @@ static bool cut_one_mms(Tree &ust, int root,
         n_valid_cuts = (int) valid_verts.size();
 
         if (k_topk == 0) {
-            // Approximate path: pick uniformly from valid cuts only.
+            // Approximate path (s=0): pick uniformly from valid cuts.
             if (valid_verts.empty()) return false;
             cut_at = valid_verts[r_int(valid_verts.size())];
         } else {
-            // Exact path: pick uniformly from top-k by deviation, fail if invalid.
+            // Top-k (exact path, or approximate path at s>=1): sort all
+            // region vertices by |pop_below - target|, pick uniformly from
+            // the top-k, fail (caller redraws tree) if chosen vertex is
+            // not a valid cut.  With k_topk >= K_s = max_T[k_T], all valid
+            // cuts of any tree fall within the top-k window and this never
+            // fails when k_T > 0.
             std::vector<std::pair<double, int>> dev_verts;
             dev_verts.reserve(region_verts.size());
             for (int v : region_verts) {
@@ -498,6 +516,12 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     int n_cuts_dist_s1[4] = {0, 0, 0, 0};
     int max_valid_cuts_s1 = 0;
     long long n_valid_trees_s1 = 0, n_valid_sum_s1 = 0;
+    // top-k estimates for s>=1: k_s = max valid cuts from K_est fresh G̃_s USTs.
+    // Used to set k_topk in cut_one_mms; correction log(k_fwd/k_rev) replaces
+    // the old log_p_edge_estimate correction.
+    long long k_est_sum_s1 = 0, k_est_count_s1 = 0;
+    int k_est_max_s1 = 0;
+    int k_est_dist_s1[5] = {0, 0, 0, 0, 0};  // k=1,2,3,4,5+
 
     CharacterVector psi_names = CharacterVector::create(
         "pop_dev", "splits", "multisplits", "total_splits",
@@ -639,11 +663,18 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
         } // end retry loop
 
         } else {
-        // ====== APPROXIMATE PATH: per-step retry with MH correction ======
-        // Each split step retries independently until success. For steps s>=1,
-        // we estimate the per-step success probability on both forward and
-        // reverse subgraphs and include a correction in the MH ratio.
-        std::vector<double> log_p_fwd(l_merge - 1, 0.0);
+        // ====== APPROXIMATE PATH: per-step retry with top-k MH correction ======
+        // Each split step retries independently until success.
+        //
+        // At s = 0: both forward and reverse use the same G̃_0 = G[R], so k_0
+        //   cancels in the MH ratio. We use valid-cuts-only (k_topk = 0).
+        //
+        // At s >= 1: G̃_s^fwd != G̃_s^rev in general (district sizes changed), so
+        //   k_s^fwd and k_s^rev differ and must be corrected.  We estimate each
+        //   k_s from K_est fresh G̃_s USTs (max valid cuts) and add
+        //   log(k_s^fwd / k_s^rev) to prop_correction per Eq. (A3) of the paper.
+        //   This is exact when k_s >= true K_s; the bias is O(1/K_est) otherwise.
+        std::vector<int> k_fwd(l_merge - 1, 1);
 
         for (int s = 0; s < l_merge - 1 && !split_failed; s++) {
             int peel = sel_districts[s];
@@ -682,6 +713,21 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
             double ust_lower = std::min(peel_lower, remain_lower);
             double ust_upper = std::max(peel_upper, remain_upper);
 
+            // For s >= 1, estimate k_s (top-k parameter) from fresh G̃_s USTs.
+            // k_0 cancels in the MH ratio, so we skip estimation at s = 0.
+            int k_topk_s = 0;  // 0 → valid-cuts-only (exact at s=0)
+            if (s >= 1) {
+                k_fwd[s] = estimate_k_step(g, pop, ignore, region_pop,
+                                           peel_lower, peel_upper,
+                                           remain_lower, remain_upper,
+                                           counties, cg, K_est);
+                k_topk_s = k_fwd[s];
+                k_est_count_s1++;
+                k_est_sum_s1 += k_fwd[s];
+                if (k_fwd[s] > k_est_max_s1) k_est_max_s1 = k_fwd[s];
+                k_est_dist_s1[std::min(k_fwd[s] - 1, 4)]++;
+            }
+
             uvec step_state(V);
             for (int v = 0; v < V; v++) step_state(v) = districts(v, idx + 1);
 
@@ -704,7 +750,7 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                                 peel_lower, peel_upper,
                                 remain_lower, remain_upper,
                                 target, /*from_valid_only=*/valid_cuts_only,
-                                nvc)) {
+                                nvc, k_topk_s)) {
                     step_ok = true;
                     if (s == 0) {
                         n_cuts_dist_s0[std::min(nvc, 3)]++;
@@ -719,21 +765,15 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                     }
                     break;
                 } else {
-                    // nvc == 0: no valid cuts found in this tree
-                    if (s == 0) n_cuts_dist_s0[0]++;
-                    else        n_cuts_dist_s1[0]++;
+                    // Record nvc (0 = no valid cuts; >0 = k_s underestimated this tree)
+                    if (s == 0) n_cuts_dist_s0[std::min(nvc, 3)]++;
+                    else        n_cuts_dist_s1[std::min(nvc, 3)]++;
                 }
             }
 
             if (!step_ok) { n_m_hit++; split_failed = true; break; }
 
             fwd_boundary_lp += log_boundary(g, districts.col(idx + 1), peel, remain);
-            if (s >= 1) {
-                log_p_fwd[s] = log_p_edge_estimate(g, pop, ignore, region_pop,
-                                                    peel_lower, peel_upper,
-                                                    remain_lower, remain_upper,
-                                                    counties, cg, K_est);
-            }
 
             for (int v = 0; v < V; v++) {
                 if ((int) districts(v, idx + 1) == remain) {
@@ -749,7 +789,9 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
         } // end per-step loop
 
         if (!split_failed) {
-            std::vector<double> log_p_rev(l_merge - 1, 0.0);
+            // Compute k_s^rev for each s >= 1 and accumulate log(k_fwd/k_rev)
+            // into prop_correction.  The reverse G̃_s^rev is the old plan's merged
+            // region minus old districts d_0 ... d_{s-1} (same ordering as fwd).
             uvec old_plan = districts.col(idx);
             umat work_mat(V, 1);
             work_mat.col(0) = old_plan;
@@ -776,9 +818,10 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                     double p_hi = std::min(upper, region_pop_rev - remaining_splits * lower);
                     double r_lo = (remaining_splits > 1) ? remaining_splits * lower : lower;
                     double r_hi = (remaining_splits > 1) ? remaining_splits * upper : upper;
-                    log_p_rev[s] = log_p_edge_estimate(g, pop, ignore_rev, region_pop_rev,
-                                                        p_lo, p_hi, r_lo, r_hi,
-                                                        counties, cg, K_est);
+                    int k_rev_s = estimate_k_step(g, pop, ignore_rev, region_pop_rev,
+                                                  p_lo, p_hi, r_lo, r_hi,
+                                                  counties, cg, K_est);
+                    prop_correction += std::log((double) k_fwd[s]) - std::log((double) k_rev_s);
                 }
                 int dist_label = sel_districts[s];
                 for (int v = 0; v < V; v++) {
@@ -786,9 +829,6 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                         work_mat(v, 0) = dist_label;
                     }
                 }
-            }
-            for (int s = 1; s < l_merge - 1; s++) {
-                prop_correction += log_p_fwd[s] - log_p_rev[s];
             }
         }
 
@@ -977,16 +1017,28 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                 double mean_vc1 = n_valid_trees_s1 > 0
                     ? (double) n_valid_sum_s1 / n_valid_trees_s1 : 0.0;
                 Rcout << std::setprecision(2)
-                      << "Valid cuts (s>=1, subregions; affects single-cut assumption): "
+                      << "Valid cuts (s>=1, subregions): "
                       << "0=" << n_cuts_dist_s1[0]
                       << ", 1=" << n_cuts_dist_s1[1]
                       << ", 2=" << n_cuts_dist_s1[2]
                       << ", 3+=" << n_cuts_dist_s1[3]
                       << "; mean=" << mean_vc1
                       << ", max=" << max_valid_cuts_s1 << ".\n";
-                if (max_valid_cuts_s1 > 1) {
-                    Rcout << "NOTE: max valid cuts (s>=1) > 1; "
-                             "single-valid-cut assumption does not hold exactly.\n";
+            }
+            if (k_est_count_s1 > 0) {
+                double mean_k = (double) k_est_sum_s1 / k_est_count_s1;
+                Rcout << std::setprecision(2)
+                      << "Top-k estimates (s>=1, MH correction = log k_fwd/k_rev): "
+                      << "k=1: " << k_est_dist_s1[0]
+                      << ", k=2: " << k_est_dist_s1[1]
+                      << ", k=3: " << k_est_dist_s1[2]
+                      << ", k=4: " << k_est_dist_s1[3]
+                      << ", k=5+: " << k_est_dist_s1[4]
+                      << "; mean=" << mean_k
+                      << ", max=" << k_est_max_s1 << ".\n";
+                if (k_est_max_s1 > 1) {
+                    Rcout << "NOTE: max top-k (s>=1) > 1; MH correction is active"
+                             " (bias O(1/K_est) per step).\n";
                 }
             }
         }
@@ -1011,6 +1063,16 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
         Rcpp::Named("1")    = n_cuts_dist_s1[1],
         Rcpp::Named("2")    = n_cuts_dist_s1[2],
         Rcpp::Named("3+")   = n_cuts_dist_s1[3]
+    );
+    // top-k estimates for s>=1 (approximate path only; 0 for exact path)
+    out["k_est_max_s1"]  = k_est_max_s1;
+    out["k_est_mean_s1"] = k_est_count_s1 > 0 ? (double) k_est_sum_s1 / k_est_count_s1 : 0.0;
+    out["k_est_dist_s1"] = Rcpp::IntegerVector::create(
+        Rcpp::Named("1")    = k_est_dist_s1[0],
+        Rcpp::Named("2")    = k_est_dist_s1[1],
+        Rcpp::Named("3")    = k_est_dist_s1[2],
+        Rcpp::Named("4")    = k_est_dist_s1[3],
+        Rcpp::Named("5+")   = k_est_dist_s1[4]
     );
 
     return out;
