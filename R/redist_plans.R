@@ -560,6 +560,7 @@ print.redist_plans <- function(x, ...) {
     alg_name <- c(mcmc = "Flip Markov chain Monte Carlo",
         smc = "Sequential Monte Carlo",
         mergesplit = "Merge-split Markov chain Monte Carlo",
+        mmss = "Multiple Merge Sequential Split Markov chain Monte Carlo",
         cyclewalk = "Cycle Walk Markov chain Monte Carlo",
         rsg = "random seed-and-grow",
         crsg = "compact random seed-and-grow",
