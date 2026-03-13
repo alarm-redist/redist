@@ -46,20 +46,14 @@
 #'   the 'Details' section for more information, and computational
 #'   considerations.
 #' @param constraints A [redist_constr] object or list of constraints.
-#' @param max_retries The maximum number of spanning trees to draw per split
-#'   step before giving up. Higher values reduce proposal failures at the cost
+#' @param max_retries The maximum number of spanning trees to draw per proposal
+#'   sequence before giving up. Higher values reduce proposal failures at the cost
 #'   of more computation per step. The default of 200 is sufficient for most
 #'   problems; increase for very tight population tolerances or large districts.
 #' @param k_est The number of spanning trees to draw from the merged region
 #'   when estimating the pre-fixed \eqn{k_s} sequence used by the top-k cut
-#'   proposal. The same estimated sequence is reused across all retries within
-#'   an MCMC step. Default is 25.
-#' @param exact_mh If `FALSE` (the default), retry failed trees one split step
-#'   at a time for faster proposals. If `TRUE`, retry the whole split sequence
-#'   as a unit, which is typically slower but more conservative.
-#' @param valid_cuts_only Controls whether tree cuts are proposed via the
-#'   top-k valid-cut heuristic (`TRUE`) or by sampling uniformly from all
-#'   non-root edges with rejection (`FALSE`). Defaults to `TRUE`.
+#'   proposal. The same estimated sequence is reused across all MCMC steps.
+#'   Default is 50.
 #' @param ncores The number of parallel processes to run. Defaults to the
 #'   number of available cores, capped at the number of chains. Only used when
 #'   `chains > 1`.
@@ -104,8 +98,6 @@ redist_mmss <- function(map,
                        constraints = list(),
                        max_retries = 200L,
                        k_seq = NULL,
-                       exact_mh = FALSE,
-                       valid_cuts_only = TRUE,
                        ncores = NULL,
                        cl_type = "PSOCK",
                        return_all = TRUE,
@@ -276,9 +268,7 @@ redist_mmss <- function(map,
     }
 
     control <- list(
-        max_retries = as.integer(max_retries),
-        exact_mh = exact_mh,
-        valid_cuts_only = valid_cuts_only
+        max_retries = as.integer(max_retries)
     )
     if (!is.null(k_seq)) {
         control$k_seq <- as.integer(k_seq)
@@ -332,12 +322,7 @@ redist_mmss <- function(map,
             runtime = as.numeric(t2_run - t1_run, units = "secs"),
             n_m_hit = algout$n_m_hit,
             k_seq = algout$k_seq,
-            max_valid_cuts_s0 = algout$max_valid_cuts_s0,
-            max_valid_cuts_s1 = algout$max_valid_cuts_s1,
-            mean_valid_cuts_s0 = algout$mean_valid_cuts_s0,
-            mean_valid_cuts_s1 = algout$mean_valid_cuts_s1,
-            valid_cuts_dist_s0 = algout$valid_cuts_dist_s0,
-            valid_cuts_dist_s1 = algout$valid_cuts_dist_s1
+            valid_cuts_by_step = algout$valid_cuts_by_step
         )
 
         warmup_idx <- c(seq_len(1 + warmup %/% thin), ncol(algout$plans))

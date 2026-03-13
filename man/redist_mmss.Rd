@@ -16,9 +16,7 @@ redist_mmss(
   compactness = 1,
   constraints = list(),
   max_retries = 200L,
-  k_est = 25L,
-  exact_mh = FALSE,
-  valid_cuts_only = !exact_mh,
+  k_seq = NULL,
   ncores = NULL,
   cl_type = "PSOCK",
   return_all = TRUE,
@@ -66,27 +64,10 @@ considerations.}
 
 \item{constraints}{A \link{redist_constr} object or list of constraints.}
 
-\item{max_retries}{The maximum number of spanning trees to draw per split
-step before giving up. Higher values reduce proposal failures at the cost
+\item{max_retries}{The maximum number of spanning trees to draw per proposal
+sequence before giving up. Higher values reduce proposal failures at the cost
 of more computation per step. The default of 200 is sufficient for most
 problems; increase for very tight population tolerances or large districts.}
-
-\item{k_est}{The number of spanning trees to draw when estimating
-\eqn{p_s^{\text{edge}}} for the approximate MH correction (used only when
-\code{exact_mh = FALSE}). Higher values give a less biased correction factor.
-Default is 25. Increase for large \eqn{\ell} or tight population tolerances.}
-
-\item{exact_mh}{If \code{FALSE} (the default), use per-step retry with an
-estimated correction factor in the Metropolis-Hastings ratio, which is
-faster and passes empirical validation. If \code{TRUE}, use exact
-whole-sequence retry, which preserves detailed balance exactly but is
-substantially slower for \code{l >= 3}.}
-
-\item{valid_cuts_only}{Controls whether tree cuts are sampled only from
-valid (population-feasible) edges, or uniformly from all non-root edges
-with rejection. Defaults to \code{!exact_mh}. Set explicitly to \code{TRUE} with
-\code{exact_mh = TRUE} if you know that every spanning tree has exactly one
-valid cut which eliminates the correction term entirely.}
 
 \item{ncores}{The number of parallel processes to run. Defaults to the
 number of available cores, capped at the number of chains. Only used when
@@ -106,6 +87,11 @@ the initial plan in the output.}
 \item{verbose}{Whether to print out intermediate information while sampling.}
 
 \item{silent}{Whether to suppress all diagnostic information.}
+
+\item{k_est}{The number of spanning trees to draw from the merged region
+when estimating the pre-fixed \eqn{k_s} sequence used by the top-k cut
+proposal. The same estimated sequence is reused across all MCMC steps.
+Default is 50.}
 }
 \value{
 A \link{redist_plans} object containing the simulated plans.

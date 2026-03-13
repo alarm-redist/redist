@@ -8,8 +8,7 @@ test_that('MMSS distribution matches expected (log st distribution)', {
 
   result <- redist_mmss(grid,
     nsims = 100000, warmup = 1000, l = 3, thin = 10,
-    init_plan = grid$init, compactness = 1, verbose = FALSE,
-    exact_mh = TRUE
+    init_plan = grid$init, compactness = 1, verbose = FALSE
   )
 
   cut_edge_counts <- comp_edges_rem(result, shp = grid) |> by_plan(ndists = 4)

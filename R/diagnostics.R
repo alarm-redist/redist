@@ -237,7 +237,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
             cli::cli_text("{.strong CycleWalk MCMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
                  districts on {fmt_comma(nrow(plans_m))} units")
         } else if (algo == 'mmss') {
-            cli::cli_text("{.strong Multi Merge-Split MCMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
+            cli::cli_text("{.strong Multiple Merge Sequential Split MCMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
                  districts on {fmt_comma(nrow(plans_m))} units")
         }
 
