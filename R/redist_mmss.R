@@ -103,7 +103,7 @@ redist_mmss <- function(map,
                        counties = NULL, compactness = 1,
                        constraints = list(),
                        max_retries = 200L,
-                       k_est = 25L,
+                       k_seq = NULL,
                        exact_mh = FALSE,
                        valid_cuts_only = TRUE,
                        ncores = NULL,
@@ -277,10 +277,12 @@ redist_mmss <- function(map,
 
     control <- list(
         max_retries = as.integer(max_retries),
-        k_est = as.integer(k_est),
         exact_mh = exact_mh,
         valid_cuts_only = valid_cuts_only
     )
+    if (!is.null(k_seq)) {
+        control$k_seq <- as.integer(k_seq)
+    }
 
     # Set up parallel cluster if needed
     if (is.null(ncores)) {
@@ -329,6 +331,7 @@ redist_mmss <- function(map,
         l_diag <- list(
             runtime = as.numeric(t2_run - t1_run, units = "secs"),
             n_m_hit = algout$n_m_hit,
+            k_seq = algout$k_seq,
             max_valid_cuts_s0 = algout$max_valid_cuts_s0,
             max_valid_cuts_s1 = algout$max_valid_cuts_s1,
             mean_valid_cuts_s0 = algout$mean_valid_cuts_s0,

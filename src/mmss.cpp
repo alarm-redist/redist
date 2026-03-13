@@ -249,87 +249,21 @@ static std::vector<int> estimate_k_sequence(const Graph &g, const uvec &pop,
 
 
 /*
- * Estimate the top-k parameter for a single split step (approximate path).
- *
- * Draws K_est fresh USTs on the subgraph defined by ignore[], counts valid
- * cuts in each, and returns the maximum (at least 1).  The max is the correct
- * statistic for the top-k proposal: with k_topk >= max_T[k_T], every tree
- * that has any valid cut will succeed, and the proposal probability is
- * τ(A)τ(B)|C(A,B)| / (τ(G̃_s) · k_topk) per Lemma 1 of the paper.
- *
- * Used for the approximate path at steps s >= 1. At s = 0, k_0 cancels
- * between the forward and reverse proposals (both use G[R]), so no estimation
- * is needed and valid-cuts-only (k_topk = 0) is used instead.
- */
-static int estimate_k_step(const Graph &g, const uvec &pop,
-                            const std::vector<bool> &ignore,
-                            double region_pop,
-                            double peel_lower, double peel_upper,
-                            double remain_lower, double remain_upper,
-                            const uvec &counties, Multigraph &cg,
-                            int K_est) {
-    int V = g.size();
-    int region_size = 0;
-    for (int v = 0; v < V; v++) if (!ignore[v]) region_size++;
-    if (region_size <= 1 || K_est <= 0) return 1;
-
-    double ust_lo = std::min(peel_lower, remain_lower);
-    double ust_hi = std::max(peel_upper, remain_upper);
-
-    Tree ust_tmp = init_tree(V);
-    std::vector<bool> visited_tmp(V);
-    std::vector<int> pop_below_tmp(V, 0);
-    std::vector<int> parent_tmp(V, -1);
-
-    int max_valid = 1;
-
-    for (int kk = 0; kk < K_est; kk++) {
-        clear_tree(ust_tmp);
-        int root_tmp;
-        if (sample_sub_ust(g, ust_tmp, V, root_tmp, visited_tmp, ignore,
-                           pop, ust_lo, ust_hi, counties, cg) != 0)
-            continue;
-
-        std::fill(pop_below_tmp.begin(), pop_below_tmp.end(), 0);
-        std::fill(parent_tmp.begin(), parent_tmp.end(), -1);
-        tree_pop(ust_tmp, root_tmp, pop, pop_below_tmp, parent_tmp);
-
-        int valid_count = 0;
-        for (int v = 0; v < V; v++) {
-            if (ignore[v] || v == root_tmp) continue;
-            double below = pop_below_tmp[v];
-            double above = region_pop - below;
-            bool ok = (peel_lower <= below && below <= peel_upper &&
-                       remain_lower <= above && above <= remain_upper) ||
-                      (remain_lower <= below && below <= remain_upper &&
-                       peel_lower <= above && above <= peel_upper);
-            if (ok) valid_count++;
-        }
-        max_valid = std::max(max_valid, valid_count);
-    }
-
-    return max_valid;
-}
-
-
-/*
  * Cut a spanning tree to peel off one district from a two-label region.
  *
- * Two picking strategies are supported via `from_valid_only` and `k_topk`:
+ * Two picking strategies via `from_valid_only` and `k_topk`:
  *
- * from_valid_only=TRUE, k_topk=0 (approximate path):
- *   Enumerate valid-cut vertices, pick uniformly from them — never returning
- *   false on a tree that has at least one valid cut.  This changes the
- *   proposal distribution by a factor of 1/E[#valid cuts] relative to the
- *   exact proposal, which the caller corrects via log_p_edge_estimate() for
- *   steps s >= 1 (per-step retry).
+ * from_valid_only=TRUE, k_topk=0: pick uniformly from valid cuts only.
  *
- * from_valid_only=TRUE, k_topk>0 (exact path):
- *   Sort all region vertices by |pop_below - target|, pick uniformly from the
- *   top-k_topk, then return false if the chosen vertex is not a valid cut.
- *   With k_topk >= max valid cuts (from estimate_k_sequence), this succeeds
- *   whenever the tree has any valid cut.  The T factors still cancel via the
- *   matrix-tree theorem because the top-k set is determined by the tree.
+ * from_valid_only=TRUE, k_topk>0 (both exact and approximate paths):
+ *   Sort all region vertices by |pop_below - target|, pick uniformly from
+ *   the top-k_topk, return false if chosen vertex is not a valid cut (caller
+ *   redraws the spanning tree).  Both paths use k_topk = k_seq[s] estimated
+ *   from G[R] via estimate_k_sequence, so k_topk is identical for forward
+ *   and reverse proposals and cancels in the MH ratio (Lemma 1, paper).
+ *
+ * from_valid_only=FALSE: pick a uniformly random non-root vertex; return
+ *   false if not a valid cut.
  */
 static bool cut_one_mms(Tree &ust, int root,
                         subview_col<uword> &districts,
@@ -458,17 +392,9 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     if (control.containsElementNamed("max_retries")) {
         max_retries = (int) control["max_retries"];
     }
-    int K_est = 25;
-    if (control.containsElementNamed("k_est")) {
-        K_est = (int) control["k_est"];
-    }
     bool exact_mh = true;
     if (control.containsElementNamed("exact_mh")) {
         exact_mh = (bool) control["exact_mh"];
-    }
-    bool valid_cuts_only = !exact_mh; // correct default for each path
-    if (control.containsElementNamed("valid_cuts_only")) {
-        valid_cuts_only = (bool) control["valid_cuts_only"];
     }
 
     Graph g = list_to_graph(l);
@@ -500,6 +426,33 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
 
     Graph dist_g = district_graph(g, init, n_distr);
     Graph new_dist_g;
+
+    // Fixed top-k sequence ONCE before the main loop.
+    // k_seq must be identical for forward and reverse proposals for reversibility,
+    // so it must NOT be estimated from the selected region R (which varies per proposal).
+    // Default: k_seq[s] = l_merge - s (top-l at step 0, top-2 at last step).
+    // User can override by passing k_seq as an integer vector in control.
+    std::vector<int> fixed_k_seq(std::max(l_merge - 1, 0), 1);
+    if (l_merge > 1) {
+        if (control.containsElementNamed("k_seq")) {
+            Rcpp::IntegerVector ks = control["k_seq"];
+            for (int s = 0; s < (int) fixed_k_seq.size() && s < ks.size(); s++) {
+                fixed_k_seq[s] = ks[s];
+            }
+        } else {
+            for (int s = 0; s < (int) fixed_k_seq.size(); s++) {
+                fixed_k_seq[s] = l_merge - s;
+            }
+        }
+        if (verbosity >= 1) {
+            Rcout << "Fixed top-k sequence (k_seq):";
+            for (int s = 0; s < (int) fixed_k_seq.size(); s++) {
+                Rcout << " " << fixed_k_seq[s];
+            }
+            Rcout << "\n";
+        }
+    }
+
     int n_accept = 0;
     // Diagnostics for approximate path.
     // n_cuts_dist[k] counts successfully-sampled USTs with exactly k valid cuts
@@ -516,12 +469,6 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     int n_cuts_dist_s1[4] = {0, 0, 0, 0};
     int max_valid_cuts_s1 = 0;
     long long n_valid_trees_s1 = 0, n_valid_sum_s1 = 0;
-    // top-k estimates for s>=1: k_s = max valid cuts from K_est fresh G̃_s USTs.
-    // Used to set k_topk in cut_one_mms; correction log(k_fwd/k_rev) replaces
-    // the old log_p_edge_estimate correction.
-    long long k_est_sum_s1 = 0, k_est_count_s1 = 0;
-    int k_est_max_s1 = 0;
-    int k_est_dist_s1[5] = {0, 0, 0, 0, 0};  // k=1,2,3,4,5+
 
     CharacterVector psi_names = CharacterVector::create(
         "pop_dev", "splits", "multisplits", "total_splits",
@@ -557,23 +504,6 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
 
         // Save the current plan for label restoration
         uvec saved_plan = districts.col(idx + 1);
-
-        // Collect region vertices and estimate top-k sequence for exact path.
-        std::vector<int> region_verts;
-        region_verts.reserve(V);
-        for (int v = 0; v < V; v++) {
-            for (int d : sel_districts) {
-                if ((int) saved_plan(v) == d) {
-                    region_verts.push_back(v);
-                    break;
-                }
-            }
-        }
-        std::vector<int> k_seq(std::max(l_merge - 1, 0), 1);
-        if (exact_mh && l_merge > 1) {
-            k_seq = estimate_k_sequence(g, pop, region_verts, l_merge, K_est,
-                                        total_pop, n_distr, tol, counties, cg);
-        }
 
         bool split_failed = false;
         double fwd_boundary_lp = 0.0;
@@ -639,7 +569,7 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                                  peel_lower, peel_upper,
                                  remain_lower, remain_upper,
                                  target, /*from_valid_only=*/true,
-                                 dummy_nvalid, k_seq[s])) {
+                                 dummy_nvalid, fixed_k_seq[s])) {
                     attempt_ok = false;
                     break;
                 }
@@ -663,18 +593,12 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
         } // end retry loop
 
         } else {
-        // ====== APPROXIMATE PATH: per-step retry with top-k MH correction ======
-        // Each split step retries independently until success.
-        //
-        // At s = 0: both forward and reverse use the same G̃_0 = G[R], so k_0
-        //   cancels in the MH ratio. We use valid-cuts-only (k_topk = 0).
-        //
-        // At s >= 1: G̃_s^fwd != G̃_s^rev in general (district sizes changed), so
-        //   k_s^fwd and k_s^rev differ and must be corrected.  We estimate each
-        //   k_s from K_est fresh G̃_s USTs (max valid cuts) and add
-        //   log(k_s^fwd / k_s^rev) to prop_correction per Eq. (A3) of the paper.
-        //   This is exact when k_s >= true K_s; the bias is O(1/K_est) otherwise.
-        std::vector<int> k_fwd(l_merge - 1, 1);
+        // ====== APPROXIMATE PATH: per-step retry, pre-fixed top-k from G[R] ======
+        // Uses the same k_seq estimated from G[R] as the exact path, so k_s is
+        // identical for forward and reverse proposals and cancels in the MH ratio.
+        // The approximation is that the per-step retry success probability is
+        // symmetric (E[k_T | G̃_s^fwd] ≈ E[k_T | G̃_s^rev]), validated empirically.
+        // No MH correction term is added (prop_correction stays 0 for this path).
 
         for (int s = 0; s < l_merge - 1 && !split_failed; s++) {
             int peel = sel_districts[s];
@@ -713,21 +637,6 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
             double ust_lower = std::min(peel_lower, remain_lower);
             double ust_upper = std::max(peel_upper, remain_upper);
 
-            // For s >= 1, estimate k_s (top-k parameter) from fresh G̃_s USTs.
-            // k_0 cancels in the MH ratio, so we skip estimation at s = 0.
-            int k_topk_s = 0;  // 0 → valid-cuts-only (exact at s=0)
-            if (s >= 1) {
-                k_fwd[s] = estimate_k_step(g, pop, ignore, region_pop,
-                                           peel_lower, peel_upper,
-                                           remain_lower, remain_upper,
-                                           counties, cg, K_est);
-                k_topk_s = k_fwd[s];
-                k_est_count_s1++;
-                k_est_sum_s1 += k_fwd[s];
-                if (k_fwd[s] > k_est_max_s1) k_est_max_s1 = k_fwd[s];
-                k_est_dist_s1[std::min(k_fwd[s] - 1, 4)]++;
-            }
-
             uvec step_state(V);
             for (int v = 0; v < V; v++) step_state(v) = districts(v, idx + 1);
 
@@ -749,8 +658,8 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                                 peel, remain, pop, region_pop,
                                 peel_lower, peel_upper,
                                 remain_lower, remain_upper,
-                                target, /*from_valid_only=*/valid_cuts_only,
-                                nvc, k_topk_s)) {
+                                target, /*from_valid_only=*/true,
+                                nvc, fixed_k_seq[s])) {
                     step_ok = true;
                     if (s == 0) {
                         n_cuts_dist_s0[std::min(nvc, 3)]++;
@@ -765,7 +674,7 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                     }
                     break;
                 } else {
-                    // Record nvc (0 = no valid cuts; >0 = k_s underestimated this tree)
+                    // Record nvc: 0 = no valid cuts; >0 = k_seq underestimated K_s
                     if (s == 0) n_cuts_dist_s0[std::min(nvc, 3)]++;
                     else        n_cuts_dist_s1[std::min(nvc, 3)]++;
                 }
@@ -787,50 +696,6 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                 }
             }
         } // end per-step loop
-
-        if (!split_failed) {
-            // Compute k_s^rev for each s >= 1 and accumulate log(k_fwd/k_rev)
-            // into prop_correction.  The reverse G̃_s^rev is the old plan's merged
-            // region minus old districts d_0 ... d_{s-1} (same ordering as fwd).
-            uvec old_plan = districts.col(idx);
-            umat work_mat(V, 1);
-            work_mat.col(0) = old_plan;
-            for (int v = 0; v < V; v++) {
-                for (int d : sel_districts) {
-                    if ((int) work_mat(v, 0) == d) {
-                        work_mat(v, 0) = 0;
-                        break;
-                    }
-                }
-            }
-            for (int s = 0; s < l_merge - 1; s++) {
-                if (s >= 1) {
-                    std::vector<bool> ignore_rev(V, true);
-                    double region_pop_rev = 0.0;
-                    for (int v = 0; v < V; v++) {
-                        if ((int) work_mat(v, 0) == 0) {
-                            ignore_rev[v] = false;
-                            region_pop_rev += pop(v);
-                        }
-                    }
-                    int remaining_splits = l_merge - 1 - s;
-                    double p_lo = std::max(lower, region_pop_rev - remaining_splits * upper);
-                    double p_hi = std::min(upper, region_pop_rev - remaining_splits * lower);
-                    double r_lo = (remaining_splits > 1) ? remaining_splits * lower : lower;
-                    double r_hi = (remaining_splits > 1) ? remaining_splits * upper : upper;
-                    int k_rev_s = estimate_k_step(g, pop, ignore_rev, region_pop_rev,
-                                                  p_lo, p_hi, r_lo, r_hi,
-                                                  counties, cg, K_est);
-                    prop_correction += std::log((double) k_fwd[s]) - std::log((double) k_rev_s);
-                }
-                int dist_label = sel_districts[s];
-                for (int v = 0; v < V; v++) {
-                    if ((int) old_plan(v) == dist_label && work_mat(v, 0) == 0) {
-                        work_mat(v, 0) = dist_label;
-                    }
-                }
-            }
-        }
 
         } // end approximate path
 
@@ -1005,7 +870,7 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                 double mean_vc0 = n_valid_trees_s0 > 0
                     ? (double) n_valid_sum_s0 / n_valid_trees_s0 : 0.0;
                 Rcout << std::setprecision(2)
-                      << "Valid cuts (s=0, full region; cancels in MH): "
+                      << "Valid cuts in proposal trees (s=0, full region; cancels in MH): "
                       << "0=" << n_cuts_dist_s0[0]
                       << ", 1=" << n_cuts_dist_s0[1]
                       << ", 2=" << n_cuts_dist_s0[2]
@@ -1017,29 +882,13 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                 double mean_vc1 = n_valid_trees_s1 > 0
                     ? (double) n_valid_sum_s1 / n_valid_trees_s1 : 0.0;
                 Rcout << std::setprecision(2)
-                      << "Valid cuts (s>=1, subregions): "
+                      << "Valid cuts in proposal trees (s>=1, subregions): "
                       << "0=" << n_cuts_dist_s1[0]
                       << ", 1=" << n_cuts_dist_s1[1]
                       << ", 2=" << n_cuts_dist_s1[2]
                       << ", 3+=" << n_cuts_dist_s1[3]
                       << "; mean=" << mean_vc1
                       << ", max=" << max_valid_cuts_s1 << ".\n";
-            }
-            if (k_est_count_s1 > 0) {
-                double mean_k = (double) k_est_sum_s1 / k_est_count_s1;
-                Rcout << std::setprecision(2)
-                      << "Top-k estimates (s>=1, MH correction = log k_fwd/k_rev): "
-                      << "k=1: " << k_est_dist_s1[0]
-                      << ", k=2: " << k_est_dist_s1[1]
-                      << ", k=3: " << k_est_dist_s1[2]
-                      << ", k=4: " << k_est_dist_s1[3]
-                      << ", k=5+: " << k_est_dist_s1[4]
-                      << "; mean=" << mean_k
-                      << ", max=" << k_est_max_s1 << ".\n";
-                if (k_est_max_s1 > 1) {
-                    Rcout << "NOTE: max top-k (s>=1) > 1; MH correction is active"
-                             " (bias O(1/K_est) per step).\n";
-                }
             }
         }
     }
@@ -1064,16 +913,8 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
         Rcpp::Named("2")    = n_cuts_dist_s1[2],
         Rcpp::Named("3+")   = n_cuts_dist_s1[3]
     );
-    // top-k estimates for s>=1 (approximate path only; 0 for exact path)
-    out["k_est_max_s1"]  = k_est_max_s1;
-    out["k_est_mean_s1"] = k_est_count_s1 > 0 ? (double) k_est_sum_s1 / k_est_count_s1 : 0.0;
-    out["k_est_dist_s1"] = Rcpp::IntegerVector::create(
-        Rcpp::Named("1")    = k_est_dist_s1[0],
-        Rcpp::Named("2")    = k_est_dist_s1[1],
-        Rcpp::Named("3")    = k_est_dist_s1[2],
-        Rcpp::Named("4")    = k_est_dist_s1[3],
-        Rcpp::Named("5+")   = k_est_dist_s1[4]
-    );
+    // Fixed top-k sequence (same for all proposals; k_s cancels in MH ratio)
+    out["k_seq"] = Rcpp::IntegerVector(fixed_k_seq.begin(), fixed_k_seq.end());
 
     return out;
 }

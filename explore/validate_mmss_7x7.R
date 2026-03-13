@@ -71,7 +71,8 @@ plans <- redist_mmss(
     l = 3,
     thin = 100,
     warmup = 2e3,
-    init_plan = init_plans[, seq_len(n_chains)]
+    init_plan = init_plans[, seq_len(n_chains)],
+    exact_mh = TRUE
 )
 
 plans <- plans |>
@@ -108,7 +109,8 @@ make_valid_plot <- function(pl_cw, target, conf = 0.9, by_chain = TRUE) {
             `colnames<-`(c('est', 'low', 'high')) %>%
             mutate(
                 edges = k,
-                true = target$true_prop[target$edges == k]
+                true = target$true_prop[target$edges == k],
+                passes = true >= low && true <= high
             )
     })
     print(d_hist)
