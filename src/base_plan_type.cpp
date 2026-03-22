@@ -900,10 +900,11 @@ void RegionPairHash::Rprint(std::vector<int> const &county_component) const{
     REprintf("Pair Map has %d Elements:\n", num_hashed_pairs);
     for(auto const &a_pair: hashed_pairs){
         auto val = get_value(a_pair.first, a_pair.second);
-        REprintf("    Regions: (%u, %u) | Components (%d, %d) %s | %s Admin Adjacent | %d within county edges, %d across county edges\n",
+        REprintf("    Regions: (%u, %u) | Components (%d, %d) %s | %s Admin Adjacent | %s Hier Merge Valid | %d within county edges, %d across county edges\n",
             a_pair.first, a_pair.second,
             county_component[a_pair.first], county_component[a_pair.second],
             (val.second.same_admin_component ? "SAME" : "NOT SAME"),
+            (val.second.merge_is_hier_valid ? "YES" : "NOT"), 
              (val.second.admin_adjacent ? "YES" : "NOT"),
             val.second.within_county_edges, val.second.across_county_edges 
         );
