@@ -1278,9 +1278,10 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau_eigen(
                 if(pair_val.admin_adjacent){
                     edges = static_cast<double>(all_pairs[curr_index].second.within_county_edges);
                 }else{
-                    REprintf("Region Pair (%d, %d) - ", pair_region1, pair_region2);
-                    REprintf("Error! in BASE PLAN TYPE NON ADMIN ADJACENT HIER MERGE VALID!\n");
-                    throw Rcpp::exception("Bro!]n");
+                    REprintf("Region Pair (%d, %d) is not administratively adjacent!", pair_region1, pair_region2);
+                    Rprint();
+                    REprintf("Error! in BASE PLAN TYPE NON ADMIN ADJACENT HIER MERGE INVALID!\n");
+                    throw Rcpp::exception("Error in compute_hierarchical_merged_log_multigraph_tau");
                 }
 
                 if(DEBUG_LOG_LINK_EDGE_VERBOSE){
@@ -1600,9 +1601,10 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
                 if(pair_val.admin_adjacent){
                     edges = all_pairs[curr_index].second.within_county_edges;
                 }else{
-                    REprintf("Region Pair (%d, %d) - ", pair_region1, pair_region2);
-                    REprintf("Error! in BASE PLAN TYPE NON ADMIN ADJACENT HIER MERGE VALID!\n");
-                    throw Rcpp::exception("Bro!]n");
+                    REprintf("Region Pair (%d, %d) is not administratively adjacent!", pair_region1, pair_region2);
+                    Rprint();
+                    REprintf("Error! in BASE PLAN TYPE NON ADMIN ADJACENT HIER MERGE INVALID!\n");
+                    throw Rcpp::exception("Error in compute_hierarchical_merged_log_multigraph_tau");
                 }
 
                 if(DEBUG_LOG_LINK_EDGE_VERBOSE){
@@ -2033,9 +2035,10 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau_eigen(
                 if(pair_val.admin_adjacent){
                     edges = static_cast<double>(all_pairs[curr_index].second.within_county_edges);
                 }else{
-                    REprintf("Region Pair (%d, %d) - ", pair_region1, pair_region2);
-                    REprintf("Error! in BASE PLAN TYPE NON ADMIN ADJACENT HIER MERGE VALID!\n");
-                    throw Rcpp::exception("Bro!]n");
+                    REprintf("Region Pair (%d, %d) is not administratively adjacent!", pair_region1, pair_region2);
+                    Rprint();
+                    REprintf("Error! in BASE PLAN TYPE NON ADMIN ADJACENT HIER MERGE INVALID!\n");
+                    throw Rcpp::exception("Error in compute_hierarchical_log_multigraph_tau_eigen");
                 }
 
                 if(DEBUG_LOG_LINK_EDGE_VERBOSE){
@@ -2533,9 +2536,10 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
                 if(pair_val.admin_adjacent){
                     edges = all_pairs[curr_index].second.within_county_edges;
                 }else{
-                    REprintf("Region Pair (%d, %d) - ", pair_region1, pair_region2);
-                    REprintf("Error! in BASE PLAN TYPE NON ADMIN ADJACENT HIER MERGE VALID!\n");
-                    throw Rcpp::exception("Bro!]n");
+                    REprintf("Region Pair (%d, %d) is not administratively adjacent!", pair_region1, pair_region2);
+                    Rprint();
+                    REprintf("Error! in BASE PLAN TYPE NON ADMIN ADJACENT HIER MERGE INVALID!\n");
+                    throw Rcpp::exception("Error in compute_hierarchical_merged_log_multigraph_tau_eigen");
                 }
 
                 if(DEBUG_LOG_LINK_EDGE_VERBOSE){
@@ -2780,7 +2784,9 @@ void PlanMultigraph::Rprint() const{
 
 
 void PlanMultigraph::Rprint_detailed(Plan const &plan){
-    REprintf("Pair Map has %d Elements:\n", pair_map.num_hashed_pairs);
+    REprintf("%s Counties | Pair Map has %d Elements:\n",
+        (counties_on ? "YES" : "NO"), 
+        pair_map.num_hashed_pairs);
     return;
     for(auto const &a_pair: pair_map.hashed_pairs){
         auto val = pair_map.get_value(a_pair.first, a_pair.second);

@@ -1147,10 +1147,12 @@ List run_redist_smc(
     } catch (RcppThread::UserInterruptException e) {
         cli_progress_done(bar);
         Rcpp::Rcerr << "c++ threaded call interrupted!" << "\n";
+        throw Rcpp::exception("c++ threaded call interrupted!\n");
         return R_NilValue;
     }catch (Rcpp::internal::InterruptedException e) {
         cli_progress_done(bar);
         Rcpp::Rcerr << "c++ call interrupted!"  << "\n";
+        throw Rcpp::exception("c++ call interrupted!\n");
         return R_NilValue;
     }catch (const std::exception &e) {
         cli_progress_done(bar);
