@@ -67,10 +67,10 @@ get_map_parameters <- function(map, counties = NULL) {
   # get population stuff
   pop_bounds <- attr(map, "pop_bounds")
   pop <- map[[attr(map, "pop_col")]]
-  smallest_district_size <- attr(map, "seats_range") |> min()
-  if (any(pop >= pop_bounds[3] * smallest_district_size)) {
+  largest_district_size <- max(attr(map, "seats_range"))
+  if (any(pop >= pop_bounds[3] * largest_district_size)) {
     too_big <- as.character(which(
-      pop >= pop_bounds[3] * smallest_district_size
+      pop >= pop_bounds[3] * largest_district_size
     ))
     cli::cli_abort(c(
       "Unit{?s} {too_big} ha{?ve/s/ve}
