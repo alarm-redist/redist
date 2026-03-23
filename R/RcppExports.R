@@ -9,6 +9,10 @@ collapse_adj <- function(graph, idxs) {
     .Call(`_redist_collapse_adj`, graph, idxs)
 }
 
+bud_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, compactness, constraints, control, edge_weights, thin, instep, verbosity) {
+    .Call(`_redist_bud_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, compactness, constraints, control, edge_weights, thin, instep, verbosity)
+}
+
 coarsen_adjacency <- function(adj, groups) {
     .Call(`_redist_coarsen_adjacency`, adj, groups)
 }

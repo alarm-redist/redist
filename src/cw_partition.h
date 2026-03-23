@@ -173,7 +173,7 @@ public:
      */
     void print_state(int verbosity = 1) const;
 
-private:
+protected:
     /*
      * Load a spanning tree into the LCT.
      * tree: adjacency list representation (tree[v] = children of v)
