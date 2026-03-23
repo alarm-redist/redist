@@ -111,7 +111,7 @@ a \code{redist_plans} object containing the final best plan
 }
 \description{
 This function uses \code{\link[=redist_mergesplit]{redist_mergesplit()}}, \code{\link[=redist_flip]{redist_flip()}}, \code{\link[=redist_cyclewalk]{redist_cyclewalk()}},
-or \code{\link[=redist_bud]{redist_bud()}} to optimize a redistrict plan according to a user-provided criteria.It does so
+or \code{\link[=redist_bud]{redist_bud()}} to optimize a redistrict plan according to a user-provided criteria. It does so
 by running the Markov chain for "short bursts" of usually 10 iterations, and then
 starting the chain anew from the best plan in the burst, according to the
 criteria. This implements the ideas in the below-referenced paper, "Voting
