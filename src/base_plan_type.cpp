@@ -900,10 +900,11 @@ void RegionPairHash::Rprint(std::vector<int> const &county_component) const{
     REprintf("Pair Map has %d Elements:\n", num_hashed_pairs);
     for(auto const &a_pair: hashed_pairs){
         auto val = get_value(a_pair.first, a_pair.second);
-        REprintf("    Regions: (%u, %u) | Components (%d, %d) %s | %s Admin Adjacent | %s Hier Merge Valid | %d within county edges, %d across county edges\n",
+        REprintf("    Regions: (%u, %u) | Components (%d, %d) %s %s | %s Hier Merge Valid | %s Admin Adjacent | %d within county edges, %d across county edges\n",
             a_pair.first, a_pair.second,
             county_component[a_pair.first], county_component[a_pair.second],
-            (val.second.same_admin_component ? "SAME" : "NOT SAME"),
+            (county_component[a_pair.first] == county_component[a_pair.second] ? "SAME(check now)" : "NOT SAME (check now)"),
+            (val.second.same_admin_component ? "SAME(attr)" : "NOT SAME(attr)"),
             (val.second.merge_is_hier_valid ? "YES" : "NOT"), 
              (val.second.admin_adjacent ? "YES" : "NOT"),
             val.second.within_county_edges, val.second.across_county_edges 
@@ -1070,7 +1071,7 @@ double PlanMultigraph::compute_log_multigraph_tau(
         double new_tau = compute_hierarchical_log_multigraph_tau_eigen(
             num_regions, scoring_function
         );
-        // double old_tau = compute_hierarchical_log_multigraph_tau(
+        // double new_tau = compute_hierarchical_log_multigraph_tau(
         //     num_regions, scoring_function
         // );
         // if(std::fabs(new_tau - old_tau) > 1e-10){
@@ -1279,10 +1280,12 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau_eigen(
                 if(pair_val.admin_adjacent){
                     edges = static_cast<double>(all_pairs[curr_index].second.within_county_edges);
                 }else{
-                    REprintf("Region Pair (%d, %d) is not administratively adjacent!", pair_region1, pair_region2);
+                    REprintf("%d Components | Region Pair (%d, %d) is not administratively adjacent!", 
+                        num_county_connected_components,
+                        pair_region1, pair_region2);
                     Rprint();
                     REprintf("Error! in BASE PLAN TYPE NON ADMIN ADJACENT HIER MERGE INVALID!\n");
-                    throw Rcpp::exception("Error in compute_hierarchical_merged_log_multigraph_tau");
+                    throw Rcpp::exception("Error in compute_hierarchical_log_multigraph_tau_eigen");
                 }
 
                 if(DEBUG_LOG_LINK_EDGE_VERBOSE){
@@ -1605,7 +1608,7 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
                     REprintf("Region Pair (%d, %d) is not administratively adjacent!", pair_region1, pair_region2);
                     Rprint();
                     REprintf("Error! in BASE PLAN TYPE NON ADMIN ADJACENT HIER MERGE INVALID!\n");
-                    throw Rcpp::exception("Error in compute_hierarchical_merged_log_multigraph_tau");
+                    throw Rcpp::exception("Error in compute_hierarchical_log_multigraph_tau");
                 }
 
                 if(DEBUG_LOG_LINK_EDGE_VERBOSE){
@@ -2039,7 +2042,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau_eigen(
                     REprintf("Region Pair (%d, %d) is not administratively adjacent!", pair_region1, pair_region2);
                     Rprint();
                     REprintf("Error! in BASE PLAN TYPE NON ADMIN ADJACENT HIER MERGE INVALID!\n");
-                    throw Rcpp::exception("Error in compute_hierarchical_log_multigraph_tau_eigen");
+                    throw Rcpp::exception("Error in compute_hierarchical_merged_log_multigraph_tau_eigen");
                 }
 
                 if(DEBUG_LOG_LINK_EDGE_VERBOSE){
@@ -2540,7 +2543,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
                     REprintf("Region Pair (%d, %d) is not administratively adjacent!", pair_region1, pair_region2);
                     Rprint();
                     REprintf("Error! in BASE PLAN TYPE NON ADMIN ADJACENT HIER MERGE INVALID!\n");
-                    throw Rcpp::exception("Error in compute_hierarchical_merged_log_multigraph_tau_eigen");
+                    throw Rcpp::exception("Error in compute_hierarchical_merged_log_multigraph_tau");
                 }
 
                 if(DEBUG_LOG_LINK_EDGE_VERBOSE){
@@ -2780,6 +2783,11 @@ void PlanMultigraph::prep_for_calculations(int const num_regions){
 
 
 void PlanMultigraph::Rprint() const{
+    REprintf("%s Counties | Pair Map has %d Elements and %d components:\n",
+        (counties_on ? "YES" : "NO"), 
+        pair_map.num_hashed_pairs,
+        num_county_connected_components
+        );
     pair_map.Rprint(county_component);
 }
 
@@ -3063,6 +3071,11 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(
 
         // if too many global splits then auto reject
         if(num_county_region_components - map_params.num_counties >= num_regions){
+            if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+            REprintf("EARLY RETURN A: total county-region components=%d, num_counties=%d, num_regions=%d\n",
+                    num_county_region_components, map_params.num_counties, num_regions);
+            Rprint();
+            }
             return false;
         }
     }
@@ -3088,6 +3101,20 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(
             REprintf("CODE ERROR!!!! Somehow county adj component has %d regions but %d splits!\n",
             component_region_counts[component_id], component_split_counts[component_id]);
         }else if(component_split_counts[component_id] >= component_region_counts[component_id]){
+            if(DEBUG_LOG_LINK_EDGE_VERBOSE){
+            REprintf("EARLY RETURN B: component %d has splits=%d regions=%d\n",
+                    component_id,
+                    component_split_counts[component_id],
+                    component_region_counts[component_id]);
+            Rprint();
+            REprintf("%d Region\n c(");
+            for (size_t i = 0; i < region_ids.size(); i++)
+            {
+                REprintf("%u,", region_ids[i]);
+            }
+            REprintf(")\n");
+            throw Rcpp::exception("");
+            }
             return false;
         }
     }
@@ -3109,7 +3136,6 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(
         pair_map.values[hash_index].merge_is_hier_valid = false;
         --pair_map.num_hier_smc_merge_valid_pairs;
     }
-
 
     return true;    
     

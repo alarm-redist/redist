@@ -845,18 +845,13 @@ rbind.redist_plans <- function(..., deparse.level = 1) {
   n_prec <- nrow(get_plans_matrix(objs[[1]]))
   prec_pop <- attr(objs[[1]], "prec_pop")
   ndists <- attr(objs[[1]], "ndists")
-  nseats <- attr(objs[[1]], "nseats")
-  seats_range <- attr(objs[[1]], "seats_range")
   constr <- attr(objs[[1]], "constraints")
   resamp <- attr(objs[[1]], "resampled")
   comp <- attr(objs[[1]], "compactness")
-  partial <- attr(objs[[1]], "partial")
-  districting_scheme <- attr(objs[[1]], "districting_scheme")
-  seats_range <- attr(objs[[1]], "seats_range")
   distr_ord <- is.ordered(objs[[1]]$district)
-  # additional attributes that might not always be present
-  pop_bounds <- attr(objs[[1]], "pop_bounds")
-  num_admin_units <- attr(objs[[1]], "num_admin_units")
+  partial <- attr(objs[[1]], "partial")
+
+
 
   for (i in 2:n_obj) {
     if (nrow(get_plans_matrix(objs[[i]])) != n_prec) {
@@ -867,11 +862,6 @@ rbind.redist_plans <- function(..., deparse.level = 1) {
     }
     if (!identical(attr(objs[[i]], "ndists"), ndists)) {
       cli::cli_abort("Number of districts must match for all sets of plans.")
-    }
-    if (!identical(attr(objs[[i]], "nseats"), nseats)) {
-      cli::cli_abort(
-        "Total number of of seats must match for all sets of plans."
-      )
     }
     if (attr(objs[[i]], "resampled") != resamp) {
       cli::cli_abort("Some sets of plans are resampled while others are not.")
@@ -893,12 +883,6 @@ rbind.redist_plans <- function(..., deparse.level = 1) {
       cli::cli_inform("Constraints may not match for all sets of plans.")
       constr <- NA
     }
-    if (!identical(attr(objs[[i]], "districting_scheme"), districting_scheme)) {
-      cli::cli_abort("All plans must have the same districting scheme.")
-    }
-    if (!identical(attr(objs[[i]], "seats_range"), seats_range)) {
-      cli::cli_abort("All plans must have the same district seat sizes")
-    }
     if (is.ordered(objs[[i]]$district) != distr_ord) {
       cli::cli_abort(c(
         "Some sets of plans have had district numbers matched to a reference plan,
@@ -910,6 +894,55 @@ rbind.redist_plans <- function(..., deparse.level = 1) {
                             {.code as.integer(district)}"
       ))
     }
+
+  if (!identical(attr(objs[[i]], "nseats"), nseats)) {
+      cli::cli_abort(
+          "Total number of of seats must match for all sets of plans."
+      )
+  }
+  if (!identical(attr(objs[[i]], "districting_scheme"), districting_scheme)) {
+      cli::cli_abort("All plans must have the same districting scheme.")
+  }
+  if (!identical(attr(objs[[i]], "seats_range"), seats_range)) {
+      cli::cli_abort("All plans must have the same district seat sizes")
+  }
+  }
+
+  # only check optional inputs if all nseats not null
+  any_null_nseats <- sapply(
+      objs,
+      function(a_plan) is.null(attr(a_plan, "nseats"))
+  ) |> any()
+
+  if(!any_null_nseats){
+      # additional attributes that might not always be present
+      # these typically only present in version 5.0
+      nseats <- attr(objs[[1]], "nseats")
+      seats_range <- attr(objs[[1]], "seats_range")
+      pop_bounds <- attr(objs[[1]], "pop_bounds")
+      num_admin_units <- attr(objs[[1]], "num_admin_units")
+      districting_scheme <- attr(objs[[1]], "districting_scheme")
+      seats_range <- attr(objs[[1]], "seats_range")
+      for (i in 2:n_obj) {
+          if (!identical(attr(objs[[i]], "nseats"), nseats)) {
+              cli::cli_abort(
+                  "Total number of of seats must match for all sets of plans."
+              )
+          }
+          if (!identical(attr(objs[[i]], "districting_scheme"), districting_scheme)) {
+              cli::cli_abort("All plans must have the same districting scheme.")
+          }
+          if (!identical(attr(objs[[i]], "seats_range"), seats_range)) {
+              cli::cli_abort("All plans must have the same district seat sizes")
+          }
+      }
+  }else{
+      nseats <- NULL
+      seats_range <- NULL
+      pop_bounds <- NULL
+      num_admin_units <- NULL
+      districting_scheme <- NULL
+      seats_range <- NULL
   }
 
   ret <- lapply(seq_along(objs), function(i) {
@@ -928,8 +961,8 @@ rbind.redist_plans <- function(..., deparse.level = 1) {
   attr(ret, "compactness") <- comp
   attr(ret, "constraints") <- constr
   attr(ret, "ndists") <- ndists
-  attr(ret, "nseats") <- nseats
   attr(ret, "prec_pop") <- prec_pop
+  attr(ret, "nseats") <- nseats
   attr(ret, "partial") <- partial
   attr(ret, "districting_scheme") <- districting_scheme
   attr(ret, "seats_range") <- seats_range
