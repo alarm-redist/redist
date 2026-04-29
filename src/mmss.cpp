@@ -149,17 +149,19 @@ static bool cut_one_mms(Tree &ust, int root,
                         double peel_target,
                         bool from_valid_only,
                         int &n_valid_cuts,
-                        int k_topk = 0) {
-    int V = ust.size();
+                        int k_topk,
+                        std::vector<int> &pop_below,
+                        std::vector<int> &parent,
+                        std::vector<int> &region_verts,
+                        std::vector<std::pair<double, int>> &dev_verts,
+                        const std::vector<int> &iter_region) {
 
-    std::vector<int> pop_below(V, 0);
-    std::vector<int> parent(V);
     parent[root] = -1;
     tree_pop(ust, root, pop, pop_below, parent);
 
-    // Collect non-root vertices in the merged region
-    std::vector<int> region_verts;
-    for (int i = 0; i < V; i++) {
+    // Collect non-root vertices in the active region (peel or remain)
+    region_verts.clear();
+    for (int i : iter_region) {
         if (i == root) continue;
         if ((int) districts(i) == peel_label || (int) districts(i) == remain_label)
             region_verts.push_back(i);
@@ -169,38 +171,45 @@ static bool cut_one_mms(Tree &ust, int root,
 
     int cut_at;
     if (from_valid_only) {
-        // Enumerate valid cuts
-        std::vector<int> valid_verts;
-        for (int v : region_verts) {
-            double below = pop_below[v];
-            double above = total_pop - below;
-            bool ok = (peel_lower <= below && below <= peel_upper &&
-                       remain_lower <= above && above <= remain_upper) ||
-                      (remain_lower <= below && below <= remain_upper &&
-                       peel_lower <= above && above <= peel_upper);
-            if (ok) valid_verts.push_back(v);
-        }
-        n_valid_cuts = (int) valid_verts.size();
-
         if (k_topk == 0) {
-            // Pick uniformly from valid cuts.
-            if (valid_verts.empty()) return false;
-            cut_at = valid_verts[r_int(valid_verts.size())];
+            // Pick uniformly from valid cuts via reservoir sampling (O(1) memory).
+            int count = 0;
+            cut_at = -1;
+            for (int v : region_verts) {
+                double below = pop_below[v];
+                double above = total_pop - below;
+                bool ok = (peel_lower <= below && below <= peel_upper &&
+                           remain_lower <= above && above <= remain_upper) ||
+                          (remain_lower <= below && below <= remain_upper &&
+                           peel_lower <= above && above <= peel_upper);
+                if (ok) {
+                    count++;
+                    if (r_int(count) == 0) cut_at = v;
+                }
+            }
+            n_valid_cuts = count;
+            if (count == 0) return false;
         } else {
-            // Top-k: sort all region vertices by |pop_below - target|, pick
-            // uniformly from the top-k, fail (caller redraws tree) if chosen
-            // vertex is not a valid cut.
-            std::vector<std::pair<double, int>> dev_verts;
-            dev_verts.reserve(region_verts.size());
+            // Top-k: use partial_sort on region vertices by |pop_below - target|
+            dev_verts.clear();
+            int n_valid = 0;
             for (int v : region_verts) {
                 double below = pop_below[v];
                 double dev = std::min(std::abs(below - peel_target),
                                       std::abs(total_pop - below - peel_target));
                 dev_verts.push_back({dev, v});
+                double above = total_pop - below;
+                bool ok = (peel_lower <= below && below <= peel_upper &&
+                           remain_lower <= above && above <= remain_upper) ||
+                          (remain_lower <= below && below <= remain_upper &&
+                           peel_lower <= above && above <= peel_upper);
+                if (ok) n_valid++;
             }
-            std::sort(dev_verts.begin(), dev_verts.end());
+            n_valid_cuts = n_valid;
             int k_actual = std::min(k_topk, (int) dev_verts.size());
             if (k_actual <= 0) return false;
+            std::nth_element(dev_verts.begin(), dev_verts.begin() + k_actual,
+                             dev_verts.end());
             cut_at = dev_verts[r_int(k_actual)].second;
             double below = pop_below[cut_at];
             double above = total_pop - below;
@@ -251,6 +260,137 @@ static bool cut_one_mms(Tree &ust, int root,
 
 
 /*
+ * Compute log boundary between peel and remain, scanning only region vertices.
+ */
+static double log_boundary_region(const Graph &g,
+                                  const subview_col<uword> &districts,
+                                  int distr_root, int distr_other,
+                                  const std::vector<int> &region_verts) {
+    double count = 0;
+    for (int v : region_verts) {
+        if ((int) districts(v) != distr_root) continue;
+        for (int nbor : g[v]) {
+            if ((int) districts(nbor) == distr_other) count += 1.0;
+        }
+    }
+    return std::log(count);
+}
+
+
+/*
+ * Random walk along `g` from `root` until something in `visited` is hit.
+ * No county check — for single-county or county-free regions.
+ * Uses CSR flat graph and int8_t status array for fast random access.
+ * Status: 0=unvisited, 1=in-tree, 2=ignored
+ */
+static int walk_until_nc(const std::vector<int> &flat_adj,
+                         const std::vector<int> &flat_off,
+                         int root,
+                         std::vector<int> &path, int MAX,
+                         std::vector<int8_t> &status) {
+    path[0] = root;
+    int curr = root;
+    int added = 1;
+    int i;
+    for (i = 0; i < MAX; i++) {
+        int off = flat_off[curr];
+        int deg = flat_off[curr + 1] - off;
+        int proposal = flat_adj[off + r_int(deg)];
+        int8_t s = status[proposal];
+        if (s == 2) {
+            continue;
+        } else if (s == 0) {
+            for (int j = added - 1; j >= 0; j--) {
+                if (path[j] == proposal) {
+                    added = j;
+                    break;
+                }
+            }
+            path[added++] = proposal;
+        } else {
+            path[added++] = proposal;
+            break;
+        }
+        curr = proposal;
+    }
+    if (i == MAX) {
+        added = 0;
+    }
+    return added;
+}
+
+
+/*
+ * Simplified UST sampler for no-county regions.
+ * Uses CSR flat graph, int8_t status array, and pre-allocated unvisited list.
+ */
+static int sample_sub_ust_nc(const std::vector<int> &flat_adj,
+                             const std::vector<int> &flat_off,
+                             Tree &tree, int V, int &root,
+                             std::vector<int8_t> &status,
+                             const std::vector<bool> &ignore,
+                             std::vector<int> &walk_buf,
+                             std::vector<int> &unvisited,
+                             std::vector<int> &unvis_pos) {
+    // Build status and unvisited list from ignore array
+    // Status: 0=unvisited, 1=in-tree, 2=ignored
+    unvisited.clear();
+    for (int i = 0; i < V; i++) {
+        if (ignore[i]) {
+            status[i] = 2;
+        } else {
+            status[i] = 0;
+            unvis_pos[i] = (int) unvisited.size();
+            unvisited.push_back(i);
+        }
+    }
+
+    int remaining = (int) unvisited.size();
+    if (remaining == 0) return 1;
+
+    // Pick root via O(1) random selection
+    int pick = r_int(remaining);
+    root = unvisited[pick];
+    // Swap-remove from unvisited
+    int last_v = unvisited[remaining - 1];
+    unvisited[pick] = last_v;
+    unvis_pos[last_v] = pick;
+    unvisited.pop_back();
+    status[root] = 1;
+    remaining--;
+
+    if (remaining > 0) {
+        int max_try = std::max(50, 50 * remaining * ((int) std::log(remaining)));
+        while (remaining > 0) {
+            // O(1) random unvisited vertex selection
+            pick = r_int(remaining);
+            int add = unvisited[pick];
+            int added = walk_until_nc(flat_adj, flat_off, add, walk_buf,
+                                       max_try, status);
+            if (added == 0) return 1;
+            // Mark in-tree and remove from unvisited list
+            for (int i = 0; i < added - 1; i++) {
+                int v = walk_buf[i];
+                status[v] = 1;
+                tree[walk_buf[i+1]].push_back(v);
+                // Swap-remove v from unvisited
+                int pos = unvis_pos[v];
+                remaining--;
+                if (remaining > 0 && pos < remaining) {
+                    int last = unvisited[remaining];
+                    unvisited[pos] = last;
+                    unvis_pos[last] = pos;
+                }
+                unvisited.pop_back();
+            }
+        }
+    }
+
+    return 0;
+}
+
+
+/*
  * Main MMSS MCMC loop.
  */
 // [[Rcpp::export]]
@@ -297,18 +437,15 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     // Fixed top-k sequence ONCE before the main loop.
     // k_seq must be identical for forward and reverse proposals for reversibility,
     // so it must NOT be estimated from the selected region R (which varies per proposal).
-    // Default: k_seq[s] = l_merge - s (top-l at step 0, top-2 at last step).
+    // Default: k_seq[s] = 0 (valid-only: pick uniformly from all valid cuts).
+    // This eliminates most retries since most USTs have at least one valid cut.
     // User can override by passing k_seq as an integer vector in control.
-    std::vector<int> fixed_k_seq(std::max(l_merge - 1, 0), 1);
+    std::vector<int> fixed_k_seq(std::max(l_merge - 1, 0), 0);
     if (l_merge > 1) {
         if (control.containsElementNamed("k_seq")) {
             Rcpp::IntegerVector ks = control["k_seq"];
             for (int s = 0; s < (int) fixed_k_seq.size() && s < ks.size(); s++) {
                 fixed_k_seq[s] = ks[s];
-            }
-        } else {
-            for (int s = 0; s < (int) fixed_k_seq.size(); s++) {
-                fixed_k_seq[s] = l_merge - s;
             }
         }
         if (verbosity >= 1) {
@@ -353,6 +490,50 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     std::vector<bool> visited(V);
     std::vector<bool> ignore(V);
 
+    // Pre-allocated buffers for cut_one_mms (avoid allocation in retry loop)
+    std::vector<int> pop_below_buf(V, 0);
+    std::vector<int> parent_buf(V);
+    std::vector<int> region_verts_buf;
+    region_verts_buf.reserve(V);
+    std::vector<std::pair<double, int>> dev_verts_buf;
+    dev_verts_buf.reserve(V);
+
+    // Pre-allocated walk buffer for UST sampling (avoids allocation per retry)
+    std::vector<int> walk_buf(V + 2);
+
+    // Detect single-county case for fast-path UST sampling
+    bool use_fast_ust = (n_cty == 1);
+    dev_verts_buf.reserve(V);
+
+    // CSR flat graph for cache-friendly random walks in no-county UST
+    std::vector<int> flat_adj;
+    std::vector<int> flat_off(V + 1);
+    if (use_fast_ust) {
+        int total_edges = 0;
+        for (int i = 0; i < V; i++) total_edges += (int) g[i].size();
+        flat_adj.reserve(total_edges);
+        for (int i = 0; i < V; i++) {
+            flat_off[i] = (int) flat_adj.size();
+            for (int nbor : g[i]) flat_adj.push_back(nbor);
+        }
+        flat_off[V] = (int) flat_adj.size();
+    }
+
+    // Pre-allocated unvisited vertex list and position index for O(1) selection
+    std::vector<int> unvisited_buf;
+    unvisited_buf.reserve(V);
+    std::vector<int> unvis_pos(V);
+
+    // Pre-allocated status array for fast-path UST (0=unvisited, 1=in-tree, 2=ignored)
+    std::vector<int8_t> ust_status(V);
+
+    // Pre-allocated buffer for reverse boundary computation
+    std::vector<int> rev_label(V, 0);
+
+    // Pre-allocated buffer for iteration region vertices
+    std::vector<int> iter_region;
+    iter_region.reserve(V);
+
     for (int i = 1; i <= N; i++) {
         double prop_lp = 0.0;
         mh_decisions(idx - 1) = 0;
@@ -369,8 +550,18 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
             continue;
         }
 
-        // Save the current plan for label restoration
-        uvec saved_plan = districts.col(idx + 1);
+        // Pre-collect region vertices (those in any selected district)
+        // districts.col(idx) is unchanged during proposal and serves as the
+        // "saved plan" for restoring on retry.
+        iter_region.clear();
+        for (int v = 0; v < V; v++) {
+            int lbl = (int) districts(v, idx);
+            for (int d : sel_districts) {
+                if (lbl == d) { iter_region.push_back(v); break; }
+            }
+        }
+        // Pre-set ignore for all non-region vertices (constant across retries)
+        std::fill(ignore.begin(), ignore.end(), true);
 
         bool split_failed = false;
         double fwd_boundary_lp = 0.0;
@@ -381,7 +572,10 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
         split_failed = true;
 
         for (int attempt = 0; attempt < max_retries; attempt++) {
-            districts.col(idx + 1) = saved_plan;
+            // Restore only region vertices (non-region are unchanged)
+            for (int v : iter_region) {
+                districts(v, idx + 1) = districts(v, idx);
+            }
             fwd_boundary_lp = 0.0;
             bool attempt_ok = true;
 
@@ -389,20 +583,27 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                 int peel = sel_districts[s];
                 int remain = sel_districts[l_merge - 1];
 
-                for (int v = 0; v < V; v++) {
-                    for (int t = s + 1; t < l_merge - 1; t++) {
-                        if ((int) districts(v, idx + 1) == sel_districts[t]) {
-                            districts(v, idx + 1) = remain;
-                            break;
+                // Merge: relabel intermediate districts to remain (region only)
+                // For l_merge=2, no intermediate districts exist — skip.
+                if (l_merge > 2) {
+                    for (int v : iter_region) {
+                        int lbl = (int) districts(v, idx + 1);
+                        for (int t = s + 1; t < l_merge - 1; t++) {
+                            if (lbl == sel_districts[t]) {
+                                districts(v, idx + 1) = remain;
+                                break;
+                            }
                         }
                     }
                 }
 
+                // Set ignore and compute region_pop (region only)
                 double region_pop = 0.0;
-                for (int v = 0; v < V; v++) {
-                    ignore[v] = ((int) districts(v, idx + 1) != peel &&
-                                 (int) districts(v, idx + 1) != remain);
-                    if (!ignore[v]) region_pop += pop(v);
+                for (int v : iter_region) {
+                    int lbl = (int) districts(v, idx + 1);
+                    bool active = (lbl == peel || lbl == remain);
+                    ignore[v] = !active;
+                    if (active) region_pop += pop(v);
                 }
 
                 int remaining_splits = l_merge - 1 - s;
@@ -422,10 +623,21 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                 double ust_lower = std::min(peel_lower, remain_lower);
                 double ust_upper = std::max(peel_upper, remain_upper);
 
-                clear_tree(ust);
+                // Clear tree entries for region vertices only (O(R) instead of O(V))
+                for (int v : iter_region) {
+                    ust[v].clear();
+                }
                 int root;
-                int result = sample_sub_ust(g, ust, V, root, visited, ignore,
-                                            pop, ust_lower, ust_upper, counties, cg);
+                int result;
+                if (use_fast_ust) {
+                    result = sample_sub_ust_nc(flat_adj, flat_off,
+                                               ust, V, root, ust_status,
+                                               ignore, walk_buf,
+                                               unvisited_buf, unvis_pos);
+                } else {
+                    result = sample_sub_ust(g, ust, V, root, visited, ignore,
+                                             pop, ust_lower, ust_upper, counties, cg);
+                }
                 if (result != 0) { attempt_ok = false; break; }
 
                 auto col_ref = districts.col(idx + 1);
@@ -435,7 +647,10 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                                  peel_lower, peel_upper,
                                  remain_lower, remain_upper,
                                  target, /*from_valid_only=*/true,
-                                 nvc, fixed_k_seq[s])) {
+                                 nvc, fixed_k_seq[s],
+                                 pop_below_buf, parent_buf,
+                                 region_verts_buf, dev_verts_buf,
+                                 iter_region)) {
                     attempt_ok = false;
                     break;
                 }
@@ -443,15 +658,19 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                 n_cuts_dist[s][std::min(nvc, 3)]++;
                 if (nvc > max_valid_cuts[s]) max_valid_cuts[s] = nvc;
 
-                fwd_boundary_lp += log_boundary(g, districts.col(idx + 1), peel, remain);
+                fwd_boundary_lp += log_boundary_region(g, districts.col(idx + 1), peel, remain, iter_region);
 
-                for (int v = 0; v < V; v++) {
-                    if ((int) districts(v, idx + 1) == remain) {
-                        int orig = saved_plan(v);
-                        for (int t = s + 1; t < l_merge; t++) {
-                            if (orig == sel_districts[t]) {
-                                districts(v, idx + 1) = orig;
-                                break;
+                // Restore: un-merge vertices that were relabeled to remain
+                // For l_merge=2, no intermediate districts were merged — skip.
+                if (l_merge > 2) {
+                    for (int v : iter_region) {
+                        if ((int) districts(v, idx + 1) == remain) {
+                            int orig = districts(v, idx);
+                            for (int t = s + 1; t < l_merge; t++) {
+                                if (orig == sel_districts[t]) {
+                                    districts(v, idx + 1) = orig;
+                                    break;
+                                }
                             }
                         }
                     }
@@ -468,69 +687,61 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
             continue;
         }
 
-        // Ensure all vertices in the selected set are properly assigned
-        int last_label = sel_districts[l_merge - 1];
-        for (int v = 0; v < V; v++) {
-            bool in_selected = false;
-            for (int t = 0; t < l_merge; t++) {
-                if ((int) saved_plan(v) == sel_districts[t]) {
-                    in_selected = true;
-                    break;
+        // Ensure all vertices in the selected set are properly assigned.
+        // For l=2, cut_one_mms already assigns all vertices via assign_district — skip.
+        if (l_merge > 2) {
+            int last_label = sel_districts[l_merge - 1];
+            for (int v : iter_region) {
+                bool peeled = false;
+                for (int t = 0; t < l_merge - 1; t++) {
+                    if ((int) districts(v, idx + 1) == sel_districts[t]) {
+                        peeled = true;
+                        break;
+                    }
                 }
-            }
-            if (!in_selected) continue;
-            bool peeled = false;
-            for (int t = 0; t < l_merge - 1; t++) {
-                if ((int) districts(v, idx + 1) == sel_districts[t]) {
-                    peeled = true;
-                    break;
+                if (!peeled) {
+                    districts(v, idx + 1) = last_label;
                 }
-            }
-            if (!peeled) {
-                districts(v, idx + 1) = last_label;
             }
         }
 
         // 3. Reverse proposal boundary terms (needed for both paths)
         {
-            uvec old_plan = districts.col(idx);
-            umat work_mat(V, 1);
-            work_mat.col(0) = old_plan;
-            for (int v = 0; v < V; v++) {
-                for (int d : sel_districts) {
-                    if ((int) work_mat(v, 0) == d) {
-                        work_mat(v, 0) = 0;
-                        break;
-                    }
-                }
+            const uvec &old_plan = districts.unsafe_col(idx);
+            for (int v : iter_region) {
+                rev_label[v] = 0;
             }
             for (int s = 0; s < l_merge - 1; s++) {
                 int dist_label = sel_districts[s];
-                for (int v = 0; v < V; v++) {
-                    if ((int) old_plan(v) == dist_label && work_mat(v, 0) == 0) {
-                        work_mat(v, 0) = dist_label;
+                for (int v : iter_region) {
+                    if ((int) old_plan(v) == dist_label && rev_label[v] == 0) {
+                        rev_label[v] = dist_label;
                     }
                 }
-                rev_boundary_lp += log_boundary(g, work_mat.col(0), 0, dist_label);
+                // Compute boundary between label 0 and dist_label, region only
+                // Note: non-region neighbors always have rev_label = 0 (cleaned up after each iter)
+                double count = 0;
+                for (int v : iter_region) {
+                    if (rev_label[v] != 0) continue;
+                    for (int nbor : g[v]) {
+                        if (rev_label[nbor] == dist_label) count += 1.0;
+                    }
+                }
+                rev_boundary_lp += std::log(count);
+            }
+            // Clean up rev_label for region vertices so next iteration starts clean
+            for (int v : iter_region) {
+                rev_label[v] = 0;
             }
         }
 
         // For l_merge >= 3: apply the region-size correction
-        // from eq. 135. For s >= 1, the forward region size
-        // |Γ_s^fwd| = |R| - sum_{j<s}|V_{d_j}^new| differs from the reverse
-        // |Γ_s^rev| = |R| - sum_{j<s}|V_{d_j}^old| whenever district sizes change.
-        // The correction factor is prod_{s=1}^{l-2} (|Γ_s^fwd|-1)/(|Γ_s^rev|-1).
         if (l_merge >= 3) {
-            int total_region = 0;
-            for (int v = 0; v < V; v++) {
-                for (int d : sel_districts) {
-                    if ((int) saved_plan(v) == d) { total_region++; break; }
-                }
-            }
+            int total_region = (int) iter_region.size();
             int fwd_cumsize = 0, rev_cumsize = 0;
             for (int s = 1; s < l_merge - 1; s++) {
                 int fwd_s = 0, rev_s = 0;
-                for (int v = 0; v < V; v++) {
+                for (int v : iter_region) {
                     if ((int) districts(v, idx + 1) == sel_districts[s - 1]) fwd_s++;
                     if ((int) districts(v, idx)     == sel_districts[s - 1]) rev_s++;
                 }
@@ -569,32 +780,41 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
         prop_lp += gibbs_old - gibbs_new;
 
         // 6. Selection probability correction
-        // The last two selected districts can be swapped at the final step
-        // (symmetric population bounds), producing the same plan via opposite
-        // orientation. Must sum over both orderings for correctness.
         new_dist_g = district_graph(g, districts.col(idx + 1), n_distr);
 
-        std::vector<int> sel_swapped = sel_districts;
-        std::swap(sel_swapped[l_merge - 2], sel_swapped[l_merge - 1]);
+        if (l_merge == 2) {
+            // Fast path for l=2: equivalent to MS pair selection correction.
+            // log_prob_perm([d1,d2]) = -log(n) - log(deg(d1))
+            // log_prob_perm([d2,d1]) = -log(n) - log(deg(d2))
+            // log_psum = -log(n) + log(1/deg(d1) + 1/deg(d2))
+            // The -log(n) cancels in the difference.
+            int d1 = sel_districts[0] - 1;
+            int d2 = sel_districts[1] - 1;
+            prop_lp -= std::log(1.0 / dist_g[d1].size() + 1.0 / dist_g[d2].size());
+            prop_lp += std::log(1.0 / new_dist_g[d1].size() + 1.0 / new_dist_g[d2].size());
+        } else {
+            std::vector<int> sel_swapped = sel_districts;
+            std::swap(sel_swapped[l_merge - 2], sel_swapped[l_merge - 1]);
 
-        double lp_fwd_swap = log_prob_perm(sel_swapped, n_distr, dist_g);
-        double mx_fwd = std::max(log_prob_fwd, lp_fwd_swap);
-        double log_psum_fwd = mx_fwd + std::log(
-            std::exp(log_prob_fwd - mx_fwd) + std::exp(lp_fwd_swap - mx_fwd));
+            double lp_fwd_swap = log_prob_perm(sel_swapped, n_distr, dist_g);
+            double mx_fwd = std::max(log_prob_fwd, lp_fwd_swap);
+            double log_psum_fwd = mx_fwd + std::log(
+                std::exp(log_prob_fwd - mx_fwd) + std::exp(lp_fwd_swap - mx_fwd));
 
-        double lp_rev_orig = log_prob_perm(sel_districts, n_distr, new_dist_g);
-        double lp_rev_swap = log_prob_perm(sel_swapped, n_distr, new_dist_g);
-        double mx_rev = std::max(lp_rev_orig, lp_rev_swap);
-        double log_psum_rev = mx_rev + std::log(
-            std::exp(lp_rev_orig - mx_rev) + std::exp(lp_rev_swap - mx_rev));
+            double lp_rev_orig = log_prob_perm(sel_districts, n_distr, new_dist_g);
+            double lp_rev_swap = log_prob_perm(sel_swapped, n_distr, new_dist_g);
+            double mx_rev = std::max(lp_rev_orig, lp_rev_swap);
+            double log_psum_rev = mx_rev + std::log(
+                std::exp(lp_rev_orig - mx_rev) + std::exp(lp_rev_swap - mx_rev));
 
-        prop_lp += log_psum_rev - log_psum_fwd;
+            prop_lp += log_psum_rev - log_psum_fwd;
+        }
 
         // 7. Accept/reject
         if (prop_lp >= 0 || std::log(r_unif()) <= prop_lp) {
             n_accept++;
             districts.col(idx) = districts.col(idx + 1);
-            dist_g = new_dist_g;
+            dist_g = std::move(new_dist_g);
             mh_decisions(idx - 1) = 1;
         } else {
             districts.col(idx + 1) = districts.col(idx);

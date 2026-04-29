@@ -68,9 +68,8 @@ Graph district_graph(const Graph &g, const uvec &plan, int nd, bool zero) {
     }
 
     for (int i = 0; i < V; i++) {
-        std::vector<int> nbors = g[i];
         int dist_i = plan[i] - 1 + zero;
-        for (int nbor : nbors) {
+        for (int nbor : g[i]) {
             int dist_j = plan[nbor] - 1 + zero;
             if (dist_j != dist_i) {
                 gr_bool[dist_i][dist_j] = true;

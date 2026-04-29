@@ -12,13 +12,10 @@ double log_boundary(const Graph &g, const subview_col<uword> &districts,
 
     double count = 0; // number of cuttable edges to create eq-pop districts
     for (int i = 0; i < V; i++) {
-        std::vector<int> nbors = g[i];
-        if (districts(i) != distr_root) continue; // same side of boundary as root
-        for (int nbor : nbors) {
-            if (districts(nbor) != distr_other)
-                continue;
-            // otherwise, boundary with root -> ... -> i -> nbor
-            count += 1.0;
+        if ((int) districts(i) != distr_root) continue;
+        for (int nbor : g[i]) {
+            if ((int) districts(nbor) == distr_other)
+                count += 1.0;
         }
     }
 

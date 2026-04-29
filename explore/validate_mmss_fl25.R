@@ -12,8 +12,10 @@ plans_sim <- redist_mmss(
     map,
     nsims = 2e4,
     chains = 8L,
-    thin = 10,
+    init_plan = fl25_enum$plans[, fl25_enum$pop_dev <= 0.1][, 1:8],
+    thin = 20,
     warmup = 100,
+    k_seq = 8,
     l = 3
 ) |>
     mutate(

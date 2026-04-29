@@ -71,8 +71,7 @@ plans <- redist_mmss(
     l = 3,
     thin = 100,
     warmup = 2e3,
-    init_plan = init_plans[, seq_len(n_chains)],
-    exact_mh = TRUE
+    init_plan = init_plans[, seq_len(n_chains)]
 )
 
 plans <- plans |>
@@ -100,11 +99,25 @@ target |>
 
 library(ggplot2)
 make_valid_plot <- function(pl_cw, target, conf = 0.9, by_chain = TRUE) {
-    PAL <- c('#CC79A7', '#E69F00', '#56B4E9', '#20B073', '#0072B2', '#D55E00', '#999999')
+    PAL <- c(
+        '#CC79A7',
+        '#E69F00',
+        '#56B4E9',
+        '#20B073',
+        '#0072B2',
+        '#D55E00',
+        '#999999'
+    )
     # edge cut compactness
     edge_rg <- 28:42
     d_hist <- purrr::map_dfr(edge_rg, function(k) {
-        redist_mcmc_ci(pl_cw, edges_rem == k, 1, conf = conf, by_chain = by_chain) %>%
+        redist_mcmc_ci(
+            pl_cw,
+            edges_rem == k,
+            1,
+            conf = conf,
+            by_chain = by_chain
+        ) %>%
             suppressWarnings() %>%
             `colnames<-`(c('est', 'low', 'high')) %>%
             mutate(
@@ -118,17 +131,21 @@ make_valid_plot <- function(pl_cw, target, conf = 0.9, by_chain = TRUE) {
     d_hist |>
         ggplot() +
         geom_col(aes(x = edges, y = true), fill = PAL[1]) +
-        geom_pointrange(aes(x = edges, y = est, ymin = low, ymax = high),
-                        color = '#444444',
-                        linewidth = 0.7
+        geom_pointrange(
+            aes(x = edges, y = est, ymin = low, ymax = high),
+            color = '#444444',
+            linewidth = 0.7
         ) +
-        scale_y_continuous(str_glue('Proportion of plans'),
-                           labels = scales::label_percent(),
-                           expand = expansion(mult = c(0, 0.04))
+        scale_y_continuous(
+            str_glue('Proportion of plans'),
+            labels = scales::label_percent(),
+            expand = expansion(mult = c(0, 0.04))
         ) +
         coord_cartesian(ylim = c(0, NA)) +
-        labs(title = str_glue('{scales::label_comma()(1e6)} samples per run'),
-             x = 'Number of edges removed') +
+        labs(
+            title = str_glue('{scales::label_comma()(1e6)} samples per run'),
+            x = 'Number of edges removed'
+        ) +
         theme_bw(base_family = 'Times', base_size = 10)
 }
 
