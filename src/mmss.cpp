@@ -437,15 +437,22 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     // Fixed top-k sequence ONCE before the main loop.
     // k_seq must be identical for forward and reverse proposals for reversibility,
     // so it must NOT be estimated from the selected region R (which varies per proposal).
-    // Default: k_seq[s] = 0 (valid-only: pick uniformly from all valid cuts).
-    // This eliminates most retries since most USTs have at least one valid cut.
+    // Default: k_seq[s] = l_merge - s (top-l at step 0, top-2 at last step).
     // User can override by passing k_seq as an integer vector in control.
-    std::vector<int> fixed_k_seq(std::max(l_merge - 1, 0), 0);
+    std::vector<int> fixed_k_seq(std::max(l_merge - 1, 0), 1);
     if (l_merge > 1) {
         if (control.containsElementNamed("k_seq")) {
             Rcpp::IntegerVector ks = control["k_seq"];
-            for (int s = 0; s < (int) fixed_k_seq.size() && s < ks.size(); s++) {
-                fixed_k_seq[s] = ks[s];
+            if (ks.size() == 1) {
+                std::fill(fixed_k_seq.begin(), fixed_k_seq.end(), ks[0]);
+            } else {
+                for (int s = 0; s < (int) fixed_k_seq.size() && s < ks.size(); s++) {
+                    fixed_k_seq[s] = ks[s];
+                }
+            }
+        } else {
+            for (int s = 0; s < (int) fixed_k_seq.size(); s++) {
+                fixed_k_seq[s] = l_merge - s;
             }
         }
         if (verbosity >= 1) {

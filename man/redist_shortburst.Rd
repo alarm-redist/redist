@@ -78,10 +78,11 @@ value \code{k_i} for each splitting iteration.}
 used will not be reversible. This may speed up optimization.}
 
 \item{fixed_k}{If not \code{NULL}, will be used to set the \code{k} parameter for the
-\code{mergesplit} backend. If e.g. \code{k=1} then the best edge in each spanning
+\code{mergesplit} backend, or the fixed top-k sequence for the \code{mmss} backend.
+If e.g. \code{k=1} then the best edge in each spanning
 tree will be used.  Lower values may speed up optimization at the
 cost of the Markov chain no longer targeting a known distribution.
-Recommended only in conjunction with \code{reversible=FALSE}.}
+Recommended only in conjunction with \code{reversible=FALSE} if using \code{mergesplit}.}
 
 \item{return_all}{Whether to return all the burst results or just the best
 one (generally, the Pareto frontier). Recommended for monitoring purposes.}
