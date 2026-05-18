@@ -321,6 +321,11 @@ redist_mmss <- function(map,
         l_diag <- list(
             runtime = as.numeric(t2_run - t1_run, units = "secs"),
             n_m_hit = algout$n_m_hit,
+            n_attempts = algout$n_attempts,
+            n_ust_draws = algout$n_ust_draws,
+            n_ust_fail = algout$n_ust_fail,
+            n_cut_fail = algout$n_cut_fail,
+            n_proposal_success = algout$n_proposal_success,
             k_seq = algout$k_seq,
             valid_cuts_by_step = algout$valid_cuts_by_step
         )

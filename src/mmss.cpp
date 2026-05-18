@@ -208,8 +208,10 @@ static bool cut_one_mms(Tree &ust, int root,
             n_valid_cuts = n_valid;
             int k_actual = std::min(k_topk, (int) dev_verts.size());
             if (k_actual <= 0) return false;
-            std::nth_element(dev_verts.begin(), dev_verts.begin() + k_actual,
-                             dev_verts.end());
+            if (k_actual < (int) dev_verts.size()) {
+                std::nth_element(dev_verts.begin(), dev_verts.begin() + k_actual,
+                                 dev_verts.end());
+            }
             cut_at = dev_verts[r_int(k_actual)].second;
             double below = pop_below[cut_at];
             double above = total_pop - below;
@@ -471,6 +473,11 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     // failed — these force staying at the current state and can bias the chain
     // if they happen frequently.
     int n_m_hit = 0;
+    long long n_attempts = 0;
+    long long n_ust_draws = 0;
+    long long n_ust_fail = 0;
+    long long n_cut_fail = 0;
+    long long n_proposal_success = 0;
     // Per-step valid cut distributions from successful cuts, indexed [s][0..3]
     // where 3 means "3 or more". Records K_T^s (total valid cuts in the drawn
     // UST) whenever cut_one_mms succeeds. If K_T^s > k_seq[s] for any tree,
@@ -579,6 +586,7 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
         split_failed = true;
 
         for (int attempt = 0; attempt < max_retries; attempt++) {
+            n_attempts++;
             // Restore only region vertices (non-region are unchanged)
             for (int v : iter_region) {
                 districts(v, idx + 1) = districts(v, idx);
@@ -636,6 +644,7 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                 }
                 int root;
                 int result;
+                n_ust_draws++;
                 if (use_fast_ust) {
                     result = sample_sub_ust_nc(flat_adj, flat_off,
                                                ust, V, root, ust_status,
@@ -645,7 +654,11 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                     result = sample_sub_ust(g, ust, V, root, visited, ignore,
                                              pop, ust_lower, ust_upper, counties, cg);
                 }
-                if (result != 0) { attempt_ok = false; break; }
+                if (result != 0) {
+                    n_ust_fail++;
+                    attempt_ok = false;
+                    break;
+                }
 
                 auto col_ref = districts.col(idx + 1);
                 int nvc = 0;
@@ -658,6 +671,7 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                                  pop_below_buf, parent_buf,
                                  region_verts_buf, dev_verts_buf,
                                  iter_region)) {
+                    n_cut_fail++;
                     attempt_ok = false;
                     break;
                 }
@@ -693,6 +707,7 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
             if (i % thin == 0) idx++;
             continue;
         }
+        n_proposal_success++;
 
         // Ensure all vertices in the selected set are properly assigned.
         // For l=2, cut_one_mms already assigns all vertices via assign_district — skip.
@@ -873,6 +888,11 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     out["plans"] = districts;
     out["mhdecisions"] = mh_decisions;
     out["n_m_hit"] = n_m_hit;
+    out["n_attempts"] = (double) n_attempts;
+    out["n_ust_draws"] = (double) n_ust_draws;
+    out["n_ust_fail"] = (double) n_ust_fail;
+    out["n_cut_fail"] = (double) n_cut_fail;
+    out["n_proposal_success"] = (double) n_proposal_success;
     // Per-step valid cut distribution matrix: rows = steps, cols = [1, 2, 3+, max]
     // "0" column omitted since cut_one_mms only records on success (nvc >= 1)
     Rcpp::IntegerMatrix valid_cuts_mat(n_steps, 4);
