@@ -845,11 +845,14 @@ rbind.redist_plans <- function(..., deparse.level = 1) {
   n_prec <- nrow(get_plans_matrix(objs[[1]]))
   prec_pop <- attr(objs[[1]], "prec_pop")
   ndists <- attr(objs[[1]], "ndists")
+  nseats <- attr(objs[[1]], "nseats")
   constr <- attr(objs[[1]], "constraints")
   resamp <- attr(objs[[1]], "resampled")
   comp <- attr(objs[[1]], "compactness")
   distr_ord <- is.ordered(objs[[1]]$district)
   partial <- attr(objs[[1]], "partial")
+  districting_scheme <- attr(objs[[1]], "districting_scheme")
+  seats_range <- attr(objs[[1]], "seats_range")
 
 
 
