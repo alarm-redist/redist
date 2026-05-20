@@ -410,6 +410,23 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     Multigraph cg = county_graph(g, counties);
     int V = g.size();
     int n_cty = max(counties);
+    std::vector<uvec> tree_levels;
+    bool use_multi_hierarchy = false;
+    if (control.containsElementNamed("tree_levels")) {
+        IntegerMatrix level_mat = control["tree_levels"];
+        for (int j = 0; j < level_mat.ncol(); j++) {
+            uvec lvl(V);
+            for (int i = 0; i < V; i++) {
+                lvl(i) = level_mat(i, j);
+            }
+            tree_levels.push_back(lvl);
+        }
+        use_multi_hierarchy = tree_levels.size() > 1;
+    }
+    std::vector<uvec> county_tree_levels;
+    if (!use_multi_hierarchy && n_cty > 1) {
+        county_tree_levels.push_back(counties);
+    }
 
     int n_out = N / thin + 2;
     umat districts(V, n_out, fill::zeros);
@@ -428,9 +445,13 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
         Rcout << std::fixed << std::setprecision(0);
         Rcout << "Sampling " << N << " " << V << "-unit maps with " << n_distr
               << " districts and population between " << lower << " and " << upper << ".\n";
-        if (cg.size() > 1)
+        if (use_multi_hierarchy) {
+            Rcout << "Sampling hierarchically across " << tree_levels.size()
+                  << " administrative levels.\n";
+        } else if (cg.size() > 1) {
             Rcout << "Sampling hierarchically with respect to the "
                   << cg.size() << " administrative units.\n";
+        }
     }
 
     Graph dist_g = district_graph(g, init, n_distr);
@@ -516,7 +537,7 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     std::vector<int> walk_buf(V + 2);
 
     // Detect single-county case for fast-path UST sampling
-    bool use_fast_ust = (n_cty == 1);
+    bool use_fast_ust = (n_cty == 1 && !use_multi_hierarchy);
     dev_verts_buf.reserve(V);
 
     // CSR flat graph for cache-friendly random walks in no-county UST
@@ -547,6 +568,8 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     // Pre-allocated buffer for iteration region vertices
     std::vector<int> iter_region;
     iter_region.reserve(V);
+    std::vector<int> active_region;
+    active_region.reserve(V);
 
     for (int i = 1; i <= N; i++) {
         double prop_lp = 0.0;
@@ -614,11 +637,15 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
 
                 // Set ignore and compute region_pop (region only)
                 double region_pop = 0.0;
+                active_region.clear();
                 for (int v : iter_region) {
                     int lbl = (int) districts(v, idx + 1);
                     bool active = (lbl == peel || lbl == remain);
                     ignore[v] = !active;
-                    if (active) region_pop += pop(v);
+                    if (active) {
+                        region_pop += pop(v);
+                        active_region.push_back(v);
+                    }
                 }
 
                 int remaining_splits = l_merge - 1 - s;
@@ -650,6 +677,16 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                                                ust, V, root, ust_status,
                                                ignore, walk_buf,
                                                unvisited_buf, unvis_pos);
+                } else if (use_multi_hierarchy) {
+                    result = sample_sub_ust_hier(g, ust, V, root, visited,
+                                                 ignore, active_region,
+                                                 pop, ust_lower, ust_upper,
+                                                 tree_levels);
+                } else if (n_cty > 1) {
+                    result = sample_sub_ust_hier(g, ust, V, root, visited,
+                                                 ignore, active_region,
+                                                 pop, ust_lower, ust_upper,
+                                                 county_tree_levels);
                 } else {
                     result = sample_sub_ust(g, ust, V, root, visited, ignore,
                                              pop, ust_lower, ust_upper, counties, cg);

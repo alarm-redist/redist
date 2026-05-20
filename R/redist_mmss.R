@@ -40,7 +40,9 @@
 #' @param counties A vector containing county (or other administrative or
 #'   geographic unit) labels for each unit, which may be integers ranging from 1
 #'   to the number of counties, or a factor or character vector.  If provided,
-#'   the algorithm will generate maps that tend to follow county lines.
+#'   the algorithm will generate maps that tend to follow county lines. Multiple
+#'   nested levels may be supplied as a concatenated vector, ordered coarsest to
+#'   finest, e.g. `counties = c(county, mcd)`.
 #' @param compactness Controls the compactness of the generated districts, with
 #'   higher values preferring more compact districts. Must be nonnegative. See
 #'   the 'Details' section for more information, and computational
@@ -63,7 +65,8 @@
 #'   the final plan from each chain.
 #' @param init_name A name for the initial plan, or `FALSE` to not include
 #'   the initial plan in the output.
-#' @param silly_adj_fix Heuristic for fixing weird inputs.
+#' @param relabel_by_contiguity Relabel administrative units by their contiguous
+#'   components before sampling.
 #' @param verbose Whether to print out intermediate information while sampling.
 #' @param silent Whether to suppress all diagnostic information.
 #'
@@ -102,7 +105,7 @@ redist_mmss <- function(map,
                        cl_type = "PSOCK",
                        return_all = TRUE,
                        init_name = NULL,
-                       silly_adj_fix = FALSE,
+                       relabel_by_contiguity = FALSE,
                        verbose = FALSE, silent = FALSE) {
     map <- validate_redist_map(map)
     V <- nrow(map)
@@ -139,6 +142,16 @@ redist_mmss <- function(map,
     # Set up initial plans for chains
     exist_name <- attr(map, "existing_col")
     counties <- rlang::eval_tidy(rlang::enquo(counties), map)
+
+    raw_hierarchy <- list()
+    if (!is.null(counties) && length(counties) > V && length(counties) %% V == 0L) {
+        county_levels <- split(counties, rep(seq_len(length(counties) / V), each = V))
+        counties <- county_levels[[1]]
+        raw_hierarchy <- rev(county_levels[-1])
+    } else if (!is.null(counties) && length(counties) != V) {
+        cli::cli_abort("{.arg counties} must have one value per unit in {.arg map}, or be a concatenated set of nested levels.")
+    }
+    raw_counties <- counties
 
     # Handle different init_plan scenarios
     if (is.null(init_plan)) {
@@ -200,13 +213,14 @@ redist_mmss <- function(map,
     }
 
     # Handle counties
-    if (is.null(counties)) {
+    if (is.null(raw_counties)) {
         counties <- rep(1L, V)
     } else {
+        counties <- raw_counties
         if (any(is.na(counties)))
             cli::cli_abort("County vector must not contain missing values.")
 
-        if (silly_adj_fix) {
+        if (relabel_by_contiguity) {
             for (j in seq_len(ndists)) {
                 idx_distr <- which(init_plans[, 1] == j)
                 adj_distr <- redist.reduce.adjacency(adj, idx_distr)
@@ -225,6 +239,72 @@ redist_mmss <- function(map,
                                        paste0(as.character(counties), "-", component),
                                        as.character(counties)) |>
                 vctrs::vec_group_id()
+        }
+    }
+
+    tree_levels <- NULL
+    if (length(raw_hierarchy) > 0) {
+        relabel_components <- function(labels, by_init_district = FALSE) {
+            if (relabel_by_contiguity || by_init_district) {
+                out <- as.character(labels)
+                for (j in seq_len(ndists)) {
+                    idx_distr <- which(init_plans[, 1] == j)
+                    adj_distr <- redist.reduce.adjacency(adj, idx_distr)
+                    component <- contiguity(adj_distr, vctrs::vec_group_id(labels[idx_distr]))
+                    out[idx_distr] <- paste0(
+                        j, ":",
+                        dplyr::if_else(component > 1,
+                                       paste0(as.character(labels[idx_distr]), "-", component),
+                                       as.character(labels[idx_distr]))
+                    )
+                }
+                out
+            } else {
+                component <- contiguity(adj, vctrs::vec_group_id(labels))
+                dplyr::if_else(component > 1,
+                               paste0(as.character(labels), "-", component),
+                               as.character(labels))
+            }
+        }
+
+        if (any(vapply(raw_hierarchy, function(x) any(is.na(x)), logical(1)))) {
+            cli::cli_abort("{.arg counties} hierarchy levels must not contain missing values.")
+        }
+
+        hierarchy_levels <- raw_hierarchy
+        if (!is.null(raw_counties)) {
+            last_matches_county <- identical(
+                as.character(hierarchy_levels[[length(hierarchy_levels)]]),
+                as.character(raw_counties)
+            )
+            if (!last_matches_county) {
+                hierarchy_levels <- c(hierarchy_levels, list(raw_counties))
+            }
+            hierarchy_levels[[length(hierarchy_levels)]] <-
+                relabel_components(hierarchy_levels[[length(hierarchy_levels)]],
+                                   by_init_district = TRUE)
+        }
+
+        tree_levels <- matrix(NA_integer_, nrow = V, ncol = length(hierarchy_levels))
+        for (j in seq_along(hierarchy_levels)) {
+            if (j == length(hierarchy_levels) && !is.null(raw_counties)) {
+                tree_levels[, j] <- vctrs::vec_group_id(hierarchy_levels[[j]])
+            } else {
+                lvl <- do.call(paste, c(lapply(hierarchy_levels[j:length(hierarchy_levels)], as.character),
+                                        sep = "\r"))
+                lvl <- relabel_components(lvl, by_init_district = TRUE)
+                tree_levels[, j] <- vctrs::vec_group_id(lvl)
+            }
+        }
+
+        if (ncol(tree_levels) > 1) {
+            for (j in seq_len(ncol(tree_levels) - 1L)) {
+                nested <- tapply(tree_levels[, j + 1L], tree_levels[, j],
+                                 function(x) length(unique(x)) == 1L)
+                if (!all(unlist(nested))) {
+                    cli::cli_abort("{.arg counties} hierarchy levels must be nested from coarser to finer.")
+                }
+            }
         }
     }
 
@@ -267,9 +347,10 @@ redist_mmss <- function(map,
                          "x" = "Redistricting impossible."))
     }
 
-    control <- list(
-        max_retries = as.integer(max_retries)
-    )
+    control <- list(max_retries = as.integer(max_retries))
+    if (!is.null(tree_levels)) {
+        control$tree_levels <- tree_levels
+    }
     if (!is.null(k_seq)) {
         control$k_seq <- as.integer(k_seq)
     }

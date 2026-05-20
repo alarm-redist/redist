@@ -21,7 +21,7 @@ redist_mmss(
   cl_type = "PSOCK",
   return_all = TRUE,
   init_name = NULL,
-  silly_adj_fix = FALSE,
+  relabel_by_contiguity = FALSE,
   verbose = FALSE,
   silent = FALSE
 )
@@ -55,7 +55,9 @@ with its own sampled plan. Defaults to 1.}
 \item{counties}{A vector containing county (or other administrative or
 geographic unit) labels for each unit, which may be integers ranging from 1
 to the number of counties, or a factor or character vector.  If provided,
-the algorithm will generate maps that tend to follow county lines.}
+the algorithm will generate maps that tend to follow county lines. Multiple
+nested levels may be supplied as a concatenated vector, ordered coarsest to
+finest, e.g. \code{counties = c(county, mcd)}.}
 
 \item{compactness}{Controls the compactness of the generated districts, with
 higher values preferring more compact districts. Must be nonnegative. See
@@ -82,7 +84,8 @@ the final plan from each chain.}
 \item{init_name}{A name for the initial plan, or \code{FALSE} to not include
 the initial plan in the output.}
 
-\item{silly_adj_fix}{Heuristic for fixing weird inputs.}
+\item{relabel_by_contiguity}{Relabel administrative units by their contiguous
+components before sampling.}
 
 \item{verbose}{Whether to print out intermediate information while sampling.}
 

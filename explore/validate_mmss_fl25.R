@@ -16,6 +16,7 @@ plans_sim <- redist_mmss(
     thin = 20,
     warmup = 100,
     k_seq = 8,
+    max_retries = 1000,
     l = 3
 ) |>
     mutate(
