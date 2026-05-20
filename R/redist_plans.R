@@ -391,7 +391,7 @@ get_mh_acceptance_rate <- function(plans) {
     if (!inherits(plans, "redist_plans")) cli::cli_abort("Not a {.cls redist_plans}")
     alg <- attr(plans, "algorithm")
 
-    if (alg %in% c("flip", "mergesplit", "cyclewalk")) {
+    if (alg %in% c("flip", "mergesplit", "cyclewalk", "mmss")) {
         attr(plans, "mh_acceptance")
     } else {
         NA_real_
