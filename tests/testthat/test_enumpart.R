@@ -1,6 +1,5 @@
 skip_on_ci()
 skip_on_cran()
-skip_if(Sys.info()['machine'] == 'arm64', 'arm64 machines')
 
 if (!(file.exists(system.file('enumpart/enumpart', package = 'redist')) ||
   file.exists(system.file('enumpart/enumpart.exe', package = 'redist')))) {

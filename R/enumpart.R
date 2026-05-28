@@ -54,17 +54,19 @@
 #' path <- redist_enumpart(fl_map, read = FALSE)
 #' plans <- redist_enumpart(fl_map, out_path = path)  # reads existing file
 #' }
-redist_enumpart <- function(map,
-                            ndists = attr(map, "ndists"),
-                            n = NULL,
-                            total_pop = map[[attr(map, "pop_col")]],
-                            lower = attr(map, "pop_bounds")[1L],
-                            upper = attr(map, "pop_bounds")[3L],
-                            ordered_path = tempfile("enum_ord"),
-                            out_path = tempfile("enum_out"),
-                            weight_path = if (!is.null(lower) || !is.null(upper)) tempfile("enum_wgt") else NULL,
-                            read = TRUE,
-                            init = FALSE) {
+redist_enumpart <- function(
+    map,
+    ndists = attr(map, "ndists"),
+    n = NULL,
+    total_pop = map[[attr(map, "pop_col")]],
+    lower = attr(map, "pop_bounds")[1L],
+    upper = attr(map, "pop_bounds")[3L],
+    ordered_path = tempfile("enum_ord"),
+    out_path = tempfile("enum_out"),
+    weight_path = if (!is.null(lower) || !is.null(upper)) tempfile("enum_wgt") else NULL,
+    read = TRUE,
+    init = !file.exists(system.file("enumpart", package = "redist"))
+) {
     map <- validate_redist_map(map)
     adj <- get_adj(map)
     n_prec <- nrow(map)
@@ -121,7 +123,7 @@ redist_enumpart <- function(map,
             paste0(system.file("enumpart", package = "redist"), "/enumpart"),
             args = ep_args,
             std_out = paste0(out_path, ".dat"),
-            std_err = TRUE
+            std_err = stdout()
         )
     }
 

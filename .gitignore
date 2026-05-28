@@ -3,6 +3,8 @@
 .DS_Store
 .Rhistory
 
+.claude
+
 *.so
 *.o
 *.rds
