@@ -3,7 +3,9 @@
 .DS_Store
 .Rhistory
 
-.claude
+.claude/
+.cache/
+CLAUDE.md
 
 *.so
 *.o

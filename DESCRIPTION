@@ -61,15 +61,16 @@ Suggests:
     spelling,
     igraph
 LinkingTo: Rcpp, RcppArmadillo, RcppThread, cli, redistmetrics
+Encoding: UTF-8
+Language: en-US
+LazyData: true
 License: GPL (>= 2)
 SystemRequirements: C++17
 NeedsCompilation: yes
 BugReports: https://github.com/alarm-redist/redist/issues
 URL: https://alarm-redist.org/redist/
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 VignetteBuilder: knitr
-Encoding: UTF-8
+Config/build/compilation-database: true
+Config/roxygen2/version: 8.0.0
+Config/roxygen2/markdown: TRUE
 Config/testthat/edition: 3
-Language: en-US
-LazyData: true
