@@ -1,11 +1,17 @@
-redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
-                           pop_tol = NULL,
-                           temper = NULL,
-                           betaseq = NULL, betaseqlength = NULL,
-                           betaweights = NULL, adjswaps = TRUE, maxiterrsg = NULL,
-                           verbose = TRUE
+redist.preproc <- function(
+    adj,
+    total_pop,
+    init_plan = NULL,
+    ndists = NULL,
+    pop_tol = NULL,
+    temper = NULL,
+    betaseq = NULL,
+    betaseqlength = NULL,
+    betaweights = NULL,
+    adjswaps = TRUE,
+    maxiterrsg = NULL,
+    verbose = TRUE
 ) {
-
     #########################
     ## Inputs to function: ##
     #########################
@@ -45,10 +51,8 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
     ## If not a list, convert adjlist to list ##
     ############################################
     if (!is.list(adj)) {
-
         ## If a matrix, check to see if adjacency matrix
         if (is.matrix(adj)) {
-
             ## Is it square?
             squaremat <- (nrow(adj) == ncol(adj))
             ## All binary entries?
@@ -61,13 +65,11 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
 
             ## If all are true, change to adjlist and automatically zero-index
             if (squaremat & binary & diag & symmetric) {
-
                 ## Initialize object
                 adjlist <- vector("list", nrow(adj))
 
                 ## Loop through rows in matrix
                 for (i in 1:nrow(adj)) {
-
                     ## Extract row
                     adjvec <- adj[, i]
                     ## Find elements it is adjacent to
@@ -78,27 +80,26 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
                     inds <- inds - 1
                     ## Put in adjlist
                     adjlist[[i]] <- inds
-
                 }
-
-            } else { ## If not valid adjacency matrix, throw error
+            } else {
+                ## If not valid adjacency matrix, throw error
                 stop("Please input valid adjacency matrix")
             }
-        } else if (inherits(adj, "SpatialPolygonsDataFrame")) { ## shp object
+        } else if (inherits(adj, "SpatialPolygonsDataFrame")) {
+            ## shp object
 
             ## Convert shp object to adjacency list
             adjlist <- redist.adjacency(st_as_sf(adj))
-
-
-        } else { ## If neither list, matrix, or shp, throw error
-            stop("Please input an adjacency list, adjacency matrix, or Spatial
-                 Polygons shp file")
+        } else {
+            ## If neither list, matrix, or shp, throw error
+            stop(
+                "Please input an adjacency list, adjacency matrix, or Spatial
+                 Polygons shp file"
+            )
         }
-
     } else if ("sf" %in% class(adj)) {
         adjlist <- redist.adjacency(adj)
     } else {
-
         ## Rename adjacency object as list
         adjlist <- adj
 
@@ -117,15 +118,19 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
             ## if neither oneind or zeroind, then stop
             stop("Adjacency list must be one-indexed or zero-indexed")
         }
-
     }
 
     if (is.null(init_plan) || isTRUE("smc" %in% init_plan)) {
-        map <- redist_map(pop = total_pop,  pop_tol = ifelse(is.null(pop_tol), 0.05, pop_tol),
-            ndists = ndists,  adj = adj)
+        map <- redist_map(
+            pop = total_pop,
+            pop_tol = ifelse(is.null(pop_tol), 0.05, pop_tol),
+            ndists = ndists,
+            adj = adj
+        )
         invisible(capture.output(
             init_plan <- redist_smc(map, nsims = 1, silent = TRUE),
-            type = "message"))
+            type = "message"
+        ))
         init_plan <- as.matrix(init_plan)[, 1]
     } else if (!is.null(init_plan) && "rsg" %in% init_plan) {
         ##############################################################################
@@ -149,22 +154,25 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
             cat("Using redist.rsg() to generate starting values.\n\n", append = TRUE)
         }
         ## Run the algorithm
-        initout <- redist.rsg(adj = adjlist,
+        initout <- redist.rsg(
+            adj = adjlist,
             total_pop = total_pop,
             ndists = ndists,
             pop_tol = pop_tol_rsg,
             verbose = FALSE,
-            maxiter = maxiterrsg)
+            maxiter = maxiterrsg
+        )
         ## Get initial cds
         init_plan <- initout$plan
-
     } else {
         ###################################################################
         ## Check whether initial partitions (if provided) are contiguous ##
         ###################################################################
         if (!is.na(init_plan)[1]) {
             if (sum(is.na(init_plan)) > 0) {
-                stop("You have NA's in your congressional districts. Please check the provided init_plan vector for NA entries.")
+                stop(
+                    "You have NA's in your congressional districts. Please check the provided init_plan vector for NA entries."
+                )
             }
 
             ndists <- length(unique(init_plan))
@@ -172,9 +180,14 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
             ncontig <- countpartitions(divlist)
 
             if (ncontig != ndists) {
-                stop(paste("Your initial congressional districts have ", ndists,
+                stop(paste(
+                    "Your initial congressional districts have ",
+                    ndists,
                     " unique districts but ",
-                    ncontig, " contigous connected components. Please provide a starting map with contigous districts.", sep = ""))
+                    ncontig,
+                    " contigous connected components. Please provide a starting map with contigous districts.",
+                    sep = ""
+                ))
             }
         }
     }
@@ -183,12 +196,16 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
     ## Check other inputs to make sure they are right length ##
     ###########################################################
     if ((length(total_pop) != length(adjlist)) | (sum(is.na(total_pop)) > 0)) {
-        stop("Each entry in adjacency list must have a corresponding entry
-              in vector of populations")
+        stop(
+            "Each entry in adjacency list must have a corresponding entry
+              in vector of populations"
+        )
     }
     if ((length(init_plan) != length(adjlist)) | (sum(is.na(init_plan)) > 0)) {
-        stop("Each entry in adjacency list must have an initial congressional
-             district assignment")
+        stop(
+            "Each entry in adjacency list must have an initial congressional
+             district assignment"
+        )
     }
 
     ####################
@@ -198,7 +215,9 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
         init_plan <- vctrs::vec_group_id(init_plan) - 1
     }
     if (length(unique(init_plan)) != (max(init_plan) + 1)) {
-        stop("The district numbers in init_plan must be consecutive. The input to `init_plan` could not be transformed using `redist.sink.plan()`.")
+        stop(
+            "The district numbers in init_plan must be consecutive. The input to `init_plan` could not be transformed using `redist.sink.plan()`."
+        )
     }
 
     ####################################################
@@ -220,13 +239,11 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
     ###################################
     if ("tempering" %in% temperbeta) {
         if (betaseq[1] == "powerlaw") {
-
             ## Generate power law sequence
             betaseq <- rep(NA, betaseqlength)
             for (i in 1:length(betaseq)) {
-                betaseq[i] <- (0.1^((i - 1)/(length(betaseq) - 1)) - .1)/.9
+                betaseq[i] <- (0.1^((i - 1) / (length(betaseq) - 1)) - .1) / .9
             }
-
         } else if (is.vector(betaseq)) {
             betaseq <- betaseq
         } else if (!is.vector(betaseq) & betaseq[1] != "powerlaw") {
@@ -246,7 +263,7 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
     ########################################
     ## Convert adjacent swaps flag to 0/1 ##
     ########################################
-    adjswaps <- adjswaps*1
+    adjswaps <- adjswaps * 1
 
     #################
     ## Return list ##

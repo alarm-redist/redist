@@ -15,7 +15,7 @@ redist_enumpart(
   out_path = tempfile("enum_out"),
   weight_path = if (!is.null(lower) || !is.null(upper)) tempfile("enum_wgt") else NULL,
   read = TRUE,
-  init = FALSE
+  init = !file.exists(system.file("enumpart", package = "redist"))
 )
 }
 \arguments{

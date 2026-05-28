@@ -48,9 +48,7 @@
 #'
 #' @concept analyze
 #' @export
-redist.distances <- function(plans, measure = "Hamming",
-                             ncores = 1, total_pop = NULL) {
-
+redist.distances <- function(plans, measure = "Hamming", ncores = 1, total_pop = NULL) {
     supported <- c("all", "Hamming", "Manhattan", "Euclidean", "variation of information")
     # fuzzy matching
     measure <- supported[agrep(measure, supported, max.distance = 0, ignore.case = TRUE)]
@@ -71,7 +69,6 @@ redist.distances <- function(plans, measure = "Hamming",
         distances[[done]] <- ham
         names(distances)[done] <- "Hamming"
     }
-
 
     # Compute Manhattan Distance Metric
     if ("Manhattan" %in% measure) {
@@ -94,12 +91,14 @@ redist.distances <- function(plans, measure = "Hamming",
             cli::cli_warn("{.arg total_pop} not provided, using default of equal population.")
             total_pop <- rep(1, nrow(plans))
         }
-        if (length(total_pop) != nrow(plans))
+        if (length(total_pop) != nrow(plans)) {
             cli::cli_abort("Mismatch: length of {.arg total_pop} does not match the number of precincts in {.arg plans}.")
+        }
 
         # 1-index in preparation
-        if (min(plans) == 0)
+        if (min(plans) == 0) {
             plans <- plans + 1
+        }
 
         vi <- redistmetrics::dist_info(plans, data.frame(), total_pop, ncores)
 
@@ -124,8 +123,9 @@ plan_distances <- function(plans, measure = "variation of information", ncores =
     choices <- c("variation of information", "Hamming", "Manhattan", "Euclidean")
     measure <- match.arg(measure, choices)
     pop <- attr(plans, "prec_pop")
-    if (is.null(pop))
+    if (is.null(pop)) {
         stop("Precinct population must be stored in `prec_pop` attribute of `plans` object")
+    }
 
     redist.distances(get_plans_matrix(plans), measure, ncores = ncores, total_pop = pop)[[1]]
 }
@@ -162,13 +162,20 @@ plan_distances <- function(plans, measure = "variation of information", ncores =
 #'
 #' @concept analyze
 #' @export
-plans_diversity <- function(plans, chains = 1, n_max = 100,
-                            ncores = 1, total_pop = attr(plans, "prec_pop")) {
+plans_diversity <- function(
+    plans,
+    chains = 1,
+    n_max = 100,
+    ncores = 1,
+    total_pop = attr(plans, "prec_pop")
+) {
     m <- get_plans_matrix(plans)
     i_min <- 0
     n_pl <- ncol(m)
     ndists <- attr(plans, "ndists")
-    if (is.null(ndists)) ndists <- max(m[, 1])
+    if (is.null(ndists)) {
+        ndists <- max(m[, 1])
+    }
 
     if ("chains" %in% colnames(plans) && chains != "all") {
         if (is.integer(chains)) {
@@ -188,13 +195,17 @@ plans_diversity <- function(plans, chains = 1, n_max = 100,
     n_eval <- min(n_max, n_pl)
     idx <- i_min + sample.int(n_pl, n_eval, replace = FALSE)
 
-
-    if (is.null(total_pop))
+    if (is.null(total_pop)) {
         cli::cli_abort("Must provide {.arg total_pop} for this {.cls redist_plans} object.")
+    }
 
-    dists <- redist.distances(m[, idx], "variation of information",
-        ncores = ncores, total_pop = total_pop)$VI
-    0.5*dists[upper.tri(dists)]
+    dists <- redist.distances(
+        m[, idx],
+        "variation of information",
+        ncores = ncores,
+        total_pop = total_pop
+    )$VI
+    0.5 * dists[upper.tri(dists)]
 }
 
 

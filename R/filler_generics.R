@@ -136,7 +136,14 @@ full_join.redist_plans <- function(x, y, by = NULL, copy = FALSE, suffix = c(".x
 
 #' @export
 #' @importFrom dplyr inner_join
-inner_join.redist_plans <- function(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...) {
+inner_join.redist_plans <- function(
+    x,
+    y,
+    by = NULL,
+    copy = FALSE,
+    suffix = c(".x", ".y"),
+    ...
+) {
     reconstruct.redist_plans(NextMethod(), x)
 }
 
@@ -148,7 +155,14 @@ left_join.redist_plans <- function(x, y, by = NULL, copy = FALSE, suffix = c(".x
 
 #' @export
 #' @importFrom dplyr right_join
-right_join.redist_plans <- function(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...) {
+right_join.redist_plans <- function(
+    x,
+    y,
+    by = NULL,
+    copy = FALSE,
+    suffix = c(".x", ".y"),
+    ...
+) {
     reconstruct.redist_plans(NextMethod(), x)
 }
 

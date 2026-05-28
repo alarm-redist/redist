@@ -27,7 +27,7 @@ Multigraph county_graph(const Graph &g, const uvec &counties);
  * if `zero`=false then ignore zeros, otherwise map them to `nd`
  */
 // TESTED
-Graph district_graph(const Graph &g, const uvec &plan, int nd, bool zero=false);
+Graph district_graph(const Graph &g, const uvec &plan, int nd, bool zero = false);
 
 /*
  * Initialize empty multigraph structure on graph with `V` vertices
@@ -55,15 +55,14 @@ Graph list_to_graph(const List &l);
  * Count population below each node in tree
  */
 // TESTED
-int tree_pop(Tree &ust, int vtx, const uvec &pop,
-             std::vector<int> &pop_below, std::vector<int> &parent);
+int tree_pop(Tree &ust, int vtx, const uvec &pop, std::vector<int> &pop_below,
+             std::vector<int> &parent);
 
 /*
  * Assign `district` to all descendants of `root` in `ust`
  */
 // TESTED
-void assign_district(const Tree &ust, subview_col<uword> &districts,
-                     int root, int district);
+void assign_district(const Tree &ust, subview_col<uword> &districts, int root, int district);
 
 /*
  * Find the root of a subtree.

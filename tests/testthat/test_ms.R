@@ -2,7 +2,13 @@ test_that("redist_mergesplit works", {
     set.seed(1, kind = "Mersenne-Twister", normal.kind = "Inversion")
 
     nsims <- 10
-    out <- redist_mergesplit(fl_map, nsims, nsims %/% 2, init_plan = plans_10[, 1], silent = TRUE)
+    out <- redist_mergesplit(
+        fl_map,
+        nsims,
+        nsims %/% 2,
+        init_plan = plans_10[, 1],
+        silent = TRUE
+    )
     par <- redist.parity(as.matrix(out), total_pop = pop)
 
     expect_equal(range(as.matrix(out)), c(1, 3))
@@ -21,8 +27,14 @@ test_that("Additional constraints work", {
         add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) %>%
         add_constr_custom(1e6, function(plan, distr) plan[7] == 2)
 
-    plans <- redist_mergesplit(iowa_map, 100, 20, init_plan = iowa$cd_2010,
-                               constraints = constr, silent = TRUE)
+    plans <- redist_mergesplit(
+        iowa_map,
+        100,
+        20,
+        init_plan = iowa$cd_2010,
+        constraints = constr,
+        silent = TRUE
+    )
     skip = seq(1, which.max(by_plan(plans$mcmc_accept, 4)) - 1) # skip to first acceptance
     expect_false(any(as.matrix(plans)[7, -skip] == 2))
 })
@@ -35,20 +47,41 @@ test_that("redist_mergesplit_parallel works", {
     N <- 20
     chains <- 2
 
-    pl1 <- redist_mergesplit_parallel(fl_map, nsims = N, warmup = N/2, chains = chains,
-        ncores = 2, silent = TRUE)
-    pl2 <- redist_mergesplit_parallel(fl_map, nsims = N, chains = chains,
-        ncores = 2, warmup = 0, init_name = FALSE, silent = TRUE)
-    pl3 <- redist_mergesplit_parallel(fl_map, nsims = N, warmup = N/2, chains = chains,
-        ncores = 2, return_all = FALSE, init_name = FALSE, silent = TRUE)
+    pl1 <- redist_mergesplit_parallel(
+        fl_map,
+        nsims = N,
+        warmup = N / 2,
+        chains = chains,
+        ncores = 2,
+        silent = TRUE
+    )
+    pl2 <- redist_mergesplit_parallel(
+        fl_map,
+        nsims = N,
+        chains = chains,
+        ncores = 2,
+        warmup = 0,
+        init_name = FALSE,
+        silent = TRUE
+    )
+    pl3 <- redist_mergesplit_parallel(
+        fl_map,
+        nsims = N,
+        warmup = N / 2,
+        chains = chains,
+        ncores = 2,
+        return_all = FALSE,
+        init_name = FALSE,
+        silent = TRUE
+    )
 
     expect_equal(get_n_ref(pl1), chains)
     expect_equal(get_n_ref(pl2), 0)
     expect_equal(get_n_ref(pl3), 0)
 
-    expect_equal(nrow(pl1), 3*chains*(N/2 + 1))
-    expect_equal(nrow(pl2), 3*chains*N)
-    expect_equal(nrow(pl3), 3*chains)
+    expect_equal(nrow(pl1), 3 * chains * (N / 2 + 1))
+    expect_equal(nrow(pl2), 3 * chains * N)
+    expect_equal(nrow(pl3), 3 * chains)
 })
 
 test_that("Parallel runs are reproducible", {

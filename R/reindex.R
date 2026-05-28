@@ -51,4 +51,3 @@ redist.sink.plan <- function(plan) {
     .Deprecated("vctrs::vec_group_id")
     vctrs::vec_group_id(plan)
 }
-

@@ -4,43 +4,29 @@
  ********************************************************/
 
 #include "cw_main.h"
+#include "cw_forest_walk.h"
 #include "cw_lct.h"
 #include "cw_partition.h"
-#include "cw_forest_walk.h"
 #include "cw_proposal.h"
 
 using namespace Rcpp;
 using namespace arma;
 
 // [[Rcpp::export]]
-Rcpp::List cyclewalk_plans(
-    int N,
-    Rcpp::List l,
-    const arma::uvec init,
-    const arma::uvec& counties,
-    const arma::uvec& pop,
-    int n_distr,
-    double target,
-    double lower,
-    double upper,
-    double compactness,
-    Rcpp::List constraints,
-    Rcpp::List control,
-    Rcpp::List edge_weights,
-    int thin,
-    int instep,
-    double cycle_walk_frac,
-    int verbosity
-) {
+Rcpp::List cyclewalk_plans(int N, Rcpp::List l, const arma::uvec init,
+                           const arma::uvec &counties, const arma::uvec &pop, int n_distr,
+                           double target, double lower, double upper, double compactness,
+                           Rcpp::List constraints, Rcpp::List control, Rcpp::List edge_weights,
+                           int thin, int instep, double cycle_walk_frac, int verbosity) {
     // Re-seed RNG for reproducibility
-    seed_rng((int) Rcpp::sample(INT_MAX, 1)[0]);
+    seed_rng((int)Rcpp::sample(INT_MAX, 1)[0]);
 
     // Convert adjacency list to Graph
     Graph g = list_to_graph(l);
     int V = g.size();
 
     // Calculate number of output samples
-    int n_out = N / thin + 2;  // +2 for init and final
+    int n_out = N / thin + 2; // +2 for init and final
 
     // Initialize output matrix
     umat plans(V, n_out, fill::zeros);
@@ -105,80 +91,83 @@ Rcpp::List cyclewalk_plans(
 
     int idx = 1;
     try {
-    for (int i = 1; i <= N; i++) {
-        // Track whether any cycle_walk was accepted during instep iterations
-        bool any_cycle_walk_accepted = false;
+        for (int i = 1; i <= N; i++) {
+            // Track whether any cycle_walk was accepted during instep iterations
+            bool any_cycle_walk_accepted = false;
 
-        // Run instep MCMC iterations per recorded sample
-        for (int step = 0; step < instep; step++) {
-            int result;
+            // Run instep MCMC iterations per recorded sample
+            for (int step = 0; step < instep; step++) {
+                int result;
 
-            if (r_unif() < cycle_walk_frac) {
-                // Cycle walk proposal - can change districts
-                CycleWalkDiagnostics diag;
-                result = cycle_walk(partition, lower, upper, target, compactness, counties, constraints, diag);
+                if (r_unif() < cycle_walk_frac) {
+                    // Cycle walk proposal - can change districts
+                    CycleWalkDiagnostics diag;
+                    result = cycle_walk(partition, lower, upper, target, compactness, counties,
+                                        constraints, diag);
 
-                diag_accept_prob.push_back(diag.accept_prob);
-                diag_cycle_length.push_back(diag.cycle_length);
-                diag_n_valid_cuts.push_back(diag.n_valid_cuts);
+                    diag_accept_prob.push_back(diag.accept_prob);
+                    diag_cycle_length.push_back(diag.cycle_length);
+                    diag_n_valid_cuts.push_back(diag.n_valid_cuts);
 
-                if (result == 1) {
-                    cycle_walk_accept++;
-                    any_cycle_walk_accepted = true;
-                } else if (result == 0) {
-                    cycle_walk_reject++;
-                } else if (result == -1) {
-                    cycle_walk_fail_no_adj++;
-                } else if (result == -2) {
-                    cycle_walk_fail_few_edges++;
-                } else if (result == -3) {
-                    cycle_walk_fail_no_path++;
-                } else if (result == -4) {
-                    cycle_walk_fail_no_cuts++;
-                }
-            } else {
-                // Internal forest walk - only changes spanning trees
-                result = internal_forest_walk(partition);
-
-                diag_accept_prob.push_back(NA_REAL);
-                diag_cycle_length.push_back(0);
-                diag_n_valid_cuts.push_back(0);
-
-                if (result == 0) {
-                    forest_walk_success++;
+                    if (result == 1) {
+                        cycle_walk_accept++;
+                        any_cycle_walk_accepted = true;
+                    } else if (result == 0) {
+                        cycle_walk_reject++;
+                    } else if (result == -1) {
+                        cycle_walk_fail_no_adj++;
+                    } else if (result == -2) {
+                        cycle_walk_fail_few_edges++;
+                    } else if (result == -3) {
+                        cycle_walk_fail_no_path++;
+                    } else if (result == -4) {
+                        cycle_walk_fail_no_cuts++;
+                    }
                 } else {
-                    forest_walk_fail++;
+                    // Internal forest walk - only changes spanning trees
+                    result = internal_forest_walk(partition);
+
+                    diag_accept_prob.push_back(NA_REAL);
+                    diag_cycle_length.push_back(0);
+                    diag_n_valid_cuts.push_back(0);
+
+                    if (result == 0) {
+                        forest_walk_success++;
+                    } else {
+                        forest_walk_fail++;
+                    }
                 }
             }
-        }
 
-        // Copy current plan to output at thinning intervals
-        if (i % thin == 0) {
-            // Record whether any cycle_walk was accepted during these instep iterations
-            mh_decisions(idx - 1) = any_cycle_walk_accepted ? 1 : 0;
-            plans.col(idx + 1) = partition.get_plan();
-            idx++;
-        }
+            // Copy current plan to output at thinning intervals
+            if (i % thin == 0) {
+                // Record whether any cycle_walk was accepted during these instep iterations
+                mh_decisions(idx - 1) = any_cycle_walk_accepted ? 1 : 0;
+                plans.col(idx + 1) = partition.get_plan();
+                idx++;
+            }
 
-        // Update progress bar
-        if (verbosity >= 1 && CLI_SHOULD_TICK) {
-            cli_progress_set(bar, i - 1);
-        }
+            // Update progress bar
+            if (verbosity >= 1 && CLI_SHOULD_TICK) {
+                cli_progress_set(bar, i - 1);
+            }
 
-        // Check for user interrupt
-        if (i % 100 == 0) {
-            Rcpp::checkUserInterrupt();
-        }
+            // Check for user interrupt
+            if (i % 100 == 0) {
+                Rcpp::checkUserInterrupt();
+            }
 
-        // Break if we've filled the output
-        if (idx == n_out - 1) {
-            if (verbosity >= 1) cli_progress_set(bar, N);
-            break;
+            // Break if we've filled the output
+            if (idx == n_out - 1) {
+                if (verbosity >= 1)
+                    cli_progress_set(bar, N);
+                break;
+            }
         }
-    }
-    } catch (Rcpp::internal::InterruptedException& e) {
-        if (verbosity >= 1) cli_progress_done(bar);
-        throw;  // Re-throw to let R handle it
+    } catch (Rcpp::internal::InterruptedException &e) {
+        if (verbosity >= 1)
+            cli_progress_done(bar);
+        throw; // Re-throw to let R handle it
     }
 
     if (verbosity >= 2) {
@@ -210,23 +199,19 @@ Rcpp::List cyclewalk_plans(
     // Create diagnostic list
     List diagnostics = List::create(
         Named("accept_prob") = NumericVector(diag_accept_prob.begin(), diag_accept_prob.end()),
-        Named("cycle_length") = IntegerVector(diag_cycle_length.begin(), diag_cycle_length.end()),
-        Named("n_valid_cuts") = IntegerVector(diag_n_valid_cuts.begin(), diag_n_valid_cuts.end()),
-        Named("failure_modes") = List::create(
-            Named("no_adj") = cycle_walk_fail_no_adj,
-            Named("few_edges") = cycle_walk_fail_few_edges,
-            Named("no_path") = cycle_walk_fail_no_path,
-            Named("no_cuts") = cycle_walk_fail_no_cuts
-        )
-    );
+        Named("cycle_length") =
+            IntegerVector(diag_cycle_length.begin(), diag_cycle_length.end()),
+        Named("n_valid_cuts") =
+            IntegerVector(diag_n_valid_cuts.begin(), diag_n_valid_cuts.end()),
+        Named("failure_modes") = List::create(Named("no_adj") = cycle_walk_fail_no_adj,
+                                              Named("few_edges") = cycle_walk_fail_few_edges,
+                                              Named("no_path") = cycle_walk_fail_no_path,
+                                              Named("no_cuts") = cycle_walk_fail_no_cuts));
 
     // Always return a List for easy iteration and extension
-    List out = List::create(
-        Named("plans") = plans,
-        Named("mhdecisions") = mh_decisions,
-        Named("diagnostics") = diagnostics,
-        Named("algorithm") = "cyclewalk"
-    );
+    List out =
+        List::create(Named("plans") = plans, Named("mhdecisions") = mh_decisions,
+                     Named("diagnostics") = diagnostics, Named("algorithm") = "cyclewalk");
 
     return out;
 }

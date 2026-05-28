@@ -165,14 +165,30 @@
 #' # Multiple chains for convergence diagnostics
 #' sims_chains <- redist_flip(iowa_map, nsims = 20, chains = 2, ncores = 2)
 #'
-redist_flip <- function(map, nsims, chains = 1, warmup = 0, init_plan = NULL,
-                        constraints = add_constr_edges_rem(redist_constr(map), 0.4),
-                        thin = 1, eprob = 0.05, lambda = 0, temper = FALSE,
-                        betaseq = "powerlaw", betaseqlength = 10, betaweights = NULL,
-                        adapt_lambda = FALSE, adapt_eprob = FALSE, exact_mh = FALSE,
-                        adjswaps = TRUE, ncores = NULL, cl_type = "PSOCK",
-                        return_all = TRUE, init_name = NULL, verbose = TRUE) {
-
+redist_flip <- function(
+    map,
+    nsims,
+    chains = 1,
+    warmup = 0,
+    init_plan = NULL,
+    constraints = add_constr_edges_rem(redist_constr(map), 0.4),
+    thin = 1,
+    eprob = 0.05,
+    lambda = 0,
+    temper = FALSE,
+    betaseq = "powerlaw",
+    betaseqlength = 10,
+    betaweights = NULL,
+    adapt_lambda = FALSE,
+    adapt_eprob = FALSE,
+    exact_mh = FALSE,
+    adjswaps = TRUE,
+    ncores = NULL,
+    cl_type = "PSOCK",
+    return_all = TRUE,
+    init_name = NULL,
+    verbose = TRUE
+) {
     chains <- as.integer(chains)
     if (chains < 1) {
         cli::cli_abort("{.arg chains} must be positive.")
@@ -183,7 +199,9 @@ redist_flip <- function(map, nsims, chains = 1, warmup = 0, init_plan = NULL,
     if (verbosity > 0) {
         cli::cli({
             cli::cli_h1(cli::col_red("redist_flip()"))
-            cli::cli_h2(cli::col_red("Automated Redistricting Simulation Using Markov Chain Monte Carlo"))
+            cli::cli_h2(cli::col_red(
+                "Automated Redistricting Simulation Using Markov Chain Monte Carlo"
+            ))
         })
     }
 
@@ -221,7 +239,10 @@ redist_flip <- function(map, nsims, chains = 1, warmup = 0, init_plan = NULL,
 
     if (is.null(init_plan)) {
         if (!is.null(exist_name)) {
-            init_plans <- matrix(rep(vctrs::vec_group_id(get_existing(map)), chains), ncol = chains)
+            init_plans <- matrix(
+                rep(vctrs::vec_group_id(get_existing(map)), chains),
+                ncol = chains
+            )
             if (is.null(init_name)) {
                 init_names <- rep(exist_name, chains)
             } else {
@@ -233,10 +254,20 @@ redist_flip <- function(map, nsims, chains = 1, warmup = 0, init_plan = NULL,
     }
 
     if (is.character(init_plan) && init_plan[1] == "sample") {
-        if (verbosity > 0) cli::cli_inform("Sampling initial plans with SMC")
+        if (verbosity > 0) {
+            cli::cli_inform("Sampling initial plans with SMC")
+        }
         init_plans <- get_plans_matrix(
-            redist_smc(map, chains, resample = TRUE, ref_name = FALSE,
-                       verbose = FALSE, silent = TRUE, ncores = 1))
+            redist_smc(
+                map,
+                chains,
+                resample = TRUE,
+                ref_name = FALSE,
+                verbose = FALSE,
+                silent = TRUE,
+                ncores = 1
+            )
+        )
         if (is.null(init_name)) {
             init_names <- paste0("<sample ", seq_len(chains), ">")
         } else {
@@ -249,7 +280,10 @@ redist_flip <- function(map, nsims, chains = 1, warmup = 0, init_plan = NULL,
             }
             init_plans <- init_plan
         } else {
-            init_plans <- matrix(rep(vctrs::vec_group_id(as.integer(init_plan)), chains), ncol = chains)
+            init_plans <- matrix(
+                rep(vctrs::vec_group_id(as.integer(init_plan)), chains),
+                ncol = chains
+            )
         }
 
         if (is.null(init_name)) {
@@ -289,14 +323,28 @@ redist_flip <- function(map, nsims, chains = 1, warmup = 0, init_plan = NULL,
     if (ncores > 1 && chains > 1) {
         `%oper%` <- `%dorng%`
         if (verbose) {
-            of <- ifelse(Sys.info()[['sysname']] == 'Windows',
-                         tempfile(pattern = paste0('flip_', substr(Sys.time(), 1, 10)), fileext = '.txt'),
-                         '')
-            cl <- parallel::makeCluster(ncores, type = cl_type, outfile = of,
-                                        methods = FALSE, useXDR = .Platform$endian != "little")
+            of <- ifelse(
+                Sys.info()[['sysname']] == 'Windows',
+                tempfile(
+                    pattern = paste0('flip_', substr(Sys.time(), 1, 10)),
+                    fileext = '.txt'
+                ),
+                ''
+            )
+            cl <- parallel::makeCluster(
+                ncores,
+                type = cl_type,
+                outfile = of,
+                methods = FALSE,
+                useXDR = .Platform$endian != "little"
+            )
         } else {
-            cl <- parallel::makeCluster(ncores, type = cl_type,
-                                        methods = FALSE, useXDR = .Platform$endian != "little")
+            cl <- parallel::makeCluster(
+                ncores,
+                type = cl_type,
+                methods = FALSE,
+                useXDR = .Platform$endian != "little"
+            )
         }
 
         doParallel::registerDoParallel(cl)
@@ -307,82 +355,88 @@ redist_flip <- function(map, nsims, chains = 1, warmup = 0, init_plan = NULL,
 
     # Run chains (in parallel or sequentially)
     out_par <- foreach::foreach(
-        chain = seq_len(chains), .inorder = FALSE,
+        chain = seq_len(chains),
+        .inorder = FALSE,
         .packages = "redist"
-    ) %oper% {
-        if (verbose) cat("Starting chain ", chain, "\n", sep = "")
-        run_verbosity <- if (chain == 1 || verbosity == 3) verbosity else 0
+    ) %oper%
+        {
+            if (verbose) {
+                cat("Starting chain ", chain, "\n", sep = "")
+            }
+            run_verbosity <- if (chain == 1 || verbosity == 3) verbosity else 0
 
-        this_init <- init_plans[, chain]
+            this_init <- init_plans[, chain]
 
-        preprocout <- redist.preproc(
-            adj = adj,
-            total_pop = total_pop,
-            init_plan = this_init,
-            ndists = ndists,
-            pop_tol = pop_tol,
-            temper = temper,
-            betaseq = betaseq,
-            betaseqlength = betaseqlength,
-            betaweights = betaweights,
-            adjswaps = adjswaps,
-            maxiterrsg = 1,
-            verbose = (run_verbosity > 0)
-        )
+            preprocout <- redist.preproc(
+                adj = adj,
+                total_pop = total_pop,
+                init_plan = this_init,
+                ndists = ndists,
+                pop_tol = pop_tol,
+                temper = temper,
+                betaseq = betaseq,
+                betaseqlength = betaseqlength,
+                betaweights = betaweights,
+                adjswaps = adjswaps,
+                maxiterrsg = 1,
+                verbose = (run_verbosity > 0)
+            )
 
-        if (run_verbosity > 0) {
-            cli::cli_alert_info("Starting swMH().")
-        }
+            if (run_verbosity > 0) {
+                cli::cli_alert_info("Starting swMH().")
+            }
 
-        t1_run <- Sys.time()
-        algout <- swMH(
-            aList = preprocout$data$adjlist,
-            cdvec = preprocout$data$init_plan,
-            popvec = preprocout$data$total_pop,
-            constraints = as.list(constraints),
-            nsims = nsims*thin + warmup,
-            eprob = eprob,
-            pop_lower = pop_bounds[1],
-            pop_upper = pop_bounds[3],
-            beta_sequence = preprocout$params$betaseq,
-            beta_weights = preprocout$params$betaweights,
-            lambda = lambda,
-            beta = preprocout$params$beta,
-            adapt_beta = preprocout$params$temperbeta,
-            adjswap = preprocout$params$adjswaps,
-            exact_mh = exact_mh,
-            adapt_lambda = adapt_lambda,
-            adapt_eprob = adapt_eprob,
-            verbose = (run_verbosity > 0)
-        )
-        t2_run <- Sys.time()
+            t1_run <- Sys.time()
+            algout <- swMH(
+                aList = preprocout$data$adjlist,
+                cdvec = preprocout$data$init_plan,
+                popvec = preprocout$data$total_pop,
+                constraints = as.list(constraints),
+                nsims = nsims * thin + warmup,
+                eprob = eprob,
+                pop_lower = pop_bounds[1],
+                pop_upper = pop_bounds[3],
+                beta_sequence = preprocout$params$betaseq,
+                beta_weights = preprocout$params$betaweights,
+                lambda = lambda,
+                beta = preprocout$params$beta,
+                adapt_beta = preprocout$params$temperbeta,
+                adjswap = preprocout$params$adjswaps,
+                exact_mh = exact_mh,
+                adapt_lambda = adapt_lambda,
+                adapt_eprob = adapt_eprob,
+                verbose = (run_verbosity > 0)
+            )
+            t2_run <- Sys.time()
 
-        algout <- redist.warmup.chain(algout, warmup = warmup)
-        algout <- redist.thin.chain(algout, thin = thin)
+            algout <- redist.warmup.chain(algout, warmup = warmup)
+            algout <- redist.thin.chain(algout, thin = thin)
 
-        algout$plans <- algout$plans + 1L
-        storage.mode(algout$plans) <- "integer"
+            algout$plans <- algout$plans + 1L
+            storage.mode(algout$plans) <- "integer"
 
-        algout$l_diag <- list(
+            algout$l_diag <- list(
             runtime = as.numeric(t2_run - t1_run, units = "secs")
         )
 
-        algout$mh <- mean(algout$mhdecisions)
+            algout$mh <- mean(algout$mhdecisions)
 
-        if (!return_all) {
-            algout$plans <- algout$plans[, ncol(algout$plans), drop = FALSE]
-            algout$mhdecisions <- algout$mhdecisions[length(algout$mhdecisions)]
-            algout$distance_parity <- algout$distance_parity[length(algout$distance_parity)]
-            algout$mhprob <- algout$mhprob[length(algout$mhprob)]
-            algout$pparam <- algout$pparam[length(algout$pparam)]
-            algout$beta_sequence <- algout$beta_sequence[length(algout$beta_sequence)]
-            algout$energy_psi <- algout$energy_psi[length(algout$energy_psi)]
-            algout$boundary_partitions <- algout$boundary_partitions[length(algout$boundary_partitions)]
-            algout$psi_store <- algout$psi_store[, ncol(algout$psi_store), drop = FALSE]
+            if (!return_all) {
+                algout$plans <- algout$plans[, ncol(algout$plans), drop = FALSE]
+                algout$mhdecisions <- algout$mhdecisions[length(algout$mhdecisions)]
+                algout$distance_parity <- algout$distance_parity[length(algout$distance_parity)]
+                algout$mhprob <- algout$mhprob[length(algout$mhprob)]
+                algout$pparam <- algout$pparam[length(algout$pparam)]
+                algout$beta_sequence <- algout$beta_sequence[length(algout$beta_sequence)]
+                algout$energy_psi <- algout$energy_psi[length(algout$energy_psi)]
+                algout$boundary_partitions <- algout$boundary_partitions[length(
+                    algout$boundary_partitions
+                )]
+                algout$psi_store <- algout$psi_store[, ncol(algout$psi_store), drop = FALSE]
+            }
+
+            algout
         }
-
-        algout
-    }
 
     # Combine results from all chains
     plans <- lapply(out_par, function(algout) algout$plans)
@@ -445,7 +499,9 @@ redist_flip <- function(map, nsims, chains = 1, warmup = 0, init_plan = NULL,
         dplyr::as_tibble() %>%
         dplyr::rename_with(function(x) paste0("constraint_", x))
 
-    names_tb <- names(add_tb)[apply(add_tb, 2, function(x) { !all(x == 0) })]
+    names_tb <- names(add_tb)[apply(add_tb, 2, function(x) {
+        !all(x == 0)
+    })]
     out <- bind_cols(out, select(add_tb, all_of(names_tb)))
 
     # Add reference plans
@@ -455,10 +511,14 @@ redist_flip <- function(map, nsims, chains = 1, warmup = 0, init_plan = NULL,
         } else if (all(init_names[1] == init_names)) {
             out <- add_reference(out, init_plans[, 1], init_names[1])
         } else {
-            out <- Reduce(function(cur, idx) {
-                add_reference(cur, init_plans[, idx], init_names[idx]) %>%
-                    mutate(chain = dplyr::coalesce(chain, idx))
-            }, rev(seq_len(chains)), init = out)
+            out <- Reduce(
+                function(cur, idx) {
+                    add_reference(cur, init_plans[, idx], init_names[idx]) %>%
+                        mutate(chain = dplyr::coalesce(chain, idx))
+                },
+                rev(seq_len(chains)),
+                init = out
+            )
         }
     }
 
@@ -511,27 +571,30 @@ redist_flip <- function(map, nsims, chains = 1, warmup = 0, init_plan = NULL,
 #'
 #' @concept simulate
 #' @export
-redist_flip_anneal <- function(map,
-                               nsims,
-                               warmup = 0,
-                               init_plan = NULL,
-                               constraints = redist_constr(),
-                               num_hot_steps = 40000,
-                               num_annealing_steps = 60000,
-                               num_cold_steps = 20000,
-                               eprob = 0.05,
-                               lambda = 0,
-                               adapt_lambda = FALSE,
-                               adapt_eprob = FALSE,
-                               exact_mh = FALSE,
-                               maxiterrsg = 5000,
-                               verbose = TRUE) {
-
+redist_flip_anneal <- function(
+    map,
+    nsims,
+    warmup = 0,
+    init_plan = NULL,
+    constraints = redist_constr(),
+    num_hot_steps = 40000,
+    num_annealing_steps = 60000,
+    num_cold_steps = 20000,
+    eprob = 0.05,
+    lambda = 0,
+    adapt_lambda = FALSE,
+    adapt_eprob = FALSE,
+    exact_mh = FALSE,
+    maxiterrsg = 5000,
+    verbose = TRUE
+) {
     if (verbose) {
         ## Initialize ##
         cli::cli({
             cli::cli_h1(cli::col_red("redist_flip_anneal()"))
-            cli::cli_h2(cli::col_red("Automated Redistricting Simulation Using Markov Chain Monte Carlo"))
+            cli::cli_h2(cli::col_red(
+                "Automated Redistricting Simulation Using Markov Chain Monte Carlo"
+            ))
         })
     }
     # process raw inputs
@@ -553,7 +616,6 @@ redist_flip_anneal <- function(map,
         cli::cli_abort("Not a {.cls redist_constr} object.")
     }
 
-
     if (!any(class(thin) %in% c("numeric", "integer"))) {
         cli::cli_abort("thin must be an integer")
     } else if (thin < 1) {
@@ -562,27 +624,26 @@ redist_flip_anneal <- function(map,
         thin <- as.integer(thin)
     }
 
-
     pop_tol <- get_pop_tol(map)
-
 
     exist_name <- attr(map, "existing_col")
     if (missing(init_plan)) {
         init_plan <- get_existing(map)
 
         if (is.null(init_plan)) {
-            invisible(capture.output(init_plan <- redist_smc(map,
-                nsims = 1,
-                silent = TRUE
-            ), type = "message"))
+            invisible(capture.output(
+                init_plan <- redist_smc(map, nsims = 1, silent = TRUE),
+                type = "message"
+            ))
             init_plan <- as.matrix(init_plan) - 1L
 
             if (is.null(init_name)) {
                 init_name <- "<init>"
             }
-
         } else {
-            if (is.null(init_name)) init_name <- exist_name
+            if (is.null(init_name)) {
+                init_name <- exist_name
+            }
             init_plan <- vctrs::vec_group_id(x = init_plan)
             components <- contiguity(adj, init_plan)
             if (any(components > 1)) {
@@ -605,21 +666,27 @@ redist_flip_anneal <- function(map,
     if (verbose) {
         cat("Preprocessing data.\n\n")
     }
-    preprocout <- redist.preproc(adj = adj, total_pop = total_pop,
-        init_plan = init_plan, ndists = ndists,
+    preprocout <- redist.preproc(
+        adj = adj,
+        total_pop = total_pop,
+        init_plan = init_plan,
+        ndists = ndists,
         pop_tol = pop_tol,
         temper = FALSE,
-        betaseq = "powerlaw", betaseqlength = 10,
+        betaseq = "powerlaw",
+        betaseqlength = 10,
         betaweights = NULL,
-        adjswaps = TRUE, maxiterrsg = maxiterrsg,
-        verbose = verbose)
-
+        adjswaps = TRUE,
+        maxiterrsg = maxiterrsg,
+        verbose = verbose
+    )
 
     if (verbose) {
         cat("Starting swMH().\n")
     }
 
-    algout <- swMH(aList = preprocout$data$adjlist,
+    algout <- swMH(
+        aList = preprocout$data$adjlist,
         cdvec = preprocout$data$init_plan,
         popvec = preprocout$data$total_pop,
         constraints = as.list(constraints),
@@ -639,10 +706,10 @@ redist_flip_anneal <- function(map,
         num_hot_steps = num_hot_steps,
         num_annealing_steps = num_annealing_steps,
         num_cold_steps = num_cold_steps,
-        verbose = as.logical(verbose))
+        verbose = as.logical(verbose)
+    )
 
     algout$plans <- algout$plans + 1
-
 
     out <- new_redist_plans(
         plans = algout$plans,
@@ -660,21 +727,24 @@ redist_flip_anneal <- function(map,
         nthin = thin,
         mh_acceptance = mean(algout$mhdecisions),
         version = packageVersion("redist"),
-    ) %>% mutate(
-        distance_parity = rep(algout$distance_parity, each = ndists),
-        mhdecisions = rep(algout$mhdecisions, each = ndists),
-        mhprob = rep(algout$mhprob, each = ndists),
-        pparam = rep(algout$pparam, each = ndists),
-        beta_sequence = rep(algout$beta_sequence, each = ndists),
-        energy_psi = rep(algout$energy_psi, each = ndists),
-        boundary_partitions = rep(algout$boundary_partitions, each = ndists),
-        boundary_ratio = rep(algout$boundary_partitions, each = ndists)
-    )
+    ) %>%
+        mutate(
+            distance_parity = rep(algout$distance_parity, each = ndists),
+            mhdecisions = rep(algout$mhdecisions, each = ndists),
+            mhprob = rep(algout$mhprob, each = ndists),
+            pparam = rep(algout$pparam, each = ndists),
+            beta_sequence = rep(algout$beta_sequence, each = ndists),
+            energy_psi = rep(algout$energy_psi, each = ndists),
+            boundary_partitions = rep(algout$boundary_partitions, each = ndists),
+            boundary_ratio = rep(algout$boundary_partitions, each = ndists)
+        )
     add_tb <- apply(algout$psi_store, 1, function(x) rep(x, each = ndists)) %>%
         dplyr::as_tibble() %>%
         dplyr::rename_with(function(x) paste0("constraint_", x))
 
-    names_tb <- names(add_tb)[apply(add_tb, 2, function(x) { !all(x == 0) })]
+    names_tb <- names(add_tb)[apply(add_tb, 2, function(x) {
+        !all(x == 0)
+    })]
     out <- bind_cols(out, select(add_tb, all_of(names_tb)))
 
     if (!is.null(init_name) && !isFALSE(init_name)) {

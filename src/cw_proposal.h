@@ -12,18 +12,18 @@
 #include "cw_partition.h"
 #include "mcmc_gibbs.h"
 #include "random.h"
-#include <utility>
 #include <kirchhoff_inline.h>
+#include <utility>
 
 /*
  * CycleWalkUpdate: Stores information about a proposed update.
  */
 struct CycleWalkUpdate {
     DistrictPair changed_districts;
-    std::vector<std::pair<int, int>> links;  // Edges to add
-    std::vector<std::pair<int, int>> cuts;   // Edges to remove
-    bool swap_link11;                         // Whether to swap root assignments
-    bool valid;                               // Whether this is a valid proposal
+    std::vector<std::pair<int, int>> links; // Edges to add
+    std::vector<std::pair<int, int>> cuts;  // Edges to remove
+    bool swap_link11;                       // Whether to swap root assignments
+    bool valid;                             // Whether this is a valid proposal
 
     CycleWalkUpdate() : swap_link11(false), valid(false) {}
 };
@@ -32,13 +32,12 @@ struct CycleWalkUpdate {
  * CycleWalkDiagnostics: Stores diagnostic information from a cycle walk attempt.
  */
 struct CycleWalkDiagnostics {
-    int status;           // 1=accept, 0=reject, <0=failure code
-    double accept_prob;   // MH acceptance probability [0, 1]
-    int cycle_length;     // Length of cycle found (0 if no cycle)
-    int n_valid_cuts;     // Number of valid cut pairs (0 if none)
+    int status;         // 1=accept, 0=reject, <0=failure code
+    double accept_prob; // MH acceptance probability [0, 1]
+    int cycle_length;   // Length of cycle found (0 if no cycle)
+    int n_valid_cuts;   // Number of valid cut pairs (0 if none)
 
-    CycleWalkDiagnostics()
-        : status(0), accept_prob(0.0), cycle_length(0), n_valid_cuts(0) {}
+    CycleWalkDiagnostics() : status(0), accept_prob(0.0), cycle_length(0), n_valid_cuts(0) {}
 };
 
 /*
@@ -63,62 +62,53 @@ struct CycleWalkDiagnostics {
  *
  * Returns: 1 if accepted, 0 if rejected, <0 if failed (see diagnostics.status)
  */
-int cycle_walk(LCTPartition& partition,
-               double lower, double upper,
-               double target,
-               double compactness,
-               const arma::uvec& counties,
-               Rcpp::List constraints,
-               CycleWalkDiagnostics& diagnostics);
+int cycle_walk(LCTPartition &partition, double lower, double upper, double target,
+               double compactness, const arma::uvec &counties, Rcpp::List constraints,
+               CycleWalkDiagnostics &diagnostics);
 
 /*
  * Get a random pair of adjacent districts.
  * Returns true if found, false if no adjacent pairs exist.
  */
-bool get_random_adjacent_districts(const LCTPartition& partition,
-                                    int& d1, int& d2);
+bool get_random_adjacent_districts(const LCTPartition &partition, int &d1, int &d2);
 
 /*
  * Get two random boundary edges between districts d1 and d2.
  * Returns true if found (need at least 2 edges), false otherwise.
  */
-bool get_random_edge_pair(const LCTPartition& partition,
-                          int d1, int d2,
-                          CWEdge& e1, CWEdge& e2);
+bool get_random_edge_pair(const LCTPartition &partition, int d1, int d2, CWEdge &e1,
+                          CWEdge &e2);
 
 /*
  * Compute the cycle formed by the two boundary edges.
  * Returns the paths in each district that form the cycle.
  *
- * The cycle is: u1 -> (path in d1) -> u2 -> (edge e2) -> v2 -> (path in d2) -> v1 -> (edge e1) -> u1
+ * The cycle is: u1 -> (path in d1) -> u2 -> (edge e2) -> v2 -> (path in d2) -> v1 -> (edge e1)
+ * -> u1
  */
-bool get_cycle_paths(LCTPartition& partition,
-                     const CWEdge& e1, const CWEdge& e2,
-                     std::vector<int>& path1, std::vector<int>& path2);
+bool get_cycle_paths(LCTPartition &partition, const CWEdge &e1, const CWEdge &e2,
+                     std::vector<int> &path1, std::vector<int> &path2);
 
 /*
  * Compute cumulative population weights along the cycle.
  * Used to find valid cut positions.
  */
-std::vector<int> get_cycle_populations(const LCTPartition& partition,
-                                        const std::vector<int>& path1,
-                                        const std::vector<int>& path2);
+std::vector<int> get_cycle_populations(const LCTPartition &partition,
+                                       const std::vector<int> &path1,
+                                       const std::vector<int> &path2);
 
 /*
  * Find all valid cut pairs that satisfy population constraints.
  * Returns pairs of indices (i, j) where cutting at positions i and j
  * results in valid district populations.
  */
-std::vector<std::pair<int, int>> find_valid_cut_pairs(
-    const std::vector<int>& cycle_pops,
-    int initial_cut,
-    int total_pop,
-    double lower, double upper);
+std::vector<std::pair<int, int>> find_valid_cut_pairs(const std::vector<int> &cycle_pops,
+                                                      int initial_cut, int total_pop,
+                                                      double lower, double upper);
 
 /*
  * Apply an update to the partition.
  */
-void apply_update(LCTPartition& partition,
-                  const CycleWalkUpdate& update);
+void apply_update(LCTPartition &partition, const CycleWalkUpdate &update);
 
 #endif // CW_PROPOSAL_H

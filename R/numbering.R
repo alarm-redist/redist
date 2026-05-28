@@ -1,9 +1,8 @@
-
 # helper function for match_numbers
 find_numbering <- function(plan, ref, pop, tot_pop) {
     joint <- plan_joint(ref, plan, pop)
 
-    renumb <- solve_hungarian(1 - joint/tot_pop)[, 2]
+    renumb <- solve_hungarian(1 - joint / tot_pop)[, 2]
 
     list(renumb = renumb,
         shared = sum(diag(joint[, renumb]))/tot_pop)
@@ -40,33 +39,50 @@ find_numbering <- function(plan, ref, pop, tot_pop) {
 #' @concept analyze
 #' @export
 match_numbers <- function(data, plan, total_pop = attr(data, "prec_pop"), col = "pop_overlap") {
-    if (!inherits(data, "redist_plans")) cli::cli_abort("{.arg data} must be a {.cls redist_plans}")
-    if (!"district" %in% names(data)) cli::cli_abort("Missing {.field district} column in {.arg data}")
+    if (!inherits(data, "redist_plans")) {
+        cli::cli_abort("{.arg data} must be a {.cls redist_plans}")
+    }
+    if (!"district" %in% names(data)) {
+        cli::cli_abort("Missing {.field district} column in {.arg data}")
+    }
 
     plan_mat <- get_plans_matrix(data)
-    if (is.character(plan)) plan <- plan_mat[, plan]
+    if (is.character(plan)) {
+        plan <- plan_mat[, plan]
+    }
     plan <- factor(plan, ordered = TRUE)
     ndists <- length(levels(plan))
 
-
-    if (is.null(total_pop))
+    if (is.null(total_pop)) {
         cli::cli_abort("Must provide {.arg total_pop} for this {.cls redist_plans} object.")
-    if (max(plan_mat[, 1]) != ndists)
+    }
+    if (max(plan_mat[, 1]) != ndists) {
         cli::cli_abort("Can't match numbers on a subset of a {.cls redist_plans}")
-    if (length(plan) != nrow(plan_mat))
+    }
+    if (length(plan) != nrow(plan_mat)) {
         cli::cli_abort(c("{.arg plan} doesn't have the right length.",
                     "i"="{.code length(plan)} should match the number of precincts,
                     i.e., {.code nrow(get_plans_matrix(data))}."))
+    }
 
     # compute renumbering and extract info
-    best_renumb <- apply(plan_mat, 2, find_numbering,
+    best_renumb <- apply(
+        plan_mat,
+        2,
+        find_numbering,
         plan = as.integer(plan),
-        pop = total_pop, tot_pop = sum(total_pop))
+        pop = total_pop,
+        tot_pop = sum(total_pop)
+    )
     renumb <- as.integer(vapply(best_renumb, function(x) x$renumb, integer(ndists)))
 
-    if (!is.null(col))
-        data[[col]] <- as.numeric(vapply(best_renumb, function(x) rep(x$shared, ndists),
-            numeric(ndists)))
+    if (!is.null(col)) {
+        data[[col]] <- as.numeric(vapply(
+            best_renumb,
+            function(x) rep(x$shared, ndists),
+            numeric(ndists)
+        ))
+    }
 
     renumb_mat <- renumber_matrix(plan_mat, renumb)
     colnames(renumb_mat) <- colnames(plan_mat)
@@ -96,16 +112,19 @@ match_numbers <- function(data, plan, total_pop = attr(data, "prec_pop"), col = 
 #' @concept analyze
 #' @export
 number_by <- function(data, x, desc = FALSE) {
-    if (!inherits(data, "redist_plans")) cli::cli_abort("{.arg data} must be a {.cls redist_plans}")
-    if (!"district" %in% names(data)) cli::cli_abort("Missing {.field district} column in {.arg data}")
+    if (!inherits(data, "redist_plans")) {
+        cli::cli_abort("{.arg data} must be a {.cls redist_plans}")
+    }
+    if (!"district" %in% names(data)) {
+        cli::cli_abort("Missing {.field district} column in {.arg data}")
+    }
 
-    ord <- 1 - 2*desc
+    ord <- 1 - 2 * desc
     m <- get_plans_matrix(data)
     orig_groups <- dplyr::group_vars(data)
     dplyr::group_by(data, .data$draw) %>%
-        dplyr::mutate(district = rank(ord*{{ x }}, ties.method = "random")) %>%
+        dplyr::mutate(district = rank(ord * {{ x }}, ties.method = "random")) %>%
         set_plan_matrix(`colnames<-`(renumber_matrix(m, .$district), colnames(m))) %>%
         dplyr::arrange(district, .by_group = TRUE) %>%
         dplyr::group_by(dplyr::across(dplyr::all_of(orig_groups)))
 }
-

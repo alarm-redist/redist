@@ -7,32 +7,33 @@
 /////////////////////////////////////
 
 // Header files
-#include <RcppArmadillo.h>
-#include <RcppArmadilloExtensions/sample.h>
-#include <time.h>
-#include <R.h>
+#include "constraint_calc_helper.h"
+#include "make_swaps_helper.h"
 #include "redist_types.h"
 #include "sw_mh_helper.h"
-#include "make_swaps_helper.h"
-#include "constraint_calc_helper.h"
 #include "tree_op.h"
+#include <R.h>
+#include <RcppArmadillo.h>
+#include <RcppArmadilloExtensions/sample.h>
 #include <cli/progress.h>
+#include <time.h>
 
 using namespace Rcpp;
 
 List vector_to_list(arma::uvec vecname) {
 
     List list_out(vecname.n_elem);
-    for(int i = 0; i < vecname.n_elem; i++) {
+    for (int i = 0; i < vecname.n_elem; i++) {
         list_out(i) = vecname(i);
     }
     return list_out;
-
 }
 
 arma::uvec get_not_in(arma::uvec vec1, arma::uvec vec2) {
-    int i; arma::uvec findtest; arma::uvec out(vec1.n_elem);
-    for(i = 0; i < vec1.n_elem; i++) {
+    int i;
+    arma::uvec findtest;
+    arma::uvec out(vec1.n_elem);
+    for (i = 0; i < vec1.n_elem; i++) {
         findtest = find(vec2 == vec1(i));
         if (findtest.n_elem == 0) {
             out(i) = 1;
@@ -40,7 +41,7 @@ arma::uvec get_not_in(arma::uvec vec1, arma::uvec vec2) {
             out(i) = 0;
         }
     }
-    arma::uvec candidates = vec1.elem( find(out == 1) );
+    arma::uvec candidates = vec1.elem(find(out == 1));
 
     return candidates;
 }
@@ -48,27 +49,12 @@ arma::uvec get_not_in(arma::uvec vec1, arma::uvec vec2) {
 /* Primary function to run redistricting algorithm. An implementation of
  Algorithm 1 in Barbu and Zhu (2005) */
 // [[Rcpp::export]]
-List swMH(List aList,
-          NumericVector cdvec,
-          NumericVector popvec,
-          int nsims,
-          List constraints,
-          double eprob,
-          double pop_lower,
-          double pop_upper,
-          NumericVector beta_sequence,
-          NumericVector beta_weights,
-          int lambda = 0,
-          double beta = 0.0,
-          std::string adapt_beta = "none",
-          int adjswap = 1,
-          int exact_mh = 0,
-          int adapt_eprob = 0,
-          int adapt_lambda = 0,
-          int num_hot_steps = 0,
-          int num_annealing_steps = 0,
-          int num_cold_steps = 0,
-          bool verbose = true) {
+List swMH(List aList, NumericVector cdvec, NumericVector popvec, int nsims, List constraints,
+          double eprob, double pop_lower, double pop_upper, NumericVector beta_sequence,
+          NumericVector beta_weights, int lambda = 0, double beta = 0.0,
+          std::string adapt_beta = "none", int adjswap = 1, int exact_mh = 0,
+          int adapt_eprob = 0, int adapt_lambda = 0, int num_hot_steps = 0,
+          int num_annealing_steps = 0, int num_cold_steps = 0, bool verbose = true) {
 
     /* Inputs to function:
      aList: adjacency list of geographic units
@@ -138,14 +124,14 @@ List swMH(List aList,
         nsims = num_hot_steps + num_annealing_steps + num_cold_steps;
         start_anneal = num_hot_steps;
         start_cold = num_hot_steps + num_annealing_steps;
-        for(int i = 0; i < num_annealing_steps; i++) {
-            beta_seq(i) = (double)i/num_annealing_steps;
+        for (int i = 0; i < num_annealing_steps; i++) {
+            beta_seq(i) = (double)i / num_annealing_steps;
         }
     }
 
     // Preprocess vector of congressional district assignments
     if (min(cdvec) == 1) {
-        for(int i = 0; i < cdvec.size(); i++) {
+        for (int i = 0; i < cdvec.size(); i++) {
             cdvec(i)--;
         }
     }
@@ -157,7 +143,7 @@ List swMH(List aList,
 
     // Get vector of unique district ids
     NumericVector uniquedists;
-    for(int i = 0; i < cdvec.size(); i++) {
+    for (int i = 0; i < cdvec.size(); i++) {
         if (is_true(any(uniquedists == cdvec(i))) == FALSE) {
             uniquedists.push_back(cdvec(i));
         }
@@ -194,12 +180,9 @@ List swMH(List aList,
 
     NumericVector psi_upd;
     CharacterVector psi_names = CharacterVector::create(
-        "pop_dev", "splits", "multisplits", "total_splits",
-        "segregation", "grp_pow", "grp_hinge", "grp_inv_hinge",
-        "compet", "status_quo", "incumbency",
-        "polsby", "fry_hold", "log_st", "edges_removed",
-        "qps", "custom"
-    );
+        "pop_dev", "splits", "multisplits", "total_splits", "segregation", "grp_pow",
+        "grp_hinge", "grp_inv_hinge", "compet", "status_quo", "incumbency", "polsby",
+        "fry_hold", "log_st", "edges_removed", "qps", "custom");
 
     NumericMatrix psi_store(psi_names.size(), nsims);
     rownames(psi_store) = psi_names;
@@ -230,11 +213,22 @@ List swMH(List aList,
     NumericVector mhprob_betaseq_store(nsims);
 
     // Initialize objects
-    List aList_con; NumericVector boundary; List swap_partitions;
-    List boundary_partitions; List cutedge_lists; int p; List aList_con_prop;
-    NumericVector boundary_prop; List boundary_partitions_prop; int decision;
-    List get_constraint; List gt_out; NumericVector cdvec_prop; int i;
-    arma::uvec boundary_precincts; List boundary_partitions_list;
+    List aList_con;
+    NumericVector boundary;
+    List swap_partitions;
+    List boundary_partitions;
+    List cutedge_lists;
+    int p;
+    List aList_con_prop;
+    NumericVector boundary_prop;
+    List boundary_partitions_prop;
+    int decision;
+    List get_constraint;
+    List gt_out;
+    NumericVector cdvec_prop;
+    int i;
+    arma::uvec boundary_precincts;
+    List boundary_partitions_list;
 
     if (adapt_beta == "annealing") {
         Rcout << "---------------------------------" << std::endl;
@@ -271,8 +265,8 @@ List swMH(List aList,
                 ///////////////////////////////////////////////////////////////////
                 /* List of connected partitions after edgecuts - first element is list of
                  partitions, second element is number of partitions */
-                boundary_partitions = bsearch_boundary(cutedge_lists["connectedlist"],
-                                                       boundary);
+                boundary_partitions =
+                    bsearch_boundary(cutedge_lists["connectedlist"], boundary);
                 boundary_partitions_list = boundary_partitions["bsearch"];
             } else {
                 boundary_precincts = find(as<arma::vec>(boundary) == 1);
@@ -286,33 +280,23 @@ List swMH(List aList,
             p = draw_p(lambda);
 
             // Loop over p, draw p connected components
-            swap_partitions = make_swaps(boundary_partitions_list,
-                                         aList,
-                                         cdvec,
-                                         popvec,
-                                         district_pops,
-                                         constraints,
-                                         psi_names,
-                                         min_parity,
-                                         max_parity,
-                                         parity,
-                                         p,
-                                         eprob,
-                                         beta,
-                                         g);
+            swap_partitions = make_swaps(boundary_partitions_list, aList, cdvec, popvec,
+                                         district_pops, constraints, psi_names, min_parity,
+                                         max_parity, parity, p, eprob, beta, g);
 
         } while (as<int>(swap_partitions["goodprop"]) == 0);
 
         // // Get new boundary, then get number of partitions
         // if (exact_mh == 1) {
-        //   aList_con_prop = genAlConn(aList, as<NumericVector>(swap_partitions["proposed_partition"]));
-        //   boundary_prop = findBoundary(aList, aList_con_prop);
-        //   boundary_partitions_prop = bsearch_boundary(cutedge_lists["connectedlist"],
+        //   aList_con_prop = genAlConn(aList,
+        //   as<NumericVector>(swap_partitions["proposed_partition"])); boundary_prop =
+        //   findBoundary(aList, aList_con_prop); boundary_partitions_prop =
+        //   bsearch_boundary(cutedge_lists["connectedlist"],
         // 						  boundary_prop);
 
-        //   // Correct npartitions to only include boundary partitions that don't break contiguity
-        //   int nvalid_current = count_valid(aList, boundary_partitions["bsearch"], cdvec);
-        //   int nvalid_prop = count_valid(aList, boundary_partitions_prop["bsearch"],
+        //   // Correct npartitions to only include boundary partitions that don't break
+        //   contiguity int nvalid_current = count_valid(aList, boundary_partitions["bsearch"],
+        //   cdvec); int nvalid_prop = count_valid(aList, boundary_partitions_prop["bsearch"],
         // 				    swap_partitions["proposed_partition"]);
 
         //   // Modify metropolis-hastings ratio
@@ -347,9 +331,11 @@ List swMH(List aList,
 
             // Run geyer thompson algorithm
             if (decision == 1) {
-                gt_out = changeBeta(beta_sequence, beta, swap_partitions["energy_new"], beta_weights, adjswap);
+                gt_out = changeBeta(beta_sequence, beta, swap_partitions["energy_new"],
+                                    beta_weights, adjswap);
             } else {
-                gt_out = changeBeta(beta_sequence, beta, swap_partitions["energy_old"], beta_weights, adjswap);
+                gt_out = changeBeta(beta_sequence, beta, swap_partitions["energy_old"],
+                                    beta_weights, adjswap);
             }
 
             // Change beta
@@ -362,17 +348,16 @@ List swMH(List aList,
             decision_betaseq_store[k] = as<int>(gt_out["mh_decision"]);
             mhprob_betaseq_store[k] = as<double>(gt_out["mh_prob"]);
 
-        }else if (adapt_beta == "annealing") {
+        } else if (adapt_beta == "annealing") {
 
             if ((k >= start_anneal) & (k < start_cold)) {
                 beta = beta_seq[k - start_anneal];
-            }else if (k >= start_cold) {
+            } else if (k >= start_cold) {
                 beta = 1.0;
             }
             if (k < nsims) {
                 betaseq_store[z] = beta;
             }
-
         }
 
         //////////////////////////////////////
@@ -387,12 +372,12 @@ List swMH(List aList,
             // Store number of boundary partitions
             boundarypartitions_store[k] = boundary_partitions_list.size();
         } else {
-            boundarypartitions_store[k] = boundarypartitions_store[k-1];
+            boundarypartitions_store[k] = boundarypartitions_store[k - 1];
         }
 
         // Store previous iteration
         if (adapt_beta != "annealing") {
-            for(i = 0; i < cdvec.size(); i++) {
+            for (i = 0; i < cdvec.size(); i++) {
                 cd_store[k * cdvec.size() + i] = cdvec(i);
             }
         }
@@ -422,16 +407,19 @@ List swMH(List aList,
                 if (adapt_eprob == 1) {
                     Rcout << "Edgecut Probability: " << eprob << std::endl;
                 }
-                // Rcout << "Metropolis acceptance ratio: "<< (double)decision_counter / (k-1) << std::endl << std::endl;
+                // Rcout << "Metropolis acceptance ratio: "<< (double)decision_counter / (k-1)
+                // << std::endl << std::endl;
                 mha = (double)decision_counter / (k);
-                cli_progress_set_format(bar, "{cli::pb_bar} {cli::pb_percent} | ETA: {cli::pb_eta} | MH Acceptance: %.2f", mha);
+                cli_progress_set_format(bar,
+                                        "{cli::pb_bar} {cli::pb_percent} | ETA: {cli::pb_eta} "
+                                        "| MH Acceptance: %.2f",
+                                        mha);
             }
         }
 
         if (verbose && CLI_SHOULD_TICK) {
             cli_progress_set(bar, k);
         }
-
 
         if (adapt_beta == "annealing") {
             if (verbose) {
@@ -451,7 +439,7 @@ List swMH(List aList,
         // Change eprob, lambda if adaptive
         if (adapt_eprob == 1 || adapt_lambda == 1) {
             if (k % 50 == 0) {
-                if ((double)decision_counter / (k-1) > .4) {
+                if ((double)decision_counter / (k - 1) > .4) {
                     if (adapt_lambda == 1 && lambda < floor((double)aList.size() / 10)) {
                         lambda++;
                     }
@@ -459,7 +447,7 @@ List swMH(List aList,
                         eprob = eprob + .01;
                     }
                 }
-                if ((double)decision_counter / (k-1) < .2) {
+                if ((double)decision_counter / (k - 1) < .2) {
                     if (adapt_lambda == 1 && lambda > 0) {
                         lambda--;
                     }
@@ -469,7 +457,6 @@ List swMH(List aList,
                 }
             }
         }
-
     }
     cli_progress_done(bar);
 
@@ -480,13 +467,12 @@ List swMH(List aList,
         dist_parity_vec = distParity(cd_store, popvec);
         dist_orig_vec = diff_origcds(cd_store, cdorigvec);
     } else {
-        for(int i = 0; i < cdvec.size(); i++) {
+        for (int i = 0; i < cdvec.size(); i++) {
             cd_store[i] = cdvec(i);
         }
         dist_parity_vec = distParity(cd_store, popvec);
         dist_orig_vec = diff_origcds(cd_store, popvec);
     }
-
 
     // Create list, store output
     List out;
@@ -509,13 +495,13 @@ List swMH(List aList,
         out["plans"] = cdvec;
         out["distance_parity"] = dist_parity_vec[0];
         out["distance_original"] = dist_orig_vec[0];
-        out["mhdecisions"] = decision_store[k-1];
-        out["mhprob"] = mhprob_store[k-1];
-        out["pparam"] = pparam_store[k-1];
-        out["beta_sequence"] = betaseq_store[k-1];
-        out["energy_psi"] = energy_store[k-1];
-        out["boundary_partitions"] = boundarypartitions_store[k-1];
-        out["boundaryratio"] = boundaryratio_store[k-1];
+        out["mhdecisions"] = decision_store[k - 1];
+        out["mhprob"] = mhprob_store[k - 1];
+        out["pparam"] = pparam_store[k - 1];
+        out["beta_sequence"] = betaseq_store[k - 1];
+        out["energy_psi"] = energy_store[k - 1];
+        out["boundary_partitions"] = boundarypartitions_store[k - 1];
+        out["boundaryratio"] = boundaryratio_store[k - 1];
     }
 
     if (adapt_eprob == 1) {
@@ -532,6 +518,4 @@ List swMH(List aList,
     out["adj"] = aList;
     out["psi_store"] = psi_store;
     return out;
-
 }
-

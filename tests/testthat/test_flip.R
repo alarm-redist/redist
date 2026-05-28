@@ -2,8 +2,12 @@ test_that("flip works", {
     set.seed(1, kind = "Mersenne-Twister", normal.kind = "Inversion")
 
     capture.output(
-        out <- redist_flip(fl_map %>% set_pop_tol(0.2), init_plan = plans_10[, 1],
-            nsims = 10, verbose = FALSE)
+        out <- redist_flip(
+            fl_map %>% set_pop_tol(0.2),
+            init_plan = plans_10[, 1],
+            nsims = 10,
+            verbose = FALSE
+        )
     )
     par <- redist.parity(get_plans_matrix(out), total_pop = pop)
 
@@ -12,7 +16,7 @@ test_that("flip works", {
 })
 
 test_that("flip works in iowa", {
-    iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol=0.01)
+    iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
     set.seed(2)
     expect_s3_class(
         redist_flip(iowa_map, nsims = 100),
@@ -34,8 +38,12 @@ test_that("flip countysplit works", {
         )
 
     capture.output(
-        out <- redist_flip(fl_map %>% set_pop_tol(0.2), init_plan = plans_10[, 1],
-            nsims = 10, verbose = FALSE)
+        out <- redist_flip(
+            fl_map %>% set_pop_tol(0.2),
+            init_plan = plans_10[, 1],
+            nsims = 10,
+            verbose = FALSE
+        )
     )
     par <- redist.parity(get_plans_matrix(out), total_pop = pop)
 
@@ -55,9 +63,13 @@ test_that("flip hinge works", {
         )
 
     capture.output(
-        out <- redist_flip(fl_map %>% set_pop_tol(0.2), init_plan = plans_10[, 1],
-            nsims = 10, verbose = FALSE,
-            constraints = cons)
+        out <- redist_flip(
+            fl_map %>% set_pop_tol(0.2),
+            init_plan = plans_10[, 1],
+            nsims = 10,
+            verbose = FALSE,
+            constraints = cons
+        )
     )
     par <- redist.parity(get_plans_matrix(out), total_pop = pop)
 
@@ -68,9 +80,13 @@ test_that("flip hinge works", {
 test_that("flip thinning works", {
     set.seed(1, kind = "Mersenne-Twister", normal.kind = "Inversion")
 
-    out <- redist_flip(fl_map %>% set_pop_tol(0.2), init_plan = plans_10[, 1],
-                           nsims = 10, verbose = FALSE,
-                        thin = 2)
+    out <- redist_flip(
+        fl_map %>% set_pop_tol(0.2),
+        init_plan = plans_10[, 1],
+        nsims = 10,
+        verbose = FALSE,
+        thin = 2
+    )
     par <- redist.parity(get_plans_matrix(out), total_pop = pop)
 
     expect_equal(range(get_plans_matrix(out)), c(1, 3))
@@ -91,13 +107,11 @@ test_that("log-st works", {
     iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05, total_pop = pop)
 
     cons <- redist_constr(iowa_map) %>%
-        add_constr_log_st(strength = 1,
-            admin = region)
+        add_constr_log_st(strength = 1, admin = region)
 
     capture.output(
-        test <- redist_flip(iowa_map, nsims = 10,  constraints = cons)
+        test <- redist_flip(iowa_map, nsims = 10, constraints = cons)
     )
 
     expect_s3_class(test, "data.frame")
-
 })

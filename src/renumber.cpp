@@ -14,9 +14,9 @@ NumericMatrix plan_joint(IntegerVector m1, IntegerVector m2, NumericVector pop) 
     NumericVector p2(k);
 
     for (int i = 0; i < V; i++) {
-        joint(m1[i]-1, m2[i]-1) += pop[i];
-        p1[m1[i]-1] += pop[i];
-        p2[m2[i]-1] += pop[i];
+        joint(m1[i] - 1, m2[i] - 1) += pop[i];
+        p1[m1[i] - 1] += pop[i];
+        p2[m2[i] - 1] += pop[i];
     }
 
     return joint;
@@ -31,7 +31,7 @@ IntegerMatrix renumber_matrix(IntegerMatrix plans, IntegerVector renumb) {
 
     for (int j = 0; j < N; j++) {
         for (int i = 0; i < V; i++) {
-            out(i, j) = renumb(n_distr*j + plans(i, j) - 1);
+            out(i, j) = renumb(n_distr * j + plans(i, j) - 1);
         }
     }
 
@@ -59,9 +59,9 @@ IntegerMatrix solve_hungarian(NumericMatrix costMatrix) {
 
     vector<double> c(nc);
     vector<vector<double>> cm(nr, c);
-    for (int i=0; i < nr; i++){
-        for (int j=0; j < nc; j++){
-            c[j] = costMatrix(i,j);
+    for (int i = 0; i < nr; i++) {
+        for (int j = 0; j < nc; j++) {
+            c[j] = costMatrix(i, j);
         }
         cm[i] = c;
     }
@@ -70,9 +70,9 @@ IntegerMatrix solve_hungarian(NumericMatrix costMatrix) {
     vector<int> assignment;
     HungAlgo.Solve(cm, assignment);
     IntegerMatrix assign(nr, 2);
-    for (int i=0; i < nr; i++){
-        assign(i,0) = i+1;
-        assign(i,1) = assignment[i]+1;
+    for (int i = 0; i < nr; i++) {
+        assign(i, 0) = i + 1;
+        assign(i, 1) = assignment[i] + 1;
     }
 
     return assign;

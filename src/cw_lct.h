@@ -10,8 +10,8 @@
 #ifndef CW_LCT_H
 #define CW_LCT_H
 
-#include <vector>
 #include <set>
+#include <vector>
 
 /*
  * LCTNode: A node in the Link-Cut Tree.
@@ -29,12 +29,12 @@
  * - reversed: Lazy reversal flag for evert operation
  */
 struct LCTNode {
-    int vertex;                     // Vertex ID (0-indexed)
-    LCTNode* parent;                // Splay tree parent
-    LCTNode* path_parent;           // Path parent (for non-preferred edges)
-    LCTNode* children[2];           // Left (0) and right (1) children
-    bool reversed;                  // Lazy reversal flag
-    std::set<LCTNode*> path_children; // Set of path children (for traversal)
+    int vertex;                        // Vertex ID (0-indexed)
+    LCTNode *parent;                   // Splay tree parent
+    LCTNode *path_parent;              // Path parent (for non-preferred edges)
+    LCTNode *children[2];              // Left (0) and right (1) children
+    bool reversed;                     // Lazy reversal flag
+    std::set<LCTNode *> path_children; // Set of path children (for traversal)
 
     LCTNode(int v);
 
@@ -52,14 +52,14 @@ struct LCTNode {
  * Nodes are stored in a vector and accessed by vertex ID.
  */
 class LinkCutTree {
-public:
+  public:
     std::vector<LCTNode> nodes;
 
     // Constructor: Create n isolated nodes
     explicit LinkCutTree(int n);
 
     // Access node by vertex ID (0-indexed)
-    LCTNode* node(int v);
+    LCTNode *node(int v);
 
     // Number of nodes
     int size() const;
@@ -72,35 +72,35 @@ public:
      * the rightmost node on the preferred path.
      */
     void expose(int v);
-    void expose(LCTNode* n);
+    void expose(LCTNode *n);
 
     /*
      * link(u, v): Make u a child of v in the represented tree.
      * Precondition: u must be the root of its represented tree.
      */
     void link(int u, int v);
-    void link(LCTNode* u, LCTNode* v);
+    void link(LCTNode *u, LCTNode *v);
 
     /*
      * cut(u): Cut u from its parent in the represented tree.
      * Precondition: u must not be the root of its represented tree.
      */
     void cut(int u);
-    void cut(LCTNode* u);
+    void cut(LCTNode *u);
 
     /*
      * evert(u): Make u the root of its represented tree.
      * This reverses the path from u to the current root.
      */
     void evert(int u);
-    void evert(LCTNode* u);
+    void evert(LCTNode *u);
 
     /*
      * find_root(u): Find the root of the represented tree containing u.
      * Returns the vertex ID of the root.
      */
     int find_root(int u);
-    LCTNode* find_root(LCTNode* u);
+    LCTNode *find_root(LCTNode *u);
 
     /*
      * same_tree(u, v): Check if u and v are in the same represented tree.
@@ -112,7 +112,7 @@ public:
      * Returns a vector of vertex IDs in order from root to u.
      */
     std::vector<int> find_path(int u);
-    std::vector<int> find_path(LCTNode* u);
+    std::vector<int> find_path(LCTNode *u);
 
     /*
      * find_path_to_root(u): Get the path from u to the root.
@@ -122,24 +122,24 @@ public:
 
     // === Splay Tree Operations (internal) ===
 
-private:
+  private:
     // Push lazy reversal down to children
-    void push_reversed(LCTNode* n);
+    void push_reversed(LCTNode *n);
 
     // Rotate n up in the splay tree
-    void rotate_up(LCTNode* n);
+    void rotate_up(LCTNode *n);
 
     // Splay n to the root of its auxiliary tree
-    void splay(LCTNode* n);
+    void splay(LCTNode *n);
 
     // Replace right subtree of n, moving old right to path child
-    void replace_right_subtree(LCTNode* n, LCTNode* r = nullptr);
+    void replace_right_subtree(LCTNode *n, LCTNode *r = nullptr);
 
     // Set child at index (0=left, 1=right)
-    void set_child(LCTNode* parent, int idx, LCTNode* child);
+    void set_child(LCTNode *parent, int idx, LCTNode *child);
 
     // Helper to traverse splay tree in order
-    void traverse_inorder(LCTNode* n, std::vector<int>& result, bool reversed);
+    void traverse_inorder(LCTNode *n, std::vector<int> &result, bool reversed);
 };
 
 #endif // CW_LCT_H

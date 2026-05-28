@@ -28,7 +28,9 @@ redist.adjacency <- function(shp, plan) {
     # Make zero indexed if not
     min <- min(unlist(adj))
     if (!zero) {
-        adj <- lapply(adj, function(x) {x - min})
+        adj <- lapply(adj, function(x) {
+            x - min
+        })
     }
 
     # Check that no numbers are skipped
@@ -40,7 +42,6 @@ redist.adjacency <- function(shp, plan) {
     } else if (any(contiguity(adj = adj, group = rep(1, length(adj))) > 1)) {
         cli::cli_warn("All precincts have at least one neighbor, but the graph is disconnected.")
     }
-
 
     if (!missing(plan)) {
         cont <- contiguity(adj, plan)
@@ -141,8 +142,7 @@ redist.coarsen.adjacency <- function(adj, groups) {
 #'
 #' @concept prepare
 #' @export
-redist.subset <- function(shp, adj, keep_rows, total_pop, ndists,
-                          pop_tol, sub_ndists) {
+redist.subset <- function(shp, adj, keep_rows, total_pop, ndists, pop_tol, sub_ndists) {
     if (missing(shp)) {
         cli::cli_abort(c("{.arg shp} is required.",
             "i" = "Use {.fn redist.reduce.adjacency} to subset adjacency lists."))
@@ -160,19 +160,24 @@ redist.subset <- function(shp, adj, keep_rows, total_pop, ndists,
         keep_rows <- redist.random.subgraph(shp, n, adj)$keep_rows
     }
 
-    if (!missing(total_pop) &
-        !missing(ndists) & !missing(pop_tol) & !missing(sub_ndists)) {
-        parpop <- sum(total_pop)/ndists
-        subparpop <- sum(total_pop[keep_rows])/sub_ndists
+    if (
+        !missing(total_pop) &
+            !missing(ndists) &
+            !missing(pop_tol) &
+            !missing(sub_ndists)
+    ) {
+        parpop <- sum(total_pop) / ndists
+        subparpop <- sum(total_pop[keep_rows]) / sub_ndists
         subdev <-
-            min(abs(subparpop - parpop*(1 - pop_tol)),
-                abs(subparpop - parpop*(1 + pop_tol)))
-        sub_pop_tol <- subdev/subparpop
+            min(
+                abs(subparpop - parpop * (1 - pop_tol)),
+                abs(subparpop - parpop * (1 + pop_tol))
+            )
+        sub_pop_tol <- subdev / subparpop
     } else {
         sub_ndists <- NA_real_
         sub_pop_tol <- NA_real_
     }
-
 
     rlist <- list(
         shp = shp %>% dplyr::slice(keep_rows),

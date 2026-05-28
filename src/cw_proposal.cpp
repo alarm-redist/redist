@@ -6,17 +6,12 @@
 #include "cw_proposal.h"
 #include <algorithm>
 #include <cmath>
-#include <set>
 #include <map>
+#include <set>
 
 // Forward declaration for recursive helper
-static int topological_sort_helper(
-    std::map<int, int>& cut_pop,
-    LCTNode* node,
-    LCTNode* source,
-    const LCTPartition& partition,
-    bool reversed,
-    int mass);
+static int topological_sort_helper(std::map<int, int> &cut_pop, LCTNode *node, LCTNode *source,
+                                   const LCTPartition &partition, bool reversed, int mass);
 
 /*
  * Compute subtree populations for all vertices reachable from root.
@@ -25,17 +20,14 @@ static int topological_sort_helper(
  *
  * This is equivalent to the Julia topological_sort function.
  */
-static std::map<int, int> compute_subtree_pops(
-    LCTPartition& partition,
-    int root_vertex
-) {
+static std::map<int, int> compute_subtree_pops(LCTPartition &partition, int root_vertex) {
     std::map<int, int> cut_pop;
-    LinkCutTree& lct = partition.lct;
-    const arma::uvec& pop = *(partition.pop);
+    LinkCutTree &lct = partition.lct;
+    const arma::uvec &pop = *(partition.pop);
 
     // Evert to make root_vertex the root
     lct.evert(root_vertex);
-    LCTNode* root = lct.node(root_vertex);
+    LCTNode *root = lct.node(root_vertex);
 
     // Push any pending reversal flags
     // The root after evert should have reversed=true, need to handle this
@@ -48,12 +40,11 @@ static std::map<int, int> compute_subtree_pops(
 
     // Process right child (in tree order)
     if (root->children[rc] != nullptr) {
-        total += topological_sort_helper(cut_pop, root->children[rc], root,
-                                          partition, rev, 0);
+        total += topological_sort_helper(cut_pop, root->children[rc], root, partition, rev, 0);
     }
 
     // Process path children
-    for (LCTNode* child : root->path_children) {
+    for (LCTNode *child : root->path_children) {
         total += topological_sort_helper(cut_pop, child, root, partition, false, 0);
     }
 
@@ -68,17 +59,12 @@ static std::map<int, int> compute_subtree_pops(
  * Recursive helper for topological_sort.
  * Returns the total population of the subtree rooted at node.
  */
-static int topological_sort_helper(
-    std::map<int, int>& cut_pop,
-    LCTNode* node,
-    LCTNode* source,
-    const LCTPartition& partition,
-    bool reversed,
-    int mass
-) {
-    if (node == nullptr) return 0;
+static int topological_sort_helper(std::map<int, int> &cut_pop, LCTNode *node, LCTNode *source,
+                                   const LCTPartition &partition, bool reversed, int mass) {
+    if (node == nullptr)
+        return 0;
 
-    const arma::uvec& pop = *(partition.pop);
+    const arma::uvec &pop = *(partition.pop);
     int remainder = 0;
 
     // Handle reversal flag
@@ -88,12 +74,12 @@ static int topological_sort_helper(
 
     // Process right subtree first (these are "below" us in tree order)
     if (node->children[rc] != nullptr) {
-        remainder += topological_sort_helper(cut_pop, node->children[rc], node,
-                                              partition, reversed, mass);
+        remainder += topological_sort_helper(cut_pop, node->children[rc], node, partition,
+                                             reversed, mass);
     }
 
     // Process path children
-    for (LCTNode* child : node->path_children) {
+    for (LCTNode *child : node->path_children) {
         remainder += topological_sort_helper(cut_pop, child, node, partition, false, 0);
     }
 
@@ -103,17 +89,17 @@ static int topological_sort_helper(
 
     // Process left subtree (if it's not where we came from)
     if (node->children[lc] != nullptr && node->children[lc] != source) {
-        remainder += topological_sort_helper(cut_pop, node->children[lc], node,
-                                              partition, reversed, cut_pop[node->vertex]);
+        remainder += topological_sort_helper(cut_pop, node->children[lc], node, partition,
+                                             reversed, cut_pop[node->vertex]);
     }
 
     return remainder + node_pop;
 }
 
-bool get_random_adjacent_districts(const LCTPartition& partition,
-                                    int& d1, int& d2) {
+bool get_random_adjacent_districts(const LCTPartition &partition, int &d1, int &d2) {
     auto pairs = partition.get_adjacent_district_pairs();
-    if (pairs.empty()) return false;
+    if (pairs.empty())
+        return false;
 
     int idx = r_int((int)pairs.size());
     d1 = pairs[idx].first;
@@ -121,19 +107,20 @@ bool get_random_adjacent_districts(const LCTPartition& partition,
     return true;
 }
 
-bool get_random_edge_pair(const LCTPartition& partition,
-                          int d1, int d2,
-                          CWEdge& e1, CWEdge& e2) {
-    const EdgeSet& edges = partition.get_cross_edges(d1, d2);
+bool get_random_edge_pair(const LCTPartition &partition, int d1, int d2, CWEdge &e1,
+                          CWEdge &e2) {
+    const EdgeSet &edges = partition.get_cross_edges(d1, d2);
     int n_edges = (int)edges.size();
 
     // Need at least 2 edges to form a cycle
-    if (n_edges < 2) return false;
+    if (n_edges < 2)
+        return false;
 
     // Sample two distinct edges
     int idx1 = r_int(n_edges);
     int idx2 = r_int(n_edges - 1);
-    if (idx2 >= idx1) idx2++;
+    if (idx2 >= idx1)
+        idx2++;
 
     auto it = edges.begin();
     std::advance(it, idx1);
@@ -146,9 +133,8 @@ bool get_random_edge_pair(const LCTPartition& partition,
     return true;
 }
 
-bool get_cycle_paths(LCTPartition& partition,
-                     const CWEdge& e1, const CWEdge& e2,
-                     std::vector<int>& path1, std::vector<int>& path2) {
+bool get_cycle_paths(LCTPartition &partition, const CWEdge &e1, const CWEdge &e2,
+                     std::vector<int> &path1, std::vector<int> &path2) {
     // e1 connects (u1, v1), e2 connects (u2, v2)
     // We need to determine which endpoints are in which district
     int u1 = e1.u, v1 = e1.v;
@@ -158,13 +144,15 @@ bool get_cycle_paths(LCTPartition& partition,
     int d2 = partition.get_district(v1);
 
     // Ensure u1, u2 are in d1 and v1, v2 are in d2
-    if (partition.get_district(u1) != d1) std::swap(u1, v1);
-    if (partition.get_district(u2) != d1) std::swap(u2, v2);
+    if (partition.get_district(u1) != d1)
+        std::swap(u1, v1);
+    if (partition.get_district(u2) != d1)
+        std::swap(u2, v2);
 
     // Now u1, u2 are in district d1 (or same district)
     // and v1, v2 are in district d2
 
-    LinkCutTree& lct = partition.lct;
+    LinkCutTree &lct = partition.lct;
 
     // Path in district d1: from u2 to u1 (root)
     // First evert u1 to make it the root
@@ -188,11 +176,9 @@ bool get_cycle_paths(LCTPartition& partition,
  *
  * This matches the Julia get_collapsed_cycle_weights function.
  */
-std::vector<int> get_collapsed_cycle_weights(
-    LCTPartition& partition,
-    const std::vector<int>& path1,
-    const std::vector<int>& path2
-) {
+std::vector<int> get_collapsed_cycle_weights(LCTPartition &partition,
+                                             const std::vector<int> &path1,
+                                             const std::vector<int> &path2) {
     int cycle_len = (int)(path1.size() + path2.size());
     std::vector<int> collapsed_weights(cycle_len);
 
@@ -200,7 +186,7 @@ std::vector<int> get_collapsed_cycle_weights(
     // path1 = [u2, ..., u1] where u1 is the root (at the END after reversal)
     // path2 = [v2, ..., v1] where v1 is the root (at the END after reversal)
     // Julia uses uPath[1] = u1 (BEFORE reversal) = path1.back() (AFTER reversal)
-    
+
     // Get subtree populations rooted at u1 (LAST vertex of path1 after reversal)
     int u1 = path1.back();
     std::map<int, int> u_cut_pop = compute_subtree_pops(partition, u1);
@@ -214,10 +200,10 @@ std::vector<int> get_collapsed_cycle_weights(
     // Julia iterates: uPath_rev[1] → collapsed[1], uPath_rev[2] → collapsed[2], etc.
     // In C++ (0-indexed): path1[0] → collapsed[0], path1[1] → collapsed[1], etc.
     for (size_t ii = 0; ii < path1.size(); ii++) {
-        int vertex = path1[ii];  // Direct mapping, same order as Julia's uPath_rev
+        int vertex = path1[ii]; // Direct mapping, same order as Julia's uPath_rev
         collapsed_weights[ii] = u_cut_pop[vertex];
         if (ii > 0) {
-            int prev_vertex = path1[ii - 1];  // Previous vertex in path (closer to u2)
+            int prev_vertex = path1[ii - 1]; // Previous vertex in path (closer to u2)
             collapsed_weights[ii] -= u_cut_pop[prev_vertex];
         }
     }
@@ -230,12 +216,12 @@ std::vector<int> get_collapsed_cycle_weights(
     for (size_t ii = 0; ii < path2.size(); ii++) {
         // Fill from end of cycle backwards
         int pos = cycle_len - 1 - ii;
-        
+
         // path2[ii] gives us vertices from v2 towards v1
         // We want collapsed[end] = v2, collapsed[end-1] = next towards v1, etc.
         int vertex = path2[ii];
         collapsed_weights[pos] = v_cut_pop[vertex];
-        
+
         if (ii > 0) {
             // Previous vertex in path2 is closer to v2
             int prev_vertex = path2[ii - 1];
@@ -246,11 +232,9 @@ std::vector<int> get_collapsed_cycle_weights(
     return collapsed_weights;
 }
 
-std::vector<std::pair<int, int>> find_valid_cut_pairs(
-    const std::vector<int>& cycle_pops,
-    int initial_cut,
-    int total_pop,
-    double lower, double upper) {
+std::vector<std::pair<int, int>> find_valid_cut_pairs(const std::vector<int> &cycle_pops,
+                                                      int initial_cut, int total_pop,
+                                                      double lower, double upper) {
 
     std::vector<std::pair<int, int>> valid_pairs;
     int n = (int)cycle_pops.size();
@@ -277,14 +261,14 @@ std::vector<std::pair<int, int>> find_valid_cut_pairs(
         for (int cut2 = cut1; cut2 <= n - 1; cut2++) {
             // Skip the identity configuration (no change to districts)
             // Julia: delete!(possible_pairs, (1, initial_cut_index))
-            if (cut1 == 1 && cut2 == initial_cut) continue;
+            if (cut1 == 1 && cut2 == initial_cut)
+                continue;
 
             // pop1 = sum of cycle_pops at positions cut1-1 to cut2-1 (0-indexed)
             int pop1 = prefix[cut2] - prefix[cut1 - 1];
             int pop2 = total_pop - pop1;
 
-            if (pop1 >= lower && pop1 <= upper &&
-                pop2 >= lower && pop2 <= upper) {
+            if (pop1 >= lower && pop1 <= upper && pop2 >= lower && pop2 <= upper) {
                 valid_pairs.push_back({cut1, cut2});
             }
         }
@@ -299,11 +283,8 @@ std::vector<std::pair<int, int>> find_valid_cut_pairs(
  *
  * Corresponds to Julia's get_link_path_ind()
  */
-static int get_link_path_ind(
-    int link_vertex,
-    const std::vector<int>& path1,
-    const std::vector<int>& path2
-) {
+static int get_link_path_ind(int link_vertex, const std::vector<int> &path1,
+                             const std::vector<int> &path2) {
     int path1_len = (int)path1.size();
     int path2_len = (int)path2.size();
 
@@ -335,14 +316,9 @@ static int get_link_path_ind(
  * The function determines which district should get which new root
  * based on population overlaps.
  */
-static bool swap_assignment_check(
-    int path_ind,
-    int cut1,
-    int cut2,
-    const std::vector<int>& path1,
-    const std::vector<int>& path2,
-    const std::vector<int>& cycle_weights
-) {
+static bool swap_assignment_check(int path_ind, int cut1, int cut2,
+                                  const std::vector<int> &path1, const std::vector<int> &path2,
+                                  const std::vector<int> &cycle_weights) {
     int path1_len = (int)path1.size();
     int cycle_len = (int)cycle_weights.size();
 
@@ -350,12 +326,13 @@ static bool swap_assignment_check(
     // that comes from path1 (the "u" district)
     int overlap1 = 0;
     int tot_pop = 0;
-    for (int w : cycle_weights) tot_pop += w;
+    for (int w : cycle_weights)
+        tot_pop += w;
 
     // Case 1: If cut1 <= path1_len, add weights in [cut1, min(path1_len, cut2)]
     if (cut1 <= path1_len) {
         for (int i = cut1; i <= std::min(path1_len, cut2); i++) {
-            overlap1 += cycle_weights[i - 1];  // Convert to 0-indexed
+            overlap1 += cycle_weights[i - 1]; // Convert to 0-indexed
         }
     }
     // Case 2: If cut1 > path1_len+1, add weights from [path1_len+1, cut1-1]
@@ -385,20 +362,20 @@ static bool swap_assignment_check(
     return (l11_in_uPath != l11_in_interval) == uPathToInterval;
 }
 
-void apply_update(LCTPartition& partition,
-                  const CycleWalkUpdate& update) {
-    if (!update.valid) return;
+void apply_update(LCTPartition &partition, const CycleWalkUpdate &update) {
+    if (!update.valid)
+        return;
 
-    LinkCutTree& lct = partition.lct;
+    LinkCutTree &lct = partition.lct;
 
     // Apply cuts (Julia does NOT evert before cutting)
-    for (const auto& cut : update.cuts) {
+    for (const auto &cut : update.cuts) {
         // Julia: cut!(partition.lct.nodes[cut[2]])
         lct.cut(cut.second);
     }
 
     // Apply links (Julia: evert!(link[1]); link!(link[1], link[2]))
-    for (const auto& link : update.links) {
+    for (const auto &link : update.links) {
         lct.evert(link.first);
         lct.link(link.first, link.second);
     }
@@ -451,7 +428,7 @@ void apply_update(LCTPartition& partition,
     // Recompute populations
     partition.district_pop[d1] = 0;
     partition.district_pop[d2] = 0;
-    const arma::uvec& pop = *(partition.pop);
+    const arma::uvec &pop = *(partition.pop);
     for (int v = 0; v < partition.n_vertices; v++) {
         if (partition.node_to_district[v] == d1) {
             partition.district_pop[d1] += pop(v);
@@ -462,7 +439,7 @@ void apply_update(LCTPartition& partition,
 
     // Recompute cross-district edges
     partition.cross_edges.clear();
-    const Graph& g = *(partition.graph);
+    const Graph &g = *(partition.graph);
     for (int u = 0; u < partition.n_vertices; u++) {
         int d_u = partition.node_to_district[u];
         for (int v : g[u]) {
@@ -477,13 +454,9 @@ void apply_update(LCTPartition& partition,
     }
 }
 
-int cycle_walk(LCTPartition& partition,
-               double lower, double upper,
-               double target,
-               double compactness,
-               const arma::uvec& counties,
-               Rcpp::List constraints,
-               CycleWalkDiagnostics& diagnostics) {
+int cycle_walk(LCTPartition &partition, double lower, double upper, double target,
+               double compactness, const arma::uvec &counties, Rcpp::List constraints,
+               CycleWalkDiagnostics &diagnostics) {
     // Initialize diagnostics
     diagnostics = CycleWalkDiagnostics();
 
@@ -491,21 +464,21 @@ int cycle_walk(LCTPartition& partition,
     int d1, d2;
     if (!get_random_adjacent_districts(partition, d1, d2)) {
         diagnostics.status = -1;
-        return -1;  // No adjacent districts
+        return -1; // No adjacent districts
     }
 
     // Step 2: Pick two random boundary edges
     CWEdge e1(0, 0), e2(0, 0);
     if (!get_random_edge_pair(partition, d1, d2, e1, e2)) {
         diagnostics.status = -2;
-        return -2;  // Need at least 2 boundary edges
+        return -2; // Need at least 2 boundary edges
     }
 
     // Step 3: Get the cycle paths
     std::vector<int> path1, path2;
     if (!get_cycle_paths(partition, e1, e2, path1, path2)) {
         diagnostics.status = -3;
-        return -3;  // Couldn't get cycle paths
+        return -3; // Couldn't get cycle paths
     }
 
     // Step 4: Get collapsed cycle weights (subtree populations)
@@ -519,7 +492,8 @@ int cycle_walk(LCTPartition& partition,
 
     // Verify cycle integrity
     int cycle_pop_sum = 0;
-    for (int p : cycle_pops) cycle_pop_sum += p;
+    for (int p : cycle_pops)
+        cycle_pop_sum += p;
     if (cycle_pop_sum != total_pop) {
         Rcpp::Rcout << "[ERROR] Cycle pop sum mismatch: sum=" << cycle_pop_sum
                     << ", total=" << total_pop << "\n";
@@ -540,7 +514,7 @@ int cycle_walk(LCTPartition& partition,
         diagnostics.status = -4;
         partition.lct.evert(partition.district_roots[d1]);
         partition.lct.evert(partition.district_roots[d2]);
-        return -4;  // No valid cut pairs found
+        return -4; // No valid cut pairs found
     }
 
     // Save number of valid pairs for MH ratio
@@ -630,17 +604,15 @@ int cycle_walk(LCTPartition& partition,
     // Get old plan as uvec for constraint evaluation
     arma::uvec old_plan(partition.n_vertices);
     for (int i = 0; i < partition.n_vertices; i++) {
-        old_plan(i) = old_node_to_district[i] + 1;  // 1-indexed
+        old_plan(i) = old_node_to_district[i] + 1; // 1-indexed
     }
     arma::subview_col<arma::uword> old_plan_view = old_plan.subvec(0, partition.n_vertices - 1);
 
     double old_constraint_penalty = 0.0;
     if (constraints.size() > 0) {
         old_constraint_penalty = calc_gibbs_tgt(
-            old_plan_view, partition.n_districts, partition.n_vertices,
-            changed_districts, psi_vec, *(partition.pop), target,
-            *(partition.graph), constraints
-        );
+            old_plan_view, partition.n_districts, partition.n_vertices, changed_districts,
+            psi_vec, *(partition.pop), target, *(partition.graph), constraints);
     }
 
     // Create the update
@@ -661,16 +633,20 @@ int cycle_walk(LCTPartition& partition,
     // Extract the d1 endpoints from the boundary edges
     int e1_d1, e1_d2, e2_d1, e2_d2;
     if (partition.get_district(e1.u) == d1) {
-        e1_d1 = e1.u; e1_d2 = e1.v;
+        e1_d1 = e1.u;
+        e1_d2 = e1.v;
     } else {
-        e1_d1 = e1.v; e1_d2 = e1.u;
+        e1_d1 = e1.v;
+        e1_d2 = e1.u;
     }
     if (partition.get_district(e2.u) == d1) {
-        e2_d1 = e2.u; e2_d2 = e2.v;
+        e2_d1 = e2.u;
+        e2_d2 = e2.v;
     } else {
-        e2_d1 = e2.v; e2_d2 = e2.u;
+        e2_d1 = e2.v;
+        e2_d2 = e2.u;
     }
-    
+
     std::vector<std::pair<int, int>> links = {{e1_d1, e1_d2}, {e2_d1, e2_d2}};
     // Selected cut edges
     std::vector<std::pair<int, int>> cuts = {{fe1_u, fe1_v}, {fe2_u, fe2_v}};
@@ -707,9 +683,8 @@ int cycle_walk(LCTPartition& partition,
     if (!links.empty()) {
         int link11_vertex = links[0].first;
         int path_ind_l11 = get_link_path_ind(link11_vertex, path1, path2);
-        update.swap_link11 = swap_assignment_check(
-            path_ind_l11, cut1, cut2, path1, path2, cycle_pops
-        );
+        update.swap_link11 =
+            swap_assignment_check(path_ind_l11, cut1, cut2, path1, path2, cycle_pops);
     } else {
         update.swap_link11 = false;
     }
@@ -727,10 +702,8 @@ int cycle_walk(LCTPartition& partition,
         psi_vec = Rcpp::NumericVector(constr_names.size());
         psi_vec.names() = constr_names;
         new_constraint_penalty = calc_gibbs_tgt(
-            new_plan_view, partition.n_districts, partition.n_vertices,
-            changed_districts, psi_vec, *(partition.pop), target,
-            *(partition.graph), constraints
-        );
+            new_plan_view, partition.n_districts, partition.n_vertices, changed_districts,
+            psi_vec, *(partition.pop), target, *(partition.graph), constraints);
     }
 
     // Compute new boundary edge count
@@ -738,12 +711,12 @@ int cycle_walk(LCTPartition& partition,
 
     // Count adjacent district pairs before and after
     // We count keys in cross_edges that involve d1 or d2
-    auto count_adj_dists_involving = [](const CrossEdgeMap& cross_edges, int d1, int d2) {
+    auto count_adj_dists_involving = [](const CrossEdgeMap &cross_edges, int d1, int d2) {
         int count = 0;
-        for (const auto& [key, edges] : cross_edges) {
-            if (key.first == d1 || key.first == d2 ||
-                key.second == d1 || key.second == d2) {
-                if (!edges.empty()) count++;
+        for (const auto &[key, edges] : cross_edges) {
+            if (key.first == d1 || key.first == d2 || key.second == d1 || key.second == d2) {
+                if (!edges.empty())
+                    count++;
             }
         }
         return count;
@@ -755,8 +728,9 @@ int cycle_walk(LCTPartition& partition,
 
     // Total number of adjacent district pairs (for proposal probability)
     int old_adj_dists_total = 0;
-    for (const auto& [key, edges] : old_cross_edges) {
-        if (!edges.empty()) old_adj_dists_total++;
+    for (const auto &[key, edges] : old_cross_edges) {
+        if (!edges.empty())
+            old_adj_dists_total++;
     }
 
     // Compute log-MH ratio
@@ -795,7 +769,7 @@ int cycle_walk(LCTPartition& partition,
     if (compactness != 1.0) {
         double log_st = 0.0;
         int n_cty = arma::max(counties);
-        const Graph& g = *(partition.graph);
+        const Graph &g = *(partition.graph);
 
         arma::umat plans_mat(partition.n_vertices, 2);
         plans_mat.col(0) = old_plan;
@@ -829,21 +803,21 @@ int cycle_walk(LCTPartition& partition,
     // MH accept/reject
     double rand_val = r_unif();
     bool do_accept = rand_val < accept_ratio;
-    
+
     if (do_accept) {
-        diagnostics.status = 1;  // Accepted
+        diagnostics.status = 1; // Accepted
         return 1;
     } else {
         // Reject - revert the update
-        diagnostics.status = 0;  // Rejected
+        diagnostics.status = 0; // Rejected
         // First undo LCT changes: cut the links, relink the cuts
-        LinkCutTree& lct = partition.lct;
-        for (const auto& link : update.links) {
+        LinkCutTree &lct = partition.lct;
+        for (const auto &link : update.links) {
             // Julia: evert!(link[2]), cut!(link[1])
             lct.evert(link.second);
             lct.cut(link.first);
         }
-        for (const auto& cut : update.cuts) {
+        for (const auto &cut : update.cuts) {
             lct.evert(cut.first);
             lct.link(cut.first, cut.second);
         }
@@ -858,6 +832,6 @@ int cycle_walk(LCTPartition& partition,
         partition.lct.evert(old_district_roots[d1]);
         partition.lct.evert(old_district_roots[d2]);
 
-        return 0;  // Rejected
+        return 0; // Rejected
     }
 }

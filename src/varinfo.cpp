@@ -9,9 +9,9 @@ double var_info(IntegerVector m1, IntegerVector m2, NumericVector pop, int k) {
 
     double total_pop = 0;
     for (int i = 0; i < V; i++) {
-        joint(m1[i]-1, m2[i]-1) += pop[i];
-        p1[m1[i]-1] += pop[i];
-        p2[m2[i]-1] += pop[i];
+        joint(m1[i] - 1, m2[i] - 1) += pop[i];
+        p1[m1[i] - 1] += pop[i];
+        p2[m2[i] - 1] += pop[i];
         total_pop += pop[i];
     }
 
@@ -19,8 +19,10 @@ double var_info(IntegerVector m1, IntegerVector m2, NumericVector pop, int k) {
     for (int i = 0; i < k; i++) {
         for (int j = 0; j < k; j++) {
             double jo = joint(i, j);
-            if (jo < 1) continue;
-            varinf -= (jo / total_pop) * (2.0*std::log(jo) - std::log(p1[i]) - std::log(p2[j]));
+            if (jo < 1)
+                continue;
+            varinf -=
+                (jo / total_pop) * (2.0 * std::log(jo) - std::log(p1[i]) - std::log(p2[j]));
         }
     }
 
@@ -28,7 +30,6 @@ double var_info(IntegerVector m1, IntegerVector m2, NumericVector pop, int k) {
         varinf = 0;
     return varinf;
 }
-
 
 /*
  * `m` has rows = precincts, cols = plans

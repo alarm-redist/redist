@@ -6,24 +6,23 @@
 #include "cw_forest_walk.h"
 #include <algorithm>
 
-bool get_random_internal_edge(LCTPartition& partition,
-                               int& u, int& v,
-                               int max_attempts) {
-    const Graph& g = *(partition.graph);
+bool get_random_internal_edge(LCTPartition &partition, int &u, int &v, int max_attempts) {
+    const Graph &g = *(partition.graph);
     int V = partition.n_vertices;
-    
+
     // Build list of all edges (as pairs where u < v)
     // This is O(E) but only done once per call
     std::vector<std::pair<int, int>> all_edges;
     for (int i = 0; i < V; i++) {
         for (int j : g[i]) {
-            if (j > i) {  // Only count each edge once
+            if (j > i) { // Only count each edge once
                 all_edges.push_back({i, j});
             }
         }
     }
-    
-    if (all_edges.empty()) return false;
+
+    if (all_edges.empty())
+        return false;
 
     // Try to find an internal edge (both endpoints in same district)
     // Pick uniformly at random from all edges, like Julia does
@@ -36,7 +35,7 @@ bool get_random_internal_edge(LCTPartition& partition,
         // Check if same district (internal edge) by checking same root
         int root_u = partition.lct.find_root(u);
         int root_v = partition.lct.find_root(v);
-        
+
         if (root_u == root_v) {
             return true;
         }
@@ -44,16 +43,16 @@ bool get_random_internal_edge(LCTPartition& partition,
     return false;
 }
 
-int internal_forest_walk(LCTPartition& partition, int max_attempts) {
+int internal_forest_walk(LCTPartition &partition, int max_attempts) {
     // Step 1: Pick a random internal edge
     int u, v;
     if (!get_random_internal_edge(partition, u, v, max_attempts)) {
-        return 1;  // No internal edge found
+        return 1; // No internal edge found
     }
 
-    LinkCutTree& lct = partition.lct;
-    LCTNode* node_u = lct.node(u);
-    LCTNode* node_v = lct.node(v);
+    LinkCutTree &lct = partition.lct;
+    LCTNode *node_u = lct.node(u);
+    LCTNode *node_v = lct.node(v);
 
     // Get the original root before we modify the tree
     int original_root = lct.find_root(u);
@@ -110,8 +109,7 @@ int internal_forest_walk(LCTPartition& partition, int max_attempts) {
     // cumulative_weights[edge_idx] < rand_sample <= cumulative_weights[edge_idx+1]
     int edge_idx = -1;
     for (int i = 0; i < path_len - 1; i++) {
-        if (rand_sample > cumulative_weights[i] &&
-            rand_sample <= cumulative_weights[i + 1]) {
+        if (rand_sample > cumulative_weights[i] && rand_sample <= cumulative_weights[i + 1]) {
             edge_idx = i;
             break;
         }

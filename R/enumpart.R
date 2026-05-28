@@ -75,14 +75,24 @@ redist_enumpart <- function(
         if (init) {
             if (Sys.info()[["sysname"]] == "Windows") {
                 makecontent <- readLines(system.file("enumpart/Makefile", package = "redist"))
-                makecontent[7] <- "\tg++ enumpart.cpp SAPPOROBDD/bddc.o SAPPOROBDD/BDD.o SAPPOROBDD/ZBDD.o -o enumpart -I$(TDZDD_DIR) -std=c++11 -O3 -DB_64 -DNDEBUG -lpsapi"
-                writeLines(text = makecontent, con = system.file("enumpart/Makefile", package = "redist"))
+                makecontent[
+                    7
+                ] <- "\tg++ enumpart.cpp SAPPOROBDD/bddc.o SAPPOROBDD/BDD.o SAPPOROBDD/ZBDD.o -o enumpart -I$(TDZDD_DIR) -std=c++11 -O3 -DB_64 -DNDEBUG -lpsapi"
+                writeLines(
+                    text = makecontent,
+                    con = system.file("enumpart/Makefile", package = "redist")
+                )
             }
             sys::exec_wait("make", args = c("-C", system.file("enumpart", package = "redist")))
             if (Sys.info()[["sysname"]] == "Windows") {
                 makecontent <- readLines(system.file("enumpart/Makefile", package = "redist"))
-                makecontent[7] <- "\tg++ enumpart.cpp SAPPOROBDD/bddc.o SAPPOROBDD/BDD.o SAPPOROBDD/ZBDD.o -o enumpart -I$(TDZDD_DIR) -std=c++11 -O3 -DB_64 -DNDEBUG"
-                writeLines(text = makecontent, con = system.file("enumpart/Makefile", package = "redist"))
+                makecontent[
+                    7
+                ] <- "\tg++ enumpart.cpp SAPPOROBDD/bddc.o SAPPOROBDD/BDD.o SAPPOROBDD/ZBDD.o -o enumpart -I$(TDZDD_DIR) -std=c++11 -O3 -DB_64 -DNDEBUG"
+                writeLines(
+                    text = makecontent,
+                    con = system.file("enumpart/Makefile", package = "redist")
+                )
             }
         }
 
@@ -91,14 +101,18 @@ redist_enumpart <- function(
         utils::write.table(
             data.frame(ordered_mat),
             file = paste0(ordered_path, ".dat"),
-            quote = FALSE, row.names = FALSE, col.names = FALSE
+            quote = FALSE,
+            row.names = FALSE,
+            col.names = FALSE
         )
 
         if (!is.null(weight_path)) {
             utils::write.table(
                 t(total_pop),
                 file = paste0(weight_path, ".dat"),
-                quote = FALSE, row.names = FALSE, col.names = FALSE
+                quote = FALSE,
+                row.names = FALSE,
+                col.names = FALSE
             )
         }
 
@@ -136,9 +150,12 @@ redist_enumpart <- function(
     n_plans <- ncol(plans)
 
     new_redist_plans(
-        plans, map,
+        plans,
+        map,
         "enumpart",
-        wgt = rep(1, n_plans), resampled = FALSE, ndists = ndists
+        wgt = rep(1, n_plans),
+        resampled = FALSE,
+        ndists = ndists
     )
 }
 
@@ -177,18 +194,25 @@ redist_enumpart_frontier <- function(adj = NULL, ordered_path = NULL) {
         vals <- scan(paste0(ordered_path, ".dat"), integer(), quiet = TRUE)
         edges_unsort <- matrix(vals, ncol = 2, byrow = TRUE)
     } else if (!is.null(adj)) {
-        edges_unsort <- do.call(rbind, lapply(seq_along(adj), function(i) {
-            nbrs <- adj[[i]] + 1L  # 0-indexed -> 1-indexed
-            nbrs <- nbrs[nbrs > i]
-            if (length(nbrs) == 0L) return(NULL)
-            cbind(i, nbrs)
-        }))
+        edges_unsort <- do.call(
+            rbind,
+            lapply(seq_along(adj), function(i) {
+                nbrs <- adj[[i]] + 1L # 0-indexed -> 1-indexed
+                nbrs <- nbrs[nbrs > i]
+                if (length(nbrs) == 0L) {
+                    return(NULL)
+                }
+                cbind(i, nbrs)
+            })
+        )
     } else {
         cli::cli_abort("Must provide either {.arg adj} or {.arg ordered_path}.")
     }
 
-    edges <- cbind(pmin(edges_unsort[, 1], edges_unsort[, 2]),
-                   pmax(edges_unsort[, 1], edges_unsort[, 2]))
+    edges <- cbind(
+        pmin(edges_unsort[, 1], edges_unsort[, 2]),
+        pmax(edges_unsort[, 1], edges_unsort[, 2])
+    )
 
     n <- nrow(edges)
     frontier <- rep(FALSE, max(edges))
@@ -200,8 +224,12 @@ redist_enumpart_frontier <- function(adj = NULL, ordered_path = NULL) {
         frontier[e1] <- TRUE
         frontier[e2] <- TRUE
 
-        if (i == n || !any(edges[(i + 1):n, ] == e1)) frontier[e1] <- FALSE
-        if (i == n || !any(edges[(i + 1):n, ] == e2)) frontier[e2] <- FALSE
+        if (i == n || !any(edges[(i + 1):n, ] == e1)) {
+            frontier[e1] <- FALSE
+        }
+        if (i == n || !any(edges[(i + 1):n, ] == e2)) {
+            frontier[e2] <- FALSE
+        }
 
         frontier_sizes[i + 1L] <- sum(frontier)
     }
@@ -236,14 +264,24 @@ redist.init.enumpart <- function() {
     .Deprecated("redist_enumpart")
     if (Sys.info()[["sysname"]] == "Windows") {
         makecontent <- readLines(system.file("enumpart/Makefile", package = "redist"))
-        makecontent[7] <- "\tg++ enumpart.cpp SAPPOROBDD/bddc.o SAPPOROBDD/BDD.o SAPPOROBDD/ZBDD.o -o enumpart -I$(TDZDD_DIR) -std=c++11 -O3 -DB_64 -DNDEBUG -lpsapi"
-        writeLines(text = makecontent, con = system.file("enumpart/Makefile", package = "redist"))
+        makecontent[
+            7
+        ] <- "\tg++ enumpart.cpp SAPPOROBDD/bddc.o SAPPOROBDD/BDD.o SAPPOROBDD/ZBDD.o -o enumpart -I$(TDZDD_DIR) -std=c++11 -O3 -DB_64 -DNDEBUG -lpsapi"
+        writeLines(
+            text = makecontent,
+            con = system.file("enumpart/Makefile", package = "redist")
+        )
     }
     sys::exec_wait("make", args = c("-C", system.file("enumpart", package = "redist")))
     if (Sys.info()[["sysname"]] == "Windows") {
         makecontent <- readLines(system.file("enumpart/Makefile", package = "redist"))
-        makecontent[7] <- "\tg++ enumpart.cpp SAPPOROBDD/bddc.o SAPPOROBDD/BDD.o SAPPOROBDD/ZBDD.o -o enumpart -I$(TDZDD_DIR) -std=c++11 -O3 -DB_64 -DNDEBUG"
-        writeLines(text = makecontent, con = system.file("enumpart/Makefile", package = "redist"))
+        makecontent[
+            7
+        ] <- "\tg++ enumpart.cpp SAPPOROBDD/bddc.o SAPPOROBDD/BDD.o SAPPOROBDD/ZBDD.o -o enumpart -I$(TDZDD_DIR) -std=c++11 -O3 -DB_64 -DNDEBUG"
+        writeLines(
+            text = makecontent,
+            con = system.file("enumpart/Makefile", package = "redist")
+        )
     }
     0
 }
@@ -273,8 +311,13 @@ redist.init.enumpart <- function() {
 #' @export
 #' @concept enumerate
 #' @keywords internal
-redist.prep.enumpart <- function(adj, ordered_path, weight_path = NULL,
-                                 total_pop = NULL, unordered_path) {
+redist.prep.enumpart <- function(
+    adj,
+    ordered_path,
+    weight_path = NULL,
+    total_pop = NULL,
+    unordered_path
+) {
     .Deprecated("redist_enumpart")
     if (!missing(unordered_path)) {
         cli_warn("{.arg unordered_path} is deprecated and will be ignored.")
@@ -284,14 +327,20 @@ redist.prep.enumpart <- function(adj, ordered_path, weight_path = NULL,
     }
     rlang::check_installed("igraph")
     ordered_mat <- do.call(rbind, ndscut(lapply(adj, unique)))
-    utils::write.table(data.frame(ordered_mat),
-                       file = paste0(ordered_path, ".dat"),
-                       quote = FALSE, row.names = FALSE, col.names = FALSE
+    utils::write.table(
+        data.frame(ordered_mat),
+        file = paste0(ordered_path, ".dat"),
+        quote = FALSE,
+        row.names = FALSE,
+        col.names = FALSE
     )
     if (!is.null(weight_path)) {
-        utils::write.table(t(total_pop),
-                           file = paste0(weight_path, ".dat"),
-                           quote = FALSE, row.names = FALSE, col.names = FALSE
+        utils::write.table(
+            t(total_pop),
+            file = paste0(weight_path, ".dat"),
+            quote = FALSE,
+            row.names = FALSE,
+            col.names = FALSE
         )
     }
     0L
@@ -325,9 +374,17 @@ redist.prep.enumpart <- function(adj, ordered_path, weight_path = NULL,
 #' @export
 #' @concept enumerate
 #' @keywords internal
-redist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
-                                all = TRUE, n = NULL, weight_path = NULL,
-                                lower = NULL, upper = NULL, options = NULL) {
+redist.run.enumpart <- function(
+    ordered_path,
+    out_path,
+    ndists = 2,
+    all = TRUE,
+    n = NULL,
+    weight_path = NULL,
+    lower = NULL,
+    upper = NULL,
+    options = NULL
+) {
     .Deprecated("redist_enumpart")
     if (is.null(options)) {
         if (all) {
@@ -339,14 +396,20 @@ redist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
             options <- c("-k", as.integer(ndists), "-comp", "-sample", as.integer(n))
         }
     }
-    if (!is.null(lower)) options <- c(options, "-lower", as.character(lower))
-    if (!is.null(upper)) options <- c(options, "-upper", as.character(upper))
+    if (!is.null(lower)) {
+        options <- c(options, "-lower", as.character(lower))
+    }
+    if (!is.null(upper)) {
+        options <- c(options, "-upper", as.character(upper))
+    }
     options <- c(paste0(ordered_path, ".dat"),
                  if (!is.null(weight_path)) paste0(weight_path, ".dat"),
                  options)
-    sys::exec_wait(paste0(system.file("enumpart", package = "redist"), "/enumpart"),
-                   args = options,
-                   std_out = paste0(out_path, ".dat"), std_err = TRUE
+    sys::exec_wait(
+        paste0(system.file("enumpart", package = "redist"), "/enumpart"),
+        args = options,
+        std_out = paste0(out_path, ".dat"),
+        std_err = TRUE
     )
 }
 
@@ -374,7 +437,9 @@ redist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
 redist.read.enumpart <- function(out_path, skip = 0, n_max = -1L) {
     .Deprecated("redist_enumpart")
     sols <- readLines(paste0(out_path, ".dat"), n = n_max)
-    if (skip > 0) sols <- sols[-seq_len(skip)]
+    if (skip > 0) {
+        sols <- sols[-seq_len(skip)]
+    }
     apply(do.call("cbind", strsplit(sols, " ")), 2, as.integer) + 1L
 }
 
@@ -436,19 +501,42 @@ redist.calc.frontier.size <- function(ordered_path) {
 #' @concept enumerate
 #' @export
 #' @keywords internal
-redist.enumpart <- function(adj, ordered_path, out_path, ndists = 2,
-                            all = TRUE, n = NULL, weight_path = NULL,
-                            lower = NULL, upper = NULL, init = FALSE,
-                            read = TRUE, total_pop = NULL, unordered_path) {
+redist.enumpart <- function(
+    adj,
+    ordered_path,
+    out_path,
+    ndists = 2,
+    all = TRUE,
+    n = NULL,
+    weight_path = NULL,
+    lower = NULL,
+    upper = NULL,
+    init = FALSE,
+    read = TRUE,
+    total_pop = NULL,
+    unordered_path
+) {
     .Deprecated("redist_enumpart")
     if (!missing(unordered_path)) {
         cli_warn("{.arg unordered_path} is deprecated and will be ignored.")
     }
-    if (init) suppressWarnings(redist.init.enumpart())
+    if (init) {
+        suppressWarnings(redist.init.enumpart())
+    }
     suppressWarnings(redist.prep.enumpart(adj, ordered_path, weight_path, total_pop))
-    suppressWarnings(redist.run.enumpart(ordered_path, out_path, ndists, all, n,
-                                         weight_path, lower, upper))
-    if (!read) return(0)
+    suppressWarnings(redist.run.enumpart(
+        ordered_path,
+        out_path,
+        ndists,
+        all,
+        n,
+        weight_path,
+        lower,
+        upper
+    ))
+    if (!read) {
+        return(0)
+    }
     cds <- suppressWarnings(redist.read.enumpart(out_path))
     par <- if (!is.null(total_pop)) redist.parity(cds, total_pop) else rep(NA_real_, ncol(cds))
     list(plans = cds, parity = par)

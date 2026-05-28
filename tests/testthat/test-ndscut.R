@@ -5,102 +5,114 @@ result_to_matrix <- function(result) {
 }
 
 check_isomorphic <- function(edges1, edges2) {
-  G1 <- igraph::graph_from_edgelist(edges1, directed = FALSE)
-  G2 <- igraph::graph_from_edgelist(edges2, directed = FALSE)
-  igraph::isomorphic(G1, G2)
+    G1 <- igraph::graph_from_edgelist(edges1, directed = FALSE)
+    G2 <- igraph::graph_from_edgelist(edges2, directed = FALSE)
+    igraph::isomorphic(G1, G2)
 }
 
 is_connected_order <- function(result) {
-  touched <- result[[1]]
-  for (i in seq_along(result)[-1]) {
-    if (!any(result[[i]] %in% touched)) {
-      return(FALSE)
+    touched <- result[[1]]
+    for (i in seq_along(result)[-1]) {
+        if (!any(result[[i]] %in% touched)) {
+            return(FALSE)
+        }
+        touched <- union(touched, result[[i]])
     }
-    touched <- union(touched, result[[i]])
-  }
-  TRUE
+    TRUE
 }
 
 test_that('ndscut preserves graph structure', {
-  cases <- list(
+    cases <- list(
     path = matrix(c(1, 2, 2, 3, 3, 4), ncol = 2, byrow = TRUE),
     triangle = matrix(c(1, 2, 2, 3, 3, 1), ncol = 2, byrow = TRUE),
     star = matrix(c(1, 2, 1, 3, 1, 4, 1, 5), ncol = 2, byrow = TRUE),
     grid = matrix(c(1, 2, 2, 3, 1, 4, 2, 5, 3, 6, 4, 5, 5, 6), ncol = 2, byrow = TRUE)
   )
 
-  for (name in names(cases)) {
-    edges <- cases[[name]]
-    result <- ndscut(edges)
-    result_mat <- result_to_matrix(result)
+    for (name in names(cases)) {
+        edges <- cases[[name]]
+        result <- ndscut(edges)
+        result_mat <- result_to_matrix(result)
 
-    expect_equal(length(result), nrow(edges), info = name)
-    expect_true(check_isomorphic(edges, result_mat), info = name)
-    expect_true(is_connected_order(result), info = name)
-  }
+        expect_equal(length(result), nrow(edges), info = name)
+        expect_true(check_isomorphic(edges, result_mat), info = name)
+        expect_true(is_connected_order(result), info = name)
+    }
 })
 
 test_that('ndscut handles empty input', {
-  result <- ndscut(matrix(ncol = 2, nrow = 0))
-  expect_null(result)
+    result <- ndscut(matrix(ncol = 2, nrow = 0))
+    expect_null(result)
 })
 
 test_that('ndscut accepts adjacency list (0-indexed)', {
-  # Simple path as adjacency list
-  adj_path <- list(c(1L), c(0L, 2L), c(1L, 3L), c(2L))
-  result <- ndscut(adj_path)
+    # Simple path as adjacency list
+    adj_path <- list(c(1L), c(0L, 2L), c(1L, 3L), c(2L))
+    result <- ndscut(adj_path)
 
-  expect_equal(length(result), 3)
-  expect_true(is_connected_order(result))
+    expect_equal(length(result), 3)
+    expect_true(is_connected_order(result))
 
-  # Triangle
-  adj_tri <- list(c(1L, 2L), c(0L, 2L), c(0L, 1L))
-  expect_equal(length(ndscut(adj_tri)), 3)
+    # Triangle
+    adj_tri <- list(c(1L, 2L), c(0L, 2L), c(0L, 1L))
+    expect_equal(length(ndscut(adj_tri)), 3)
 })
 
 test_that('ndscut produces equivalent frontier size for FL25', {
-  # Python output (ordered.dat) for reference
-  python_ordered <- matrix(c(
+    # Python output (ordered.dat) for reference
+    python_ordered <- matrix(
+        c(
     6, 23, 3, 23, 3, 6, 21, 23, 3, 21, 1, 6, 1, 3, 3, 4, 4, 21, 1, 4,
     2, 21, 1, 2, 2, 4, 6, 9, 1, 9, 18, 21, 2, 18, 1, 14, 9, 14, 1, 15,
     14, 15, 1, 13, 13, 15, 2, 16, 16, 18, 1, 12, 12, 13, 1, 11, 11, 12, 1, 10,
     10, 11, 2, 17, 16, 17, 1, 8, 8, 10, 1, 7, 7, 8, 2, 19, 17, 19, 2, 20,
     19, 20, 1, 5, 5, 7, 2, 22, 20, 22, 5, 22, 5, 24, 22, 24, 5, 25, 22, 25, 24, 25
-  ), ncol = 2, byrow = TRUE)
+  ),
+        ncol = 2,
+        byrow = TRUE
+    )
 
-  # Get R result from adjacency list
-  result <- ndscut(adj)
-  result_mat <- result_to_matrix(result)
+    # Get R result from adjacency list
+    result <- ndscut(adj)
+    result_mat <- result_to_matrix(result)
 
-  # Basic checks
-  expect_equal(nrow(result_mat), 51)
-  expect_true(is_connected_order(result))
-  expect_true(check_isomorphic(python_ordered, result_mat))
+    # Basic checks
+    expect_equal(nrow(result_mat), 51)
+    expect_true(is_connected_order(result))
+    expect_true(check_isomorphic(python_ordered, result_mat))
 
-  # Write both to temp files and compare frontier sizes
-  dir <- tempdir()
-  py_path <- file.path(dir, 'py_ordered')
-  r_path <- file.path(dir, 'r_ordered')
+    # Write both to temp files and compare frontier sizes
+    dir <- tempdir()
+    py_path <- file.path(dir, 'py_ordered')
+    r_path <- file.path(dir, 'r_ordered')
 
-  utils::write.table(data.frame(python_ordered), paste0(py_path, '.dat'),
-    quote = FALSE, row.names = FALSE, col.names = FALSE
-  )
-  utils::write.table(data.frame(result_mat), paste0(r_path, '.dat'),
-    quote = FALSE, row.names = FALSE, col.names = FALSE
-  )
+    utils::write.table(
+        data.frame(python_ordered),
+        paste0(py_path, '.dat'),
+        quote = FALSE,
+        row.names = FALSE,
+        col.names = FALSE
+    )
+    utils::write.table(
+        data.frame(result_mat),
+        paste0(r_path, '.dat'),
+        quote = FALSE,
+        row.names = FALSE,
+        col.names = FALSE
+    )
 
-  py_frontier <- redist_enumpart_frontier(ordered_path = py_path)
-  r_frontier <- redist_enumpart_frontier(ordered_path = r_path)
+    py_frontier <- redist_enumpart_frontier(ordered_path = py_path)
+    r_frontier <- redist_enumpart_frontier(ordered_path = r_path)
 
-  # R should produce equivalent or better frontier size
-  expect_equal(r_frontier$max, py_frontier$max)
-  expect_equal(r_frontier$average, py_frontier$average, tolerance = 0.1)
+    # R should produce equivalent or better frontier size
+    expect_equal(r_frontier$max, py_frontier$max)
+    expect_equal(r_frontier$average, py_frontier$average, tolerance = 0.1)
 })
 
 test_that('ndscut produces equivalent frontier size for Iowa', {
-  # old python implementation
-  python_ordered <- matrix(
-    c(23L, 49L, 23L, 53L, 49L, 53L, 16L, 23L, 16L, 53L, 31L, 49L,
+    # old python implementation
+    python_ordered <- matrix(
+        c(23L, 49L, 23L, 53L, 49L, 53L, 16L, 23L, 16L, 53L, 31L, 49L,
       31L, 53L, 23L, 82L, 16L, 82L, 16L, 70L, 70L, 82L, 53L, 57L, 16L,
       57L, 28L, 53L, 28L, 31L, 28L, 57L, 16L, 52L, 52L, 70L, 52L, 57L,
       22L, 31L, 22L, 28L, 10L, 57L, 10L, 28L, 58L, 70L, 52L, 58L, 6L,
@@ -134,34 +146,45 @@ test_that('ndscut produces equivalent frontier size for Iowa', {
       67L, 21L, 74L, 11L, 21L, 11L, 18L, 18L, 47L, 47L, 97L, 67L, 97L,
       18L, 97L, 30L, 32L, 21L, 30L, 21L, 71L, 18L, 71L, 18L, 75L, 75L,
       97L, 30L, 72L, 71L, 72L, 71L, 84L, 75L, 84L, 60L, 72L, 60L, 84L
-    ), ncol = 2, byrow = TRUE)
+    ),
+        ncol = 2,
+        byrow = TRUE
+    )
 
-  # Get R result from adjacency list
-  adj_ia <- redist.adjacency(iowa)
-  result <- ndscut(adj_ia)
-  result_mat <- result_to_matrix(result)
+    # Get R result from adjacency list
+    adj_ia <- redist.adjacency(iowa)
+    result <- ndscut(adj_ia)
+    result_mat <- result_to_matrix(result)
 
-  # Basic checks
-  expect_equal(nrow(result_mat), 222)
-  expect_true(is_connected_order(result))
-  expect_true(check_isomorphic(python_ordered, result_mat))
+    # Basic checks
+    expect_equal(nrow(result_mat), 222)
+    expect_true(is_connected_order(result))
+    expect_true(check_isomorphic(python_ordered, result_mat))
 
-  # Write both to temp files and compare frontier sizes
-  dir <- tempdir()
-  py_path <- file.path(dir, 'py_ordered')
-  r_path <- file.path(dir, 'r_ordered')
+    # Write both to temp files and compare frontier sizes
+    dir <- tempdir()
+    py_path <- file.path(dir, 'py_ordered')
+    r_path <- file.path(dir, 'r_ordered')
 
-  utils::write.table(data.frame(python_ordered), paste0(py_path, '.dat'),
-                     quote = FALSE, row.names = FALSE, col.names = FALSE
-  )
-  utils::write.table(data.frame(result_mat), paste0(r_path, '.dat'),
-                     quote = FALSE, row.names = FALSE, col.names = FALSE
-  )
+    utils::write.table(
+        data.frame(python_ordered),
+        paste0(py_path, '.dat'),
+        quote = FALSE,
+        row.names = FALSE,
+        col.names = FALSE
+    )
+    utils::write.table(
+        data.frame(result_mat),
+        paste0(r_path, '.dat'),
+        quote = FALSE,
+        row.names = FALSE,
+        col.names = FALSE
+    )
 
-  py_frontier <- redist_enumpart_frontier(ordered_path = py_path)
-  r_frontier <- redist_enumpart_frontier(ordered_path = r_path)
+    py_frontier <- redist_enumpart_frontier(ordered_path = py_path)
+    r_frontier <- redist_enumpart_frontier(ordered_path = r_path)
 
-  # R should produce equivalent or better frontier size
-  expect_equal(r_frontier$max, py_frontier$max)
-  expect_equal(r_frontier$average, py_frontier$average, tolerance = 0.1)
+    # R should produce equivalent or better frontier size
+    expect_equal(r_frontier$max, py_frontier$max)
+    expect_equal(r_frontier$average, py_frontier$average, tolerance = 0.1)
 })

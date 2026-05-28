@@ -4,8 +4,8 @@
  * Partition `x` and its indices `idxs` between `right` and `left` by `pivot`
  */
 // TESTED
-void partition_vec(std::vector<double> &x, std::vector<int> &idxs, int left,
-                   int right, int &pivot) {
+void partition_vec(std::vector<double> &x, std::vector<int> &idxs, int left, int right,
+                   int &pivot) {
     double pivot_value = x[pivot];
     std::swap(x[pivot], x[right]);
     std::swap(idxs[pivot], idxs[right]);
@@ -29,7 +29,8 @@ int select_k(std::vector<double> x, int k) {
     int right = x.size() - 1;
     int left = 0;
     std::vector<int> idxs(right + 1);
-    for (int i = 0; i <= right; i++) idxs[i] = i;
+    for (int i = 0; i <= right; i++)
+        idxs[i] = i;
 
     k--;
     while (true) {
@@ -47,7 +48,6 @@ int select_k(std::vector<double> x, int k) {
     }
 }
 
-List cli_config(bool clear, const char * fmt) {
-    return List::create(_["clear"]=clear, _["show_after"]=0.25,
-                        _["format"]=fmt);
+List cli_config(bool clear, const char *fmt) {
+    return List::create(_["clear"] = clear, _["show_after"] = 0.25, _["format"] = fmt);
 }

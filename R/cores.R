@@ -39,25 +39,30 @@
 #' core <- redist.identify.cores(adj = fl250_map$adj, plan = plan)
 #' redist.plot.cores(shp = fl250, plan = plan, core = core)
 #'
-redist.identify.cores <- function(adj, plan, boundary = 1, focus = NULL,
-                                  simplify = TRUE) {
-    if (!is.list(adj)) cli::cli_abort("{.arg adj} must be a list.")
+redist.identify.cores <- function(adj, plan, boundary = 1, focus = NULL, simplify = TRUE) {
+    if (!is.list(adj)) {
+        cli::cli_abort("{.arg adj} must be a list.")
+    }
     if (is.matrix(plan)) {
         plan <- plan[, 1]
     }
 
-
     # init a nice empty list
-    cd_within_k <- lapply(1:length(plan), FUN = function(x) {integer(0)})
+    cd_within_k <- lapply(1:length(plan), FUN = function(x) {
+        integer(0)
+    })
 
     core <- cores(adj = adj, dm = plan, k = boundary, cd_within_k = cd_within_k)
 
     if (!is.null(focus)) {
-        idx <- unlist(lapply(core$cd_within_k, FUN = function(x) {focus %in% x})) | plan == focus
+        idx <- unlist(lapply(core$cd_within_k, FUN = function(x) {
+            focus %in% x
+        })) |
+            plan == focus
 
         core$k <- ifelse(idx, core$k, 0)
 
-        conncomp <- update_conncomp(dm  = core$dm, kvec = core$k, adj = adj)
+        conncomp <- update_conncomp(dm = core$dm, kvec = core$k, adj = adj)
         core$conncomp <- conncomp
     }
 
@@ -66,11 +71,12 @@ redist.identify.cores <- function(adj, plan, boundary = 1, focus = NULL,
         mutate(gid = row_number()) %>%
         ungroup() %>%
         mutate(gid = ifelse(boundary == 0, .data$cc, gid)) %>%
-        mutate(gid = paste0(.data$dm, "-", boundary, "-", gid)) %>% group_by(gid) %>%
-        mutate(group = cur_group_id()) %>% ungroup()
+        mutate(gid = paste0(.data$dm, "-", boundary, "-", gid)) %>%
+        group_by(gid) %>%
+        mutate(group = cur_group_id()) %>%
+        ungroup()
 
     gid <- tb$group
-
 
     if (simplify) {
         gid
@@ -94,11 +100,9 @@ redist.identify.cores <- function(adj, plan, boundary = 1, focus = NULL,
 #' @concept post
 #' @export
 redist.uncoarsen <- function(plans, group_index) {
-    uncoarse <- matrix(nrow = length(group_index),
-        ncol = ncol(plans))
+    uncoarse <- matrix(nrow = length(group_index), ncol = ncol(plans))
 
     remain <- sort(unique(group_index))
-
 
     for (i in 1:length(group_index)) {
         uncoarse[i, ] <- plans[which(group_index[i] == remain), ]

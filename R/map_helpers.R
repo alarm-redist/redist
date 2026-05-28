@@ -1,5 +1,3 @@
-
-
 #' Check that a \code{redist_map} object is contiguous
 #'
 #' @param x the object
@@ -9,7 +7,9 @@
 #'
 #' @export
 is_contiguous <- function(x) {
-    if (!inherits(x, "redist_map")) cli::cli_abort("{.arg x} must be a {.cls redist_map}")
+    if (!inherits(x, "redist_map")) {
+        cli::cli_abort("{.arg x} must be a {.cls redist_map}")
+    }
     all(contiguity(get_adj(x), rep(1, nrow(x))) == 1)
 }
 
@@ -18,7 +18,9 @@ is_contiguous <- function(x) {
 # checks if is a proportion/pct
 is_prop <- function(x) is.double(x) && min(x, na.rm = TRUE) >= 0 && max(x, na.rm = TRUE) <= 1
 # checks if is not a  proportion/pct
-is_nonprop <- function(x) is.numeric(x) && (min(x, na.rm = TRUE) < 0 || max(x, na.rm = TRUE) > 1)
+is_nonprop <- function(x) {
+    is.numeric(x) && (min(x, na.rm = TRUE) < 0 || max(x, na.rm = TRUE) > 1)
+}
 # checks if x is constant within levels of rel
 is_const_rel <- function(rel) {
     function(x) {
@@ -54,28 +56,37 @@ merge_by <- function(.data, ..., by_existing = TRUE, drop_geom = TRUE, collapse_
     key_val <- rlang::eval_tidy(dots[[1]], .data)
     pop_col <- attr(.data, "pop_col")
 
-    if (drop_geom && inherits(.data, "sf"))
+    if (drop_geom && inherits(.data, "sf")) {
         .data <- sf::st_drop_geometry(.data)
+    }
 
     col <- attr(.data, "existing_col")
     unique_chr <- function(x) paste(unique(x), collapse = "~")
     is_col_chr <- if (collapse_chr) is.character else (function(x) FALSE)
     if (!is.null(col) && by_existing) {
         dplyr::group_by(.data, dplyr::across(dplyr::all_of(col)), !!!dots) %>%
-            dplyr::summarize(dplyr::across(where(is_prop),
-                                           ~ weighted.mean(., w = .data[[pop_col]], na.rm = TRUE)),
-                             dplyr::across(where(is.numeric), sum, na.rm = TRUE),
-                             dplyr::across(where(is_const_rel(key_val)), ~ .[1]),
-                             dplyr::across(where(is_col_chr), unique_chr),
-                             .groups = "drop")
+            dplyr::summarize(
+                dplyr::across(
+                    where(is_prop),
+                    ~ weighted.mean(., w = .data[[pop_col]], na.rm = TRUE)
+                ),
+                dplyr::across(where(is.numeric), sum, na.rm = TRUE),
+                dplyr::across(where(is_const_rel(key_val)), ~ .[1]),
+                dplyr::across(where(is_col_chr), unique_chr),
+                .groups = "drop"
+            )
     } else {
         dplyr::group_by(.data, !!!dots) %>%
-            dplyr::summarize(dplyr::across(where(is_prop),
-                                           ~ weighted.mean(., w = .data[[pop_col]], na.rm = TRUE)),
-                             dplyr::across(where(is.numeric), sum, na.rm = TRUE),
-                             dplyr::across(where(is_const_rel(key_val)), ~ .[1]),
-                             dplyr::across(where(is_col_chr), unique_chr),
-                             .groups = "drop") %>%
+            dplyr::summarize(
+                dplyr::across(
+                    where(is_prop),
+                    ~ weighted.mean(., w = .data[[pop_col]], na.rm = TRUE)
+                ),
+                dplyr::across(where(is.numeric), sum, na.rm = TRUE),
+                dplyr::across(where(is_const_rel(key_val)), ~ .[1]),
+                dplyr::across(where(is_col_chr), unique_chr),
+                .groups = "drop"
+            ) %>%
             `attr<-`("existing_col", NULL)
     }
 }
@@ -90,16 +101,24 @@ merge_by <- function(.data, ..., by_existing = TRUE, drop_geom = TRUE, collapse_
 #' @concept prepare
 #' @export
 make_cores <- function(.data = cur_map(), boundary = 1, focus = NULL) {
-    if (is.null(.data))
+    if (is.null(.data)) {
         cli::cli_abort("Must provide {.arg .data} if not called within a {.pkg dplyr} verb")
-    if (!inherits(.data, "redist_map")) cli::cli_abort("{.arg .data} must be a {.cls redist_map}")
+    }
+    if (!inherits(.data, "redist_map")) {
+        cli::cli_abort("{.arg .data} must be a {.cls redist_map}")
+    }
 
     existing <- get_existing(.data)
-    if (is.null(existing))
+    if (is.null(existing)) {
         cli::cli_abort(c("No existing plan found from which to compute cores.",
                     ">" = "Add one using the {.arg existing_plan} argument to {.fun redist_map}"))
+    }
 
-    redist.identify.cores(adj = get_adj(.data),
-                          plan = vctrs::vec_group_id(existing),
-                          boundary = boundary, focus = focus, simplify = TRUE)
+    redist.identify.cores(
+        adj = get_adj(.data),
+        plan = vctrs::vec_group_id(existing),
+        boundary = boundary,
+        focus = focus,
+        simplify = TRUE
+    )
 }

@@ -1,6 +1,5 @@
 # tidy accessor/helper functions ----
 
-
 #' Access the Current `redist_plans()` Object
 #'
 #' Useful inside piped expressions and `dplyr` functions.
@@ -25,10 +24,16 @@ get_cur_df <- function(dplyr_funcs) {
     for (i in rev(seq_along(calls))) {
         call <- calls[[i]]
         frame <- frames[[i]]
-        if (is.null(rlang::call_name(call))) next
-        if (any(vapply(dplyr_funcs,
-            function(x) identical(x, rlang::frame_fn(frame)),
-            logical(1)))) {
+        if (is.null(rlang::call_name(call))) {
+            next
+        }
+        if (
+            any(vapply(
+                dplyr_funcs,
+                function(x) identical(x, rlang::frame_fn(frame)),
+                logical(1)
+            ))
+        ) {
             return(rlang::env_get(frame, ".data"))
         }
     }
@@ -37,8 +42,10 @@ get_cur_df <- function(dplyr_funcs) {
 
 #' Helper function to get current map object
 #' @noRd
-cur_map <- function(verbs = c("mutate", "summarize", "merge_by",
-                        "filter", "arrange", "transmute")) {
+cur_map <- function(
+    verbs = c("mutate", "summarize", "merge_by",
+                        "filter", "arrange", "transmute")
+) {
     get_cur_df(list(mutate = mutate.redist_map,
         transmute = transmute.redist_map,
         summarize = summarise.redist_map,
@@ -49,8 +56,10 @@ cur_map <- function(verbs = c("mutate", "summarize", "merge_by",
 
 #' Helper function to get current plans object
 #' @noRd
-cur_plans <- function(verbs = c("mutate", "summarize", "filter",
-                          "arrange", "transmute")) {
+cur_plans <- function(
+    verbs = c("mutate", "summarize", "filter",
+                          "arrange", "transmute")
+) {
     get_cur_df(list(mutate = mutate.redist_plans,
         transmute = transmute.redist_plans,
         summarize = summarise.redist_plans,
@@ -58,4 +67,3 @@ cur_plans <- function(verbs = c("mutate", "summarize", "filter",
         arrange = arrange.redist_plans)[verbs])
 }
 #
-

@@ -21,8 +21,14 @@
 #' shp <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
 #' plans <- redist_smc(shp, 100)
 #' redist.plot.wted.adj(shp, plans = plans, counties = region)
-redist.plot.wted.adj <- function(shp, plans, counties = NULL,
-                                 ref = TRUE, adj = NULL, plot_shp = TRUE) {
+redist.plot.wted.adj <- function(
+    shp,
+    plans,
+    counties = NULL,
+    ref = TRUE,
+    adj = NULL,
+    plot_shp = TRUE
+) {
     # Check inputs ----
     if ("SpatialPolygonsDataFrame" %in% class(shp)) {
         shp <- shp %>% st_as_sf()
@@ -31,7 +37,7 @@ redist.plot.wted.adj <- function(shp, plans, counties = NULL,
     }
 
     check_tidy_types(NULL, plans)
-    plans <-  get_plans_matrix(subset_sampled(plans))
+    plans <- get_plans_matrix(subset_sampled(plans))
 
     if (inherits(shp, "redist_map")) {
         if (missing(adj)) {

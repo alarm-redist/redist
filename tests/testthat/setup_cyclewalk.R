@@ -12,8 +12,13 @@ grid_sf <- grid_sf[c(13, 14, 9, 10, 15, 16, 11, 12, 5, 6, 1, 2, 7, 8, 3, 4), ]
 grid_sf$adj <- redist.adjacency(grid_sf)
 grid_sf$pop <- rep(1L, 16)
 grid_sf$init <- c(1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 4L, 4L, 4L, 4L)
-grid <- redist_map(grid_sf, existing_plan = init, pop_bounds = c(3.99, 4, 4.01),
-                   adj = grid_sf$adj) |> suppressWarnings()
+grid <- redist_map(
+    grid_sf,
+    existing_plan = init,
+    pop_bounds = c(3.99, 4, 4.01),
+    adj = grid_sf$adj
+) |>
+    suppressWarnings()
 
 # Tolerance checker for distribution tests
 # Allows 10% relative tolerance for large probabilities (>1%)

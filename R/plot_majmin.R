@@ -11,7 +11,6 @@
 #' @concept plot
 #' @export
 redist.plot.majmin <- function(grouppercent, type = "hist", title = "") {
-
     if (type == "hist") {
         mm <- colSums(grouppercent > 0.5)
 
@@ -20,10 +19,12 @@ redist.plot.majmin <- function(grouppercent, type = "hist", title = "") {
             geom_histogram() +
             theme_bw() +
             labs(x = "Minority Majority Districts", y = "Count", title = title)
-
     } else if (type == "toptwo") {
-        tibble(blk_pct = c(grouppercent), district = rep(1:nrow(grouppercent), ncol(grouppercent)),
-            nloop = rep(1:ncol(grouppercent), each = nrow(grouppercent))) %>%
+        tibble(
+            blk_pct = c(grouppercent),
+            district = rep(1:nrow(grouppercent), ncol(grouppercent)),
+            nloop = rep(1:ncol(grouppercent), each = nrow(grouppercent))
+        ) %>%
             group_by(nloop) %>%
             arrange(desc(blk_pct), .by_group = TRUE) %>%
             mutate(group_id = row_number()) %>%
@@ -36,11 +37,12 @@ redist.plot.majmin <- function(grouppercent, type = "hist", title = "") {
             labs(x = "Larger Minority Percent", y = "Smaller Minority Percent") +
             theme_bw() +
             annotate("rect", xmin = 0.5, ymin = 0.5, xmax = 1, ymax = 1, alpha = 0.2)
-
-
     } else if (type == "box") {
-        tibble(blk_pct = c(grouppercent), district = rep(1:nrow(grouppercent), ncol(grouppercent)),
-            nloop = rep(1:ncol(grouppercent), each = nrow(grouppercent))) %>%
+        tibble(
+            blk_pct = c(grouppercent),
+            district = rep(1:nrow(grouppercent), ncol(grouppercent)),
+            nloop = rep(1:ncol(grouppercent), each = nrow(grouppercent))
+        ) %>%
             group_by(district) %>%
             mutate(blk_pct = sort(blk_pct)) %>%
             ungroup() %>%
@@ -48,7 +50,6 @@ redist.plot.majmin <- function(grouppercent, type = "hist", title = "") {
             geom_boxplot() +
             theme_bw() +
             labs(x = "Districts, Sorted by Minority Percent", y = "Minority Percent")
-
     } else {
         stop("No available type specified.")
     }

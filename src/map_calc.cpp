@@ -6,14 +6,15 @@
  * Compute the logarithm of the graph theoretic length of the boundary between
  * `distr_root` and `distr_other`, where the root of `ust` is in `distr_root`
  */
-double log_boundary(const Graph &g, const subview_col<uword> &districts,
-                    int distr_root, int distr_other) {
+double log_boundary(const Graph &g, const subview_col<uword> &districts, int distr_root,
+                    int distr_other) {
     int V = g.size();
 
     double count = 0; // number of cuttable edges to create eq-pop districts
     for (int i = 0; i < V; i++) {
         std::vector<int> nbors = g[i];
-        if (districts(i) != distr_root) continue; // same side of boundary as root
+        if (districts(i) != distr_root)
+            continue; // same side of boundary as root
         for (int nbor : nbors) {
             if (districts(nbor) != distr_other)
                 continue;
@@ -28,14 +29,15 @@ double log_boundary(const Graph &g, const subview_col<uword> &districts,
 /*
  * Compute the status quo penalty for district `distr`
  */
-double eval_sq_entropy(const subview_col<uword> &districts, const uvec &current,
-                       int distr, const uvec &pop, int n_distr, int n_current, int V) {
+double eval_sq_entropy(const subview_col<uword> &districts, const uvec &current, int distr,
+                       const uvec &pop, int n_distr, int n_current, int V) {
     double accuml = 0;
     for (int j = 1; j <= n_current; j++) { // 1-indexed districts
         double pop_overlap = 0;
         double pop_total = 0;
         for (int k = 0; k < V; k++) {
-            if (current[k] != j) continue;
+            if (current[k] != j)
+                continue;
             pop_total += pop[k];
 
             if (districts[k] == distr)
@@ -52,10 +54,10 @@ double eval_sq_entropy(const subview_col<uword> &districts, const uvec &current,
 /*
  * Compute the new, hinge group penalty for district `distr`
  */
-double eval_grp_hinge(const subview_col<uword> &districts, int distr,
-                      const vec &tgts_grp, const uvec &grp_pop, const uvec &total_pop) {
+double eval_grp_hinge(const subview_col<uword> &districts, int distr, const vec &tgts_grp,
+                      const uvec &grp_pop, const uvec &total_pop) {
     uvec idxs = find(districts == distr);
-    double frac = ((double) sum(grp_pop(idxs))) / sum(total_pop(idxs));
+    double frac = ((double)sum(grp_pop(idxs))) / sum(total_pop(idxs));
     // figure out which to compare it to
     double target;
     double diff = 1;
@@ -74,10 +76,10 @@ double eval_grp_hinge(const subview_col<uword> &districts, int distr,
 /*
  * Compute the new, hinge group penalty for district `distr`
  */
-double eval_grp_inv_hinge(const subview_col<uword> &districts, int distr,
-                      const vec &tgts_grp, const uvec &grp_pop, const uvec &total_pop) {
+double eval_grp_inv_hinge(const subview_col<uword> &districts, int distr, const vec &tgts_grp,
+                          const uvec &grp_pop, const uvec &total_pop) {
     uvec idxs = find(districts == distr);
-    double frac = ((double) sum(grp_pop(idxs))) / sum(total_pop(idxs));
+    double frac = ((double)sum(grp_pop(idxs))) / sum(total_pop(idxs));
     // figure out which to compare it to
     double target;
     double diff = 1;
@@ -96,11 +98,10 @@ double eval_grp_inv_hinge(const subview_col<uword> &districts, int distr,
 /*
  * Compute the power-based group penalty for district `distr`
  */
-double eval_grp_pow(const subview_col<uword> &districts, int distr,
-                   const uvec &grp_pop, const uvec &total_pop,
-                   double tgt_grp, double tgt_other, double pow) {
+double eval_grp_pow(const subview_col<uword> &districts, int distr, const uvec &grp_pop,
+                    const uvec &total_pop, double tgt_grp, double tgt_other, double pow) {
     uvec idxs = find(districts == distr);
-    double frac = ((double) sum(grp_pop(idxs))) / sum(total_pop(idxs));
+    double frac = ((double)sum(grp_pop(idxs))) / sum(total_pop(idxs));
     return std::pow(std::fabs(frac - tgt_grp) * std::fabs(frac - tgt_other), pow);
 }
 
@@ -122,12 +123,10 @@ double eval_inc(const subview_col<uword> &districts, int distr, const uvec &incu
     return inc_in_distr;
 }
 
-
 // helper function
 // calculates districts which appear in each county (but not zeros)
 std::vector<std::set<int>> calc_county_dist(const subview_col<uword> &districts,
-                                            const uvec &counties, int n_cty,
-                                            bool zero_ok) {
+                                            const uvec &counties, int n_cty, bool zero_ok) {
     std::vector<std::set<int>> county_dist(n_cty);
     int V = counties.size();
     for (int i = 0; i < n_cty; i++) {
@@ -135,7 +134,7 @@ std::vector<std::set<int>> calc_county_dist(const subview_col<uword> &districts,
     }
     for (int i = 0; i < V; i++) {
         if (zero_ok || districts[i] > 0) {
-            county_dist[counties[i]-1].insert(districts[i]);
+            county_dist[counties[i] - 1].insert(districts[i]);
         }
     }
     return county_dist;
@@ -144,9 +143,10 @@ std::vector<std::set<int>> calc_county_dist(const subview_col<uword> &districts,
 /*
  * Compute the county split penalty for district `distr`
  */
-double eval_splits(const subview_col<uword> &districts, int distr,
-                   const uvec &counties, int n_cty, bool smc) {
-    std::vector<std::set<int>> county_dist = calc_county_dist(districts, counties, n_cty, distr == 0);
+double eval_splits(const subview_col<uword> &districts, int distr, const uvec &counties,
+                   int n_cty, bool smc) {
+    std::vector<std::set<int>> county_dist =
+        calc_county_dist(districts, counties, n_cty, distr == 0);
 
     int splits = 0;
     for (int i = 0; i < n_cty; i++) {
@@ -172,9 +172,10 @@ double eval_splits(const subview_col<uword> &districts, int distr,
 /*
  * Compute the county multisplit penalty for district `distr`
  */
-double eval_multisplits(const subview_col<uword> &districts, int distr,
-                        const uvec &counties, int n_cty, bool smc) {
-    std::vector<std::set<int>> county_dist = calc_county_dist(districts, counties, n_cty, distr == 0);
+double eval_multisplits(const subview_col<uword> &districts, int distr, const uvec &counties,
+                        int n_cty, bool smc) {
+    std::vector<std::set<int>> county_dist =
+        calc_county_dist(districts, counties, n_cty, distr == 0);
 
     double splits = 0;
     for (int i = 0; i < n_cty; i++) {
@@ -200,9 +201,10 @@ double eval_multisplits(const subview_col<uword> &districts, int distr,
 /*
  * Compute the total splits penalty for district `distr`
  */
-double eval_total_splits(const subview_col<uword> &districts, int distr,
-                         const uvec &counties, int n_cty, bool smc) {
-    std::vector<std::set<int>> county_dist = calc_county_dist(districts, counties, n_cty, distr == 0);
+double eval_total_splits(const subview_col<uword> &districts, int distr, const uvec &counties,
+                         int n_cty, bool smc) {
+    std::vector<std::set<int>> county_dist =
+        calc_county_dist(districts, counties, n_cty, distr == 0);
 
     double splits = 0;
     for (int i = 0; i < n_cty; i++) {
@@ -226,11 +228,8 @@ double eval_total_splits(const subview_col<uword> &districts, int distr,
 /*
  * Compute the Polsby Popper penalty for district `distr`
  */
-double eval_polsby(const subview_col<uword> &districts, int distr,
-                   const ivec &from,
-                   const ivec &to,
-                   const vec &area,
-                   const vec &perimeter) {
+double eval_polsby(const subview_col<uword> &districts, int distr, const ivec &from,
+                   const ivec &to, const vec &area, const vec &perimeter) {
     uvec idxs = find(districts == distr);
 
     double pi4 = 4.0 * 3.14159265;
@@ -239,12 +238,12 @@ double eval_polsby(const subview_col<uword> &districts, int distr,
     double tot_perim = 0.0;
 
     for (int e = 0; e < from.size(); e++) {
-        if(from(e) == -1) {
-            if(districts(to(e) - 1) == distr) {
+        if (from(e) == -1) {
+            if (districts(to(e) - 1) == distr) {
                 tot_perim += perimeter(e);
             }
         } else {
-            if(districts(from(e) - 1) == distr && districts(to(e) - 1) != distr) {
+            if (districts(from(e) - 1) == distr && districts(to(e) - 1) != distr) {
                 tot_perim += perimeter(e);
             }
         }
@@ -257,15 +256,14 @@ double eval_polsby(const subview_col<uword> &districts, int distr,
 /*
  * Compute the Fryer-Holden penalty for district `distr`
  */
-double eval_fry_hold(const subview_col<uword> &districts, int distr,
-                     const uvec &total_pop, mat ssdmat, double denominator = 1.0) {
+double eval_fry_hold(const subview_col<uword> &districts, int distr, const uvec &total_pop,
+                     mat ssdmat, double denominator = 1.0) {
     uvec idxs = find(districts == distr);
     double ssd = 0.0;
 
     for (int i = 0; i < idxs.size() - 1; i++) {
         for (int k = i + 1; k < idxs.size(); k++) {
-            ssd += (double) ssdmat(idxs(i), idxs(k)) * total_pop(idxs(i)) *
-                total_pop(idxs(k));
+            ssd += (double)ssdmat(idxs(i), idxs(k)) * total_pop(idxs(i)) * total_pop(idxs(k));
         }
     }
 
@@ -275,24 +273,23 @@ double eval_fry_hold(const subview_col<uword> &districts, int distr,
 /*
  * Compute the population penalty for district `distr`
  */
-double eval_pop_dev(const subview_col<uword> &districts, int distr,
-                       const uvec &total_pop, double parity) {
+double eval_pop_dev(const subview_col<uword> &districts, int distr, const uvec &total_pop,
+                    double parity) {
     uvec idxs = find(districts == distr);
     double pop = sum(total_pop(idxs));
 
     return std::pow(pop / parity - 1.0, 2.0);
 }
 
-
 /*
  * Compute the segregation penalty for district `distr`
  */
-double eval_segregation(const subview_col<uword> &districts, int distr,
-                        const uvec &grp_pop, const uvec &total_pop) {
+double eval_segregation(const subview_col<uword> &districts, int distr, const uvec &grp_pop,
+                        const uvec &total_pop) {
 
     int T = sum(total_pop);
-    double pAll = (double) sum(grp_pop) / T;
-    double denom = (double) 2.0 * T * pAll * (1 - pAll);
+    double pAll = (double)sum(grp_pop) / T;
+    double denom = (double)2.0 * T * pAll * (1 - pAll);
 
     uvec idxs = find(districts == distr);
     double grp = sum(grp_pop(idxs));
@@ -304,9 +301,8 @@ double eval_segregation(const subview_col<uword> &districts, int distr,
 /*
  * Compute the qps penalty for district `distr`
  */
-double eval_qps(const subview_col<uword> &districts, int distr,
-                const uvec &total_pop, const uvec &cities, int n_city,
-                int nd) {
+double eval_qps(const subview_col<uword> &districts, int distr, const uvec &total_pop,
+                const uvec &cities, int n_city, int nd) {
 
     vec tally(n_city);
     vec pj(n_city);
@@ -316,7 +312,7 @@ double eval_qps(const subview_col<uword> &districts, int distr,
     uvec idxs_d = find(districts == distr);
     double pop = sum(total_pop(idxs_d));
 
-    for (int i = 0; i < n_city; i++){
+    for (int i = 0; i < n_city; i++) {
         uvec idxs = find(cities == (i + 1));
         idxs = arma::intersect(idxs_d, idxs);
         tally(i) = sum(total_pop(idxs));
@@ -326,8 +322,8 @@ double eval_qps(const subview_col<uword> &districts, int distr,
     }
 
     pj = tally / pop;
-    sumpj = pj * (1.0 -  pj);
-    sumpj = sumpj / (double) nd;
+    sumpj = pj * (1.0 - pj);
+    sumpj = sumpj / (double)nd;
 
     return sum(sumpj) + log(sum(j));
 }
@@ -335,20 +331,17 @@ double eval_qps(const subview_col<uword> &districts, int distr,
 /*
  * Compute the log spanning tree penalty for district `distr`
  */
-double eval_log_st(const subview_col<uword> &districts, const Graph g,
-                   arma::uvec counties, int ndists) {
-    return (double) redistmetrics::log_st_map(g, districts, counties, ndists)[0];
+double eval_log_st(const subview_col<uword> &districts, const Graph g, arma::uvec counties,
+                   int ndists) {
+    return (double)redistmetrics::log_st_map(g, districts, counties, ndists)[0];
 }
 
 /*
  * Compute the edges removed penalty for district `distr`
  */
 double eval_er(const subview_col<uword> &districts, const Graph g, int ndists) {
-    return (double) redistmetrics::n_removed(g, districts, ndists)[0];
+    return (double)redistmetrics::n_removed(g, districts, ndists)[0];
 }
-
-
-
 
 /*
  * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,
@@ -359,18 +352,21 @@ mat prec_cooccur(umat m, uvec idxs, int ncores) {
     int n = idxs.n_elem;
     mat out(v, v);
 
-    RcppThread::parallelFor(0, v, [&] (int i) {
-        out(i, i) = 1;
-        for (int j = 0; j < i; j++) {
-            double shared = 0;
-            for (int k = 0; k < n; k++) {
-                shared += m(i, idxs[k]-1) == m(j, idxs[k]-1);
+    RcppThread::parallelFor(
+        0, v,
+        [&](int i) {
+            out(i, i) = 1;
+            for (int j = 0; j < i; j++) {
+                double shared = 0;
+                for (int k = 0; k < n; k++) {
+                    shared += m(i, idxs[k] - 1) == m(j, idxs[k] - 1);
+                }
+                shared /= n;
+                out(i, j) = shared;
+                out(j, i) = shared;
             }
-            shared /= n;
-            out(i, j) = shared;
-            out(j, i) = shared;
-        }
-    }, ncores);
+        },
+        ncores);
 
     return out;
 }
@@ -415,8 +411,8 @@ NumericVector group_pct_top_k(const IntegerMatrix m, const NumericVector group_p
     NumericVector out(n);
 
     for (int i = 0; i < n; i++) {
-         std::vector<double> grp_distr(n_distr, 0.0);
-         std::vector<double> tot_distr(n_distr, 0.0);
+        std::vector<double> grp_distr(n_distr, 0.0);
+        std::vector<double> tot_distr(n_distr, 0.0);
 
         for (int j = 0; j < v; j++) {
             int distr = m(j, i) - 1;
@@ -428,15 +424,14 @@ NumericVector group_pct_top_k(const IntegerMatrix m, const NumericVector group_p
             grp_distr[j] /= tot_distr[j];
         }
 
-        std::nth_element(grp_distr.begin(), grp_distr.begin() + k - 1,
-                         grp_distr.end(), std::greater<double>());
+        std::nth_element(grp_distr.begin(), grp_distr.begin() + k - 1, grp_distr.end(),
+                         std::greater<double>());
 
         out[i] = grp_distr[k - 1];
     }
 
     return out;
 }
-
 
 /*
  * Tally a variable by district.
@@ -461,8 +456,8 @@ NumericMatrix pop_tally(IntegerMatrix districts, vec pop, int n_distr) {
  * Create the projective distribution of a variable `x`
  */
 // [[Rcpp::export]]
-NumericMatrix proj_distr_m(IntegerMatrix districts, const arma::vec x,
-                           IntegerVector draw_idx, int n_distr) {
+NumericMatrix proj_distr_m(IntegerMatrix districts, const arma::vec x, IntegerVector draw_idx,
+                           int n_distr) {
     int n = draw_idx.size();
     int V = districts.nrow();
 
@@ -470,7 +465,7 @@ NumericMatrix proj_distr_m(IntegerMatrix districts, const arma::vec x,
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < V; j++) {
             int idx = draw_idx[i] - 1;
-            out(j, i) = x[n_distr*idx + districts(j, idx) - 1];
+            out(j, i) = x[n_distr * idx + districts(j, idx) - 1];
         }
     }
 
@@ -500,19 +495,21 @@ NumericVector max_dev(const IntegerMatrix districts, const vec pop, int n_distr)
 /*
  * Calculate the deviation for cutting at every edge in a spanning tree.
  */
-std::vector<double> tree_dev(Tree &ust, int root, const uvec &pop,
-                             double total_pop, double target) {
+std::vector<double> tree_dev(Tree &ust, int root, const uvec &pop, double total_pop,
+                             double target) {
     int V = pop.size();
     std::vector<int> pop_below(V, 0);
     std::vector<int> parent(V);
     tree_pop(ust, root, pop, pop_below, parent);
     // compile a list of candidate edges to cut
     int idx = 0;
-    std::vector<double> devs(V-1);
+    std::vector<double> devs(V - 1);
     for (int i = 0; i < V; i++) {
-        if (i == root) continue;
+        if (i == root)
+            continue;
         devs.at(idx) = std::min(std::fabs(pop_below.at(i) - target),
-                std::fabs(total_pop - pop_below[i] - target)) / target;
+                                std::fabs(total_pop - pop_below[i] - target)) /
+                       target;
         idx++;
     }
 
@@ -520,7 +517,6 @@ std::vector<double> tree_dev(Tree &ust, int root, const uvec &pop,
 
     return devs;
 }
-
 
 /*
  * Column-wise maximum

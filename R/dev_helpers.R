@@ -9,18 +9,23 @@ ld_ia <- function() {
 
 enforce_style <- function() {
     R_style <- function(...) {
-        x <- styler::tidyverse_style(scope = I(c("spaces", "indention", "tokens")),
+        x <- styler::tidyverse_style(
+            scope = I(c("spaces", "indention", "tokens")),
             indent_by = 4,
             strict = FALSE,
             start_comments_with_one_space = TRUE,
             math_token_spacing = styler::specify_math_token_spacing(
                 zero = c("'^'", "'*'", "'/'"),
-                one = c("'+'", "'-'")))
+                one = c("'+'", "'-'")
+            )
+        )
         x
     }
 
     styler::cache_activate()
-    styler::style_pkg(style = R_style,
-                      exclude_files=c("R/redist_smc.R", "R/redist_ms.R", "R/redist_ms_parallel.R"),
-                      exclude_dirs = "explore")
+    styler::style_pkg(
+        style = R_style,
+        exclude_files = c("R/redist_smc.R", "R/redist_ms.R", "R/redist_ms_parallel.R"),
+        exclude_dirs = "explore"
+    )
 }

@@ -131,37 +131,59 @@
 #' @md
 #' @order 1
 #' @export
-redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints = list(),
-                       resample = TRUE, runs = 1L, ncores = 0L, init_particles = NULL,
-                       n_steps = NULL, adapt_k_thresh = 0.99, seq_alpha = 0.5,
-                       truncate = (compactness != 1), trunc_fn = redist_quantile_trunc,
-                       pop_temper = 0, final_infl = 1,
-                       ref_name = NULL, verbose = FALSE, silent = FALSE) {
+redist_smc <- function(
+    map,
+    nsims,
+    counties = NULL,
+    compactness = 1,
+    constraints = list(),
+    resample = TRUE,
+    runs = 1L,
+    ncores = 0L,
+    init_particles = NULL,
+    n_steps = NULL,
+    adapt_k_thresh = 0.99,
+    seq_alpha = 0.5,
+    truncate = (compactness != 1),
+    trunc_fn = redist_quantile_trunc,
+    pop_temper = 0,
+    final_infl = 1,
+    ref_name = NULL,
+    verbose = FALSE,
+    silent = FALSE
+) {
     map <- validate_redist_map(map)
     V <- nrow(map)
     adj <- get_adj(map)
 
-    if (compactness < 0)
+    if (compactness < 0) {
         cli::cli_abort("{.arg compactness} must be non-negative.")
-    if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
+    }
+    if (adapt_k_thresh < 0 | adapt_k_thresh > 1) {
         cli::cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
-    if (seq_alpha <= 0 | seq_alpha > 1)
+    }
+    if (seq_alpha <= 0 | seq_alpha > 1) {
         cli::cli_abort("{.arg seq_alpha} must lie in (0, 1].")
-    if (nsims < 1)
+    }
+    if (nsims < 1) {
         cli::cli_abort("{.arg nsims} must be positive.")
+    }
 
     counties <- rlang::eval_tidy(rlang::enquo(counties), map)
     if (is.null(counties)) {
         counties <- rep(1, V)
     } else {
-        if (any(is.na(counties)))
+        if (any(is.na(counties))) {
             cli::cli_abort("County vector must not contain missing values.")
+        }
 
         # handle discontinuous counties
         component <- contiguity(adj, vctrs::vec_group_id(counties))
-        counties <- dplyr::if_else(component > 1,
-                                   paste0(as.character(counties), "-", component),
-                                   as.character(counties)) %>%
+        counties <- dplyr::if_else(
+            component > 1,
+            paste0(as.character(counties), "-", component),
+            as.character(counties)
+        ) %>%
             as.factor() %>%
             as.integer()
         if (any(component > 1)) {
@@ -185,8 +207,12 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
     constraints <- as.list(constraints) # drop data attribute
 
     verbosity <- 1
-    if (verbose) verbosity <- 3
-    if (silent) verbosity <- 0
+    if (verbose) {
+        verbosity <- 3
+    }
+    if (silent) {
+        verbosity <- 0
+    }
 
     pop_bounds <- attr(map, "pop_bounds")
     pop <- map[[attr(map, "pop_col")]]
@@ -203,10 +229,12 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
         init_particles <- matrix(0L, nrow = V, ncol = nsims)
         n_drawn <- 0L
     } else {
-        if (nrow(init_particles) != V)
+        if (nrow(init_particles) != V) {
             cli::cli_abort("{.arg init_particles} must have as many rows as {.arg map} has precincts.")
-        if (ncol(init_particles) != nsims)
+        }
+        if (ncol(init_particles) != nsims) {
             cli::cli_abort("{.arg init_particles} must have {.arg nsims} columns.")
+        }
         n_drawn <- as.integer(max(init_particles[, 1]))
     }
     if (is.null(n_steps)) {
@@ -222,21 +250,20 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
     ncores_runs <- min(ncores_max, runs)
     ncores_per <- as.integer(ncores)
     if (ncores_per == 0) {
-        if (nsims/100*length(adj)/200 < 20) {
+        if (nsims / 100 * length(adj) / 200 < 20) {
             ncores_per <- 1L
         } else {
-            ncores_per <- floor(ncores_max/ncores_runs)
+            ncores_per <- floor(ncores_max / ncores_runs)
         }
     }
 
-    lags <- 1 + unique(round((ndists - 1)^0.8*seq(0, 0.7, length.out = 4)^0.9))
+    lags <- 1 + unique(round((ndists - 1)^0.8 * seq(0, 0.7, length.out = 4)^0.9))
     control <- list(adapt_k_thresh = adapt_k_thresh,
                     seq_alpha = seq_alpha,
                     pop_temper = pop_temper,
                     final_infl = final_infl,
                     lags = lags,
                     cores = as.integer(ncores_per))
-
 
     if (ncores_runs > 1) {
         `%oper%` <- `%dorng%`
@@ -246,12 +273,20 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
             ""
         }
 
-        if (!silent)
-            cl <- makeCluster(ncores_runs, outfile = of, methods = FALSE,
-                useXDR = .Platform$endian != "little")
-        else
-            cl <- makeCluster(ncores_runs, methods = FALSE,
-                useXDR = .Platform$endian != "little")
+        if (!silent) {
+            cl <- makeCluster(
+                ncores_runs,
+                outfile = of,
+                methods = FALSE,
+                useXDR = .Platform$endian != "little"
+            )
+        } else {
+            cl <- makeCluster(
+                ncores_runs,
+                methods = FALSE,
+                useXDR = .Platform$endian != "little"
+            )
+        }
         doParallel::registerDoParallel(cl, cores = ncores_runs)
         on.exit(stopCluster(cl))
     } else {
@@ -259,25 +294,39 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
     }
 
     t1 <- Sys.time()
-    all_out <- foreach(chain = seq_len(runs), .inorder = FALSE, .packages="redist") %oper% {
-        run_verbosity <- if (chain == 1) verbosity else 0
-        t1_run <- Sys.time()
+    all_out <- foreach(chain = seq_len(runs), .inorder = FALSE, .packages = "redist") %oper%
+        {
+            run_verbosity <- if (chain == 1) verbosity else 0
+            t1_run <- Sys.time()
 
-        algout <- smc_plans(nsims, adj, counties, pop, ndists,
-                            pop_bounds[2], pop_bounds[1], pop_bounds[3],
-                            compactness, init_particles, n_drawn, n_steps,
-                            constraints, control, run_verbosity)
-        # handle interrupt
-        if (length(algout) == 0) {
-            cli::cli_process_done()
-            cli::cli_process_done()
-        }
+            algout <- smc_plans(
+                nsims,
+                adj,
+                counties,
+                pop,
+                ndists,
+                pop_bounds[2],
+                pop_bounds[1],
+                pop_bounds[3],
+                compactness,
+                init_particles,
+                n_drawn,
+                n_steps,
+                constraints,
+                control,
+                run_verbosity
+            )
+            # handle interrupt
+            if (length(algout) == 0) {
+                cli::cli_process_done()
+                cli::cli_process_done()
+            }
 
-        lr <- -algout$lp
-        wgt <- exp(lr - mean(lr))
-        n_eff <- length(wgt)*mean(wgt)^2/mean(wgt^2)
-        if (any(is.na(lr))) {
-            cli::cli_abort(c("Sampling probabilities have been corrupted.",
+            lr <- -algout$lp
+            wgt <- exp(lr - mean(lr))
+            n_eff <- length(wgt) * mean(wgt)^2 / mean(wgt^2)
+            if (any(is.na(lr))) {
+                cli::cli_abort(c("Sampling probabilities have been corrupted.",
                 "*" = "Check that none of your constraint weights are too large.
                              The output of constraint functions multiplied by the weight
                              should generally fall in the -5 to 5 range.",
@@ -287,34 +336,36 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
                 "*" = "If you are not using any constraints, please call
                              {.code rlang::trace_back()} and file an issue at
                              {.url https://github.com/alarm-redist/redist/issues/new}"))
-        }
-
-        n_unique <- NA
-        if (resample) {
-            if (!truncate) {
-                mod_wgt <- wgt
-            } else if (requireNamespace("loo", quietly = TRUE) && is.null(trunc_fn)) {
-                mod_wgt <- wgt/sum(wgt)
-                mod_wgt <- loo::weights.importance_sampling(
-                    loo::psis(log(mod_wgt), r_eff = NA), log = FALSE)
-            } else {
-                mod_wgt <- trunc_fn(wgt)
             }
-            mod_wgt <- wgt/sum(wgt)
-            n_eff <- 1/sum(mod_wgt^2)
 
-            # rs_idx <- sample(nsims, nsims, replace = TRUE, prob = mod_wgt)
-            rs_idx <- resample_lowvar(mod_wgt)
-            n_unique <- dplyr::n_distinct(rs_idx)
-            algout$plans <- algout$plans[, rs_idx, drop = FALSE]
-            algout$ancestors <- algout$ancestors[rs_idx, , drop = FALSE]
-            storage.mode(algout$ancestors) <- "integer"
-        }
-        storage.mode(algout$plans) <- "integer"
-        t2_run <- Sys.time()
+            n_unique <- NA
+            if (resample) {
+                if (!truncate) {
+                    mod_wgt <- wgt
+                } else if (requireNamespace("loo", quietly = TRUE) && is.null(trunc_fn)) {
+                    mod_wgt <- wgt / sum(wgt)
+                    mod_wgt <- loo::weights.importance_sampling(
+                        loo::psis(log(mod_wgt), r_eff = NA),
+                        log = FALSE
+                    )
+                } else {
+                    mod_wgt <- trunc_fn(wgt)
+                }
+                mod_wgt <- wgt / sum(wgt)
+                n_eff <- 1 / sum(mod_wgt^2)
 
-        if (!is.nan(n_eff) && n_eff/nsims <= 0.05)
-            cli::cli_warn(c("Less than 5% resampling efficiency.",
+                # rs_idx <- sample(nsims, nsims, replace = TRUE, prob = mod_wgt)
+                rs_idx <- resample_lowvar(mod_wgt)
+                n_unique <- dplyr::n_distinct(rs_idx)
+                algout$plans <- algout$plans[, rs_idx, drop = FALSE]
+                algout$ancestors <- algout$ancestors[rs_idx, , drop = FALSE]
+                storage.mode(algout$ancestors) <- "integer"
+            }
+            storage.mode(algout$plans) <- "integer"
+            t2_run <- Sys.time()
+
+            if (!is.nan(n_eff) && n_eff / nsims <= 0.05) {
+                cli::cli_warn(c("Less than 5% resampling efficiency.",
                        "*" = "Increase the number of samples.",
                        "*" = "Consider weakening or removing constraints.",
                        "i" = "If sampling efficiency drops precipitously in the final
@@ -322,10 +373,11 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
                             Try increasing {.arg pop_temper} by 0.01.",
                        "i" = "If sampling efficiency declines steadily across iterations,
                             adjusting {.arg seq_alpha} upward may help a bit."))
+            }
 
-        algout$wgt <- wgt
+            algout$wgt <- wgt
 
-        algout$l_diag <- list(
+            algout$l_diag <- list(
             n_eff = n_eff,
             step_n_eff = algout$step_n_eff,
             adapt_k_thresh = adapt_k_thresh,
@@ -340,8 +392,8 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
             runtime = as.numeric(t2_run - t1_run, units = "secs")
         )
 
-        algout
-    }
+            algout
+        }
     if (verbosity >= 2) {
         t2 <- Sys.time()
         cli::cli_text("{format(nsims*runs, big.mark=',')} plans sampled in
@@ -355,21 +407,27 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
 
     # tempering warning
     temp_ratio = do.call(c, lapply(l_diag, function(x) x$sd_temper / head(x$sd_lp, -1)))
-    if (any(temp_ratio > 0.5, na.rm=TRUE)) {
+    if (any(temp_ratio > 0.5, na.rm = TRUE)) {
         cli::cli_warn(c("Population tempering is increasing the variance of the
                    resampling weights by over 50% at some steps.",
                    "*" = "Consider lowering {.arg pop_temper}."))
     }
 
-    out <- new_redist_plans(plans, map, "smc", wgt, resample,
-                            ndists = final_dists,
-                            n_eff = all_out[[1]]$n_eff,
-                            compactness = compactness,
-                            constraints = constraints,
-                            version = packageVersion("redist"),
-                            diagnostics = l_diag)
+    out <- new_redist_plans(
+        plans,
+        map,
+        "smc",
+        wgt,
+        resample,
+        ndists = final_dists,
+        n_eff = all_out[[1]]$n_eff,
+        compactness = compactness,
+        constraints = constraints,
+        version = packageVersion("redist"),
+        diagnostics = l_diag
+    )
     if (runs > 1) {
-        out <- mutate(out, chain = rep(seq_len(runs), each = n_dist_act*nsims)) %>%
+        out <- mutate(out, chain = rep(seq_len(runs), each = n_dist_act * nsims)) %>%
             dplyr::relocate('chain', .after = "draw")
     }
 

@@ -27,14 +27,12 @@
  *
  * Returns: 0 on success, 1 on failure (no internal edges found)
  */
-int internal_forest_walk(LCTPartition& partition, int max_attempts = 100);
+int internal_forest_walk(LCTPartition &partition, int max_attempts = 100);
 
 /*
  * Get a random internal edge (endpoints in same district).
  * Returns true if found, false if no internal edge exists.
  */
-bool get_random_internal_edge(LCTPartition& partition,
-                               int& u, int& v,
-                               int max_attempts = 100);
+bool get_random_internal_edge(LCTPartition &partition, int &u, int &v, int max_attempts = 100);
 
 #endif // CW_FOREST_WALK_H

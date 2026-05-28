@@ -12,7 +12,7 @@
 preproc.shp <- function(shp) {
     if (!is.null(shp)) {
         if ("SpatialPolygonsDataFrame" %in% class(shp)) {
-            shp <- shp %>%  st_as_sf()
+            shp <- shp %>% st_as_sf()
         } else if (!("sf" %in% class(shp))) {
             stop('Please provide "shp" as a SpatialPolygonsDataFrame or sf object.')
         }
@@ -41,7 +41,6 @@ preproc.adj <- function(shp, adj) {
     }
     adj
 }
-
 
 
 #' Return a random subgraph of a shape

@@ -15,8 +15,8 @@
 #include "wilson.h"
 #include <map>
 #include <set>
-#include <utility>
 #include <unordered_map>
+#include <utility>
 
 /*
  * Edge between two vertices, with weight.
@@ -28,8 +28,8 @@ struct CWEdge {
 
     CWEdge(int a, int b, double w = 1.0);
 
-    bool operator<(const CWEdge& other) const;
-    bool operator==(const CWEdge& other) const;
+    bool operator<(const CWEdge &other) const;
+    bool operator==(const CWEdge &other) const;
 };
 
 /*
@@ -52,7 +52,7 @@ using CrossEdgeMap = std::map<DistrictPair, EdgeSet>;
  * Used for efficient edge weight lookup.
  */
 struct EdgePairHash {
-    std::size_t operator()(const std::pair<int, int>& p) const {
+    std::size_t operator()(const std::pair<int, int> &p) const {
         int u = std::min(p.first, p.second);
         int v = std::max(p.first, p.second);
         // Combine hash values
@@ -64,8 +64,7 @@ struct EdgePairHash {
  * Equality for edge pairs (symmetric: (u,v) == (v,u)).
  */
 struct EdgePairEqual {
-    bool operator()(const std::pair<int, int>& a,
-                    const std::pair<int, int>& b) const {
+    bool operator()(const std::pair<int, int> &a, const std::pair<int, int> &b) const {
         return (a.first == b.first && a.second == b.second) ||
                (a.first == b.second && a.second == b.first);
     }
@@ -74,8 +73,8 @@ struct EdgePairEqual {
 /*
  * Map for sparse edge weight storage.
  */
-using EdgeWeightMap = std::unordered_map<std::pair<int, int>, double,
-                                          EdgePairHash, EdgePairEqual>;
+using EdgeWeightMap =
+    std::unordered_map<std::pair<int, int>, double, EdgePairHash, EdgePairEqual>;
 
 /*
  * LCTPartition: Maintains the redistricting plan state.
@@ -88,24 +87,24 @@ using EdgeWeightMap = std::unordered_map<std::pair<int, int>, double,
  * - Population totals per district
  */
 class LCTPartition {
-public:
-    int n_districts;                      // Number of districts
-    int n_vertices;                       // Number of vertices
+  public:
+    int n_districts; // Number of districts
+    int n_vertices;  // Number of vertices
 
-    LinkCutTree lct;                      // Link-Cut Tree for all vertices
-    std::vector<int> district_roots;      // Root vertex of each district's tree
-    std::vector<int> node_to_district;    // District assignment for each vertex
-    std::vector<int> district_pop;        // Population of each district
-    CrossEdgeMap cross_edges;             // Edges between districts
+    LinkCutTree lct;                   // Link-Cut Tree for all vertices
+    std::vector<int> district_roots;   // Root vertex of each district's tree
+    std::vector<int> node_to_district; // District assignment for each vertex
+    std::vector<int> district_pop;     // Population of each district
+    CrossEdgeMap cross_edges;          // Edges between districts
 
     // References to input data (not owned)
-    const Graph* graph;
-    const arma::uvec* pop;
-    const arma::uvec* counties;
+    const Graph *graph;
+    const arma::uvec *pop;
+    const arma::uvec *counties;
 
     // Edge weights (sparse storage - only non-default weights stored)
     EdgeWeightMap edge_weights_;
-    double default_edge_weight_;  // Default weight for edges not in map
+    double default_edge_weight_; // Default weight for edges not in map
 
     // Constructor: empty partition (use init_from_plan to populate)
     LCTPartition(int n_vertices, int n_districts);
@@ -118,11 +117,8 @@ public:
      *   3. Track the district root
      * Then find all cross-district edges.
      */
-    int init_from_plan(const Graph& g,
-                       const arma::uvec& plan,
-                       const arma::uvec& population,
-                       const arma::uvec& county_assignments,
-                       double lower, double upper);
+    int init_from_plan(const Graph &g, const arma::uvec &plan, const arma::uvec &population,
+                       const arma::uvec &county_assignments, double lower, double upper);
 
     /*
      * Get the district of a vertex.
@@ -137,7 +133,7 @@ public:
     /*
      * Get all edges between two districts.
      */
-    const EdgeSet& get_cross_edges(int d1, int d2) const;
+    const EdgeSet &get_cross_edges(int d1, int d2) const;
 
     /*
      * Check if two districts are adjacent (share at least one boundary edge).
@@ -159,7 +155,7 @@ public:
      * edge_weights_list: List where each element has $edge (length 2) and $weight (scalar)
      * Stores weights in sparse map; missing edges default to 1.0
      */
-    void set_edge_weights(const Rcpp::List& edge_weights_list);
+    void set_edge_weights(const Rcpp::List &edge_weights_list);
 
     /*
      * Get edge weight between vertices u and v.
@@ -173,14 +169,14 @@ public:
      */
     void print_state(int verbosity = 1) const;
 
-private:
+  private:
     /*
      * Load a spanning tree into the LCT.
      * tree: adjacency list representation (tree[v] = children of v)
      * root: root vertex of the tree
      * district: district index to assign
      */
-    void load_tree_into_lct(const Tree& tree, int root, int district);
+    void load_tree_into_lct(const Tree &tree, int root, int district);
 
     /*
      * Find all cross-district edges by scanning the graph.

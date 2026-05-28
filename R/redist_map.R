@@ -9,17 +9,28 @@
 # constructors and reconstructors
 
 # Main internal constructor
-new_redist_map <- function(data, adj, ndists, pop_bounds, pop_col = "pop",
-                           adj_col = "adj", add_adj = TRUE, existing_col = NULL) {
+new_redist_map <- function(
+    data,
+    adj,
+    ndists,
+    pop_bounds,
+    pop_col = "pop",
+    adj_col = "adj",
+    add_adj = TRUE,
+    existing_col = NULL
+) {
     if (add_adj) {
         stopifnot(!is.null(adj))
 
         data[[adj_col]] <- adj
     }
 
-    if (!is.integer(ndists)) cli::cli_abort("{.arg ndists} must be an integer.")
-    if (!is.numeric(pop_bounds) || length(pop_bounds) != 3)
+    if (!is.integer(ndists)) {
+        cli::cli_abort("{.arg ndists} must be an integer.")
+    }
+    if (!is.numeric(pop_bounds) || length(pop_bounds) != 3) {
         cli::cli_abort("{.arg pop_bounds} must be a numeric vector of length 3.")
+    }
 
     data <- reconstruct.redist_map(data)
     attr(data, "ndists") <- ndists
@@ -32,15 +43,20 @@ new_redist_map <- function(data, adj, ndists, pop_bounds, pop_col = "pop",
 }
 
 validate_redist_map <- function(data, check_contig = TRUE, call = parent.frame()) {
-    if (!inherits(data, "redist_map"))
+    if (!inherits(data, "redist_map")) {
         cli::cli_abort("Not a {.cls redist_map}", call = call)
-    if (!is.data.frame(data))
+    }
+    if (!is.data.frame(data)) {
         cli::cli_abort("Not a data frame", call = call)
+    }
 
     col <- attr(data, "adj_col")
-    if (is.null(col)) cli::cli_abort("No adjacency graph column found.", call = call)
-    if (!is.list(data[[col]]))
+    if (is.null(col)) {
+        cli::cli_abort("No adjacency graph column found.", call = call)
+    }
+    if (!is.list(data[[col]])) {
         cli::cli_abort("Adjacency graph column must be a properly formatted adjacency list.", call = call)
+    }
 
     if (check_contig && !is_contiguous(data)) {
         components <- contiguity(get_adj(data), rep(1, nrow(data)))
@@ -55,13 +71,15 @@ validate_redist_map <- function(data, check_contig = TRUE, call = parent.frame()
     stopifnot(!is.null(attr(data, "ndists")))
 
     exist_col <- attr(data, "existing_col")
-    if (!is.null(exist_col) && !is.numeric(data[[exist_col]]))
+    if (!is.null(exist_col) && !is.numeric(data[[exist_col]])) {
         cli::cli_abort("Existing plan {.field {exist_col}} must be a numeric vector.", call = call)
+    }
 
     pop_bounds <- attr(data, "pop_bounds")
     stopifnot(!is.null(pop_bounds))
-    if (!all(diff(pop_bounds) > 0))
+    if (!all(diff(pop_bounds) > 0)) {
         cli::cli_abort("{.arg pop_bounds} must satisfy lower < target < upper.", call = call)
+    }
 
     data
 }
@@ -69,20 +87,26 @@ validate_redist_map <- function(data, check_contig = TRUE, call = parent.frame()
 reconstruct.redist_map <- function(data, old) {
     classes <- c("tbl_df", "tbl", "data.frame")
 
-    if (inherits(data, "grouped_df"))
+    if (inherits(data, "grouped_df")) {
         classes <- c("grouped_df", classes)
-    if (inherits(data, "rowwise_df"))
+    }
+    if (inherits(data, "rowwise_df")) {
         classes <- c("rowwise_df", classes)
-    if (inherits(data, "sf"))
+    }
+    if (inherits(data, "sf")) {
         classes <- c("sf", classes)
+    }
 
     if (!missing(old)) {
-        if (attr(old, "pop_col") %in% names(data))
+        if (attr(old, "pop_col") %in% names(data)) {
             attr(data, "pop_col") <- attr(old, "pop_col")
-        if (attr(old, "adj_col") %in% names(data))
+        }
+        if (attr(old, "adj_col") %in% names(data)) {
             attr(data, "adj_col") <- attr(old, "adj_col")
-        if (is.null(attr(data, "merge_idx")))
+        }
+        if (is.null(attr(data, "merge_idx"))) {
             attr(data, "merge_idx") <- attr(old, "merge_idx")
+        }
 
         if (isTRUE((exist_col <- attr(old, "existing_col")) %in% names(data))) {
             attr(data, "existing_col") <- exist_col
@@ -91,8 +115,9 @@ reconstruct.redist_map <- function(data, old) {
             attr(data, "ndists") <- attr(old, "ndists")
         }
 
-        if (is.null(attr(data, "pop_bounds")))
+        if (is.null(attr(data, "pop_bounds"))) {
             attr(data, "pop_bounds") <- attr(old, "pop_bounds")
+        }
 
         others <- setdiff(names(attributes(old)), names(attributes(data)))
         if (length(others) > 1) {
@@ -157,10 +182,17 @@ reconstruct.redist_map <- function(data, old) {
 #' @concept prepare
 #' @md
 #' @export
-redist_map <- function(..., existing_plan = NULL, pop_tol = NULL,
-                       total_pop = c("pop", "population", "total_pop", "POP100"),
-                       ndists = NULL, pop_bounds = NULL,
-                       adj = NULL, adj_col = "adj", planarize = 3857) {
+redist_map <- function(
+    ...,
+    existing_plan = NULL,
+    pop_tol = NULL,
+    total_pop = c("pop", "population", "total_pop", "POP100"),
+    ndists = NULL,
+    pop_bounds = NULL,
+    adj = NULL,
+    adj_col = "adj",
+    planarize = 3857
+) {
     x <- tibble(...)
     is_sf <- any(vapply(x, function(x) inherits(x, "sfc"), TRUE))
     if (is_sf) {
@@ -182,8 +214,7 @@ redist_map <- function(..., existing_plan = NULL, pop_tol = NULL,
         }
     }
 
-    pop_col <- names(x)[tidyselect::eval_select(rlang::enquo(total_pop), x,
-        strict = FALSE)]
+    pop_col <- names(x)[tidyselect::eval_select(rlang::enquo(total_pop), x, strict = FALSE)]
     if (length(pop_col) == 0) {
         names <- rlang::as_label(rlang::enquo(total_pop))
         cli::cli_abort(c("Population column {.field {names}} not found.",
@@ -198,13 +229,16 @@ redist_map <- function(..., existing_plan = NULL, pop_tol = NULL,
     }
 
     existing_col <- names(tidyselect::eval_select(rlang::enquo(existing_plan), x))
-    if (length(existing_col) == 0)
+    if (length(existing_col) == 0) {
         existing_col <- NULL
+    }
 
     if (!is.null(existing_col)) {
         if (!is.numeric(x[[existing_col]])) {
             temp_col <- NULL
-            suppressWarnings({temp_col <- as.numeric(x[[existing_col]])})
+            suppressWarnings({
+                temp_col <- as.numeric(x[[existing_col]])
+            })
             if (!any(is.na(temp_col))) {
                 x[[existing_col]] <- temp_col
             } else {
@@ -227,8 +261,9 @@ redist_map <- function(..., existing_plan = NULL, pop_tol = NULL,
     if (is.null(pop_tol) && is.null(pop_bounds)) {
         if (!is.null(existing_col)) {
             pop_tol <- redist.parity(x[[existing_col]], x[[pop_col]])
-            if (pop_tol <= 0.001)
+            if (pop_tol <= 0.001) {
                 cli::cli_inform("{.arg pop_tol} calculated from existing plan is \u2264 0.1%")
+            }
         } else {
             pop_tol <- 0.01
             cli::cli_warn("{.arg pop_tol} not provided; defaulting to 1.0%")
@@ -239,23 +274,32 @@ redist_map <- function(..., existing_plan = NULL, pop_tol = NULL,
         stopifnot(!is.null(pop_tol))
         stopifnot(pop_tol > 0)
 
-        target <- sum(x[[pop_col]])/ndists
-        pop_bounds <- target*c(1 - pop_tol, 1, 1 + pop_tol)
+        target <- sum(x[[pop_col]]) / ndists
+        pop_bounds <- target * c(1 - pop_tol, 1, 1 + pop_tol)
     } else {
         pop_bounds <- rlang::eval_tidy(rlang::enquo(pop_bounds), x)
     }
 
     if (is_sf && is.null(adj)) {
-        if (!is.null(x[[adj_col]]))
+        if (!is.null(x[[adj_col]])) {
             cli::cli_abort(c("Column {.field adj_col} already present in data. ",
                 ">" = "Specify an alternate adj column."))
+        }
 
         adj <- redist.adjacency(x)
     }
 
     validate_redist_map(
-        new_redist_map(x, adj, ndists, pop_bounds, pop_col, adj_col,
-            add_adj = TRUE, existing_col)
+        new_redist_map(
+            x,
+            adj,
+            ndists,
+            pop_bounds,
+            pop_col,
+            adj_col,
+            add_adj = TRUE,
+            existing_col
+        )
     )
 }
 
@@ -273,7 +317,9 @@ as_redist_map <- function(x) {
 #' @concept prepare
 #' @export
 get_adj <- function(x) {
-    if (!inherits(x, "redist_map")) cli::cli_abort("Not a {.cls redist_map}")
+    if (!inherits(x, "redist_map")) {
+        cli::cli_abort("Not a {.cls redist_map}")
+    }
 
     x[[attr(x, "adj_col")]]
 }
@@ -283,8 +329,12 @@ get_adj <- function(x) {
 #' @returns the modified \code{redist_map} object (\code{set_adj})
 #' @export
 set_adj <- function(x, adj) {
-    if (!inherits(x, "redist_map")) cli::cli_abort("Not a {.cls redist_map}")
-    if (!is.list(adj)) cli::cli_abort("{.arg adj} must be a list")
+    if (!inherits(x, "redist_map")) {
+        cli::cli_abort("Not a {.cls redist_map}")
+    }
+    if (!is.list(adj)) {
+        cli::cli_abort("{.arg adj} must be a list")
+    }
 
     # zero-index if need be
     if ((min_idx <- min(sapply(adj, min))) != 0) {
@@ -303,7 +353,9 @@ set_adj <- function(x, adj) {
 #' @concept prepare
 #' @export
 get_existing <- function(x) {
-    if (!inherits(x, "redist_map")) cli::cli_abort("Not a {.cls redist_map}")
+    if (!inherits(x, "redist_map")) {
+        cli::cli_abort("Not a {.cls redist_map}")
+    }
 
     exist_col <- attr(x, "existing_col")
     if (is.null(exist_col)) NULL else x[[exist_col]]
@@ -316,7 +368,9 @@ get_existing <- function(x) {
 #' @concept prepare
 #' @export
 get_target <- function(x) {
-    if (!inherits(x, "redist_map")) cli::cli_abort("Not a {.cls redist_map}")
+    if (!inherits(x, "redist_map")) {
+        cli::cli_abort("Not a {.cls redist_map}")
+    }
 
     attr(x, "pop_bounds")[2]
 }
@@ -331,10 +385,12 @@ get_target <- function(x) {
 #' @concept  prepare
 #' @export
 get_pop_tol <- function(map) {
-    if (!inherits(map, "redist_map")) cli::cli_abort("Not a {.cls redist_map}")
+    if (!inherits(map, "redist_map")) {
+        cli::cli_abort("Not a {.cls redist_map}")
+    }
 
-    bot <- 1 - attr(map, "pop_bounds")[1]/attr(map, "pop_bounds")[2]
-    top <- attr(map, "pop_bounds")[3]/attr(map, "pop_bounds")[2] - 1
+    bot <- 1 - attr(map, "pop_bounds")[1] / attr(map, "pop_bounds")[2]
+    top <- attr(map, "pop_bounds")[3] / attr(map, "pop_bounds")[2] - 1
 
     if (!isTRUE(all.equal(bot, top))) {
         cli::cli_warn("Population bounds were not symmetric, using the smaller tolerance.")
@@ -351,17 +407,18 @@ get_pop_tol <- function(map) {
 #' @concept  prepare
 #' @export
 set_pop_tol <- function(map, pop_tol) {
-    if (!inherits(map, "redist_map")) cli::cli_abort("Not a {.cls redist_map}")
+    if (!inherits(map, "redist_map")) {
+        cli::cli_abort("Not a {.cls redist_map}")
+    }
 
     target <- get_target(map)
-    bot <- (1 - pop_tol)*target
-    top <- (1 + pop_tol)*target
+    bot <- (1 - pop_tol) * target
+    top <- (1 + pop_tol) * target
 
     attr(map, "pop_bounds") <- c(bot, target, top)
 
     validate_redist_map(map, check_contig = FALSE)
 }
-
 
 
 #######################
@@ -370,7 +427,9 @@ set_pop_tol <- function(map, pop_tol) {
 #' @method dplyr_row_slice redist_map
 #' @export
 dplyr_row_slice.redist_map <- function(data, i, ...) {
-    if (is.logical(i)) i <- which(i)
+    if (is.logical(i)) {
+        i <- which(i)
+    }
 
     # reduce adj. graph
     y <- vctrs::vec_slice(data, i)
@@ -380,20 +439,22 @@ dplyr_row_slice.redist_map <- function(data, i, ...) {
     # fix ndists if existing_col exists
     exist_col <- attr(data, "existing_col")
     new_distr <- attr(data, "ndists")
-    if (!is.null(exist_col))
+    if (!is.null(exist_col)) {
         new_distr <- length(unique(y[[exist_col]]))
+    }
     attr(y, "ndists") <- new_distr
 
     # fix merge_idx
     merge_idx <- attr(data, "merge_idx")
-    if (!is.null(merge_idx))
+    if (!is.null(merge_idx)) {
         merge_idx <- vctrs::vec_group_id(merge_idx[i])
+    }
     attr(y, "merge_idx") <- merge_idx
 
     # fix pop. bounds
     bounds <- attr(data, "pop_bounds")
     attr(y, "pop_bounds") <- bounds
-    new_tgt <- sum(y[[attr(data, "pop_col")]])/new_distr
+    new_tgt <- sum(y[[attr(data, "pop_col")]]) / new_distr
 
     if (new_distr > 0) {
         if (bounds[1] > new_tgt || bounds[3] < new_tgt) {
@@ -422,8 +483,7 @@ summarise.redist_map <- function(.data, ..., .groups = NULL) {
     # rebuild the graph if need be
     adj_col <- attr(.data, "adj_col")
     if (!(adj_col %in% names(ret))) {
-        ret[[adj_col]] <- collapse_adj(get_adj(.data),
-            dplyr::group_indices(.data) - 1)
+        ret[[adj_col]] <- collapse_adj(get_adj(.data), dplyr::group_indices(.data) - 1)
     }
 
     attr(ret, "merge_idx") <- dplyr::group_indices(.data)
@@ -491,42 +551,58 @@ print.redist_map <- function(x, ...) {
     cli::cli_text("A {.cls redist_map} with {nrow(x)} units and {ncol(x)} fields")
 
     bounds <- attr(x, "pop_bounds")
-    cat("To be partitioned into ", attr(x, "ndists"),
+    cat(
+        "To be partitioned into ",
+        attr(x, "ndists"),
         " districts with population between ",
-        format(bounds[2], nsmall = 0, big.mark = ","), " - ",
-        format(100 - 100*bounds[1]/bounds[2], nsmall = 1), "% and ",
-        format(bounds[2], nsmall = 0, big.mark = ","), " + ",
-        format(100*bounds[3]/bounds[2] - 100, nsmall = 1), "%\n",
-        sep = "")
+        format(bounds[2], nsmall = 0, big.mark = ","),
+        " - ",
+        format(100 - 100 * bounds[1] / bounds[2], nsmall = 1),
+        "% and ",
+        format(bounds[2], nsmall = 0, big.mark = ","),
+        " + ",
+        format(100 * bounds[3] / bounds[2] - 100, nsmall = 1),
+        "%\n",
+        sep = ""
+    )
 
     merge_idx <- attr(x, "merge_idx")
-    if (!is.null(merge_idx))
-        cat("Merged from another map with reindexing:",
-            utils::capture.output(str(merge_idx, vec.len = 2)), "\n", sep = "")
+    if (!is.null(merge_idx)) {
+        cat(
+            "Merged from another map with reindexing:",
+            utils::capture.output(str(merge_idx, vec.len = 2)),
+            "\n",
+            sep = ""
+        )
+    }
 
     if (inherits(x, "sf")) {
         geom <- st_geometry(x)
 
         cat("With geometry:\n")
         bb <- signif(attr(geom, "bbox"), options("digits")$digits)
-        cat("    bbox:           ",
+        cat(
+            "    bbox:           ",
             paste(paste(names(bb), bb[], sep = ": "), collapse = " "),
-            "\n", sep = "")
+            "\n",
+            sep = ""
+        )
 
         crs <- st_crs(geom)
         if (is.na(crs)) {
             cat(paste0("    CRS:            NA\n"))
         } else {
             if (crs$Name == "unknown") {
-                if (!is.character(crs$input) || is.na(crs$input))
-                    cat(paste0("proj4string:    ", crs$proj4string,
-                        "\n"))
-                else cat(paste0("CRS:            ", crs$input, "\n"))
-            }
-            else if (crs$IsGeographic)
+                if (!is.character(crs$input) || is.na(crs$input)) {
+                    cat(paste0("proj4string:    ", crs$proj4string, "\n"))
+                } else {
+                    cat(paste0("CRS:            ", crs$input, "\n"))
+                }
+            } else if (crs$IsGeographic) {
                 cat(paste0("    geographic CRS: ", crs$Name, "\n"))
-            else
+            } else {
                 cat(paste0("    projected CRS:  ", crs$Name, "\n"))
+            }
         }
     }
 
@@ -568,10 +644,11 @@ print.redist_map <- function(x, ...) {
 #' @concept plot
 #' @export
 plot.redist_map <- function(x, fill = NULL, by_distr = FALSE, adj = FALSE, ...) {
-    if (!inherits(x, "sf"))
+    if (!inherits(x, "sf")) {
         cli::cli_abort(c("Plotting requires a shapefile.",
             ">" = "If you've just used {.fun merge_by},
                     consider passing {.arg drop_geom = FALSE}."))
+    }
 
     fill <- rlang::enquo(fill)
     existing <- get_existing(x)
@@ -584,8 +661,14 @@ plot.redist_map <- function(x, fill = NULL, by_distr = FALSE, adj = FALSE, ...) 
     } else {
         fill_name <- rlang::quo_text(fill)
         if (!is.null(existing) && isTRUE(by_distr)) {
-            redist.plot.map(shp = x, adj = get_adj(x), plan = existing,
-                fill = !!fill, fill_label = fill_name, ...)
+            redist.plot.map(
+                shp = x,
+                adj = get_adj(x),
+                plan = existing,
+                fill = !!fill,
+                fill_label = fill_name,
+                ...
+            )
         } else {
             redist.plot.map(shp = x, fill = !!fill, fill_label = fill_name, ...)
         }

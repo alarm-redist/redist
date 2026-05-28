@@ -15,7 +15,8 @@ int rvtx(const std::vector<bool> &visited, int size, int remaining, int &lower) 
             seen_one = true;
             lower = i;
         }
-        if (accuml - 1 == idx) return i;
+        if (accuml - 1 == idx)
+            return i;
     }
     return size - 1;
 }
@@ -45,7 +46,8 @@ Multigraph county_graph(const Graph &g, const uvec &counties) {
         int county = counties.at(i) - 1;
         for (int j = 0; j < length; j++) {
             int nbor_cty = counties.at(nbors[j]) - 1;
-            if (county == nbor_cty) continue;
+            if (county == nbor_cty)
+                continue;
             std::vector<int> el = {nbor_cty, i, nbors[j]};
             cg.at(county).push_back(el);
         }
@@ -53,7 +55,6 @@ Multigraph county_graph(const Graph &g, const uvec &counties) {
 
     return cg;
 }
-
 
 /*
  * Make the district adjacency graph for `plan` from the overall precinct graph `g`
@@ -91,7 +92,6 @@ Graph district_graph(const Graph &g, const uvec &plan, int nd, bool zero) {
 
     return out;
 }
-
 
 /*
  * Initialize empty multigraph structure on graph with `V` vertices
@@ -135,19 +135,18 @@ Graph list_to_graph(const List &l) {
     int V = l.size();
     Graph g;
     for (int i = 0; i < V; i++) {
-        g.push_back(as<std::vector<int>>((IntegerVector) l[i]));
+        g.push_back(as<std::vector<int>>((IntegerVector)l[i]));
     }
     return g;
 }
-
 
 /*
  * Count population below each node in tree
  */
 // TESTED
 // [[Rcpp::export]]
-int tree_pop(Tree &ust, int vtx, const arma::uvec &pop,
-             std::vector<int> &pop_below, std::vector<int> &parent) {
+int tree_pop(Tree &ust, int vtx, const arma::uvec &pop, std::vector<int> &pop_below,
+             std::vector<int> &parent) {
     int pop_at = pop(vtx);
     const std::vector<int> *nbors = &ust[vtx];
     int length = nbors->size();
@@ -165,8 +164,7 @@ int tree_pop(Tree &ust, int vtx, const arma::uvec &pop,
  * Assign `district` to all descendants of `root` in `ust`
  */
 // TESTED
-void assign_district(const Tree &ust, subview_col<uword> &districts,
-                     int root, int district) {
+void assign_district(const Tree &ust, subview_col<uword> &districts, int root, int district) {
     districts(root) = district;
     int n_desc = ust.at(root).size();
     for (int i = 0; i < n_desc; i++) {
@@ -182,14 +180,15 @@ int find_subroot(const Tree &ust, const std::vector<bool> &ignore) {
     int V = ust.size();
     std::vector<bool> visited(V, false);
     for (int j = 0; j < V; j++) {
-        const std::vector<int>* nbors = &ust[j];
+        const std::vector<int> *nbors = &ust[j];
         for (int k = 0; k < nbors->size(); k++) {
             visited[(*nbors)[k]] = true;
         }
     }
     int root;
     for (root = 0; root < V; root++) {
-        if (!visited[root] && !ignore.at(root)) break;
+        if (!visited[root] && !ignore.at(root))
+            break;
     }
     return root;
 }

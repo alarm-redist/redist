@@ -1,7 +1,6 @@
 test_that("rsg works", {
     set.seed(1, kind = "Mersenne-Twister", normal.kind = "Inversion")
-    out <- redist.rsg(adj = adj, total_pop = pop, pop_tol = 0.2, ndists = 3,
-        verbose = FALSE)
+    out <- redist.rsg(adj = adj, total_pop = pop, pop_tol = 0.2, ndists = 3, verbose = FALSE)
 
     par <- redist.parity(out$plan, total_pop = pop)
 

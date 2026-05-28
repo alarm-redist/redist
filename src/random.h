@@ -2,9 +2,9 @@
 #define RANDOM_H
 
 #include <RcppArmadillo.h>
-#include <vector>
 #include <cstdint>
 #include <random>
+#include <vector>
 
 using namespace arma;
 
@@ -38,6 +38,5 @@ int r_int_mixstrat(int max, int stratum, double p, vec cum_wgts);
  */
 // [[Rcpp::export]]
 arma::ivec resample_lowvar(arma::vec wgts);
-
 
 #endif

@@ -70,10 +70,10 @@ redist.dist.pop.overlap <- function(plan_old, plan_new, total_pop, normalize_row
 
     if (normalize_rows) {
         pops <- tapply(total_pop, plan_old, sum)
-        out <- out/c(pops)
+        out <- out / c(pops)
     } else {
         pops <- tapply(total_pop, plan_new, sum)
-        out <- t(t(out)/c(pops))
+        out <- t(t(out) / c(pops))
     }
 
     out
@@ -109,9 +109,15 @@ redist.dist.pop.overlap <- function(plan_old, plan_new, total_pop, normalize_row
 #' redist.prec.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map,  weighting = "s",
 #'     normalize = FALSE, index_only = TRUE)
 #'
-redist.prec.pop.overlap <- function(plan_old, plan_new, total_pop, weighting = "s",
-                                    normalize = TRUE, index_only = FALSE, return_mat = FALSE) {
-
+redist.prec.pop.overlap <- function(
+    plan_old,
+    plan_new,
+    total_pop,
+    weighting = "s",
+    normalize = TRUE,
+    index_only = FALSE,
+    return_mat = FALSE
+) {
     weighting <- match.arg(weighting, choices = c("s", "m", "g", "n"))
 
     if (missing(plan_old)) {
@@ -141,27 +147,31 @@ redist.prec.pop.overlap <- function(plan_old, plan_new, total_pop, weighting = "
 
     total_pop <- matrix(total_pop, nrow = length(total_pop))
 
-    if (weighting == "s") { # weight by sum of ith and jth pop
+    if (weighting == "s") {
+        # weight by sum of ith and jth pop
         cmat <- matrix(rep(total_pop, nprec), ncol = nprec)
         rmat <- t(cmat)
         wts <- (cmat + rmat)
-    } else if (weighting == "g") { # weight by geometric mean of ith and jth pop
+    } else if (weighting == "g") {
+        # weight by geometric mean of ith and jth pop
         wts <- sqrt(total_pop %*% t(total_pop))
-    } else if (weighting == "m") { # weight by mean of ith and jth pop
+    } else if (weighting == "m") {
+        # weight by mean of ith and jth pop
         cmat <- matrix(rep(total_pop, nprec), ncol = nprec)
         rmat <- t(cmat)
-        wts <- (cmat + rmat)/2
-    } else { # if (weighting == 'n') { # no weights (matrix of 1s)
+        wts <- (cmat + rmat) / 2
+    } else {
+        # if (weighting == 'n') { # no weights (matrix of 1s)
         wts <- matrix(1, nprec, nprec)
     }
 
     mat_old <- prec_cooccur(plan_old, 1)
     mat_new <- prec_cooccur(plan_new, 1)
 
-    wted_mat <- wts*abs(mat_old - mat_new)
+    wted_mat <- wts * abs(mat_old - mat_new)
 
     if (normalize) {
-        wted_mat <- wted_mat/sum(total_pop)
+        wted_mat <- wted_mat / sum(total_pop)
     }
 
     if (index_only) {

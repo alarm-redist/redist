@@ -1,7 +1,13 @@
 test_that("crsg works", {
     set.seed(1, kind = "Mersenne-Twister", normal.kind = "Inversion")
-    out <- redist.crsg(adj = adj, total_pop = fl25$pop, pop_tol = 0.1, ndists = 3,
-        shp = fl25, verbose = FALSE)
+    out <- redist.crsg(
+        adj = adj,
+        total_pop = fl25$pop,
+        pop_tol = 0.1,
+        ndists = 3,
+        shp = fl25,
+        verbose = FALSE
+    )
     out$district_list <- lapply(out$district_list, sort)
     expected <- list(plan = c(1, 2, 2, 2, 3, 2, 3, 3, 1, 3, 3, 1, 1, 1, 1, 2,
         2, 2, 2, 2, 2, 3, 2, 3, 3),

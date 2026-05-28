@@ -73,12 +73,17 @@
 #' }
 #' @concept plot
 #' @export
-redist.diagplot <- function(sumstat, plot = c("trace", "autocorr", "densplot",
+redist.diagplot <- function(
+    sumstat,
+    plot = c("trace", "autocorr", "densplot",
                                 "mean", "gelmanrubin"),
-                            logit = FALSE, savename = NULL) {
-    if (!requireNamespace("coda", quietly = TRUE))
+    logit = FALSE,
+    savename = NULL
+) {
+    if (!requireNamespace("coda", quietly = TRUE)) {
         cli::cli_abort(c("{.fn redist.diagplot} requires the {.pkg coda} package.",
             ">" = 'Install it with {.code install.packages("coda")}'))
+    }
 
     ##############
     ## Warnings ##
@@ -86,8 +91,11 @@ redist.diagplot <- function(sumstat, plot = c("trace", "autocorr", "densplot",
     if (!inherits(sumstat, c("integer", "numeric", "list", "mcmc", "mcmc.list"))) {
         cli::cli_abort("{.arg sumstat} should be either a numeric vector, list, or {.cls mcmc} object.")
     }
-    if (!(plot %in% c("trace", "autocorr", "densplot",
-        "mean", "gelmanrubin"))) {
+    if (
+        !(plot %in%
+            c("trace", "autocorr", "densplot",
+        "mean", "gelmanrubin"))
+    ) {
         cli::cli_abort("Sorry. We don't currently support the {.value {plot}} diagnostic.")
     }
     if (plot == "gelmanrubin" & !inherits(sumstat, c("list", "mcmc.list"))) {
@@ -111,10 +119,10 @@ redist.diagplot <- function(sumstat, plot = c("trace", "autocorr", "densplot",
     ## Logit transform
     if (logit) {
         if (inherits(segout, "mcmc")) {
-            segout <- log(segout/(1 - segout))
+            segout <- log(segout / (1 - segout))
         } else if (inherits(segout, "mcmc.list")) {
             for (i in 1:length(segout)) {
-                segout[[i]] <- log(segout[[i]]/(1 - segout[[i]]))
+                segout[[i]] <- log(segout[[i]] / (1 - segout[[i]]))
             }
         }
     }
@@ -167,5 +175,4 @@ redist.diagplot <- function(sumstat, plot = c("trace", "autocorr", "densplot",
             dev.off()
         }
     }
-
 }

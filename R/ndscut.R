@@ -24,10 +24,8 @@ get_farthest_two_vertices <- function(G) {
 }
 
 
-
 # Choose the next vertex in order based on scoring criteria
 choose_next <- function(G, vertex_order, order_v_list) {
-
     neigh_ids <- function(v) {
         as.numeric(unique(igraph::neighbors(G, as.character(v))$name))
     }
@@ -70,7 +68,6 @@ order_by_NDS <- function(G, vertex_order, order_vertex_set, result_edge_list) {
     v_count <- sum(vertex_order_vec >= 1) + 1
 
     while (length(order_v_list) > 0) {
-
         v <- choose_next(G, vertex_order_vec, order_v_list)
 
         order_v_list <- order_v_list[order_v_list != v]
@@ -122,7 +119,6 @@ count_multiple <- function(G, v1, v2) {
 
 # contract node v into u, moving v's edges to u
 contracted_nodes <- function(G, u, v) {
-
     u_chr <- as.character(u)
     v_chr <- as.character(v)
 
@@ -133,7 +129,6 @@ contracted_nodes <- function(G, u, v) {
     v_neighbors <- v_neighbors[v_neighbors != u_chr]
 
     if (length(v_neighbors) > 0) {
-
         # count multiplicities of edges connected to v
         edge_counts <- vapply(
             v_neighbors,
@@ -160,21 +155,25 @@ contracted_nodes <- function(G, u, v) {
 }
 
 # recursively split graph with minimum node cuts
-split_graph <- function(G, s, t,
-                        left_vertex_set,
-                        right_vertex_set,
-                        cut_set,
-                        vertex_order,
-                        result_edge_list) {
-
+split_graph <- function(
+    G,
+    s,
+    t,
+    left_vertex_set,
+    right_vertex_set,
+    cut_set,
+    vertex_order,
+    result_edge_list
+) {
     # base case: order vertices if graph is small
-    base_case <- function(G,
-                          left_vertex_set,
-                          right_vertex_set,
-                          cut_set,
-                          vertex_order,
-                          result_edge_list) {
-
+    base_case <- function(
+        G,
+        left_vertex_set,
+        right_vertex_set,
+        cut_set,
+        vertex_order,
+        result_edge_list
+    ) {
         order_vertex_set <- igraph::V(G)$name
         order_vertex_set <- setdiff(order_vertex_set, as.character(left_vertex_set))
         order_vertex_set <- setdiff(order_vertex_set, as.character(right_vertex_set))
@@ -213,9 +212,10 @@ split_graph <- function(G, s, t,
     }
 
     # if graph is small or s-t are connected, run base case
-    if (igraph::vcount(H) <= 10 ||
-        igraph::are_adjacent(H, as.character(s), as.character(t))) {
-
+    if (
+        igraph::vcount(H) <= 10 ||
+            igraph::are_adjacent(H, as.character(s), as.character(t))
+    ) {
         return(base_case(
             G,
             left_vertex_set,
@@ -278,7 +278,9 @@ split_graph <- function(G, s, t,
     }
 
     res <- split_graph(
-        G, s, t,
+        G,
+        s,
+        t,
         left_vertex_set,
         new_right_vertex_set,
         cut,
@@ -291,7 +293,9 @@ split_graph <- function(G, s, t,
     new_left_vertex_set <- union(new_left_vertex_set, cut)
 
     split_graph(
-        G, s, t,
+        G,
+        s,
+        t,
         new_left_vertex_set,
         right_vertex_set,
         cut_set,
@@ -306,7 +310,6 @@ split_graph <- function(G, s, t,
 # Original edges become large-capacity cross edges.
 # Min s-t edge cut in the split graph = min s-t node cut in original.
 minimum_st_node_cut <- function(G, s, t) {
-
     vnames <- igraph::V(G)$name
     n <- length(vnames)
     s_chr <- as.character(s)
@@ -359,7 +362,9 @@ minimum_st_node_cut <- function(G, s, t) {
     tgt <- which(igraph::V(split_G)$name == in_node(t_chr))
     flow_res <- igraph::max_flow(split_G, source = src, target = tgt)
 
-    if (flow_res$value == 0) return(numeric(0))
+    if (flow_res$value == 0) {
+        return(numeric(0))
+    }
 
     # Cut vertices: non-{s,t} vertices whose internal edge crosses the partition
     p1 <- as.integer(flow_res$partition1)
@@ -380,9 +385,8 @@ minimum_st_node_cut <- function(G, s, t) {
 
 # simplify graph by removing degree 1 & 2 vertices, tracking for later recovery
 remove_deg12 <- function(G) {
-
     deg1_edges <- list()
-    deg2_dict  <- list()
+    deg2_dict <- list()
     deg2_cycle <- list()
 
     # ---- Helper: current degrees as named integer vector
@@ -395,7 +399,9 @@ remove_deg12 <- function(G) {
         deg <- get_deg(G)
         deg1 <- names(deg)[deg == 1]
 
-        if (length(deg1) == 0) break
+        if (length(deg1) == 0) {
+            break
+        }
 
         n <- deg1[1]
         ns <- igraph::neighbors(G, n)$name
@@ -407,7 +413,6 @@ remove_deg12 <- function(G) {
 
     # if graph is a tree, all edges will be removed
     if (igraph::ecount(G) == 0) {
-
         e <- deg1_edges[[length(deg1_edges)]]
         deg1_edges <- deg1_edges[-length(deg1_edges)]
 
@@ -435,7 +440,9 @@ remove_deg12 <- function(G) {
         deg <- get_deg(G)
         deg2 <- names(deg)[deg == 2]
 
-        if (length(deg2) == 0) break
+        if (length(deg2) == 0) {
+            break
+        }
 
         n <- deg2[1]
         walk <- n
@@ -446,7 +453,6 @@ remove_deg12 <- function(G) {
         walk <- c(c, walk)
 
         while (igraph::degree(G, c) == 2) {
-
             if (c == n) {
                 return(list(
                     G = G,
@@ -481,12 +487,9 @@ remove_deg12 <- function(G) {
 
         # store chain info to recover it later
         if (walk[1] == walk[length(walk)]) {
-
             key <- walk[1]
             deg2_cycle[[key]] <- c(deg2_cycle[[key]], list(walk_num))
-
         } else {
-
             has_e <- igraph::are_adjacent(G, walk[1], walk[length(walk)])
             G <- igraph::add_edges(G, c(walk[1], walk[length(walk)]))
 
@@ -529,7 +532,7 @@ get_cycle <- function(edge_list) {
     # walk the cycle and record edges in order
     for (i in seq_len(n)) {
         # Find all edges touching v
-        idx <- which(edges[,1] == v | edges[,2] == v)
+        idx <- which(edges[, 1] == v | edges[, 2] == v)
 
         # Extract the two vertices from those edges
         candidates <- unique(c(edges[idx, 1], edges[idx, 2]))
@@ -550,7 +553,6 @@ get_cycle <- function(edge_list) {
 
 # re-insert the degree 1 & 2 vertices that were removed
 recover_deg12 <- function(deg1_edges, deg2_dict, deg2_cycle, result_edge_list) {
-
     # Helper: normalize edge
     norm_edge <- function(e) sort(as.numeric(e))
 
@@ -590,16 +592,19 @@ recover_deg12 <- function(deg1_edges, deg2_dict, deg2_cycle, result_edge_list) {
                     # Remove the edge (search for it each time)
                     keys <- get_keys(result_edge_list)
                     j <- match(key, keys, nomatch = 0)
-                    if (j == 0) next
+                    if (j == 0) {
+                        next
+                    }
 
                     result_edge_list <- result_edge_list[-j]
 
                     # Determine touched vertices using the ORIGINAL position i (before removal)
                     # but slicing result_edge_list AFTER the removal
-                    touched <- if (i > 1)
+                    touched <- if (i > 1) {
                         unique(unlist(result_edge_list[1:(i - 1)]))
-                    else
+                    } else {
                         numeric(0)
+                    }
 
                     walk <- walk_info$walk
 
@@ -610,7 +615,9 @@ recover_deg12 <- function(deg1_edges, deg2_dict, deg2_cycle, result_edge_list) {
                         seqs <- 1:(length(walk) - 1)
                     }
 
-                    edges_to_insert <- lapply(seqs, function(k) norm_edge(c(walk[k], walk[k + 1])))
+                    edges_to_insert <- lapply(seqs, function(k) {
+                        norm_edge(c(walk[k], walk[k + 1]))
+                    })
 
                     # Reverse because Python inserts one at a time (which reverses), but we insert as a block
                     edges_to_insert <- rev(edges_to_insert)
@@ -639,8 +646,9 @@ recover_deg12 <- function(deg1_edges, deg2_dict, deg2_cycle, result_edge_list) {
                     # Build cycle edges
                     edges_to_insert <- unlist(
                         lapply(deg2_cycle[[v]], function(cy) {
-                            lapply(seq_len(length(cy) - 1),
-                                   function(j) norm_edge(c(cy[j], cy[j + 1])))
+                            lapply(seq_len(length(cy) - 1), function(j) {
+                                norm_edge(c(cy[j], cy[j + 1]))
+                            })
                         }),
                         recursive = FALSE
                     )
@@ -686,7 +694,6 @@ recover_deg12 <- function(deg1_edges, deg2_dict, deg2_cycle, result_edge_list) {
 
 # Main function to order edges by cut
 get_order_by_cut <- function(edge_list) {
-
     # Convert to igraph
     edges_chr <- do.call(rbind, lapply(edge_list, as.character))
     G <- igraph::graph_from_edgelist(edges_chr, directed = FALSE)
@@ -735,8 +742,12 @@ get_order_by_cut <- function(edge_list) {
 
     # Split graph
     split_res <- split_graph(
-        G, s, t,
-        left, right, cut_set,
+        G,
+        s,
+        t,
+        left,
+        right,
+        cut_set,
         vertex_order,
         result_edge_list = list()
     )
@@ -754,7 +765,6 @@ get_order_by_cut <- function(edge_list) {
 
 # Check the output and validate
 get_order_by_cut_with_check <- function(edge_list) {
-
     result_edge_list <- get_order_by_cut(edge_list)
 
     # Convert list-of-edges → 2‑column numeric matrix
@@ -781,7 +791,6 @@ get_order_by_cut_with_check <- function(edge_list) {
 
     result_edge_list
 }
-
 
 
 # convert adjacency list to edge matrix
