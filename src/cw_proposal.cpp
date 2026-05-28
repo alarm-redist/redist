@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <cmath>
 #include <map>
-#include <set>
 
 // Forward declaration for recursive helper
 static int topological_sort_helper(std::map<int, int> &cut_pop, LCTNode *node, LCTNode *source,
@@ -141,7 +140,6 @@ bool get_cycle_paths(LCTPartition &partition, const CWEdge &e1, const CWEdge &e2
     int u2 = e2.u, v2 = e2.v;
 
     int d1 = partition.get_district(u1);
-    int d2 = partition.get_district(v1);
 
     // Ensure u1, u2 are in d1 and v1, v2 are in d2
     if (partition.get_district(u1) != d1)

@@ -11,6 +11,7 @@
 #include <vector>
 
 // [[Rcpp::depends(RcppArmadillo)]]
+#include <RcppArmadillo.h>
 
 typedef std::vector<std::vector<int>> Tree;
 typedef std::vector<std::vector<int>> Graph;

@@ -51,11 +51,6 @@ int internal_forest_walk(LCTPartition &partition, int max_attempts) {
     }
 
     LinkCutTree &lct = partition.lct;
-    LCTNode *node_u = lct.node(u);
-    LCTNode *node_v = lct.node(v);
-
-    // Get the original root before we modify the tree
-    int original_root = lct.find_root(u);
 
     // Step 2: Evert u to make it the root, then find path to v
     lct.evert(u);
