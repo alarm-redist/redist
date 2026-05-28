@@ -310,6 +310,7 @@ redist_cyclewalk <- function(
         }
 
         doParallel::registerDoParallel(cl)
+        init_workers(cl)
         on.exit(parallel::stopCluster(cl))
     } else {
         `%oper%` <- `%do%`
@@ -318,8 +319,7 @@ redist_cyclewalk <- function(
     # Run chains (in parallel or sequentially)
     out_par <- foreach::foreach(
         chain = seq_len(chains),
-        .inorder = FALSE,
-        .packages = 'redist'
+        .inorder = FALSE
     ) %oper%
         {
             if (!silent) {

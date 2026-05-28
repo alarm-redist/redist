@@ -59,7 +59,8 @@ Suggests:
     RSpectra,
     testthat (>= 3.0.0),
     spelling,
-    igraph
+    igraph,
+    pkgload
 LinkingTo: Rcpp, RcppArmadillo, RcppThread, cli, redistmetrics
 Encoding: UTF-8
 Language: en-US

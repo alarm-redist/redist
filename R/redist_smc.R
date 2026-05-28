@@ -288,13 +288,14 @@ redist_smc <- function(
             )
         }
         doParallel::registerDoParallel(cl, cores = ncores_runs)
+        init_workers(cl)
         on.exit(stopCluster(cl))
     } else {
         `%oper%` <- `%do%`
     }
 
     t1 <- Sys.time()
-    all_out <- foreach(chain = seq_len(runs), .inorder = FALSE, .packages = "redist") %oper%
+    all_out <- foreach(chain = seq_len(runs), .inorder = FALSE) %oper%
         {
             run_verbosity <- if (chain == 1) verbosity else 0
             t1_run <- Sys.time()

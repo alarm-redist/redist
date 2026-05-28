@@ -283,12 +283,12 @@ redist_mergesplit_parallel <- function(
     }
 
     doParallel::registerDoParallel(cl)
+    init_workers(cl)
     on.exit(parallel::stopCluster(cl))
 
     out_par <- foreach::foreach(
         chain = seq_len(chains),
-        .inorder = FALSE,
-        .packages = "redist"
+        .inorder = FALSE
     ) %dorng%
         {
             if (!silent) {
