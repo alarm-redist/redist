@@ -40,7 +40,9 @@ plans <- redist_smc(map, 50, silent = TRUE)
 plans$dem <- group_frac(map, dem_08, tot_08, plans)
 
 pc <- proj_contr(plans, dem, pfdr=TRUE)
-redist.plot.contr_pfdr(map, pc, level=0.4) # high `level` just to demonstrate
+if (requireNamespace("ggpattern", quietly = TRUE)) {
+    redist.plot.contr_pfdr(map, pc, level=0.4) # high `level` just to demonstrate
+}
 
 
 }

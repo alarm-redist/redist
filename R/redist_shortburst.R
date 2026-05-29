@@ -63,7 +63,7 @@
 #' @param flip_lambda The parameter determining the number of swaps to attempt each iteration of flip mcmc.
 #' The number of swaps each iteration is equal to Pois(lambda) + 1. The default is 0.
 #' @param flip_eprob  The probability of keeping an edge connected in flip mcmc. The default is 0.05.
-#' @param cw_instep Number of MCMC iterations per recorded sample for cyclewalk
+#' @param cw_instep Number of MCMC iterations per recorded sample for CycleWalk
 #'   backend (default 10).
 #' @param cw_cycle_walk_frac Fraction of proposals that are cycle walks vs
 #'   forest walks for cyclewalk backend (default 0.1).

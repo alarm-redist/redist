@@ -120,7 +120,7 @@ redist.plot.hist <- function(plans, qty, bins = NULL, ...) {
 
 #' @rdname redist.plot.hist
 #' @param x \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the statistic.
-#' @export
+#' @exportS3Method graphics::hist
 hist.redist_plans <- function(x, qty, ...) {
     if (missing(qty)) {
         cli::cli_abort("Must provide a {.arg qty} to make the histogram from.")

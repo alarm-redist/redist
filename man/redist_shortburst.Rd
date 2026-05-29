@@ -96,7 +96,7 @@ The number of swaps each iteration is equal to Pois(lambda) + 1. The default is 
 
 \item{flip_eprob}{The probability of keeping an edge connected in flip mcmc. The default is 0.05.}
 
-\item{cw_instep}{Number of MCMC iterations per recorded sample for cyclewalk
+\item{cw_instep}{Number of MCMC iterations per recorded sample for CycleWalk
 backend (default 10).}
 
 \item{cw_cycle_walk_frac}{Fraction of proposals that are cycle walks vs

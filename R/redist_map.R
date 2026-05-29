@@ -234,16 +234,16 @@ redist_map <- function(
     }
 
     if ((!is.null(existing_col)) && (!is.numeric(x[[existing_col]]))) {
-            temp_col <- NULL
-            suppressWarnings({
-                temp_col <- as.numeric(x[[existing_col]])
-            })
-            if (!anyNA(temp_col)) {
-                x[[existing_col]] <- temp_col
-            } else {
-                cli::cli_abort("Existing plan {.field {exist_col}} must be a numeric vector.")
-            }
+        temp_col <- NULL
+        suppressWarnings({
+            temp_col <- as.numeric(x[[existing_col]])
+        })
+        if (!anyNA(temp_col)) {
+            x[[existing_col]] <- temp_col
+        } else {
+            cli::cli_abort("Existing plan {.field {exist_col}} must be a numeric vector.")
         }
+    }
 
     if (is.null(ndists)) {
         if (!is.null(existing_col)) {
@@ -455,11 +455,11 @@ dplyr_row_slice.redist_map <- function(data, i, ...) {
     new_tgt <- sum(y[[attr(data, "pop_col")]]) / new_distr
 
     if ((new_distr > 0) && (bounds[1] > new_tgt || bounds[3] < new_tgt)) {
-            cli::cli_warn(c("Your subset was not based on districts.",
+        cli::cli_warn(c("Your subset was not based on districts.",
                        ">" = "Please use {.fn set_pop_tol} to update your
                         {.cls redist_map} or create a new {.cls redist_map}
                         with the correct number of districts."))
-        }
+    }
 
     y
 }
