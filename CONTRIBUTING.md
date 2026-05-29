@@ -4,6 +4,7 @@ Tools needed:
 
 - [`devtools` package](https://cran.r-project.org/package=devtools)
 - [`air`](https://posit-dev.github.io/air/) (installable with system package managers)
+- [`jarl`](https://jarl.etiennebacher.com/)
 - [`clangd`](https://clangd.llvm.org/) or
   [`clang-format`](https://clang.llvm.org/docs/ClangFormat.html) if you don't
   use an IDE (both installable with system packagemanagers). 
@@ -13,4 +14,5 @@ save (search "Format on save" under worskspace settings).
 
 Pre-commit workflow if not using IDE:
 - Run `air format .`
+- Run `jarl check .`
 - Run `clang-format -i <FILE>` for all edited C/C++ files
