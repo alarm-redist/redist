@@ -1,0 +1,9 @@
+[lint]
+ignore = ["implicit_assignment"]
+exclude = ["explore/"]
+
+[lint.assignment]
+operator = "<-"
+
+[lint.quotes]
+quote = "double"
