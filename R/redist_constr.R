@@ -36,6 +36,7 @@ new_redist_constr <- function(constr = list(), data = tibble()) {
     constr
 }
 
+# jarl-ignore unused_function: to be used in future, hopefully
 validate_redist_constr <- function(constr) {
     if (!is.list(constr)) {
         cli::cli_abort("Not a list")
@@ -367,13 +368,18 @@ add_constr_status_quo <- function(
     }
 
     data <- attr(constr, "data")
-    if (missing(current)) {
+    # defuse `current` first; calling `missing()` before `enquo()` interferes
+    # with promise capture and can drop the calling-frame expression
+    current_q <- rlang::enquo(current)
+    if (rlang::quo_is_missing(current_q)) {
         current <- get_existing(data)
+    } else {
+        current <- rlang::eval_tidy(current_q, data)
     }
 
     new_constr <- list(
     strength = strength,
-    current = rlang::eval_tidy(rlang::enquo(current), data),
+    current = current,
     only_districts = only_districts,
     hard_constraint = hard_constraint,
     hard_threshold = hard_threshold
@@ -913,9 +919,6 @@ add_constr_segregation <- function(
             cli::cli_abort("{.arg total_pop} missing.")
         }
     }
-    if (is.null(new_constr$group_pop)) {
-        cli::cli_abort("{.arg group_pop} missing.")
-    }
 
     stopifnot(length(new_constr$group_pop) == nrow(data))
     stopifnot(length(new_constr$total_pop) == nrow(data))
@@ -1194,7 +1197,7 @@ find_env <- function(name, env = rlang::caller_env()) {
         find_env(name, rlang::env_parent(env))
     }
 }
-extract_vars = function(expr) {
+extract_vars <- function(expr) {
     if (rlang::is_syntactic_literal(expr)) {
         NULL
     } else if (rlang::is_symbol(expr)) {
@@ -1500,10 +1503,10 @@ add_constr_custom <- function(
         cli::cli_abort("Function must take exactly two arguments.")
     }
 
-    constr_env = rlang::fn_env(fn)
+    constr_env <- rlang::fn_env(fn)
     constr_env <- rlang::env(constr_env)
     # every symbol used in the function (except the 2 arguments)
-    var_names = setdiff(
+    var_names <- setdiff(
         all.names(rlang::fn_body(fn)),
         names(args)
     )
@@ -1816,7 +1819,7 @@ plot.redist_constr <- function(x, y, type = "group", xlim = c(0, 1), ...) {
         }
     }
 
-    warn_multiple = FALSE
+    warn_multiple <- FALSE
     if ("grp_hinge" %in% names(x)) {
         for (obj in x$grp_hinge) {
             if (length(obj$tgts_group) > 1) {

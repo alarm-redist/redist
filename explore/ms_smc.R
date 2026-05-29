@@ -1,9 +1,9 @@
-map = alarmdata::alarm_50state_map("CT") |>
+map <- alarmdata::alarm_50state_map("CT") |>
     set_pop_tol(0.05)
 
 # pl1 = redist_mergesplit_parallel(map, 2200, warmup=200, chains=2)
 # pl2 = redist_mergesplit(map, 2200, warmup=200)
-perims = prep_perims(map)
+perims <- prep_perims(map)
 
 pl_ms = redist_mergesplit(
     map,

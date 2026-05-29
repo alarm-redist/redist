@@ -31,8 +31,11 @@ ecutsMPI <- function(
 
         cat("\n", append = TRUE)
         cat(divider, append = TRUE)
-        cat("redist.mcmc.mpi(): Automated Redistricting Simulation Using
-        Markov Chain Monte Carlo w/ Parallel Tempering \n\n", append = TRUE)
+        cat(
+            "redist.mcmc.mpi(): Automated Redistricting Simulation Using
+        Markov Chain Monte Carlo w/ Parallel Tempering \n\n",
+            append = TRUE
+        )
     }
 
     ## Extract variables
@@ -173,7 +176,7 @@ ecutsMPI <- function(
     }
 
     ## Set seed before first iteration of algorithm if provided by user
-    if (!is.null(rngseed) & is.numeric(rngseed)) {
+    if (!is.null(rngseed) && is.numeric(rngseed)) {
         set.seed(rngseed)
     }
 
@@ -200,7 +203,7 @@ ecutsMPI <- function(
                 beta <- algout$beta_sequence[nsims]
             }
 
-            if (!is.null(rngseed) & is.numeric(rngseed)) {
+            if (!is.null(rngseed) && is.numeric(rngseed)) {
                 set.seed(algout$randseed)
             }
 
@@ -233,7 +236,7 @@ ecutsMPI <- function(
                     beta <- algout$beta_sequence[nsims]
                 }
 
-                if (!is.null(rngseed) & is.numeric(rngseed)) {
+                if (!is.null(rngseed) && is.numeric(rngseed)) {
                     set.seed(algout$randseed)
                 }
 
@@ -254,10 +257,14 @@ ecutsMPI <- function(
         ## Run the algorithm ##
         #######################
         for (j in seq_along(nsimsAdj)) {
-            cat("Swap ", j, " out of ", length(nsimsAdj), " swaps.\n",
-                append = TRUE)
+            cat("Swap ", j, " out of ", length(nsimsAdj), " swaps.\n", append = TRUE)
 
             ## Run algorithm
+            # Compute population bounds from pop_tol
+            parity <- sum(preprocout$data$total_pop) / max(cds)
+            pop_lower <- parity * (1 - preprocout$params$pctdistparity)
+            pop_upper <- parity * (1 + preprocout$params$pctdistparity)
+
             temp <- swMH(
                 aList = preprocout$data$adjlist,
                 cdvec = cds,
@@ -265,7 +272,8 @@ ecutsMPI <- function(
                 constraints = list(),
                 nsims = nsimsAdj[j],
                 eprob = eprob,
-                pct_dist_parity = preprocout$params$pctdistparity,
+                pop_lower = pop_lower,
+                pop_upper = pop_upper,
                 beta_sequence = preprocout$params$betaseq,
                 beta_weights = preprocout$params$betaweights,
                 lambda = lambda,
@@ -407,8 +415,7 @@ ecutsMPI <- function(
         if (nloop > 1) {
             save(
                 algout,
-                file = paste(savename, "_proc", procID, "_loop",
-                i, ".RData", sep = "")
+                file = paste(savename, "_proc", procID, "_loop", i, ".RData", sep = "")
             )
             ## Save temperature adjacency matrix
             if (adjswaps) {
@@ -420,9 +427,13 @@ ecutsMPI <- function(
         } else if (!is.null(savename)) {
             save(
                 algout,
-                file = paste(savename, "_chain",
-                algout$beta_sequence[nsims],
-                ".RData", sep = "")
+                file = paste(
+                    savename,
+                    "_chain",
+                    algout$beta_sequence[nsims],
+                    ".RData",
+                    sep = ""
+                )
             )
         }
         ## End loop over i
@@ -440,10 +451,8 @@ ecutsMPI <- function(
                 tempadj = tempadj
             )
         }
-    } else if (!is.null(savename)) {
-        if (procID == tempadj[1]) {
-            save(algout, file = paste(savename, ".RData", sep = ""))
-        }
+    } else if ((!is.null(savename)) && (procID == tempadj[1])) {
+        save(algout, file = paste(savename, ".RData", sep = ""))
     }
 
     if (params$verbose) {
@@ -805,13 +814,13 @@ redist.mcmc.mpi <- function(
     if (missing(nsims)) {
         stop("Please supply number of simulations to run algorithm")
     }
-    if (is.na(ndists) & is.null(init_plan)) {
+    if (is.na(ndists) && is.null(init_plan)) {
         stop(
             "Please provide either the desired number of congressional districts
          or an initial set of congressional district assignments"
         )
     }
-    if (nloop > 1 & missing(savename)) {
+    if (nloop > 1 && missing(savename)) {
         stop("Please supply save directory if saving simulations at checkpoints")
     }
 
@@ -840,7 +849,7 @@ redist.mcmc.mpi <- function(
         ## partner <- matrix(NA,1,nits)
         for (i in seq_along(swaps)) {
             if (i %% freq == 0) {
-                swaps[i] <- sample(1:(betaseqlength - 1), size = 1)
+                swaps[i] <- sample.int((betaseqlength - 1), size = 1)
             }
             ## Initial temperature adjacency
             tempadj <- 1:betaseqlength
@@ -849,7 +858,7 @@ redist.mcmc.mpi <- function(
         swaps <- matrix(NA, 2, nsims * (nloop - loopscompleted))
         for (i in seq_len(ncol(swaps))) {
             if (i %% freq == 0) {
-                swaps[, i] <- sample(1:betaseqlength, size = 2)
+                swaps[, i] <- sample.int(betaseqlength, size = 2)
             }
         }
     }

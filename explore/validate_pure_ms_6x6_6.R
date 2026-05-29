@@ -8,58 +8,58 @@ library(patchwork)
 library(scales)
 # source(here("validation/R/setup.R"))
 
-PAL = c("#CC79A7", "#E69F00", "#56B4E9", "#20B073", "#0072B2", "#D55E00", "#999999")
+PAL <- c("#CC79A7", "#E69F00", "#56B4E9", "#20B073", "#0072B2", "#D55E00", "#999999")
 
-n = 6
+n <- 6
 
-shp = geomander::checkerboard |>
+shp <- geomander::checkerboard |>
     filter(i < n, j < n) |>
     st_set_crs(3857) |>
     mutate(pop = n)
-map = redist_map(shp, ndists = n, pop_tol = 0.01)
+map <- redist_map(shp, ndists = n, pop_tol = 0.01)
 
 
 # enumerate all valid plans -----
 path_enum <- here(sprintf("../smc-paper/julia/trees/enumerations/%dx%d_%d.txt", n, n, n))
-enum_raw = read_csv(path_enum, col_names = FALSE, col_types = cols(.default = "i")) %>%
+enum_raw <- read_csv(path_enum, col_names = FALSE, col_types = cols(.default = "i")) %>%
     as.matrix() %>%
     t()
-enum_raw = list(plans=enum_raw)
-log_st_enum = by_plan(comp_log_st(enum_raw$plans, map))
-w = exp(log_st_enum - max(log_st_enum))
-w = w / sum(w)
+enum_raw <- list(plans=enum_raw)
+log_st_enum <- by_plan(comp_log_st(enum_raw$plans, map))
+w <- exp(log_st_enum - max(log_st_enum))
+w <- w / sum(w)
 
-pl_enum = redist_plans(enum_raw$plans, map, "enumpart") %>%
+pl_enum <- redist_plans(enum_raw$plans, map, "enumpart") %>%
     mutate(edges = comp_edges_rem(pl(), map))
 
-true_median = weighted.mean(by_plan(pl_enum$edges == 22, n), w)
-true_htail = weighted.mean(by_plan(pl_enum$edges >= 27, n), w)
-true_ltail = weighted.mean(by_plan(pl_enum$edges == 18, n), w)
+true_median <- weighted.mean(by_plan(pl_enum$edges == 22, n), w)
+true_htail <- weighted.mean(by_plan(pl_enum$edges >= 27, n), w)
+true_ltail <- weighted.mean(by_plan(pl_enum$edges == 18, n), w)
 
 # Run comparisons --------
-M_seq = 10 * round(10^seq(0, 3, by = 0.5))
+M_seq <- 10 * round(10^seq(0, 3, by = 0.5))
 
-pls_smc = list()
+pls_smc <- list()
 
 set.seed(5118)
-res_smc = imap_dfr(M_seq, function(M, i) {
+res_smc <- imap_dfr(M_seq, function(M, i) {
     cat("Running SMC for M =", M, "\n")
 
-    pl_smc = map(1:20, function(j) {
+    pl_smc <- map(1:20, function(j) {
         redist_mergesplit(map, 100 + M * 10, warmup = 100, thin = 10, silent = TRUE) |>
             mutate(edges = comp_edges_rem(pl(), map))
     }) |>
         do.call(rbind, args = _)
     pls_smc[[i]] <<- pl_smc # save it
 
-    diagn = attr(pl_smc, "diagnostics")
-    vi = plans_diversity(pl_smc, 200L)
-    chain = by_plan(pl_smc$chain, ndists = n)
-    edges = by_plan(pl_smc$edges, ndists = n)
+    diagn <- attr(pl_smc, "diagnostics")
+    vi <- plans_diversity(pl_smc, 200L)
+    chain <- by_plan(pl_smc$chain, ndists = n)
+    edges <- by_plan(pl_smc$edges, ndists = n)
 
-    ests_median = tapply(edges == 22, chain, mean)
-    ests_htail = tapply(edges >= 27, chain, mean)
-    ests_ltail = tapply(edges == 18, chain, mean)
+    ests_median <- tapply(edges == 22, chain, mean)
+    ests_htail <- tapply(edges >= 27, chain, mean)
+    ests_ltail <- tapply(edges == 18, chain, mean)
 
     tibble_row(
         alg = "smc",
@@ -86,9 +86,9 @@ res_smc = imap_dfr(M_seq, function(M, i) {
         rmse_ltail = sqrt(mean((ests_ltail - true_ltail)^2))
     )
 })
-names(pls_smc) = as.character(M_seq)
+names(pls_smc) <- as.character(M_seq)
 
-res = res_smc %>%
+res <- res_smc %>%
     select(-est_median:-est_ltail) %>%
     pivot_longer(rhat_median:rmse_ltail, names_to = c("var", "stat"), names_sep = "_") %>%
     mutate(
@@ -113,7 +113,7 @@ res = res_smc %>%
 # library(scales)
 # res = read_rds(here("~/Desktop/gsmc_valid_6x6in6.rds"))
 
-make_iter_plot = function(x, ylab = NULL, ymax = NA, ymin = NA) {
+make_iter_plot <- function(x, ylab = NULL, ymax = NA, ymin = NA) {
     filter(res, var == x) %>%
         mutate(
             stat = fct_inorder(
@@ -149,7 +149,7 @@ make_iter_plot = function(x, ylab = NULL, ymax = NA, ymin = NA) {
         )
 }
 
-p = make_iter_plot("rhat", expression(hat(R))) +
+p <- make_iter_plot("rhat", expression(hat(R))) +
     make_iter_plot("sd", "Standard error", ymax = 0.1) +
     make_iter_plot("bias", "Bias", ymax = 0.164, ymin = -0.164) +
     make_iter_plot("rmse", "RMSE", ymax = 0.1) +
@@ -159,12 +159,12 @@ p = make_iter_plot("rhat", expression(hat(R))) +
 ggsave(here("~/Desktop//gsmc_diagn_6x6.pdf"), plot = p, width = 8, height = 3.25)
 
 # Check validity ---------
-make_valid_plot = function(M, conf = 0.9, by_chain = TRUE) {
-    pl_smc = pls_smc[[as.character(M)]]
+make_valid_plot <- function(M, conf = 0.9, by_chain = TRUE) {
+    pl_smc <- pls_smc[[as.character(M)]]
 
     # edge cut compactness
-    edge_rg = do.call(seq, as.list(range(pl_enum$edges)))
-    d_hist = map_dfr(edge_rg, function(k) {
+    edge_rg <- do.call(seq, as.list(range(pl_enum$edges)))
+    d_hist <- map_dfr(edge_rg, function(k) {
         redist_ci(pl_smc, edges == k, 1, conf = conf, by_chain = by_chain) %>%
             suppressWarnings() %>%
             `colnames<-`(c("est", "low", "high")) %>%
@@ -190,7 +190,7 @@ make_valid_plot = function(M, conf = 0.9, by_chain = TRUE) {
 }
 
 
-p = make_valid_plot(100) +
+p <- make_valid_plot(100) +
     make_valid_plot(1000) +
     make_valid_plot(10000) +
     plot_layout(nrow = 1) &

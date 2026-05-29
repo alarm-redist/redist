@@ -114,7 +114,7 @@ new_redist_plans <- function(
   )
 
     if (is.null(colnames(plans))) {
-        draw_fac = as.factor(1:n_sims)
+        draw_fac <- as.factor(1:n_sims)
     } else {
         draw_fac = character(n_sims)
         ref_idx = which(nchar(colnames(plans)) > 0)
@@ -561,7 +561,7 @@ add_reference <- function(plans, ref_plan, name = NULL, ref_seats = NULL) {
     }
 
     if (is.ordered(plans$district)) {
-        rg_labels = range(as.integer(as.character(levels(plans$district))))
+        rg_labels <- range(as.integer(as.character(levels(plans$district))))
         if (any(rg_labels != c(1L, attr(plans, "ndists")))) {
             cli::cli_abort(c(
         "Cannot add a reference plan to a set of plans which
@@ -758,7 +758,7 @@ get_mh_acceptance_rate <- function(plans) {
     }
     alg <- attr(plans, "algorithm")
 
-    if (alg %in% c("flip", "mergesplit")) {
+    if (alg %in% c("flip", "mergesplit", "cyclewalk")) {
         attr(plans, "mh_acceptance")
     } else {
         NA_real_
@@ -945,7 +945,7 @@ rbind.redist_plans <- function(..., deparse.level = 1) {
         out <- objs[[i]] |>
             dplyr::as_tibble()
 
-        if (!'chain' %in% names(out)) {
+        if (!"chain" %in% names(out)) {
             out$chain <- i
         }
         out

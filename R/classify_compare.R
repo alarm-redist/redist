@@ -303,15 +303,26 @@ classify_plans <- function(dist_mat, k = 8, method = "complete") {
 print.redist_classified <- function(x, ...) {
     n_split <- length(x$splits)
     cat(length(x$groups), "plans classified into", n_split + 1L, "groups.\n")
-    cat("Group assignment:", utils::capture.output(str(x$group, vec.len = 3)),
-        "\n", sep = "")
+    cat("Group assignment:", utils::capture.output(str(x$group, vec.len = 3)), "\n", sep = "")
     for (i in seq_len(n_split)) {
         split <- x$splits[[i]]
         cat("Split ", i, ":\n", sep = "")
-        cat("    ", names(split)[1], ": ",
-            utils::capture.output(str(split[[1]], vec.len = 3)), "\n", sep = "")
-        cat("    ", names(split)[2], ": ",
-            utils::capture.output(str(split[[2]], vec.len = 3)), "\n", sep = "")
+        cat(
+            "    ",
+            names(split)[1],
+            ": ",
+            utils::capture.output(str(split[[1]], vec.len = 3)),
+            "\n",
+            sep = ""
+        )
+        cat(
+            "    ",
+            names(split)[2],
+            ": ",
+            utils::capture.output(str(split[[2]], vec.len = 3)),
+            "\n",
+            sep = ""
+        )
     }
 }
 

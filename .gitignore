@@ -3,6 +3,10 @@
 .DS_Store
 .Rhistory
 
+.claude/
+.cache/
+CLAUDE.md
+
 *.so
 *.o
 *.rds
@@ -20,3 +24,6 @@ vignettes/*_cache/*
 src-i386/
 inst/enumpart/enumpart.exe
 redist/tests/testthat/_snaps
+docs
+
+compile_commands.json

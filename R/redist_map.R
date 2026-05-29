@@ -658,13 +658,11 @@ dplyr_row_slice.redist_map <- function(data, i, ...) {
     attr(y, "pop_bounds") <- bounds
     new_tgt <- sum(y[[attr(data, "pop_col")]]) / new_nseats
 
-    if (new_distr > 0) {
-        if (bounds[1] > new_tgt || bounds[3] < new_tgt) {
-            cli::cli_warn(c("Your subset was not based on districts.",
+    if ((new_distr > 0) && (bounds[1] > new_tgt || bounds[3] < new_tgt)) {
+        cli::cli_warn(c("Your subset was not based on districts.",
                        ">" = "Please use {.fn set_pop_tol} to update your
                         {.cls redist_map} or create a new {.cls redist_map}
                         with the correct number of districts."))
-        }
     }
 
     y
@@ -788,9 +786,12 @@ print.redist_map <- function(x, ...) {
 
         cat("With geometry:\n")
         bb <- signif(attr(geom, "bbox"), options("digits")$digits)
-        cat("    bbox:           ",
+        cat(
+            "    bbox:           ",
             paste(paste(names(bb), bb[], sep = ": "), collapse = " "),
-            "\n", sep = "")
+            "\n",
+            sep = ""
+        )
 
         crs <- st_crs(geom)
         if (is.na(crs)) {

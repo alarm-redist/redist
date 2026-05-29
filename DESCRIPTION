@@ -1,9 +1,8 @@
 Package: redist
 Version: 5.0.0.1
-Date: 2025-08-08
 Title: Simulation Methods for Legislative Redistricting
 Authors@R: c(
-    person("Christopher T.", "Kenny", email = "christopherkenny@fas.harvard.edu", 
+    person("Christopher T.", "Kenny", email = "ctkenny@proton.me", 
            role = c("aut", "cre"), comment = c(ORCID = "0000-0002-9386-6860")),
     person("Cory", "McCartan", email = "mccartan@psu.edu", role = "aut",
            comment = c(ORCID = "0000-0002-6251-669X")),
@@ -44,7 +43,6 @@ Imports:
     doParallel,
     foreach,
     doRNG,
-    servr,
     sys,
     ggplot2,
     patchwork
@@ -62,17 +60,26 @@ Suggests:
     units,
     RSpectra,
     testthat (>= 3.0.0),
-    spelling
-LinkingTo: Rcpp, RcppArmadillo, RcppThread, cli, redistmetrics, RcppEigen
+    spelling,
+    igraph,
+    pkgload
+LinkingTo: 
+    Rcpp,
+    RcppArmadillo,
+    RcppEigen,
+    RcppThread,
+    redistmetrics,
+    cli
 License: GPL (>= 2)
-SystemRequirements: C++17, python
+Encoding: UTF-8
+Language: en-US
+LazyData: true
+SystemRequirements: C++17
 NeedsCompilation: yes
 BugReports: https://github.com/alarm-redist/redist/issues
 URL: https://alarm-redist.org/redist/
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
 VignetteBuilder: knitr
-Encoding: UTF-8
+Config/build/compilation-database: true
+Config/roxygen2/version: 8.0.0
+Config/roxygen2/markdown: TRUE
 Config/testthat/edition: 3
-Language: en-US
-LazyData: true

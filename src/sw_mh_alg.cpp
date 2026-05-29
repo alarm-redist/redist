@@ -50,7 +50,7 @@ arma::uvec get_not_in(arma::uvec vec1, arma::uvec vec2) {
  Algorithm 1 in Barbu and Zhu (2005) */
 // [[Rcpp::export]]
 List swMH(List aList, NumericVector cdvec, NumericVector popvec, int nsims, List constraints,
-          double eprob, double pct_dist_parity, NumericVector beta_sequence,
+          double eprob, double pop_lower, double pop_upper, NumericVector beta_sequence,
           NumericVector beta_weights, int lambda = 0, double beta = 0.0,
           std::string adapt_beta = "none", int adjswap = 1, int exact_mh = 0,
           int adapt_eprob = 0, int adapt_lambda = 0, int num_hot_steps = 0,
@@ -69,7 +69,9 @@ List swMH(List aList, NumericVector cdvec, NumericVector popvec, int nsims, List
 
      eprob: edgecut probability
 
-     pct_dist_parity: strength of population parity requirement
+     pop_lower: lower bound for district population
+
+     pop_upper: upper bound for district population
 
      beta_sequence: sequence of betas to anneal ove
 
@@ -147,11 +149,10 @@ List swMH(List aList, NumericVector cdvec, NumericVector popvec, int nsims, List
         }
     }
 
-    // Define parity, min and max popoulations
+    // Define parity, min and max populations
     double parity = sum(popvec) / (max(cdvec) + 1);
-    double dist_parity = parity * pct_dist_parity;
-    double min_parity = parity - dist_parity;
-    double max_parity = parity + dist_parity;
+    double min_parity = pop_lower;
+    double max_parity = pop_upper;
 
     // Set counter variable
     int k = 0;
@@ -511,7 +512,8 @@ List swMH(List aList, NumericVector cdvec, NumericVector popvec, int nsims, List
     }
 
     out["algorithm"] = "mcmc";
-    out["pct_dist_parity"] = pct_dist_parity;
+    out["pop_lower"] = pop_lower;
+    out["pop_upper"] = pop_upper;
     out["nsims"] = nsims;
     out["adj"] = aList;
     out["psi_store"] = psi_store;

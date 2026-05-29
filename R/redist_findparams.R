@@ -41,13 +41,13 @@ run_sims <- function(
     }
 
     if ("lambda" %in% names) {
-        lambda <- p_sub$eprob
+        lambda <- p_sub$lambda
     } else {
         lambda <- 0
     }
 
     if (!("pop_tol" %in% names)) {
-        pop_tol <- 100
+        pop_tol <- 1
     } else {
         pop_tol <- p_sub$pop_tol
     }
@@ -98,8 +98,22 @@ run_sims <- function(
     inds <- which(1 - attr(out, "distance_original") < maxdist_startval)
     cuts <- c(0, round(quantile(seq_along(inds), (1:nstartval_store)/nstartval_store)))
     if (length(inds) == 0) {
-        cat(paste0("No maps available under parameter set ", i, ".\n"))
-        startval <- NULL
+        message_text <- paste0("No maps available under parameter set ", i, ".\n")
+        cat(message_text)
+        printout <- paste(
+            "## -------------------------------------\n",
+            "## -------------------------------------\n",
+            "## Parameter Values for Simulation",
+            i,
+            "\n",
+            "## No valid maps generated under these parameters\n",
+            "## -------------------------------------\n",
+            "## -------------------------------------\n\n"
+        )
+        if (logarg) {
+            sink()
+        }
+        return(list(printout = printout, startval = NULL))
     } else {
         startval <- matrix(NA, nrow(get_plans_matrix(out)), nstartval_store)
         for (i in 1:nstartval_store) {
@@ -170,9 +184,13 @@ run_sims <- function(
     ## -----------------
     ## Report statistics
     ## -----------------
-    out <- paste("## -------------------------------------\n",
+    out <- paste(
         "## -------------------------------------\n",
-        "## Parameter Values for Simulation", i, "\n")
+        "## -------------------------------------\n",
+        "## Parameter Values for Simulation",
+        i,
+        "\n"
+    )
     if (!adapt_eprob) {
         out <- paste0(out, "## Edgecut probability = ", eprob, "\n")
     } else {
@@ -215,8 +233,7 @@ run_sims <- function(
             paste(range_pop_parity, collapse = " "),
             "\n",
             "## MCMC Iteration quantiles of population parity median = ",
-            paste(q1_pop_median, q2_pop_median,
-                q3_pop_median, q4_pop_median, sep = " "),
+            paste(q1_pop_median, q2_pop_median, q3_pop_median, q4_pop_median, sep = " "),
             "\n"
         )
     }
@@ -233,32 +250,35 @@ run_sims <- function(
             paste(range_dist_orig, collapse = " "),
             "\n",
             "## MCMC Iteration quantiles of geography distance to initial assignment = ",
-            paste(q1_dist_median, q2_dist_median,
-                q3_dist_median, q4_dist_median, sep = " "),
+            paste(q1_dist_median, q2_dist_median, q3_dist_median, q4_dist_median, sep = " "),
             "\n"
         )
     }
-    if (!is.null(counties)) {
-        if (report_all) {
-            out <- paste0(
-                out,
-                "\n## Median number of counties split = ",
-                mean(ncounties_split),
-                "\n",
-                "## Median number of counties split = ",
-                median(ncounties_split),
-                "\n",
-                "## Range of number of counties split = ",
-                paste(range(ncounties_split), collapse = " "),
-                "\n",
-                "## Initial number of counties split = ",
-                starting_county_split,
-                "\n",
-                "## MCMC Iteration quantiles of number of counties split = ",
-                paste(q1_countysplit_median, q2_countysplit_median, q3_countysplit_median, q4_countysplit_median, sep = " "),
-                "\n"
-            )
-        }
+    if ((!is.null(counties)) && (report_all)) {
+        out <- paste0(
+            out,
+            "\n## Median number of counties split = ",
+            mean(ncounties_split),
+            "\n",
+            "## Median number of counties split = ",
+            median(ncounties_split),
+            "\n",
+            "## Range of number of counties split = ",
+            paste(range(ncounties_split), collapse = " "),
+            "\n",
+            "## Initial number of counties split = ",
+            starting_county_split,
+            "\n",
+            "## MCMC Iteration quantiles of number of counties split = ",
+            paste(
+                    q1_countysplit_median,
+                    q2_countysplit_median,
+                    q3_countysplit_median,
+                    q4_countysplit_median,
+                    sep = " "
+                ),
+            "\n"
+        )
     }
     out <- paste0(
         out,
@@ -367,10 +387,15 @@ redist.findparams <- function(
 
     ## Starting statement
     if (verbose) {
-        cat(paste("## ------------------------------\n",
+        cat(paste(
+            "## ------------------------------\n",
             "## redist.findparams(): Parameter tuning for redist_flip()\n",
-            "## Searching over", trials, "parameter combinations\n",
-            "## ------------------------------\n\n", sep = " "))
+            "## Searching over",
+            trials,
+            "parameter combinations\n",
+            "## ------------------------------\n\n",
+            sep = " "
+        ))
     }
 
     ## Get parameters in params
@@ -390,16 +415,16 @@ redist.findparams <- function(
         cli::cli_warn("You have specified a grid of eprob values to search and set `adapt_eprob` to TRUE. Setting `adapt_eprob` to FALSE.")
         adapt_eprob <- FALSE
     }
-    if ("weight_segregation" %in% names & is.null(group_pop)) {
+    if ("weight_segregation" %in% names && is.null(group_pop)) {
         cli::cli_abort("If constraining on segregation, please provide a vector of group population.")
     }
-    if ("weight_compact" %in% names & is.null(ssdmat)) {
+    if ("weight_compact" %in% names && is.null(ssdmat)) {
         cli::cli_abort("If constraining on compactness, please provide a distances matrix.")
     }
-    if ("weight_similarity" %in% names & is.null(init_plan)) {
+    if ("weight_similarity" %in% names && is.null(init_plan)) {
         cli::cli_abort("If constraining on similarity, please provide a vector of initial congressional district assignments.")
     }
-    if ("weight_countysplit" %in% names & is.null(counties)) {
+    if ("weight_countysplit" %in% names && is.null(counties)) {
         cli::cli_abort("If constraining the number of county splits, please provide a vector of county assignments.")
     }
 
@@ -413,9 +438,14 @@ redist.findparams <- function(
 
         ## Statement initializing parallelization
         if (verbose) {
-            cat(paste("## -----------------------------\n",
-                "## Parallelizing over", ncores, "processors\n",
-                "## -----------------------------\n\n", sep = " "))
+            cat(paste(
+                "## -----------------------------\n",
+                "## Parallelizing over",
+                ncores,
+                "processors\n",
+                "## -----------------------------\n\n",
+                sep = " "
+            ))
         }
 
         ## Set parallel environment

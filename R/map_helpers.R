@@ -17,10 +17,6 @@ is_contiguous <- function(x) {
 ## merge helpers
 # checks if is a proportion/pct
 is_prop <- function(x) is.double(x) && min(x, na.rm = TRUE) >= 0 && max(x, na.rm = TRUE) <= 1
-# checks if is not a  proportion/pct
-is_nonprop <- function(x) {
-    is.numeric(x) && (min(x, na.rm = TRUE) < 0 || max(x, na.rm = TRUE) > 1)
-}
 # checks if x is constant within levels of rel
 is_const_rel <- function(rel) {
     function(x) {

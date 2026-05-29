@@ -33,17 +33,17 @@ library(ggplot2)
 
 # The `redist` package {#package}
 To install `redist`, follow the instructions in the
-[README](../index.html#installation-instructions).
+[README](https://alarm-redist.org/redist/#installation-instructions).
 
 For more information on package components, check out the 
-[full documentation](../reference/index.html).
+[full documentation](https://alarm-redist.org/redist/).
 
 ## Algorithms
 The package contains a variety of redistricting simulation and enumeration
 algorithms.  Generally you will use one of the following three algorithms:
 
 - `redist_smc()`, the recommended algorithm for most purposes.^[from 
-[Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans](http://arxiv.org/pdf/2008.06131)]
+[Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans](https://arxiv.org/pdf/2008.06131)]
 - `redist_mergesplit()`, a MCMC version of the SMC proposal.^[based on Carter,
 D., Herschlag, G., Hunter, Z., and Mattingly, J. (2019). A merge-split proposal
 for reversible Monte Carlo Markov chain sampling of redistricting plans. arXiv
@@ -53,7 +53,7 @@ preprint arXiv:1911.01503.]
 
 The other algorithms are
 
-- `redist.enumpart()` for efficient enumeration of small maps.^[from
+- `redist_enumpart()` for efficient enumeration of small maps.^[from
 [The Essential Role of Empirical Validation in Legislative Redistricting Simulation](https://imai.fas.harvard.edu/research/files/enumerate.pdf)]
 - `redist_shortburst()` for optimizing a plan according to a user-provided
 criterion.^[from Cannon, S., Goldbloom-Helzner, A., Gupta, V., Matthews, J. N.,
@@ -179,7 +179,7 @@ The latter can be inferred if a reference redistricting plan exists.  For Iowa,
 we'll use the adopted 2010 plan as a reference.
 
 ```{r}
-iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.01, total_pop = pop)
+iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01, total_pop = pop)
 print(iowa_map)
 ```
 
@@ -234,7 +234,7 @@ Republicans (at least in the '08 election), though there is a rough east-west
 gradient.
 
 ```{r iowa-chloro, message=FALSE}
-areas = as.numeric(units::set_units(sf::st_area(iowa_map$geometry), mi^2))
+areas <- as.numeric(units::set_units(sf::st_area(iowa_map$geometry), mi^2))
 plot(iowa_map, fill = pop / areas) + 
     scale_fill_viridis_c(name="Population density (people / sq. mi)", 
                          trans="sqrt")
@@ -269,7 +269,7 @@ provides extremely valuable diagnostic information about whether the algorithm
 is sampling properly.
 
 ```{r message=FALSE}
-iowa_plans = redist_smc(iowa_map, 500, compactness=1, runs=2)
+iowa_plans <- redist_smc(iowa_map, 500, compactness=1, runs=2)
 ```
 
 The output from the algorithm is a `redist_plans` object, which stores a matrix
@@ -298,7 +298,7 @@ random numbers in general) to match the reference plan as closely as possible.
 This adds a `pop_overlap` column which measures how much of the population is in
 the same district in both a given plan and the reference plan.
 ```{r}
-iowa_plans = match_numbers(iowa_plans, iowa_map$cd_2010)
+iowa_plans <- match_numbers(iowa_plans, iowa_map$cd_2010)
 print(iowa_plans)
 ```
 
@@ -308,9 +308,9 @@ compactness measure related to the Iowa Code's redistricting requirements, and
 the fraction of minority voters and two-party Democratic vote share by district.
 
 ```{r message=F}
-county_perims = prep_perims(iowa_map, iowa_map$adj)
+county_perims <- prep_perims(iowa_map, iowa_map$adj)
 
-iowa_plans = iowa_plans %>%
+iowa_plans <- iowa_plans %>%
     mutate(pop_dev = abs(total_pop / get_target(iowa_map) - 1),
            comp = comp_polsby(pl(), iowa_map, perim_df=county_perims),
            pct_min = group_frac(iowa_map, vap - wvap, vap),
@@ -348,7 +348,7 @@ It's quick to turn district-level statistics from a `redist_plans` object
 into plan-level summary statistics.
 
 ```{r}
-plan_sum = group_by(iowa_plans, draw) %>%
+plan_sum <- group_by(iowa_plans, draw) %>%
     summarize(max_dev = max(pop_dev),
               avg_comp = mean(comp),
               max_pct_min = max(pct_min),
@@ -400,7 +400,7 @@ normal, district has a lower number of Democrats and minority voters than would
 otherwise be expected. 
 
 ```{r scatter}
-pal = scales::viridis_pal()(5)[-1]
+pal <- scales::viridis_pal()(5)[-1]
 redist.plot.scatter(iowa_plans, pct_min, pct_dem, 
                     color=pal[subset_sampled(iowa_plans)$district]) +
     scale_color_manual(values="black")

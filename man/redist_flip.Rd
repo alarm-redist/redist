@@ -7,8 +7,9 @@
 redist_flip(
   map,
   nsims,
+  chains = 1,
   warmup = 0,
-  init_plan,
+  init_plan = NULL,
   constraints = add_constr_edges_rem(redist_constr(map), 0.4),
   thin = 1,
   eprob = 0.05,
@@ -21,23 +22,30 @@ redist_flip(
   adapt_eprob = FALSE,
   exact_mh = FALSE,
   adjswaps = TRUE,
+  ncores = NULL,
+  cl_type = "PSOCK",
+  return_all = TRUE,
   init_name = NULL,
-  verbose = TRUE,
-  nthin
+  verbose = TRUE
 )
 }
 \arguments{
 \item{map}{A \code{\link{redist_map}} object.}
 
-\item{nsims}{The number of samples to draw, not including warmup.}
+\item{nsims}{The number of samples to draw per chain, not including warmup.}
+
+\item{chains}{The number of parallel chains to run. Each chain will have
+\code{nsims} draws. If \code{init_plan} is sampled, each chain will be initialized
+with its own sampled plan. Defaults to 1.}
 
 \item{warmup}{The number of warmup samples to discard.}
 
-\item{init_plan}{A vector containing the congressional district labels
-of each geographic unit. The default is \code{NULL}. If not provided,
-a random initial plan will be generated using \code{redist_smc}. You can also
-request to initialize using \code{redist.rsg} by supplying 'rsg', though this is
-not recommended behavior.}
+\item{init_plan}{The initial state of the map, provided as a single vector
+to be shared across all chains, or a matrix with \code{chains} columns.
+If not provided, will default to the reference map of the \code{map} object, or if
+none exists, will sample a random initial state using \code{redist_smc}. You can
+also request a random initial state for each chain by setting
+\code{init_plan="sample"}.}
 
 \item{constraints}{A \code{redist_constr} object.}
 
@@ -77,16 +85,25 @@ Metropolis-Hastings ratio calculation for accept-reject rule. Default is FALSE.}
 values adjacent to current constraint are proposed. The default is
 \code{TRUE}.}
 
+\item{ncores}{The number of parallel processes to run. Defaults to the
+number of available cores, capped at the number of chains.}
+
+\item{cl_type}{The cluster type (see \code{\link[parallel:makeCluster]{parallel::makeCluster()}}). Safest is
+\code{"PSOCK"}, but \code{"FORK"} may be faster on non-Windows systems.}
+
+\item{return_all}{If \code{TRUE} return all sampled plans; otherwise, just return
+the final plan from each chain.}
+
 \item{init_name}{a name for the initial plan, or \code{FALSE} to not include
 the initial plan in the output.  Defaults to the column name of the
 existing plan, or "\code{<init>}" if the initial plan is sampled.}
 
 \item{verbose}{Whether to print initialization statement. Default is \code{TRUE}.}
-
-\item{nthin}{Deprecated. Use \code{thin}.}
 }
 \value{
 A \code{\link{redist_plans}} object containing the simulated plans.
+If \code{chains > 1}, the output will include a \code{chain} column indicating which
+chain each plan came from.
 }
 \description{
 This function allows users to simulate redistricting plans
@@ -188,6 +205,9 @@ data(iowa)
 iowa_map <- redist_map(iowa, ndists = 4, existing_plan = cd_2010, total_pop = pop,
     pop_tol = 0.05)
 sims <- redist_flip(map = iowa_map, nsims = 100)
+
+# Multiple chains for convergence diagnostics
+sims_chains <- redist_flip(iowa_map, nsims = 20, chains = 2, ncores = 2)
 
 }
 \references{

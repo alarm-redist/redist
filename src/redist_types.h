@@ -16,6 +16,7 @@
 #include <vector>
 
 // [[Rcpp::depends(RcppArmadillo)]]
+#include <RcppArmadillo.h>
 
 typedef uint16_t VertexID; // type for trees to save space from normal int
 constexpr unsigned int MAX_SUPPORTED_NUM_VERTICES =

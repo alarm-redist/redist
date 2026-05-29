@@ -519,6 +519,7 @@ redist_smc <- function(
             NULL
         })
         doParallel::registerDoParallel(cl, cores = nproc)
+        init_workers(cl)
         on.exit(stopCluster(cl))
         if (!silent) cat("Spawning ", nproc, " clusters \n")
     } else {
@@ -547,8 +548,7 @@ redist_smc <- function(
     t1 <- Sys.time()
     all_out <- foreach(
         chain = seq_len(runs),
-        .inorder = FALSE,
-        .packages = "redist"
+        .inorder = FALSE
     ) %oper%
         {
             if (chain == 1) {

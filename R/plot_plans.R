@@ -120,7 +120,7 @@ redist.plot.hist <- function(plans, qty, bins = NULL, ...) {
 
 #' @rdname redist.plot.hist
 #' @param x \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the statistic.
-#' @export
+#' @exportS3Method graphics::hist
 hist.redist_plans <- function(x, qty, ...) {
     if (missing(qty)) {
         cli::cli_abort("Must provide a {.arg qty} to make the histogram from.")
@@ -259,7 +259,7 @@ redist.plot.scatter <- function(plans, x, y, ..., bigger = TRUE) {
 #'
 #' # Finally, the `ref_label` argument can also be swapped for a function, like so:
 #' redist.plot.distr_qtys(plans, pct_dem, geom = ggplot2::geom_violin, ref_geom = r_geom,
-#'     ref_label = function() ggplot2::labs(color = 'Ref.'))
+#'     ref_label = function() ggplot2::labs(color = "Ref."))
 #'
 #' @concept plot
 #' @export

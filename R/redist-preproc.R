@@ -64,7 +64,7 @@ redist.preproc <- function(
             symmetric <- isSymmetric(adj)
 
             ## If all are true, change to adjlist and automatically zero-index
-            if (squaremat & binary & diag & symmetric) {
+            if (squaremat && binary && diag && symmetric) {
                 ## Initialize object
                 adjlist <- vector("list", nrow(adj))
 
@@ -114,7 +114,7 @@ redist.preproc <- function(
             for (i in seq_along(adjlist)) {
                 adjlist[[i]] <- adjlist[[i]] - 1
             }
-        } else if (!(oneind | zeroind)) {
+        } else if (!oneind && !zeroind) {
             ## if neither oneind or zeroind, then stop
             stop("Adjacency list must be one-indexed or zero-indexed")
         }
@@ -180,9 +180,14 @@ redist.preproc <- function(
             ncontig <- countpartitions(divlist)
 
             if (ncontig != ndists) {
-                stop(paste("Your initial congressional districts have ", ndists,
+                stop(paste(
+                    "Your initial congressional districts have ",
+                    ndists,
                     " unique districts but ",
-                    ncontig, " contigous connected components. Please provide a starting map with contigous districts.", sep = ""))
+                    ncontig,
+                    " contigous connected components. Please provide a starting map with contigous districts.",
+                    sep = ""
+                ))
             }
         }
     }
@@ -190,13 +195,13 @@ redist.preproc <- function(
     ###########################################################
     ## Check other inputs to make sure they are right length ##
     ###########################################################
-    if ((length(total_pop) != length(adjlist)) | (sum(is.na(total_pop)) > 0)) {
+    if ((length(total_pop) != length(adjlist)) || (sum(is.na(total_pop)) > 0)) {
         stop(
             "Each entry in adjacency list must have a corresponding entry
               in vector of populations"
         )
     }
-    if ((length(init_plan) != length(adjlist)) | (sum(is.na(init_plan)) > 0)) {
+    if ((length(init_plan) != length(adjlist)) || (sum(is.na(init_plan)) > 0)) {
         stop(
             "Each entry in adjacency list must have an initial congressional
              district assignment"
@@ -241,7 +246,7 @@ redist.preproc <- function(
             }
         } else if (is.vector(betaseq)) {
             betaseq <- betaseq
-        } else if (!is.vector(betaseq) & betaseq[1] != "powerlaw") {
+        } else if (!is.vector(betaseq) && betaseq[1] != "powerlaw") {
             stop("Please provide valid sequence of betas")
         }
         if (is.null(betaweights)) {

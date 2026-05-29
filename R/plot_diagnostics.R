@@ -45,7 +45,7 @@
 #' fl25$init_plan <- init_plan
 #'
 #' ## 25 precinct, three districts - no pop constraint ##
-#' fl_map <- redist_map(fl25, existing_plan = 'init_plan', adj = fl25_adj)
+#' fl_map <- redist_map(fl25, existing_plan = "init_plan", adj = fl25_adj)
 #' alg_253 <- redist_flip(fl_map, nsims = 10000)
 #'
 #' ## Get Republican Dissimilarity Index from simulations
@@ -98,7 +98,7 @@ redist.diagplot <- function(
     ) {
         cli::cli_abort("Sorry. We don't currently support the {.value {plot}} diagnostic.")
     }
-    if (plot == "gelmanrubin" & !inherits(sumstat, c("list", "mcmc.list"))) {
+    if (plot == "gelmanrubin" && !inherits(sumstat, c("list", "mcmc.list"))) {
         cli::cli_abort("If generating a Gelman-Rubin plot, please provide an object of class list or mcmc.list")
     }
 

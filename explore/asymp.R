@@ -4,11 +4,11 @@ library(dplyr)
 library(ggplot2)
 
 # MCMC: how does # dists -> autocorrelation -> samp size
-ess_mcmc = Vectorize(\(rho) 1 / (2 / (1 - rho) - 1))
+ess_mcmc <- Vectorize(\(rho) 1 / (2 / (1 - rho) - 1))
 
-cor_mcmc = function(revisit = 1.0, N = 100, alpha = 10, beta = 1) {
+cor_mcmc <- function(revisit = 1.0, N = 100, alpha = 10, beta = 1) {
     # pr(visit the district with max order stat)
-    ac = list(
+    ac <- list(
         lengths = 1 + rgeom(N, revisit),
         values =  rbeta(N, alpha, beta)
     ) |>
@@ -18,25 +18,25 @@ cor_mcmc = function(revisit = 1.0, N = 100, alpha = 10, beta = 1) {
 }
 
 # cor really is just 1 - rev_pr
-rev_pr = seq(0.1, 1.0, 0.1)
-rev_ac = map_dbl(rev_pr, ~ cor_mcmc(., 1e4, alpha = 2, beta = 1))
+rev_pr <- seq(0.1, 1.0, 0.1)
+rev_ac <- map_dbl(rev_pr, ~ cor_mcmc(., 1e4, alpha = 2, beta = 1))
 plot(rev_pr, rev_ac)
-abline(a = 1, b = -1, col = 'red')
+abline(a = 1, b = -1, col = "red")
 
 
 # SMC: how does # dists -> # ancestors (proxy for ess)
-esss_smc = function(n) {
-    b = numeric(n)
-    b[1] = 1
+esss_smc <- function(n) {
+    b <- numeric(n)
+    b[1] <- 1
     for (i in seq(2, n)) {
-        b[i] = 1 - exp(-b[i - 1])
+        b[i] <- 1 - exp(-b[i - 1])
     }
     b
 }
 
 
-n_max = 400
-d = tibble(
+n_max <- 400
+d <- tibble(
     n_distr = seq_len(n_max),
     ess_mcmc = ess_mcmc(1 - 1 / seq_len(n_max)),
     ess_smc = esss_smc(n_max)
@@ -59,5 +59,5 @@ d |>
     scale_y_log10("Minimum sample size needed") +
     theme_bw()
 
-plot(log(d$ess_smc), type = 'l')
-curve(log(1 / x), add = T, from = 1, to = 400, col = 'red')
+plot(log(d$ess_smc), type = "l")
+curve(log(1 / x), add = T, from = 1, to = 400, col = "red")

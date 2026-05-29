@@ -22,3 +22,13 @@ builder.sh
 ^\.github$
 ^LICENSE\.md$
 ^CRAN-SUBMISSION$
+^revdep$
+^\.cache$
+^\.claude$
+^\.vscode$
+^\.clang-format$
+^src/\.clang-format-ignore$
+^CONTRIBUTING\.md$
+^air\.toml$
+^jarl\.toml$
+^compile_commands\.json$

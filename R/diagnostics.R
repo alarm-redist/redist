@@ -32,6 +32,19 @@
 #' * **Bottleneck**: An asterisk will appear in the right column if a bottleneck
 #' appears likely, based on the values of the other statistics.
 #'
+#' For CycleWalk MCMC, additional diagnostic statistics include:
+#'
+#' * **Cycle walk percentage**: the fraction of iterations that attempted a cycle walk
+#' proposal (vs. forest walk). Typically around 10%.
+#' * **Success rate**: the fraction of cycle walk attempts that found a valid cycle
+#' and cut. Low values (< 30%) may indicate tight constraints.
+#' * **Mean acceptance probability**: average MH acceptance probability for successful
+#' cycle walk proposals.
+#' * **Mean cycle length**: average length of cycles found (typically 3-16).
+#' * **Mean valid cuts**: average number of valid cut pairs found per cycle.
+#' * **Failures**: breakdown of why cycle walk proposals failed (no adjacent districts,
+#' too few boundary edges, no path found, or no valid cuts).
+#'
 #' In the event of problematic diagnostics, the function will provide
 #' suggestions for improvement.
 #'

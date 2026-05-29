@@ -22,11 +22,11 @@ pl_con <- redist_mergesplit(
 
 (pl_no_con %>%
     redist.plot.trace(spl) +
-    labs(title = 'MS without constraint')) +
+    labs(title = "MS without constraint")) +
     (pl_con %>%
         redist.plot.trace(spl) +
-        labs(title = 'MS with constraint') +
-        plot_annotation(title = 'ba7c109'))
+        labs(title = "MS with constraint") +
+        plot_annotation(title = "ba7c109"))
 
 
 set.seed(12345)
@@ -38,8 +38,8 @@ pl_con <- redist_smc(nh_map, nsims = 200, constraints = cons) %>%
 
 (pl_no_con %>%
     redist.plot.trace(spl) +
-    labs(title = 'SMC without constraint')) +
+    labs(title = "SMC without constraint")) +
     (pl_con %>%
         redist.plot.trace(spl) +
-        labs(title = 'SMC with constraint') +
-        plot_annotation(title = 'ba7c109'))
+        labs(title = "SMC with constraint") +
+        plot_annotation(title = "ba7c109"))

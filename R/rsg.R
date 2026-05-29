@@ -116,9 +116,14 @@ redist.rsg <- function(adj, total_pop, ndists, pop_tol, verbose = TRUE, maxiter 
     }
 
     if (verbose) {
-        cat(paste("\n\t", ndists, " districts built using ",
-            length(adj), " precincts in ",
-            round(time[3], digits = 2), " seconds...\n\n", sep = ""), append = TRUE)
+        cat(
+            paste(
+                "\n\t", ndists, " districts built using ", length(adj),
+                " precincts in ", round(time[3], digits = 2), " seconds...\n\n",
+                sep = ""
+            ),
+            append = TRUE
+        )
     }
 
     ret

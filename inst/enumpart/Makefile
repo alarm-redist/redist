@@ -22,4 +22,4 @@ SAPPOROBDD/ZBDD.o: SAPPOROBDD/ZBDD.cc SAPPOROBDD/ZBDD.h
 	g++ $(OPT) SAPPOROBDD/ZBDD.cc -c -o SAPPOROBDD/ZBDD.o
 
 clean:
-	rm -f enumpart enumpart.exe enumpart-debug enumpart-debug.exe sample sample.exe *.o SAPPOROBDD/bddc.o SAPPOROBDD/ZBDD.o
+	rm -f enumpart enumpart.exe enumpart-debug enumpart-debug.exe sample sample.exe *.o SAPPOROBDD/bddc.o SAPPOROBDD/BDD.o SAPPOROBDD/ZBDD.o

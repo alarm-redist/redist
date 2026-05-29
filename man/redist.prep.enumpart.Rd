@@ -2,46 +2,40 @@
 % Please edit documentation in R/enumpart.R
 \name{redist.prep.enumpart}
 \alias{redist.prep.enumpart}
-\title{Prepares a run of the enumpart algorithm by ordering edges}
+\title{Prepare enumpart edge ordering}
 \usage{
 redist.prep.enumpart(
   adj,
-  unordered_path,
   ordered_path,
   weight_path = NULL,
-  total_pop = NULL
+  total_pop = NULL,
+  unordered_path
 )
 }
 \arguments{
-\item{adj}{zero indexed adjacency list}
+\item{adj}{Zero-indexed adjacency list.}
 
-\item{unordered_path}{valid path to output the unordered adjacency map to}
+\item{ordered_path}{Valid path to output the ordered adjacency map to.}
 
-\item{ordered_path}{valid path to output the ordered adjacency map to}
+\item{weight_path}{A path (not including \code{".dat"}) to store vertex weights.
+Only supply with \code{total_pop}.}
 
-\item{weight_path}{A path (not including ".dat") to store a space-delimited
-file containing a vector of vertex weights. Only supply with total_pop.}
+\item{total_pop}{The vector of precinct populations. Only supply with
+\code{weight_path}.}
 
-\item{total_pop}{the vector of precinct populations. Only supply with weight_path}
+\item{unordered_path}{Deprecated, ignored.}
 }
 \value{
-0 on success
+0 on success.
 }
 \description{
-Prepares a run of the enumpart algorithm by ordering edges
-}
-\examples{
-\dontrun{
-temp <- tempdir()
-data(fl25)
-adj <- redist.adjacency(fl25)
-redist.prep.enumpart(adj = adj, unordered_path = paste0(temp, "/unordered"),
-    ordered_path = paste0(temp, "/ordered"))
-}
+\strong{Deprecated}: Use \code{\link[=redist_enumpart]{redist_enumpart()}} instead, which handles preparation
+automatically.
 }
 \references{
-Benjamin Fifield, Kosuke Imai, Jun Kawahara, and Christopher T Kenny.
-"The Essential Role of Empirical Validation in Legislative Redistricting Simulation."
-Forthcoming, Statistics and Public Policy.
+Fifield, B., Imai, K., Kawahara, J., & Kenny, C. T. (2020).
+The essential role of empirical validation in legislative redistricting
+simulation. \emph{Statistics and Public Policy}, 7(1), 52-68.
 }
 \concept{enumerate}
+\keyword{internal}

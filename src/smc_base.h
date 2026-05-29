@@ -5,6 +5,7 @@
 #define ARMA_NO_DEBUG
 #endif
 
+#include "redist_types.h"
 #include <RcppArmadillo.h>
 #include <limits>
 #include <vector>

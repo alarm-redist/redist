@@ -70,7 +70,7 @@ redist.plot.map <- function(
 
     # Create Plot
     if (!is.null(plan)) {
-        if (inherits(shp, "redist_map") & is.null(fill)) {
+        if (inherits(shp, "redist_map") && is.null(fill)) {
             plan <- as.factor(plan)
             adj <- get_adj(shp)
             ndists <- length(unique(plan))
@@ -260,7 +260,7 @@ redist.plot.adj <- function(
         adj <- redist.adjacency(shp)
     }
 
-    if (drop & is.null(plan)) {
+    if (drop && is.null(plan)) {
         cli::cli_abort("{.arg drop} is {.code TRUE} but no plan supplied.")
     }
 
@@ -296,7 +296,7 @@ redist.plot.adj <- function(
     }
 
     if (centroids) {
-        if (!is.null(plan) & !plot_shp) {
+        if (!is.null(plan) && !plot_shp) {
             plot <- plot +
                 geom_sf(
                     data = centers,
@@ -344,7 +344,7 @@ edge_center_df <- function(shp, adj) {
             i = pmin(.data$start, .data$finish),
             j = pmax(.data$start, .data$finish)
         ) %>%
-        dplyr::select('i', 'j')
+        dplyr::select("i", "j")
     edgedf <- edgedf[!duplicated(edgedf), ]
 
     geoms <- lapply(seq_len(nrow(edgedf)), function(x) {

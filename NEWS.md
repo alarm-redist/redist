@@ -1,4 +1,4 @@
-# 5.0.0
+# redist 5.0.0
 * Replaces old SMC weights with generally lower variance optimal weights.
 * Adds the option to add Mergesplit MCMC steps at any point during an SMC run. 
 Adding mergesplit steps can help achieve convergence for plans with a larger 
@@ -39,8 +39,14 @@ see the forthcoming working paper.
 with forest space for the backend instead of sampling with graph space and all
 `k` related parameters have been removed. 
 
+# redist 4.4.0
+* Old `enumpart` functions are deprecated in favor of `redist_enumpart()` which provides a more consistent syntax.
 
-# 4.3.0
+# redist 4.3.2
+* Allows for parallel flip with `chains` argument in `redist_flip()`.
+* Fixes URL issues causing a note on CRAN. We have pointed the links to our website directly.
+
+# redist 4.3.0
 * Improves SMC performance by pre-allocating some memory while drawing spanning trees.
 * Replaces SMC label-counting adjustments (exact and importance-sampling-based) with a new backward kernel that eliminates approximation error and requires far less computation
 * 4.2.0 introduced some regressions in `redist_shortburst()` along with the new features. The following issues are fixed: 
@@ -49,7 +55,7 @@ with forest space for the backend instead of sampling with graph space and all
   
  * Add `summary()` support for plans sampled with the `flip` algorithm. This does not replace the full flip diagnostic suite, but provides an easy way to compute r-hats.
 
-# 4.2.0
+# redist 4.2.0
 * Deprecate functionality that is provided by `redistmetrics` package.
 * Improve contiguity checking speed drastically.
 * Support for multiple independent scoring functions in `redist_shortburst()`.

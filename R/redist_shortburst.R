@@ -7,9 +7,9 @@
 
 #' Redistricting Optimization through Short Bursts
 #'
-#' This function uses [redist_mergesplit()] or [redist_flip()] to optimize a
-#' redistrict plan according to a user-provided criteria. It does so by running
-#' the Markov chain for "short bursts" of usually 10 iterations, and then
+#' This function uses [redist_mergesplit()], [redist_flip()], or [redist_cyclewalk()]
+#' to optimize a redistrict plan according to a user-provided criteria. It does so
+#' by running the Markov chain for "short bursts" of usually 10 iterations, and then
 #' starting the chain anew from the best plan in the burst, according to the
 #' criteria. This implements the ideas in the below-referenced paper, "Voting
 #' Rights, Markov Chains, and Optimization by Short Bursts."
@@ -24,9 +24,9 @@
 #'   threshold for each dimension, which must all be met for the algorithm to
 #'   stop.
 #' @param burst_size The size of each burst. 10 is recommended for the
-#'   `mergesplit` backend and 50 for the `flip` backend. Can also provide
-#'   burst schedule function which takes the current iteration (an integer)
-#'   and returns the desired burst size. This can be a random function.
+#'   `mergesplit` and `cyclewalk` backends, and 50 for the `flip` backend. Can
+#'   also provide burst schedule function which takes the current iteration (an
+#'   integer) and returns the desired burst size. This can be a random function.
 #' @param max_bursts The maximum number of bursts to run before returning.
 #' @param maximize If `TRUE`, try to maximize the score; otherwise, try to
 #'   minimize it. When `score_fn` returns a row vector per plan, `maximize` can
@@ -53,11 +53,15 @@
 #' one (generally, the Pareto frontier). Recommended for monitoring purposes.
 #' @param thin Save every `thin`-th sample. Defaults to no thinning (1). Ignored
 #' if `return_all=TRUE`.
-#' @param backend the MCMC algorithm to use within each burst, either
-#' "mergesplit" or "flip".
+#' @param backend The MCMC algorithm to use within each burst: `"mergesplit"`,
+#'   `"flip"`, or `"cyclewalk"`.
 #' @param flip_lambda The parameter determining the number of swaps to attempt each iteration of flip mcmc.
 #' The number of swaps each iteration is equal to Pois(lambda) + 1. The default is 0.
 #' @param flip_eprob  The probability of keeping an edge connected in flip mcmc. The default is 0.05.
+#' @param cw_instep Number of MCMC iterations per recorded sample for CycleWalk
+#'   backend (default 10).
+#' @param cw_cycle_walk_frac Fraction of proposals that are cycle walks vs
+#'   forest walks for cyclewalk backend (default 0.1).
 #' @param verbose Whether to print out intermediate information while sampling.
 #' Recommended for monitoring purposes.
 #'
@@ -84,7 +88,7 @@ redist_shortburst <- function(
     map,
     score_fn = NULL,
     stop_at = NULL,
-    burst_size = ifelse(backend == "mergesplit", 10L, 50L),
+    burst_size = ifelse(backend == "flip", 50L, 10L),
     max_bursts = 500L,
     maximize = TRUE,
     init_plan = NULL,
@@ -98,6 +102,8 @@ redist_shortburst <- function(
     backend = "mergesplit",
     flip_lambda = 0,
     flip_eprob = 0.05,
+    cw_instep = 10L,
+    cw_cycle_walk_frac = 0.1,
     verbose = TRUE
 ) {
     thin <- as.integer(thin)
@@ -122,7 +128,14 @@ redist_shortburst <- function(
         burst_size <- function(i) per_burst
     }
     max_bursts <- as.integer(max_bursts)
-    match.arg(backend, c("flip", "mergesplit"))
+    match.arg(backend, c("flip", "mergesplit", "cyclewalk"))
+
+    if (backend == "cyclewalk" && districting_scheme == "multiple") {
+        cli::cli_abort(c(
+            "{.val cyclewalk} backend does not support multi-member district plans.",
+            "i" = "Use {.val mergesplit} for MMD shortbursts."
+        ))
+    }
 
     score_fn <- rlang::as_closure(score_fn)
     stopifnot(is.function(score_fn))
@@ -196,12 +209,12 @@ redist_shortburst <- function(
 
     # ensure plan satisfies population bounds
     if (
-        (backend == 'flip' && any(pop >= get_target(map))) ||
+        (backend %in% c('flip', 'cyclewalk') && any(pop >= get_target(map))) ||
             (backend == 'mergesplit' && any(pop >= max_seat_size * pop_bounds[3]))
     ) {
         too_big <- as.character(which(pop >= max_seat_size * pop_bounds[3]))
         cli::cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
-                    population larger than the district target.",
+                    population larger than the maximum district size.",
             "x" = "Redistricting impossible."))
     }
 
@@ -256,6 +269,33 @@ redist_shortburst <- function(
                 )
             }
         }
+    } else if (backend == "cyclewalk") {
+        run_burst <- function(init, init_sizes, steps) {
+            plans <- cyclewalk_plans(
+                N = steps,
+                l = adj_list,
+                init = init,
+                counties = counties,
+                pop = pop,
+                n_distr = ndists,
+                target = pop_bounds[2],
+                lower = pop_bounds[1],
+                upper = pop_bounds[3],
+                compactness = compactness,
+                constraints = constraints,
+                control = list(),
+                edge_weights = list(),
+                thin = 1L,
+                instep = cw_instep,
+                cycle_walk_frac = cw_cycle_walk_frac,
+                verbosity = 0
+            )$plans[, -1L]
+
+            list(
+                plans = plans,
+                seats = matrix(1L, nrow = ndists, ncol = steps)
+            )
+        }
     } else {
         if (flip_eprob <= 0 || flip_eprob >= 1) {
             cli::cli_abort("{.arg flip_eprob} must be in the interval (0, 1).")
@@ -293,19 +333,19 @@ redist_shortburst <- function(
     rescale <- 1 - maximize * 2
 
     cur_best_scores <- score_fn(matrix(init_plan, ncol = 1))
-    score_init = cur_best_scores
+    score_init <- cur_best_scores
     if (!is.numeric(stop_at)) {
         stop_at <- -Inf
     } else {
-        stop_at = rescale * stop_at
+        stop_at <- rescale * stop_at
     }
     if (!is.matrix(cur_best_scores)) {
         cur_best_scores = matrix(cur_best_scores, ncol = 1)
         rownames(cur_best_scores) = "score"
     } else {
-        cur_best_scores = t(cur_best_scores)
+        cur_best_scores <- t(cur_best_scores)
         if (!is.null(names(rescale))) {
-            rescale = rescale[match(rownames(cur_best_scores), names(rescale))]
+            rescale <- rescale[match(rownames(cur_best_scores), names(rescale))]
         }
     }
     cur_best_scores <- cur_best_scores * rescale
@@ -320,11 +360,12 @@ redist_shortburst <- function(
         }
         if (backend == "mergesplit") {
             cat("MERGE-SPLIT SHORT BURSTS\n")
+        } else if (backend == "cyclewalk") {
+            cat("CYCLEWALK SHORT BURSTS\n")
         } else {
             cat("FLIP SHORT BURSTS\n")
         }
-        cat("Sampling up to", max_bursts, "bursts of", burst_size(1),
-            "iterations each.\n")
+        cat("Sampling up to", max_bursts, "bursts of", burst_size(1), "iterations each.\n")
         cat("Burst  Improve? ")
         cur_fmt_len <- nchar(fmt_score(cur_best_scores[, 1]))
         cols <- stringr::str_pad(colnames(scores), round(cur_fmt_len / dim_score))
@@ -377,13 +418,15 @@ redist_shortburst <- function(
             if (verbose) {
                 improve_ct <- (improve_ct %% length(improve_ch)) + 1L
 
-                cat(sprintf("% 5d     %s     %s\n", burst,
+                cat(sprintf(
+                    "% 5d     %s     %s\n",
+                    burst,
                     improve_ch[improve_ct],
-                    fmt_score(cur_best_scores[, out_idx])))
+                    fmt_score(cur_best_scores[, out_idx])
+                ))
             }
         } else if (verbose && burst %% report_int == 0) {
-            cat(sprintf("% 5d            %s\n", burst,
-                        fmt_score(cur_best_scores[, out_idx])))
+            cat(sprintf("% 5d            %s\n", burst, fmt_score(cur_best_scores[, out_idx])))
         }
 
         if (burst %% thin == 0) {
@@ -393,7 +436,7 @@ redist_shortburst <- function(
             scores[idx, ] <- cur_best_scores[, out_idx] * rescale
 
             if (any(colSums(cur_best_scores <= stop_at) == dim_score)) {
-                converged = TRUE
+                converged <- TRUE
                 break
             }
         }
@@ -404,8 +447,8 @@ redist_shortburst <- function(
         storage.mode(out_mat) <- "integer"
         storage.mode(out_sizes) <- "integer"
 
-        pareto_scores = t(cur_best_scores * rescale)
-        ord = order(pareto_scores[, 1])
+        pareto_scores <- t(cur_best_scores * rescale)
+        ord <- order(pareto_scores[, 1])
 
         out <- new_redist_plans(
             plans = out_mat[, out_idx, drop = FALSE],
@@ -425,7 +468,7 @@ redist_shortburst <- function(
         score_mat = matrix(rep(scores[out_idx, ], each = ndists), ncol = dim_score)
         colnames(score_mat) = colnames(scores)
         out <- dplyr::mutate(out, as.data.frame(score_mat))
-        out$burst_size = rep(burst_sizes[out_idx], each = ndists)
+        out$burst_size <- rep(burst_sizes[out_idx], each = ndists)
 
         out <- add_reference(
             plans = out,

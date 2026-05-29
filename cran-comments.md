@@ -1,12 +1,11 @@
 ## Test environments
 
-* local R installation (macOS), R 4.5.0
-* local R installation (Windows), R 4.5.0
-* ubuntu-latest (on GitHub Actions), (release)
-* ubuntu-latest (on GitHub Actions), (old release 1)
+* local R installation (Windows 11), R 4.5.2
+* local R installation (macOS 11.4), R 4.5.2
+* ubuntu-latest (on GitHub Actions), (oldrel-1, devel, and release)
+* windows-latest (on GitHub Actions), (release)
 * macOS-latest (on GitHub Actions), (release)
-* Windows-latest (on GitHub Actions), (release)
-* Windows-latest (on Winbuilder), (devel and release)
+* Windows (on Winbuilder), (devel and release)
 
 ## R CMD check results
 
@@ -14,9 +13,11 @@
 
 ## Reverse Dependencies
 
-There are no reverse dependencies to check.
+We checked 4 reverse dependencies, comparing R CMD check results across CRAN and dev versions of this package.
+
+ * We saw 0 new problems
+ * We failed to check 0 packages
 
 ## Additional Notes
 
-* Fixes documentation links to external packages, such as correcting links from `tibble` to `tibble::tibble`.
-* Corrects safe access to internet resources for vignettes.
+* Fixes CRAN issue regarding incorrect partial links under the new ubuntu checks.

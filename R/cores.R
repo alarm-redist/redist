@@ -67,14 +67,10 @@ redist.identify.cores <- function(adj, plan, boundary = 1, focus = NULL, simplif
     }
 
     tb <- tibble(dm = plan, boundary = core$k, cc = core$conncomp) %>%
-        group_by(.data$dm, boundary) %>%
-        mutate(gid = row_number()) %>%
-        ungroup() %>%
+        mutate(gid = row_number(), .by = c(.data$dm, boundary)) %>%
         mutate(gid = ifelse(boundary == 0, .data$cc, gid)) %>%
         mutate(gid = paste0(.data$dm, "-", boundary, "-", gid)) %>%
-        group_by(gid) %>%
-        mutate(group = cur_group_id()) %>%
-        ungroup()
+        mutate(group = cur_group_id(), .by = gid)
 
     gid <- tb$group
 
