@@ -18,7 +18,7 @@
 #' counties <- sample(c(rep("a", 20), rep("b", 5)))
 #' redist.county.relabel(fl25_adj, counties)
 #'
-redist.county.relabel <- function(adj, counties,  simplify = TRUE) {
+redist.county.relabel <- function(adj, counties, simplify = TRUE) {
     if (length(adj) != length(counties)) {
         cli::cli_abort("{.arg adj} and {.arg counties} must have the same length.")
     }
@@ -35,7 +35,9 @@ redist.county.relabel <- function(adj, counties,  simplify = TRUE) {
         mutate(comps = max(.data$comp)) %>%
         ungroup() %>%
         rowwise() %>%
-        mutate(countiescomp = ifelse(.data$comps > 1, paste0(counties, "-", .data$comp), counties)) %>%
+        mutate(
+            countiescomp = ifelse(.data$comps > 1, paste0(counties, "-", .data$comp), counties)
+        ) %>%
         ungroup()
     if (simplify) {
         redist.county.id(component$countiescomp)
@@ -62,7 +64,7 @@ redist.county.id <- function(counties) {
     if (class(counties) %in% c("character", "numeric", "integer")) {
         uc <- unique(sort(counties))
         county_id <- rep(0, length(counties))
-        for (i in 1:length(counties)) {
+        for (i in seq_along(counties)) {
             county_id[i] <- which(uc == counties[i])
         }
     } else {

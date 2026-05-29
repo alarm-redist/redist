@@ -4,7 +4,7 @@ test_that("redist.plot.map works", {
 
     iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
 
-    out <- iowa_map  %>% redist.plot.map(shp = ., plan = get_existing(.))
+    out <- iowa_map %>% redist.plot.map(shp = ., plan = get_existing(.))
     expect_true("ggplot" %in% class(out))
 
     out <- iowa_map %>% redist.plot.map(shp = ., plan = cd_2010)

@@ -20,16 +20,18 @@ redist.plot.varinfo <- function(plans, group_pop, total_pop, shp) {
     pct_min <- colmin(gp)
     dists <- redist.distances(plans, "info", total_pop = total_pop)$VI
     mds <- cmdscale(dists)
-    tb <- tibble(mds1 = mds[, 1], mds2 = mds[, 2],
-        pct_min = pct_min, id = 1:ncol(plans))
+    tb <- tibble(mds1 = mds[, 1], mds2 = mds[, 2], pct_min = pct_min, id = seq_len(ncol(plans)))
 
     km <- kmeans(x = mds, centers = centers)
 
     tb$cluster <- km$cluster
 
     tb$dist <- NA_real_
-    for (i in 1:nrow(tb)) {
-        tb$dist[i] <- sqrt((tb$mds1[i] - km$centers[tb$cluster[i], 1])^2 + (tb$mds2[i] - km$centers[tb$cluster[i], 2])^2)
+    for (i in seq_len(nrow(tb))) {
+        tb$dist[i] <- sqrt(
+            (tb$mds1[i] - km$centers[tb$cluster[i], 1])^2 +
+                (tb$mds2[i] - km$centers[tb$cluster[i], 2])^2
+        )
     }
 
     sub <- tb %>% group_by(cluster) %>% filter(dist == min(dist)) %>% slice(1)
@@ -42,16 +44,18 @@ redist.plot.varinfo <- function(plans, group_pop, total_pop, shp) {
         geom_text(data = sub, aes(label = id), color = "red") +
         ggplot2::scale_color_viridis_c()
 
+    ratio <- group_pop / total_pop
 
-    ratio <- group_pop/total_pop
-
-    p2  <- lapply(1:(centers + 1), function(x) {
+    p2 <- lapply(1:(centers + 1), function(x) {
         if (x == 1) {
             return(NULL)
         }
-        shp$newcd  <- as.character(plans[, sub$id[x - 1]])
-        shpdist <- shp %>% group_by(newcd) %>% summarize(geometry = st_union(sf::st_geometry(geometry)))
-        shp %>% ggplot() +
+        shp$newcd <- as.character(plans[, sub$id[x - 1]])
+        shpdist <- shp %>%
+            group_by(newcd) %>%
+            summarize(geometry = st_union(sf::st_geometry(geometry)))
+        shp %>%
+            ggplot() +
             geom_sf(aes(fill = ratio)) +
             labs(fill = "Minority\nPercent", title = sub$id[x - 1]) +
             theme_void() +

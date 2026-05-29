@@ -5,7 +5,6 @@
 ## Purpose: redist functions for a tidy workflow
 ##############################################
 
-
 # helper: TRUE if `x is constant within `grps`
 is_const_num <- function(x, grps) {
     all(tapply(x, grps, FUN = function(y) diff(range(y)) == 0))
@@ -28,12 +27,15 @@ is_const_num <- function(x, grps) {
 plot.redist_plans <- function(x, ..., type = "distr_qtys") {
     if (rlang::dots_n(...) == 0) {
         wgts <- get_plans_weights(subset_sampled(x, matrix = FALSE))
-        if (is.null(wgts))
+        if (is.null(wgts)) {
             return(redist.plot.distr_qtys(x, total_pop, size = 0.1))
+        }
         n <- length(wgts)
         iqr <- IQR(wgts)
-        bins <- min(max(round(diff(range(wgts))/(2*iqr/n^(1/3))), 3), 100)
-        if (iqr == 0) bins <- 3
+        bins <- min(max(round(diff(range(wgts)) / (2 * iqr / n^(1 / 3))), 3), 100)
+        if (iqr == 0) {
+            bins <- 3
+        }
 
         ggplot(NULL, aes(x = wgts)) +
             geom_histogram(bins = bins) +
@@ -69,36 +71,50 @@ plot.redist_plans <- function(x, ..., type = "distr_qtys") {
 #' @concept plot
 #' @export
 redist.plot.hist <- function(plans, qty, bins = NULL, ...) {
-    if (!inherits(plans, "redist_plans")) cli::cli_abort("{.arg plans} must be a {.cls redist_plans}")
-    if (missing(qty))
+    if (!inherits(plans, "redist_plans")) {
+        cli::cli_abort("{.arg plans} must be a {.cls redist_plans}")
+    }
+    if (missing(qty)) {
         cli::cli_abort("Must provide a {.arg qty} to make the histogram from.")
+    }
 
     val <- rlang::eval_tidy(rlang::enquo(qty), plans)
     rg <- diff(range(val, na.rm = TRUE))
     is_int <- isTRUE(all.equal(as.integer(val), val)) && rg <= 100
     if (is.null(bins)) {
         if (is_int) {
-            bins <- 3*rg + 1
+            bins <- 3 * rg + 1
         } else {
             n <- length(val)
             if (is_const_num(val, plans$draw)) {
-                n <- n/nrow(get_plans_matrix(plans))
+                n <- n / nrow(get_plans_matrix(plans))
             }
-            bins <- ceiling(2.4*n^(1/3)) # Modified Rice rule
+            bins <- ceiling(2.4 * n^(1 / 3)) # Modified Rice rule
         }
     }
 
-    percent <- function(x) sprintf("%1.0f%%", 100*x)
+    percent <- function(x) sprintf("%1.0f%%", 100 * x)
     p <- ggplot(subset_sampled(plans, matrix = FALSE), aes({{ qty }})) +
-        ggplot2::geom_histogram(aes(y = ggplot2::after_stat(density*width)), ...,
-            boundary = 0.5*is_int, bins = bins) +
-        ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0, 0.05)),
-            labels = percent) +
+        ggplot2::geom_histogram(
+            aes(y = ggplot2::after_stat(density * width)),
+            ...,
+            boundary = 0.5 * is_int,
+            bins = bins
+        ) +
+        ggplot2::scale_y_continuous(
+            expand = ggplot2::expansion(mult = c(0, 0.05)),
+            labels = percent
+        ) +
         labs(y = "Fraction of plans")
-    if (get_n_ref(plans) > 0)
-        p <- p + labs(color = "Plan") +
-            ggplot2::geom_vline(aes(xintercept = {{ qty }}, color = .data$draw),
-                linewidth = 1.15, data = subset_ref(plans))
+    if (get_n_ref(plans) > 0) {
+        p <- p +
+            labs(color = "Plan") +
+            ggplot2::geom_vline(
+                aes(xintercept = {{ qty }}, color = .data$draw),
+                linewidth = 1.15,
+                data = subset_ref(plans)
+            )
+    }
     p
 }
 
@@ -106,8 +122,9 @@ redist.plot.hist <- function(plans, qty, bins = NULL, ...) {
 #' @param x \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the statistic.
 #' @export
 hist.redist_plans <- function(x, qty, ...) {
-    if (missing(qty))
+    if (missing(qty)) {
         cli::cli_abort("Must provide a {.arg qty} to make the histogram from.")
+    }
     qty <- rlang::enquo(qty)
     redist.plot.hist(x, !!qty, ...)
 }
@@ -142,18 +159,29 @@ hist.redist_plans <- function(x, qty, ...) {
 #' @concept plot
 #' @export
 redist.plot.scatter <- function(plans, x, y, ..., bigger = TRUE) {
-    if (!inherits(plans, "redist_plans")) cli::cli_abort("{.arg plans} must be a {.cls redist_plans}")
+    if (!inherits(plans, "redist_plans")) {
+        cli::cli_abort("{.arg plans} must be a {.cls redist_plans}")
+    }
 
     p <- ggplot(subset_sampled(plans, matrix = FALSE), aes(x = {{ x }}, y = {{ y }})) +
         ggplot2::geom_point(...)
     if (get_n_ref(plans) > 0) {
         p <- p + labs(color = "Plan")
         if (bigger) {
-            p <- p + ggplot2::geom_point(aes(color = .data$draw), shape = 15,
-                size = 3, data = subset_ref(plans))
+            p <- p +
+                ggplot2::geom_point(
+                    aes(color = .data$draw),
+                    shape = 15,
+                    size = 3,
+                    data = subset_ref(plans)
+                )
         } else {
-            p <- p + ggplot2::geom_point(aes(color = .data$draw), shape = 15,
-                data = subset_ref(plans))
+            p <- p +
+                ggplot2::geom_point(
+                    aes(color = .data$draw),
+                    shape = 15,
+                    data = subset_ref(plans)
+                )
         }
     }
 
@@ -235,20 +263,34 @@ redist.plot.scatter <- function(plans, x, y, ..., bigger = TRUE) {
 #'
 #' @concept plot
 #' @export
-redist.plot.distr_qtys <- function(plans, qty, sort = "asc", geom = "jitter",
-                                   color_thresh = NULL, size = 0.1, ref_geom,
-                                   ref_label, ...) {
-    if (!inherits(plans, "redist_plans")) cli::cli_abort("{.arg plans} must be a {.cls redist_plans}")
+redist.plot.distr_qtys <- function(
+    plans,
+    qty,
+    sort = "asc",
+    geom = "jitter",
+    color_thresh = NULL,
+    size = 0.1,
+    ref_geom,
+    ref_label,
+    ...
+) {
+    if (!inherits(plans, "redist_plans")) {
+        cli::cli_abort("{.arg plans} must be a {.cls redist_plans}")
+    }
 
     if (isFALSE(sort) || sort == "none") {
         plans <- dplyr::group_by(plans, .data$draw) %>%
             dplyr::mutate(.distr_no = as.factor(.data$district))
     } else {
-        ord <- if (sort == "asc") 1  else if (sort == "desc") -1 else
+        ord <- if (sort == "asc") {
+            1
+        } else if (sort == "desc") {
+            -1
+        } else {
             cli::cli_abort("{.arg sort} not recognized: {.code {sort}}")
+        }
         plans <- dplyr::group_by(plans, .data$draw) %>%
-            dplyr::mutate(.distr_no = as.factor(rank(ord*{{ qty }},
-                ties.method = "first")))
+            dplyr::mutate(.distr_no = as.factor(rank(ord * {{ qty }}, ties.method = "first")))
     }
 
     val <- eval_tidy(enquo(qty), plans)
@@ -261,9 +303,13 @@ redist.plot.distr_qtys <- function(plans, qty, sort = "asc", geom = "jitter",
     if (is.null(color_thresh)) {
         p <- ggplot(pl_samp, aes(.data$.distr_no, {{ qty }}))
     } else {
-        if (!is.numeric(color_thresh)) cli::cli_abort("{.arg color_thresh} must be numeric.")
-        p <- ggplot(pl_samp, aes(.data$.distr_no, {{ qty }},
-            color = {{ qty }} >= color_thresh)) +
+        if (!is.numeric(color_thresh)) {
+            cli::cli_abort("{.arg color_thresh} must be numeric.")
+        }
+        p <- ggplot(
+            pl_samp,
+            aes(.data$.distr_no, {{ qty }}, color = {{ qty }} >= color_thresh)
+        ) +
             ggplot2::guides(color = "none")
     }
 
@@ -273,47 +319,62 @@ redist.plot.distr_qtys <- function(plans, qty, sort = "asc", geom = "jitter",
             if (missing(ref_geom)) {
                 if (is.null(color_thresh)) {
                     ref_geom <- function(...) {
-                        ggplot2::geom_segment(aes(as.integer(.data$.distr_no) - 0.5,
-                                                  xend = as.integer(.data$.distr_no) + 0.5,
-                                                  yend = {{ qty }},
-                                                  color = .data$draw),
-                                              linewidth = 1.2, ...)
+                        ggplot2::geom_segment(
+                            aes(
+                                as.integer(.data$.distr_no) - 0.5,
+                                xend = as.integer(.data$.distr_no) + 0.5,
+                                yend = {{ qty }},
+                                color = .data$draw
+                            ),
+                            linewidth = 1.2,
+                            ...
+                        )
                     }
-                   if (missing(ref_label))
-                       ref_label <- function() labs(color = "Plan", shape = "Plan")
-                } else{
-                    ref_geom <- function(...) {
-                        ggplot2::geom_point(aes(color = .data$draw), shape = 15,
-                                            size = 2, ...)
-                    }
-                    if (missing(ref_label))
+                    if (missing(ref_label)) {
                         ref_label <- function() labs(color = "Plan", shape = "Plan")
+                    }
+                } else {
+                    ref_geom <- function(...) {
+                        ggplot2::geom_point(aes(color = .data$draw), shape = 15, size = 2, ...)
+                    }
+                    if (missing(ref_label)) {
+                        ref_label <- function() labs(color = "Plan", shape = "Plan")
+                    }
                 }
             }
         } else if (geom == "boxplot") {
-           geom <- function(...) ggplot2::geom_boxplot(..., outlier.size = 1)
-           if (missing(ref_geom)) {
-               if (is.null(color_thresh)) {
-                   ref_geom <- function(...) {
-                       ggplot2::geom_segment(
-                           aes(x = as.integer(.data$.distr_no) - 0.5,
-                               xend = as.integer(.data$.distr_no) + 0.5,
-                               yend = {{ qty }},
-                               color = .data$draw
-                           ), ...,
-                           linewidth = 1.2)
-                   }
-                   if (missing(ref_label))
-                       ref_label <- function() labs(color = "Plan")
-               } else{
-                   ref_geom <- function(...) {
-                       ggplot2::geom_point(aes(shape = .data$draw), color = "black",
-                                           size = 2, ...)
-                   }
-                   if (missing(ref_label))
-                       ref_label <- function() labs(shape = "Plan")
-               }
-           }
+            geom <- function(...) ggplot2::geom_boxplot(..., outlier.size = 1)
+            if (missing(ref_geom)) {
+                if (is.null(color_thresh)) {
+                    ref_geom <- function(...) {
+                        ggplot2::geom_segment(
+                            aes(
+                                x = as.integer(.data$.distr_no) - 0.5,
+                                xend = as.integer(.data$.distr_no) + 0.5,
+                                yend = {{ qty }},
+                                color = .data$draw
+                            ),
+                            ...,
+                            linewidth = 1.2
+                        )
+                    }
+                    if (missing(ref_label)) {
+                        ref_label <- function() labs(color = "Plan")
+                    }
+                } else {
+                    ref_geom <- function(...) {
+                        ggplot2::geom_point(
+                            aes(shape = .data$draw),
+                            color = "black",
+                            size = 2,
+                            ...
+                        )
+                    }
+                    if (missing(ref_label)) {
+                        ref_label <- function() labs(shape = "Plan")
+                    }
+                }
+            }
         } else {
             cli::cli_abort("{.arg geom} must be either \"jitter\" or \"boxplot\"")
         }
@@ -321,18 +382,27 @@ redist.plot.distr_qtys <- function(plans, qty, sort = "asc", geom = "jitter",
 
     p <- p + geom(...)
 
-    if (isFALSE(sort) || sort == "none")
+    if (isFALSE(sort) || sort == "none") {
         p <- p + labs(x = "District")
-    else
+    } else {
         p <- p + labs(x = "Ordered district")
+    }
 
     if (get_n_ref(plans) > 0) {
         pl_ref <- as.data.frame(subset_ref(plans, matrix = FALSE))
-        if (missing(ref_geom))
-            ref_geom <- function(...) ggplot2::geom_point(
-                aes(color = .data$draw), shape = 15, size = 2, ...
+        if (missing(ref_geom)) {
+            ref_geom <- function(...) {
+                ggplot2::geom_point(
+                    aes(color = .data$draw),
+                    shape = 15,
+                    size = 2,
+                    ...
                 )
-        if (missing(ref_label)) ref_label <- function() labs(color = "Plan", shape = "Plan")
+            }
+        }
+        if (missing(ref_label)) {
+            ref_label <- function() labs(color = "Plan", shape = "Plan")
+        }
         p <- p + ref_geom(data = pl_ref) + ref_label()
     }
 
@@ -361,18 +431,32 @@ redist.plot.distr_qtys <- function(plans, qty, sort = "asc", geom = "jitter",
 #'
 #' @concept plot
 #' @export
-redist.plot.plans <- function(plans, draws, shp, qty = NULL, interactive = FALSE, ..., geom = NULL) {
+redist.plot.plans <- function(
+    plans,
+    draws,
+    shp,
+    qty = NULL,
+    interactive = FALSE,
+    ...,
+    geom = NULL
+) {
     if (!missing(geom)) {
         .Deprecated("shp", old = "geom")
         if (missing(shp)) shp <- geom
     }
-    if (!inherits(plans, "redist_plans")) cli::cli_abort("{.arg plans} must be a {.cls redist_plans}")
+    if (!inherits(plans, "redist_plans")) {
+        cli::cli_abort("{.arg plans} must be a {.cls redist_plans}")
+    }
     m <- get_plans_matrix(plans)
-    if (nrow(shp) != nrow(m))
+    if (nrow(shp) != nrow(m)) {
         cli::cli_abort("{.arg plans} and {.arg shp} must have the same number of precincts.")
+    }
 
     if (interactive) {
-        .Deprecated("interactive", msg = "Interactive editing is no longer supported within redist.")
+        .Deprecated(
+            "interactive",
+            msg = "Interactive editing is no longer supported within redist."
+        )
     }
 
     plot_single <- function(draw) {
@@ -426,7 +510,9 @@ redist.plot.plans <- function(plans, draws, shp, qty = NULL, interactive = FALSE
 #' @concept plot
 #' @export
 redist.plot.trace <- function(plans, qty, district = 1L, ...) {
-    if (!"chain" %in% names(plans)) plans$chain <- 1
+    if (!"chain" %in% names(plans)) {
+        plans$chain <- 1
+    }
     plans <- as.data.frame(plans) %>%
         filter(!is.na(.data$chain)) %>%
         mutate(chain = as.factor(.data$chain)) %>%

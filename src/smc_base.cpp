@@ -4,8 +4,8 @@
  * Partition `x` and its indices `idxs` between `right` and `left` by `pivot`
  */
 // TESTED
-void partition_vec(std::vector<double> &x, std::vector<int> &idxs, int left,
-                   int right, int &pivot) {
+void partition_vec(std::vector<double> &x, std::vector<int> &idxs, int left, int right,
+                   int &pivot) {
     double pivot_value = x[pivot];
     std::swap(x[pivot], x[right]);
     std::swap(idxs[pivot], idxs[right]);
@@ -26,14 +26,15 @@ void partition_vec(std::vector<double> &x, std::vector<int> &idxs, int left,
  */
 // TESTED
 int global_rng_select_k(std::vector<double> x, int k) {
-    if(k > x.size()){
-        REprintf("k=%d bigger than number of edges=%d!\n", k, (int) x.size());
+    if (k > x.size()) {
+        REprintf("k=%d bigger than number of edges=%d!\n", k, (int)x.size());
         throw Rcpp::exception("k bigger than number of edges!\n");
     }
     int right = x.size() - 1;
     int left = 0;
     std::vector<int> idxs(right + 1);
-    for (int i = 0; i <= right; i++) idxs[i] = i;
+    for (int i = 0; i <= right; i++)
+        idxs[i] = i;
 
     k--;
     while (true) {
@@ -51,20 +52,20 @@ int global_rng_select_k(std::vector<double> x, int k) {
     }
 }
 
-
 /*
  * Get the index of the k-th smallest element of x
  */
 // TESTED
 int select_k(std::vector<double> x, int k, RNGState &rng_state) {
-    if(k > x.size()){
-        REprintf("k=%d bigger than number of edges=%d!\n", k, (int) x.size());
+    if (k > x.size()) {
+        REprintf("k=%d bigger than number of edges=%d!\n", k, (int)x.size());
         throw Rcpp::exception("k bigger than number of edges!\n");
     }
     int right = x.size() - 1;
     int left = 0;
     std::vector<int> idxs(right + 1);
-    for (int i = 0; i <= right; i++) idxs[i] = i;
+    for (int i = 0; i <= right; i++)
+        idxs[i] = i;
 
     k--;
     while (true) {
@@ -82,7 +83,6 @@ int select_k(std::vector<double> x, int k, RNGState &rng_state) {
     }
 }
 
-List cli_config(bool clear, const char * fmt) {
-    return List::create(_["clear"]=clear, _["show_after"]=0.25,
-                        _["format"]=fmt);
+List cli_config(bool clear, const char *fmt) {
+    return List::create(_["clear"] = clear, _["show_after"] = 0.25, _["format"] = fmt);
 }

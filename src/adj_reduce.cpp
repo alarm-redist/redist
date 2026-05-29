@@ -8,7 +8,8 @@ List reduce_adj(List adj_list, IntegerVector prec_map, int n_keep) {
     int V = adj_list.size();
     for (int i = 0; i < V; i++) {
         int new_i = prec_map[i];
-        if (new_i == -1) continue;
+        if (new_i == -1)
+            continue;
 
         sub = IntegerVector::create();
 
@@ -38,12 +39,11 @@ Graph collapse_adj(List graph, const arma::uvec &idxs) {
     for (int i = 0; i < V; i++) {
         int from = idxs(i);
         std::vector<int> *nbors = &collapsed[from];
-        int length = ((IntegerVector) graph[i]).size();
+        int length = ((IntegerVector)graph[i]).size();
         for (int j = 0; j < length; j++) {
-            int to = idxs(((IntegerVector) graph[i])[j]);
+            int to = idxs(((IntegerVector)graph[i])[j]);
 
-            if (from != to &&
-                    std::find(nbors->begin(), nbors->end(), to) == nbors->end()) {
+            if (from != to && std::find(nbors->begin(), nbors->end(), to) == nbors->end()) {
                 nbors->push_back(to);
             }
         }

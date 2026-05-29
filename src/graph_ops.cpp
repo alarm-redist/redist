@@ -1,19 +1,14 @@
 /********************************************************
-* Author: Philip O'Sullivan'
-* Institution: Harvard University
-* Date Created: 2025/3
-* Purpose: Graph functions
-********************************************************/
+ * Author: Philip O'Sullivan'
+ * Institution: Harvard University
+ * Date Created: 2025/3
+ * Purpose: Graph functions
+ ********************************************************/
 
 #include "graph_ops.h"
 
-
-
-RegionMultigraphCount build_region_multigraph(
-    Graph const &g, 
-    PlanVector const &region_ids,
-    int const num_regions
-){
+RegionMultigraphCount build_region_multigraph(Graph const &g, PlanVector const &region_ids,
+                                              int const num_regions) {
     RegionMultigraphCount region_multigraph(num_regions);
     int const V = g.size();
 
@@ -27,7 +22,7 @@ RegionMultigraphCount build_region_multigraph(
             int v_nbor_region_num = region_ids[v_nbor];
 
             // to avoid double counting only count when v less u
-            if(v_region_num < v_nbor_region_num){
+            if (v_region_num < v_nbor_region_num) {
                 // we increase the count of edges
                 region_multigraph[v_region_num][v_nbor_region_num]++;
                 region_multigraph[v_nbor_region_num][v_region_num]++;
@@ -38,20 +33,14 @@ RegionMultigraphCount build_region_multigraph(
     return region_multigraph;
 }
 
-
-
-arma::mat build_region_laplacian(
-    RegionMultigraphCount const &region_multigraph
-){
+arma::mat build_region_laplacian(RegionMultigraphCount const &region_multigraph) {
     int num_regions = region_multigraph.size();
     arma::mat laplacian_mat(num_regions, num_regions, arma::fill::zeros);
     // iterate over the multigraph
-    for (size_t region_id = 0; region_id < num_regions; region_id++)
-    {
+    for (size_t region_id = 0; region_id < num_regions; region_id++) {
         int vertex_degree = 0;
         // iterate over neighbors
-        for (auto const &it : region_multigraph[region_id])
-        {
+        for (auto const &it : region_multigraph[region_id]) {
             // add number of edges to degree
             vertex_degree += it.second;
             laplacian_mat(region_id, it.first) = -it.second;
@@ -60,54 +49,25 @@ arma::mat build_region_laplacian(
         laplacian_mat(region_id, region_id) = vertex_degree;
     }
 
-    return(laplacian_mat);
+    return (laplacian_mat);
 }
 
 // Can call from R
-RegionMultigraphCount get_region_multigraph(
-    Rcpp::List const &adj_list,
-    arma::uvec const &region_ids
-){
+RegionMultigraphCount get_region_multigraph(Rcpp::List const &adj_list,
+                                            arma::uvec const &region_ids) {
     std::unordered_set<int> uniqueElements;
     for (int element : region_ids) {
         uniqueElements.insert(element);
     }
 
-    AllPlansVector underlying_id_vec(
-        region_ids.begin(),
-        region_ids.end()
-    );
+    AllPlansVector underlying_id_vec(region_ids.begin(), region_ids.end());
 
-    PlanVector region_id_vec(underlying_id_vec, 0, underlying_id_vec.size()-1);
-
+    PlanVector region_id_vec(underlying_id_vec, 0, underlying_id_vec.size() - 1);
 
     int num_regions = uniqueElements.size();
-    return(build_region_multigraph(
-        list_to_graph(adj_list), 
-        region_id_vec,
-        num_regions
-    ));
+    return (build_region_multigraph(list_to_graph(adj_list), region_id_vec, num_regions));
 }
 
-arma::mat get_region_laplacian(
-    Rcpp::List const &adj_list,
-    arma::uvec const &region_ids
-){
-    return(
-        build_region_laplacian(get_region_multigraph(
-            adj_list,
-            region_ids
-        ))
-    );
+arma::mat get_region_laplacian(Rcpp::List const &adj_list, arma::uvec const &region_ids) {
+    return (build_region_laplacian(get_region_multigraph(adj_list, region_ids)));
 }
-
-
-
-
-
-
-
-
-
-
-

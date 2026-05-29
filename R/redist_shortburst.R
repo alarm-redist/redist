@@ -5,8 +5,6 @@
 # Purpose: short-burst redistricting optimization
 ####################################################
 
-
-
 #' Redistricting Optimization through Short Bursts
 #'
 #' This function uses [redist_mergesplit()] or [redist_flip()] to optimize a
@@ -82,18 +80,27 @@
 #' @concept simulate
 #' @md
 #' @export
-redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
-                              burst_size = ifelse(backend == "mergesplit", 10L, 50L),
-                              max_bursts = 500L, maximize = TRUE,
-                              init_plan = NULL, init_seats = NULL,
-                              counties = NULL,  constraints = redist_constr(map),
-                              compactness = 1, reversible=TRUE,
-                              return_all = TRUE, thin = 1L, backend = "mergesplit",
-                              flip_lambda = 0, flip_eprob = 0.05,
-                              verbose = TRUE) {
-
+redist_shortburst <- function(
+    map,
+    score_fn = NULL,
+    stop_at = NULL,
+    burst_size = ifelse(backend == "mergesplit", 10L, 50L),
+    max_bursts = 500L,
+    maximize = TRUE,
+    init_plan = NULL,
+    init_seats = NULL,
+    counties = NULL,
+    constraints = redist_constr(map),
+    compactness = 1,
+    reversible = TRUE,
+    return_all = TRUE,
+    thin = 1L,
+    backend = "mergesplit",
+    flip_lambda = 0,
+    flip_eprob = 0.05,
+    verbose = TRUE
+) {
     thin <- as.integer(thin)
-
 
     map_params <- get_map_parameters(map, !!rlang::enquo(counties))
     map <- map_params$map
@@ -120,23 +127,24 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     score_fn <- rlang::as_closure(score_fn)
     stopifnot(is.function(score_fn))
 
-    if (compactness < 0){
+    if (compactness < 0) {
         cli::cli_abort("{.arg compactness} must be non-negative.")
     }
-    if (burst_size(1) < 1 || max_bursts < 1)
+    if (burst_size(1) < 1 || max_bursts < 1) {
         cli::cli_abort("{.arg burst_size} and {.arg max_bursts} must be positive.")
-    if (thin < 1 || thin > max_bursts)
+    }
+    if (thin < 1 || thin > max_bursts) {
         cli::cli_abort("{.arg thin} must be a positive integer, and no larger than {.arg max_bursts}.")
+    }
 
-
-    if (is.null(init_plan)){
+    if (is.null(init_plan)) {
         init_plan_list <- get_ref_plan_and_seats(map)
         init_plan <- init_plan_list$ref_plan
         init_seats <- init_plan_list$ref_seats
-    }else if(!isTRUE(init_plan == "sample")){
-        if(districting_scheme == "multiple"){
+    } else if (!isTRUE(init_plan == "sample")) {
+        if (districting_scheme == "multiple") {
             # infer seats if needed
-            if(is.null(init_seats)){
+            if (is.null(init_seats)) {
                 distr_pop <- pop_tally(as.matrix(init_plan, ncol = 1), pop, ndists)
                 init_seats <- redist:::infer_region_seats(
                     distr_pop,
@@ -145,54 +153,64 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
                     nseats
                 ) |>
                     as.vector()
-            }else{
+            } else {
                 # check its valid
-                if(sum(init_seats) != nseats){
+                if (sum(init_seats) != nseats) {
                     cli::cli_abort("{.arg init_seats} must contain {nseats} total seats")
                 }
             }
-        }else{
+        } else {
             init_seats <- rep(1, ndists)
         }
     }
     if (is.null(init_plan) || isTRUE(init_plan == "sample")) {
         smc_nsims <- 10
-        smc_plans <- redist_smc(map, smc_nsims, counties, resample = FALSE, ref_name = FALSE, silent = TRUE)
+        smc_plans <- redist_smc(
+            map,
+            smc_nsims,
+            counties,
+            resample = FALSE,
+            ref_name = FALSE,
+            silent = TRUE
+        )
         sample_index <- sample.int(smc_nsims, 1)
 
-        init_plan <- get_plans_matrix(smc_plans)[,sample_index]
+        init_plan <- get_plans_matrix(smc_plans)[, sample_index]
         init_seats <- get_seats_matrix(smc_plans)[, sample_index]
     }
 
     # check init
-    if (length(init_plan) != V)
+    if (length(init_plan) != V) {
         cli::cli_abort("{.arg init_plan} must be as long as the number of units as `map`.")
-    if (max(init_plan) != ndists)
+    }
+    if (max(init_plan) != ndists) {
         cli::cli_abort("{.arg init_plan} must have the same number of districts as `map`.")
-    if (any(contiguity(adj_list, init_plan) != 1))
+    }
+    if (any(contiguity(adj_list, init_plan) != 1)) {
         cli::cli_warn("{.arg init_plan} should have contiguous districts.")
-
-
-
+    }
 
     if (backend == "flip") {
         pop_tol <- get_pop_tol(map)
     }
 
     # ensure plan satisfies population bounds
-    if ((backend == 'flip' && any(pop >= get_target(map))) ||
-        (backend == 'mergesplit' && any(pop >= max_seat_size* pop_bounds[3]))) {
+    if (
+        (backend == 'flip' && any(pop >= get_target(map))) ||
+            (backend == 'mergesplit' && any(pop >= max_seat_size * pop_bounds[3]))
+    ) {
         too_big <- as.character(which(pop >= max_seat_size * pop_bounds[3]))
         cli::cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
                     population larger than the district target.",
             "x" = "Redistricting impossible."))
     }
 
-    if (!inherits(constraints, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
+    if (!inherits(constraints, "redist_constr")) {
+        cli::cli_abort("Not a {.cls redist_constr} object")
+    }
     constraints <- as.list(constraints)
 
     if (backend == "mergesplit") {
-
         control = list(
             splitting_method=UNIF_VALID_EDGE_SPLITTING,
             do_mh=reversible
@@ -203,38 +221,42 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
             init_sizes <- matrix(init_sizes, ncol = 1)
 
             run_output <- ms_plans(
-                nsims=steps, warmup=0L, thin=1L,
-                ndists=ndists, total_seats=nseats,
-                district_seat_sizes=seats_range,
-                adj_list=adj_list, counties=counties, pop=pop,
-                target=pop_bounds[2], lower=pop_bounds[1], upper=pop_bounds[3],
-                rho=compactness,
-                init_plan=init,
-                init_seats=init_sizes,
+                nsims = steps,
+                warmup = 0L,
+                thin = 1L,
+                ndists = ndists,
+                total_seats = nseats,
+                district_seat_sizes = seats_range,
+                adj_list = adj_list,
+                counties = counties,
+                pop = pop,
+                target = pop_bounds[2],
+                lower = pop_bounds[1],
+                upper = pop_bounds[3],
+                rho = compactness,
+                init_plan = init,
+                init_seats = init_sizes,
                 sampling_space_str = FOREST_SPACE_SAMPLING,
                 pair_rule = "uniform",
-                control=control, constraints=constraints,
-                verbosity=0, diagnostic_mode=FALSE
+                control = control,
+                constraints = constraints,
+                verbosity = 0,
+                diagnostic_mode = FALSE
             )
 
-
-            if(districting_scheme == "single"){
+            if (districting_scheme == "single") {
                 output_list <- list(
                     plans = run_output$plans,
                     seats = matrix(1L, nrow = ndists, ncol = ncol(plans))
                 )
-            }else{
+            } else {
                 output_list <- list(
                     plans = run_output$plans,
                     seats = run_output$seats
                 )
             }
-
-
-
         }
     } else {
-
         if (flip_eprob <= 0 || flip_eprob >= 1) {
             cli::cli_abort("{.arg flip_eprob} must be in the interval (0, 1).")
         }
@@ -243,10 +265,16 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         }
 
         run_burst <- function(init, init_sizes, steps) {
-            plans <- skinny_flips(adj = adj_list, init_plan = init, total_pop = pop,
-                pop_tol = pop_tol, nsims = steps,
-                eprob = flip_eprob, lambda = flip_lambda,
-                constraints = constraints)
+            plans <- skinny_flips(
+                adj = adj_list,
+                init_plan = init,
+                total_pop = pop,
+                pop_tol = pop_tol,
+                nsims = steps,
+                eprob = flip_eprob,
+                lambda = flip_lambda,
+                constraints = constraints
+            )
 
             list(
                 plans = plans,
@@ -255,14 +283,13 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         }
     }
 
-
     burst <- 1
     n_out <- max_bursts %/% thin
     out_mat <- matrix(0L, nrow = V, ncol = n_out)
     out_sizes <- matrix(0L, nrow = ndists, ncol = n_out)
     burst_sizes <- integer(n_out)
-    cur_best <- matrix(init_plan, ncol=1)
-    cur_best_size <- matrix(init_seats, ncol=1)
+    cur_best <- matrix(init_plan, ncol = 1)
+    cur_best_size <- matrix(init_seats, ncol = 1)
     rescale <- 1 - maximize * 2
 
     cur_best_scores <- score_fn(matrix(init_plan, ncol = 1))
@@ -273,7 +300,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         stop_at = rescale * stop_at
     }
     if (!is.matrix(cur_best_scores)) {
-        cur_best_scores = matrix(cur_best_scores, ncol=1)
+        cur_best_scores = matrix(cur_best_scores, ncol = 1)
         rownames(cur_best_scores) = "score"
     } else {
         cur_best_scores = t(cur_best_scores)
@@ -284,12 +311,12 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     cur_best_scores <- cur_best_scores * rescale
     dim_score <- nrow(cur_best_scores)
 
-    scores <- matrix(nrow=n_out, ncol=dim_score)
+    scores <- matrix(nrow = n_out, ncol = dim_score)
     colnames(scores) = rownames(cur_best_scores)
 
     if (verbose) {
         fmt_score <- function(x) {
-            paste0(sprintf("%f", x * rescale), collapse=" ")
+            paste0(sprintf("%f", x * rescale), collapse = " ")
         }
         if (backend == "mergesplit") {
             cat("MERGE-SPLIT SHORT BURSTS\n")
@@ -303,7 +330,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         cols <- stringr::str_pad(colnames(scores), round(cur_fmt_len / dim_score))
         cat(cols, "\n")
     }
-    report_int <- max(round(max_bursts/10), 1)
+    report_int <- max(round(max_bursts / 10), 1)
     improve_ch <- sample(c("\U0001F973", "\U0001F600", "\U0001F60E",
         "\U0001F642", "\U0001F386", "\U0001F387",
         "\U0001F942", "\U0001F383", "\U0001FA85",
@@ -326,11 +353,10 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         burst_init_size <- cur_best_size[, burst_init_index]
 
         run_burst_result <- run_burst(burst_init, burst_init_size, this_burst_size)
-        plans <- run_burst_result$plans[, keep, drop=FALSE]
-        plan_sizes <- run_burst_result$seats[, keep, drop=FALSE]
+        plans <- run_burst_result$plans[, keep, drop = FALSE]
+        plan_sizes <- run_burst_result$seats[, keep, drop = FALSE]
 
-
-        plan_scores <- t(matrix(score_fn(plans), ncol=dim_score))
+        plan_scores <- t(matrix(score_fn(plans), ncol = dim_score))
         plan_scores <- plan_scores * rescale
 
         cur_best <- cbind(cur_best, plans)
@@ -338,15 +364,16 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         cur_best_scores <- cbind(cur_best_scores, plan_scores)
 
         dominated <- pareto_dominated(cur_best_scores)
-        improved <- any(!tail(dominated, this_burst_size))
+        improved <- !all(tail(dominated, this_burst_size))
         # remove dominated plans
-        cur_best <- cur_best[, !dominated, drop=FALSE]
-        cur_best_size <- cur_best_size[, !dominated, drop=FALSE]
-        cur_best_scores <- cur_best_scores[, !dominated, drop=FALSE]
+        cur_best <- cur_best[, !dominated, drop = FALSE]
+        cur_best_size <- cur_best_size[, !dominated, drop = FALSE]
+        cur_best_scores <- cur_best_scores[, !dominated, drop = FALSE]
 
         # add new undominated plans
         out_idx = sample.int(ncol(cur_best), 1) # random plan from frontier
-        if (improved) { # improvement
+        if (improved) {
+            # improvement
             if (verbose) {
                 improve_ct <- (improve_ct %% length(improve_ch)) + 1L
 
@@ -382,15 +409,19 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
 
         out <- new_redist_plans(
             plans = out_mat[, out_idx, drop = FALSE],
-            map = map, algorithm = "shortburst",
-            wgt = NULL, resampled = FALSE, seats = out_sizes[, out_idx, drop = FALSE],
+            map = map,
+            algorithm = "shortburst",
+            wgt = NULL,
+            resampled = FALSE,
+            seats = out_sizes[, out_idx, drop = FALSE],
             n_bursts = burst,
             backend = backend,
             converged = converged,
-            pareto_front = cur_best[, ord, drop=FALSE],
-            pareto_scores = pareto_scores[ord, , drop=FALSE],
+            pareto_front = cur_best[, ord, drop = FALSE],
+            pareto_scores = pareto_scores[ord, , drop = FALSE],
             version = packageVersion("redist"),
-            score_fn = deparse(substitute(score_fn)))
+            score_fn = deparse(substitute(score_fn))
+        )
         score_mat = matrix(rep(scores[out_idx, ], each = ndists), ncol = dim_score)
         colnames(score_mat) = colnames(scores)
         out <- dplyr::mutate(out, as.data.frame(score_mat))
@@ -406,17 +437,20 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         idx_cols = ncol(out) - dim_score:1
         out[1:ndists, idx_cols] <- matrix(rep(score_init, each = ndists), ncol = dim_score)
     } else {
-
-        out <- new_redist_plans(plans = cur_best, map = map,
-                                algorithm = "shortburst",
-                                wgt = NULL, resampled = FALSE,
-                                n_bursts = burst, seats = cur_best_size,
-                                backend = backend,
-                                converged = converged,
-                                version = packageVersion("redist"),
-                                score_fn = deparse(substitute(score_fn)))
-        score_mat = matrix(rep(t(cur_best_scores * rescale), each = ndists),
-                           ncol = dim_score)
+        out <- new_redist_plans(
+            plans = cur_best,
+            map = map,
+            algorithm = "shortburst",
+            wgt = NULL,
+            resampled = FALSE,
+            n_bursts = burst,
+            seats = cur_best_size,
+            backend = backend,
+            converged = converged,
+            version = packageVersion("redist"),
+            score_fn = deparse(substitute(score_fn))
+        )
+        score_mat = matrix(rep(t(cur_best_scores * rescale), each = ndists), ncol = dim_score)
         colnames(score_mat) = colnames(scores)
         out <- dplyr::mutate(out, as.data.frame(score_mat))
     }
@@ -485,11 +519,11 @@ NULL
 #' @export
 scorer_frac_kept <- function(map) {
     adj <- get_adj(map)
-    edges <- sum(sapply(adj, length))/2
+    edges <- sum(lengths(adj)) / 2
     ndists <- attr(map, "ndists")
 
     fn <- function(plans) {
-        (edges - n_removed(adj, plans, ndists))/edges
+        (edges - n_removed(adj, plans, ndists)) / edges
     }
     class(fn) <- c("redist_scorer", "function")
     fn
@@ -553,7 +587,7 @@ scorer_splits <- function(map, counties) {
 
     fn <- function(plans) {
         nd <- length(unique(plans[, 1]))
-        redistmetrics:::splits(plans, counties, nd, 1)/length(unique(counties))
+        redistmetrics:::splits(plans, counties, nd, 1) / length(unique(counties))
     }
     class(fn) <- c("redist_scorer", "function")
     fn
@@ -570,7 +604,7 @@ scorer_multisplits <- function(map, counties) {
     counties <- vctrs::vec_group_id(counties)
 
     fn <- function(plans) {
-        splits(plans, counties, attr(map, "ndists"), 2)/length(unique(counties))
+        splits(plans, counties, attr(map, "ndists"), 2) / length(unique(counties))
     }
     class(fn) <- c("redist_scorer", "function")
     fn
@@ -587,13 +621,21 @@ scorer_multisplits <- function(map, counties) {
 #' @export
 scorer_polsby_popper <- function(map, perim_df = NULL, areas = NULL, m = 1) {
     ndists <- attr(map, "ndists")
-    if (is.null(perim_df)) perim_df <- redistmetrics::prep_perims(map)
-    if (is.null(areas)) areas <- sf::st_area(sf::st_geometry(map))
+    if (is.null(perim_df)) {
+        perim_df <- redistmetrics::prep_perims(map)
+    }
+    if (is.null(areas)) {
+        areas <- sf::st_area(sf::st_geometry(map))
+    }
 
     fn <- function(plans) {
         pp <- polsbypopper(
-            from = perim_df$origin, to = perim_df$touching, area = areas,
-            perimeter = perim_df$edge, dm = plans, nd = ndists
+            from = perim_df$origin,
+            to = perim_df$touching,
+            area = areas,
+            perimeter = perim_df$edge,
+            dm = plans,
+            nd = ndists
         )
 
         k_smallest(x = pp, k = m)
@@ -618,12 +660,11 @@ scorer_status_quo <- function(map, existing_plan = get_existing(map)) {
     stopifnot(!is.null(pop))
 
     fn <- function(plans) {
-        1 - 0.5*var_info_vec(plans, existing_plan, pop)/log(ndists)
+        1 - 0.5 * var_info_vec(plans, existing_plan, pop) / log(ndists)
     }
     class(fn) <- c("redist_scorer", "function")
     fn
 }
-
 
 
 #' Combine scoring functions
@@ -657,9 +698,12 @@ cbind.redist_scorer <- function(..., deparse.level = 1) {
     stopifnot(all(sapply(fns, function(x) inherits(x, "redist_scorer"))))
 
     fn <- function(plans) {
-        do.call(cbind, c(lapply(fns, function(fn) {
+        do.call(
+            cbind,
+            c(lapply(fns, function(fn) {
             fn(plans)
-        }), list(deparse.level=deparse.level)))
+        }), list(deparse.level=deparse.level))
+        )
     }
     class(fn) <- c("redist_scorer", "function")
     fn
@@ -688,10 +732,14 @@ NULL
     stopifnot(inherits(fn2, "redist_scorer"))
 
     if (is.numeric(x)) {
-        rlang::fn_body(fn2) <- rlang::expr({!!x*!!rlang::fn_body(fn2)})
+        rlang::fn_body(fn2) <- rlang::expr({
+            !!x * !!rlang::fn_body(fn2)
+        })
         return(fn2)
     } else {
-        fn <- function(plans) { x(plans)*fn2(plans) }
+        fn <- function(plans) {
+            x(plans) * fn2(plans)
+        }
         class(fn) <- c("redist_scorer", "function")
     }
 
@@ -708,7 +756,9 @@ NULL
     stopifnot(inherits(fn1, "redist_scorer"))
     stopifnot(inherits(fn2, "redist_scorer"))
 
-    fn <- function(plans) { fn1(plans) + fn2(plans) }
+    fn <- function(plans) {
+        fn1(plans) + fn2(plans)
+    }
     class(fn) <- c("redist_scorer", "function")
     fn
 }
@@ -723,7 +773,9 @@ NULL
     stopifnot(inherits(fn1, "redist_scorer"))
     stopifnot(inherits(fn2, "redist_scorer"))
 
-    fn <- function(plans) { fn1(plans) - fn2(plans) }
+    fn <- function(plans) {
+        fn1(plans) - fn2(plans)
+    }
     class(fn) <- c("redist_scorer", "function")
     fn
 }

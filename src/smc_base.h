@@ -5,10 +5,9 @@
 #define ARMA_NO_DEBUG
 #endif
 
-#include <vector>
-#include <limits>
 #include <RcppArmadillo.h>
-
+#include <limits>
+#include <vector>
 
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::plugins("cpp11")]]
@@ -24,7 +23,6 @@ using namespace arma;
 // TESTED
 int global_rng_select_k(std::vector<double> x, int k);
 
-
 /*
  * Get the index of the k-th smallest element of x
  */
@@ -35,6 +33,6 @@ int select_k(std::vector<double> x, int k, RNGState &rng_state);
  * Make a progress bar configuration with format string `fmt`
  */
 List cli_config(bool clear = false,
-                const char * fmt = "{cli::pb_bar} {cli::pb_percent} | ETA:{cli::pb_eta}");
+                const char *fmt = "{cli::pb_bar} {cli::pb_percent} | ETA:{cli::pb_eta}");
 
 #endif

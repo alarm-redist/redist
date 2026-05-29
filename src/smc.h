@@ -6,29 +6,28 @@
 
 #include "smc_base.h"
 
-#include <string>
-#include <cmath>
-#include <iostream>
-#include <functional>
-#include <cli/progress.h>
 #include <RcppThread.h>
 #include <atomic>
 #include <chrono>
-
+#include <cli/progress.h>
+#include <cmath>
+#include <functional>
+#include <iostream>
+#include <string>
 
 #include "merging.h"
-#include "weights.h"
 #include "redist_alg_helpers.h"
 #include "scoring.h"
 #include "ust_sampler.h"
 #include "weight_caching.h"
-
+#include "weights.h"
 
 //' Run SMC (optionally with Merge Split steps too)
 //'
-//' Uses smc method with optimal weights and merge split steps to generate a sample of `nsims` plans in `c++` 
-//' 
-//' 
+//' Uses smc method with optimal weights and merge split steps to generate a sample of `nsims`
+//plans in `c++`
+//'
+//'
 //' Using the procedure outlined in <PAPER HERE> this function uses Sequential
 //' Monte Carlo (SMC) methods to generate a sample of `M` plans
 //'
@@ -43,32 +42,23 @@
 //' @param lower Acceptable lower bounds on a valid district's population
 //' @param upper Acceptable upper bounds on a valid district's population
 //' @param nsims The number of plans (samples) to draw
-//' @param k_param The k parameter from the SMC algorithm, you choose among the top k_param edges
-//' @param control Named list of additional parameters.
-//' @param num_threads The number of threads the threadpool should use
-//' @param verbosity What level of detail to print out while the algorithm is
-//' running <ADD OPTIONS>
-//' @keywords internal
-//' @noRd
+//' @param k_param The k parameter from the SMC algorithm, you choose among the top k_param
+//edges ' @param control Named list of additional parameters. ' @param num_threads The number of
+//threads the threadpool should use ' @param verbosity What level of detail to print out while
+//the algorithm is ' running <ADD OPTIONS> ' @keywords internal ' @noRd
 // [[Rcpp::export]]
 List run_redist_smc(
-        int const nsims, 
-        int const total_seats, int const ndists, Rcpp::IntegerVector const district_seat_sizes,
-        int const initial_num_regions, 
-        List const &adj_list,
-        arma::uvec const &counties, const arma::uvec &pop,
-        Rcpp::CharacterVector const &step_types,
-        double const target, double const lower, double const upper,
-        double const rho, // compactness 
-        std::string const &sampling_space_str, // sampling space (graphs, forest, etc)
-        List const &control, // control has pop temper, and k parameter value, and splitting method are allowed
-        List const &constraints, // constraints 
-        int const verbosity, int const diagnostic_level,
-        Rcpp::IntegerMatrix const &region_id_mat, 
-        Rcpp::IntegerMatrix const &region_sizes_mat,
-        arma::vec &log_weights
-);
-
-
+    int const nsims, int const total_seats, int const ndists,
+    Rcpp::IntegerVector const district_seat_sizes, int const initial_num_regions,
+    List const &adj_list, arma::uvec const &counties, const arma::uvec &pop,
+    Rcpp::CharacterVector const &step_types, double const target, double const lower,
+    double const upper,
+    double const rho,                      // compactness
+    std::string const &sampling_space_str, // sampling space (graphs, forest, etc)
+    List const &control, // control has pop temper, and k parameter value, and splitting method
+                         // are allowed
+    List const &constraints, // constraints
+    int const verbosity, int const diagnostic_level, Rcpp::IntegerMatrix const &region_id_mat,
+    Rcpp::IntegerMatrix const &region_sizes_mat, arma::vec &log_weights);
 
 #endif

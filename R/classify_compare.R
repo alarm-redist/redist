@@ -64,28 +64,41 @@
 #' @md
 #' @concept analyze
 #' @export
-compare_plans <- function(plans, set1, set2, shp = NULL, plot = "fill", thresh = 0.1,
-                          labs = c("Set 1", "Set 2"), ncores = 1) {
+compare_plans <- function(
+    plans,
+    set1,
+    set2,
+    shp = NULL,
+    plot = "fill",
+    thresh = 0.1,
+    labs = c("Set 1", "Set 2"),
+    ncores = 1
+) {
     stopifnot(inherits(plans, "redist_plans"))
 
     if (!missing(set2)) {
         set1 <- eval_tidy(enquo(set1), plans)
         set2 <- eval_tidy(enquo(set2), plans)
-        if (is.logical(set1)) set1 <- unique(as.integer(plans$draw[set1]))
-        if (is.logical(set2)) set2 <- unique(as.integer(plans$draw[set2]))
-        if (length(intersect(set1, set2)) > 0)
+        if (is.logical(set1)) {
+            set1 <- unique(as.integer(plans$draw[set1]))
+        }
+        if (is.logical(set2)) {
+            set2 <- unique(as.integer(plans$draw[set2]))
+        }
+        if (length(intersect(set1, set2)) > 0) {
             cli::cli_abort("{.arg set1} and {.arg set2} must be mutually exclusive.")
+        }
         n1 <- length(set1)
         n2 <- length(set2)
         stopifnot(n1 > 0 && n2 > 0)
 
         pm1 <- get_plans_matrix(plans)
         pm2 <- pm1
-    } else  {
-        if (!inherits(set1, "redist_plans"))
+    } else {
+        if (!inherits(set1, "redist_plans")) {
             cli::cli_abort("Must provide both {.arg set1} and {.arg set2} or
                       provide {.arg set1} as a {.cls redist_plans} object.")
-
+        }
 
         pm1 <- get_plans_matrix(plans)
         pm2 <- get_plans_matrix(set1)
@@ -94,13 +107,14 @@ compare_plans <- function(plans, set1, set2, shp = NULL, plot = "fill", thresh =
         set1 <- seq_len(n1)
         set2 <- seq_len(n2)
 
-        if (nrow(pm1) != nrow(pm2))
+        if (nrow(pm1) != nrow(pm2)) {
             cli::cli_abort("Both sets of plans must use the same number of precincts.")
+        }
     }
 
-    base_co <- 1/max(pm1[, 1]) # baseline coccurence
-    p1 <- (n1*prec_cooccur(pm1, set1, ncores) + base_co)/(n1 + 1)
-    p2 <- (n2*prec_cooccur(pm2, set2, ncores) + base_co)/(n2 + 1)
+    base_co <- 1 / max(pm1[, 1]) # baseline coccurence
+    p1 <- (n1 * prec_cooccur(pm1, set1, ncores) + base_co) / (n1 + 1)
+    p2 <- (n2 * prec_cooccur(pm2, set2, ncores) + base_co) / (n2 + 1)
 
     if (requireNamespace("RSpectra", quietly = TRUE)) {
         evec1 <- RSpectra::eigs_sym(p1 - p2, 2, which = "LA", tol = 1e-6)$vectors[, 1]
@@ -135,10 +149,12 @@ compare_plans <- function(plans, set1, set2, shp = NULL, plot = "fill", thresh =
                 sf::st_intersection() %>%
                 dplyr::as_tibble() %>%
                 dplyr::filter(.data$n.overlaps == 2) %>%
-                dplyr::mutate(from = sapply(.data$origins, function(x) x[1]),
+                dplyr::mutate(
+                    from = sapply(.data$origins, function(x) x[1]),
                     to = sapply(.data$origins, function(x) x[2]),
                     wgt1 = (evec1[.data$from] - evec1[.data$to])^2,
-                    wgt2 = (evec2[.data$from] - evec2[.data$to])^2) %>%
+                    wgt2 = (evec2[.data$from] - evec2[.data$to])^2
+                ) %>%
                 dplyr::filter(sf::st_dimension(.data$geometry) == 1) %>%
                 sf::st_as_sf()
 
@@ -176,10 +192,11 @@ compare_plans <- function(plans, set1, set2, shp = NULL, plot = "fill", thresh =
             edge_cntr <- edge_center_df(shp, adj)
             nb <- edge_cntr$nb
 
-            nb <- nb %>% mutate(
-                wgt1 = (evec1[.data$i] - evec1[.data$j])^2,
-                wgt2 = (evec2[.data$j] - evec2[.data$i])^2
-            )
+            nb <- nb %>%
+                mutate(
+                    wgt1 = (evec1[.data$i] - evec1[.data$j])^2,
+                    wgt2 = (evec2[.data$j] - evec2[.data$i])^2
+                )
 
             make_plot <- function(x, lab) {
                 ggplot(nb, aes(size = x, color = x)) +
@@ -189,7 +206,7 @@ compare_plans <- function(plans, set1, set2, shp = NULL, plot = "fill", thresh =
                     ggplot2::scale_colour_fermenter(palette = "RdPu") +
                     labs(title = lab) +
                     theme_void() +
-                    geom_sf(data = shp, size = .05, color = "black", fill = NA)
+                    geom_sf(data = shp, size = 0.05, color = "black", fill = NA)
             }
             p1 <- make_plot(nb$wgt1, labs[1])
             p2 <- make_plot(nb$wgt2, labs[2])
@@ -212,7 +229,9 @@ make_classif_lbl <- function(idxs) {
         c("a", "b", "c", "d", "e", "f", "g", "h"),
         c("i", "ii", "iii", "iv", "v", "vi", "vii", "viii"))
     n_opts <- length(opts)
-    for (i in seq_len(n)) out[i] <- opts[[i]][idxs[i]]
+    for (i in seq_len(n)) {
+        out[i] <- opts[[i]][idxs[i]]
+    }
     paste0(out, collapse = ".")
 }
 
@@ -316,10 +335,11 @@ plot.redist_classified <- function(x, plans, shp, type = "fill", which = NULL, .
     stopifnot(inherits(plans, "redist_plans"))
     stopifnot(inherits(shp, "sf"))
 
-    if (is.null(which)) which <- seq_along(x$splits)
+    if (is.null(which)) {
+        which <- seq_along(x$splits)
+    }
     plots <- lapply(x$splits[which], function(split) {
-        compare_plans(plans, split[[1]], split[[2]], shp, plot = type,
-            ..., labs = names(split))
+        compare_plans(plans, split[[1]], split[[2]], shp, plot = type, ..., labs = names(split))
     })
     patchwork::wrap_plots(plots, ncol = 1)
 }

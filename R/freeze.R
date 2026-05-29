@@ -40,7 +40,7 @@ redist.freeze <- function(adj, freeze_row, plan = rep(1, length(adj))) {
 
     if (is.numeric(freeze_row)) {
         if (max(freeze_row) < length(adj) & all(freeze_row > 0)) {
-            freeze_row <- 1:length(adj) %in% freeze_row
+            freeze_row <- seq_along(adj) %in% freeze_row
         }
     } else if (is.logical(freeze_row)) {
         if (length(freeze_row) != length(adj)) {
@@ -55,7 +55,8 @@ redist.freeze <- function(adj, freeze_row, plan = rep(1, length(adj))) {
         mutate(id = cur_group_id()) %>%
         ungroup()
     cont <- contiguity(adj = adj, group = tb$id)
-    tb <- tb %>% mutate(cont = cont) %>%
+    tb <- tb %>%
+        mutate(cont = cont) %>%
         mutate(rn = row_number()) %>%
         group_by(plan, cont, freeze_row) %>%
         mutate(rn = ifelse(freeze_row, min(rn), rn)) %>%
@@ -74,24 +75,30 @@ redist.freeze <- function(adj, freeze_row, plan = rep(1, length(adj))) {
 #' @concept prepare
 #' @export
 freeze <- function(freeze_row, plan, .data = cur_map()) {
-    if (is.null(.data))
+    if (is.null(.data)) {
         cli::cli_abort("Must provide {.arg .data} if not called within a {.pkg dplyr} verb")
-    if (!inherits(.data, "redist_map"))
+    }
+    if (!inherits(.data, "redist_map")) {
         cli::cli_abort("{.arg .data} must be a {.cls redist_map}")
-    if (missing(freeze_row))
+    }
+    if (missing(freeze_row)) {
         cli::cli_abort("{.arg freeze_row} cannot be missing.")
+    }
 
     adj <- get_adj(.data)
-    if (missing(plan))
+    if (missing(plan)) {
         plan <- as.integer(get_existing(.data))
-    if (isFALSE(plan) || is.null(plan))
+    }
+    if (isFALSE(plan) || is.null(plan)) {
         plan <- rep(1, length(adj))
+    }
 
     freeze_row <- eval_tidy(enquo(freeze_row), .data)
-    if (is.logical(freeze_row[1]))
+    if (is.logical(freeze_row[1])) {
         freeze_row <- as.logical(freeze_row)
-    else
+    } else {
         freeze_row <- as.numeric(freeze_row)
+    }
 
     redist.freeze(adj = adj, freeze_row = freeze_row, plan = plan)
 }

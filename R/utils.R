@@ -1,4 +1,3 @@
-
 #' Combine factors
 #'
 #' @param ... factors to combine

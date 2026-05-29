@@ -57,8 +57,9 @@ redist_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE) {
                   Call {.fn redist_smc_ci} or {.fn redist_mcmc_ci} directly.")
     } else if (algo %in% c("smc", "smc_ms")) {
         redist_smc_ci(plans, !!x, district, conf, by_chain)
-    } else { # MCMC
-        redist_mcmc_ci(plans,!!x, district, conf, by_chain)
+    } else {
+        # MCMC
+        redist_mcmc_ci(plans, !!x, district, conf, by_chain)
     }
 }
 
@@ -68,14 +69,17 @@ redist_smc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE)
     plans <- subset_sampled(plans)
     x_orig <- enquo(x)
     x <- as.numeric(eval_tidy(enquo(x), plans))
-    if (!"district" %in% names(plans))
+    if (!"district" %in% names(plans)) {
         plans$district = rep(1, nrow(plans))
-    if (!is.null(district))
+    }
+    if (!is.null(district)) {
         x <- x[plans$district == district]
+    }
     N <- length(x)
     est <- mean(x)
 
-    if ("chain" %in% names(plans)) { # multiple runs
+    if ("chain" %in% names(plans)) {
+        # multiple runs
         if (is.null(district)) {
             chain <- plans$chain
         } else {
@@ -102,85 +106,99 @@ redist_smc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE)
         # LEE, A. and WHITELEY, N. (2018). Variance estimation in the particle filter. Biometrika 105 609–625.
         std_errs <- apply(attr(plans, "diagnostics")[[1]]$ancestors, 2, function(anc) {
             sum_inner <- tapply(x - est, anc, sum)^2
-            sqrt(mean(sum_inner[as.character(anc)])/N)
+            sqrt(mean(sum_inner[as.character(anc)]) / N)
         })
         std_err <- quantile(std_errs, 0.75)
     }
 
-    alpha <- (1 - conf)/2
-    ci <- est + qt(c(alpha, 0.5, 1 - alpha), df = N - 1)*std_err
+    alpha <- (1 - conf) / 2
+    ci <- est + qt(c(alpha, 0.5, 1 - alpha), df = N - 1) * std_err
 
-    tibble("{{ x_orig }}" := ci[2],
-           "{{ x_orig }}_lower" := ci[1],
-           "{{ x_orig }}_upper" := ci[3])
+    tibble(
+        "{{ x_orig }}" := ci[2],
+        "{{ x_orig }}_lower" := ci[1],
+        "{{ x_orig }}_upper" := ci[3]
+    )
 }
 
 #' @describeIn redist_ci Compute confidence intervals for MCMC output.
 #' @param use_coda Whether or not to use the coda package to compute standard errors
 #' @export
-redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE, use_coda = FALSE) {
+redist_mcmc_ci <- function(
+    plans,
+    x,
+    district = 1L,
+    conf = 0.9,
+    by_chain = FALSE,
+    use_coda = FALSE
+) {
     plans <- subset_sampled(plans)
     x_orig <- enquo(x)
     x <- as.numeric(eval_tidy(enquo(x), plans))
-    if (!"district" %in% names(plans))
+    if (!"district" %in% names(plans)) {
         plans$district = rep(1, nrow(plans))
-    if (!is.null(district))
+    }
+    if (!is.null(district)) {
         x <- x[plans$district == district]
+    }
     N <- length(x)
     est <- mean(x)
     thin <- attr(plans, "diagnostics")[[1]]$thin
 
-    if ("chain" %in% names(plans)) { # multiple runs
+    if ("chain" %in% names(plans)) {
+        # multiple runs
         chain <- plans$chain[plans$district == district]
     } else {
         chain <- rep(1, N)
     }
 
-    rhat <- diag_rhat(x, chain, split=TRUE)
+    rhat <- diag_rhat(x, chain, split = TRUE)
     if (is.finite(rhat) && rhat > 1.05) {
         cli::cli_warn(c("Runs have not converged for this statistic.",
                    "i" = "R-hat is {round(rhat, 3)}",
                    ">" = "Increase the number of samples."))
     }
 
-    if(use_coda){
+    if (use_coda) {
         rlang::check_installed("coda", "to calculate MCMC standard errors.")
-        mcmc = coda::mcmc.list(tapply(x, chain, coda::mcmc, thin=thin))
+        mcmc = coda::mcmc.list(tapply(x, chain, coda::mcmc, thin = thin))
         std_err <- summary(mcmc)$statistics["Time-series SE"]
         if (isTRUE(by_chain)) {
             std_err <- std_err * sqrt(max(chain))
         }
-    }else if("chain" %in% names(plans)) {
-         # multiple runs
-            if (is.null(district)) {
-                chain <- plans$chain
-            } else {
-                chain <- plans$chain[plans$district == district]
-            }
-            rhat <- diag_rhat(x, chain)
-            if (is.finite(rhat) && rhat > 1.05) {
-                cli::cli_warn(c("Runs have not converged for this statistic.",
+    } else if ("chain" %in% names(plans)) {
+        # multiple runs
+        if (is.null(district)) {
+            chain <- plans$chain
+        } else {
+            chain <- plans$chain[plans$district == district]
+        }
+        rhat <- diag_rhat(x, chain)
+        if (is.finite(rhat) && rhat > 1.05) {
+            cli::cli_warn(c("Runs have not converged for this statistic.",
                            "i" = "R-hat is {round(rhat, 3)}",
                            ">" = "Increase the number of samples."))
-            }
-            run_means <- tapply(x, chain, mean) %>%
-                `names<-`(NULL)
+        }
+        run_means <- tapply(x, chain, mean) %>%
+            `names<-`(NULL)
 
-            if (isTRUE(by_chain)) {
-                std_err <- sd(run_means)
-            } else {
-                std_err <- sd(run_means) / sqrt(max(chain) - 1) # be slightly conservative
-            }
-    }else{
+        if (isTRUE(by_chain)) {
+            std_err <- sd(run_means)
+        } else {
+            std_err <- sd(run_means) / sqrt(max(chain) - 1) # be slightly conservative
+        }
+    } else {
         cli::cli_abort("Can't do non-coda std errors for single MCMC chain!")
     }
 
-    alpha <- (1 - conf)/2
-    ci <- est + qt(c(alpha, 0.5, 1 - alpha), df = N - 1)*std_err
+    alpha <- (1 - conf) / 2
+    ci <- est + qt(c(alpha, 0.5, 1 - alpha), df = N - 1) * std_err
 
-    tibble("{{ x_orig }}" := ci[2],
-           "{{ x_orig }}_lower" := ci[1],
-           "{{ x_orig }}_upper" := ci[3])
+    tibble(
+        "{{ x_orig }}" := ci[2],
+        "{{ x_orig }}_lower" := ci[1],
+        "{{ x_orig }}_upper" := ci[3]
+    )
 }
 
 
@@ -201,8 +219,8 @@ redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE
 #' @export
 redist.smc_is_ci <- function(x, wgt, conf = 0.99) {
     .Deprecated("redist_smc_ci")
-    wgt <- wgt/sum(wgt)
-    mu <- sum(x*wgt)
-    sig <- sqrt(sum((x - mu)^2*wgt^2))
-    mu + qnorm(c((1 - conf)/2, 1 - (1 - conf)/2))*sig
+    wgt <- wgt / sum(wgt)
+    mu <- sum(x * wgt)
+    sig <- sqrt(sum((x - mu)^2 * wgt^2))
+    mu + qnorm(c((1 - conf)/2, 1 - (1 - conf)/2)) * sig
 }

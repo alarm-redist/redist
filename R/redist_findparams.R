@@ -7,11 +7,23 @@
 ## get estimates of performance
 #############################################
 
-run_sims <- function(i, params, map, nsims, init_plan,
-                     group_pop, counties, names, maxiterrsg, report_all,
-                     adapt_lambda, adapt_eprob,
-                     nstartval_store, maxdist_startval, logarg) {
-
+run_sims <- function(
+    i,
+    params,
+    map,
+    nsims,
+    init_plan,
+    group_pop,
+    counties,
+    names,
+    maxiterrsg,
+    report_all,
+    adapt_lambda,
+    adapt_eprob,
+    nstartval_store,
+    maxdist_startval,
+    logarg
+) {
     ## Get this iteration
     p_sub <- params %>% dplyr::slice(i)
     if (logarg) {
@@ -52,8 +64,7 @@ run_sims <- function(i, params, map, nsims, init_plan,
     }
     if ("weight_segregation" %in% names) {
         constr <- constr %>%
-            add_constr_segregation(strength = p_sub$weight_segregation,
-                group_pop = group_pop)
+            add_constr_segregation(strength = p_sub$weight_segregation, group_pop = group_pop)
     }
     if ("weight_similarity" %in% names) {
         constr <- constr %>%
@@ -64,14 +75,16 @@ run_sims <- function(i, params, map, nsims, init_plan,
             add_constr_splits(strength = p_sub$weight_countysplit, admin = counties)
     }
     ## Run siulations
-    out <- redist_flip(map %>% set_pop_tol(pop_tol),
+    out <- redist_flip(
+        map %>% set_pop_tol(pop_tol),
         nsims = nsims,
         init_plan = init_plan,
         eprob = eprob,
         lambda = lambda,
         constraints = constr,
         adapt_lambda = adapt_lambda,
-        adapt_eprob = adapt_eprob) %>%
+        adapt_eprob = adapt_eprob
+    ) %>%
         subset_sampled()
     if (adapt_eprob) {
         final_eprob <- attr(out, "final_eprob")
@@ -83,7 +96,7 @@ run_sims <- function(i, params, map, nsims, init_plan,
     ## Sample districts for use as starting values
     ## Divide equally by distance
     inds <- which(1 - attr(out, "distance_original") < maxdist_startval)
-    cuts <- c(0, round(quantile(1:length(inds), (1:nstartval_store)/nstartval_store)))
+    cuts <- c(0, round(quantile(seq_along(inds), (1:nstartval_store)/nstartval_store)))
     if (length(inds) == 0) {
         cat(paste0("No maps available under parameter set ", i, ".\n"))
         startval <- NULL
@@ -97,15 +110,17 @@ run_sims <- function(i, params, map, nsims, init_plan,
     }
 
     ## Get quantiles
-    quant <- floor(nsims/4)
+    quant <- floor(nsims / 4)
     q1 <- 1:quant
-    q2 <- (quant + 1):(2*quant)
-    q3 <- (2*quant + 1):(3*quant)
-    q4 <- (3*quant + 1):nsims
+    q2 <- (quant + 1):(2 * quant)
+    q3 <- (2 * quant + 1):(3 * quant)
+    q4 <- (3 * quant + 1):nsims
 
     ## Check acceptance rate
-    mh_acceptance <- round(sum(out$mhdecisions, na.rm = TRUE)/length(stats::na.omit(out$mhdecisions)),
-        digits = 3)
+    mh_acceptance <- round(
+        sum(out$mhdecisions, na.rm = TRUE) / length(stats::na.omit(out$mhdecisions)),
+        digits = 3
+    )
 
     ## Check population parity
     pop_parity <- round(mean(out$distance_parity, na.rm = TRUE), digits = 3)
@@ -120,16 +135,30 @@ run_sims <- function(i, params, map, nsims, init_plan,
     dist_orig <- round(mean(attr(out, "distance_original"), na.rm = TRUE), digits = 3)
     med_dist_orig <- round(median(attr(out, "distance_original"), na.rm = TRUE), digits = 3)
     range_dist_orig <- round(range(attr(out, "distance_original"), na.rm = TRUE), digits = 3)
-    q1_dist_median <- round(median(attr(out, "distance_original")[q1], na.rm = TRUE), digits = 3)
-    q2_dist_median <- round(median(attr(out, "distance_original")[q2], na.rm = TRUE), digits = 3)
-    q3_dist_median <- round(median(attr(out, "distance_original")[q3], na.rm = TRUE), digits = 3)
-    q4_dist_median <- round(median(attr(out, "distance_original")[q4], na.rm = TRUE), digits = 3)
+    q1_dist_median <- round(
+        median(attr(out, "distance_original")[q1], na.rm = TRUE),
+        digits = 3
+    )
+    q2_dist_median <- round(
+        median(attr(out, "distance_original")[q2], na.rm = TRUE),
+        digits = 3
+    )
+    q3_dist_median <- round(
+        median(attr(out, "distance_original")[q3], na.rm = TRUE),
+        digits = 3
+    )
+    q4_dist_median <- round(
+        median(attr(out, "distance_original")[q4], na.rm = TRUE),
+        digits = 3
+    )
 
     ## Share of counties split
     if (!is.null(counties)) {
         ncounties_split <- unlist(lapply(1:nsims, function(x) {
             cd_assign <- out$plans[, x]
-            return(sum(tapply(cd_assign, counties, function(y) {ifelse(length(unique(y)) > 1, 1, 0)})))
+            return(sum(tapply(cd_assign, counties, function(y) {
+                ifelse(length(unique(y)) > 1, 1, 0)
+            })))
         }))
         starting_county_split <- ncounties_split[1]
         q1_countysplit_median <- median(ncounties_split[q1])
@@ -147,8 +176,7 @@ run_sims <- function(i, params, map, nsims, init_plan,
     if (!adapt_eprob) {
         out <- paste0(out, "## Edgecut probability = ", eprob, "\n")
     } else {
-        out <- paste0(out, "## Final adaptive edgecut probability = ",
-            final_eprob, "\n")
+        out <- paste0(out, "## Final adaptive edgecut probability = ", final_eprob, "\n")
     }
     if (!adapt_lambda) {
         out <- paste0(out, "## Lambda = ", lambda, "\n")
@@ -166,64 +194,82 @@ run_sims <- function(i, params, map, nsims, init_plan,
     # }else{
     # out <- paste0(out, "## Not setting any soft constraints\n")
     # }
-    out <- paste0(out,
+    out <- paste0(
+        out,
         "## -------------------------------------\n",
         "## Diagnostics:\n",
-        "## Metropolis-Hastings Acceptance Ratio = ", mh_acceptance, "\n")
-    if (report_all == TRUE) {
+        "## Metropolis-Hastings Acceptance Ratio = ",
+        mh_acceptance,
+        "\n"
+    )
+    if (report_all) {
         out <- paste0(
-            out, "## Mean population parity distance = ",
-            pop_parity, "\n",
+            out,
+            "## Mean population parity distance = ",
+            pop_parity,
+            "\n",
             "## Median population parity distance = ",
-            med_pop_parity, "\n",
+            med_pop_parity,
+            "\n",
             "## Population parity range = ",
             paste(range_pop_parity, collapse = " "),
             "\n",
             "## MCMC Iteration quantiles of population parity median = ",
             paste(q1_pop_median, q2_pop_median,
                 q3_pop_median, q4_pop_median, sep = " "),
-            "\n")
+            "\n"
+        )
     }
-    if (report_all == TRUE) {
+    if (report_all) {
         out <- paste0(
             out,
             "\n## Mean share of geographies equal to initial assignment = ",
-            dist_orig, "\n",
+            dist_orig,
+            "\n",
             "## Median share of geographies equal to initial assignment = ",
-            med_dist_orig, "\n",
+            med_dist_orig,
+            "\n",
             "## Range of share of geographies equal to initial assignment = ",
-            paste(range_dist_orig, collapse = " "), "\n",
+            paste(range_dist_orig, collapse = " "),
+            "\n",
             "## MCMC Iteration quantiles of geography distance to initial assignment = ",
             paste(q1_dist_median, q2_dist_median,
                 q3_dist_median, q4_dist_median, sep = " "),
-            "\n")
+            "\n"
+        )
     }
     if (!is.null(counties)) {
-        if (report_all == TRUE) {
+        if (report_all) {
             out <- paste0(
                 out,
                 "\n## Median number of counties split = ",
-                mean(ncounties_split), "\n",
+                mean(ncounties_split),
+                "\n",
                 "## Median number of counties split = ",
-                median(ncounties_split), "\n",
+                median(ncounties_split),
+                "\n",
                 "## Range of number of counties split = ",
-                paste(range(ncounties_split), collapse = " "), "\n",
+                paste(range(ncounties_split), collapse = " "),
+                "\n",
                 "## Initial number of counties split = ",
-                starting_county_split, "\n",
+                starting_county_split,
+                "\n",
                 "## MCMC Iteration quantiles of number of counties split = ",
-                paste(q1_countysplit_median, q2_countysplit_median, q3_countysplit_median, q4_countysplit_median, sep = " "), "\n"
+                paste(q1_countysplit_median, q2_countysplit_median, q3_countysplit_median, q4_countysplit_median, sep = " "),
+                "\n"
             )
         }
     }
-    out <- paste0(out,
+    out <- paste0(
+        out,
         "## -------------------------------------\n",
-        "## -------------------------------------\n\n")
+        "## -------------------------------------\n\n"
+    )
     if (logarg) {
         sink()
     }
 
     list(printout = out, startval = startval)
-
 }
 
 #' Run parameter testing for \code{redist_flip}
@@ -297,16 +343,25 @@ run_sims <- function(i, params, map, nsims, init_plan,
 #' }
 #' @concept prepare
 #' @export
-redist.findparams <- function(map,
-                              nsims,
-                              init_plan = NULL,
-                              adapt_lambda = FALSE, adapt_eprob = FALSE,
-                              params, ssdmat = NULL,
-                              group_pop = NULL, counties = NULL,
-                              nstartval_store = 1, maxdist_startval = 100,
-                              maxiterrsg = 5000, report_all = TRUE,
-                              parallel = FALSE, ncores = NULL,
-                              log = FALSE, verbose = TRUE) {
+redist.findparams <- function(
+    map,
+    nsims,
+    init_plan = NULL,
+    adapt_lambda = FALSE,
+    adapt_eprob = FALSE,
+    params,
+    ssdmat = NULL,
+    group_pop = NULL,
+    counties = NULL,
+    nstartval_store = 1,
+    maxdist_startval = 100,
+    maxiterrsg = 5000,
+    report_all = TRUE,
+    parallel = FALSE,
+    ncores = NULL,
+    log = FALSE,
+    verbose = TRUE
+) {
     ## Get number of trial parameter values to test
     trials <- nrow(params)
 
@@ -348,7 +403,8 @@ redist.findparams <- function(map,
         cli::cli_abort("If constraining the number of county splits, please provide a vector of county assignments.")
     }
 
-    if (parallel) { ## Parallel
+    if (parallel) {
+        ## Parallel
 
         ## Check to see if threads declared
         if (is.null(ncores)) {
@@ -371,15 +427,27 @@ redist.findparams <- function(map,
         doParallel::registerDoParallel(cl)
 
         ## Execute foreach loop
-        ret <- foreach(i = 1:trials, .verbose = verbose) %dorng% {
-
-            ## Run simulations
-            run_sims(i, params, map, nsims, init_plan,
-                group_pop, counties, names, maxiterrsg, report_all,
-                adapt_lambda, adapt_eprob,
-                nstartval_store, maxdist_startval, log)
-
-        }
+        ret <- foreach(i = 1:trials, .verbose = verbose) %dorng%
+            {
+                ## Run simulations
+                run_sims(
+                    i,
+                    params,
+                    map,
+                    nsims,
+                    init_plan,
+                    group_pop,
+                    counties,
+                    names,
+                    maxiterrsg,
+                    report_all,
+                    adapt_lambda,
+                    adapt_eprob,
+                    nstartval_store,
+                    maxdist_startval,
+                    log
+                )
+            }
 
         printout <- c()
         startval <- vector(mode = "list", length = trials)
@@ -387,8 +455,8 @@ redist.findparams <- function(map,
             printout <- paste(printout, ret[[i]]$printout)
             startval[[i]] <- ret[[i]]$startval
         }
-
-    } else { ## Sequential
+    } else {
+        ## Sequential
 
         ## Create container for report
         printout <- c()
@@ -396,19 +464,29 @@ redist.findparams <- function(map,
 
         ## Start loop over parameter values
         for (i in 1:trials) {
-
             ## Run simulations
-            out <- run_sims(i = i, params = params, map = map, nsims = nsims, init_plan,
-                group_pop, counties, names, maxiterrsg, report_all,
-                adapt_lambda, adapt_eprob,
-                nstartval_store, maxdist_startval, logarg = log)
+            out <- run_sims(
+                i = i,
+                params = params,
+                map = map,
+                nsims = nsims,
+                init_plan,
+                group_pop,
+                counties,
+                names,
+                maxiterrsg,
+                report_all,
+                adapt_lambda,
+                adapt_eprob,
+                nstartval_store,
+                maxdist_startval,
+                logarg = log
+            )
 
             ## Add to printout
             printout <- paste(printout, out$printout)
             startval[[i]] <- out$startval
-
         }
-
     }
 
     if (parallel) {

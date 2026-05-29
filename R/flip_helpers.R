@@ -97,13 +97,14 @@
 #'
 #' @concept post
 #' @export
-redist.ipw <- function(plans,
-                       resampleconstraint = c("pop_dev", "edges_removed",
+redist.ipw <- function(
+    plans,
+    resampleconstraint = c("pop_dev", "edges_removed",
                            "segregation", "status_quo"),
-                       targetbeta,
-                       targetpop = NULL,
-                       temper = 0) {
-
+    targetbeta,
+    targetpop = NULL,
+    temper = 0
+) {
     ## Warnings:
     if (missing(plans) | !inherits(plans, "redist_plans")) {
         cli::cli_abort("Please provide {.arg plans} as a {.cls redist_plans}.")
@@ -140,12 +141,14 @@ redist.ipw <- function(plans,
     inds <- intersect(indpop, indbeta)
     ## Construct weights
     psi <- plans[[paste0("constraint_", resampleconstraint)]][inds]
-    weights <- 1/exp(targetbeta*psi)
+    weights <- 1 / exp(targetbeta * psi)
 
     ## Resample indices
     inds <- sample(inds, length(inds), replace = TRUE, prob = weights)
     ndists <- max(plans$district)
-    indx <- unlist(lapply(inds, function(x) {seq(ndists*(x - 1) + 1, ndists*x, by = 1)}))
+    indx <- unlist(lapply(inds, function(x) {
+        seq(ndists * (x - 1) + 1, ndists * x, by = 1)
+    }))
 
     ## Subset the entire list
     plans %>% slice(indx)
@@ -158,7 +161,6 @@ redist.warmup.chain <- function(algout, warmup = 1) {
     inds <- seq_len(warmup)
     algout_new <- vector(mode = "list", length = length(algout))
     for (i in seq_along(algout)) {
-
         ## Subset the matrix first, then the vectors
         if (i == 1) {
             algout_new[[i]] <- algout[[i]][, -inds]
@@ -169,7 +171,6 @@ redist.warmup.chain <- function(algout, warmup = 1) {
         } else {
             algout_new[[i]] <- algout[[i]][-inds]
         }
-
     }
     names(algout_new) <- names(algout)
     class(algout_new) <- "redist"
@@ -185,7 +186,6 @@ redist.thin.chain <- function(algout, thin = 100) {
     inds <- seq(1, ncol(algout$plans), by = thin)
     algout_new <- vector(mode = "list", length = length(algout))
     for (i in seq_along(algout)) {
-
         ## Subset the matrix first, then the vectors
         if (is.matrix(algout[[i]])) {
             algout_new[[i]] <- algout[[i]][, inds]
@@ -196,7 +196,6 @@ redist.thin.chain <- function(algout, thin = 100) {
         } else {
             algout_new[[i]] <- algout[[i]][inds]
         }
-
     }
     names(algout_new) <- names(algout)
     class(algout_new) <- "redist"

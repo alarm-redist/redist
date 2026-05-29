@@ -10,5 +10,5 @@ cat("one\n")
 tt2 = sample_ust(ia$adj, ia$pop, bounds[1], bounds[3], as.integer(factor(ia$region)))
 cat("two\n")
 
-x = redist_smc(ia, 100, counties=region, silent=TRUE)
+x = redist_smc(ia, 100, counties = region, silent = TRUE)
 cat("map\n")

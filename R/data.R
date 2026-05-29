@@ -89,8 +89,6 @@ NULL
 NULL
 
 
-
-
 #' Florida 70 Precinct Shape File
 #'
 #' This data set contains the 70 Precinct shapefile and related data for each precinct.

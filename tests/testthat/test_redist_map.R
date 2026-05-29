@@ -1,10 +1,9 @@
-
 test_that("basic constructor works", {
     iowa_map <- redist_map(iowa, ndists = 4, pop_tol = 0.01)
     expect_s3_class(iowa_map, "redist_map")
     expect_equal(attr(iowa_map, "pop_col"), "pop")
-    target <- sum(iowa$pop)/4
-    expect_equal(attr(iowa_map, "pop_bounds"), c(0.99, 1.0, 1.01)*target)
+    target <- sum(iowa$pop) / 4
+    expect_equal(attr(iowa_map, "pop_bounds"), c(0.99, 1.0, 1.01) * target)
     expect_type(get_adj(iowa_map), "list")
 })
 

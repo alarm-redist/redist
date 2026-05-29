@@ -1,14 +1,13 @@
 /********************************************************
-* Author: Philip O'Sullivan'
-* Institution: Harvard University
-* Date Created: 2024/10
-* Purpose: Run SMC with MCMC merge-split steps mixed in
-********************************************************/
+ * Author: Philip O'Sullivan'
+ * Institution: Harvard University
+ * Date Created: 2024/10
+ * Purpose: Run SMC with MCMC merge-split steps mixed in
+ ********************************************************/
 
 constexpr bool DEBUG_GSMC_PLANS_VERBOSE = false; // Compile-time constant
 
 #include "smc.h"
-
 
 /*
  *  Use SMC Sampler method to split a multidistrict in all of the plans
@@ -42,9 +41,9 @@ constexpr bool DEBUG_GSMC_PLANS_VERBOSE = false; // Compile-time constant
  *  attempt was successful.
  *  @param parent_unsuccessful_tries_vec A vector used to keep track of how many times the
  *  previous rounds plans were sampled and unsuccessfully split. The value
- *  `parent_unsuccessful_tries_vec[i]` represents how many times `old_plans_ptr_vec[i]` was sampled
- *  and then unsuccessfully split while creating all `M` of the new plans.
- *  THIS MAY NOT BE THREAD SAFE
+ *  `parent_unsuccessful_tries_vec[i]` represents how many times `old_plans_ptr_vec[i]` was
+ * sampled and then unsuccessfully split while creating all `M` of the new plans. THIS MAY NOT
+ * BE THREAD SAFE
  *  @param accept_rate The number of accepted splits over the total number of
  *  attempted splits. This is equal to `sum(draw_tries_vec)/M`
  *  @param n_unique_parent_indices The number of unique parent indices, ie the
@@ -88,34 +87,31 @@ constexpr bool DEBUG_GSMC_PLANS_VERBOSE = false; // Compile-time constant
  *     I DO NOT KNOW WHAT IT MEANS
  *
  */
-void run_smc_step(
-        const MapParams &map_params, SplittingSchedule const &splitting_schedule,
-        std::vector<ScoringFunction> const &scoring_functions,
-        std::vector<RNGState> &rng_states, SamplingSpace const sampling_space,
-        std::unique_ptr<PlanEnsemble> &old_plan_ensemble,
-        std::unique_ptr<PlanEnsemble> &new_plan_ensemble,
-        std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters,
-        const arma::vec &normalized_cumulative_weights,
-        SMCDiagnostics &smc_diagnostics,
-        int const smc_step_num, int const step_num, bool const is_final_split,
-        umat &ancestors, const std::vector<int> &lags,
-        RcppThread::ThreadPool &pool,
-        int verbosity, int diagnostic_level, int const max_split_tries
-) {
+void run_smc_step(const MapParams &map_params, SplittingSchedule const &splitting_schedule,
+                  std::vector<ScoringFunction> const &scoring_functions,
+                  std::vector<RNGState> &rng_states, SamplingSpace const sampling_space,
+                  std::unique_ptr<PlanEnsemble> &old_plan_ensemble,
+                  std::unique_ptr<PlanEnsemble> &new_plan_ensemble,
+                  std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters,
+                  const arma::vec &normalized_cumulative_weights,
+                  SMCDiagnostics &smc_diagnostics, int const smc_step_num, int const step_num,
+                  bool const is_final_split, umat &ancestors, const std::vector<int> &lags,
+                  RcppThread::ThreadPool &pool, int verbosity, int diagnostic_level,
+                  int const max_split_tries) {
     // important constants
     const int M = old_plan_ensemble->nsims;
-    bool const smd_split_district_only = splitting_schedule.schedule_type == SplittingSizeScheduleType::DistrictOnlySMD;
+    bool const smd_split_district_only =
+        splitting_schedule.schedule_type == SplittingSizeScheduleType::DistrictOnlySMD;
 
     // PREVIOUS SMC CODE I DONT KNOW WHAT IT DOES
     const int dist_ctr = old_plan_ensemble->plan_ptr_vec.at(0)->num_regions;
     const int n_lags = lags.size();
     umat ancestors_new(M, n_lags); // lags/ancestor thing
 
-
     // Because of multithreading we have to add specific checks for if the user
     // wants to quit the program
     const int reject_check_int = 200; // check for interrupts every _ rejections
-    const int check_int = 50; // check for interrupts every _ iterations
+    const int check_int = 50;         // check for interrupts every _ iterations
     const bool check_max_split_tries = max_split_tries > 0; // only check if greater than 0
 
     // The new region in the split plans is the number of regions in a split plan minus
@@ -126,24 +122,19 @@ void run_smc_step(
     bool save_edge_selection_prob = sampling_space == SamplingSpace::LinkingEdgeSpace;
 
     // These are Rcpp::IntegerMatrix::Column type
-    Rcpp::IntegerMatrix::Column parent_index_vec = smc_diagnostics.parent_index_mat.column(
-        smc_step_num
-    );
-    Rcpp::IntegerMatrix::Column draw_tries_vec = smc_diagnostics.draw_tries_mat.column(
-        step_num
-    );
-    Rcpp::IntegerMatrix::Column parent_unsuccessful_tries_vec = smc_diagnostics.parent_unsuccessful_tries_mat.column(
-        smc_step_num
-    );
+    Rcpp::IntegerMatrix::Column parent_index_vec =
+        smc_diagnostics.parent_index_mat.column(smc_step_num);
+    Rcpp::IntegerMatrix::Column draw_tries_vec =
+        smc_diagnostics.draw_tries_mat.column(step_num);
+    Rcpp::IntegerMatrix::Column parent_unsuccessful_tries_vec =
+        smc_diagnostics.parent_unsuccessful_tries_mat.column(smc_step_num);
 
     // count the sizes we draw trees on
-    std::vector<std::vector<int>> thread_tree_sizes(rng_states.size(),
-        std::vector<int>(map_params.total_seats, 0)
-    );
+    std::vector<std::vector<int>> thread_tree_sizes(
+        rng_states.size(), std::vector<int>(map_params.total_seats, 0));
     // count the sizes of regions successful trees drawn on
-    std::vector<std::vector<int>> thread_successful_tree_sizes(rng_states.size(),
-        std::vector<int>(map_params.total_seats, 0)
-    );
+    std::vector<std::vector<int>> thread_successful_tree_sizes(
+        rng_states.size(), std::vector<int>(map_params.total_seats, 0));
 
     int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
     // Trick to give each thread a unique id
@@ -155,18 +146,18 @@ void run_smc_step(
     std::atomic<int> thread_id_counter{0};
 
     // now make the vectors of important variables to be used by threads
-    std::vector<USTSampler> ust_samplers_vec; ust_samplers_vec.reserve(num_threads);
-    for (size_t i = 0; i < num_threads; i++)
-    {
+    std::vector<USTSampler> ust_samplers_vec;
+    ust_samplers_vec.reserve(num_threads);
+    for (size_t i = 0; i < num_threads; i++) {
         ust_samplers_vec.emplace_back(map_params, splitting_schedule);
     }
 
-
-    if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("About to start SMC Step for %d plans\n", M);
+    if (DEBUG_GSMC_PLANS_VERBOSE)
+        Rprintf("About to start SMC Step for %d plans\n", M);
     // create a progress bar
     RcppThread::ProgressBar bar(M, 1);
     // Parallel thread pool where all objects in memory shared by default
-    pool.parallelFor(0, M, [&] (int i) {
+    pool.parallelFor(0, M, [&](int i) {
         static thread_local int thread_generation_counter = -1;
         static thread_local int thread_id;
 
@@ -180,7 +171,7 @@ void run_smc_step(
 
         if (thread_id < 0 || thread_id >= num_threads) {
             RcppThread::Rcerr << "Thread id thing broke, thread id is " << thread_id
-            << " but num threads is  " << num_threads << std::endl;
+                              << " but num threads is  " << num_threads << std::endl;
             return;
         }
 
@@ -188,80 +179,84 @@ void run_smc_step(
         int idx;
         int reject_ct = 0;
         RcppThread::checkUserInterrupt(i % check_int == 0);
-        
 
         while (!ok) {
-            if(check_max_split_tries && reject_ct >= max_split_tries){
-                throw Rcpp::exception("Failed to split a single plan after `max_split_tries` attempts!\n");
+            if (check_max_split_tries && reject_ct >= max_split_tries) {
+                throw Rcpp::exception(
+                    "Failed to split a single plan after `max_split_tries` attempts!\n");
             }
             // increase the number of tries for particle i by 1
             draw_tries_vec[i]++;
             // sample previous plan
             idx = rng_states[thread_id].r_int_wgt(normalized_cumulative_weights);
 
-
             // Get region id the split
             int region_id_to_split;
-            if(smd_split_district_only){
+            if (smd_split_district_only) {
                 // if just doing district splits just use remainder region
                 // which is always the highest id
                 region_id_to_split = old_plan_ensemble->plan_ptr_vec[idx]->num_regions - 1;
-            }else{
+            } else {
                 // if generalized split pick a region to try to split
-                region_id_to_split = old_plan_ensemble->plan_ptr_vec[idx]->choose_multidistrict_to_split(
-                    splitting_schedule.valid_region_sizes_to_split, rng_states[thread_id]
-                );
+                region_id_to_split =
+                    old_plan_ensemble->plan_ptr_vec[idx]->choose_multidistrict_to_split(
+                        splitting_schedule.valid_region_sizes_to_split, rng_states[thread_id]);
             }
-            int region_to_split_size = old_plan_ensemble->plan_ptr_vec[idx]->region_sizes[region_id_to_split];
-            if (DEBUG_GSMC_PLANS_VERBOSE){
-                REprintf("Sampled idx %d - Region %d, Size %d!\n", idx, region_id_to_split, region_to_split_size);
+            int region_to_split_size =
+                old_plan_ensemble->plan_ptr_vec[idx]->region_sizes[region_id_to_split];
+            if (DEBUG_GSMC_PLANS_VERBOSE) {
+                REprintf("Sampled idx %d - Region %d, Size %d!\n", idx, region_id_to_split,
+                         region_to_split_size);
             }
 
-            //increase the count
-            ++thread_tree_sizes[thread_id][region_to_split_size-1];
+            // increase the count
+            ++thread_tree_sizes[thread_id][region_to_split_size - 1];
 
             // Try to split the region
-            std::pair<bool, EdgeCut> edge_search_result = ust_samplers_vec[thread_id].attempt_to_find_valid_tree_split(
-                rng_states[thread_id], scoring_functions[thread_id], *tree_splitters[thread_id],
-                *old_plan_ensemble->plan_ptr_vec[idx], region_id_to_split, new_region_id,
-                save_edge_selection_prob
-            );
+            std::pair<bool, EdgeCut> edge_search_result =
+                ust_samplers_vec[thread_id].attempt_to_find_valid_tree_split(
+                    rng_states[thread_id], scoring_functions[thread_id],
+                    *tree_splitters[thread_id], *old_plan_ensemble->plan_ptr_vec[idx],
+                    region_id_to_split, new_region_id, save_edge_selection_prob);
 
-            if (DEBUG_GSMC_PLANS_VERBOSE){
-                REprintf("idx %d - Splti %s\n", idx, (std::get<0>(edge_search_result) ? "SUCCESS" : "FAILURE"));
+            if (DEBUG_GSMC_PLANS_VERBOSE) {
+                REprintf("idx %d - Splti %s\n", idx,
+                         (std::get<0>(edge_search_result) ? "SUCCESS" : "FAILURE"));
             }
 
-            // if successful update the new plan and check if satisfies any other hard constraints
-            if(std::get<0>(edge_search_result)){
-                if(DEBUG_GSMC_PLANS_VERBOSE){
+            // if successful update the new plan and check if satisfies any other hard
+            // constraints
+            if (std::get<0>(edge_search_result)) {
+                if (DEBUG_GSMC_PLANS_VERBOSE) {
                     Rprintf("Tree on Plan %d Successfully split\n", i);
                 }
                 // make the new plan a copy of the old one
-                new_plan_ensemble->plan_ptr_vec[i]->shallow_copy(*old_plan_ensemble->plan_ptr_vec[idx]);
+                new_plan_ensemble->plan_ptr_vec[i]->shallow_copy(
+                    *old_plan_ensemble->plan_ptr_vec[idx]);
                 // now split that region we found on the old one
                 new_plan_ensemble->plan_ptr_vec[i]->update_from_successful_split(
-                    *tree_splitters[thread_id],
-                    ust_samplers_vec[thread_id], std::get<1>(edge_search_result),
-                    region_id_to_split, new_region_id,
-                    true
-                );
+                    *tree_splitters[thread_id], ust_samplers_vec[thread_id],
+                    std::get<1>(edge_search_result), region_id_to_split, new_region_id, true);
 
                 // check if there are any additional hard constraints
-                if(!scoring_functions[thread_id].any_hard_constraints){
+                if (!scoring_functions[thread_id].any_hard_constraints) {
                     ok = true;
-                }else{
+                } else {
                     // If custom hard constraints are used then
-                    // the thread pool can only have a single thread or else everything will break
-                    ok = scoring_functions[thread_id].new_split_ok(*new_plan_ensemble->plan_ptr_vec[i], region_id_to_split, new_region_id, is_final_split);
-                    if(DEBUG_GSMC_PLANS_VERBOSE){
-                        Rprintf("Plan %d - New split has %s probability\n",
-                            i, (ok ? "POSITIVE" : "ZERO"));
+                    // the thread pool can only have a single thread or else everything will
+                    // break
+                    ok = scoring_functions[thread_id].new_split_ok(
+                        *new_plan_ensemble->plan_ptr_vec[i], region_id_to_split, new_region_id,
+                        is_final_split);
+                    if (DEBUG_GSMC_PLANS_VERBOSE) {
+                        Rprintf("Plan %d - New split has %s probability\n", i,
+                                (ok ? "POSITIVE" : "ZERO"));
                     }
                 }
             }
 
-            if(ok){
-                if(DEBUG_GSMC_PLANS_VERBOSE){
+            if (ok) {
+                if (DEBUG_GSMC_PLANS_VERBOSE) {
                     Rprintf("Success, updating Plan %d\n", i);
                 }
                 RcppThread::checkUserInterrupt(i % check_int == 0);
@@ -269,17 +264,17 @@ void run_smc_step(
                 // record index of new plan's parent
                 parent_index_vec[i] = idx;
                 // add as successful tree size
-                ++thread_successful_tree_sizes[thread_id][region_to_split_size-1];
-            }else{ // else bad sample so try again
-                 // check for user interrupt
+                ++thread_successful_tree_sizes[thread_id][region_to_split_size - 1];
+            } else { // else bad sample so try again
+                     // check for user interrupt
                 RcppThread::checkUserInterrupt(++reject_ct % reject_check_int == 0);
-                 // if diagnostic level 2 or higher get unsuccessful count
-                 if(diagnostic_level >= 0){
-                     // not atomic so technically not thread safe but doesn't seem to differ in practice
-                     parent_unsuccessful_tries_vec[idx]++;
-                 }
+                // if diagnostic level 2 or higher get unsuccessful count
+                if (diagnostic_level >= 0) {
+                    // not atomic so technically not thread safe but doesn't seem to differ in
+                    // practice
+                    parent_unsuccessful_tries_vec[idx]++;
+                }
             }
-
         }
 
         // ORIGINAL SMC CODE I DONT KNOW WHAT THIS DOES
@@ -294,7 +289,6 @@ void run_smc_step(
         if (verbosity >= 3) {
             ++bar;
         }
-
     });
 
     // Wait for all the threads to finish
@@ -304,24 +298,22 @@ void run_smc_step(
 
     // RcppThread::checkUserInterrupt();
 
-    if(DEBUG_GSMC_PLANS_VERBOSE){
+    if (DEBUG_GSMC_PLANS_VERBOSE) {
         REprintf("Done splitting!\n");
     }
-
 
     // now swap the old plans with the new ones. This avoids needing to actually copy
     std::swap(old_plan_ensemble, new_plan_ensemble);
 
     // update tree sizes counts
-    for (size_t region_size = 0; region_size < map_params.total_seats; region_size++)
-    {
-        for (size_t a_thread_id = 0; a_thread_id < rng_states.size(); a_thread_id++)
-        {
-            smc_diagnostics.tree_sizes_mat(region_size, step_num) += thread_tree_sizes[a_thread_id][region_size];
-            smc_diagnostics.successful_tree_sizes_mat(region_size, step_num) += thread_successful_tree_sizes[a_thread_id][region_size];
+    for (size_t region_size = 0; region_size < map_params.total_seats; region_size++) {
+        for (size_t a_thread_id = 0; a_thread_id < rng_states.size(); a_thread_id++) {
+            smc_diagnostics.tree_sizes_mat(region_size, step_num) +=
+                thread_tree_sizes[a_thread_id][region_size];
+            smc_diagnostics.successful_tree_sizes_mat(region_size, step_num) +=
+                thread_successful_tree_sizes[a_thread_id][region_size];
         }
     }
-
 
     // now compute acceptance rate and unique parents and original ancestors
     double accept_rate = M / static_cast<double>(sum(draw_tries_vec));
@@ -334,49 +326,41 @@ void run_smc_step(
     smc_diagnostics.nunique_plans[step_num] = old_plan_ensemble->count_unique_plans(pool);
 
     if (verbosity >= 3) {
-       Rcout << "  " << std::setprecision(2) << 100.0 * accept_rate << "% acceptance rate. " <<
-       100.0 * smc_diagnostics.nunique_parents.at(smc_step_num) / M << "% of previous step's plans survived," <<
-       " and there are now " << smc_diagnostics.nunique_plans[step_num] << " unique plans." << std::endl;
+        Rcout << "  " << std::setprecision(2) << 100.0 * accept_rate << "% acceptance rate. "
+              << 100.0 * smc_diagnostics.nunique_parents.at(smc_step_num) / M
+              << "% of previous step's plans survived," << " and there are now "
+              << smc_diagnostics.nunique_plans[step_num] << " unique plans." << std::endl;
     }
 
     // ORIGINAL SMC CODE I DONT KNOW WHAT IT DOES
     ancestors = ancestors_new;
 }
 
-
 void run_merge_split_step_on_all_plans(
-    RcppThread::ThreadPool &pool,
-    MapParams const &map_params, const SplittingSchedule &splitting_schedule,
-    std::vector<ScoringFunction> const &scoring_functions,
-    std::vector<RNGState> &rng_states, SamplingSpace const sampling_space,
-    std::vector<std::unique_ptr<Plan>> &plan_ptrs_vec,
+    RcppThread::ThreadPool &pool, MapParams const &map_params,
+    const SplittingSchedule &splitting_schedule,
+    std::vector<ScoringFunction> const &scoring_functions, std::vector<RNGState> &rng_states,
+    SamplingSpace const sampling_space, std::vector<std::unique_ptr<Plan>> &plan_ptrs_vec,
     std::vector<std::unique_ptr<Plan>> &new_plan_ptrs_vec,
     std::vector<std::unique_ptr<TreeSplitter>> &tree_splitter_ptrs_vec,
-    std::string const merge_prob_type,
-    double const rho, bool const is_final,
-    int const nsteps_to_run,
-    int const merge_split_step_num, int const step_num,
-    SMCDiagnostics &smc_diagnostics, WeightCacheEnsemble &cache_ensemble, 
-    int verbosity
-){
+    std::string const merge_prob_type, double const rho, bool const is_final,
+    int const nsteps_to_run, int const merge_split_step_num, int const step_num,
+    SMCDiagnostics &smc_diagnostics, WeightCacheEnsemble &cache_ensemble, int verbosity) {
     int const num_regions = plan_ptrs_vec[0]->num_regions;
     const int check_int = 15; // check for interrupts every _ iterations
-    int nsims = (int) plan_ptrs_vec.size();
-    if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Going to run %d steps!\n", nsteps_to_run);
+    int nsims = (int)plan_ptrs_vec.size();
+    if (DEBUG_GSMC_PLANS_VERBOSE)
+        Rprintf("Going to run %d steps!\n", nsteps_to_run);
 
     // Diagnostics
-    Rcpp::IntegerMatrix::Column success_count_vec = smc_diagnostics.merge_split_successes_mat.column(
-        merge_split_step_num
-    );
+    Rcpp::IntegerMatrix::Column success_count_vec =
+        smc_diagnostics.merge_split_successes_mat.column(merge_split_step_num);
 
     // count the sizes we draw trees on
-    std::vector<std::vector<int>> thread_tree_sizes(rng_states.size(),
-        std::vector<int>(map_params.total_seats, 0)
-    );
-    std::vector<std::vector<int>> thread_successful_tree_sizes(rng_states.size(),
-        std::vector<int>(map_params.total_seats, 0)
-    );
-
+    std::vector<std::vector<int>> thread_tree_sizes(
+        rng_states.size(), std::vector<int>(map_params.total_seats, 0));
+    std::vector<std::vector<int>> thread_successful_tree_sizes(
+        rng_states.size(), std::vector<int>(map_params.total_seats, 0));
 
     int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
     // thread safe id counter
@@ -385,27 +369,25 @@ void run_merge_split_step_on_all_plans(
     std::atomic<int> thread_id_counter{0};
 
     // now make the vectors of important variables to be used by threads
-    std::vector<USTSampler> ust_samplers_vec; ust_samplers_vec.reserve(num_threads);
-    std::vector<PlanMultigraph> current_plan_multigraphs_vec; current_plan_multigraphs_vec.reserve(num_threads);
-    std::vector<PlanMultigraph> proposed_plan_multigraphs_vec; proposed_plan_multigraphs_vec.reserve(num_threads);
+    std::vector<USTSampler> ust_samplers_vec;
+    ust_samplers_vec.reserve(num_threads);
+    std::vector<PlanMultigraph> current_plan_multigraphs_vec;
+    current_plan_multigraphs_vec.reserve(num_threads);
+    std::vector<PlanMultigraph> proposed_plan_multigraphs_vec;
+    proposed_plan_multigraphs_vec.reserve(num_threads);
 
-    for (size_t i = 0; i < num_threads; i++)
-    {
+    for (size_t i = 0; i < num_threads; i++) {
         ust_samplers_vec.emplace_back(map_params, splitting_schedule);
         current_plan_multigraphs_vec.emplace_back(
-            map_params,
-            sampling_space == SamplingSpace::LinkingEdgeSpace
-        );
+            map_params, sampling_space == SamplingSpace::LinkingEdgeSpace);
         proposed_plan_multigraphs_vec.emplace_back(
-            map_params,
-            sampling_space == SamplingSpace::LinkingEdgeSpace
-        );
+            map_params, sampling_space == SamplingSpace::LinkingEdgeSpace);
     }
 
     // create a progress bar
     RcppThread::ProgressBar bar(nsims, 1);
     // Parallel thread pool where all objects in memory shared by default
-    pool.parallelFor(0, nsims, [&] (int i) {
+    pool.parallelFor(0, nsims, [&](int i) {
         static thread_local int thread_generation_counter = -1;
         static thread_local int thread_id;
         // check if the thread id was generated this function call
@@ -415,43 +397,32 @@ void run_merge_split_step_on_all_plans(
             thread_generation_counter = generation;
         }
         // store the number of succesful runs
-        if(cache_ensemble.using_caching){
+        if (cache_ensemble.using_caching) {
             success_count_vec[i] = run_merge_split_steps(
                 map_params, splitting_schedule, scoring_functions[thread_id],
-                rng_states[thread_id], sampling_space,
-                *plan_ptrs_vec[i], *new_plan_ptrs_vec[i],
+                rng_states[thread_id], sampling_space, *plan_ptrs_vec[i], *new_plan_ptrs_vec[i],
                 ust_samplers_vec[thread_id], *tree_splitter_ptrs_vec[thread_id],
                 current_plan_multigraphs_vec[thread_id],
-                proposed_plan_multigraphs_vec[thread_id],
-                merge_prob_type,
-                rho, is_final,
-                nsteps_to_run,
-                thread_tree_sizes[thread_id], thread_successful_tree_sizes[thread_id],
-                true, cache_ensemble.weight_cache_ptr_vec[i].get()
-            );
-        }else{
+                proposed_plan_multigraphs_vec[thread_id], merge_prob_type, rho, is_final,
+                nsteps_to_run, thread_tree_sizes[thread_id],
+                thread_successful_tree_sizes[thread_id], true,
+                cache_ensemble.weight_cache_ptr_vec[i].get());
+        } else {
             success_count_vec[i] = run_merge_split_steps(
                 map_params, splitting_schedule, scoring_functions[thread_id],
-                rng_states[thread_id], sampling_space,
-                *plan_ptrs_vec[i], *new_plan_ptrs_vec[i],
+                rng_states[thread_id], sampling_space, *plan_ptrs_vec[i], *new_plan_ptrs_vec[i],
                 ust_samplers_vec[thread_id], *tree_splitter_ptrs_vec[thread_id],
                 current_plan_multigraphs_vec[thread_id],
-                proposed_plan_multigraphs_vec[thread_id],
-                merge_prob_type,
-                rho, is_final,
-                nsteps_to_run,
-                thread_tree_sizes[thread_id], thread_successful_tree_sizes[thread_id],
-                false, nullptr
-            );
+                proposed_plan_multigraphs_vec[thread_id], merge_prob_type, rho, is_final,
+                nsteps_to_run, thread_tree_sizes[thread_id],
+                thread_successful_tree_sizes[thread_id], false, nullptr);
         }
 
         RcppThread::checkUserInterrupt(i % check_int == 0);
 
-
         if (verbosity >= 3) {
             ++bar;
         }
-
     });
 
     // Wait for all the threads to finish
@@ -459,29 +430,24 @@ void run_merge_split_step_on_all_plans(
 
     Rcpp::checkUserInterrupt();
 
-
     // update tree sizes counts
-    for (size_t region_size = 0; region_size < map_params.total_seats; region_size++)
-    {
-        for (size_t a_thread_id = 0; a_thread_id < rng_states.size(); a_thread_id++)
-        {
-            smc_diagnostics.tree_sizes_mat(region_size, step_num) += thread_tree_sizes[a_thread_id][region_size];
-            smc_diagnostics.successful_tree_sizes_mat(region_size, step_num) += thread_successful_tree_sizes[a_thread_id][region_size];
+    for (size_t region_size = 0; region_size < map_params.total_seats; region_size++) {
+        for (size_t a_thread_id = 0; a_thread_id < rng_states.size(); a_thread_id++) {
+            smc_diagnostics.tree_sizes_mat(region_size, step_num) +=
+                thread_tree_sizes[a_thread_id][region_size];
+            smc_diagnostics.successful_tree_sizes_mat(region_size, step_num) +=
+                thread_successful_tree_sizes[a_thread_id][region_size];
         }
     }
 
-
     return;
 }
-
-
 
 // Different diagnostic levels
 //      - level 0 - Does not capture any ancestry information or retain intermediate weights
 //      - level 1 - Saves ancestry information, intermediate weights and the number of tries
 //      - level 2 - Captures the parent tries mat
 //      - level 3 - Saves intermediate region dvals and plan ids
-
 
 //' Uses gsmc method to generate a sample of `M` plans in `c++`
 //'
@@ -505,134 +471,128 @@ void run_merge_split_step_on_all_plans(
 //' running <ADD OPTIONS>
 //' @export
 List run_redist_smc(
-    int const nsims,
-    int const total_seats, int const ndists, Rcpp::IntegerVector const district_seat_sizes,
-    int const initial_num_regions,
-    List const &adj_list,
-    arma::uvec const &counties, const arma::uvec &pop,
-    Rcpp::CharacterVector const &step_types,
-    double const target, double const lower, double const upper,
-    double const rho, // compactness
+    int const nsims, int const total_seats, int const ndists,
+    Rcpp::IntegerVector const district_seat_sizes, int const initial_num_regions,
+    List const &adj_list, arma::uvec const &counties, const arma::uvec &pop,
+    Rcpp::CharacterVector const &step_types, double const target, double const lower,
+    double const upper,
+    double const rho,                      // compactness
     std::string const &sampling_space_str, // sampling space (graphs, forest, etc)
-    List const &control, // control has pop temper, and k parameter value, and splitting method are allowed
+    List const &control, // control has pop temper, and k parameter value, and splitting method
+                         // are allowed
     List const &constraints, // constraints
-    int const verbosity, int const diagnostic_level,
-    Rcpp::IntegerMatrix const &region_id_mat,
-    Rcpp::IntegerMatrix const &region_sizes_mat,
-    arma::vec &log_weights
-){
-    if (DEBUG_GSMC_PLANS_VERBOSE) REprintf("Inside c++ code!\n");
+    int const verbosity, int const diagnostic_level, Rcpp::IntegerMatrix const &region_id_mat,
+    Rcpp::IntegerMatrix const &region_sizes_mat, arma::vec &log_weights) {
+    if (DEBUG_GSMC_PLANS_VERBOSE)
+        REprintf("Inside c++ code!\n");
     bool diagnostic_mode = diagnostic_level == 1;
     // set the number of threads
-    int num_threads = (int) control["num_threads"];
-    if (num_threads <= 0) num_threads = std::thread::hardware_concurrency();
+    int num_threads = (int)control["num_threads"];
+    if (num_threads <= 0)
+        num_threads = std::thread::hardware_concurrency();
 
     // Create map level graph and county level multigraph
-    MapParams const map_params(
-        adj_list, counties, pop,
-        ndists, total_seats, as<std::vector<int>>(district_seat_sizes),
-        lower, target, upper);
+    MapParams const map_params(adj_list, counties, pop, ndists, total_seats,
+                               as<std::vector<int>>(district_seat_sizes), lower, target, upper);
     int V = map_params.g.size();
 
-    if(DEBUG_GSMC_PLANS_VERBOSE){
+    if (DEBUG_GSMC_PLANS_VERBOSE) {
         REprintf("District Seat Sizes: ");
-        for (int i = 1; i <= total_seats; i++)
-        {
-            REprintf("%d - %s,", i, (map_params.is_district[i] ? "YES DISTRICT" : "NOT A DISTRICT") );
+        for (int i = 1; i <= total_seats; i++) {
+            REprintf("%d - %s,", i,
+                     (map_params.is_district[i] ? "YES DISTRICT" : "NOT A DISTRICT"));
         }
         REprintf("\n");
-
     }
 
     // Add scoring functions (constraints)
     // one per thread
-    std::vector<ScoringFunction> scoring_functions; scoring_functions.reserve(num_threads);
-    for (size_t thread_id = 0; thread_id < num_threads; thread_id++)
-    {
-        scoring_functions.emplace_back(
-            map_params, constraints,
-            as<double>(control["pop_temper"]), true, thread_id
-        );
+    std::vector<ScoringFunction> scoring_functions;
+    scoring_functions.reserve(num_threads);
+    for (size_t thread_id = 0; thread_id < num_threads; thread_id++) {
+        scoring_functions.emplace_back(map_params, constraints,
+                                       as<double>(control["pop_temper"]), true, thread_id);
     }
 
     // if we have any custom hard constraints then we have to single thread everything
-    if(scoring_functions[0].any_hard_custom_constraints){
+    if (scoring_functions[0].any_hard_custom_constraints) {
         num_threads = 1;
     };
-
 
     // get seq_alpha
     double weights_alpha = as<double>(control["seq_alpha"]);
     bool const apply_weights_alpha = weights_alpha != 1;
 
     // re-seed MT so that `set.seed()` works in R
-    int global_rng_seed = (int) Rcpp::sample(INT_MAX, 1)[0];
+    int global_rng_seed = (int)Rcpp::sample(INT_MAX, 1)[0];
     int num_rng_states = num_threads;
-    std::vector<RNGState> rng_states;rng_states.reserve(num_rng_states);
-    for (size_t i = 1; i <= num_rng_states; i++)
-    {
+    std::vector<RNGState> rng_states;
+    rng_states.reserve(num_rng_states);
+    for (size_t i = 1; i <= num_rng_states; i++) {
         // same seed with i*3 long_jumps for state
-        rng_states.emplace_back(global_rng_seed, i*3);
-
+        rng_states.emplace_back(global_rng_seed, i * 3);
     }
 
     // Set the sampling space
     SamplingSpace sampling_space = get_sampling_space(sampling_space_str);
 
     // Do not support hard plan constraints with linking edge
-    if(sampling_space == SamplingSpace::LinkingEdgeSpace && scoring_functions[0].any_hard_plan_constraints){
-        // The issue right now is for a merged plan we need to know what pairs in the merged plan are valid
-        // For region based constraints merging two regions doens't affect the others but theoretically for the entire plan
-        // a merge in the original plan could be ok and then cease to be ok after two other regions are merged.
-        // Checks need to be added for that
-        throw Rcpp::exception("Whole Plan constraints with thresholding is not supported for linking edge space sampling yet!\n");
+    if (sampling_space == SamplingSpace::LinkingEdgeSpace &&
+        scoring_functions[0].any_hard_plan_constraints) {
+        // The issue right now is for a merged plan we need to know what pairs in the merged
+        // plan are valid For region based constraints merging two regions doens't affect the
+        // others but theoretically for the entire plan a merge in the original plan could be ok
+        // and then cease to be ok after two other regions are merged. Checks need to be added
+        // for that
+        throw Rcpp::exception("Whole Plan constraints with thresholding is not supported for "
+                              "linking edge space sampling yet!\n");
     }
 
     // Legacy, in future remove
-    RNGState rng_state((int) Rcpp::sample(INT_MAX, 1)[0]);
-    global_seed_rng((int) Rcpp::sample(INT_MAX, 1)[0]);
-    if (DEBUG_GSMC_PLANS_VERBOSE) REprintf("RNG States created!\n");
-
+    RNGState rng_state((int)Rcpp::sample(INT_MAX, 1)[0]);
+    global_seed_rng((int)Rcpp::sample(INT_MAX, 1)[0]);
+    if (DEBUG_GSMC_PLANS_VERBOSE)
+        REprintf("RNG States created!\n");
 
     // unpack control params
     // lags thing (copied from original smc code, don't understand what its doing)
-    std::vector<int> lags = as<std::vector<int>>(control["lags"]); arma::umat ancestors(nsims, lags.size(), fill::zeros);
+    std::vector<int> lags = as<std::vector<int>>(control["lags"]);
+    arma::umat ancestors(nsims, lags.size(), fill::zeros);
     // weight type
     std::string wgt_type = as<std::string>(control["weight_type"]);
-    // whether or not to cache the weights 
+    // whether or not to cache the weights
     bool const using_caching = as<bool>(control["cache_weights"]);
-    // max tries value 
+    // max tries value
     int const max_split_tries = as<int>(control["max_split_tries"]);
-
 
     // total number of steps to run
     int total_steps = static_cast<int>(step_types.size());
-    int total_ms_steps = 0; int total_smc_steps = 0;
+    int total_ms_steps = 0;
+    int total_smc_steps = 0;
     std::vector<bool> merge_split_step_vec(step_types.size());
-    for (size_t i = 0; i < step_types.size(); i++)
-    {
-        if(static_cast<std::string>(step_types.at(i)) == "smc"){
+    for (size_t i = 0; i < step_types.size(); i++) {
+        if (static_cast<std::string>(step_types.at(i)) == "smc") {
             merge_split_step_vec.at(i) = false;
             total_smc_steps++;
-        }else if(static_cast<std::string>(step_types.at(i)) == "ms"){
+        } else if (static_cast<std::string>(step_types.at(i)) == "ms") {
             merge_split_step_vec.at(i) = true;
             total_ms_steps++;
-        }else{
+        } else {
             REprintf("Invalid step type: %s\n",
-            static_cast<std::string>(step_types.at(i)).c_str());
+                     static_cast<std::string>(step_types.at(i)).c_str());
             throw Rcpp::exception("Invalid step type passed!");
         }
     }
     // sanity check we're not splitting more than ndists districts
-    if(initial_num_regions + total_smc_steps > ndists){
+    if (initial_num_regions + total_smc_steps > ndists) {
         REprintf("Trying to do %d splits with %d initial regions will "
-        "create more than ndists=%d districts!\n",
-        total_smc_steps, initial_num_regions,ndists);
+                 "create more than ndists=%d districts!\n",
+                 total_smc_steps, initial_num_regions, ndists);
         throw Rcpp::exception(
-            "Desired number of splits will produce more than ndist districts!"
-            );
+            "Desired number of splits will produce more than ndist districts!");
     }
-    if (DEBUG_GSMC_PLANS_VERBOSE) REprintf("Step types vec created!\n");
+    if (DEBUG_GSMC_PLANS_VERBOSE)
+        REprintf("Step types vec created!\n");
 
     // see if we are splitting plans all the way or just creating partial plans
     bool splitting_all_the_way = ndists == initial_num_regions + total_smc_steps;
@@ -640,581 +600,575 @@ List run_redist_smc(
     // multipler for number of merge split steps
     double ms_steps_multiplier;
     std::string merge_prob_type;
-    if(total_ms_steps > 0){
+    if (total_ms_steps > 0) {
         ms_steps_multiplier = as<double>(control["mh_accept_per_smc"]);
         merge_prob_type = as<std::string>(control["pair_rule"]);
     }
 
     double tol = std::max(target - lower, upper - target) / target;
 
-
     // get splitting type
-    SplittingMethodType splitting_method = get_splitting_type(
-        static_cast<std::string>(control["splitting_method"])
-        );
+    SplittingMethodType splitting_method =
+        get_splitting_type(static_cast<std::string>(control["splitting_method"]));
 
     // get the splitting size regime
-    SplittingSizeScheduleType splitting_size_regime = get_splitting_size_regime(
-        static_cast<std::string>(control["splitting_size_regime"])
-    );
+    SplittingSizeScheduleType splitting_size_regime =
+        get_splitting_size_regime(static_cast<std::string>(control["splitting_size_regime"]));
     auto splitting_schedule_ptr = get_splitting_schedule(
         total_smc_steps, ndists, total_seats, as<std::vector<int>>(district_seat_sizes),
-        splitting_size_regime, control
-    );
+        splitting_size_regime, control);
     // it wants presplit number of regions so make initial regions - 1
     // Needed for initializing linking edge plans
-    splitting_schedule_ptr->set_potential_cut_sizes_for_each_valid_size(
-        0, initial_num_regions - 1
-    );
+    splitting_schedule_ptr->set_potential_cut_sizes_for_each_valid_size(0, initial_num_regions -
+                                                                               1);
 
-    if (DEBUG_GSMC_PLANS_VERBOSE) REprintf("Splitting Schedule Obj created!\n");
+    if (DEBUG_GSMC_PLANS_VERBOSE)
+        REprintf("Splitting Schedule Obj created!\n");
 
     // Whether or not to only do district splits only
-    bool const multi_member_districting = (
-        splitting_size_regime == SplittingSizeScheduleType::DistrictOnlyMMD ||
-        splitting_size_regime == SplittingSizeScheduleType::AnyValidSizeMMD
-    );
-    bool split_district_only = splitting_size_regime == SplittingSizeScheduleType::DistrictOnlySMD;
+    bool const multi_member_districting =
+        (splitting_size_regime == SplittingSizeScheduleType::DistrictOnlyMMD ||
+         splitting_size_regime == SplittingSizeScheduleType::AnyValidSizeMMD);
+    bool split_district_only =
+        splitting_size_regime == SplittingSizeScheduleType::DistrictOnlySMD;
     bool use_graph_plan_space = sampling_space == SamplingSpace::GraphSpace;
 
     // Do some input checking
     // Make sure first merge split argument isn't true
-    if(merge_split_step_vec.at(0)){
+    if (merge_split_step_vec.at(0)) {
         throw Rcpp::exception("The first entry of merge_split_step_vec cannot be true.");
     };
 
-
-
-
     // Now create diagnostic information
     SMCDiagnostics smc_diagnostics(
-        sampling_space, splitting_method,
-        splitting_size_regime,
-        merge_split_step_vec,
-        V, nsims, ndists, total_seats, initial_num_regions,
-        total_smc_steps, total_ms_steps,
-        diagnostic_level, splitting_all_the_way, split_district_only
-    );
-
-
+        sampling_space, splitting_method, splitting_size_regime, merge_split_step_vec, V, nsims,
+        ndists, total_seats, initial_num_regions, total_smc_steps, total_ms_steps,
+        diagnostic_level, splitting_all_the_way, split_district_only);
 
     // Create a threadpool
     RcppThread::ThreadPool pool(num_threads > 1 ? num_threads : 0);
 
     // If hard custom then switch to no threading
-    if(scoring_functions[0].any_hard_custom_constraints){
+    if (scoring_functions[0].any_hard_custom_constraints) {
         pool.setNumThreads(0);
     }
 
     // Now we add everything here to a scope since it won't be needed for the end
     // create the ensemble
     std::unique_ptr<PlanEnsemble> plan_ensemble_ptr = get_plan_ensemble_ptr(
-        map_params, *splitting_schedule_ptr,
-        initial_num_regions,
-        nsims, sampling_space,
-        region_id_mat, region_sizes_mat,
-        rng_states, pool, verbosity
-    );
+        map_params, *splitting_schedule_ptr, initial_num_regions, nsims, sampling_space,
+        region_id_mat, region_sizes_mat, rng_states, pool, verbosity);
 
     {
-    // Ensemble of dummy plans for copying
-    std::unique_ptr<PlanEnsemble> dummy_plan_ensemble_ptr = get_plan_ensemble_ptr(
-        map_params, *splitting_schedule_ptr,
-        initial_num_regions,
-        nsims, sampling_space,
-        region_id_mat, region_sizes_mat,
-        rng_states, pool, verbosity
-    );
+        // Ensemble of dummy plans for copying
+        std::unique_ptr<PlanEnsemble> dummy_plan_ensemble_ptr = get_plan_ensemble_ptr(
+            map_params, *splitting_schedule_ptr, initial_num_regions, nsims, sampling_space,
+            region_id_mat, region_sizes_mat, rng_states, pool, verbosity);
 
-    // Get the tree splitter
-    std::vector<std::unique_ptr<TreeSplitter>> tree_splitter_ptrs_vec = get_tree_splitter_ptrs(
-        map_params,splitting_method, control, nsims, num_threads
-    );
+        // Get the tree splitter
+        std::vector<std::unique_ptr<TreeSplitter>> tree_splitter_ptrs_vec =
+            get_tree_splitter_ptrs(map_params, splitting_method, control, nsims, num_threads);
 
-    bool use_naive_k_splitter = splitting_method == SplittingMethodType::NaiveTopK;
-    // adaptive k estimation threshold
-    bool try_to_estimate_cut_k;
-    double thresh;
-    // k param values to potentially use. If set to 0 or lower then estimate
-    std::vector<int> k_params;
-    if(use_naive_k_splitter){
-        try_to_estimate_cut_k = as<bool>(control["estimate_cut_k"]);
-        if(try_to_estimate_cut_k){
-            thresh = (double) control["adapt_k_thresh"];
-            k_params.resize(total_smc_steps);
-        }else{
-            k_params = as<std::vector<int>>(control["manual_k_params"]);
-        }
-    }
-
-
-    // Start off all the unnormalized weights at at exp of log weights
-    arma::vec unnormalized_sampling_weights = arma::exp(log_weights);
-    // now get initial normalized weights
-    arma::vec normalized_cumulative_weights = arma::cumsum(unnormalized_sampling_weights);
-    normalized_cumulative_weights = normalized_cumulative_weights / normalized_cumulative_weights[nsims-1];
-
-
-    // Create the weight cache's if needed 
-    std::unique_ptr<WeightCacheEnsemble> cache_ensemble_ptr = std::make_unique<WeightCacheEnsemble>(
-        using_caching, map_params,
-        nsims, rho, sampling_space
-    );
-
-    std::unique_ptr<WeightCacheEnsemble> dummy_cache_ensemble_ptr = std::make_unique<WeightCacheEnsemble>(
-        using_caching, map_params,
-        nsims, rho, sampling_space
-    );
-
-    double entire_map_compactness = 0.0;
-    // compute the whole map compactness if needed 
-    if(initial_num_regions == 1 & rho != 1){
-        entire_map_compactness = (rho - 1) * plan_ensemble_ptr->plan_ptr_vec[0]->compute_log_region_spanning_trees(
-            map_params, 0
-        );
-    }
-
-
-    // Loading Info
-    if (verbosity >= 1) {
-        Rcout.imbue(std::locale::classic());
-        Rcout << std::fixed << std::setprecision(0);
-        if(!split_district_only){
-            Rcout << "GENERALIZED SEQUENTIAL MONTE CARLO";
-        }else{
-            Rcout << "SEQUENTIAL MONTE CARLO";
-        }
-        if(total_ms_steps > 0){
-            Rcout << " WITH MERGE SPLIT";
-        }
-        Rcout << std::endl;
-        Rcout << "Using " << sampling_space_to_str(sampling_space);
-        Rcout << " Sampling space to sample " << nsims << " " << V << "-unit ";
-        Rcout << "maps with " << ndists << " districts and population between "
-              << lower << " and " << upper << "." << std::endl;
-        if(verbosity >= 3){
-            Rcout << "Using " << (pool.getNumThreads() == 0 ? 1 : pool.getNumThreads()) << " threads, "
-                << total_ms_steps << " merge split steps, ";
-            if(splitting_size_regime == SplittingSizeScheduleType::DistrictOnlySMD || splitting_size_regime == SplittingSizeScheduleType::DistrictOnlyMMD){
-                Rcout << "and only performing 1-district splits.";
-            }else if(splitting_size_regime == SplittingSizeScheduleType::AnyValidSizeSMD){
-                Rcout << "and generalized region splits.";
-            }else if(splitting_size_regime == SplittingSizeScheduleType::OneCustomSize){
-                Rcout << "and custom size region splits.";
-            }
-            Rcout << " Using " << splitting_method_to_str(splitting_method) << " with " <<
-            (wgt_type == "optimal" ? "Optimal" : "Simple") << " Weights!\n";
-            if (map_params.cg.size() > 1){
-                Rcout << "Ensuring no more than " << ndists - 1 << " splits of the "
-                    << map_params.cg.size() << " administrative units.\n";
-            }
-            if(scoring_functions[0].total_soft_constraints > 0){
-                Rcout << "Applying " << scoring_functions[0].total_soft_constraints << " soft constraints.\n";
-            }
-            if(scoring_functions[0].num_hard_plan_constraints > 0){
-                Rcout << "Applying " << scoring_functions[0].num_hard_plan_constraints << " hard constraints.\n";
+        bool use_naive_k_splitter = splitting_method == SplittingMethodType::NaiveTopK;
+        // adaptive k estimation threshold
+        bool try_to_estimate_cut_k;
+        double thresh;
+        // k param values to potentially use. If set to 0 or lower then estimate
+        std::vector<int> k_params;
+        if (use_naive_k_splitter) {
+            try_to_estimate_cut_k = as<bool>(control["estimate_cut_k"]);
+            if (try_to_estimate_cut_k) {
+                thresh = (double)control["adapt_k_thresh"];
+                k_params.resize(total_smc_steps);
+            } else {
+                k_params = as<std::vector<int>>(control["manual_k_params"]);
             }
         }
-    }
 
-    // keep track of if we need to swap at the end.
-    // counts the number of smc steps
-    int smc_step_num = 0;
-    int merge_split_step_num = 0;
+        // Start off all the unnormalized weights at at exp of log weights
+        arma::vec unnormalized_sampling_weights = arma::exp(log_weights);
+        // now get initial normalized weights
+        arma::vec normalized_cumulative_weights = arma::cumsum(unnormalized_sampling_weights);
+        normalized_cumulative_weights =
+            normalized_cumulative_weights / normalized_cumulative_weights[nsims - 1];
 
-    std::string bar_fmt = "Split [{cli::pb_current}/{cli::pb_total}] {cli::pb_bar} | ETA{cli::pb_eta}";
-    RObject bar = cli_progress_bar(total_steps, cli_config(false, bar_fmt.c_str()));
-    // Now for each run through split the map
-    try {
-    for(int step_num=0; step_num < total_steps; step_num++){
-        if(verbosity > 1){
-            if(merge_split_step_vec[step_num]){
-                Rprintf("Iteration %d: Merge Split Step %d \n", step_num+1, merge_split_step_num + 1);
-            }else{
-                Rprintf("Iteration %d: SMC Step %d of %d \n",  step_num+1, smc_step_num + 1, total_smc_steps);
-            }
+        // Create the weight cache's if needed
+        std::unique_ptr<WeightCacheEnsemble> cache_ensemble_ptr =
+            std::make_unique<WeightCacheEnsemble>(using_caching, map_params, nsims, rho,
+                                                  sampling_space);
+
+        std::unique_ptr<WeightCacheEnsemble> dummy_cache_ensemble_ptr =
+            std::make_unique<WeightCacheEnsemble>(using_caching, map_params, nsims, rho,
+                                                  sampling_space);
+
+        double entire_map_compactness = 0.0;
+        // compute the whole map compactness if needed
+        if (initial_num_regions == 1 & rho != 1) {
+            entire_map_compactness =
+                (rho - 1) *
+                plan_ensemble_ptr->plan_ptr_vec[0]->compute_log_region_spanning_trees(
+                    map_params, 0);
         }
-        // its the final splitting step if step_num + 1 == total_smc steps
-        bool const is_final_splitting_step = step_num + 1 == total_smc_steps;
-        // If we have any custom hard constraints then must switch to single threading for everything
 
-
-        //  using std::chrono::high_resolution_clock;
-        // using std::chrono::duration_cast;
-        // using std::chrono::duration;
-        // using std::chrono::milliseconds;
-
-        // Check what step type
-        if(!merge_split_step_vec[step_num]){
-
-            // set the splitting schedule
-            splitting_schedule_ptr->set_potential_cut_sizes_for_each_valid_size(
-                smc_step_num, plan_ensemble_ptr->plan_ptr_vec[0]->num_regions
-                );
-
-            // splitting_schedule_ptr->print_current_step_splitting_info();
-
-            // Print if needed
-            if(verbosity >= 3 && splitting_size_regime == SplittingSizeScheduleType::OneCustomSize){
-                splitting_schedule_ptr->print_current_step_splitting_info();
+        // Loading Info
+        if (verbosity >= 1) {
+            Rcout.imbue(std::locale::classic());
+            Rcout << std::fixed << std::setprecision(0);
+            if (!split_district_only) {
+                Rcout << "GENERALIZED SEQUENTIAL MONTE CARLO";
+            } else {
+                Rcout << "SEQUENTIAL MONTE CARLO";
             }
-
-            // check if k is passed in or estimate
-            if(use_naive_k_splitter){
-                if(try_to_estimate_cut_k){
-                    // est k
-                    int est_cut_k;
-                    int last_k = smc_step_num == 0 ? std::max(1, V - 5) : k_params.at(smc_step_num-1);
-                    if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("About to try to estimate cut k!\n");
-                    estimate_cut_k(
-                        map_params, *splitting_schedule_ptr, rng_state,
-                        est_cut_k, last_k, unnormalized_sampling_weights, thresh,
-                        tol, plan_ensemble_ptr->plan_ptr_vec,
-                        split_district_only, verbosity);
-                    if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Estimated cut k!\n");
-                    k_params.at(smc_step_num) = est_cut_k;
-
-                    if (verbosity >= 3) {
-                        Rcout << " (using estimated k = " << k_params.at(smc_step_num) << ")\n";
-                    }
-                }else{
-                    if (verbosity >= 3) {
-                        Rcout << " (using input k = " << k_params.at(smc_step_num) << ")\n";
-                    }
-                }
-                for (auto &tree_splitter_ptr: tree_splitter_ptrs_vec){
-                    tree_splitter_ptr->update_single_int_param(k_params.at(smc_step_num));
-                }
-
-                smc_diagnostics.cut_k_values.at(step_num) = tree_splitter_ptrs_vec[0]->get_single_int_param();
+            if (total_ms_steps > 0) {
+                Rcout << " WITH MERGE SPLIT";
             }
-
-
-            // auto t1f = high_resolution_clock::now();
-
-            if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("About to run smc step %d!\n", smc_step_num);
-            // split the map
-            run_smc_step(map_params, *splitting_schedule_ptr, scoring_functions,
-                rng_states, sampling_space,
-                plan_ensemble_ptr, dummy_plan_ensemble_ptr,
-                tree_splitter_ptrs_vec,
-                normalized_cumulative_weights,
-                smc_diagnostics,
-                smc_step_num, step_num, is_final_splitting_step,
-                ancestors, lags,
-                pool,
-                verbosity, diagnostic_mode ? 3 : 0, max_split_tries
-            );
-            if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Ran smc step %d!\n", smc_step_num);
-            if(smc_step_num == 0 && initial_num_regions == 1){
-                // For the first ancestor one make every ancestor themselves
-                std::iota(
-                    smc_diagnostics.parent_index_mat.column(0).begin(),
-                    smc_diagnostics.parent_index_mat.column(0).end(),
-                    0);
-            }
-            
-            // update the weights if caching 
-            if(using_caching){
-                // use the dummy one as a temp
-                for (size_t i = 0; i < nsims; i++)
-                {
-                    // for plan i it was split from plan smc_diagnostics.parent_index_mat(i, smc_step_num)
-                    // so we want to make plan i in the dummy one to be the cache from the split plan
-                    dummy_cache_ensemble_ptr->weight_cache_ptr_vec[i]->copy_from(
-                        *cache_ensemble_ptr->weight_cache_ptr_vec[smc_diagnostics.parent_index_mat(i, smc_step_num)]
-                    );
-                }
-                // now we swap the two pointers so the cache ensemble one is aligned 
-                std::swap(cache_ensemble_ptr, dummy_cache_ensemble_ptr);
-            }
-
-            // plan_ensemble_ptr->plan_ptr_vec[0]->Rprint(true);
-
-
-            // auto t2f = std::chrono::high_resolution_clock::now();
-            // /* Getting number of milliseconds as a double. */
-            // std::chrono::duration<double, std::milli> ms_doublef = t2f - t1f;
-            // Rcout << "Running SMC " << ms_doublef.count() << " ms\n";
-            auto t1 = std::chrono::high_resolution_clock::now();
-
-            // compute splitting probability if MMD or if Anysplits SMD and num regions isn't number of districts
-            bool compute_log_splitting_prob = (
-                multi_member_districting ||
-                (
-                splitting_schedule_ptr->schedule_type == SplittingSizeScheduleType::AnyValidSizeSMD &&
-                plan_ensemble_ptr->plan_ptr_vec[0]->num_regions != ndists
-                )
-            );
-
-            // if soft custom constraints and no hard custom then temporarily switch to 1 thread
-            if(scoring_functions[0].any_soft_custom_constraints && !scoring_functions[0].any_hard_custom_constraints){
-                pool.setNumThreads(0);
-            }
-
-            if(wgt_type == "optimal"){
-                // TODO make more princicpal in the future
-                // for now its just if not district only and not final round
-                if (verbosity >= 3) Rprintf("Computing Optimal Weights:\n");
-                compute_all_plans_log_optimal_incremental_weights(
-                    pool,
-                    map_params, *splitting_schedule_ptr, sampling_space,
-                    scoring_functions, rho, entire_map_compactness,
-                    plan_ensemble_ptr->plan_ptr_vec, tree_splitter_ptrs_vec,
-                    compute_log_splitting_prob, is_final_splitting_step,
-                    smc_diagnostics.log_incremental_weights_mat.col(smc_step_num),
-                    *cache_ensemble_ptr, verbosity
-                );
-            }else if(wgt_type == "simple"){
-                if (verbosity >= 3) Rprintf("Computing Simple Backwards Kernel Weights:\n");
-                compute_all_plans_log_simple_incremental_weights(
-                    pool,
-                    map_params, *splitting_schedule_ptr,
-                    sampling_space,
-                    scoring_functions, rho,
-                    plan_ensemble_ptr->plan_ptr_vec, tree_splitter_ptrs_vec,
-                    compute_log_splitting_prob, is_final_splitting_step,
-                    smc_diagnostics.log_incremental_weights_mat.col(smc_step_num),
-                    verbosity
-                );
-            }else{
-                throw Rcpp::exception("invalid weight type!");
-            }
-            if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Done computing weights!\n");
-
-            // now swap back
-            if(scoring_functions[0].any_soft_custom_constraints && !scoring_functions[0].any_hard_custom_constraints){
-                pool.setNumThreads(num_threads);
-            }
-
-            auto t2 = std::chrono::high_resolution_clock::now();
-            /* Getting number of milliseconds as a double. */
-            std::chrono::duration<double, std::milli> ms_double = t2 - t1;
-            if(DEBUG_GSMC_PLANS_VERBOSE){
-                Rcout << "Calculating log weights took" << ms_double.count() << " ms, " << std::endl;
-            }
-
-            // do seq_alpha if needed
-            if(apply_weights_alpha){
-                // reindex first by making the log weight at index i the index of the parent
-                // we use unnormalized_sampling_weights to hold new values then swap later
-                for (size_t i = 0; i < nsims; i++)
-                {
-                    // REprintf("Sending %u to %d \n", i, smc_diagnostics.parent_index_mat(i, smc_step_num));
-                    unnormalized_sampling_weights[i] = log_weights[smc_diagnostics.parent_index_mat(i, smc_step_num)];
-                }
-                std::swap(unnormalized_sampling_weights, log_weights);
-                // add incremental weights to the current log weights
-                log_weights = log_weights + smc_diagnostics.log_incremental_weights_mat.col(smc_step_num);
-
-                // if using seq_alpha then our sampling weights for next round are
-                // proportional to exp(alpha* (prev_log_weights + incremental_weights))
-                unnormalized_sampling_weights = arma::exp(weights_alpha * log_weights);
-                if(!is_final_splitting_step){
-                    // if not the end then multiply by 1-alpha
-                    log_weights = (1-weights_alpha) * log_weights;
-                }
-            }else{
-                // if no seq alpha then log weights are just the incremental weights
-                // and sampling weights are just exp of exponential weights
-                log_weights = smc_diagnostics.log_incremental_weights_mat.col(smc_step_num);
-                unnormalized_sampling_weights = arma::exp(log_weights);
-            }
-            normalized_cumulative_weights = arma::cumsum(unnormalized_sampling_weights);
-
-            // compute log weight sd
-            smc_diagnostics.log_wgt_stddevs.at(smc_step_num) = arma::stddev(log_weights);
-            // compute effective sample size
-            smc_diagnostics.n_eff.at(smc_step_num) = normalized_cumulative_weights[nsims-1] * normalized_cumulative_weights[nsims-1]  / arma::sum(arma::square(unnormalized_sampling_weights));
-            // Now normalize the weights
-            normalized_cumulative_weights = normalized_cumulative_weights / normalized_cumulative_weights[nsims-1];
-
+            Rcout << std::endl;
+            Rcout << "Using " << sampling_space_to_str(sampling_space);
+            Rcout << " Sampling space to sample " << nsims << " " << V << "-unit ";
+            Rcout << "maps with " << ndists << " districts and population between " << lower
+                  << " and " << upper << "." << std::endl;
             if (verbosity >= 3) {
-                Rcout << "  " << std::setprecision(2)
-                      << 100*smc_diagnostics.n_eff.at(smc_step_num)/nsims <<  "% efficiency."
-                      << std::setprecision(4)
-                      << " Log Weight Standard Deviation: "
-                      << smc_diagnostics.log_wgt_stddevs.at(smc_step_num) << std::endl;
+                Rcout << "Using " << (pool.getNumThreads() == 0 ? 1 : pool.getNumThreads())
+                      << " threads, " << total_ms_steps << " merge split steps, ";
+                if (splitting_size_regime == SplittingSizeScheduleType::DistrictOnlySMD ||
+                    splitting_size_regime == SplittingSizeScheduleType::DistrictOnlyMMD) {
+                    Rcout << "and only performing 1-district splits.";
+                } else if (splitting_size_regime ==
+                           SplittingSizeScheduleType::AnyValidSizeSMD) {
+                    Rcout << "and generalized region splits.";
+                } else if (splitting_size_regime == SplittingSizeScheduleType::OneCustomSize) {
+                    Rcout << "and custom size region splits.";
+                }
+                Rcout << " Using " << splitting_method_to_str(splitting_method) << " with "
+                      << (wgt_type == "optimal" ? "Optimal" : "Simple") << " Weights!\n";
+                if (map_params.cg.size() > 1) {
+                    Rcout << "Ensuring no more than " << ndists - 1 << " splits of the "
+                          << map_params.cg.size() << " administrative units.\n";
+                }
+                if (scoring_functions[0].total_soft_constraints > 0) {
+                    Rcout << "Applying " << scoring_functions[0].total_soft_constraints
+                          << " soft constraints.\n";
+                }
+                if (scoring_functions[0].num_hard_plan_constraints > 0) {
+                    Rcout << "Applying " << scoring_functions[0].num_hard_plan_constraints
+                          << " hard constraints.\n";
+                }
             }
-
-            // only increase if we have smc steps left else it will cause index issues
-            // with merge split
-            if(smc_step_num < total_smc_steps-1){
-                smc_step_num++;
-            }
-        }else if(merge_split_step_vec[step_num]){ // check if its a merge split step
-            // run merge split
-            // Set the number of steps to run at 1 over previous stage acceptance rate if not 0
-            int prev_acceptance_index = merge_split_step_num == 0 ? step_num-1 : step_num - 2;
-            double prev_acceptance_rate = smc_diagnostics.acceptance_rates.at(prev_acceptance_index);
-            // if the acceptance is zero just default to 5
-            prev_acceptance_rate = prev_acceptance_rate > 0 ? prev_acceptance_rate : .1;
-
-            int nsteps_to_run = std::ceil(ms_steps_multiplier * std::ceil((1/prev_acceptance_rate)));
-            smc_diagnostics.num_merge_split_attempts_vec.at(merge_split_step_num) = nsteps_to_run;
-
-            if (verbosity >= 3){
-                Rprintf("  Running %d Merge Split Steps per plan, %d in total!\n",
-                    nsteps_to_run, nsteps_to_run*nsims);
-            }
-
-
-            splitting_schedule_ptr->update_cut_sizes_for_mergesplit_step(
-                smc_step_num, plan_ensemble_ptr->plan_ptr_vec[0]->num_regions
-            );
-
-            // If only soft custom constraints then need to temporarily switch to single threading
-            if(scoring_functions[0].any_soft_custom_constraints && !scoring_functions[0].any_hard_custom_constraints){
-                pool.setNumThreads(0);
-            }
-
-            // auto t1fm = high_resolution_clock::now();
-            run_merge_split_step_on_all_plans(
-                pool,
-                map_params, *splitting_schedule_ptr,
-                scoring_functions,
-                rng_states, sampling_space,
-                plan_ensemble_ptr->plan_ptr_vec, dummy_plan_ensemble_ptr->plan_ptr_vec,
-                tree_splitter_ptrs_vec,
-                merge_prob_type,
-                rho, is_final_splitting_step,
-                nsteps_to_run,
-                merge_split_step_num, step_num,
-                smc_diagnostics, *cache_ensemble_ptr,
-                verbosity
-            );
-
-            // now switch back
-            if(scoring_functions[0].any_soft_custom_constraints && !scoring_functions[0].any_hard_custom_constraints){
-                pool.setNumThreads(num_threads);
-            }
-
-            if(use_naive_k_splitter){
-                smc_diagnostics.cut_k_values.at(step_num) = tree_splitter_ptrs_vec[0]->get_single_int_param();
-            }
-
-
-            // auto t2fm = high_resolution_clock::now();
-            // /* Getting number of milliseconds as a double. */
-            // duration<double, std::milli> ms_doublefm = t2fm - t1fm;
-            // Rcout << "Running Merge split " << ms_doublefm.count() << " ms\n";
-
-            // set the acceptance rate
-            int total_ms_successes = Rcpp::sum(smc_diagnostics.merge_split_successes_mat.column(merge_split_step_num));
-            int total_ms_attempts = nsims * nsteps_to_run;
-
-            smc_diagnostics.acceptance_rates.at(step_num) = total_ms_successes / static_cast<double>(total_ms_attempts);
-
-            // add number of unique plans
-            smc_diagnostics.nunique_plans[step_num] = plan_ensemble_ptr->count_unique_plans(pool);
-
-            if (verbosity >= 3){
-                Rcout << "  " << std::setprecision(2) << 100.0 * smc_diagnostics.acceptance_rates.at(step_num) << "% acceptance rate. " <<
-                "There are now " << smc_diagnostics.nunique_plans[step_num] << " unique plans." << std::endl;
-            }
-
-            // Access the column
-            IntegerMatrix::Column col = smc_diagnostics.draw_tries_mat(_, step_num);
-            // Set all elements in the column to the value nsteps_to_run
-            std::fill(col.begin(), col.end(), nsteps_to_run);
-
-            merge_split_step_num++;
         }
 
-        // Add details diagnostics if needed
-        // Now update the diagnostic info if needed, region labels, dval column of the matrix
-        if(diagnostic_mode){
-            if (DEBUG_GSMC_PLANS_VERBOSE){
-                REprintf("Adding full diagnostics!\n");
+        // keep track of if we need to swap at the end.
+        // counts the number of smc steps
+        int smc_step_num = 0;
+        int merge_split_step_num = 0;
+
+        std::string bar_fmt =
+            "Split [{cli::pb_current}/{cli::pb_total}] {cli::pb_bar} | ETA{cli::pb_eta}";
+        RObject bar = cli_progress_bar(total_steps, cli_config(false, bar_fmt.c_str()));
+        // Now for each run through split the map
+        try {
+            for (int step_num = 0; step_num < total_steps; step_num++) {
+                if (verbosity > 1) {
+                    if (merge_split_step_vec[step_num]) {
+                        Rprintf("Iteration %d: Merge Split Step %d \n", step_num + 1,
+                                merge_split_step_num + 1);
+                    } else {
+                        Rprintf("Iteration %d: SMC Step %d of %d \n", step_num + 1,
+                                smc_step_num + 1, total_smc_steps);
+                    }
+                }
+                // its the final splitting step if step_num + 1 == total_smc steps
+                bool const is_final_splitting_step = step_num + 1 == total_smc_steps;
+                // If we have any custom hard constraints then must switch to single threading
+                // for everything
+
+                //  using std::chrono::high_resolution_clock;
+                // using std::chrono::duration_cast;
+                // using std::chrono::duration;
+                // using std::chrono::milliseconds;
+
+                // Check what step type
+                if (!merge_split_step_vec[step_num]) {
+
+                    // set the splitting schedule
+                    splitting_schedule_ptr->set_potential_cut_sizes_for_each_valid_size(
+                        smc_step_num, plan_ensemble_ptr->plan_ptr_vec[0]->num_regions);
+
+                    // splitting_schedule_ptr->print_current_step_splitting_info();
+
+                    // Print if needed
+                    if (verbosity >= 3 &&
+                        splitting_size_regime == SplittingSizeScheduleType::OneCustomSize) {
+                        splitting_schedule_ptr->print_current_step_splitting_info();
+                    }
+
+                    // check if k is passed in or estimate
+                    if (use_naive_k_splitter) {
+                        if (try_to_estimate_cut_k) {
+                            // est k
+                            int est_cut_k;
+                            int last_k = smc_step_num == 0 ? std::max(1, V - 5)
+                                                           : k_params.at(smc_step_num - 1);
+                            if (DEBUG_GSMC_PLANS_VERBOSE)
+                                Rprintf("About to try to estimate cut k!\n");
+                            estimate_cut_k(map_params, *splitting_schedule_ptr, rng_state,
+                                           est_cut_k, last_k, unnormalized_sampling_weights,
+                                           thresh, tol, plan_ensemble_ptr->plan_ptr_vec,
+                                           split_district_only, verbosity);
+                            if (DEBUG_GSMC_PLANS_VERBOSE)
+                                Rprintf("Estimated cut k!\n");
+                            k_params.at(smc_step_num) = est_cut_k;
+
+                            if (verbosity >= 3) {
+                                Rcout << " (using estimated k = " << k_params.at(smc_step_num)
+                                      << ")\n";
+                            }
+                        } else {
+                            if (verbosity >= 3) {
+                                Rcout << " (using input k = " << k_params.at(smc_step_num)
+                                      << ")\n";
+                            }
+                        }
+                        for (auto &tree_splitter_ptr : tree_splitter_ptrs_vec) {
+                            tree_splitter_ptr->update_single_int_param(
+                                k_params.at(smc_step_num));
+                        }
+
+                        smc_diagnostics.cut_k_values.at(step_num) =
+                            tree_splitter_ptrs_vec[0]->get_single_int_param();
+                    }
+
+                    // auto t1f = high_resolution_clock::now();
+
+                    if (DEBUG_GSMC_PLANS_VERBOSE)
+                        Rprintf("About to run smc step %d!\n", smc_step_num);
+                    // split the map
+                    run_smc_step(map_params, *splitting_schedule_ptr, scoring_functions,
+                                 rng_states, sampling_space, plan_ensemble_ptr,
+                                 dummy_plan_ensemble_ptr, tree_splitter_ptrs_vec,
+                                 normalized_cumulative_weights, smc_diagnostics, smc_step_num,
+                                 step_num, is_final_splitting_step, ancestors, lags, pool,
+                                 verbosity, diagnostic_mode ? 3 : 0, max_split_tries);
+                    if (DEBUG_GSMC_PLANS_VERBOSE)
+                        Rprintf("Ran smc step %d!\n", smc_step_num);
+                    if (smc_step_num == 0 && initial_num_regions == 1) {
+                        // For the first ancestor one make every ancestor themselves
+                        std::iota(smc_diagnostics.parent_index_mat.column(0).begin(),
+                                  smc_diagnostics.parent_index_mat.column(0).end(), 0);
+                    }
+
+                    // update the weights if caching
+                    if (using_caching) {
+                        // use the dummy one as a temp
+                        for (size_t i = 0; i < nsims; i++) {
+                            // for plan i it was split from plan
+                            // smc_diagnostics.parent_index_mat(i, smc_step_num) so we want to
+                            // make plan i in the dummy one to be the cache from the split plan
+                            dummy_cache_ensemble_ptr->weight_cache_ptr_vec[i]->copy_from(
+                                *cache_ensemble_ptr
+                                     ->weight_cache_ptr_vec[smc_diagnostics.parent_index_mat(
+                                         i, smc_step_num)]);
+                        }
+                        // now we swap the two pointers so the cache ensemble one is aligned
+                        std::swap(cache_ensemble_ptr, dummy_cache_ensemble_ptr);
+                    }
+
+                    // plan_ensemble_ptr->plan_ptr_vec[0]->Rprint(true);
+
+                    // auto t2f = std::chrono::high_resolution_clock::now();
+                    // /* Getting number of milliseconds as a double. */
+                    // std::chrono::duration<double, std::milli> ms_doublef = t2f - t1f;
+                    // Rcout << "Running SMC " << ms_doublef.count() << " ms\n";
+                    auto t1 = std::chrono::high_resolution_clock::now();
+
+                    // compute splitting probability if MMD or if Anysplits SMD and num regions
+                    // isn't number of districts
+                    bool compute_log_splitting_prob =
+                        (multi_member_districting ||
+                         (splitting_schedule_ptr->schedule_type ==
+                              SplittingSizeScheduleType::AnyValidSizeSMD &&
+                          plan_ensemble_ptr->plan_ptr_vec[0]->num_regions != ndists));
+
+                    // if soft custom constraints and no hard custom then temporarily switch to
+                    // 1 thread
+                    if (scoring_functions[0].any_soft_custom_constraints &&
+                        !scoring_functions[0].any_hard_custom_constraints) {
+                        pool.setNumThreads(0);
+                    }
+
+                    if (wgt_type == "optimal") {
+                        // TODO make more princicpal in the future
+                        // for now its just if not district only and not final round
+                        if (verbosity >= 3)
+                            Rprintf("Computing Optimal Weights:\n");
+                        compute_all_plans_log_optimal_incremental_weights(
+                            pool, map_params, *splitting_schedule_ptr, sampling_space,
+                            scoring_functions, rho, entire_map_compactness,
+                            plan_ensemble_ptr->plan_ptr_vec, tree_splitter_ptrs_vec,
+                            compute_log_splitting_prob, is_final_splitting_step,
+                            smc_diagnostics.log_incremental_weights_mat.col(smc_step_num),
+                            *cache_ensemble_ptr, verbosity);
+                    } else if (wgt_type == "simple") {
+                        if (verbosity >= 3)
+                            Rprintf("Computing Simple Backwards Kernel Weights:\n");
+                        compute_all_plans_log_simple_incremental_weights(
+                            pool, map_params, *splitting_schedule_ptr, sampling_space,
+                            scoring_functions, rho, plan_ensemble_ptr->plan_ptr_vec,
+                            tree_splitter_ptrs_vec, compute_log_splitting_prob,
+                            is_final_splitting_step,
+                            smc_diagnostics.log_incremental_weights_mat.col(smc_step_num),
+                            verbosity);
+                    } else {
+                        throw Rcpp::exception("invalid weight type!");
+                    }
+                    if (DEBUG_GSMC_PLANS_VERBOSE)
+                        Rprintf("Done computing weights!\n");
+
+                    // now swap back
+                    if (scoring_functions[0].any_soft_custom_constraints &&
+                        !scoring_functions[0].any_hard_custom_constraints) {
+                        pool.setNumThreads(num_threads);
+                    }
+
+                    auto t2 = std::chrono::high_resolution_clock::now();
+                    /* Getting number of milliseconds as a double. */
+                    std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+                    if (DEBUG_GSMC_PLANS_VERBOSE) {
+                        Rcout << "Calculating log weights took" << ms_double.count() << " ms, "
+                              << std::endl;
+                    }
+
+                    // do seq_alpha if needed
+                    if (apply_weights_alpha) {
+                        // reindex first by making the log weight at index i the index of the
+                        // parent we use unnormalized_sampling_weights to hold new values then
+                        // swap later
+                        for (size_t i = 0; i < nsims; i++) {
+                            // REprintf("Sending %u to %d \n", i,
+                            // smc_diagnostics.parent_index_mat(i, smc_step_num));
+                            unnormalized_sampling_weights[i] =
+                                log_weights[smc_diagnostics.parent_index_mat(i, smc_step_num)];
+                        }
+                        std::swap(unnormalized_sampling_weights, log_weights);
+                        // add incremental weights to the current log weights
+                        log_weights =
+                            log_weights +
+                            smc_diagnostics.log_incremental_weights_mat.col(smc_step_num);
+
+                        // if using seq_alpha then our sampling weights for next round are
+                        // proportional to exp(alpha* (prev_log_weights + incremental_weights))
+                        unnormalized_sampling_weights = arma::exp(weights_alpha * log_weights);
+                        if (!is_final_splitting_step) {
+                            // if not the end then multiply by 1-alpha
+                            log_weights = (1 - weights_alpha) * log_weights;
+                        }
+                    } else {
+                        // if no seq alpha then log weights are just the incremental weights
+                        // and sampling weights are just exp of exponential weights
+                        log_weights =
+                            smc_diagnostics.log_incremental_weights_mat.col(smc_step_num);
+                        unnormalized_sampling_weights = arma::exp(log_weights);
+                    }
+                    normalized_cumulative_weights = arma::cumsum(unnormalized_sampling_weights);
+
+                    // compute log weight sd
+                    smc_diagnostics.log_wgt_stddevs.at(smc_step_num) =
+                        arma::stddev(log_weights);
+                    // compute effective sample size
+                    smc_diagnostics.n_eff.at(smc_step_num) =
+                        normalized_cumulative_weights[nsims - 1] *
+                        normalized_cumulative_weights[nsims - 1] /
+                        arma::sum(arma::square(unnormalized_sampling_weights));
+                    // Now normalize the weights
+                    normalized_cumulative_weights = normalized_cumulative_weights /
+                                                    normalized_cumulative_weights[nsims - 1];
+
+                    if (verbosity >= 3) {
+                        Rcout << "  " << std::setprecision(2)
+                              << 100 * smc_diagnostics.n_eff.at(smc_step_num) / nsims
+                              << "% efficiency." << std::setprecision(4)
+                              << " Log Weight Standard Deviation: "
+                              << smc_diagnostics.log_wgt_stddevs.at(smc_step_num) << std::endl;
+                    }
+
+                    // only increase if we have smc steps left else it will cause index issues
+                    // with merge split
+                    if (smc_step_num < total_smc_steps - 1) {
+                        smc_step_num++;
+                    }
+                } else if (merge_split_step_vec[step_num]) { // check if its a merge split step
+                    // run merge split
+                    // Set the number of steps to run at 1 over previous stage acceptance rate
+                    // if not 0
+                    int prev_acceptance_index =
+                        merge_split_step_num == 0 ? step_num - 1 : step_num - 2;
+                    double prev_acceptance_rate =
+                        smc_diagnostics.acceptance_rates.at(prev_acceptance_index);
+                    // if the acceptance is zero just default to 5
+                    prev_acceptance_rate = prev_acceptance_rate > 0 ? prev_acceptance_rate : .1;
+
+                    int nsteps_to_run =
+                        std::ceil(ms_steps_multiplier * std::ceil((1 / prev_acceptance_rate)));
+                    smc_diagnostics.num_merge_split_attempts_vec.at(merge_split_step_num) =
+                        nsteps_to_run;
+
+                    if (verbosity >= 3) {
+                        Rprintf("  Running %d Merge Split Steps per plan, %d in total!\n",
+                                nsteps_to_run, nsteps_to_run * nsims);
+                    }
+
+                    splitting_schedule_ptr->update_cut_sizes_for_mergesplit_step(
+                        smc_step_num, plan_ensemble_ptr->plan_ptr_vec[0]->num_regions);
+
+                    // If only soft custom constraints then need to temporarily switch to single
+                    // threading
+                    if (scoring_functions[0].any_soft_custom_constraints &&
+                        !scoring_functions[0].any_hard_custom_constraints) {
+                        pool.setNumThreads(0);
+                    }
+
+                    // auto t1fm = high_resolution_clock::now();
+                    run_merge_split_step_on_all_plans(
+                        pool, map_params, *splitting_schedule_ptr, scoring_functions,
+                        rng_states, sampling_space, plan_ensemble_ptr->plan_ptr_vec,
+                        dummy_plan_ensemble_ptr->plan_ptr_vec, tree_splitter_ptrs_vec,
+                        merge_prob_type, rho, is_final_splitting_step, nsteps_to_run,
+                        merge_split_step_num, step_num, smc_diagnostics, *cache_ensemble_ptr,
+                        verbosity);
+
+                    // now switch back
+                    if (scoring_functions[0].any_soft_custom_constraints &&
+                        !scoring_functions[0].any_hard_custom_constraints) {
+                        pool.setNumThreads(num_threads);
+                    }
+
+                    if (use_naive_k_splitter) {
+                        smc_diagnostics.cut_k_values.at(step_num) =
+                            tree_splitter_ptrs_vec[0]->get_single_int_param();
+                    }
+
+                    // auto t2fm = high_resolution_clock::now();
+                    // /* Getting number of milliseconds as a double. */
+                    // duration<double, std::milli> ms_doublefm = t2fm - t1fm;
+                    // Rcout << "Running Merge split " << ms_doublefm.count() << " ms\n";
+
+                    // set the acceptance rate
+                    int total_ms_successes = Rcpp::sum(
+                        smc_diagnostics.merge_split_successes_mat.column(merge_split_step_num));
+                    int total_ms_attempts = nsims * nsteps_to_run;
+
+                    smc_diagnostics.acceptance_rates.at(step_num) =
+                        total_ms_successes / static_cast<double>(total_ms_attempts);
+
+                    // add number of unique plans
+                    smc_diagnostics.nunique_plans[step_num] =
+                        plan_ensemble_ptr->count_unique_plans(pool);
+
+                    if (verbosity >= 3) {
+                        Rcout << "  " << std::setprecision(2)
+                              << 100.0 * smc_diagnostics.acceptance_rates.at(step_num)
+                              << "% acceptance rate. " << "There are now "
+                              << smc_diagnostics.nunique_plans[step_num] << " unique plans."
+                              << std::endl;
+                    }
+
+                    // Access the column
+                    IntegerMatrix::Column col = smc_diagnostics.draw_tries_mat(_, step_num);
+                    // Set all elements in the column to the value nsteps_to_run
+                    std::fill(col.begin(), col.end(), nsteps_to_run);
+
+                    merge_split_step_num++;
+                }
+
+                // Add details diagnostics if needed
+                // Now update the diagnostic info if needed, region labels, dval column of the
+                // matrix
+                if (diagnostic_mode) {
+                    if (DEBUG_GSMC_PLANS_VERBOSE) {
+                        REprintf("Adding full diagnostics!\n");
+                    }
+                    smc_diagnostics.add_full_step_diagnostics(
+                        total_steps, splitting_all_the_way, step_num, merge_split_step_num,
+                        smc_step_num, !merge_split_step_vec[step_num], sampling_space, pool,
+                        *plan_ensemble_ptr, *dummy_plan_ensemble_ptr, *splitting_schedule_ptr);
+                }
+
+                if (verbosity == 1 && CLI_SHOULD_TICK) {
+                    cli_progress_set(bar, step_num);
+                }
+                Rcpp::checkUserInterrupt();
             }
-            smc_diagnostics.add_full_step_diagnostics(
-                total_steps, splitting_all_the_way,
-                step_num, merge_split_step_num, smc_step_num,
-                !merge_split_step_vec[step_num],
-                sampling_space,
-                pool,
-                *plan_ensemble_ptr, *dummy_plan_ensemble_ptr,
-                *splitting_schedule_ptr
-            );
+        } catch (RcppThread::UserInterruptException e) {
+            cli_progress_done(bar);
+            Rcpp::Rcerr << "c++ threaded call interrupted!" << "\n";
+            throw Rcpp::exception("c++ threaded call interrupted!\n");
+            return R_NilValue;
+        } catch (Rcpp::internal::InterruptedException e) {
+            cli_progress_done(bar);
+            Rcpp::Rcerr << "c++ call interrupted!" << "\n";
+            throw Rcpp::exception("c++ call interrupted!\n");
+            return R_NilValue;
+        } catch (const std::exception &e) {
+            cli_progress_done(bar);
+            Rcpp::Rcerr << "Standard exception: " << e.what() << "\n";
+            return R_NilValue;
+        } catch (...) {
+            Rcpp::Rcerr << "Unknown exception caught!\n";
+        }
+        cli_progress_done(bar);
+        if (DEBUG_GSMC_PLANS_VERBOSE) {
+            REprintf("Done with main for loop!\n");
         }
 
-        if (verbosity == 1 && CLI_SHOULD_TICK){
-            cli_progress_set(bar, step_num);
+        // if not all diagnostic mode and split district only reorder the plans
+        if (!diagnostic_mode &&
+            splitting_size_regime != SplittingSizeScheduleType::DistrictOnlySMD) {
+            reorder_all_plans(pool, plan_ensemble_ptr->plan_ptr_vec,
+                              dummy_plan_ensemble_ptr->plan_ptr_vec);
         }
-        Rcpp::checkUserInterrupt();
-
-    }
-    } catch (RcppThread::UserInterruptException e) {
-        cli_progress_done(bar);
-        Rcpp::Rcerr << "c++ threaded call interrupted!" << "\n";
-        throw Rcpp::exception("c++ threaded call interrupted!\n");
-        return R_NilValue;
-    }catch (Rcpp::internal::InterruptedException e) {
-        cli_progress_done(bar);
-        Rcpp::Rcerr << "c++ call interrupted!"  << "\n";
-        throw Rcpp::exception("c++ call interrupted!\n");
-        return R_NilValue;
-    }catch (const std::exception &e) {
-        cli_progress_done(bar);
-        Rcpp::Rcerr << "Standard exception: " << e.what() << "\n";
-        return R_NilValue;
-    }
-    catch (...) {
-        Rcpp::Rcerr << "Unknown exception caught!\n";
-    }
-    cli_progress_done(bar);
-    if (DEBUG_GSMC_PLANS_VERBOSE){
-        REprintf("Done with main for loop!\n");
+        // end of scope
     }
 
-
-
-    // if not all diagnostic mode and split district only reorder the plans
-    if(!diagnostic_mode && splitting_size_regime != SplittingSizeScheduleType::DistrictOnlySMD){
-        reorder_all_plans(pool, plan_ensemble_ptr->plan_ptr_vec, dummy_plan_ensemble_ptr->plan_ptr_vec);
-    }
-    // end of scope
-    }
-
-    if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Exiting main loop and going to do diagnostics!\n");
+    if (DEBUG_GSMC_PLANS_VERBOSE)
+        Rprintf("Exiting main loop and going to do diagnostics!\n");
 
     bool plan_sizes_saved;
 
-    if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Plans saved!\n");
+    if (DEBUG_GSMC_PLANS_VERBOSE)
+        Rprintf("Plans saved!\n");
 
     // if only sampling partial plans or MMD plans then return the size matrix
-    if(
-        !splitting_all_the_way ||
+    if (!splitting_all_the_way ||
         splitting_schedule_ptr->schedule_type == SplittingSizeScheduleType::AnyValidSizeMMD ||
-        splitting_schedule_ptr->schedule_type == SplittingSizeScheduleType::DistrictOnlyMMD
-    ){
-        if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Getting ready to save region sizes!\n");
+        splitting_schedule_ptr->schedule_type == SplittingSizeScheduleType::DistrictOnlyMMD) {
+        if (DEBUG_GSMC_PLANS_VERBOSE)
+            Rprintf("Getting ready to save region sizes!\n");
         plan_sizes_saved = true;
-    }else{
+    } else {
         plan_sizes_saved = false;
     }
 
-
-    if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Plan matrix (and sizes potentially) saved!\n");
+    if (DEBUG_GSMC_PLANS_VERBOSE)
+        Rprintf("Plan matrix (and sizes potentially) saved!\n");
 
     // Return results
     List out = List::create(
-        _["plans_mat"] = plan_ensemble_ptr->get_R_plans_matrix(), // integer matrix to store final plans
-        _["seats"] = plan_sizes_saved ? plan_ensemble_ptr->get_R_sizes_matrix(pool) : Rcpp::IntegerMatrix(1,1), // saves sizes matrix if needed
+        _["plans_mat"] =
+            plan_ensemble_ptr->get_R_plans_matrix(), // integer matrix to store final plans
+        _["seats"] = plan_sizes_saved
+                         ? plan_ensemble_ptr->get_R_sizes_matrix(pool)
+                         : Rcpp::IntegerMatrix(1, 1), // saves sizes matrix if needed
         _["region_pops"] = plan_ensemble_ptr->get_region_pops_matrix(pool),
-        _["plan_seats_saved"] = plan_sizes_saved,
-        _["log_weights"] = log_weights,
-        _["ancestors"] = ancestors,
-        _["step_types"] = step_types,
-        _["merge_split_steps"] = merge_split_step_vec
-    );
+        _["plan_seats_saved"] = plan_sizes_saved, _["log_weights"] = log_weights,
+        _["ancestors"] = ancestors, _["step_types"] = step_types,
+        _["merge_split_steps"] = merge_split_step_vec);
 
     // to try to save memory kill the plan vector
-    plan_ensemble_ptr->flattened_all_plans.clear(); plan_ensemble_ptr->flattened_all_plans.shrink_to_fit();
+    plan_ensemble_ptr->flattened_all_plans.clear();
+    plan_ensemble_ptr->flattened_all_plans.shrink_to_fit();
     // add all the diagnostics
     smc_diagnostics.add_diagnostics_to_out_list(out);
 
-    if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Returning to R!\n");
+    if (DEBUG_GSMC_PLANS_VERBOSE)
+        Rprintf("Returning to R!\n");
     return out;
-
 }

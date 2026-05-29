@@ -1,11 +1,8 @@
 #include <RcppArmadillo.h>
 using namespace Rcpp;
 
-double var_info(
-    IntegerVector const &m1, IntegerVector const &m2, 
-    NumericVector const &pop, 
-    int const k1, int const k2
-    ) {
+double var_info(IntegerVector const &m1, IntegerVector const &m2, NumericVector const &pop,
+                int const k1, int const k2) {
     int V = m1.size();
     NumericMatrix joint(k1, k2);
     NumericVector p1(k1);
@@ -13,9 +10,9 @@ double var_info(
 
     double total_pop = 0;
     for (int i = 0; i < V; i++) {
-        joint(m1[i]-1, m2[i]-1) += pop[i];
-        p1[m1[i]-1] += pop[i];
-        p2[m2[i]-1] += pop[i];
+        joint(m1[i] - 1, m2[i] - 1) += pop[i];
+        p1[m1[i] - 1] += pop[i];
+        p2[m2[i] - 1] += pop[i];
         total_pop += pop[i];
     }
 
@@ -23,8 +20,10 @@ double var_info(
     for (int i = 0; i < k1; i++) {
         for (int j = 0; j < k2; j++) {
             double jo = joint(i, j);
-            if (jo <= 0) continue;
-            varinf -= (jo / total_pop) * (2.0*std::log(jo) - std::log(p1[i]) - std::log(p2[j]));
+            if (jo <= 0)
+                continue;
+            varinf -=
+                (jo / total_pop) * (2.0 * std::log(jo) - std::log(p1[i]) - std::log(p2[j]));
         }
     }
 
@@ -33,15 +32,15 @@ double var_info(
     return varinf;
 }
 
-
 /*
  * `m` has rows = precincts, cols = plans
  * `ref` is the plan we want to compute distances to
  * `pop` is population of precincts
- * 
+ *
  */
 // [[Rcpp::export]]
-NumericVector var_info_vec(IntegerMatrix const &m, IntegerVector const &ref, NumericVector const &pop) {
+NumericVector var_info_vec(IntegerMatrix const &m, IntegerVector const &ref,
+                           NumericVector const &pop) {
     int N = m.ncol();
 
     NumericVector out(N);

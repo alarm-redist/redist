@@ -21,17 +21,23 @@
 #' shp <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
 #' plans <- redist_smc(shp, 100)
 #' redist.plot.wted.adj(shp, plans = plans, counties = region)
-redist.plot.wted.adj <- function(shp, plans, counties = NULL,
-                                 ref = TRUE, adj = NULL, plot_shp = TRUE) {
+redist.plot.wted.adj <- function(
+    shp,
+    plans,
+    counties = NULL,
+    ref = TRUE,
+    adj = NULL,
+    plot_shp = TRUE
+) {
     # Check inputs ----
-    if ("SpatialPolygonsDataFrame" %in% class(shp)) {
+    if (inherits(shp, "SpatialPolygonsDataFrame")) {
         shp <- shp %>% st_as_sf()
     } else if (!inherits(shp, "sf")) {
         cli::cli_abort("{.arg shp} must be a {.cls SpatialPolygonsDataFrame} or {.cls sf} object.")
     }
 
     check_tidy_types(NULL, plans)
-    plans <-  get_plans_matrix(subset_sampled(plans))
+    plans <- get_plans_matrix(subset_sampled(plans))
 
     if (inherits(shp, "redist_map")) {
         if (missing(adj)) {
@@ -81,7 +87,7 @@ redist.plot.wted.adj <- function(shp, plans, counties = NULL,
                     geom_sf(data = distr, size = 1, fill = NA)
             }
         } else {
-            if (length(ref == nrow(shp))) {
+            if (length(ref) == nrow(shp)) {
                 distr <- shp %>%
                     mutate(ref_input = ref) %>%
                     group_by(.data$ref_input) %>%

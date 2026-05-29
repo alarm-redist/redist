@@ -29,31 +29,30 @@
 #' @md
 #' @export
 redist_mergesplit_parallel <- function(
-        map,
-        nsims,
-        warmup = if (is.null(init_plan)) 10 else max(100, nsims %/% 5),
-        thin = 1L,
-        chains = 1L,
-        init_plan = NULL,
-        counties = NULL,
-        compactness = 1,
-        constraints = list(),
-        constraint_fn = function(m) rep(0, ncol(m)),
-        sampling_space = c("graph_plan", "spanning_forest", "linking_edge"),
-        split_method = NULL,
-        split_params = NULL,
-        pair_rule = "uniform",
-        init_seats = NULL,
-        ncores = NULL,
-        cl_type = "PSOCK",
-        return_all = TRUE,
-        init_name = NULL,
-        verbose = FALSE,
-        silent = FALSE,
-        diagnostic_mode = FALSE,
-        control = list(),
-        adapt_k_thresh = .99) {
-
+    map,
+    nsims,
+    warmup = if (is.null(init_plan)) 10 else max(100, nsims %/% 5),
+    thin = 1L,
+    chains = 1L,
+    init_plan = NULL,
+    counties = NULL,
+    compactness = 1,
+    constraints = list(),
+    constraint_fn = function(m) rep(0, ncol(m)),
+    sampling_space = c("graph_plan", "spanning_forest", "linking_edge"),
+    split_method = NULL,
+    split_params = NULL,
+    pair_rule = "uniform",
+    init_seats = NULL,
+    ncores = NULL,
+    cl_type = "PSOCK",
+    return_all = TRUE,
+    init_name = NULL,
+    verbose = FALSE,
+    silent = FALSE,
+    diagnostic_mode = FALSE,
+    control = list(),
+    adapt_k_thresh = 0.99
+) {
     cli::cli_abort("redist_mergesplit_parallel is deprecated. Please call redist_mergesplit now.")
 }
-

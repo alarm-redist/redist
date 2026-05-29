@@ -45,27 +45,27 @@ redist.parity <- function(plans, total_pop, seats = NULL) {
         n_distr <- rg[2]
     }
 
-    if (!is.null(seats)){
+    if (!is.null(seats)) {
         if (!is.numeric(seats)) {
             cli::cli_abort("{.arg seats} must be a numeric vector")
         }
         if (length(seats) != n_distr * ncol(plans)) {
             cli::cli_abort(".arg seats} must be of length {.arg ncol(plans)} * {.arg n_distr}.")
         }
-        # now reshape into matrix 
+        # now reshape into matrix
         seats <- matrix(
-            seats, ncol = ncol(plans), nrow = n_distr
+            seats,
+            ncol = ncol(plans),
+            nrow = n_distr
         )
         multimember <- TRUE
-        # nseats is just sum of seats associated with initial plan 
+        # nseats is just sum of seats associated with initial plan
         nseats <- sum(seats[seq_len(n_distr)])
-    }else{
+    } else {
         seats <- matrix(0L)
         multimember <- FALSE
-        nseats <- n_distr 
+        nseats <- n_distr
     }
-
-
 
     max_dev(plans, total_pop, n_distr, multimember, nseats, seats, 1)
 }
@@ -107,8 +107,9 @@ min_move_parity <- function(map, plan, counties = NULL, penalty = 0.2) {
     nd <- attr(map, "ndists")
 
     plan <- eval_tidy(enquo(plan), map)
-    if (!is.numeric(plan) && all(plan > 0) && length(plan) == V)
+    if (!is.numeric(plan) && all(plan > 0) && length(plan) == V) {
         cli::cli_abort("{.arg plan} must be a positive integer vector with one entry per precinct.")
+    }
 
     if (missing(counties)) {
         counties <- rep(1L, V)
@@ -117,12 +118,17 @@ min_move_parity <- function(map, plan, counties = NULL, penalty = 0.2) {
     }
 
     distr_adj <- get_plan_graph(adj, length(adj), plan, nd)
-    edges <- do.call(rbind, lapply(seq_along(distr_adj), function(i) {
-        tibble(from = i, to = distr_adj[[i]] + 1L)
-    })) %>%
+    edges <- do.call(
+        rbind,
+        lapply(seq_along(distr_adj), function(i) {
+            tibble(from = i, to = distr_adj[[i]] + 1L)
+        })
+    ) %>%
         rowwise() %>%
-        filter(.data$from < .data$to,
-            any(unique(counties[plan == .data$from]) %in% counties[plan == .data$to])) %>%
+        filter(
+            .data$from < .data$to,
+            any(unique(counties[plan == .data$from]) %in% counties[plan == .data$to])
+        ) %>%
         ungroup()
 
     n_edge <- nrow(edges)
@@ -135,22 +141,30 @@ min_move_parity <- function(map, plan, counties = NULL, penalty = 0.2) {
     discrep <- pops - mean(pops)
 
     fn_balance <- function(move, alpha = 0.1) {
-        sum(abs(discrep + diff_mat %*% move)) + alpha*sum(abs(move))
+        sum(abs(discrep + diff_mat %*% move)) + alpha * sum(abs(move))
     }
     gr_balance <- function(move, alpha = 0.1) {
-        t(sign(discrep + diff_mat %*% move)) %*% diff_mat + alpha*sign(move)
+        t(sign(discrep + diff_mat %*% move)) %*% diff_mat + alpha * sign(move)
     }
 
-    res <- optim(rep(0, n_edge), fn_balance, gr_balance, alpha = penalty,
-        method = "BFGS", control = list(maxit = 1e3, reltol = 1e-9, abstol = 1))
+    res <- optim(
+        rep(0, n_edge),
+        fn_balance,
+        gr_balance,
+        alpha = penalty,
+        method = "BFGS",
+        control = list(maxit = 1e3, reltol = 1e-9, abstol = 1)
+    )
 
     move <- round(res$par)
     pops_new <- pops + diff_mat %*% move
     from_old <- edges$from
-    edges <- mutate(edges,
+    edges <- mutate(
+        edges,
         from = if_else(move < 0, .data$to, .data$from),
         to = if_else(move < 0, from_old, .data$to),
-        move = abs(move)) %>%
+        move = abs(move)
+    ) %>%
         filter(.data$move > 0)
 
     list(moves = edges,

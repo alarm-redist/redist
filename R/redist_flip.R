@@ -151,22 +151,40 @@
 #'     pop_tol = 0.05)
 #' sims <- redist_flip(map = iowa_map, nsims = 100)
 #'
-redist_flip <- function(map, nsims, warmup = 0, init_plan,
-                        constraints = add_constr_edges_rem(redist_constr(map), 0.4),
-                        thin = 1, eprob = 0.05, lambda = 0, temper = FALSE,
-                        betaseq = "powerlaw", betaseqlength = 10, betaweights = NULL,
-                        adapt_lambda = FALSE, adapt_eprob = FALSE, exact_mh = FALSE,
-                        adjswaps = TRUE, init_name = NULL, verbose = TRUE, nthin) {
-
+redist_flip <- function(
+    map,
+    nsims,
+    warmup = 0,
+    init_plan,
+    constraints = add_constr_edges_rem(redist_constr(map), 0.4),
+    thin = 1,
+    eprob = 0.05,
+    lambda = 0,
+    temper = FALSE,
+    betaseq = "powerlaw",
+    betaseqlength = 10,
+    betaweights = NULL,
+    adapt_lambda = FALSE,
+    adapt_eprob = FALSE,
+    exact_mh = FALSE,
+    adjswaps = TRUE,
+    init_name = NULL,
+    verbose = TRUE,
+    nthin
+) {
     if (!missing(nthin)) {
         thin <- nthin
-        .Deprecated(msg = 'Argument `nthin` is deprecated in favor of `thin` in redist 4.2.0 for consistency.')
+        .Deprecated(
+            msg = 'Argument `nthin` is deprecated in favor of `thin` in redist 4.2.0 for consistency.'
+        )
     }
     if (verbose) {
         ## Initialize ##
         cli::cli({
             cli::cli_h1(cli::col_red("redist_flip()"))
-            cli::cli_h2(cli::col_red("Automated Redistricting Simulation Using Markov Chain Monte Carlo"))
+            cli::cli_h2(cli::col_red(
+                "Automated Redistricting Simulation Using Markov Chain Monte Carlo"
+            ))
         })
     }
     # process raw inputs
@@ -176,16 +194,16 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
     total_pop <- map[[attr(map, "pop_col")]]
     ndists <- attr(map, "ndists")
 
-    if (any(total_pop >= get_target(map)))
+    if (any(total_pop >= get_target(map))) {
         cli::cli_abort("Units ", which(total_pop >= get_target(map)),
             " have population larger than the district target.\n",
             "Redistricting impossible.")
+    }
 
     # process constraints
     if (!inherits(constraints, "redist_constr")) {
         cli::cli_abort("Not a {.cls redist_constr} object.")
     }
-
 
     if (!any(class(thin) %in% c("numeric", "integer"))) {
         cli::cli_abort("thin must be an integer")
@@ -197,24 +215,24 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
 
     pop_tol <- get_pop_tol(map)
 
-
     exist_name <- attr(map, "existing_col")
     if (missing(init_plan)) {
         init_plan <- get_existing(map)
 
         if (is.null(init_plan)) {
-            invisible(capture.output(init_plan <- redist_smc(map,
-                nsims = 1,
-                silent = TRUE
-            ), type = "message"))
+            invisible(capture.output(
+                init_plan <- redist_smc(map, nsims = 1, silent = TRUE),
+                type = "message"
+            ))
             init_plan <- as.matrix(init_plan) - 1L
 
             if (is.null(init_name)) {
                 init_name <- "<init>"
             }
-
         } else {
-            if (is.null(init_name)) init_name <- exist_name
+            if (is.null(init_name)) {
+                init_name <- exist_name
+            }
             init_plan <- vctrs::vec_group_id(x = init_plan)
             components <- contiguity(adj, init_plan)
             if (any(components > 1)) {
@@ -255,7 +273,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
         cdvec = preprocout$data$init_plan,
         popvec = preprocout$data$total_pop,
         constraints = as.list(constraints),
-        nsims = nsims*thin + warmup,
+        nsims = nsims * thin + warmup,
         eprob = eprob,
         pct_dist_parity = preprocout$params$pctdistparity,
         beta_sequence = preprocout$params$betaseq,
@@ -272,7 +290,6 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
 
     algout <- redist.warmup.chain(algout, warmup = warmup)
     algout <- redist.thin.chain(algout, thin = thin)
-
 
     algout$plans <- algout$plans + 1L
 
@@ -311,7 +328,9 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
         dplyr::as_tibble() %>%
         dplyr::rename_with(function(x) paste0("constraint_", x))
 
-    names_tb <- names(add_tb)[apply(add_tb, 2, function(x) { !all(x == 0) })]
+    names_tb <- names(add_tb)[apply(add_tb, 2, function(x) {
+        !all(x == 0)
+    })]
     out <- bind_cols(out, select(add_tb, all_of(names_tb)))
 
     if (!is.null(init_name) && !isFALSE(init_name)) {
@@ -363,27 +382,30 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
 #'
 #' @concept simulate
 #' @export
-redist_flip_anneal <- function(map,
-                               nsims,
-                               warmup = 0,
-                               init_plan = NULL,
-                               constraints = redist_constr(),
-                               num_hot_steps = 40000,
-                               num_annealing_steps = 60000,
-                               num_cold_steps = 20000,
-                               eprob = 0.05,
-                               lambda = 0,
-                               adapt_lambda = FALSE,
-                               adapt_eprob = FALSE,
-                               exact_mh = FALSE,
-                               maxiterrsg = 5000,
-                               verbose = TRUE) {
-
+redist_flip_anneal <- function(
+    map,
+    nsims,
+    warmup = 0,
+    init_plan = NULL,
+    constraints = redist_constr(),
+    num_hot_steps = 40000,
+    num_annealing_steps = 60000,
+    num_cold_steps = 20000,
+    eprob = 0.05,
+    lambda = 0,
+    adapt_lambda = FALSE,
+    adapt_eprob = FALSE,
+    exact_mh = FALSE,
+    maxiterrsg = 5000,
+    verbose = TRUE
+) {
     if (verbose) {
         ## Initialize ##
         cli::cli({
             cli::cli_h1(cli::col_red("redist_flip_anneal()"))
-            cli::cli_h2(cli::col_red("Automated Redistricting Simulation Using Markov Chain Monte Carlo"))
+            cli::cli_h2(cli::col_red(
+                "Automated Redistricting Simulation Using Markov Chain Monte Carlo"
+            ))
         })
     }
     # process raw inputs
@@ -404,7 +426,6 @@ redist_flip_anneal <- function(map,
         cli::cli_abort("Not a {.cls redist_constr} object.")
     }
 
-
     if (!any(class(thin) %in% c("numeric", "integer"))) {
         cli::cli_abort("thin must be an integer")
     } else if (thin < 1) {
@@ -413,27 +434,26 @@ redist_flip_anneal <- function(map,
         thin <- as.integer(thin)
     }
 
-
     pop_tol <- get_pop_tol(map)
-
 
     exist_name <- attr(map, "existing_col")
     if (missing(init_plan)) {
         init_plan <- get_existing(map)
 
         if (is.null(init_plan)) {
-            invisible(capture.output(init_plan <- redist_smc(map,
-                nsims = 1,
-                silent = TRUE
-            ), type = "message"))
+            invisible(capture.output(
+                init_plan <- redist_smc(map, nsims = 1, silent = TRUE),
+                type = "message"
+            ))
             init_plan <- as.matrix(init_plan) - 1L
 
             if (is.null(init_name)) {
                 init_name <- "<init>"
             }
-
         } else {
-            if (is.null(init_name)) init_name <- exist_name
+            if (is.null(init_name)) {
+                init_name <- exist_name
+            }
             init_plan <- vctrs::vec_group_id(x = init_plan)
             components <- contiguity(adj, init_plan)
             if (any(components > 1)) {
@@ -456,21 +476,27 @@ redist_flip_anneal <- function(map,
     if (verbose) {
         cat("Preprocessing data.\n\n")
     }
-    preprocout <- redist.preproc(adj = adj, total_pop = total_pop,
-        init_plan = init_plan, ndists = ndists,
+    preprocout <- redist.preproc(
+        adj = adj,
+        total_pop = total_pop,
+        init_plan = init_plan,
+        ndists = ndists,
         pop_tol = pop_tol,
         temper = FALSE,
-        betaseq = "powerlaw", betaseqlength = 10,
+        betaseq = "powerlaw",
+        betaseqlength = 10,
         betaweights = NULL,
-        adjswaps = TRUE, maxiterrsg = maxiterrsg,
-        verbose = verbose)
-
+        adjswaps = TRUE,
+        maxiterrsg = maxiterrsg,
+        verbose = verbose
+    )
 
     if (verbose) {
         cat("Starting swMH().\n")
     }
 
-    algout <- swMH(aList = preprocout$data$adjlist,
+    algout <- swMH(
+        aList = preprocout$data$adjlist,
         cdvec = preprocout$data$init_plan,
         popvec = preprocout$data$total_pop,
         constraints = as.list(constraints),
@@ -489,10 +515,10 @@ redist_flip_anneal <- function(map,
         num_hot_steps = num_hot_steps,
         num_annealing_steps = num_annealing_steps,
         num_cold_steps = num_cold_steps,
-        verbose = as.logical(verbose))
+        verbose = as.logical(verbose)
+    )
 
     algout$plans <- algout$plans + 1
-
 
     out <- new_redist_plans(
         plans = algout$plans,
@@ -510,21 +536,24 @@ redist_flip_anneal <- function(map,
         nthin = thin,
         mh_acceptance = mean(algout$mhdecisions),
         version = packageVersion("redist"),
-    ) %>% mutate(
-        distance_parity = rep(algout$distance_parity, each = ndists),
-        mhdecisions = rep(algout$mhdecisions, each = ndists),
-        mhprob = rep(algout$mhprob, each = ndists),
-        pparam = rep(algout$pparam, each = ndists),
-        beta_sequence = rep(algout$beta_sequence, each = ndists),
-        energy_psi = rep(algout$energy_psi, each = ndists),
-        boundary_partitions = rep(algout$boundary_partitions, each = ndists),
-        boundary_ratio = rep(algout$boundary_partitions, each = ndists)
-    )
+    ) %>%
+        mutate(
+            distance_parity = rep(algout$distance_parity, each = ndists),
+            mhdecisions = rep(algout$mhdecisions, each = ndists),
+            mhprob = rep(algout$mhprob, each = ndists),
+            pparam = rep(algout$pparam, each = ndists),
+            beta_sequence = rep(algout$beta_sequence, each = ndists),
+            energy_psi = rep(algout$energy_psi, each = ndists),
+            boundary_partitions = rep(algout$boundary_partitions, each = ndists),
+            boundary_ratio = rep(algout$boundary_partitions, each = ndists)
+        )
     add_tb <- apply(algout$psi_store, 1, function(x) rep(x, each = ndists)) %>%
         dplyr::as_tibble() %>%
         dplyr::rename_with(function(x) paste0("constraint_", x))
 
-    names_tb <- names(add_tb)[apply(add_tb, 2, function(x) { !all(x == 0) })]
+    names_tb <- names(add_tb)[apply(add_tb, 2, function(x) {
+        !all(x == 0)
+    })]
     out <- bind_cols(out, select(add_tb, all_of(names_tb)))
 
     if (!is.null(init_name) && !isFALSE(init_name)) {

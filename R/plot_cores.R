@@ -31,15 +31,12 @@ redist.plot.cores <- function(shp, plan = NULL, core = NULL, lwd = 2) {
 
     shp_un <- shp %>%
         group_by(plan) %>%
-        summarize(geometry = st_union(geometry),
-            .groups = "drop") %>%
+        summarize(geometry = st_union(geometry), .groups = "drop") %>%
         suppressMessages()
 
     shp_cores <- shp %>%
         group_by(plan, core) %>%
-        summarize(ct = n(),
-            geometry = st_union(geometry),
-            .groups = "drop") %>%
+        summarize(ct = n(), geometry = st_union(geometry), .groups = "drop") %>%
         mutate(ct = if_else(.data$ct == 1, NA_integer_, .data$ct)) %>%
         suppressMessages()
 

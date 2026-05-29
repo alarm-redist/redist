@@ -6,7 +6,6 @@
 # and optimal weight functions
 ####################################################
 
-
 #' Computes the unnormalized log target density for plans
 #'
 #' Computes the unnormalized log target density for the standard redist
@@ -27,26 +26,29 @@
 #' @md
 #' @noRd
 compute_log_target_density <- function(
-        map, plans, counties = NULL,
-        sizes_matrix = NULL, compactness = 1L,
-        constraints = list(),
-        ncores = 0, pop_temper = 0L
-){
-    if(ncores <= 0){
+    map,
+    plans,
+    counties = NULL,
+    sizes_matrix = NULL,
+    compactness = 1L,
+    constraints = list(),
+    ncores = 0,
+    pop_temper = 0L
+) {
+    if (ncores <= 0) {
         ncores <- parallel::detectCores()
     }
-    
-    if (inherits(plans, "redist_plans")){
+
+    if (inherits(plans, "redist_plans")) {
         plan_matrix <- get_plans_matrix(plans)
-    }else if(is.matrix(plans)){
+    } else if (is.matrix(plans)) {
         plan_matrix <- plans
-    }else if(is.vector(plans) && is.numeric(plans)){
+    } else if (is.vector(plans) && is.numeric(plans)) {
         plan_matrix <- as.matrix(plans, cols = 1)
-    }else{
+    } else {
         cli::cli_abort("{.arg plans} must be a matrix or {.cls redist_plans} type!")
     }
-    num_regions <- dplyr::n_distinct(plan_matrix[,1])
-
+    num_regions <- dplyr::n_distinct(plan_matrix[, 1])
 
     # get validated inputs
     map_params <- get_map_parameters(map, !!rlang::enquo(counties))
@@ -61,47 +63,52 @@ compute_log_target_density <- function(
     district_seat_sizes <- map_params$seats_range
     districting_scheme <- map_params$districting_scheme
 
-    if (inherits(plans, "redist_plans")){
+    if (inherits(plans, "redist_plans")) {
         sizes_matrix <- get_seats_matrix(plans)
-    }else if(is.null(sizes_matrix)){
-        if(districting_scheme == "single" && num_regions == ndists){
+    } else if (is.null(sizes_matrix)) {
+        if (districting_scheme == "single" && num_regions == ndists) {
             sizes_matrix <- matrix(1L, nrow = ndists, ncol = ncol(plan_matrix))
-        }else{
+        } else {
             # infer
             prec_pop <- map[[attr(map, "pop_col")]]
             distr_pop <- pop_tally(plan_matrix, prec_pop, num_regions)
             sizes_matrix <- infer_region_seats(
                 distr_pop,
-                attr(map, "pop_bounds")[1], attr(map, "pop_bounds")[3],
+                attr(map, "pop_bounds")[1],
+                attr(map, "pop_bounds")[3],
                 total_seats
             )
         }
     }
 
-
     # need to pass in the defused quosure
-    constraints <- validate_constraints(map=map, constraints=rlang::enquo(constraints))
+    constraints <- validate_constraints(map = map, constraints = rlang::enquo(constraints))
 
     unnormalized_log_density <- compute_log_unnormalized_target_density_components(
-        adj_list, counties, pop,
+        adj_list,
+        counties,
+        pop,
         constraints,
-        pop_temper=pop_temper, compute_pop_temper=FALSE,
-        rho=compactness,
-        ndists=ndists, total_seats = total_seats, num_regions=num_regions,
-        district_seat_sizes=district_seat_sizes,
-        lower=pop_bounds[1],
-        target=pop_bounds[2],
-        upper=pop_bounds[3],
-        region_ids=plan_matrix,
-        region_sizes=sizes_matrix,
-        output_type="single",
-        num_threads=ncores
+        pop_temper = pop_temper,
+        compute_pop_temper = FALSE,
+        rho = compactness,
+        ndists = ndists,
+        total_seats = total_seats,
+        num_regions = num_regions,
+        district_seat_sizes = district_seat_sizes,
+        lower = pop_bounds[1],
+        target = pop_bounds[2],
+        upper = pop_bounds[3],
+        region_ids = plan_matrix,
+        region_sizes = sizes_matrix,
+        output_type = "single",
+        num_threads = ncores
     )
 
     # check if anything was -Inf so probability 0
     num_prob_zero <- sum(!is.finite(unnormalized_log_density))
 
-    if(num_prob_zero > 0){
+    if (num_prob_zero > 0) {
         cli::cli_warn("{num_prob_zero} of the {length(unnormalized_log_density)} plans have probability 0!")
     }
 
@@ -131,26 +138,29 @@ compute_log_target_density <- function(
 #' @md
 #' @noRd
 compute_log_target_density_by_region <- function(
-        map, plans, counties = NULL,
-        sizes_matrix = NULL, compactness = 1L,
-        constraints = list(),
-        ncores = 0, pop_temper = 0L
-){
-    if(ncores <= 0){
+    map,
+    plans,
+    counties = NULL,
+    sizes_matrix = NULL,
+    compactness = 1L,
+    constraints = list(),
+    ncores = 0,
+    pop_temper = 0L
+) {
+    if (ncores <= 0) {
         ncores <- parallel::detectCores()
     }
 
-    if (inherits(plans, "redist_plans")){
+    if (inherits(plans, "redist_plans")) {
         plan_matrix <- get_plans_matrix(plans)
-    }else if(is.matrix(plans)){
+    } else if (is.matrix(plans)) {
         plan_matrix <- plans
-    }else if(is.vector(plans) && is.numeric(plans)){
+    } else if (is.vector(plans) && is.numeric(plans)) {
         plan_matrix <- as.matrix(plans, cols = 1)
-    }else{
+    } else {
         cli::cli_abort("{.arg plans} must be a matrix or {.cls redist_plans} type!")
     }
-    num_regions <- dplyr::n_distinct(plan_matrix[,1])
-
+    num_regions <- dplyr::n_distinct(plan_matrix[, 1])
 
     # get validated inputs
     map_params <- get_map_parameters(map, !!rlang::enquo(counties))
@@ -166,47 +176,52 @@ compute_log_target_density_by_region <- function(
     district_seat_sizes <- map_params$seats_range
     districting_scheme <- map_params$districting_scheme
 
-    if (inherits(plans, "redist_plans")){
+    if (inherits(plans, "redist_plans")) {
         sizes_matrix <- get_seats_matrix(plans)
-    }else if(is.null(sizes_matrix)){
-        if(districting_scheme == "single" && num_regions == ndists){
+    } else if (is.null(sizes_matrix)) {
+        if (districting_scheme == "single" && num_regions == ndists) {
             sizes_matrix <- matrix(1L, nrow = ndists, ncol = ncol(plan_matrix))
-        }else{
+        } else {
             # infer
             prec_pop <- map[[attr(map, "pop_col")]]
             distr_pop <- pop_tally(plan_matrix, prec_pop, num_regions)
             sizes_matrix <- infer_region_seats(
                 distr_pop,
-                attr(map, "pop_bounds")[1], attr(map, "pop_bounds")[3],
+                attr(map, "pop_bounds")[1],
+                attr(map, "pop_bounds")[3],
                 total_seats
             )
         }
     }
 
-
     # need to pass in the defused quosure
-    constraints <- validate_constraints(map=map, constraints=rlang::enquo(constraints))
+    constraints <- validate_constraints(map = map, constraints = rlang::enquo(constraints))
 
     unnormalized_log_region_densities <- compute_log_unnormalized_target_density_components(
-        adj_list, counties, pop,
+        adj_list,
+        counties,
+        pop,
         constraints,
-        pop_temper=pop_temper, compute_pop_temper=FALSE,
-        rho=compactness,
-        ndists=ndists, total_seats = total_seats, num_regions=num_regions,
-        district_seat_sizes=district_seat_sizes,
-        lower=pop_bounds[1],
-        target=pop_bounds[2],
-        upper=pop_bounds[3],
-        region_ids=plan_matrix,
-        region_sizes=sizes_matrix,
-        output_type="components",
-        num_threads=ncores
+        pop_temper = pop_temper,
+        compute_pop_temper = FALSE,
+        rho = compactness,
+        ndists = ndists,
+        total_seats = total_seats,
+        num_regions = num_regions,
+        district_seat_sizes = district_seat_sizes,
+        lower = pop_bounds[1],
+        target = pop_bounds[2],
+        upper = pop_bounds[3],
+        region_ids = plan_matrix,
+        region_sizes = sizes_matrix,
+        output_type = "components",
+        num_threads = ncores
     )
 
     # check if anything was -Inf so probability 0
     num_prob_zero <- sum(!is.finite(unnormalized_log_region_densities))
 
-    if(num_prob_zero > 0){
+    if (num_prob_zero > 0) {
         cli::cli_warn("{num_prob_zero} of the {prod(dim(unnormalized_log_region_densities))} regions have probability 0!")
     }
 
@@ -230,22 +245,26 @@ compute_log_target_density_by_region <- function(
 #' @md
 #' @noRd
 compute_log_optimal_weights <- function(
-        map, plans, counties = NULL,
-        sizes_matrix = NULL, constraints = list(),
-        splitting_schedule = "any_valid_sizes",
-        ncores = 0, compactness = 1L, pop_temper = 0L
-){
-    if (inherits(plans, "redist_plans")){
+    map,
+    plans,
+    counties = NULL,
+    sizes_matrix = NULL,
+    constraints = list(),
+    splitting_schedule = "any_valid_sizes",
+    ncores = 0,
+    compactness = 1L,
+    pop_temper = 0L
+) {
+    if (inherits(plans, "redist_plans")) {
         plan_matrix <- get_plans_matrix(plans)
-    }else if(is.matrix(plans)){
+    } else if (is.matrix(plans)) {
         plan_matrix <- plans
-    }else if(is.vector(plans) && is.numeric(plans)){
+    } else if (is.vector(plans) && is.numeric(plans)) {
         plan_matrix <- as.matrix(plans, cols = 1)
-    }else{
+    } else {
         cli::cli_abort("{.arg plans} must be a matrix or {.cls redist_plans} type!")
     }
-    num_regions <- dplyr::n_distinct(plan_matrix[,1])
-
+    num_regions <- dplyr::n_distinct(plan_matrix[, 1])
 
     # get validated inputs
     map_params <- get_map_parameters(map, !!rlang::enquo(counties))
@@ -261,44 +280,51 @@ compute_log_optimal_weights <- function(
     district_seat_sizes <- map_params$seats_range
     districting_scheme <- map_params$districting_scheme
 
-    if (inherits(plans, "redist_plans")){
+    if (inherits(plans, "redist_plans")) {
         sizes_matrix <- get_seats_matrix(plans)
-    }else if(is.null(sizes_matrix)){
-        if(districting_scheme == "single" && num_regions == ndists){
+    } else if (is.null(sizes_matrix)) {
+        if (districting_scheme == "single" && num_regions == ndists) {
             sizes_matrix <- matrix(1L, nrow = ndists, ncol = ncol(plan_matrix))
-        }else{
+        } else {
             # infer
             prec_pop <- map[[attr(map, "pop_col")]]
             distr_pop <- pop_tally(plan_matrix, prec_pop, num_regions)
             sizes_matrix <- infer_region_seats(
                 distr_pop,
-                attr(map, "pop_bounds")[1], attr(map, "pop_bounds")[3],
+                attr(map, "pop_bounds")[1],
+                attr(map, "pop_bounds")[3],
                 total_seats
             )
         }
     }
 
-
     # need to pass in the defused quosure
-    constraints <- validate_constraints(map=map, constraints=rlang::enquo(constraints))
+    constraints <- validate_constraints(map = map, constraints = rlang::enquo(constraints))
 
     unnormalized_log_density <- compute_plans_log_optimal_weights(
-        adj_list, counties, pop,
-        constraints, pop_temper, rho=compactness,
+        adj_list,
+        counties,
+        pop,
+        constraints,
+        pop_temper,
+        rho = compactness,
         splitting_schedule,
-        ndists, total_seats, num_regions=num_regions,
+        ndists,
+        total_seats,
+        num_regions = num_regions,
         district_seat_sizes,
-        lower=pop_bounds[1],
-        target=pop_bounds[2],
-        upper=pop_bounds[3],
-        plan_matrix, sizes_matrix,
+        lower = pop_bounds[1],
+        target = pop_bounds[2],
+        upper = pop_bounds[3],
+        plan_matrix,
+        sizes_matrix,
         ncores
     )
 
     # check if anything was -Inf so probability 0
     num_prob_zero <- sum(!is.finite(unnormalized_log_density))
 
-    if(num_prob_zero > 0){
+    if (num_prob_zero > 0) {
         cli::cli_warn("{num_prob_zero} of the plans have probability 0!")
     }
 

@@ -1,11 +1,10 @@
+#include <RcppArmadillo.h>
 #include <algorithm>
 #include <vector>
-#include <RcppArmadillo.h>
 
 #include "smc_base.h"
 
 using namespace Rcpp;
-
 
 // [[Rcpp::export]]
 NumericVector k_smallest(NumericMatrix x, int k = 1) {
@@ -35,8 +34,7 @@ NumericVector k_biggest(NumericMatrix x, int k = 1) {
         for (int j = 0; j < nrow; j++) {
             col[j] = x(j, i);
         }
-        std::nth_element(col.begin(), col.begin() + k - 1,
-                         col.end(), std::less<double>());
+        std::nth_element(col.begin(), col.begin() + k - 1, col.end(), std::less<double>());
         out[i] = col[k - 1];
     }
 

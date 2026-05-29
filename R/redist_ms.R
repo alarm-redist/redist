@@ -112,50 +112,50 @@
 #' @order 1
 #' @export
 redist_mergesplit <- function(
-  map,
-  nsims,
-  warmup = if (is.null(init_plan)) 10 else max(100, nsims %/% 5),
-  thin = 1L,
-  chains = 1L,
-  init_plan = NULL,
-  counties = NULL,
-  compactness = 1,
-  constraints = list(),
-  constraint_fn = function(m) rep(0, ncol(m)),
-  sampling_space = c("graph_plan", "spanning_forest", "linking_edge"),
-  split_method = NULL,
-  split_params = NULL,
-  pair_rule = "uniform",
-  init_seats = NULL,
-  ncores = 1L,
-  cl_type = "PSOCK",
-  return_all = TRUE,
-  init_name = NULL,
-  verbose = FALSE,
-  silent = FALSE,
-  diagnostic_mode = FALSE,
-  control = list(),
-  adapt_k_thresh = .99
+    map,
+    nsims,
+    warmup = if (is.null(init_plan)) 10 else max(100, nsims %/% 5),
+    thin = 1L,
+    chains = 1L,
+    init_plan = NULL,
+    counties = NULL,
+    compactness = 1,
+    constraints = list(),
+    constraint_fn = function(m) rep(0, ncol(m)),
+    sampling_space = c("graph_plan", "spanning_forest", "linking_edge"),
+    split_method = NULL,
+    split_params = NULL,
+    pair_rule = "uniform",
+    init_seats = NULL,
+    ncores = 1L,
+    cl_type = "PSOCK",
+    return_all = TRUE,
+    init_name = NULL,
+    verbose = FALSE,
+    silent = FALSE,
+    diagnostic_mode = FALSE,
+    control = list(),
+    adapt_k_thresh = 0.99
 ) {
-  if (!missing(constraint_fn)) {
-    cli::cli_warn("{.arg constraint_fn} is deprecated.")
-  }
+    if (!missing(constraint_fn)) {
+        cli::cli_warn("{.arg constraint_fn} is deprecated.")
+    }
 
-  if (!missing(adapt_k_thresh)) {
-    cli::cli_warn(
+    if (!missing(adapt_k_thresh)) {
+        cli::cli_warn(
       "Passing {.arg adapt_k_thresh} directly is deprecated. Pass it in as an argument
                  in {.arg split_params}"
     )
-    if (is.list(split_params)) {
-      split_params$adapt_k_thresh <- adapt_k_thresh
-      split_params$estimate_cut_k <- TRUE
-    } else {
-      split_params <- list(
+        if (is.list(split_params)) {
+            split_params$adapt_k_thresh <- adapt_k_thresh
+            split_params$estimate_cut_k <- TRUE
+        } else {
+            split_params <- list(
         adapt_k_thresh = adapt_k_thresh,
         estimate_cut_k = TRUE
       )
+        }
     }
-  }
 
     # get parallel related params
     if (ncores <= 0) {
@@ -165,300 +165,288 @@ redist_mergesplit <- function(
     default_smc_ncores <- ncores
     ncores <- min(ncores, chains)
 
+    # validate constraints
+    constraints <- validate_constraints(
+        map = map,
+        constraints = rlang::enquo(constraints)
+    )
 
-  # validate constraints
-  constraints <- validate_constraints(
-    map = map,
-    constraints = rlang::enquo(constraints)
-  )
-
-  # get map params
-  map_params <- get_map_parameters(map, !!rlang::enquo(counties))
-  map <- map_params$map
-  V <- map_params$V
-  adj_list <- map_params$adj_list
-  counties <- map_params$counties
-  num_admin_units <- length(unique(counties))
-  pop <- map_params$pop
-  pop_bounds <- map_params$pop_bounds
-  # get the total number of districts
-  ndists <- map_params$ndists
-  nseats <- map_params$nseats
-  seats_range <- map_params$seats_range
-  districting_scheme <- map_params$districting_scheme
+    # get map params
+    map_params <- get_map_parameters(map, !!rlang::enquo(counties))
+    map <- map_params$map
+    V <- map_params$V
+    adj_list <- map_params$adj_list
+    counties <- map_params$counties
+    num_admin_units <- length(unique(counties))
+    pop <- map_params$pop
+    pop_bounds <- map_params$pop_bounds
+    # get the total number of districts
+    ndists <- map_params$ndists
+    nseats <- map_params$nseats
+    seats_range <- map_params$seats_range
+    districting_scheme <- map_params$districting_scheme
 
     # check that no district is the sum of two others
     for (d_size1 in seats_range) {
-      for (d_size2 in seats_range) {
-          if((d_size1 + d_size2) %in% seats_range){
-              cli::cli_abort("SMC does not support {.arg seats_range} where one district's seats is equal to the sum of two others")
-          }
-      }
+        for (d_size2 in seats_range) {
+            if ((d_size1 + d_size2) %in% seats_range) {
+                cli::cli_abort("SMC does not support {.arg seats_range} where one district's seats is equal to the sum of two others")
+            }
+        }
     }
 
+    thin <- as.integer(thin)
+    chains <- as.integer(chains)
 
-  thin <- as.integer(thin)
-  chains <- as.integer(chains)
-
-  if (compactness < 0) {
-    cli::cli_abort("{.arg compactness} must be non-negative.")
-  }
-  if (thin < 1) {
-    cli::cli_abort("{.arg thin} must be a positive integer.")
-  }
-  if (nsims < 1) {
-    cli::cli_abort("{.arg nsims} must be positive.")
-  }
-
-  #validate the splitting method and params
-
-
-  #validate the splitting method and params
-  split_stuff_list <- validate_sample_space_and_splitting_method(
-      sampling_space,
-      split_method,
-      split_params,
-      1
-  )
-
-  sampling_space <- split_stuff_list$sampling_space
-  split_method <- split_stuff_list$split_method
-  forward_kernel_params <- split_stuff_list$forward_kernel_params
-
-
-
-  exist_name <- attr(map, "existing_col")
-  if (is.null(init_plan)) {
-    if (!is.null(exist_name)) {
-        ref_plan_list <- get_ref_plan_and_seats(map)
-
-      init_plan <- matrix(
-        rep(ref_plan_list$ref_plan, chains),
-        ncol = chains,
-        nrow = length(ref_plan_list$ref_plan)
-      )
-
-      init_seats <- replicate(chains, ref_plan_list$ref_seats)
-
-      if (is.null(init_name)) {
-        init_names <- rep(exist_name, chains)
-      } else {
-        init_names <- rep(init_name, chains)
-      }
-    } else {
-      init_plan <- "sample"
+    if (compactness < 0) {
+        cli::cli_abort("{.arg compactness} must be non-negative.")
     }
-  } else if (!is.null(init_plan) && !isTRUE(init_plan == "sample")) {
-    if (inherits(init_plan, "redist_plans")) {
-      if (is.null(init_seats)) {
-        init_seats <- get_seats_matrix(init_plan)
-      }
-      init_plan <- get_plans_matrix(init_plan)
-    } else if (is.matrix(init_plan)) {
-      stopifnot(ncol(init_plan) == chains)
-      init_plan <- init_plan
-    } else if (!rlang::is_integerish(init_plan)){
-        cli::cli_abort("{.arg init_plan} must be integers!")
-    } else {
-      init_plan <- matrix(rep(as.integer(init_plan), chains), ncol = chains)
+    if (thin < 1) {
+        cli::cli_abort("{.arg thin} must be a positive integer.")
     }
-    if (is.null(init_name)) {
-      init_names <- paste0("<init> ", seq_len(chains))
-    } else {
-      init_names <- rep(init_name, chains)
-    }
-  }
-
-  if (isTRUE(init_plan == "sample")) {
-    if (!silent) {
-      cat("Sampling initial plans with SMC\n")
-    }
-    # heuristic. Do at least 50 plans to not get stuck
-    n_smc_nsims <- max(chains, 50)
-    # get ncores if needed
-    if (is.list(control) && "init_ncores" %in% names(control)) {
-      init_ncores <- control[["init_ncores"]]
-    } else {
-        # else default to default smc ncores from earlier
-      init_ncores <- default_smc_ncores
+    if (nsims < 1) {
+        cli::cli_abort("{.arg nsims} must be positive.")
     }
 
+    #validate the splitting method and params
 
-    init_plan <- redist_smc(
-      map,
-      n_smc_nsims,
-      counties,
-      compactness,
-      constraints,
-      resample = TRUE,
-      split_params = split_params,
-      sampling_space = sampling_space,
-      split_method = split_method,
-      ncores = init_ncores,
-      ref_name = FALSE,
-      verbose = verbose,
-      silent = silent
+    #validate the splitting method and params
+    split_stuff_list <- validate_sample_space_and_splitting_method(
+        sampling_space,
+        split_method,
+        split_params,
+        1
     )
 
-    sampled_inidices <- sample.int(n = n_smc_nsims, size = chains, replace = F)
+    sampling_space <- split_stuff_list$sampling_space
+    split_method <- split_stuff_list$split_method
+    forward_kernel_params <- split_stuff_list$forward_kernel_params
 
-    init_seats <- get_seats_matrix(init_plan)[,
-      sampled_inidices,
-      drop = FALSE
-    ]
+    exist_name <- attr(map, "existing_col")
+    if (is.null(init_plan)) {
+        if (!is.null(exist_name)) {
+            ref_plan_list <- get_ref_plan_and_seats(map)
 
-    init_plan <- get_plans_matrix(
-      init_plan
-    )[, sampled_inidices, drop = FALSE]
+            init_plan <- matrix(
+                rep(ref_plan_list$ref_plan, chains),
+                ncol = chains,
+                nrow = length(ref_plan_list$ref_plan)
+            )
 
-    if (is.null(init_name)) {
-      init_names <- paste0("<init> ", seq_len(chains))
-    } else {
-      init_names <- paste(init_name, seq_len(chains))
+            init_seats <- replicate(chains, ref_plan_list$ref_seats)
+
+            if (is.null(init_name)) {
+                init_names <- rep(exist_name, chains)
+            } else {
+                init_names <- rep(init_name, chains)
+            }
+        } else {
+            init_plan <- "sample"
+        }
+    } else if (!is.null(init_plan) && !isTRUE(init_plan == "sample")) {
+        if (inherits(init_plan, "redist_plans")) {
+            if (is.null(init_seats)) {
+                init_seats <- get_seats_matrix(init_plan)
+            }
+            init_plan <- get_plans_matrix(init_plan)
+        } else if (is.matrix(init_plan)) {
+            stopifnot(ncol(init_plan) == chains)
+            init_plan <- init_plan
+        } else if (!rlang::is_integerish(init_plan)) {
+            cli::cli_abort("{.arg init_plan} must be integers!")
+        } else {
+            init_plan <- matrix(rep(as.integer(init_plan), chains), ncol = chains)
+        }
+        if (is.null(init_name)) {
+            init_names <- paste0("<init> ", seq_len(chains))
+        } else {
+            init_names <- rep(init_name, chains)
+        }
     }
-  }else {
-      if (is.null(init_seats)) {
-          if (districting_scheme == "single") {
-              init_seats <- matrix(1L, nrow = ndists, ncol = ncol(init_plan))
-          } else {
-              init_seats <- infer_plan_seats(
-                  init_plan,
-                  nseats,
-                  pop,
-                  pop_bounds[1],
-                  pop_bounds[3]
-              )
-          }
-      }
-  }
 
+    if (isTRUE(init_plan == "sample")) {
+        if (!silent) {
+            cat("Sampling initial plans with SMC\n")
+        }
+        # heuristic. Do at least 50 plans to not get stuck
+        n_smc_nsims <- max(chains, 50)
+        # get ncores if needed
+        if (is.list(control) && "init_ncores" %in% names(control)) {
+            init_ncores <- control[["init_ncores"]]
+        } else {
+            # else default to default smc ncores from earlier
+            init_ncores <- default_smc_ncores
+        }
 
-  # check it satsifies population bounds
-  # add one because we assume 1 indexed
-  init_pop <- pop_tally(init_plan, pop, ndists)
+        init_plan <- redist_smc(
+            map,
+            n_smc_nsims,
+            counties,
+            compactness,
+            constraints,
+            resample = TRUE,
+            split_params = split_params,
+            sampling_space = sampling_space,
+            split_method = split_method,
+            ncores = init_ncores,
+            ref_name = FALSE,
+            verbose = verbose,
+            silent = silent
+        )
 
+        sampled_inidices <- sample.int(n = n_smc_nsims, size = chains, replace = F)
 
-  # validate initial plans
-  validate_initial_region_id_mat(init_plan, V, chains, ndists)
+        init_seats <- get_seats_matrix(init_plan)[,
+            sampled_inidices,
+            drop = FALSE
+        ]
 
+        init_plan <- get_plans_matrix(
+            init_plan
+        )[, sampled_inidices, drop = FALSE]
 
-  bad_pops <- sapply(seq_len(chains),
-         function(i){
-             any(init_pop[,i] < pop_bounds[1] * init_seats[,i]) ||
-                 any(init_pop[,i] > pop_bounds[3] * init_seats[,i])
-         }
-         ) |>
-    any()
+        if (is.null(init_name)) {
+            init_names <- paste0("<init> ", seq_len(chains))
+        } else {
+            init_names <- paste(init_name, seq_len(chains))
+        }
+    } else {
+        if (is.null(init_seats)) {
+            if (districting_scheme == "single") {
+                init_seats <- matrix(1L, nrow = ndists, ncol = ncol(init_plan))
+            } else {
+                init_seats <- infer_plan_seats(
+                    init_plan,
+                    nseats,
+                    pop,
+                    pop_bounds[1],
+                    pop_bounds[3]
+                )
+            }
+        }
+    }
 
-  if (bad_pops) {
-    cli::cli_abort("Provided initialization does not meet population bounds.")
-  }
+    # check it satsifies population bounds
+    # add one because we assume 1 indexed
+    init_pop <- pop_tally(init_plan, pop, ndists)
 
-  verbosity <- 1
-  if (verbose) {
-    verbosity <- 3
-  }
-  if (silent) {
-    verbosity <- 0
-  }
+    # validate initial plans
+    validate_initial_region_id_mat(init_plan, V, chains, ndists)
 
-  control = list(
+    bad_pops <- sapply(seq_len(chains), function(i) {
+        any(init_pop[, i] < pop_bounds[1] * init_seats[, i]) ||
+            any(init_pop[, i] > pop_bounds[3] * init_seats[, i])
+    }) |>
+        any()
+
+    if (bad_pops) {
+        cli::cli_abort("Provided initialization does not meet population bounds.")
+    }
+
+    verbosity <- 1
+    if (verbose) {
+        verbosity <- 3
+    }
+    if (silent) {
+        verbosity <- 0
+    }
+
+    control = list(
     splitting_method = split_method,
     do_mh = TRUE
   )
 
-  # add the splitting parameters
-  # need to do it like this because its a list
-  control <- c(control, forward_kernel_params)
+    # add the splitting parameters
+    # need to do it like this because its a list
+    control <- c(control, forward_kernel_params)
 
-  multiprocess <- ncores > 1
+    multiprocess <- ncores > 1
 
-  if (multiprocess) {
-    `%oper%` <- `%dorng%`
+    if (multiprocess) {
+        `%oper%` <- `%dorng%`
 
-    of <- ifelse(
-      Sys.info()[['sysname']] == 'Windows',
-      tempfile(
-        pattern = paste0('ms_', substr(Sys.time(), 1, 10)),
-        fileext = '.txt'
-      ),
-      ''
-    )
-    # this makes a cluster using socket (NOT FORK) with
-    if (!silent) {
-      cl <- makeCluster(
-        ncores,
-        outfile = of,
-        methods = FALSE,
-        useXDR = .Platform$endian != "little"
-      )
+        of <- ifelse(
+            Sys.info()[['sysname']] == 'Windows',
+            tempfile(
+                pattern = paste0('ms_', substr(Sys.time(), 1, 10)),
+                fileext = '.txt'
+            ),
+            ''
+        )
+        # this makes a cluster using socket (NOT FORK) with
+        if (!silent) {
+            cl <- makeCluster(
+                ncores,
+                outfile = of,
+                methods = FALSE,
+                useXDR = .Platform$endian != "little"
+            )
+        } else {
+            cl <- makeCluster(
+                ncores,
+                methods = FALSE,
+                useXDR = .Platform$endian != "little"
+            )
+        }
+
+        doParallel::registerDoParallel(cl, cores = ncores)
+        on.exit(stopCluster(cl))
+
+        # Ensures only one process will print when there's multiple processes
+        # to avoid cluttering output
+        parallel::clusterEvalQ(cl, {
+            if (!exists("is_chain1", envir = .GlobalEnv)) {
+                is_chain1 <- FALSE
+            }
+            NULL
+        })
     } else {
-      cl <- makeCluster(
-        ncores,
-        methods = FALSE,
-        useXDR = .Platform$endian != "little"
-      )
+        `%oper%` <- `%do%`
     }
 
-    doParallel::registerDoParallel(cl, cores = ncores)
-    on.exit(stopCluster(cl))
+    t1 <- Sys.time()
+    out_par <- foreach(
+        chain = seq_len(chains),
+        .inorder = FALSE,
+        .packages = "redist"
+    ) %oper%
+        {
+            if (chain == 1) {
+                is_chain1 <- TRUE
+            }
+            run_verbosity <- if (is_chain1 || !multiprocess) verbosity else 0
+            if (!silent && is_chain1) {
+                cat("Starting chain ", chain, "\n", sep = "")
+            }
 
+            t1_run <- Sys.time()
+            algout <- ms_plans(
+                nsims = nsims,
+                warmup = warmup,
+                thin = thin,
+                ndists = ndists,
+                total_seats = nseats,
+                district_seat_sizes = seats_range,
+                adj_list = adj_list,
+                counties = counties,
+                pop = pop,
+                target = pop_bounds[2],
+                lower = pop_bounds[1],
+                upper = pop_bounds[3],
+                rho = compactness,
+                init_plan = init_plan[, chain, drop = FALSE],
+                init_seats = init_seats[, chain, drop = FALSE],
+                sampling_space_str = sampling_space,
+                pair_rule = pair_rule,
+                control = control,
+                constraints = constraints,
+                verbosity = run_verbosity,
+                diagnostic_mode = diagnostic_mode
+            )
+            t2_run <- Sys.time()
 
-    # Ensures only one process will print when there's multiple processes
-    # to avoid cluttering output
-    parallel::clusterEvalQ(cl, {
-      if (!exists("is_chain1", envir = .GlobalEnv)) {
-        is_chain1 <- FALSE
-      }
-      NULL
-    })
-  } else {
-    `%oper%` <- `%do%`
-  }
-
-  t1 <- Sys.time()
-  out_par <- foreach(
-    chain = seq_len(chains),
-    .inorder = FALSE,
-    .packages = "redist"
-  ) %oper%
-    {
-      if (chain == 1) {
-        is_chain1 <- TRUE
-      }
-      run_verbosity <- if (is_chain1 || !multiprocess) verbosity else 0
-      if (!silent && is_chain1) {
-        cat("Starting chain ", chain, "\n", sep = "")
-      }
-
-      t1_run <- Sys.time()
-      algout <- ms_plans(
-        nsims = nsims,
-        warmup = warmup,
-        thin = thin,
-        ndists = ndists,
-        total_seats = nseats,
-        district_seat_sizes = seats_range,
-        adj_list = adj_list,
-        counties = counties,
-        pop = pop,
-        target = pop_bounds[2],
-        lower = pop_bounds[1],
-        upper = pop_bounds[3],
-        rho = compactness,
-        init_plan = init_plan[, chain, drop = FALSE],
-        init_seats = init_seats[, chain, drop = FALSE],
-        sampling_space_str = sampling_space,
-        pair_rule = pair_rule,
-        control = control,
-        constraints = constraints,
-        verbosity = run_verbosity,
-        diagnostic_mode = diagnostic_mode
-      )
-      t2_run <- Sys.time()
-
-      # Internal diagnostics,
-      algout$internal_diagnostics <- list(
+            # Internal diagnostics,
+            algout$internal_diagnostics <- list(
         log_mh_ratio = algout$log_mh_ratio,
         mh_acceptance = algout$mhdecisions,
         warmup_acceptances = algout$warmup_acceptances,
@@ -471,13 +459,13 @@ redist_mergesplit <- function(
         proposed_plans = algout$proposed_plans
       )
 
-      # add cut k for graph space
-      run_forward_kernel_params <- forward_kernel_params
-      if(sampling_space == GRAPH_PLAN_SPACE_SAMPLING){
-          run_forward_kernel_params$cut_k_used <- algout$cut_k
-      }
+            # add cut k for graph space
+            run_forward_kernel_params <- forward_kernel_params
+            if (sampling_space == GRAPH_PLAN_SPACE_SAMPLING) {
+                run_forward_kernel_params$cut_k_used <- algout$cut_k
+            }
 
-      algout$l_diag <- list(
+            algout$l_diag <- list(
         runtime = as.numeric(t2_run - t1_run, units = "secs"),
         nsims = nsims,
         thin = thin,
@@ -491,8 +479,8 @@ redist_mergesplit <- function(
         forward_kernel_params = run_forward_kernel_params
       )
 
-      # Information about the run
-      algout$run_information <- list(
+            # Information about the run
+            algout$run_information <- list(
         valid_region_sizes_to_split_list = algout$valid_region_sizes_to_split_list,
         valid_split_region_sizes_list = algout$valid_split_region_sizes_list,
         sampling_space = sampling_space,
@@ -502,87 +490,90 @@ redist_mergesplit <- function(
         alg_name = "mergesplit"
       )
 
-      # flatten the region sizes by column
-      dim(algout$seats) <- NULL
-      dim(algout$region_pops) <- NULL
+            # flatten the region sizes by column
+            dim(algout$seats) <- NULL
+            dim(algout$region_pops) <- NULL
 
-      algout
+            algout
+        }
+    t2 <- Sys.time()
+
+    plans <- lapply(out_par, function(algout) {
+        algout$plans
+    })
+    each_len <- ncol(plans[[1]])
+    plans <- do.call(cbind, plans)
+
+    seats <- do.call(c, lapply(out_par, function(x) x$seats))
+    region_pops <- do.call(c, lapply(out_par, function(x) x$region_pops))
+
+    mh <- sapply(out_par, function(algout) {
+        mean(as.logical(algout$mhdecisions))
+    })
+    l_diag <- lapply(out_par, function(algout) algout$l_diag)
+    run_information <- lapply(out_par, function(x) x$run_information)
+    internal_diagnostics <- lapply(out_par, function(x) x$internal_diagnostics)
+
+    acceptances <- sapply(out_par, function(algout) {
+        algout$mhdecisions
+    })
+
+    num_admin_units <- length(unique(counties))
+
+    out <- new_redist_plans(
+        plans = plans,
+        map = map,
+        algorithm = "mergesplit",
+        wgt = NULL,
+        inputs_safe = TRUE,
+        resampled = FALSE,
+        distr_pop = region_pops,
+        seats = seats,
+        compactness = compactness,
+        constraints = constraints,
+        counties = counties,
+        ndists = ndists,
+        nseats = nseats,
+        mh_acceptance = mh,
+        version = packageVersion("redist"),
+        diagnostics = l_diag,
+        run_information = run_information,
+        internal_diagnostics = internal_diagnostics,
+        pop_bounds = pop_bounds,
+        num_admin_units = num_admin_units,
+        total_runtime = t2 - t1
+    ) %>%
+        mutate(
+            chain = rep(seq_len(chains), each = each_len * ndists),
+            mcmc_accept = rep(acceptances, each = ndists)
+        )
+
+    if (!is.null(init_names) && !isFALSE(init_name)) {
+        if (all(init_names[1] == init_names)) {
+            out <- add_reference(
+                plans = out,
+                ref_plan = init_plan[, 1],
+                name = init_names[1],
+                ref_seats = init_seats[, 1]
+            )
+        } else {
+            out <- Reduce(
+                function(cur, idx) {
+                    add_reference(
+                        plans = cur,
+                        ref_plan = init_plan[, idx],
+                        name = init_names[idx],
+                        ref_seats = init_seats[, idx]
+                    ) %>%
+                        mutate(chain = dplyr::coalesce(chain, idx))
+                },
+                rev(seq_len(chains)),
+                init = out
+            )
+        }
     }
-  t2 <- Sys.time()
 
-  plans <- lapply(out_par, function(algout) {
-    algout$plans
-  })
-  each_len <- ncol(plans[[1]])
-  plans <- do.call(cbind, plans)
-
-  seats <- do.call(c, lapply(out_par, function(x) x$seats))
-  region_pops <- do.call(c, lapply(out_par, function(x) x$region_pops))
-
-
-  mh <- sapply(out_par, function(algout) {
-    mean(as.logical(algout$mhdecisions))
-  })
-  l_diag <- lapply(out_par, function(algout) algout$l_diag)
-  run_information <- lapply(out_par, function(x) x$run_information)
-  internal_diagnostics <- lapply(out_par, function(x) x$internal_diagnostics)
-
-  acceptances <- sapply(out_par, function(algout) {
-    algout$mhdecisions
-  })
-
-  num_admin_units <- length(unique(counties))
-
-  out <- new_redist_plans(
-    plans = plans,
-    map = map,
-    algorithm = "mergesplit",
-    wgt = NULL,
-    inputs_safe = TRUE,
-    resampled = FALSE,
-    distr_pop = region_pops,
-    seats = seats,
-    compactness = compactness,
-    constraints = constraints,
-    counties = counties,
-    ndists = ndists,
-    nseats = nseats,
-    mh_acceptance = mh,
-    version = packageVersion("redist"),
-    diagnostics = l_diag,
-    run_information = run_information,
-    internal_diagnostics = internal_diagnostics,
-    pop_bounds = pop_bounds,
-    num_admin_units = num_admin_units,
-    total_runtime = t2 - t1
-  ) %>%
-    mutate(
-      chain = rep(seq_len(chains), each = each_len * ndists),
-      mcmc_accept = rep(acceptances, each = ndists)
-    )
-
-  if (!is.null(init_names) && !isFALSE(init_name)) {
-    if (all(init_names[1] == init_names)) {
-      out <- add_reference(
-          plans = out,
-          ref_plan = init_plan[, 1],
-          name = init_names[1],
-          ref_seats = init_seats[, 1]
-          )
-    } else {
-      out <- Reduce(
-        function(cur, idx) {
-          add_reference(plans = cur, ref_plan = init_plan[, idx],
-                        name = init_names[idx], ref_seats = init_seats[, idx]) %>%
-            mutate(chain = dplyr::coalesce(chain, idx))
-        },
-        rev(seq_len(chains)),
-        init = out
-      )
-    }
-  }
-
-  dplyr::relocate(out, chain, .after = "draw")
+    dplyr::relocate(out, chain, .after = "draw")
 }
 
 utils::globalVariables("chain")

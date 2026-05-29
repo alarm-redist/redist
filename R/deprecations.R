@@ -51,15 +51,19 @@ redist.segcalc <- function(plans, group_pop, total_pop) {
         plans <- plans$plans
     }
 
-    if (!((nrow(plans) == length(group_pop)) &
-        (length(group_pop) == length(total_pop)) &
-        (length(total_pop) == nrow(plans)))) {
+    if (
+        !((nrow(plans) == length(group_pop)) &
+            (length(group_pop) == length(total_pop)) &
+            (length(total_pop) == nrow(plans)))
+    ) {
         cli::cli_abort("Please make sure there is a population entry for each geographic unit")
     }
 
     nd <- dplyr::n_distinct((plans[, 1]))
-    out <- redistmetrics::seg_dissim(plans,
-        shp = data.frame(), group_pop = group_pop,
+    out <- redistmetrics::seg_dissim(
+        plans,
+        shp = data.frame(),
+        group_pop = group_pop,
         total_pop = total_pop
     )
     out[seq(1, length(out), by = nd)]
@@ -91,9 +95,14 @@ redist.segcalc <- function(plans, group_pop, total_pop) {
 redist.competitiveness <- function(plans, rvote, dvote, alpha = 1, beta = 1) {
     .Deprecated("compet_talisman")
     nd <- length(unique(plans[, 1]))
-    redistmetrics::compet_talisman(plans = plans, shp = data.frame(),
-        rvote = rvote, dvote = dvote,
-        alpha = alpha, beta = beta)[seq(1, nd*ncol(plans), by = nd)]
+    redistmetrics::compet_talisman(
+        plans = plans,
+        shp = data.frame(),
+        rvote = rvote,
+        dvote = dvote,
+        alpha = alpha,
+        beta = beta
+    )[seq(1, nd * ncol(plans), by = nd)]
 }
 ##############################################
 ## Author: Christopher T Kenny
@@ -102,7 +111,6 @@ redist.competitiveness <- function(plans, rvote, dvote, alpha = 1, beta = 1) {
 ## Date Modified: 2022/01/13
 ## Purpose: R function to compute compactness
 ##############################################
-
 
 #' Calculate compactness measures for a set of plans
 #'
@@ -243,12 +251,20 @@ redist.competitiveness <- function(plans, rvote, dvote, alpha = 1, beta = 1) {
 #' comp_polsby(plans_05[, 1:3], fl25)
 #' comp_edges_rem(plans_05[, 1:3], fl25, fl25$adj)
 #' @export redist.compactness
-redist.compactness <- function(shp = NULL,
-                               plans,
-                               measure = c("PolsbyPopper"),
-                               total_pop = NULL, adj = NULL, draw = 1,
-                               ncores = 1, counties = NULL, planarize = 3857,
-                               ppRcpp, perim_path, perim_df) {
+redist.compactness <- function(
+    shp = NULL,
+    plans,
+    measure = c("PolsbyPopper"),
+    total_pop = NULL,
+    adj = NULL,
+    draw = 1,
+    ncores = 1,
+    counties = NULL,
+    planarize = 3857,
+    ppRcpp,
+    perim_path,
+    perim_df
+) {
     repl = c(
         PolsbyPopper = "comp_polsby",
         Schwartzberg = "comp_schwartz",
@@ -269,12 +285,11 @@ redist.compactness <- function(shp = NULL,
     }
 
     if (!is.null(shp)) {
-        if ("SpatialPolygonsDataFrame" %in% class(shp)) {
+        if (inherits(shp, "SpatialPolygonsDataFrame")) {
             shp <- sf::st_as_sf(shp)
         } else if (!inherits(shp, "sf")) {
             cli::cli_abort("Please provide {.arg shp} as a SpatialPolygonsDataFrame or sf object.")
         }
-
 
         if (isTRUE(st_is_longlat(st_geometry(shp)))) {
             if (!is.null(st_crs(shp)) & !is.null(planarize) && !isFALSE(planarize)) {
@@ -296,7 +311,6 @@ redist.compactness <- function(shp = NULL,
         cli::cli_abort("Please provide {.arg plans} as a numeric vector, matrix, or {.cls redist_plans}.")
     }
 
-
     possible_measures <- c(
         "PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull",
         "Reock", "BoyceClark", "FryerHolden", "EdgesRemoved", "FracKept",
@@ -307,7 +321,8 @@ redist.compactness <- function(shp = NULL,
     }
 
     match.arg(
-        arg = measure, several.ok = TRUE,
+        arg = measure,
+        several.ok = TRUE,
         choices = possible_measures
     )
 
@@ -332,7 +347,6 @@ redist.compactness <- function(shp = NULL,
         cli::cli_abort("Please provide {.arg counties}.")
     }
 
-
     # Compute compactness scores
     dists <- sort(unique(c(plans)))
     nd <- length(dists)
@@ -351,9 +365,9 @@ redist.compactness <- function(shp = NULL,
     }
 
     nmap <- ncol(plans)
-    if (!(is.factor(draw) && length(draw) == nd*nmap)) {
+    if (!(is.factor(draw) && length(draw) == nd * nmap)) {
         if (nmap != 1) {
-            draw <- rep(draw + (1:ncol(plans)) - 1, each = nd)
+            draw <- rep(draw + (seq_len(ncol(plans))) - 1, each = nd)
         } else {
             draw <- rep(draw, nd)
         }
@@ -362,23 +376,24 @@ redist.compactness <- function(shp = NULL,
     # Initialize object
     comp <- tibble(
         district = rep(x = dists, nmap),
-        PolsbyPopper = rep(NA_real_, nd*nmap),
-        Schwartzberg = rep(NA_real_, nd*nmap),
-        LengthWidth = rep(NA_real_, nd*nmap),
-        ConvexHull = rep(NA_real_, nd*nmap),
-        Reock = rep(NA_real_, nd*nmap),
-        BoyceClark = rep(NA_real_, nd*nmap),
-        FryerHolden = rep(NA_real_, nd*nmap),
-        EdgesRemoved = rep(NA_real_, nd*nmap),
-        FracKept = rep(NA_real_, nd*nmap),
-        logSpanningTree = rep(NA_real_, nd*nmap),
+        PolsbyPopper = rep(NA_real_, nd * nmap),
+        Schwartzberg = rep(NA_real_, nd * nmap),
+        LengthWidth = rep(NA_real_, nd * nmap),
+        ConvexHull = rep(NA_real_, nd * nmap),
+        Reock = rep(NA_real_, nd * nmap),
+        BoyceClark = rep(NA_real_, nd * nmap),
+        FryerHolden = rep(NA_real_, nd * nmap),
+        EdgesRemoved = rep(NA_real_, nd * nmap),
+        FracKept = rep(NA_real_, nd * nmap),
+        logSpanningTree = rep(NA_real_, nd * nmap),
         draw = draw
     ) %>%
         dplyr::select(all_of(c("district", measure)), all_of(measure), draw)
 
     # Compute Specified Scores for provided districts
     if ("PolsbyPopper" %in% measure) {
-        comp$PolsbyPopper <- redistmetrics::comp_polsby(plans,
+        comp$PolsbyPopper <- redistmetrics::comp_polsby(
+            plans,
             shp = shp,
             use_Rcpp = ppRcpp,
             perim_path = perim_path,
@@ -446,13 +461,14 @@ redist.compactness <- function(shp = NULL,
         )
     }
 
-
     if (any(measure %in% c("EdgesRemoved", "logSpanningTree", "FracKept")) & is.null(adj)) {
         adj <- redist.adjacency(shp)
     }
 
     if ("logSpanningTree" %in% measure) {
-        comp$logSpanningTree <- redistmetrics::comp_log_st(plans, shp,
+        comp$logSpanningTree <- redistmetrics::comp_log_st(
+            plans,
+            shp,
             counties = counties,
             adj = adj
         )
@@ -498,29 +514,31 @@ redist.compactness <- function(shp = NULL,
 #' group_frac(fl25_map, BlackPop, TotPop, fl25_plans)
 redist.group.percent <- function(plans, group_pop, total_pop, ncores = 1) {
     .Deprecated("group_frac()")
-    if (!is.numeric(group_pop) || !is.numeric(total_pop))
+    if (!is.numeric(group_pop) || !is.numeric(total_pop)) {
         cli::cli_abort("{.arg group_pop} and {.arg total_pop} must be numeric vectors.")
-    if (!is.matrix(plans))
+    }
+    if (!is.matrix(plans)) {
         cli::cli_abort("{.arg plans} must be a matrix.")
+    }
 
     if (!is.matrix(plans)) {
         plans <- as.matrix(plans)
     }
 
-    if (length(total_pop) != nrow(plans))
+    if (length(total_pop) != nrow(plans)) {
         cli::cli_abort("{.arg plans} and {.arg total_pop} must have the same number of precincts.")
-    if (length(group_pop) != nrow(plans))
+    }
+    if (length(group_pop) != nrow(plans)) {
         cli::cli_abort("{.arg plans} and {.arg group_pop} must have the same number of precincts.")
+    }
 
     ndists <- max(plans[, 1])
-    if (ndists ==  length(unique(plans[, 1])) - 1) {
+    if (ndists == length(unique(plans[, 1])) - 1) {
         plans <- plans + 1
         ndists <- ndists + 1
     }
     group_pct(plans, group_pop, total_pop, ndists)
 }
-
-
 
 
 #' Calculate gerrymandering metrics for a set of plans
@@ -595,9 +613,17 @@ redist.group.percent <- function(plans, group_pop, total_pop, ncores = 1) {
 #' @md
 #' @concept analyze
 #' @export
-redist.metrics <- function(plans, measure = "DSeats", rvote, dvote,
-                           tau = 1, biasV = 0.5, respV = 0.5, bandwidth = 0.01,
-                           draw = 1) {
+redist.metrics <- function(
+    plans,
+    measure = "DSeats",
+    rvote,
+    dvote,
+    tau = 1,
+    biasV = 0.5,
+    respV = 0.5,
+    bandwidth = 0.01,
+    draw = 1
+) {
     repl = c(
         DSeats = "part_dseats",
         DVS = "part_dvs",
@@ -622,7 +648,7 @@ redist.metrics <- function(plans, measure = "DSeats", rvote, dvote,
 
     # Check Inputs
     if ("all" %in% measure) {
-        measure <-  all_measures
+        measure <- all_measures
     }
     match.arg(arg = measure, several.ok = TRUE, choices = all_measures)
 
@@ -637,14 +663,14 @@ redist.metrics <- function(plans, measure = "DSeats", rvote, dvote,
     if (!is.matrix(plans)) {
         plans <- as.matrix(plans)
     }
-    if (any(is.na(plans))) {
+    if (anyNA(plans)) {
         cli::cli_abort("{.val NA} in argument to {.arg plans}.")
     }
 
-    if (any(is.na(rvote))) {
+    if (anyNA(rvote)) {
         cli::cli_abort("{.val NA} value in argument to {.arg rvote}.")
     }
-    if (any(is.na(dvote))) {
+    if (anyNA(dvote)) {
         cli::cli_abort("{.val NA} value in argument to {.arg dvote}.")
     }
     if (!is.numeric(rvote)) {
@@ -673,84 +699,141 @@ redist.metrics <- function(plans, measure = "DSeats", rvote, dvote,
     dists <- sort(unique(plans[, 1]))
 
     # Create return tibble:
-    if (!(is.factor(draw) && length(draw) == nd*nmap)) {
+    if (!(is.factor(draw) && length(draw) == nd * nmap)) {
         if (nmap != 1) {
-            draw <- rep(draw + (1:ncol(plans)) - 1, each = nd)
+            draw <- rep(draw + (seq_len(ncol(plans))) - 1, each = nd)
         } else {
             draw <- rep(draw, nd)
         }
     }
 
-    metrics <- tibble(district = rep(x = dists, nmap),
-        DSeats = rep(NA_real_, nd*nmap),
-        DVS = rep(NA_real_, nd*nmap),
-        EffGap = rep(NA_real_, nd*nmap),
-        EffGapEqPop = rep(NA_real_, nd*nmap),
-        TauGap = rep(NA_real_, nd*nmap),
-        MeanMedian = rep(NA_real_, nd*nmap),
-        Bias = rep(NA_real_, nd*nmap),
-        BiasV = rep(NA_real_, nd*nmap),
-        Declination = rep(NA_real_, nd*nmap),
-        Responsiveness = rep(NA_real_, nd*nmap),
-        LopsidedWins = rep(NA_real_, nd*nmap),
-        RankedMarginal = rep(NA_real_, nd*nmap),
-        SmoothedSeat = rep(NA_real_, nd*nmap),
-        draw = draw) %>%
+    metrics <- tibble(
+        district = rep(x = dists, nmap),
+        DSeats = rep(NA_real_, nd * nmap),
+        DVS = rep(NA_real_, nd * nmap),
+        EffGap = rep(NA_real_, nd * nmap),
+        EffGapEqPop = rep(NA_real_, nd * nmap),
+        TauGap = rep(NA_real_, nd * nmap),
+        MeanMedian = rep(NA_real_, nd * nmap),
+        Bias = rep(NA_real_, nd * nmap),
+        BiasV = rep(NA_real_, nd * nmap),
+        Declination = rep(NA_real_, nd * nmap),
+        Responsiveness = rep(NA_real_, nd * nmap),
+        LopsidedWins = rep(NA_real_, nd * nmap),
+        RankedMarginal = rep(NA_real_, nd * nmap),
+        SmoothedSeat = rep(NA_real_, nd * nmap),
+        draw = draw
+    ) %>%
         dplyr::select(all_of(c("district", measure)), draw)
 
     # Compute Metrics if desired:
     if ("DSeats" %in% measure) {
-        metrics[["DSeats"]] <- redistmetrics::part_dseats(plans = plans, shp = data.frame(),
-            rvote = rvote, dvote = dvote)
+        metrics[["DSeats"]] <- redistmetrics::part_dseats(
+            plans = plans,
+            shp = data.frame(),
+            rvote = rvote,
+            dvote = dvote
+        )
     }
     if ("DVS" %in% measure) {
-        metrics[["DVS"]] <- redistmetrics::part_dvs(plans = plans, shp = data.frame(),
-            dvote = dvote, rvote = rvote)
+        metrics[["DVS"]] <- redistmetrics::part_dvs(
+            plans = plans,
+            shp = data.frame(),
+            dvote = dvote,
+            rvote = rvote
+        )
     }
     if ("EffGap" %in% measure) {
-        metrics[["EffGap"]] <- redistmetrics::part_egap(plans = plans, shp = data.frame(),
-            dvote = dvote, rvote = rvote)
+        metrics[["EffGap"]] <- redistmetrics::part_egap(
+            plans = plans,
+            shp = data.frame(),
+            dvote = dvote,
+            rvote = rvote
+        )
     }
     if ("EffGapEqPop" %in% measure) {
-        metrics[["EffGapEqPop"]] <- redistmetrics::part_egap_ep(plans = plans, shp = data.frame(),
-            dvote = dvote, rvote = rvote)
+        metrics[["EffGapEqPop"]] <- redistmetrics::part_egap_ep(
+            plans = plans,
+            shp = data.frame(),
+            dvote = dvote,
+            rvote = rvote
+        )
     }
     if ("TauGap" %in% measure) {
-        metrics[["TauGap"]] <- redistmetrics::part_tau_gap(plans = plans, shp = data.frame(),
-            dvote = dvote, rvote = rvote)
+        metrics[["TauGap"]] <- redistmetrics::part_tau_gap(
+            plans = plans,
+            shp = data.frame(),
+            dvote = dvote,
+            rvote = rvote
+        )
     }
     if ("MeanMedian" %in% measure) {
-        metrics[["MeanMedian"]] <- redistmetrics::part_mean_median(plans = plans, shp = data.frame(),
-            dvote = dvote, rvote = rvote)
+        metrics[["MeanMedian"]] <- redistmetrics::part_mean_median(
+            plans = plans,
+            shp = data.frame(),
+            dvote = dvote,
+            rvote = rvote
+        )
     }
     if ("Bias" %in% measure) {
-        metrics[["Bias"]] <- redistmetrics::part_bias(plans = plans, shp = data.frame(),
-            dvote = dvote, rvote = rvote, v = 0.5)
+        metrics[["Bias"]] <- redistmetrics::part_bias(
+            plans = plans,
+            shp = data.frame(),
+            dvote = dvote,
+            rvote = rvote,
+            v = 0.5
+        )
     }
     if ("BiasV" %in% measure) {
-        metrics[["BiasV"]] <- redistmetrics::part_bias(plans = plans, shp = data.frame(),
-            dvote = dvote, rvote = rvote, v = biasV)
+        metrics[["BiasV"]] <- redistmetrics::part_bias(
+            plans = plans,
+            shp = data.frame(),
+            dvote = dvote,
+            rvote = rvote,
+            v = biasV
+        )
     }
     if ("Declination" %in% measure) {
-        metrics[["Declination"]] <- redistmetrics::part_decl(plans = plans, shp = data.frame(),
-            dvote = dvote, rvote = rvote)
+        metrics[["Declination"]] <- redistmetrics::part_decl(
+            plans = plans,
+            shp = data.frame(),
+            dvote = dvote,
+            rvote = rvote
+        )
     }
     if ("Responsiveness" %in% measure) {
-        metrics[["Responsiveness"]] <- redistmetrics::part_resp(plans = plans, shp = data.frame(),
-            dvote = dvote, rvote = rvote,
-            v = respV, bandwidth = bandwidth)
+        metrics[["Responsiveness"]] <- redistmetrics::part_resp(
+            plans = plans,
+            shp = data.frame(),
+            dvote = dvote,
+            rvote = rvote,
+            v = respV,
+            bandwidth = bandwidth
+        )
     }
     if ("LopsidedWins" %in% measure) {
-        metrics[["LopsidedWins"]] <- redistmetrics::part_lop_wins(plans = plans, shp = data.frame(),
-            dvote = dvote, rvote = rvote)
+        metrics[["LopsidedWins"]] <- redistmetrics::part_lop_wins(
+            plans = plans,
+            shp = data.frame(),
+            dvote = dvote,
+            rvote = rvote
+        )
     }
     if ("RankedMarginal" %in% measure) {
-        metrics[["RankedMarginal"]] <- redistmetrics::part_rmd(plans = plans, shp = data.frame(),
-            dvote = dvote, rvote = rvote)
+        metrics[["RankedMarginal"]] <- redistmetrics::part_rmd(
+            plans = plans,
+            shp = data.frame(),
+            dvote = dvote,
+            rvote = rvote
+        )
     }
     if ("SmoothedSeat" %in% measure) {
-        metrics[["SmoothedSeat"]] <- redistmetrics::part_sscd(plans = plans, shp = data.frame(),
-            dvote = dvote, rvote = rvote)
+        metrics[["SmoothedSeat"]] <- redistmetrics::part_sscd(
+            plans = plans,
+            shp = data.frame(),
+            dvote = dvote,
+            rvote = rvote
+        )
     }
 
     # Return computed results
@@ -785,9 +868,7 @@ redist.splits <- function(plans, counties) {
         cli::cli_abort("Please provide an argument to {.arg counties}.")
     }
 
-
-    redistmetrics::splits_admin(plans = plans, shp = data.frame(),
-        admin = counties)
+    redistmetrics::splits_admin(plans = plans, shp = data.frame(), admin = counties)
 }
 
 #' Counts the Number of Counties within a District
@@ -835,7 +916,6 @@ redist.district.splits <- function(plans, counties) {
         stop('Please provide "counties" as a character, numeric, or integer vector.')
     }
 
-
     dist_cty_splits(plans - 1, community = county_id - 1, length(unique(plans[, 1])))
 }
 
@@ -878,8 +958,7 @@ redist.multisplits <- function(plans, counties) {
         cli::cli_abort("Please provide an argument to {.arg counties}.")
     }
 
-    redistmetrics::splits_multi(plans = plans, shp = data.frame(),
-        admin = counties)
+    redistmetrics::splits_multi(plans = plans, shp = data.frame(), admin = counties)
 }
 
 
@@ -907,7 +986,5 @@ redist.multisplits <- function(plans, counties) {
 #' splits_sub_admin(plans, ia, region)
 redist.muni.splits <- function(plans, munis) {
     .Deprecated("splits_sub_admin")
-    redistmetrics::splits_sub_admin(plans = plans, shp = data.frame(),
-        sub_admin = munis)
+    redistmetrics::splits_sub_admin(plans = plans, shp = data.frame(), sub_admin = munis)
 }
-

@@ -47,8 +47,7 @@
 #'
 #' @concept simulate
 #' @export
-redist.crsg <- function(adj, total_pop, shp,  ndists, pop_tol, verbose = TRUE,
-                        maxiter = 5000) {
+redist.crsg <- function(adj, total_pop, shp, ndists, pop_tol, verbose = TRUE, maxiter = 5000) {
     if (missing(shp)) {
         stop("An argument to shp is now required.")
     }
@@ -58,7 +57,6 @@ redist.crsg <- function(adj, total_pop, shp,  ndists, pop_tol, verbose = TRUE,
     y_center <- coords[, 2]
     area <- st_area(shp)
 
-
     if (verbose) {
         divider <- c(paste(rep("=", 20), sep = "", collapse = ""), "\n")
 
@@ -67,23 +65,12 @@ redist.crsg <- function(adj, total_pop, shp,  ndists, pop_tol, verbose = TRUE,
         cat("redist.crsg(): Automated Redistricting Starts\n\n")
     }
 
-    target.pop <- sum(total_pop)/ndists
+    target.pop <- sum(total_pop) / ndists
 
     # Main call to function - unlike rsg, uses RcppExporting not direct .Call
-    time <- system.time(ret <- crsg(adj_list = adj,
-        population = total_pop,
-        area = area,
-        x_center = x_center,
-        y_center = y_center,
-        Ndistrict = ndists,
-        target_pop = target.pop,
-        thresh = pop_tol,
-        maxiter = maxiter))
-
-    ## Make another call if NA, but beware this may be due to maxiter.
-    ## This could also be if there are no valid moves.
-    if (is.na(ret$plan[1])) {
-        time <- system.time(ret <- crsg(adj_list = adj,
+    time <- system.time(
+        ret <- crsg(
+            adj_list = adj,
             population = total_pop,
             area = area,
             x_center = x_center,
@@ -91,14 +78,30 @@ redist.crsg <- function(adj, total_pop, shp,  ndists, pop_tol, verbose = TRUE,
             Ndistrict = ndists,
             target_pop = target.pop,
             thresh = pop_tol,
-            maxiter = maxiter))
+            maxiter = maxiter
+        )
+    )
+
+    ## Make another call if NA, but beware this may be due to maxiter.
+    ## This could also be if there are no valid moves.
+    if (is.na(ret$plan[1])) {
+        time <- system.time(
+            ret <- crsg(
+                adj_list = adj,
+                population = total_pop,
+                area = area,
+                x_center = x_center,
+                y_center = y_center,
+                Ndistrict = ndists,
+                target_pop = target.pop,
+                thresh = pop_tol,
+                maxiter = maxiter
+            )
+        )
     }
 
-
     if (is.na(ret$plan[1])) {
-
         warning("redist.crsg() failed to return a valid partition. Try increasing maxiter")
-
     } else {
         ret$plan <- ret$plan + 1
     }

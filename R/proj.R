@@ -49,7 +49,7 @@ NULL
 #'
 #' @rdname proj
 #' @export
-proj_distr <- function(plans, x, draws=NA) {
+proj_distr <- function(plans, x, draws = NA) {
     plans_m <- get_plans_matrix(plans)
 
     n_ref <- 0
@@ -84,7 +84,7 @@ proj_distr <- function(plans, x, draws=NA) {
 #'
 #' @rdname proj
 #' @export
-proj_avg <- function(plans, x, draws=NA) {
+proj_avg <- function(plans, x, draws = NA) {
     rowMeans(proj_distr(plans, {{ x }}, draws))
 }
 
@@ -104,7 +104,7 @@ proj_avg <- function(plans, x, draws=NA) {
 #'
 #' @rdname proj
 #' @export
-proj_contr <- function(plans, x, compare=NA, draws=NA, norm=FALSE, pfdr=FALSE) {
+proj_contr <- function(plans, x, compare = NA, draws = NA, norm = FALSE, pfdr = FALSE) {
     plans_m <- get_plans_matrix(plans)
 
     n_ref <- 0
@@ -129,7 +129,7 @@ proj_contr <- function(plans, x, compare=NA, draws=NA, norm=FALSE, pfdr=FALSE) {
     }
 
     draw_idx <- if (is.null(draws)) {
-         seq_len(ncol(plans_m))
+        seq_len(ncol(plans_m))
     } else if (length(draws) == 1 && is.na(draws)) {
         # VS ABOVE: also remove comp_idx
         if (n_ref > 0) {
@@ -149,7 +149,7 @@ proj_contr <- function(plans, x, compare=NA, draws=NA, norm=FALSE, pfdr=FALSE) {
     pd = proj_distr_m(plans_m, x, draw_idx, nd)
     pa = rowMeans(pd)
 
-    contr = x[(comp_idx - 1)*nd + 1:nd][plans_m[, comp_idx]] - pa
+    contr = x[(comp_idx - 1) * nd + 1:nd][plans_m[, comp_idx]] - pa
 
     if (isTRUE(norm)) {
         sds = sqrt(rowMeans((pd - rowMeans(pd))^2))
@@ -159,7 +159,7 @@ proj_contr <- function(plans, x, compare=NA, draws=NA, norm=FALSE, pfdr=FALSE) {
     if (isTRUE(pfdr)) {
         rlang::check_installed("matrixStats", "for pFDR control.")
         pd = pd - pa
-        m_pv = matrixStats::rowRanks(abs(pd), ties.method="max") / ncol(pd)
+        m_pv = matrixStats::rowRanks(abs(pd), ties.method = "max") / ncol(pd)
         pv_draw = matrixStats::rowMeans2(abs(pd) >= abs(contr)) + 1 / ncol(pd)
 
         attr(contr, "q") = est_pfdr(pv_draw, m_pv) |>
@@ -170,14 +170,18 @@ proj_contr <- function(plans, x, compare=NA, draws=NA, norm=FALSE, pfdr=FALSE) {
 }
 
 # Algorithm 1 of Storey & Tibshirani (2001)
-est_pfdr <- function(p, ref, lambda=0.5, n_alpha=15) {
-    alphas = quantile(p, probs=seq(0, 1, length.out=n_alpha), type=1, names=FALSE)
+est_pfdr <- function(p, ref, lambda = 0.5, n_alpha = 15) {
+    alphas = quantile(p, probs = seq(0, 1, length.out = n_alpha), type = 1, names = FALSE)
     m = length(p)
     pi0 = (m - sum(p <= lambda)) / (m - mean(colSums(ref <= lambda)))
     pi0 = min(pi0, 1)
-    fdrs = vapply(alphas, function(a) {
-        pi0 *  mean(colSums(ref <= a)) / sum(p <= a)
-    }, 0.0)
+    fdrs = vapply(
+        alphas,
+        function(a) {
+            pi0 * mean(colSums(ref <= a)) / sum(p <= a)
+        },
+        0.0
+    )
     ok = !is.nan(fdrs)
 
     list(
@@ -188,10 +192,8 @@ est_pfdr <- function(p, ref, lambda=0.5, n_alpha=15) {
 # Produce q values with spline
 qvalues <- function(ests, p) {
     idx = vctrs::vec_unique_loc(ests$alpha)
-    splinefun(ests$alpha[idx], rev(cummin(rev(ests$pfdr[idx]))), method="monoH.FC")(p)
+    splinefun(ests$alpha[idx], rev(cummin(rev(ests$pfdr[idx]))), method = "monoH.FC")(p)
 }
-
-
 
 
 #' Plot a Projective Contrast with positive False Discovery Rate (pFDR) Control
@@ -222,7 +224,7 @@ qvalues <- function(ests, p) {
 #'
 #' @concept plot
 #' @export
-redist.plot.contr_pfdr <- function(map, contr, level=0.05, density=0.2, spacing=0.015) {
+redist.plot.contr_pfdr <- function(map, contr, level = 0.05, density = 0.2, spacing = 0.015) {
     if (is.null(attr(contr, "q"))) {
         cli::cli_abort("Must provide {.arg pfdr=TRUE} to {.fn proj_contr} to use {.fn redist.plot.contr_pfdr}.")
     }
@@ -232,19 +234,33 @@ redist.plot.contr_pfdr <- function(map, contr, level=0.05, density=0.2, spacing=
     if (!is.numeric(level) || level < 0 || level > 1) {
         cli::cli_abort("{.arg level} must be a number between 0 and 1.")
     }
-    if (!any(q <= level)) return(p)
+    if (!any(q <= level)) {
+        return(p)
+    }
     rlang::check_installed("ggpattern", "for pFDR-controlling projective contrast plots.")
 
     geom_sel = map |>
         dplyr::filter(q <= level) |>
-        dplyr::summarize(is_coverage=TRUE) |>
+        dplyr::summarize(is_coverage = TRUE) |>
         suppressWarnings()
 
     p +
-        ggplot2::geom_sf(data=geom_sel, inherit.aes=FALSE,
-                         fill=NA, linewidth=0.15, color="black") +
-        ggpattern::geom_sf_pattern(data=geom_sel, inherit.aes=FALSE,
-                                   fill=NA, linewidth=0.0, color=NA,
-                                   pattern_fill="#00000070", pattern_color=NA,
-                                   pattern_density=density, pattern_spacing=spacing)
+        ggplot2::geom_sf(
+            data = geom_sel,
+            inherit.aes = FALSE,
+            fill = NA,
+            linewidth = 0.15,
+            color = "black"
+        ) +
+        ggpattern::geom_sf_pattern(
+            data = geom_sel,
+            inherit.aes = FALSE,
+            fill = NA,
+            linewidth = 0.0,
+            color = NA,
+            pattern_fill = "#00000070",
+            pattern_color = NA,
+            pattern_density = density,
+            pattern_spacing = spacing
+        )
 }

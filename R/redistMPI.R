@@ -7,7 +7,14 @@
 # parallel tempering (mpi)                   #
 ##############################################
 
-ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = total_pop, init_plan = init_plan, swaps = swaps) {
+ecutsMPI <- function(
+    procID = procID,
+    params = params,
+    adj = adj,
+    total_pop = total_pop,
+    init_plan = init_plan,
+    swaps = swaps
+) {
     ## Load redist library
     library(redist)
 
@@ -38,7 +45,6 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
     if (is.na(cities)) {
         cities <- NULL
     }
-
 
     if (is.na(areasvec)) {
         areasvec <- NULL
@@ -136,13 +142,18 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
     nthin <- params$nthin
 
     ## Run redist preprocessing function
-    preprocout <- redist.preproc(adj = adj, total_pop = total_pop,
-        init_plan = init_plan, ndists = ndists,
+    preprocout <- redist.preproc(
+        adj = adj,
+        total_pop = total_pop,
+        init_plan = init_plan,
+        ndists = ndists,
         pop_tol = pop_tol,
         temper = FALSE,
-        betaseq = NULL, betaweights = NULL,
+        betaseq = NULL,
+        betaweights = NULL,
         adjswaps = adjswaps,
-        maxiterrsg = maxiterrsg)
+        maxiterrsg = maxiterrsg
+    )
 
     ## Set betas - if tempering, modified later
     beta <- params$beta
@@ -170,13 +181,11 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
     loopstart <- loopscompleted + 1
 
     for (i in loopstart:nloop) {
-
         if (adjswaps) {
-            nsimsAdj <- rep(freq, nsims/freq)
-        }
-        else {
+            nsimsAdj <- rep(freq, nsims / freq)
+        } else {
             ## Construct adjusted "nsims" vector
-            tempIts <- swapIts[swapIts <= nsims*i & swapIts > nsims*(i - 1)]
+            tempIts <- swapIts[swapIts <= nsims * i & swapIts > nsims * (i - 1)]
             ## Swap partners
             partner <- swaps[, tempIts][swaps[, tempIts] != procID]
             nsimsAdj <- c(tempIts, nsims*i) - c((i - 1)*nsims, tempIts)
@@ -185,7 +194,6 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
 
         ## Get initial partition
         if (i > loopstart) {
-
             cds <- algout$partitions[, nsims]
 
             if (temper == "parallel") {
@@ -198,12 +206,9 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
 
             rm(list = "algout")
             algout <- list()
-
         } else {
-
             ## Reload the data if restarting
             if (loopstart > 1) {
-
                 ## Load the data
                 load(paste(savename, "_proc", procID, "_loop", i - 1, ".RData", sep = ""))
 
@@ -216,8 +221,10 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
 
                 ## Stop if number of simulations per loop is different
                 if (nsims != ncol(algout[[1]])) {
-                    stop("Please specify the same number of simulations per
-               loop across all loops")
+                    stop(
+                        "Please specify the same number of simulations per
+               loop across all loops"
+                    )
                 }
 
                 cds <- algout$partitions[, nsims]
@@ -232,7 +239,6 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
 
                 rm(list = "algout")
                 algout <- list()
-
             } else {
                 cds <- preprocout$data$init_plan
                 ## Initialize algout object (for use in ecutsAppend)
@@ -242,19 +248,18 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
                     tempadjMat <- tempadj
                 }
             }
-
         }
 
         #######################
         ## Run the algorithm ##
         #######################
-        for (j in 1:length(nsimsAdj)) {
-
+        for (j in seq_along(nsimsAdj)) {
             cat("Swap ", j, " out of ", length(nsimsAdj), " swaps.\n",
                 append = TRUE)
 
             ## Run algorithm
-            temp <- swMH(aList = preprocout$data$adjlist,
+            temp <- swMH(
+                aList = preprocout$data$adjlist,
                 cdvec = cds,
                 popvec = preprocout$data$total_pop,
                 constraints = list(),
@@ -269,7 +274,8 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
                 adjswap = preprocout$params$adjswaps,
                 exact_mh = 0,
                 adapt_eprob = 0,
-                adapt_lambda = 0)
+                adapt_lambda = 0
+            )
 
             ## Combine data
             algout <- ecutsAppend(algout, temp)
@@ -287,9 +293,8 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
             ##
 
             if (adjswaps) {
-
                 ## Determine which nodes are swapping
-                tempvra <- swaps[(i - 1)*nsims + j*freq]
+                tempvra <- swaps[(i - 1) * nsims + j * freq]
                 ## Get node indices
                 temps <- tempadj[tempvra:(tempvra + 1)]
                 ## Communication step
@@ -319,10 +324,10 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
                     cat("betaPart =", betaPart, "\n", append = TRUE)
                     cat("likePart =", likePart, "\n", append = TRUE)
 
-                    a_like <- -1*betaPart*like
-                    b_like <- -1*beta*likePart
-                    x_like <- -1*beta*like
-                    y_like <- -1*betaPart*likePart
+                    a_like <- -1 * betaPart * like
+                    b_like <- -1 * beta * likePart
+                    x_like <- -1 * beta * like
+                    y_like <- -1 * betaPart * likePart
                     prob <- exp(a_like + b_like - x_like - y_like)
 
                     if (prob > accept) {
@@ -334,14 +339,14 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
                         ## Send temperature adjacency list
                         if (procID == tempadj[tempvra + 1]) {
                             oProcs <- tempadj[!(tempadj %in% temps)]
-                            for (k in 1:length(oProcs)) {
+                            for (k in seq_along(oProcs)) {
                                 Rmpi::mpi.send.Robj(tempadj, dest = oProcs[k], tag = 4)
                             }
                         }
                     } else {
                         if (procID == tempadj[tempvra]) {
                             oProcs <- tempadj[!(tempadj %in% temps)]
-                            for (k in 1:length(oProcs)) {
+                            for (k in seq_along(oProcs)) {
                                 Rmpi::mpi.send.Robj(tempadj, dest = oProcs[k], tag = 4)
                             }
                         }
@@ -364,16 +369,15 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
                     if (partner[j] < procID) {
                         accept <- runif(1)
                         Rmpi::mpi.send.Robj(accept, dest = partner[j], tag = 3)
-                    }
-                    else {
+                    } else {
                         accept <- Rmpi::mpi.recv.Robj(partner[j], tag = 3)
                     }
 
                     ## Compute acceptance probability
-                    a_like <- -1*betaPart*like
-                    b_like <- -1*beta*likePart
-                    x_like <- -1*beta*like
-                    y_like <- -1*betaPart*likePart
+                    a_like <- -1 * betaPart * like
+                    b_like <- -1 * beta * likePart
+                    x_like <- -1 * beta * like
+                    y_like <- -1 * betaPart * likePart
                     prob <- exp(a_like + b_like - x_like - y_like)
                     if (prob > accept) {
                         ## Exchange temperature values
@@ -401,8 +405,11 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
 
         ## Save output
         if (nloop > 1) {
-            save(algout, file = paste(savename, "_proc", procID, "_loop",
-                i, ".RData", sep = ""))
+            save(
+                algout,
+                file = paste(savename, "_proc", procID, "_loop",
+                i, ".RData", sep = "")
+            )
             ## Save temperature adjacency matrix
             if (adjswaps) {
                 save(tempadjMat, file = paste0(savename, "_tempadjMat.RData"))
@@ -410,11 +417,13 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
 
             ## Save swaps
             save(swaps, file = paste0(savename, "_swaps.RData"))
-
         } else if (!is.null(savename)) {
-            save(algout, file = paste(savename, "_chain",
+            save(
+                algout,
+                file = paste(savename, "_chain",
                 algout$beta_sequence[nsims],
-                ".RData", sep = ""))
+                ".RData", sep = "")
+            )
         }
         ## End loop over i
     }
@@ -424,8 +433,12 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
     ###############################
     if (nloop > 1) {
         if (procID == tempadj[1]) {
-            redist.combine.mpi(savename = savename, nloop = nloop,
-                nthin = nthin, tempadj = tempadj)
+            redist.combine.mpi(
+                savename = savename,
+                nloop = nloop,
+                nthin = nthin,
+                tempadj = tempadj
+            )
         }
     } else if (!is.null(savename)) {
         if (procID == tempadj[1]) {
@@ -521,7 +534,6 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
 #' @concept post
 #' @export
 redist.combine.mpi <- function(savename, nloop, nthin, tempadj) {
-
     ##############################
     ## Set up container objects ##
     ##############################
@@ -531,11 +543,11 @@ redist.combine.mpi <- function(savename, nloop, nthin, tempadj) {
     ## Create containers
     nr <- nrow(algout$partitions)
     nc <- ncol(algout$partitions)
-    partitions <- matrix(NA, nrow = nr, ncol = (nc*nloop/nthin))
+    partitions <- matrix(NA, nrow = nr, ncol = (nc * nloop / nthin))
 
     veclist <- vector(mode = "list", length = length(algout) - 1)
-    for (i in 1:length(veclist)) {
-        veclist[[i]] <- rep(NA, (nc*nloop/nthin))
+    for (i in seq_along(veclist)) {
+        veclist[[i]] <- rep(NA, (nc * nloop / nthin))
     }
 
     ## Indices for thinning
@@ -546,28 +558,26 @@ redist.combine.mpi <- function(savename, nloop, nthin, tempadj) {
     ####################################
 
     for (i in 1:nloop) {
-
         ## Load data
         load(paste(savename, "_proc", tempadj[1], "_loop", i, ".RData", sep = ""))
 
-        ind <- ((i - 1)*(nc/nthin) + 1):(i*(nc/nthin))
+        ind <- ((i - 1) * (nc / nthin) + 1):(i * (nc / nthin))
 
         ## Store objects together
-        for (j in 1:length(algout)) {
+        for (j in seq_along(algout)) {
             if (j == 1) {
                 partitions[1:nr, ind] <- algout$partitions[, indthin]
             } else {
                 veclist[[j - 1]][ind] <- algout[[j]][indthin]
             }
         }
-
     }
 
     #################################
     ## Store data in algout object ##
     #################################
     algout <- vector(mode = "list", length = length(algout))
-    for (i in 1:length(algout)) {
+    for (i in seq_along(algout)) {
         if (i == 1) {
             algout[[i]] <- partitions
         } else {
@@ -575,7 +585,6 @@ redist.combine.mpi <- function(savename, nloop, nthin, tempadj) {
         }
     }
     names(algout) <- names_obj
-
 
     #########################
     ## Set class of object ##
@@ -586,7 +595,6 @@ redist.combine.mpi <- function(savename, nloop, nthin, tempadj) {
     ## Save object ##
     #################
     save(algout, file = paste(savename, ".RData", sep = ""))
-
 }
 
 ecutsAppend <- function(algout, ndata) {
@@ -594,7 +602,7 @@ ecutsAppend <- function(algout, ndata) {
         algout <- ndata
     } else {
         names_obj <- names(algout)
-        for (i in 1:length(algout)) {
+        for (i in seq_along(algout)) {
             if (i == 1) {
                 algout[[i]] <- cbind(algout[[i]], ndata[[i]])
             } else {
@@ -740,24 +748,44 @@ ecutsAppend <- function(algout, ndata) {
 #'     init_plan = init_plan, nsims = 10000, savename = "test")
 #' }
 #' @export
-redist.mcmc.mpi <- function(adj, total_pop, nsims, ndists = NA,
-                            init_plan = NULL,
-                            loopscompleted = 0, nloop = 1, nthin = 1,
-                            eprob = 0.05, lambda = 0,
-                            pop_tol = NA, group_pop = NA, areasvec = NA,
-                            counties = NA, borderlength_mat = NA,
-                            ssdmat = NA, compactness_metric = "fryer-holden", rngseed = NA,
-                            constraint = NA, constraintweights = NA,
-                            betaseq = "powerlaw", betaseqlength = 10,
-                            adjswaps = TRUE, freq = 100, savename = NA,
-                            maxiterrsg = 5000, verbose = FALSE,
-                            cities = NULL) {
+redist.mcmc.mpi <- function(
+    adj,
+    total_pop,
+    nsims,
+    ndists = NA,
+    init_plan = NULL,
+    loopscompleted = 0,
+    nloop = 1,
+    nthin = 1,
+    eprob = 0.05,
+    lambda = 0,
+    pop_tol = NA,
+    group_pop = NA,
+    areasvec = NA,
+    counties = NA,
+    borderlength_mat = NA,
+    ssdmat = NA,
+    compactness_metric = "fryer-holden",
+    rngseed = NA,
+    constraint = NA,
+    constraintweights = NA,
+    betaseq = "powerlaw",
+    betaseqlength = 10,
+    adjswaps = TRUE,
+    freq = 100,
+    savename = NA,
+    maxiterrsg = 5000,
+    verbose = FALSE,
+    cities = NULL
+) {
     contiguitymap <- "rooks"
 
     ## Check if Rmpi library is installed
     if (!requireNamespace("Rmpi", quietly = TRUE)) {
-        stop("You must install package 'Rmpi' to use this function. Please install it if you wish to continue."
-            , call. = FALSE)
+        stop(
+            "You must install package 'Rmpi' to use this function. Please install it if you wish to continue.",
+            call. = FALSE
+        )
     }
 
     ## ## Load Rmpi library
@@ -778,8 +806,10 @@ redist.mcmc.mpi <- function(adj, total_pop, nsims, ndists = NA,
         stop("Please supply number of simulations to run algorithm")
     }
     if (is.na(ndists) & is.null(init_plan)) {
-        stop("Please provide either the desired number of congressional districts
-         or an initial set of congressional district assignments")
+        stop(
+            "Please provide either the desired number of congressional districts
+         or an initial set of congressional district assignments"
+        )
     }
     if (nloop > 1 & missing(savename)) {
         stop("Please supply save directory if saving simulations at checkpoints")
@@ -799,16 +829,16 @@ redist.mcmc.mpi <- function(adj, total_pop, nsims, ndists = NA,
     ## Generate temperature sequence (power law)
     temp <- rep(NA, betaseqlength)
     for (i in 1:betaseqlength) {
-        temp[i] <- 0.1^((i - 1)/(betaseqlength - 1)) - .1
+        temp[i] <- 0.1^((i - 1) / (betaseqlength - 1)) - 0.1
     }
-    beta <- temp/0.9
+    beta <- temp / 0.9
     target.beta <- beta[1]
 
     ## Generate swapping sequence
     if (adjswaps) {
-        swaps <- matrix(NA, 1, nsims*(nloop - loopscompleted))
+        swaps <- matrix(NA, 1, nsims * (nloop - loopscompleted))
         ## partner <- matrix(NA,1,nits)
-        for (i in 1:length(swaps)) {
+        for (i in seq_along(swaps)) {
             if (i %% freq == 0) {
                 swaps[i] <- sample(1:(betaseqlength - 1), size = 1)
             }
@@ -816,8 +846,8 @@ redist.mcmc.mpi <- function(adj, total_pop, nsims, ndists = NA,
             tempadj <- 1:betaseqlength
         }
     } else {
-        swaps <- matrix(NA, 2, nsims*(nloop - loopscompleted))
-        for (i in 1:ncol(swaps)) {
+        swaps <- matrix(NA, 2, nsims * (nloop - loopscompleted))
+        for (i in seq_len(ncol(swaps))) {
             if (i %% freq == 0) {
                 swaps[, i] <- sample(1:betaseqlength, size = 2)
             }
@@ -825,17 +855,30 @@ redist.mcmc.mpi <- function(adj, total_pop, nsims, ndists = NA,
     }
 
     ## Create parameters list to distribute across nodes
-    params <- expand.grid(nsims = nsims, nloop = nloop, eprob = eprob,
-        ndists = ndists, lambda = lambda, pop_tol = pop_tol,
-        beta = beta, target.beta = target.beta,
+    params <- expand.grid(
+        nsims = nsims,
+        nloop = nloop,
+        eprob = eprob,
+        ndists = ndists,
+        lambda = lambda,
+        pop_tol = pop_tol,
+        beta = beta,
+        target.beta = target.beta,
         constraint = paste(constraint, collapse = ","),
         constraintweights = paste(constraintweights, collapse = ","),
         compactness_metric = compactness_metric,
-        betaseqlength = betaseqlength, adjswaps = adjswaps,
-        nthin = nthin, freq = freq, maxiterrsg = maxiterrsg,
-        contiguitymap = contiguitymap, verbose = verbose,
-        loopscompleted = loopscompleted, rngseed = rngseed,
-        savename = savename, stringsAsFactors = FALSE)
+        betaseqlength = betaseqlength,
+        adjswaps = adjswaps,
+        nthin = nthin,
+        freq = freq,
+        maxiterrsg = maxiterrsg,
+        contiguitymap = contiguitymap,
+        verbose = verbose,
+        loopscompleted = loopscompleted,
+        rngseed = rngseed,
+        savename = savename,
+        stringsAsFactors = FALSE
+    )
 
     ##################
     ## Spawn Slaves ##
@@ -864,7 +907,7 @@ redist.mcmc.mpi <- function(adj, total_pop, nsims, ndists = NA,
     Rmpi::mpi.bcast.Robj2slave(total_pop)
 
     ## Initial Plans
-    init_plan <- split(init_plan, f = 1:nrow(init_plan))
+    init_plan <- split(init_plan, f = seq_len(nrow(init_plan)))
     Rmpi::mpi.scatter.Robj2slave(init_plan)
 
     ## Group population vector
@@ -883,7 +926,7 @@ redist.mcmc.mpi <- function(adj, total_pop, nsims, ndists = NA,
     Rmpi::mpi.bcast.Robj2slave(ssdmat)
 
     ## Parameters List
-    params <- split(params, f = 1:nrow(params))
+    params <- split(params, f = seq_len(nrow(params)))
     Rmpi::mpi.scatter.Robj2slave(params)
 
     ## Send ecutsMPI function to slaves
@@ -900,5 +943,4 @@ redist.mcmc.mpi <- function(adj, total_pop, nsims, ndists = NA,
 
     ## Terminate MPI processes and close R
     Rmpi::mpi.quit()
-
 }
