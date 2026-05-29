@@ -176,7 +176,7 @@ ecutsMPI <- function(
     }
 
     ## Set seed before first iteration of algorithm if provided by user
-    if (!is.null(rngseed) & is.numeric(rngseed)) {
+    if (!is.null(rngseed) && is.numeric(rngseed)) {
         set.seed(rngseed)
     }
 
@@ -203,7 +203,7 @@ ecutsMPI <- function(
                 beta <- algout$beta_sequence[nsims]
             }
 
-            if (!is.null(rngseed) & is.numeric(rngseed)) {
+            if (!is.null(rngseed) && is.numeric(rngseed)) {
                 set.seed(algout$randseed)
             }
 
@@ -236,7 +236,7 @@ ecutsMPI <- function(
                     beta <- algout$beta_sequence[nsims]
                 }
 
-                if (!is.null(rngseed) & is.numeric(rngseed)) {
+                if (!is.null(rngseed) && is.numeric(rngseed)) {
                     set.seed(algout$randseed)
                 }
 
@@ -256,7 +256,7 @@ ecutsMPI <- function(
         #######################
         ## Run the algorithm ##
         #######################
-        for (j in 1:length(nsimsAdj)) {
+        for (j in seq_along(nsimsAdj)) {
             cat("Swap ", j, " out of ", length(nsimsAdj), " swaps.\n", append = TRUE)
 
             ## Run algorithm
@@ -347,14 +347,14 @@ ecutsMPI <- function(
                         ## Send temperature adjacency list
                         if (procID == tempadj[tempvra + 1]) {
                             oProcs <- tempadj[!(tempadj %in% temps)]
-                            for (k in 1:length(oProcs)) {
+                            for (k in seq_along(oProcs)) {
                                 Rmpi::mpi.send.Robj(tempadj, dest = oProcs[k], tag = 4)
                             }
                         }
                     } else {
                         if (procID == tempadj[tempvra]) {
                             oProcs <- tempadj[!(tempadj %in% temps)]
-                            for (k in 1:length(oProcs)) {
+                            for (k in seq_along(oProcs)) {
                                 Rmpi::mpi.send.Robj(tempadj, dest = oProcs[k], tag = 4)
                             }
                         }
@@ -451,10 +451,8 @@ ecutsMPI <- function(
                 tempadj = tempadj
             )
         }
-    } else if (!is.null(savename)) {
-        if (procID == tempadj[1]) {
-            save(algout, file = paste(savename, ".RData", sep = ""))
-        }
+    } else if ((!is.null(savename)) && (procID == tempadj[1])) {
+        save(algout, file = paste(savename, ".RData", sep = ""))
     }
 
     if (params$verbose) {
@@ -557,7 +555,7 @@ redist.combine.mpi <- function(savename, nloop, nthin, tempadj) {
     partitions <- matrix(NA, nrow = nr, ncol = (nc * nloop / nthin))
 
     veclist <- vector(mode = "list", length = length(algout) - 1)
-    for (i in 1:length(veclist)) {
+    for (i in seq_along(veclist)) {
         veclist[[i]] <- rep(NA, (nc * nloop / nthin))
     }
 
@@ -575,7 +573,7 @@ redist.combine.mpi <- function(savename, nloop, nthin, tempadj) {
         ind <- ((i - 1) * (nc / nthin) + 1):(i * (nc / nthin))
 
         ## Store objects together
-        for (j in 1:length(algout)) {
+        for (j in seq_along(algout)) {
             if (j == 1) {
                 partitions[1:nr, ind] <- algout$partitions[, indthin]
             } else {
@@ -588,7 +586,7 @@ redist.combine.mpi <- function(savename, nloop, nthin, tempadj) {
     ## Store data in algout object ##
     #################################
     algout <- vector(mode = "list", length = length(algout))
-    for (i in 1:length(algout)) {
+    for (i in seq_along(algout)) {
         if (i == 1) {
             algout[[i]] <- partitions
         } else {
@@ -613,7 +611,7 @@ ecutsAppend <- function(algout, ndata) {
         algout <- ndata
     } else {
         names_obj <- names(algout)
-        for (i in 1:length(algout)) {
+        for (i in seq_along(algout)) {
             if (i == 1) {
                 algout[[i]] <- cbind(algout[[i]], ndata[[i]])
             } else {
@@ -816,13 +814,13 @@ redist.mcmc.mpi <- function(
     if (missing(nsims)) {
         stop("Please supply number of simulations to run algorithm")
     }
-    if (is.na(ndists) & is.null(init_plan)) {
+    if (is.na(ndists) && is.null(init_plan)) {
         stop(
             "Please provide either the desired number of congressional districts
          or an initial set of congressional district assignments"
         )
     }
-    if (nloop > 1 & missing(savename)) {
+    if (nloop > 1 && missing(savename)) {
         stop("Please supply save directory if saving simulations at checkpoints")
     }
 
@@ -840,7 +838,7 @@ redist.mcmc.mpi <- function(
     ## Generate temperature sequence (power law)
     temp <- rep(NA, betaseqlength)
     for (i in 1:betaseqlength) {
-        temp[i] <- 0.1^((i - 1) / (betaseqlength - 1)) - .1
+        temp[i] <- 0.1^((i - 1) / (betaseqlength - 1)) - 0.1
     }
     beta <- temp / 0.9
     target.beta <- beta[1]
@@ -849,18 +847,18 @@ redist.mcmc.mpi <- function(
     if (adjswaps) {
         swaps <- matrix(NA, 1, nsims * (nloop - loopscompleted))
         ## partner <- matrix(NA,1,nits)
-        for (i in 1:length(swaps)) {
+        for (i in seq_along(swaps)) {
             if (i %% freq == 0) {
-                swaps[i] <- sample(1:(betaseqlength - 1), size = 1)
+                swaps[i] <- sample.int((betaseqlength - 1), size = 1)
             }
             ## Initial temperature adjacency
             tempadj <- 1:betaseqlength
         }
     } else {
         swaps <- matrix(NA, 2, nsims * (nloop - loopscompleted))
-        for (i in 1:ncol(swaps)) {
+        for (i in seq_len(ncol(swaps))) {
             if (i %% freq == 0) {
-                swaps[, i] <- sample(1:betaseqlength, size = 2)
+                swaps[, i] <- sample.int(betaseqlength, size = 2)
             }
         }
     }
@@ -918,7 +916,7 @@ redist.mcmc.mpi <- function(
     Rmpi::mpi.bcast.Robj2slave(total_pop)
 
     ## Initial Plans
-    init_plan <- split(init_plan, f = 1:nrow(init_plan))
+    init_plan <- split(init_plan, f = seq_len(nrow(init_plan)))
     Rmpi::mpi.scatter.Robj2slave(init_plan)
 
     ## Group population vector
@@ -937,7 +935,7 @@ redist.mcmc.mpi <- function(
     Rmpi::mpi.bcast.Robj2slave(ssdmat)
 
     ## Parameters List
-    params <- split(params, f = 1:nrow(params))
+    params <- split(params, f = seq_len(nrow(params)))
     Rmpi::mpi.scatter.Robj2slave(params)
 
     ## Send ecutsMPI function to slaves

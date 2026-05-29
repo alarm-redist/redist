@@ -31,14 +31,14 @@ centroid <- function(plans, map) {
 }
 # Fisher's method to combine p-values
 pv_combine <- function(...) {
-    pv = do.call(cbind, list(...))
+    pv <- do.call(cbind, list(...))
     pchisq(-2 * rowSums(log(pv)), df = 2 * ncol(pv))
 }
 
-d_ccd = tigris::county_subdivisions("SC", year = 2020, cb = TRUE)
-map = alarm_50state_map("SC", year = 2020) |>
+d_ccd <- tigris::county_subdivisions("SC", year = 2020, cb = TRUE)
+map <- alarm_50state_map("SC", year = 2020) |>
     mutate(ccd = d_ccd$NAME[geomander::geo_match(map, d_ccd, "center")])
-plans = alarm_50state_plans("SC", year = 2020) |>
+plans <- alarm_50state_plans("SC", year = 2020) |>
     mutate(centroid(pl(), map))
 
 plot(map, proj_avg(plans, vap_black / total_vap)) +
@@ -47,12 +47,12 @@ plot(map, proj_avg(plans, vap_black / total_vap)) +
     # scale_fill_party_c(limits=c(0.3, 0.7)) +
     theme(legend.key.width = unit(1, "cm"))
 
-pc_x = proj_contr(plans, ctr_x, pfdr = FALSE)
-pc_y = proj_contr(plans, ctr_y, pfdr = FALSE)
-pc_pv = proj_contr(plans, ctr_x^2 + ctr_y^2, pfdr = TRUE)
-pc_dem = proj_contr(plans, ndshare, pfdr = TRUE)
-pc_bvap = proj_contr(plans, vap_black / total_vap, pfdr = TRUE)
-ctr = st_centroid(map) |>
+pc_x <- proj_contr(plans, ctr_x, pfdr = FALSE)
+pc_y <- proj_contr(plans, ctr_y, pfdr = FALSE)
+pc_pv <- proj_contr(plans, ctr_x^2 + ctr_y^2, pfdr = TRUE)
+pc_dem <- proj_contr(plans, ndshare, pfdr = TRUE)
+pc_bvap <- proj_contr(plans, vap_black / total_vap, pfdr = TRUE)
+ctr <- st_centroid(map) |>
     suppressWarnings() |>
     st_coordinates() |>
     as_tibble() |>
@@ -159,13 +159,13 @@ map |>
 #     classify_plans() |>
 #     plot()
 
-co = prec_cooccurrence(plans, ncores = 4)
-m_cons = lapply(seq_len(attr(plans, "ndists")), function(i) {
+co <- prec_cooccurrence(plans, ncores = 4)
+m_cons <- lapply(seq_len(attr(plans, "ndists")), function(i) {
     # matrixStats::colWeightedMeans(co[map$cd_2010 == i, ], map$vap[map$cd_2010 == i])
     matrixStats::rowMeans2(as.matrix(plans) == i)
 }) |>
     do.call(cbind, args = _)
-pr_cons = m_cons[cbind(seq_len(nrow(map)), max.col(m_cons))]
+pr_cons <- m_cons[cbind(seq_len(nrow(map)), max.col(m_cons))]
 
 ggplot(map, aes(fill = as.factor(max.col(m_cons)), alpha = pr_cons)) +
     geom_sf(linewidth = 0, color = NA) +
@@ -180,7 +180,7 @@ ggplot(map, aes(fill = as.factor(max.col(m_cons)), alpha = pr_cons)) +
     theme_void()
 
 
-edges = dplyr::as_tibble(map) %>%
+edges <- dplyr::as_tibble(map) %>%
     sf::st_as_sf() %>%
     dplyr::select(geometry = attr(map, "sf_column")) %>%
     sf::st_intersection() %>%
@@ -194,7 +194,7 @@ edges = dplyr::as_tibble(map) %>%
     dplyr::select(i, j, geometry) |>
     sf::st_as_sf()
 
-edge_cuts = imap(map$adj, function(nbors, i) {
+edge_cuts <- imap(map$adj, function(nbors, i) {
     new_tibble(list(
         i = rep(i, length(nbors)),
         j = nbors + 1,
@@ -248,17 +248,17 @@ ggplot(map) +
 X <- st_centroid(map) |>
     suppressWarnings() |>
     st_coordinates()
-dm = st_distance(st_centroid(map))
+dm <- st_distance(st_centroid(map))
 m <- as.matrix(plans)[, -1]
-N = ncol(m)
-disp = matrix(0, nrow = nrow(map), ncol = 2)
-for (pl in 1:ncol(m)) {
-    for (i in 1:nrow(m)) {
-        j = which.min(dm[i, m[, pl] != m[i, pl]])
-        disp[i, ] = disp[i, ] + (X[j, ] - X[i, ]) / N
+N <- ncol(m)
+disp <- matrix(0, nrow = nrow(map), ncol = 2)
+for (pl in seq_len(ncol(m))) {
+    for (i in seq_len(nrow(m))) {
+        j <- which.min(dm[i, m[, pl] != m[i, pl]])
+        disp[i, ] <- disp[i, ] + (X[j, ] - X[i, ]) / N
     }
 }
-colnames(disp) = c("dX", "dY")
+colnames(disp) <- c("dX", "dY")
 
 ggplot(map) +
     geom_sf(

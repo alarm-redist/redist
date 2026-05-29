@@ -20,7 +20,7 @@ redist.adjacency <- function(shp, plan) {
     adj <- suppressMessages(st_relate(shp, shp, pattern = "F***1****"))
     # items contained entirely within ~ even if validly "rooks" adjacent ~ do not meet this, you need:
     withinadj <- suppressMessages(st_relate(x = shp, pattern = "2121**2*2"))
-    adj <- lapply(1:nrow(shp), function(x) c(adj[[x]], withinadj[[x]]))
+    adj <- lapply(seq_len(nrow(shp)), function(x) c(adj[[x]], withinadj[[x]]))
 
     # Check for zero indexing
     zero <- min(unlist(adj)) == 0
@@ -83,7 +83,7 @@ redist.reduce.adjacency <- function(adj, keep_rows) {
     }
 
     prec_map <- match(seq_along(adj), keep_rows) - 1L
-    prec_map[is.na(prec_map)] = -1L
+    prec_map[is.na(prec_map)] <- -1L
 
     # Reduce!
     reduce_adj(adj, prec_map, length(keep_rows))
@@ -156,14 +156,14 @@ redist.subset <- function(shp, adj, keep_rows, total_pop, ndists, pop_tol, sub_n
     }
 
     if (missing(keep_rows)) {
-        n <- sample(1:nrow(shp), 1)
+        n <- sample.int(nrow(shp), 1)
         keep_rows <- redist.random.subgraph(shp, n, adj)$keep_rows
     }
 
     if (
-        !missing(total_pop) &
-            !missing(ndists) &
-            !missing(pop_tol) &
+        !missing(total_pop) &&
+            !missing(ndists) &&
+            !missing(pop_tol) &&
             !missing(sub_ndists)
     ) {
         parpop <- sum(total_pop) / ndists

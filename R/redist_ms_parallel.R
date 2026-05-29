@@ -80,7 +80,7 @@ redist_mergesplit_parallel <- function(
     if (compactness < 0) {
         cli::cli_abort("{.arg compactness} must be non-negative.")
     }
-    if (adapt_k_thresh < 0 | adapt_k_thresh > 1) {
+    if (adapt_k_thresh < 0 || adapt_k_thresh > 1) {
         cli::cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
     }
     if (nsims <= warmup) {
@@ -163,7 +163,7 @@ redist_mergesplit_parallel <- function(
     if (is.null(counties)) {
         counties <- rep(1, V)
     } else {
-        if (any(is.na(counties))) {
+        if (anyNA(counties)) {
             cli::cli_abort("{.arg counties} must not contain missing values.")
         }
 
@@ -184,7 +184,7 @@ redist_mergesplit_parallel <- function(
             }
             counties <- vctrs::vec_group_id(counties)
         } else {
-            counties = vctrs::vec_group_id(counties)
+            counties <- vctrs::vec_group_id(counties)
             # handle discontinuous counties
             component <- contiguity(adj, vctrs::vec_group_id(counties))
             counties <- dplyr::if_else(
@@ -226,7 +226,7 @@ redist_mergesplit_parallel <- function(
     pop_bounds <- attr(map, "pop_bounds")
     pop <- map[[attr(map, "pop_col")]]
     init_pop <- pop_tally(init_plans, pop, ndists)
-    if (any(init_pop < pop_bounds[1]) | any(init_pop > pop_bounds[3])) {
+    if (any(init_pop < pop_bounds[1]) || any(init_pop > pop_bounds[3])) {
         cli::cli_abort("Provided initialization does not meet population bounds.")
     }
     if (any(pop >= pop_bounds[3])) {
@@ -236,7 +236,7 @@ redist_mergesplit_parallel <- function(
                     "x" = "Redistricting impossible."))
     }
 
-    control = list(adapt_k_thresh=adapt_k_thresh, do_mh=TRUE)
+    control <- list(adapt_k_thresh=adapt_k_thresh, do_mh=TRUE)
     x <- ms_plans(
         1,
         adj,
@@ -263,9 +263,9 @@ redist_mergesplit_parallel <- function(
     }
     ncores <- min(ncores, chains)
     of <- ifelse(
-        Sys.info()[['sysname']] == 'Windows',
-        tempfile(pattern = paste0('ms_', substr(Sys.time(), 1, 10)), fileext = '.txt'),
-        ''
+        Sys.info()[["sysname"]] == "Windows",
+        tempfile(pattern = paste0("ms_", substr(Sys.time(), 1, 10)), fileext = ".txt"),
+        ""
     )
     if (!silent) {
         cl <- parallel::makeCluster(

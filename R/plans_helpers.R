@@ -91,7 +91,7 @@ group_frac <- function(map, group_pop, total_pop = map[[attr(map, "pop_col")]], 
         cli::cli_abort("{.arg group_pop} and {.arg total_pop} must be numeric vectors.")
     }
 
-    plans = get_plans_matrix(.data)
+    plans <- get_plans_matrix(.data)
     if (length(total_pop) != nrow(plans)) {
         cli::cli_abort("{.arg .data} and {.arg total_pop} must have the same number of precincts.")
     }

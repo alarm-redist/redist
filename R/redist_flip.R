@@ -324,12 +324,12 @@ redist_flip <- function(
         `%oper%` <- `%dorng%`
         if (verbose) {
             of <- ifelse(
-                Sys.info()[['sysname']] == 'Windows',
+                Sys.info()[["sysname"]] == "Windows",
                 tempfile(
-                    pattern = paste0('flip_', substr(Sys.time(), 1, 10)),
-                    fileext = '.txt'
+                    pattern = paste0("flip_", substr(Sys.time(), 1, 10)),
+                    fileext = ".txt"
                 ),
-                ''
+                ""
             )
             cl <- parallel::makeCluster(
                 ncores,

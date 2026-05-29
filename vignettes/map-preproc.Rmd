@@ -9,15 +9,15 @@ vignette: >
 
 ```{r, include = FALSE}
 try({
-  data_url <- "https://github.com/alarm-redist/redist-data/raw/main/data/king_county.rds"
-  data_path <- tempfile()
-  download.file(data_url, data_path)
+    data_url <- "https://github.com/alarm-redist/redist-data/raw/main/data/king_county.rds"
+    data_path <- tempfile()
+    download.file(data_url, data_path, mode = "wb")
 })
 
 knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>",
-  eval = file.exists(data_path)
+    collapse = TRUE,
+    comment = "#>",
+    eval = file.exists(data_path)
 )
 set.seed(5118)
 ```
@@ -54,7 +54,7 @@ library(redist)
 
 data_url <- "https://github.com/alarm-redist/redist-data/raw/main/data/king_county.rds"
 data_path <- tempfile()
-download.file(data_url, data_path)
+download.file(data_url, data_path, mode = "wb")
 king_shp <- readRDS(data_path)
 print(king_shp)
 ```

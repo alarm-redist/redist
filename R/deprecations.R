@@ -32,7 +32,7 @@
 #' fl25$init_plan <- init_plan
 #'
 #' ## 25 precinct, three districts - no pop constraint ##
-#' fl_map <- redist_map(fl25, existing_plan = 'init_plan', adj = fl25_adj)
+#' fl_map <- redist_map(fl25, existing_plan = "init_plan", adj = fl25_adj)
 #' alg_253 <- redist_flip(fl_map, nsims = 10000)
 #'
 #'
@@ -52,8 +52,8 @@ redist.segcalc <- function(plans, group_pop, total_pop) {
     }
 
     if (
-        !((nrow(plans) == length(group_pop)) &
-            (length(group_pop) == length(total_pop)) &
+        !((nrow(plans) == length(group_pop)) &&
+            (length(group_pop) == length(total_pop)) &&
             (length(total_pop) == nrow(plans)))
     ) {
         cli::cli_abort("Please make sure there is a population entry for each geographic unit")
@@ -265,7 +265,7 @@ redist.compactness <- function(
     perim_path,
     perim_df
 ) {
-    repl = c(
+    repl <- c(
         PolsbyPopper = "comp_polsby",
         Schwartzberg = "comp_schwartz",
         LengthWidth = "comp_lw",
@@ -280,25 +280,26 @@ redist.compactness <- function(
     .Deprecated(repl)
 
     # Check Inputs
-    if (is.null(shp) & is.null(adj)) {
+    if (is.null(shp) && is.null(adj)) {
         cli::cli_abort("Please provide a {.arg shp} or {.arg adj} argument.")
     }
 
     if (!is.null(shp)) {
-        if ("SpatialPolygonsDataFrame" %in% class(shp)) {
+        if (inherits(shp, "SpatialPolygonsDataFrame")) {
             shp <- sf::st_as_sf(shp)
         } else if (!inherits(shp, "sf")) {
             cli::cli_abort("Please provide {.arg shp} as a SpatialPolygonsDataFrame or sf object.")
         }
 
-        if (isTRUE(st_is_longlat(st_geometry(shp)))) {
-            if (!is.null(st_crs(shp)) & !is.null(planarize) && !isFALSE(planarize)) {
-                shp <- sf::st_transform(shp, planarize)
-            }
+        if (
+            (isTRUE(st_is_longlat(st_geometry(shp)))) &&
+                (!is.null(st_crs(shp)) && !is.null(planarize) && !isFALSE(planarize))
+        ) {
+            shp <- sf::st_transform(shp, planarize)
         }
     }
 
-    if (inherits(shp, "redist_map") & missing(adj)) {
+    if (inherits(shp, "redist_map") && missing(adj)) {
         adj <- get_adj(shp)
     }
 
@@ -326,24 +327,22 @@ redist.compactness <- function(
         choices = possible_measures
     )
 
-    if ("FryerHolden" %in% measure & is.null(total_pop)) {
+    if ("FryerHolden" %in% measure && is.null(total_pop)) {
         cli::cli_abort("Please provide a {.arg total_pop} argument when FryerHolden is specified.")
     }
 
-    if ("FryerHolden" %in% measure) {
-        if (!any(class(total_pop) %in% c("numeric", "integer"))) {
-            cli::cli_abort("Please provide {.arg total_pop} as a numeric or integer.")
-        }
+    if (("FryerHolden" %in% measure) && (!any(class(total_pop) %in% c("numeric", "integer")))) {
+        cli::cli_abort("Please provide {.arg total_pop} as a numeric or integer.")
     }
 
-    if (!is.numeric(draw) & !is.factor(draw)) {
+    if (!is.numeric(draw) && !is.factor(draw)) {
         cli::cli_abort("Please provide {.arg draw} as a numeric or factor.")
     }
 
     if (!is.numeric(ncores)) {
         cli::cli_abort('Please provide "ncores" as a numeric.')
     }
-    if (("logSpanningTree" %in% measure) & is.null(counties)) {
+    if (("logSpanningTree" %in% measure) && is.null(counties)) {
         cli::cli_abort("Please provide {.arg counties}.")
     }
 
@@ -367,7 +366,7 @@ redist.compactness <- function(
     nmap <- ncol(plans)
     if (!(is.factor(draw) && length(draw) == nd * nmap)) {
         if (nmap != 1) {
-            draw <- rep(draw + (1:ncol(plans)) - 1, each = nd)
+            draw <- rep(draw + (seq_len(ncol(plans))) - 1, each = nd)
         } else {
             draw <- rep(draw, nd)
         }
@@ -461,7 +460,7 @@ redist.compactness <- function(
         )
     }
 
-    if (any(measure %in% c("EdgesRemoved", "logSpanningTree", "FracKept")) & is.null(adj)) {
+    if (any(measure %in% c("EdgesRemoved", "logSpanningTree", "FracKept")) && is.null(adj)) {
         adj <- redist.adjacency(shp)
     }
 
@@ -508,8 +507,8 @@ redist.compactness <- function(
 #' data(fl25_enum)
 #'
 #' cd <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
-#' fl25_map = redist_map(fl25, ndists=3, pop_tol=0.1)
-#' fl25_plans = redist_plans(cd, fl25_map, algorithm="enumpart")
+#' fl25_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1)
+#' fl25_plans <- redist_plans(cd, fl25_map, algorithm = "enumpart")
 #'
 #' group_frac(fl25_map, BlackPop, TotPop, fl25_plans)
 redist.group.percent <- function(plans, group_pop, total_pop, ncores = 1) {
@@ -624,7 +623,7 @@ redist.metrics <- function(
     bandwidth = 0.01,
     draw = 1
 ) {
-    repl = c(
+    repl <- c(
         DSeats = "part_dseats",
         DVS = "part_dvs",
         EffGap = "part_egap",
@@ -663,14 +662,14 @@ redist.metrics <- function(
     if (!is.matrix(plans)) {
         plans <- as.matrix(plans)
     }
-    if (any(is.na(plans))) {
+    if (anyNA(plans)) {
         cli::cli_abort("{.val NA} in argument to {.arg plans}.")
     }
 
-    if (any(is.na(rvote))) {
+    if (anyNA(rvote)) {
         cli::cli_abort("{.val NA} value in argument to {.arg rvote}.")
     }
-    if (any(is.na(dvote))) {
+    if (anyNA(dvote)) {
         cli::cli_abort("{.val NA} value in argument to {.arg dvote}.")
     }
     if (!is.numeric(rvote)) {
@@ -689,7 +688,7 @@ redist.metrics <- function(
         cli::cli_abort("{.arg dvote} length and {.arg plans} row dimension are not equal.")
     }
 
-    if (!is.numeric(draw) & !is.factor(draw)) {
+    if (!is.numeric(draw) && !is.factor(draw)) {
         cli::cli_abort('Please provide "draw" as a numeric or factor.')
     }
 
@@ -701,7 +700,7 @@ redist.metrics <- function(
     # Create return tibble:
     if (!(is.factor(draw) && length(draw) == nd * nmap)) {
         if (nmap != 1) {
-            draw <- rep(draw + (1:ncol(plans)) - 1, each = nd)
+            draw <- rep(draw + (seq_len(ncol(plans))) - 1, each = nd)
         } else {
             draw <- rep(draw, nd)
         }

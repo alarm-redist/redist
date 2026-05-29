@@ -45,7 +45,7 @@
 #' fl25$init_plan <- init_plan
 #'
 #' ## 25 precinct, three districts - no pop constraint ##
-#' fl_map <- redist_map(fl25, existing_plan = 'init_plan', adj = fl25_adj)
+#' fl_map <- redist_map(fl25, existing_plan = "init_plan", adj = fl25_adj)
 #' alg_253 <- redist_flip(fl_map, nsims = 10000)
 #'
 #' ## Get Republican Dissimilarity Index from simulations
@@ -98,7 +98,7 @@ redist.diagplot <- function(
     ) {
         cli::cli_abort("Sorry. We don't currently support the {.value {plot}} diagnostic.")
     }
-    if (plot == "gelmanrubin" & !inherits(sumstat, c("list", "mcmc.list"))) {
+    if (plot == "gelmanrubin" && !inherits(sumstat, c("list", "mcmc.list"))) {
         cli::cli_abort("If generating a Gelman-Rubin plot, please provide an object of class list or mcmc.list")
     }
 
@@ -108,7 +108,7 @@ redist.diagplot <- function(
     if (is.numeric(sumstat)) {
         segout <- coda::mcmc(sumstat)
     } else if (is.list(sumstat)) {
-        for (i in 1:length(sumstat)) {
+        for (i in seq_along(sumstat)) {
             sumstat[[i]] <- coda::mcmc(sumstat[[i]])
         }
         segout <- coda::mcmc.list(sumstat)
@@ -121,7 +121,7 @@ redist.diagplot <- function(
         if (inherits(segout, "mcmc")) {
             segout <- log(segout / (1 - segout))
         } else if (inherits(segout, "mcmc.list")) {
-            for (i in 1:length(segout)) {
+            for (i in seq_along(segout)) {
                 segout[[i]] <- log(segout[[i]] / (1 - segout[[i]]))
             }
         }
@@ -161,7 +161,7 @@ redist.diagplot <- function(
         if (!is.null(savename)) {
             pdf(file = paste(savename, ".pdf", sep = ""))
         }
-        coda::cumuplot(segout, probs = .5, type = "l", lty = 1)
+        coda::cumuplot(segout, probs = 0.5, type = "l", lty = 1)
         if (!is.null(savename)) {
             dev.off()
         }

@@ -1,10 +1,10 @@
 test_that("pareto domination is calculated correctly", {
-    x = matrix(1:5, nrow = 1)
+    x <- matrix(1:5, nrow = 1)
     expect_equal(pareto_dominated(x), c(FALSE, rep(TRUE, 4)))
-    x = matrix(5:1, nrow = 1)
+    x <- matrix(5:1, nrow = 1)
     expect_equal(pareto_dominated(x), c(rep(TRUE, 4), FALSE))
 
-    x = matrix(
+    x <- matrix(
         c(0, 0,
                  1, 0,
                  0, 1),
@@ -12,7 +12,7 @@ test_that("pareto domination is calculated correctly", {
     )
     expect_equal(pareto_dominated(x), c(FALSE, TRUE, TRUE))
 
-    x = matrix(
+    x <- matrix(
         c(0, 1,
                  0, 0,
                  1, 0),
@@ -21,7 +21,7 @@ test_that("pareto domination is calculated correctly", {
     expect_equal(pareto_dominated(x), c(TRUE, FALSE, TRUE))
 
     # remove dupes in right order
-    x = matrix(
+    x <- matrix(
         c(0, 0,
                  0, 0,
                  0, 1),
@@ -65,7 +65,7 @@ test_that("short bursts run and improve the score over time", {
 
 test_that("short bursts work with multiple scorers", {
     iowa_map <- suppressWarnings(redist_map(iowa, ndists = 4, pop_tol = 0.2))
-    scorer = cbind(
+    scorer <- cbind(
         comp = scorer_frac_kept(iowa_map),
         dem = scorer_group_pct(iowa_map, dem_08, tot_08, k = 2)
     )
@@ -80,7 +80,7 @@ test_that("short bursts work with multiple scorers", {
     expect_true(inherits(plans, "redist_plans"))
     expect_equal(dim(get_plans_matrix(plans)), c(99, 21))
     # check frontier is monotone in right direction
-    frontier = attr(plans, "pareto_score")
+    frontier <- attr(plans, "pareto_score")
     if (nrow(frontier) > 1) {
         expect_equal(1, cor(frontier, method = "spearman")[1, 2])
     }
@@ -116,7 +116,7 @@ test_that("cyclewalk short bursts run and improve score over time", {
 
 test_that("cyclewalk short bursts work with multiple scorers", {
     iowa_map <- suppressWarnings(redist_map(iowa, ndists = 4, pop_tol = 0.2))
-    scorer = cbind(
+    scorer <- cbind(
         comp = scorer_frac_kept(iowa_map),
         dem = scorer_group_pct(iowa_map, dem_08, tot_08, k = 2)
     )
@@ -132,7 +132,7 @@ test_that("cyclewalk short bursts work with multiple scorers", {
     expect_true(inherits(plans, "redist_plans"))
     expect_equal(dim(get_plans_matrix(plans)), c(99, 21))
     # check frontier is monotone in right direction
-    frontier = attr(plans, "pareto_score")
+    frontier <- attr(plans, "pareto_score")
     if (nrow(frontier) > 1) {
         expect_equal(1, cor(frontier, method = "spearman")[1, 2])
     }

@@ -7,25 +7,25 @@ devtools::load_all()
 data(iowa)
 ia <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
 
-bounds = attr(ia, "pop_bounds")
-tt = sample_ust(ia$adj, ia$pop, bounds[1], bounds[3], as.integer(factor(ia$region)))
+bounds <- attr(ia, "pop_bounds")
+tt <- sample_ust(ia$adj, ia$pop, bounds[1], bounds[3], as.integer(factor(ia$region)))
 
-x = redist_smc(ia, 100, ncores = 1L, silent = TRUE)
+x <- redist_smc(ia, 100, ncores = 1L, silent = TRUE)
 redist.plot.plans(x, 1:4, ia)
 
 microbenchmark(redist_smc(ia, 100, ncores = 1L, silent = TRUE), times = 20)
 # 100 -> 182ms
 # 500 -> 976ms
 
-va = readRDS("../partisan-bias/data-raw/virginia/VA_map.rds") |>
+va <- readRDS("../partisan-bias/data-raw/virginia/VA_map.rds") |>
     set_pop_tol(0.01)
 
-x = redist_smc(va, 500, ncores = 1L, verbose = TRUE)
+x <- redist_smc(va, 500, ncores = 1L, verbose = TRUE)
 
 
 ########################
 
-res = callr::r_bg(
+res <- callr::r_bg(
     function(...) {
         redist::redist_smc(...)
     },
@@ -33,10 +33,10 @@ res = callr::r_bg(
     poll_connection = FALSE
 )
 
-d = tibble(raw = system2("sample", args = as.character(res$get_pid()), stdout = TRUE))
+d <- tibble(raw = system2("sample", args = as.character(res$get_pid()), stdout = TRUE))
 
 write_lines(d$raw, "~/Desktop/sample.txt")
-d = tibble(raw = read_lines("~/Desktop/sample.txt"))
+d <- tibble(raw = read_lines("~/Desktop/sample.txt"))
 
 d |>
     filter(str_starts(str_trim(raw), "\\+")) |>

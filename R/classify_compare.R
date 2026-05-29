@@ -206,7 +206,7 @@ compare_plans <- function(
                     ggplot2::scale_colour_fermenter(palette = "RdPu") +
                     labs(title = lab) +
                     theme_void() +
-                    geom_sf(data = shp, size = .05, color = "black", fill = NA)
+                    geom_sf(data = shp, size = 0.05, color = "black", fill = NA)
             }
             p1 <- make_plot(nb$wgt1, labs[1])
             p2 <- make_plot(nb$wgt2, labs[2])

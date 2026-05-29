@@ -40,8 +40,8 @@ data(fl25)
 data(fl25_enum)
 
 cd <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
-fl25_map = redist_map(fl25, ndists=3, pop_tol=0.1)
-fl25_plans = redist_plans(cd, fl25_map, algorithm="enumpart")
+fl25_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1)
+fl25_plans <- redist_plans(cd, fl25_map, algorithm = "enumpart")
 
 group_frac(fl25_map, BlackPop, TotPop, fl25_plans)
 }

@@ -81,7 +81,7 @@ redist_cyclewalk <- function(
     constraints = list(),
     edge_weights = NULL,
     ncores = NULL,
-    cl_type = 'PSOCK',
+    cl_type = "PSOCK",
     return_all = TRUE,
     init_name = NULL,
     verbose = FALSE,
@@ -90,33 +90,33 @@ redist_cyclewalk <- function(
     map <- validate_redist_map(map)
     V <- nrow(map)
     adj <- get_adj(map)
-    ndists <- attr(map, 'ndists')
+    ndists <- attr(map, "ndists")
     warmup <- max(warmup, 0L)
     thin <- as.integer(thin)
     chains <- as.integer(chains)
 
     # Input validation
     if (compactness < 0) {
-        cli::cli_abort('{.arg compactness} must be non-negative.')
+        cli::cli_abort("{.arg compactness} must be non-negative.")
     }
     if (nsims <= warmup) {
-        cli::cli_abort('{.arg nsims} must be greater than {.arg warmup}.')
+        cli::cli_abort("{.arg nsims} must be greater than {.arg warmup}.")
     }
     if (thin < 1 || thin > nsims - warmup) {
-        cli::cli_abort('{.arg thin} must be a positive integer, and no larger than {.arg nsims - warmup}.')
+        cli::cli_abort("{.arg thin} must be a positive integer, and no larger than {.arg nsims - warmup}.")
     }
     if (cycle_walk_frac < 0 || cycle_walk_frac > 1) {
-        cli::cli_abort('{.arg cycle_walk_frac} must be between 0 and 1.')
+        cli::cli_abort("{.arg cycle_walk_frac} must be between 0 and 1.")
     }
     if (nsims < 1) {
-        cli::cli_abort('{.arg nsims} must be positive.')
+        cli::cli_abort("{.arg nsims} must be positive.")
     }
     if (chains < 1) {
-        cli::cli_abort('{.arg chains} must be positive.')
+        cli::cli_abort("{.arg chains} must be positive.")
     }
 
     # Set up initial plans for chains
-    exist_name <- attr(map, 'existing_col')
+    exist_name <- attr(map, "existing_col")
     counties <- rlang::eval_tidy(rlang::enquo(counties), map)
 
     # Handle different init_plan scenarios
@@ -132,13 +132,13 @@ redist_cyclewalk <- function(
                 init_names <- rep(init_name, chains)
             }
         } else {
-            init_plan <- 'sample'
+            init_plan <- "sample"
         }
     }
 
-    if (is.null(init_plan) || (is.character(init_plan) && init_plan == 'sample')) {
+    if (is.null(init_plan) || (is.character(init_plan) && init_plan == "sample")) {
         if (verbose) {
-            cli::cli_inform('Sampling initial plans with SMC\n')
+            cli::cli_inform("Sampling initial plans with SMC\n")
         }
         init_plans <- get_plans_matrix(
             redist_smc(
@@ -155,14 +155,14 @@ redist_cyclewalk <- function(
             )
         )
         if (is.null(init_name)) {
-            init_names <- paste0('<sample ', seq_len(chains), '>')
+            init_names <- paste0("<sample ", seq_len(chains), ">")
         } else {
             init_names <- paste(init_name, seq_len(chains))
         }
     } else if (!is.null(init_plan)) {
         if (is.matrix(init_plan)) {
             if (ncol(init_plan) != chains) {
-                cli::cli_abort('{.arg init_plan} matrix must have {chains} column{?s}.')
+                cli::cli_abort("{.arg init_plan} matrix must have {chains} column{?s}.")
             }
             init_plans <- init_plan
         } else {
@@ -170,7 +170,7 @@ redist_cyclewalk <- function(
         }
 
         if (is.null(init_name)) {
-            init_names <- paste0('<init ', seq_len(chains), '>')
+            init_names <- paste0("<init ", seq_len(chains), ">")
         } else if (is.matrix(init_plan) && chains > 1) {
             # Matrix with unique inits per chain - add suffixes
             init_names <- paste(init_name, seq_len(chains))
@@ -182,35 +182,35 @@ redist_cyclewalk <- function(
 
     # Validate init_plans
     if (nrow(init_plans) != V) {
-        cli::cli_abort('{.arg init_plan} must be as long as the number of units as `map`.')
+        cli::cli_abort("{.arg init_plan} must be as long as the number of units as `map`.")
     }
     if (max(init_plans) != ndists) {
-        cli::cli_abort('{.arg init_plan} must have the same number of districts as `map`.')
+        cli::cli_abort("{.arg init_plan} must have the same number of districts as `map`.")
     }
     if (any(apply(init_plans, 2, function(x) contiguity(adj, x)) != 1)) {
-        cli::cli_warn('{.arg init_plan} should have contiguous districts.')
+        cli::cli_warn("{.arg init_plan} should have contiguous districts.")
     }
 
     # Handle counties
     if (is.null(counties)) {
         counties <- rep(1L, V)
     } else {
-        if (any(is.na(counties))) {
-            cli::cli_abort('County vector must not contain missing values.')
+        if (anyNA(counties)) {
+            cli::cli_abort("County vector must not contain missing values.")
         }
 
         # Handle discontinuous counties
         component <- contiguity(adj, vctrs::vec_group_id(counties))
         counties <- dplyr::if_else(
             component > 1,
-            paste0(as.character(counties), '-', component),
+            paste0(as.character(counties), "-", component),
             as.character(counties)
         ) |>
             vctrs::vec_group_id()
     }
 
     # Handle constraints
-    if (!inherits(constraints, 'redist_constr')) {
+    if (!inherits(constraints, "redist_constr")) {
         if (length(constraints) == 0) {
             # Empty list or NULL - use map data for constraint evaluation
             constraints <- redist_constr(map)
@@ -220,10 +220,10 @@ redist_cyclewalk <- function(
     }
 
     # Warn if user manually added log_st or edges_removed
-    if (any(c('edges_removed', 'log_st') %in% names(constraints))) {
-        cli::cli_warn(c('{.var edges_removed} or {.var log_st} constraint found in
-           {.arg constraints} and will be ignored.',
-      '>' = 'Adjust using {.arg compactness} instead.'
+    if (any(c("edges_removed", "log_st") %in% names(constraints))) {
+        cli::cli_warn(c("{.var edges_removed} or {.var log_st} constraint found in
+           {.arg constraints} and will be ignored.",
+      '>' = "Adjust using {.arg compactness} instead."
     ))
     }
 
@@ -235,11 +235,11 @@ redist_cyclewalk <- function(
     # If NULL and counties provided, default to 10x for intra-county edges
     if (is.numeric(edge_weights) && length(edge_weights) == 1) {
         if (all(counties == 1L)) {
-            cli::cli_abort('{.arg edge_weights} as a number requires {.arg counties} to be specified.')
+            cli::cli_abort("{.arg edge_weights} as a number requires {.arg counties} to be specified.")
         }
         edge_weights <- build_county_edge_weights(adj, counties, weight = edge_weights)
         if (!silent) {
-            cli::cli_inform('Using county-based edge weights ({edge_weights[[1]]$weight}x for intra-county edges).')
+            cli::cli_inform("Using county-based edge weights ({edge_weights[[1]]$weight}x for intra-county edges).")
         }
     } else if (!is.null(edge_weights)) {
         edge_weights <- validate_edge_weights(edge_weights, adj, V)
@@ -247,7 +247,7 @@ redist_cyclewalk <- function(
         # Build edge weights from counties: upweight intra-county edges by 10x
         edge_weights <- build_county_edge_weights(adj, counties, weight = 10.0)
         if (!silent) {
-            cli::cli_inform('Using county-based edge weights (10x for intra-county edges).')
+            cli::cli_inform("Using county-based edge weights (10x for intra-county edges).")
         }
     } else {
         edge_weights <- list()
@@ -263,19 +263,19 @@ redist_cyclewalk <- function(
     }
 
     # Population bounds
-    pop_bounds <- attr(map, 'pop_bounds')
-    pop <- map[[attr(map, 'pop_col')]]
+    pop_bounds <- attr(map, "pop_bounds")
+    pop <- map[[attr(map, "pop_col")]]
 
     # Validate population for all init plans
     init_pop <- pop_tally(init_plans, pop, ndists)
-    if (any(init_pop < pop_bounds[1]) | any(init_pop > pop_bounds[3])) {
-        cli::cli_abort('Provided initialization does not meet population bounds.')
+    if (any(init_pop < pop_bounds[1]) || any(init_pop > pop_bounds[3])) {
+        cli::cli_abort("Provided initialization does not meet population bounds.")
     }
     if (any(pop >= pop_bounds[3])) {
         too_big <- as.character(which(pop >= pop_bounds[3]))
-        cli::cli_abort(c('Unit{?s} {too_big} ha{?ve/s/ve}
-                    population larger than the maximum district size.',
-      'x' = 'Redistricting impossible.'
+        cli::cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
+                    population larger than the maximum district size.",
+      'x' = "Redistricting impossible."
     ))
     }
 
@@ -289,23 +289,23 @@ redist_cyclewalk <- function(
         `%oper%` <- `%dorng%`
         if (!silent) {
             of <- ifelse(
-                Sys.info()[['sysname']] == 'Windows',
-                tempfile(pattern = paste0('cw_', substr(Sys.time(), 1, 10)), fileext = '.txt'),
-                ''
+                Sys.info()[["sysname"]] == "Windows",
+                tempfile(pattern = paste0("cw_", substr(Sys.time(), 1, 10)), fileext = ".txt"),
+                ""
             )
             cl <- parallel::makeCluster(
                 ncores,
                 type = cl_type,
                 outfile = of,
                 methods = FALSE,
-                useXDR = .Platform$endian != 'little'
+                useXDR = .Platform$endian != "little"
             )
         } else {
             cl <- parallel::makeCluster(
                 ncores,
                 type = cl_type,
                 methods = FALSE,
-                useXDR = .Platform$endian != 'little'
+                useXDR = .Platform$endian != "little"
             )
         }
 
@@ -323,7 +323,7 @@ redist_cyclewalk <- function(
     ) %oper%
         {
             if (!silent) {
-                cat('Starting chain ', chain, '\n', sep = '')
+                cat("Starting chain ", chain, "\n", sep = "")
             }
             run_verbosity <- if (chain == 1 || verbosity == 3) verbosity else 0
 
@@ -353,7 +353,7 @@ redist_cyclewalk <- function(
             t2_run <- Sys.time()
 
             # Process output for this chain
-            storage.mode(algout$plans) <- 'integer'
+            storage.mode(algout$plans) <- "integer"
 
             acceptances <- if (!is.null(algout$mhdecisions)) {
                 as.logical(algout$mhdecisions)
@@ -363,7 +363,7 @@ redist_cyclewalk <- function(
 
             # Extract diagnostics
             l_diag <- list(
-      runtime = as.numeric(t2_run - t1_run, units = 'secs')
+      runtime = as.numeric(t2_run - t1_run, units = "secs")
     )
 
             if (!is.null(algout$diagnostics)) {
@@ -393,7 +393,7 @@ redist_cyclewalk <- function(
     plans <- lapply(out_par, function(algout) algout$plans)
     each_len <- ncol(plans[[1]])
     plans <- do.call(cbind, plans)
-    storage.mode(plans) <- 'integer'
+    storage.mode(plans) <- "integer"
 
     mh <- sapply(out_par, function(algout) algout$mh)
     l_diag <- lapply(out_par, function(algout) algout$l_diag)
@@ -403,14 +403,14 @@ redist_cyclewalk <- function(
     out <- new_redist_plans(
         plans = plans,
         map = map,
-        algorithm = 'cyclewalk',
+        algorithm = "cyclewalk",
         wgt = NULL,
         resampled = FALSE,
         compactness = compactness,
         constraints = constraints,
         ndists = ndists,
         mh_acceptance = mh,
-        version = packageVersion('redist'),
+        version = packageVersion("redist"),
         diagnostics = l_diag
     )
 
@@ -447,7 +447,7 @@ redist_cyclewalk <- function(
     }
 
     if (chains > 1) {
-        out <- dplyr::relocate(out, chain, .after = 'draw')
+        out <- dplyr::relocate(out, chain, .after = "draw")
     }
 
     out
@@ -456,7 +456,7 @@ redist_cyclewalk <- function(
 # Validate edge weights format and values
 validate_edge_weights <- function(edge_weights, adj, V) {
     if (!is.list(edge_weights)) {
-        cli::cli_abort('{.arg edge_weights} must be a list.')
+        cli::cli_abort("{.arg edge_weights} must be a list.")
     }
 
     if (length(edge_weights) == 0) {
@@ -468,17 +468,17 @@ validate_edge_weights <- function(edge_weights, adj, V) {
         entry <- edge_weights[[i]]
 
         if (!is.list(entry)) {
-            cli::cli_abort('Entry {i} of {.arg edge_weights} must be a list.')
+            cli::cli_abort("Entry {i} of {.arg edge_weights} must be a list.")
         }
 
         # Check for edge field
-        if (!'edge' %in% names(entry)) {
-            cli::cli_abort('Entry {i} of {.arg edge_weights} missing {.field edge} field.')
+        if (!"edge" %in% names(entry)) {
+            cli::cli_abort("Entry {i} of {.arg edge_weights} missing {.field edge} field.")
         }
 
         # Check for weight field
-        if (!'weight' %in% names(entry)) {
-            cli::cli_abort('Entry {i} of {.arg edge_weights} missing {.field weight} field.')
+        if (!"weight" %in% names(entry)) {
+            cli::cli_abort("Entry {i} of {.arg edge_weights} missing {.field weight} field.")
         }
 
         edge <- entry$edge
@@ -486,7 +486,7 @@ validate_edge_weights <- function(edge_weights, adj, V) {
 
         # Validate edge format
         if (!is.numeric(edge) || length(edge) != 2) {
-            cli::cli_abort('Entry {i}: {.field edge} must be a numeric vector of length 2.')
+            cli::cli_abort("Entry {i}: {.field edge} must be a numeric vector of length 2.")
         }
 
         u <- as.integer(edge[1])
@@ -494,23 +494,23 @@ validate_edge_weights <- function(edge_weights, adj, V) {
 
         # Validate vertices in range
         if (u < 1 || u > V || v < 1 || v > V) {
-            cli::cli_abort('Entry {i}: vertices {u} and {v} out of range [1, {V}].')
+            cli::cli_abort("Entry {i}: vertices {u} and {v} out of range [1, {V}].")
         }
 
         # Check edge exists in adjacency
         # Note: adj is 0-indexed (neighbors stored as 0, 1, 2, ...)
         # but user input is 1-indexed, so check (v-1) in adj[[u]]
         if (!((v - 1) %in% adj[[u]])) {
-            cli::cli_abort('Entry {i}: edge ({u}, {v}) not in adjacency graph.')
+            cli::cli_abort("Entry {i}: edge ({u}, {v}) not in adjacency graph.")
         }
 
         # Validate weight
         if (!is.numeric(weight) || length(weight) != 1) {
-            cli::cli_abort('Entry {i}: {.field weight} must be a single number.')
+            cli::cli_abort("Entry {i}: {.field weight} must be a single number.")
         }
 
         if (weight <= 0) {
-            cli::cli_abort('Entry {i}: {.field weight} must be positive, got {weight}.')
+            cli::cli_abort("Entry {i}: {.field weight} must be positive, got {weight}.")
         }
     }
 

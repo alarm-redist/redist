@@ -30,7 +30,7 @@ redist.plot.wted.adj <- function(
     plot_shp = TRUE
 ) {
     # Check inputs ----
-    if ("SpatialPolygonsDataFrame" %in% class(shp)) {
+    if (inherits(shp, "SpatialPolygonsDataFrame")) {
         shp <- shp %>% st_as_sf()
     } else if (!inherits(shp, "sf")) {
         cli::cli_abort("{.arg shp} must be a {.cls SpatialPolygonsDataFrame} or {.cls sf} object.")
@@ -87,7 +87,7 @@ redist.plot.wted.adj <- function(
                     geom_sf(data = distr, size = 1, fill = NA)
             }
         } else {
-            if (length(ref == nrow(shp))) {
+            if (length(ref) == nrow(shp)) {
                 distr <- shp %>%
                     mutate(ref_input = ref) %>%
                     group_by(.data$ref_input) %>%

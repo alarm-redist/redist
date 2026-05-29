@@ -46,13 +46,13 @@ new_redist_plans <- function(
         names(list(...)))
 
     if (is.null(colnames(plans))) {
-        draw_fac = as.factor(1:n_sims)
+        draw_fac <- as.factor(1:n_sims)
     } else {
-        draw_fac = character(n_sims)
-        ref_idx = which(nchar(colnames(plans)) > 0)
-        draw_fac[ref_idx] = colnames(plans)[ref_idx]
-        draw_fac[-ref_idx] = as.character(seq_len(n_sims - length(ref_idx)))
-        draw_fac = factor(draw_fac, levels = draw_fac)
+        draw_fac <- character(n_sims)
+        ref_idx <- which(nchar(colnames(plans)) > 0)
+        draw_fac[ref_idx] <- colnames(plans)[ref_idx]
+        draw_fac[-ref_idx] <- as.character(seq_len(n_sims - length(ref_idx)))
+        draw_fac <- factor(draw_fac, levels = draw_fac)
     }
 
     structure(
@@ -351,7 +351,7 @@ add_reference <- function(plans, ref_plan, name = NULL) {
     }
 
     if (is.ordered(plans$district)) {
-        rg_labels = range(as.integer(as.character(levels(plans$district))))
+        rg_labels <- range(as.integer(as.character(levels(plans$district))))
         if (any(rg_labels != c(1L, attr(plans, "ndists")))) {
             cli::cli_abort(c("Cannot add a reference plan to a set of plans which
                         have relabeled district numbers that don't start at 1.",
@@ -361,7 +361,7 @@ add_reference <- function(plans, ref_plan, name = NULL) {
         }
 
         # good to go
-        plans$district = as.integer(plans$district)
+        plans$district <- as.integer(plans$district)
         cli::cli_inform(c("Coercing {.val district} column to integers.",
                      "i"="You may want to run {.fn match_numbers} again to fix district labels.\n"))
     }
@@ -581,7 +581,7 @@ rbind.redist_plans <- function(..., deparse.level = 1) {
         out <- objs[[i]] |>
             dplyr::as_tibble()
 
-        if (!'chain' %in% names(out)) {
+        if (!"chain" %in% names(out)) {
             out$chain <- i
         }
         out

@@ -47,10 +47,10 @@
 #' @concept analyze
 #' @export
 redist_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE) {
-    algo = attr(plans, "algorithm")
-    algos_ok = c("smc", "mergesplit", "cyclewalk", "flip")
+    algo <- attr(plans, "algorithm")
+    algos_ok <- c("smc", "mergesplit", "cyclewalk", "flip")
 
-    x = enquo(x)
+    x <- enquo(x)
 
     if (is.null(algo) || !algo %in% algos_ok) {
         cli::cli_abort("{.field algorithm} attribute missing from {.arg plans}.
@@ -70,7 +70,7 @@ redist_smc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE)
     x_orig <- enquo(x)
     x <- as.numeric(eval_tidy(enquo(x), plans))
     if (!"district" %in% names(plans)) {
-        plans$district = rep(1, nrow(plans))
+        plans$district <- rep(1, nrow(plans))
     }
     if (!is.null(district)) {
         x <- x[plans$district == district]
@@ -124,7 +124,7 @@ redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE
     x_orig <- enquo(x)
     x <- as.numeric(eval_tidy(enquo(x), plans))
     if (!"district" %in% names(plans)) {
-        plans$district = rep(1, nrow(plans))
+        plans$district <- rep(1, nrow(plans))
     }
     if (!is.null(district)) {
         x <- x[plans$district == district]
@@ -148,7 +148,7 @@ redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE
 
     rlang::check_installed("coda", "to calculate MCMC standard errors.")
 
-    mcmc = coda::mcmc.list(tapply(x, chain, coda::mcmc))
+    mcmc <- coda::mcmc.list(tapply(x, chain, coda::mcmc))
     std_err <- summary(mcmc)$statistics["Time-series SE"]
     if (isTRUE(by_chain)) {
         std_err <- std_err * sqrt(max(chain))

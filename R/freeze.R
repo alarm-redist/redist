@@ -39,8 +39,8 @@ redist.freeze <- function(adj, freeze_row, plan = rep(1, length(adj))) {
     }
 
     if (is.numeric(freeze_row)) {
-        if (max(freeze_row) < length(adj) & all(freeze_row > 0)) {
-            freeze_row <- 1:length(adj) %in% freeze_row
+        if (max(freeze_row) < length(adj) && all(freeze_row > 0)) {
+            freeze_row <- seq_along(adj) %in% freeze_row
         }
     } else if (is.logical(freeze_row)) {
         if (length(freeze_row) != length(adj)) {
@@ -51,16 +51,12 @@ redist.freeze <- function(adj, freeze_row, plan = rep(1, length(adj))) {
     }
 
     tb <- tibble(plan = plan, freeze_row = freeze_row) %>%
-        group_by(plan, freeze_row) %>%
-        mutate(id = cur_group_id()) %>%
-        ungroup()
+        mutate(id = cur_group_id(), .by = c(plan, freeze_row))
     cont <- contiguity(adj = adj, group = tb$id)
     tb <- tb %>%
         mutate(cont = cont) %>%
         mutate(rn = row_number()) %>%
-        group_by(plan, cont, freeze_row) %>%
-        mutate(rn = ifelse(freeze_row, min(rn), rn)) %>%
-        ungroup() %>%
+        mutate(rn = ifelse(freeze_row, min(rn), rn), .by = c(plan, cont, freeze_row)) %>%
         group_by(rn) %>%
         mutate(gid = cur_group_id())
 

@@ -52,9 +52,9 @@ library(dplyr)
 data(iowa)
 
 # set a 0.1% population constraint
-iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.001, total_pop = pop)
+iowa_map <- redist_map(iowa, existing_plan=cd_2010, pop_tol=0.001, total_pop = pop)
 # simulate 500 plans using the SMC algorithm
-iowa_plans = redist_smc(iowa_map, nsims=500)
+iowa_plans <- redist_smc(iowa_map, nsims=500)
 #> SEQUENTIAL MONTE CARLO
 #> Sampling 500 99-unit maps with 4 districts and population between 760827 and 762350.
 ```
@@ -74,7 +74,7 @@ redist.plot.plans(iowa_plans, draws=c("cd_2010", "1", "2", "3"), shp=iowa_map)
 
 ``` r
 
-iowa_plans = iowa_plans %>%
+iowa_plans <- iowa_plans %>%
     mutate(Compactness = comp_polsby(pl(), iowa_map),
            `Population deviation` = plan_parity(iowa_map),
            `Democratic vote` = group_frac(iowa_map, dem_08, tot_08))

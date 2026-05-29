@@ -146,23 +146,23 @@ proj_contr <- function(plans, x, compare = NA, draws = NA, norm = FALSE, pfdr = 
     plans <- vctrs::vec_slice(plans, vctrs::vec_order(cbind(plans$draw, plans$district)))
     nd <- attr(plans, "ndists")
     x <- rlang::eval_tidy(rlang::enquo(x), plans)
-    pd = proj_distr_m(plans_m, x, draw_idx, nd)
-    pa = rowMeans(pd)
+    pd <- proj_distr_m(plans_m, x, draw_idx, nd)
+    pa <- rowMeans(pd)
 
-    contr = x[(comp_idx - 1) * nd + 1:nd][plans_m[, comp_idx]] - pa
+    contr <- x[(comp_idx - 1) * nd + 1:nd][plans_m[, comp_idx]] - pa
 
     if (isTRUE(norm)) {
-        sds = sqrt(rowMeans((pd - rowMeans(pd))^2))
-        contr = contr / sds
+        sds <- sqrt(rowMeans((pd - rowMeans(pd))^2))
+        contr <- contr / sds
     }
 
     if (isTRUE(pfdr)) {
         rlang::check_installed("matrixStats", "for pFDR control.")
-        pd = pd - pa
-        m_pv = matrixStats::rowRanks(abs(pd), ties.method = "max") / ncol(pd)
-        pv_draw = matrixStats::rowMeans2(abs(pd) >= abs(contr)) + 1 / ncol(pd)
+        pd <- pd - pa
+        m_pv <- matrixStats::rowRanks(abs(pd), ties.method = "max") / ncol(pd)
+        pv_draw <- matrixStats::rowMeans2(abs(pd) >= abs(contr)) + 1 / ncol(pd)
 
-        attr(contr, "q") = est_pfdr(pv_draw, m_pv) |>
+        attr(contr, "q") <- est_pfdr(pv_draw, m_pv) |>
             qvalues(pv_draw)
     }
 
@@ -171,18 +171,18 @@ proj_contr <- function(plans, x, compare = NA, draws = NA, norm = FALSE, pfdr = 
 
 # Algorithm 1 of Storey & Tibshirani (2001)
 est_pfdr <- function(p, ref, lambda = 0.5, n_alpha = 15) {
-    alphas = quantile(p, probs = seq(0, 1, length.out = n_alpha), type = 1, names = FALSE)
-    m = length(p)
-    pi0 = (m - sum(p <= lambda)) / (m - mean(colSums(ref <= lambda)))
-    pi0 = min(pi0, 1)
-    fdrs = vapply(
+    alphas <- quantile(p, probs = seq(0, 1, length.out = n_alpha), type = 1, names = FALSE)
+    m <- length(p)
+    pi0 <- (m - sum(p <= lambda)) / (m - mean(colSums(ref <= lambda)))
+    pi0 <- min(pi0, 1)
+    fdrs <- vapply(
         alphas,
         function(a) {
             pi0 * mean(colSums(ref <= a)) / sum(p <= a)
         },
         0.0
     )
-    ok = !is.nan(fdrs)
+    ok <- !is.nan(fdrs)
 
     list(
         alpha = alphas,
@@ -191,7 +191,7 @@ est_pfdr <- function(p, ref, lambda = 0.5, n_alpha = 15) {
 }
 # Produce q values with spline
 qvalues <- function(ests, p) {
-    idx = vctrs::vec_unique_loc(ests$alpha)
+    idx <- vctrs::vec_unique_loc(ests$alpha)
     splinefun(ests$alpha[idx], rev(cummin(rev(ests$pfdr[idx]))), method = "monoH.FC")(p)
 }
 
@@ -218,7 +218,7 @@ qvalues <- function(ests, p) {
 #' plans <- redist_smc(map, 50, silent = TRUE)
 #' plans$dem <- group_frac(map, dem_08, tot_08, plans)
 #'
-#' pc = proj_contr(plans, dem, pfdr=TRUE)
+#' pc <- proj_contr(plans, dem, pfdr=TRUE)
 #' redist.plot.contr_pfdr(map, pc, level=0.4) # high `level` just to demonstrate
 #'
 #'
@@ -229,8 +229,8 @@ redist.plot.contr_pfdr <- function(map, contr, level = 0.05, density = 0.2, spac
         cli::cli_abort("Must provide {.arg pfdr=TRUE} to {.fn proj_contr} to use {.fn redist.plot.contr_pfdr}.")
     }
 
-    p = plot(map, contr)
-    q = attr(contr, "q")
+    p <- plot(map, contr)
+    q <- attr(contr, "q")
     if (!is.numeric(level) || level < 0 || level > 1) {
         cli::cli_abort("{.arg level} must be a number between 0 and 1.")
     }
@@ -239,7 +239,7 @@ redist.plot.contr_pfdr <- function(map, contr, level = 0.05, density = 0.2, spac
     }
     rlang::check_installed("ggpattern", "for pFDR-controlling projective contrast plots.")
 
-    geom_sel = map |>
+    geom_sel <- map |>
         dplyr::filter(q <= level) |>
         dplyr::summarize(is_coverage = TRUE) |>
         suppressWarnings()

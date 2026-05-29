@@ -22,8 +22,8 @@ redist.plot.majmin <- function(grouppercent, type = "hist", title = "") {
     } else if (type == "toptwo") {
         tibble(
             blk_pct = c(grouppercent),
-            district = rep(1:nrow(grouppercent), ncol(grouppercent)),
-            nloop = rep(1:ncol(grouppercent), each = nrow(grouppercent))
+            district = rep(seq_len(nrow(grouppercent)), ncol(grouppercent)),
+            nloop = rep(seq_len(ncol(grouppercent)), each = nrow(grouppercent))
         ) %>%
             group_by(nloop) %>%
             arrange(desc(blk_pct), .by_group = TRUE) %>%
@@ -32,20 +32,18 @@ redist.plot.majmin <- function(grouppercent, type = "hist", title = "") {
             summarise(first_blk = first(tot_blk_pct), second_blk = nth(tot_blk_pct, n = 2)) %>%
             ggplot(aes(x = first_blk, y = second_blk)) +
             geom_point() +
-            geom_vline(xintercept = .5, color = "blue", linetype = "dotted") +
-            geom_hline(yintercept = .5, color = "blue", linetype = "dotted") +
+            geom_vline(xintercept = 0.5, color = "blue", linetype = "dotted") +
+            geom_hline(yintercept = 0.5, color = "blue", linetype = "dotted") +
             labs(x = "Larger Minority Percent", y = "Smaller Minority Percent") +
             theme_bw() +
             annotate("rect", xmin = 0.5, ymin = 0.5, xmax = 1, ymax = 1, alpha = 0.2)
     } else if (type == "box") {
         tibble(
             blk_pct = c(grouppercent),
-            district = rep(1:nrow(grouppercent), ncol(grouppercent)),
-            nloop = rep(1:ncol(grouppercent), each = nrow(grouppercent))
+            district = rep(seq_len(nrow(grouppercent)), ncol(grouppercent)),
+            nloop = rep(seq_len(ncol(grouppercent)), each = nrow(grouppercent))
         ) %>%
-            group_by(district) %>%
-            mutate(blk_pct = sort(blk_pct)) %>%
-            ungroup() %>%
+            mutate(blk_pct = sort(blk_pct), .by = district) %>%
             ggplot(aes(x = district, y = blk_pct, group = district)) %>%
             geom_boxplot() +
             theme_bw() +

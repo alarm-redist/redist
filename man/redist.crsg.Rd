@@ -62,7 +62,7 @@ Rodden (2013).
 \examples{
 data("fl25")
 adj <- redist.adjacency(fl25)
-redist.crsg(adj = adj, total_pop = fl25$pop, shp = fl25, ndists = 2, pop_tol = .1)
+redist.crsg(adj = adj, total_pop = fl25$pop, shp = fl25, ndists = 2, pop_tol = 0.1)
 
 }
 \references{

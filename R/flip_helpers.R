@@ -106,7 +106,7 @@ redist.ipw <- function(
     temper = 0
 ) {
     ## Warnings:
-    if (missing(plans) | !inherits(plans, "redist_plans")) {
+    if (missing(plans) || !inherits(plans, "redist_plans")) {
         cli::cli_abort("Please provide {.arg plans} as a {.cls redist_plans}.")
     }
 
@@ -191,7 +191,7 @@ redist.thin.chain <- function(algout, thin = 100) {
             algout_new[[i]] <- algout[[i]][, inds]
         } else if (length(algout[[i]]) == 1) {
             algout_new[[i]] <- algout[[i]]
-        } else if (!is.null(names(algout[[i]])) & all(names(algout[[i]]) == "adj")) {
+        } else if (!is.null(names(algout[[i]])) && all(names(algout[[i]]) == "adj")) {
             algout_new[[i]] <- algout[[i]]
         } else {
             algout_new[[i]] <- algout[[i]][inds]

@@ -13,33 +13,21 @@ init_workers <- function(cl) {
         isTRUE(pkgload::is_dev_package("redist"))
     if (dev) {
         pkg_path <- getNamespaceInfo("redist", "path")
-        parallel::clusterCall(cl, function(p) {
-            pkgload::load_all(p, quiet = TRUE, export_all = FALSE,
-                              helpers = FALSE, attach_testthat = FALSE)
-        }, pkg_path)
+        parallel::clusterCall(
+            cl,
+            function(p) {
+                pkgload::load_all(
+                    p,
+                    quiet = TRUE,
+                    export_all = FALSE,
+                    helpers = FALSE,
+                    attach_testthat = FALSE
+                )
+            },
+            pkg_path
+        )
     } else {
         parallel::clusterEvalQ(cl, library(redist))
     }
     invisible(NULL)
-}
-
-#' Combine factors
-#'
-#' @param ... factors to combine
-#'
-#' @return a factor
-#'
-#' @noRd
-factor_combine <- function(...) {
-    f <- rlang::list2(...)
-    lvls <- lapply(f, levels)
-    lvls <- lapply(seq_along(f), function(i) {
-        if (is.null(lvls[[i]])) {
-            unique(f[[i]])
-        } else {
-            lvls[[i]]
-        }
-    })
-    lvls <- Reduce(f = union, x = lvls, init = c())
-    factor(unlist(f), levels = lvls)
 }

@@ -181,5 +181,5 @@ redist.prec.pop.overlap <- function(
     if (return_mat) {
         return(wted_mat)
     }
-    apply(wted_mat, MARGIN = 1, FUN = mean)
+    rowMeans(wted_mat)
 }

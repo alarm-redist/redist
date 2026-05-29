@@ -64,12 +64,12 @@ redist.preproc <- function(
             symmetric <- isSymmetric(adj)
 
             ## If all are true, change to adjlist and automatically zero-index
-            if (squaremat & binary & diag & symmetric) {
+            if (squaremat && binary && diag && symmetric) {
                 ## Initialize object
                 adjlist <- vector("list", nrow(adj))
 
                 ## Loop through rows in matrix
-                for (i in 1:nrow(adj)) {
+                for (i in seq_len(nrow(adj))) {
                     ## Extract row
                     adjvec <- adj[, i]
                     ## Find elements it is adjacent to
@@ -97,7 +97,7 @@ redist.preproc <- function(
                  Polygons shp file"
             )
         }
-    } else if ("sf" %in% class(adj)) {
+    } else if (inherits(adj, "sf")) {
         adjlist <- redist.adjacency(adj)
     } else {
         ## Rename adjacency object as list
@@ -111,10 +111,10 @@ redist.preproc <- function(
 
         if (oneind) {
             ## Zero-index list
-            for (i in 1:length(adjlist)) {
+            for (i in seq_along(adjlist)) {
                 adjlist[[i]] <- adjlist[[i]] - 1
             }
-        } else if (!(oneind | zeroind)) {
+        } else if (!oneind && !zeroind) {
             ## if neither oneind or zeroind, then stop
             stop("Adjacency list must be one-indexed or zero-indexed")
         }
@@ -140,7 +140,7 @@ redist.preproc <- function(
 
         ## Set up target pop, strength of constraint (5%)
         if (is.null(pop_tol)) {
-            pop_tol_rsg <- .05
+            pop_tol_rsg <- 0.05
         } else {
             pop_tol_rsg <- pop_tol
         }
@@ -195,13 +195,13 @@ redist.preproc <- function(
     ###########################################################
     ## Check other inputs to make sure they are right length ##
     ###########################################################
-    if ((length(total_pop) != length(adjlist)) | (sum(is.na(total_pop)) > 0)) {
+    if ((length(total_pop) != length(adjlist)) || (sum(is.na(total_pop)) > 0)) {
         stop(
             "Each entry in adjacency list must have a corresponding entry
               in vector of populations"
         )
     }
-    if ((length(init_plan) != length(adjlist)) | (sum(is.na(init_plan)) > 0)) {
+    if ((length(init_plan) != length(adjlist)) || (sum(is.na(init_plan)) > 0)) {
         stop(
             "Each entry in adjacency list must have an initial congressional
              district assignment"
@@ -241,12 +241,12 @@ redist.preproc <- function(
         if (betaseq[1] == "powerlaw") {
             ## Generate power law sequence
             betaseq <- rep(NA, betaseqlength)
-            for (i in 1:length(betaseq)) {
-                betaseq[i] <- (0.1^((i - 1) / (length(betaseq) - 1)) - .1) / .9
+            for (i in seq_along(betaseq)) {
+                betaseq[i] <- (0.1^((i - 1) / (length(betaseq) - 1)) - 0.1) / 0.9
             }
         } else if (is.vector(betaseq)) {
             betaseq <- betaseq
-        } else if (!is.vector(betaseq) & betaseq[1] != "powerlaw") {
+        } else if (!is.vector(betaseq) && betaseq[1] != "powerlaw") {
             stop("Please provide valid sequence of betas")
         }
         if (is.null(betaweights)) {

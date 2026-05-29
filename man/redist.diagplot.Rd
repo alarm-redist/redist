@@ -45,7 +45,7 @@ init_plan <- fl25_enum$plans[, 5118]
 fl25$init_plan <- init_plan
 
 ## 25 precinct, three districts - no pop constraint ##
-fl_map <- redist_map(fl25, existing_plan = 'init_plan', adj = fl25_adj)
+fl_map <- redist_map(fl25, existing_plan = "init_plan", adj = fl25_adj)
 alg_253 <- redist_flip(fl_map, nsims = 10000)
 
 ## Get Republican Dissimilarity Index from simulations

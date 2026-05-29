@@ -48,7 +48,7 @@ redist.identify.cores <- function(adj, plan, boundary = 1, focus = NULL, simplif
     }
 
     # init a nice empty list
-    cd_within_k <- lapply(1:length(plan), FUN = function(x) {
+    cd_within_k <- lapply(seq_along(plan), FUN = function(x) {
         integer(0)
     })
 
@@ -67,14 +67,10 @@ redist.identify.cores <- function(adj, plan, boundary = 1, focus = NULL, simplif
     }
 
     tb <- tibble(dm = plan, boundary = core$k, cc = core$conncomp) %>%
-        group_by(.data$dm, boundary) %>%
-        mutate(gid = row_number()) %>%
-        ungroup() %>%
+        mutate(gid = row_number(), .by = c(.data$dm, boundary)) %>%
         mutate(gid = ifelse(boundary == 0, .data$cc, gid)) %>%
         mutate(gid = paste0(.data$dm, "-", boundary, "-", gid)) %>%
-        group_by(gid) %>%
-        mutate(group = cur_group_id()) %>%
-        ungroup()
+        mutate(group = cur_group_id(), .by = gid)
 
     gid <- tb$group
 
@@ -104,7 +100,7 @@ redist.uncoarsen <- function(plans, group_index) {
 
     remain <- sort(unique(group_index))
 
-    for (i in 1:length(group_index)) {
+    for (i in seq_along(group_index)) {
         uncoarse[i, ] <- plans[which(group_index[i] == remain), ]
     }
 

@@ -51,7 +51,7 @@ match_numbers <- function(data, plan, total_pop = attr(data, "prec_pop"), col = 
         plan <- plan_mat[, plan]
     }
     plan <- factor(plan, ordered = TRUE)
-    ndists <- length(levels(plan))
+    ndists <- nlevels(plan)
 
     if (is.null(total_pop)) {
         cli::cli_abort("Must provide {.arg total_pop} for this {.cls redist_plans} object.")

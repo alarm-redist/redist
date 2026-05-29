@@ -61,12 +61,12 @@ redist.plot.map(shp = fl25, plan = plan) +
 Suppose we are redistricting this small map above on the left. To use the `flip` algorithm, we need to consider the adjacency graph that underlies this map, which is above on the right. Each of the 25 precincts on the left are displayed as a node on the right, connected if they are contiguous on the map. If we use the above district as an initial plan, we can then run `flip` for a few steps.
 
 ```{r, echo = FALSE}
-redist.plot.adj(shp = fl25, plan = plan, plot_shp = FALSE, title = 'Initialization') +
-  redist.plot.adj(shp = fl25, plan = get_plans_matrix(sims)[, 1], plot_shp = FALSE, title = 'First Iteration') +
-  redist.plot.adj(shp = fl25, plan = get_plans_matrix(sims)[, 2], plot_shp = FALSE, title = 'Second Iteration') +
-  redist.plot.adj(shp = fl25, plan = get_plans_matrix(sims)[, 3], plot_shp = FALSE, title = 'Third Iteration') +
-  redist.plot.adj(shp = fl25, plan = get_plans_matrix(sims)[, 4], plot_shp = FALSE, title = 'Fourth Iteration') +
-  redist.plot.adj(shp = fl25, plan = get_plans_matrix(sims)[, 5], plot_shp = FALSE, title = 'Fifth Iteration')
+redist.plot.adj(shp = fl25, plan = plan, plot_shp = FALSE, title = "Initialization") +
+  redist.plot.adj(shp = fl25, plan = get_plans_matrix(sims)[, 1], plot_shp = FALSE, title = "First Iteration") +
+  redist.plot.adj(shp = fl25, plan = get_plans_matrix(sims)[, 2], plot_shp = FALSE, title = "Second Iteration") +
+  redist.plot.adj(shp = fl25, plan = get_plans_matrix(sims)[, 3], plot_shp = FALSE, title = "Third Iteration") +
+  redist.plot.adj(shp = fl25, plan = get_plans_matrix(sims)[, 4], plot_shp = FALSE, title = "Fourth Iteration") +
+  redist.plot.adj(shp = fl25, plan = get_plans_matrix(sims)[, 5], plot_shp = FALSE, title = "Fifth Iteration")
 ```
 
 While this map is extremely small, the five iterations give a basic idea of what is going on behind the scenes. At each iteration, it searches the boundary for possible swaps, selects one, and then accepts or rejects the proposals. With very weak constraints, like those used to create the above example, almost every swap is accepted. Even then, though, it doesn't guarantee that some iterations won't repeat other plans sampled. In fact, in the above, the second iteration is the same plan as the initialization.
@@ -314,7 +314,7 @@ redist.diagplot(sumstat = seg_chains, plot = "trace")
 -   Gelman Rubin Plot
 
 ```{r}
-redist.diagplot(sumstat = seg_chains, plot = 'gelmanrubin')
+redist.diagplot(sumstat = seg_chains, plot = "gelmanrubin")
 ```
 
 [Back to top](#top)
@@ -370,7 +370,7 @@ for(i in 1:100){
   adj_dists_new[i] <- dists_new[i, i + 1]
 }
 tibble(Hamming = c(adj_dists, adj_dists_new), 
-       `lambda/eprob` = c(rep('0/0.05', 100), rep('2/0.10', 100))) %>% 
+       `lambda/eprob` = c(rep("0/0.05", 100), rep("2/0.10", 100))) %>% 
   ggplot() + 
   geom_density(aes(x = Hamming, color = `lambda/eprob`)) + 
   theme_bw()

@@ -30,7 +30,7 @@ redist.plot.penalty <- function(
 ) {
     .Deprecated("plot.redist_constr")
 
-    tb <- tibble(x = seq(0, 1, by = .001))
+    tb <- tibble(x = seq(0, 1, by = 0.001))
     tb <- tb %>%
         mutate(y = strength_vra * (abs(x - tgt_min)^pow_vra) * (abs(x - tgt_other)^pow_vra))
 

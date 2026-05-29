@@ -20,14 +20,14 @@ redist.plot.varinfo <- function(plans, group_pop, total_pop, shp) {
     pct_min <- colmin(gp)
     dists <- redist.distances(plans, "info", total_pop = total_pop)$VI
     mds <- cmdscale(dists)
-    tb <- tibble(mds1 = mds[, 1], mds2 = mds[, 2], pct_min = pct_min, id = 1:ncol(plans))
+    tb <- tibble(mds1 = mds[, 1], mds2 = mds[, 2], pct_min = pct_min, id = seq_len(ncol(plans)))
 
     km <- kmeans(x = mds, centers = centers)
 
     tb$cluster <- km$cluster
 
     tb$dist <- NA_real_
-    for (i in 1:nrow(tb)) {
+    for (i in seq_len(nrow(tb))) {
         tb$dist[i] <- sqrt(
             (tb$mds1[i] - km$centers[tb$cluster[i], 1])^2 +
                 (tb$mds2[i] - km$centers[tb$cluster[i], 2])^2

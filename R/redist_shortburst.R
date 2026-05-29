@@ -131,7 +131,7 @@ redist_shortburst <- function(
     if (compactness < 0) {
         cli::cli_abort("{.arg compactness} must be non-negative.")
     }
-    if (adapt_k_thresh < 0 | adapt_k_thresh > 1) {
+    if (adapt_k_thresh < 0 || adapt_k_thresh > 1) {
         cli::cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
     }
 
@@ -146,7 +146,7 @@ redist_shortburst <- function(
     if (is.null(counties)) {
         counties <- rep(1, V)
     } else {
-        if (any(is.na(counties))) {
+        if (anyNA(counties)) {
             cli::cli_abort("County vector must not contain missing values.")
         }
 
@@ -209,7 +209,7 @@ redist_shortburst <- function(
     constraints <- as.list(constraints)
 
     if (backend == "mergesplit") {
-        control = list(adapt_k_thresh=adapt_k_thresh, do_mh=reversible)
+        control <- list(adapt_k_thresh=adapt_k_thresh, do_mh=reversible)
         if (is.null(fixed_k)) {
             x <- ms_plans(
                 1,
@@ -230,7 +230,7 @@ redist_shortburst <- function(
             )
             k <- x$est_k
         } else {
-            k = fixed_k
+            k <- fixed_k
         }
 
         run_burst <- function(init, steps) {
@@ -305,26 +305,26 @@ redist_shortburst <- function(
     rescale <- 1 - maximize * 2
 
     cur_best_scores <- score_fn(matrix(init_plan, ncol = 1))
-    score_init = cur_best_scores
+    score_init <- cur_best_scores
     if (!is.numeric(stop_at)) {
         stop_at <- -Inf
     } else {
-        stop_at = rescale * stop_at
+        stop_at <- rescale * stop_at
     }
     if (!is.matrix(cur_best_scores)) {
-        cur_best_scores = matrix(cur_best_scores, ncol = 1)
-        rownames(cur_best_scores) = "score"
+        cur_best_scores <- matrix(cur_best_scores, ncol = 1)
+        rownames(cur_best_scores) <- "score"
     } else {
-        cur_best_scores = t(cur_best_scores)
+        cur_best_scores <- t(cur_best_scores)
         if (!is.null(names(rescale))) {
-            rescale = rescale[match(rownames(cur_best_scores), names(rescale))]
+            rescale <- rescale[match(rownames(cur_best_scores), names(rescale))]
         }
     }
     cur_best_scores <- cur_best_scores * rescale
     dim_score <- nrow(cur_best_scores)
 
     scores <- matrix(nrow = n_out, ncol = dim_score)
-    colnames(scores) = rownames(cur_best_scores)
+    colnames(scores) <- rownames(cur_best_scores)
 
     if (verbose) {
         fmt_score <- function(x) {
@@ -360,7 +360,7 @@ redist_shortburst <- function(
                         "x"="Found {this_burst_size} on iteration {burst}."))
         }
         keep <- seq_len(this_burst_size)
-        burst_init = cur_best[, sample.int(ncol(cur_best), 1)]
+        burst_init <- cur_best[, sample.int(ncol(cur_best), 1)]
         plans <- run_burst(burst_init, this_burst_size)[, keep, drop = FALSE]
         plan_scores <- t(matrix(score_fn(plans), ncol = dim_score))
         plan_scores <- plan_scores * rescale
@@ -369,13 +369,13 @@ redist_shortburst <- function(
         cur_best_scores <- cbind(cur_best_scores, plan_scores)
 
         dominated <- pareto_dominated(cur_best_scores)
-        improved <- any(!tail(dominated, this_burst_size))
+        improved <- !all(tail(dominated, this_burst_size))
         # remove dominated plans
         cur_best <- cur_best[, !dominated, drop = FALSE]
         cur_best_scores <- cur_best_scores[, !dominated, drop = FALSE]
 
         # add new undominated plans
-        out_idx = sample.int(ncol(cur_best), 1) # random plan from frontier
+        out_idx <- sample.int(ncol(cur_best), 1) # random plan from frontier
         if (improved) {
             # improvement
             if (verbose) {
@@ -398,7 +398,7 @@ redist_shortburst <- function(
             scores[idx, ] <- cur_best_scores[, out_idx] * rescale
 
             if (any(colSums(cur_best_scores <= stop_at) == dim_score)) {
-                converged = TRUE
+                converged <- TRUE
                 break
             }
         }
@@ -408,8 +408,8 @@ redist_shortburst <- function(
         out_idx <- seq_len(idx)
         storage.mode(out_mat) <- "integer"
 
-        pareto_scores = t(cur_best_scores * rescale)
-        ord = order(pareto_scores[, 1])
+        pareto_scores <- t(cur_best_scores * rescale)
+        ord <- order(pareto_scores[, 1])
 
         out <- new_redist_plans(
             out_mat[, out_idx, drop = FALSE],
@@ -425,13 +425,13 @@ redist_shortburst <- function(
             version = packageVersion("redist"),
             score_fn = deparse(substitute(score_fn))
         )
-        score_mat = matrix(rep(scores[out_idx, ], each = ndists), ncol = dim_score)
-        colnames(score_mat) = colnames(scores)
+        score_mat <- matrix(rep(scores[out_idx, ], each = ndists), ncol = dim_score)
+        colnames(score_mat) <- colnames(scores)
         out <- dplyr::mutate(out, as.data.frame(score_mat))
-        out$burst_size = rep(burst_sizes[out_idx], each = ndists)
+        out$burst_size <- rep(burst_sizes[out_idx], each = ndists)
 
         out <- add_reference(out, init_plan, "<init>")
-        idx_cols = ncol(out) - dim_score:1
+        idx_cols <- ncol(out) - dim_score:1
         out[1:ndists, idx_cols] <- matrix(rep(score_init, each = ndists), ncol = dim_score)
     } else {
         out <- new_redist_plans(
@@ -446,8 +446,8 @@ redist_shortburst <- function(
             version = packageVersion("redist"),
             score_fn = deparse(substitute(score_fn))
         )
-        score_mat = matrix(rep(t(cur_best_scores * rescale), each = ndists), ncol = dim_score)
-        colnames(score_mat) = colnames(scores)
+        score_mat <- matrix(rep(t(cur_best_scores * rescale), each = ndists), ncol = dim_score)
+        colnames(score_mat) <- colnames(scores)
         out <- dplyr::mutate(out, as.data.frame(score_mat))
     }
 
@@ -515,7 +515,7 @@ NULL
 #' @export
 scorer_frac_kept <- function(map) {
     adj <- get_adj(map)
-    edges <- sum(sapply(adj, length)) / 2
+    edges <- sum(lengths(adj)) / 2
     ndists <- attr(map, "ndists")
 
     fn <- function(plans) {

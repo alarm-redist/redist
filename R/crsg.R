@@ -43,7 +43,7 @@
 #' @examples
 #' data("fl25")
 #' adj <- redist.adjacency(fl25)
-#' redist.crsg(adj = adj, total_pop = fl25$pop, shp = fl25, ndists = 2, pop_tol = .1)
+#' redist.crsg(adj = adj, total_pop = fl25$pop, shp = fl25, ndists = 2, pop_tol = 0.1)
 #'
 #' @concept simulate
 #' @export
@@ -109,13 +109,8 @@ redist.crsg <- function(adj, total_pop, shp, ndists, pop_tol, verbose = TRUE, ma
     if (verbose) {
         cat(
             paste(
-                "\n\t",
-                ndists,
-                " districts built using ",
-                length(adj),
-                " precincts in ",
-                round(time[3], digits = 2),
-                " seconds...\n\n",
+                "\n\t", ndists, " districts built using ", length(adj),
+                " precincts in ", round(time[3], digits = 2), " seconds...\n\n",
                 sep = ""
             ),
             append = TRUE

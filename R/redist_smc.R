@@ -159,10 +159,10 @@ redist_smc <- function(
     if (compactness < 0) {
         cli::cli_abort("{.arg compactness} must be non-negative.")
     }
-    if (adapt_k_thresh < 0 | adapt_k_thresh > 1) {
+    if (adapt_k_thresh < 0 || adapt_k_thresh > 1) {
         cli::cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
     }
-    if (seq_alpha <= 0 | seq_alpha > 1) {
+    if (seq_alpha <= 0 || seq_alpha > 1) {
         cli::cli_abort("{.arg seq_alpha} must lie in (0, 1].")
     }
     if (nsims < 1) {
@@ -173,7 +173,7 @@ redist_smc <- function(
     if (is.null(counties)) {
         counties <- rep(1, V)
     } else {
-        if (any(is.na(counties))) {
+        if (anyNA(counties)) {
             cli::cli_abort("County vector must not contain missing values.")
         }
 
@@ -326,7 +326,7 @@ redist_smc <- function(
             lr <- -algout$lp
             wgt <- exp(lr - mean(lr))
             n_eff <- length(wgt) * mean(wgt)^2 / mean(wgt^2)
-            if (any(is.na(lr))) {
+            if (anyNA(lr)) {
                 cli::cli_abort(c("Sampling probabilities have been corrupted.",
                 "*" = "Check that none of your constraint weights are too large.
                              The output of constraint functions multiplied by the weight
@@ -407,7 +407,7 @@ redist_smc <- function(
     n_dist_act <- dplyr::n_distinct(plans[, 1]) # actual number (for partial plans)
 
     # tempering warning
-    temp_ratio = do.call(c, lapply(l_diag, function(x) x$sd_temper / head(x$sd_lp, -1)))
+    temp_ratio <- do.call(c, lapply(l_diag, function(x) x$sd_temper / head(x$sd_lp, -1)))
     if (any(temp_ratio > 0.5, na.rm = TRUE)) {
         cli::cli_warn(c("Population tempering is increasing the variance of the
                    resampling weights by over 50% at some steps.",
@@ -429,7 +429,7 @@ redist_smc <- function(
     )
     if (runs > 1) {
         out <- mutate(out, chain = rep(seq_len(runs), each = n_dist_act * nsims)) %>%
-            dplyr::relocate('chain', .after = "draw")
+            dplyr::relocate("chain", .after = "draw")
     }
 
     exist_name <- attr(map, "existing_col")

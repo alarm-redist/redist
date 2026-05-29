@@ -130,7 +130,7 @@ redist_mergesplit <- function(
     if (compactness < 0) {
         cli::cli_abort("{.arg compactness} must be non-negative.")
     }
-    if (adapt_k_thresh < 0 | adapt_k_thresh > 1) {
+    if (adapt_k_thresh < 0 || adapt_k_thresh > 1) {
         cli::cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
     }
     if (nsims <= warmup) {
@@ -145,10 +145,10 @@ redist_mergesplit <- function(
 
     exist_name <- attr(map, "existing_col")
     counties <- rlang::eval_tidy(rlang::enquo(counties), map)
-    orig_lookup = seq_len(ndists)
+    orig_lookup <- seq_len(ndists)
     if (is.null(init_plan) && !is.null(exist_name)) {
         init_plan <- vctrs::vec_group_id(get_existing(map))
-        orig_lookup = unique(get_existing(map))
+        orig_lookup <- unique(get_existing(map))
         if (is.null(init_name)) init_name <- exist_name
     } else if (!is.null(init_plan) && is.null(init_name)) {
         init_name <- "<init>"
@@ -182,15 +182,15 @@ redist_mergesplit <- function(
     if (is.null(counties)) {
         counties <- rep(1, V)
     } else {
-        if (any(is.na(counties))) {
+        if (anyNA(counties)) {
             cli::cli_abort("County vector must not contain missing values.")
         }
 
         # handle discontinuous counties
         if (silly_adj_fix) {
             for (j in seq_len(ndists)) {
-                idx_distr = which(init_plan == j)
-                adj_distr = redist.reduce.adjacency(adj, idx_distr)
+                idx_distr <- which(init_plan == j)
+                adj_distr <- redist.reduce.adjacency(adj, idx_distr)
                 component <- contiguity(adj_distr, vctrs::vec_group_id(counties[idx_distr]))
                 counties[idx_distr] <- paste0(
                     j,
@@ -202,7 +202,7 @@ redist_mergesplit <- function(
                     )
                 )
             }
-            counties = vctrs::vec_group_id(counties)
+            counties <- vctrs::vec_group_id(counties)
         } else {
             component <- contiguity(adj, vctrs::vec_group_id(counties))
             counties <- dplyr::if_else(
@@ -243,7 +243,7 @@ redist_mergesplit <- function(
     pop_bounds <- attr(map, "pop_bounds")
     pop <- map[[attr(map, "pop_col")]]
     init_pop <- pop_tally(matrix(init_plan, ncol = 1), pop, ndists)
-    if (any(init_pop < pop_bounds[1]) | any(init_pop > pop_bounds[3])) {
+    if (any(init_pop < pop_bounds[1]) || any(init_pop > pop_bounds[3])) {
         cli::cli_abort("Provided initialization does not meet population bounds.")
     }
     if (any(pop >= pop_bounds[3])) {
@@ -254,7 +254,7 @@ redist_mergesplit <- function(
     }
 
     t1_run <- Sys.time()
-    control = list(adapt_k_thresh=adapt_k_thresh, do_mh=TRUE)
+    control <- list(adapt_k_thresh=adapt_k_thresh, do_mh=TRUE)
     algout <- ms_plans(
         nsims,
         adj,

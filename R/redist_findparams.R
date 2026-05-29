@@ -96,7 +96,7 @@ run_sims <- function(
     ## Sample districts for use as starting values
     ## Divide equally by distance
     inds <- which(1 - attr(out, "distance_original") < maxdist_startval)
-    cuts <- c(0, round(quantile(1:length(inds), (1:nstartval_store)/nstartval_store)))
+    cuts <- c(0, round(quantile(seq_along(inds), (1:nstartval_store)/nstartval_store)))
     if (length(inds) == 0) {
         message_text <- paste0("No maps available under parameter set ", i, ".\n")
         cat(message_text)
@@ -220,7 +220,7 @@ run_sims <- function(
         mh_acceptance,
         "\n"
     )
-    if (report_all == TRUE) {
+    if (report_all) {
         out <- paste0(
             out,
             "## Mean population parity distance = ",
@@ -237,7 +237,7 @@ run_sims <- function(
             "\n"
         )
     }
-    if (report_all == TRUE) {
+    if (report_all) {
         out <- paste0(
             out,
             "\n## Mean share of geographies equal to initial assignment = ",
@@ -254,33 +254,31 @@ run_sims <- function(
             "\n"
         )
     }
-    if (!is.null(counties)) {
-        if (report_all == TRUE) {
-            out <- paste0(
-                out,
-                "\n## Median number of counties split = ",
-                mean(ncounties_split),
-                "\n",
-                "## Median number of counties split = ",
-                median(ncounties_split),
-                "\n",
-                "## Range of number of counties split = ",
-                paste(range(ncounties_split), collapse = " "),
-                "\n",
-                "## Initial number of counties split = ",
-                starting_county_split,
-                "\n",
-                "## MCMC Iteration quantiles of number of counties split = ",
-                paste(
+    if ((!is.null(counties)) && (report_all)) {
+        out <- paste0(
+            out,
+            "\n## Median number of counties split = ",
+            mean(ncounties_split),
+            "\n",
+            "## Median number of counties split = ",
+            median(ncounties_split),
+            "\n",
+            "## Range of number of counties split = ",
+            paste(range(ncounties_split), collapse = " "),
+            "\n",
+            "## Initial number of counties split = ",
+            starting_county_split,
+            "\n",
+            "## MCMC Iteration quantiles of number of counties split = ",
+            paste(
                     q1_countysplit_median,
                     q2_countysplit_median,
                     q3_countysplit_median,
                     q4_countysplit_median,
                     sep = " "
                 ),
-                "\n"
-            )
-        }
+            "\n"
+        )
     }
     out <- paste0(
         out,
@@ -417,16 +415,16 @@ redist.findparams <- function(
         cli::cli_warn("You have specified a grid of eprob values to search and set `adapt_eprob` to TRUE. Setting `adapt_eprob` to FALSE.")
         adapt_eprob <- FALSE
     }
-    if ("weight_segregation" %in% names & is.null(group_pop)) {
+    if ("weight_segregation" %in% names && is.null(group_pop)) {
         cli::cli_abort("If constraining on segregation, please provide a vector of group population.")
     }
-    if ("weight_compact" %in% names & is.null(ssdmat)) {
+    if ("weight_compact" %in% names && is.null(ssdmat)) {
         cli::cli_abort("If constraining on compactness, please provide a distances matrix.")
     }
-    if ("weight_similarity" %in% names & is.null(init_plan)) {
+    if ("weight_similarity" %in% names && is.null(init_plan)) {
         cli::cli_abort("If constraining on similarity, please provide a vector of initial congressional district assignments.")
     }
-    if ("weight_countysplit" %in% names & is.null(counties)) {
+    if ("weight_countysplit" %in% names && is.null(counties)) {
         cli::cli_abort("If constraining the number of county splits, please provide a vector of county assignments.")
     }
 

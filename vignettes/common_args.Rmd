@@ -55,7 +55,7 @@ redist.plot.adj(shp = iowa_map)
 # Standard eval - 
 ndists <- 4
 # tidy eval - stored within redist_map object
-attr(iowa_map, 'ndists')
+attr(iowa_map, "ndists")
 ```
 
 # nsims
@@ -145,7 +145,7 @@ get_existing(iowa_map)
 total_pop <- iowa$pop
 
 # tidy eval - a column within the redist_map object tracked by attributes
-iowa_map[[attr(iowa_map, 'pop_col')]]
+iowa_map[[attr(iowa_map, "pop_col")]]
 ```
 
 # group_pop
@@ -168,7 +168,7 @@ iowa$white
 
 ```{r}
 # tidy eval - stored in redist_map object
-attr(iowa_map, 'pop_bounds')
+attr(iowa_map, "pop_bounds")
 ```
 
 # ncores

@@ -762,37 +762,6 @@ get_order_by_cut <- function(edge_list) {
     lapply(result, as.numeric)
 }
 
-
-# Check the output and validate
-get_order_by_cut_with_check <- function(edge_list) {
-    result_edge_list <- get_order_by_cut(edge_list)
-
-    # Convert list-of-edges → 2‑column numeric matrix
-    edges1 <- do.call(rbind, lapply(edge_list, as.numeric))
-    edges2 <- do.call(rbind, lapply(result_edge_list, as.numeric))
-
-    # Build graphs
-    G1 <- igraph::graph_from_edgelist(edges1, directed = FALSE)
-    G2 <- igraph::graph_from_edgelist(edges2, directed = FALSE)
-
-    # Keep multiple edges, keep loops
-    G1 <- igraph::simplify(G1, remove.multiple = FALSE, remove.loops = FALSE)
-    G2 <- igraph::simplify(G2, remove.multiple = FALSE, remove.loops = FALSE)
-
-    # Structural check
-    if (!igraph::isomorphic(G1, G2)) {
-        cli::cli_abort("Output graph is not isomorphic to input graph.")
-    }
-
-    # Connectivity check
-    if (!igraph::is_connected(G2)) {
-        cli::cli_abort("Output edge order is not connected.")
-    }
-
-    result_edge_list
-}
-
-
 # convert adjacency list to edge matrix
 adj_to_edges <- function(adj) {
     lens <- lengths(adj)
@@ -845,7 +814,7 @@ ndscut <- function(edges) {
     edges_df <- do.call(rbind, result)
     G <- igraph::graph_from_edgelist(edges_df, directed = FALSE)
     if (!igraph::is_connected(G)) {
-        cli::cli_warn('Output edge order is not connected')
+        cli::cli_warn("Output edge order is not connected")
     }
 
     result

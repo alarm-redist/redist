@@ -1,4 +1,4 @@
-skip_if_not_installed('igraph')
+skip_if_not_installed("igraph")
 
 result_to_matrix <- function(result) {
     do.call(rbind, result)
@@ -21,7 +21,7 @@ is_connected_order <- function(result) {
     TRUE
 }
 
-test_that('ndscut preserves graph structure', {
+test_that("ndscut preserves graph structure", {
     cases <- list(
     path = matrix(c(1, 2, 2, 3, 3, 4), ncol = 2, byrow = TRUE),
     triangle = matrix(c(1, 2, 2, 3, 3, 1), ncol = 2, byrow = TRUE),
@@ -40,25 +40,25 @@ test_that('ndscut preserves graph structure', {
     }
 })
 
-test_that('ndscut handles empty input', {
+test_that("ndscut handles empty input", {
     result <- ndscut(matrix(ncol = 2, nrow = 0))
     expect_null(result)
 })
 
-test_that('ndscut accepts adjacency list (0-indexed)', {
+test_that("ndscut accepts adjacency list (0-indexed)", {
     # Simple path as adjacency list
     adj_path <- list(c(1L), c(0L, 2L), c(1L, 3L), c(2L))
     result <- ndscut(adj_path)
 
-    expect_equal(length(result), 3)
+    expect_length(result, 3)
     expect_true(is_connected_order(result))
 
     # Triangle
     adj_tri <- list(c(1L, 2L), c(0L, 2L), c(0L, 1L))
-    expect_equal(length(ndscut(adj_tri)), 3)
+    expect_length(ndscut(adj_tri), 3)
 })
 
-test_that('ndscut produces equivalent frontier size for FL25', {
+test_that("ndscut produces equivalent frontier size for FL25", {
     # Python output (ordered.dat) for reference
     python_ordered <- matrix(
         c(
@@ -83,19 +83,19 @@ test_that('ndscut produces equivalent frontier size for FL25', {
 
     # Write both to temp files and compare frontier sizes
     dir <- tempdir()
-    py_path <- file.path(dir, 'py_ordered')
-    r_path <- file.path(dir, 'r_ordered')
+    py_path <- file.path(dir, "py_ordered")
+    r_path <- file.path(dir, "r_ordered")
 
     utils::write.table(
         data.frame(python_ordered),
-        paste0(py_path, '.dat'),
+        paste0(py_path, ".dat"),
         quote = FALSE,
         row.names = FALSE,
         col.names = FALSE
     )
     utils::write.table(
         data.frame(result_mat),
-        paste0(r_path, '.dat'),
+        paste0(r_path, ".dat"),
         quote = FALSE,
         row.names = FALSE,
         col.names = FALSE
@@ -109,7 +109,7 @@ test_that('ndscut produces equivalent frontier size for FL25', {
     expect_equal(r_frontier$average, py_frontier$average, tolerance = 0.1)
 })
 
-test_that('ndscut produces equivalent frontier size for Iowa', {
+test_that("ndscut produces equivalent frontier size for Iowa", {
     # old python implementation
     python_ordered <- matrix(
         c(23L, 49L, 23L, 53L, 49L, 53L, 16L, 23L, 16L, 53L, 31L, 49L,
@@ -163,19 +163,19 @@ test_that('ndscut produces equivalent frontier size for Iowa', {
 
     # Write both to temp files and compare frontier sizes
     dir <- tempdir()
-    py_path <- file.path(dir, 'py_ordered')
-    r_path <- file.path(dir, 'r_ordered')
+    py_path <- file.path(dir, "py_ordered")
+    r_path <- file.path(dir, "r_ordered")
 
     utils::write.table(
         data.frame(python_ordered),
-        paste0(py_path, '.dat'),
+        paste0(py_path, ".dat"),
         quote = FALSE,
         row.names = FALSE,
         col.names = FALSE
     )
     utils::write.table(
         data.frame(result_mat),
-        paste0(r_path, '.dat'),
+        paste0(r_path, ".dat"),
         quote = FALSE,
         row.names = FALSE,
         col.names = FALSE

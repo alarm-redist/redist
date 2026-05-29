@@ -4,10 +4,10 @@ library(ggplot2)
 library(ggredist)
 
 # don't share this data please
-map <- readRDS('explore/ex.rds')
-map$geometry = rmapshaper::ms_simplify(map$geometry, 0.05, keep_shapes = TRUE)
-init_plan = vctrs::vec_group_id(map$test)
-V = nrow(map)
+map <- readRDS("explore/ex.rds")
+map$geometry <- rmapshaper::ms_simplify(map$geometry, 0.05, keep_shapes = TRUE)
+init_plan <- vctrs::vec_group_id(map$test)
+V <- nrow(map)
 
 # init plan is contiguous
 ccm(map$adj, map$test)
@@ -30,7 +30,7 @@ ms <- redist_mergesplit(
 ccm(map$adj, last_plan(ms))
 #> [1] 2
 
-broken = which(check_contiguity(map$adj, last_plan(ms))$component == 2)
+broken <- which(check_contiguity(map$adj, last_plan(ms))$component == 2)
 # plot(map, check_contiguity(map$adj, last_plan(ms))$component) + ggplot2::guides(fill="none")
 plot(map, (as.matrix(ms)[, 22] == 11) + 2 * (as.matrix(ms)[, 22] == 77)) +
     geom_district(

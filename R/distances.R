@@ -179,14 +179,14 @@ plans_diversity <- function(
 
     if ("chains" %in% colnames(plans) && chains != "all") {
         if (is.integer(chains)) {
-            i_ok = which(plans$chain %in% chains)
-            i_min = i_ok[1] - 1
+            i_ok <- which(plans$chain %in% chains)
+            i_min <- i_ok[1] - 1
             if ("district" %in% colnames(plans)) {
-                denom = dplyr::n_distinct(plans$district)
+                denom <- dplyr::n_distinct(plans$district)
             } else {
-                denom = 1
+                denom <- 1
             }
-            n_pl = length(i_ok) / denom
+            n_pl <- length(i_ok) / denom
         } else {
             cli::cli_abort("{.arg chains} must be an integer or the value \"all\".")
         }

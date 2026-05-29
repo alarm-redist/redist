@@ -35,7 +35,7 @@ test_that("Additional constraints work", {
         constraints = constr,
         silent = TRUE
     )
-    skip = seq(1, which.max(by_plan(plans$mcmc_accept, 4)) - 1) # skip to first acceptance
+    skip <- seq(1, which.max(by_plan(plans$mcmc_accept, 4)) - 1) # skip to first acceptance
     expect_false(any(as.matrix(plans)[7, -skip] == 2))
 })
 

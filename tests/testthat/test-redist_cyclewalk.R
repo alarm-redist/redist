@@ -1,16 +1,16 @@
-test_that('redist_cyclewalk runs on Iowa data', {
+test_that("redist_cyclewalk runs on Iowa data", {
     result <- redist_cyclewalk(ia, nsims = 500)
 
-    expect_s3_class(result, 'redist_plans')
+    expect_s3_class(result, "redist_plans")
     expect_equal(ncol(get_plans_matrix(result)), 51)
     expect_equal(nrow(get_plans_matrix(result)), 99)
 })
 
-test_that('redist_cyclewalk respects population bounds', {
+test_that("redist_cyclewalk respects population bounds", {
     set.seed(1)
     result <- redist_cyclewalk(ia, nsims = 200)
 
-    pop_bounds <- attr(ia, 'pop_bounds')
+    pop_bounds <- attr(ia, "pop_bounds")
     pops <- result |>
         dplyr::group_by(draw) |>
         dplyr::summarize(
@@ -22,18 +22,18 @@ test_that('redist_cyclewalk respects population bounds', {
     expect_true(all(pops$max_pop <= pop_bounds[3]))
 })
 
-test_that('redist_cyclewalk with verbose output works', {
+test_that("redist_cyclewalk with verbose output works", {
     expect_output(
         redist_cyclewalk(ia, nsims = 10, verbose = TRUE),
-        'Forest Walk'
+        "Forest Walk"
     )
 })
 
-test_that('redist_cyclewalk with silent output works', {
+test_that("redist_cyclewalk with silent output works", {
     expect_silent(redist_cyclewalk(ia, nsims = 10, silent = TRUE))
 })
 
-test_that('cycle walk can produce different plans', {
+test_that("cycle walk can produce different plans", {
     set.seed(1)
     result <- redist_cyclewalk(ia, nsims = 1000, thin = 1, verbose = FALSE)
 
@@ -46,14 +46,14 @@ test_that('cycle walk can produce different plans', {
     expect_true(ncol(plans_mat) == 1001)
 })
 
-test_that('all generated plans are contiguous', {
+test_that("all generated plans are contiguous", {
     result <- redist_cyclewalk(ia, nsims = 500, verbose = FALSE)
     plans_mat <- get_plans_matrix(result)
     cont <- apply(plans_mat, 2, \(x) max(contiguity(adj = ia$adj, x)))
     expect_equal(max(cont), 1)
 })
 
-test_that('redist_cyclewalk runs with constraints', {
+test_that("redist_cyclewalk runs with constraints", {
     skip_on_cran()
 
     constr <- redist_constr(ia) |>
@@ -61,7 +61,7 @@ test_that('redist_cyclewalk runs with constraints', {
 
     result <- redist_cyclewalk(ia, nsims = 500, constraints = constr, verbose = FALSE)
 
-    expect_s3_class(result, 'redist_plans')
+    expect_s3_class(result, "redist_plans")
     expect_equal(ncol(get_plans_matrix(result)), 51)
 
     constr <- redist_constr(ia) |>
@@ -69,45 +69,45 @@ test_that('redist_cyclewalk runs with constraints', {
 
     result <- redist_cyclewalk(ia, nsims = 500, constraints = constr, verbose = FALSE)
 
-    expect_s3_class(result, 'redist_plans')
+    expect_s3_class(result, "redist_plans")
     expect_equal(ncol(get_plans_matrix(result)), 51)
 })
 
-test_that('all plans have valid district structure', {
+test_that("all plans have valid district structure", {
     result <- redist_cyclewalk(ia, nsims = 1000, verbose = FALSE)
     plans_mat <- get_plans_matrix(result)
 
-    ndists <- attr(ia, 'ndists')
+    ndists <- attr(ia, "ndists")
 
     expect_true(all(apply(plans_mat, 2, function(x) length(unique(x))) == ndists))
     expect_true(all(apply(plans_mat, 2, function(x) x >= 1 & x <= ndists)))
 })
 
-test_that('longer chain runs without crashing', {
+test_that("longer chain runs without crashing", {
     skip_on_cran()
 
     result <- redist_cyclewalk(ia, nsims = 500, verbose = FALSE)
 
-    expect_s3_class(result, 'redist_plans')
+    expect_s3_class(result, "redist_plans")
     expect_equal(ncol(get_plans_matrix(result)), 51)
 })
 
-test_that('thinning works correctly', {
+test_that("thinning works correctly", {
     # With thin=5 and nsims=1000, should get 1000/5 + 1 = 201 plans
     result <- redist_cyclewalk(ia, nsims = 1000, thin = 5, verbose = FALSE)
 
     expect_equal(ncol(get_plans_matrix(result)), 201)
 })
 
-test_that('warmup burns initial samples', {
+test_that("warmup burns initial samples", {
     result <- redist_cyclewalk(ia, nsims = 500, warmup = 10, verbose = FALSE)
 
-    expect_s3_class(result, 'redist_plans')
+    expect_s3_class(result, "redist_plans")
     # 1 reference + 49 sampled (with thin=10 default)
     expect_equal(ncol(get_plans_matrix(result)), 50)
 })
 
-test_that('init_plan parameter works', {
+test_that("init_plan parameter works", {
     result <- redist_cyclewalk(ia, nsims = 200, init_plan = ia$cd_2010, verbose = FALSE)
 
     plans_mat <- get_plans_matrix(result)
@@ -115,7 +115,7 @@ test_that('init_plan parameter works', {
     expect_true(all(vctrs::vec_group_id(ia$cd_2010) == vctrs::vec_group_id(plans_mat[, 1])))
 })
 
-test_that('cycle walk produces valid plans on 4x4 grid', {
+test_that("cycle walk produces valid plans on 4x4 grid", {
     skip_on_cran()
 
     set.seed(42)

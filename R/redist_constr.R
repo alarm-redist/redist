@@ -16,7 +16,7 @@ new_redist_constr <- function(constr = list(), data = tibble()) {
         if (is.null(names(constr))) {
             cli::cli_abort("Null names.")
         }
-        if (any(names(constr) == "")) {
+        if (!all(nzchar(names(constr)))) {
             cli::cli_abort("Empty names.")
         }
         for (el in constr) {
@@ -36,6 +36,7 @@ new_redist_constr <- function(constr = list(), data = tibble()) {
     constr
 }
 
+# jarl-ignore unused_function: to be used in future, hopefully
 validate_redist_constr <- function(constr) {
     if (!is.list(constr)) {
         cli::cli_abort("Not a list")
@@ -442,7 +443,7 @@ add_constr_splits <- function(constr, strength, admin) {
     if (is.null(admin)) {
         cli::cli_abort("{.arg admin} may not be {.val NULL}.")
     }
-    if (any(is.na(admin))) {
+    if (anyNA(admin)) {
         cli::cli_abort("{.arg admin} many not contain {.val NA}s.")
     }
     admin <- vctrs::vec_group_id(admin)
@@ -469,7 +470,7 @@ add_constr_multisplits <- function(constr, strength, admin) {
     if (is.null(admin)) {
         cli::cli_abort("{.arg admin} may not be {.val NULL}.")
     }
-    if (any(is.na(admin))) {
+    if (anyNA(admin)) {
         cli::cli_abort("{.arg admin} many not contain {.val NA}s.")
     }
 
@@ -496,7 +497,7 @@ add_constr_total_splits <- function(constr, strength, admin) {
     if (is.null(admin)) {
         cli::cli_abort("{.arg admin} may not be {.val NULL}.")
     }
-    if (any(is.na(admin))) {
+    if (anyNA(admin)) {
         cli::cli_abort("{.arg admin} many not contain {.val NA}s.")
     }
 
@@ -638,7 +639,7 @@ add_constr_log_st <- function(constr, strength, admin = NULL) {
     if (is.null(admin)) {
         admin <- rep(1, nrow(data))
     }
-    if (any(is.na(admin))) {
+    if (anyNA(admin)) {
         cli::cli_abort("{.arg admin} many not contain {.val NA}s.")
     }
 
@@ -696,7 +697,7 @@ find_env <- function(name, env = rlang::caller_env()) {
         find_env(name, rlang::env_parent(env))
     }
 }
-extract_vars = function(expr) {
+extract_vars <- function(expr) {
     if (rlang::is_syntactic_literal(expr)) {
         NULL
     } else if (rlang::is_symbol(expr)) {
@@ -723,23 +724,23 @@ add_constr_custom <- function(constr, strength, fn) {
         cli::cli_abort("Function must take exactly two arguments.")
     }
 
-    constr_env = rlang::fn_env(fn)
+    constr_env <- rlang::fn_env(fn)
     constr_env <- rlang::env(constr_env)
     # every symbol used in the function (except the 2 arguments)
-    var_names = setdiff(
+    var_names <- setdiff(
         all.names(rlang::fn_body(fn)),
         names(args)
     )
 
     for (nm in var_names) {
-        found = find_env(nm, constr_env)
+        found <- find_env(nm, constr_env)
         if (
             !is.null(found) &&
                 !identical(found, rlang::base_env()) &&
                 !identical(found, constr_env) &&
                 !identical(found, rlang::pkg_env("redist"))
         ) {
-            constr_env[[nm]] = get(nm, envir = found)
+            constr_env[[nm]] <- get(nm, envir = found)
         }
     }
 
@@ -874,23 +875,23 @@ plot.redist_constr <- function(x, y, type = "group", xlim = c(0, 1), ...) {
         cli::cli_abort("Only {.arg type = \"group\"} is currently supported.")
     }
 
-    out <- tibble(share = seq(xlim[1], xlim[2], by = .001), penalty = 0)
+    out <- tibble(share = seq(xlim[1], xlim[2], by = 0.001), penalty = 0)
 
     if ("grp_pow" %in% names(x)) {
         for (obj in x$grp_pow) {
-            out$penalty = out$penalty +
+            out$penalty <- out$penalty +
                 obj$strength *
                     (abs(out$share - obj$tgt_group) * abs(out$share - obj$tgt_other))^obj$pow
         }
     }
 
-    warn_multiple = FALSE
+    warn_multiple <- FALSE
     if ("grp_hinge" %in% names(x)) {
         for (obj in x$grp_hinge) {
             if (length(obj$tgts_group) > 1) {
-                warn_multiple = TRUE
+                warn_multiple <- TRUE
             }
-            out$penalty = out$penalty +
+            out$penalty <- out$penalty +
                 obj$strength * sqrt(pmax(0.0, obj$tgts_group[1] - out$share))
         }
     }
@@ -898,9 +899,9 @@ plot.redist_constr <- function(x, y, type = "group", xlim = c(0, 1), ...) {
     if ("grp_inv_hinge" %in% names(x)) {
         for (obj in x$grp_inv_hinge) {
             if (length(obj$tgts_group) > 1) {
-                warn_multiple = TRUE
+                warn_multiple <- TRUE
             }
-            out$penalty = out$penalty +
+            out$penalty <- out$penalty +
                 obj$strength * sqrt(pmax(0.0, out$share - obj$tgts_group[1]))
         }
     }

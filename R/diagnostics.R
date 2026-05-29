@@ -156,7 +156,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
             rhats_p <- vapply(
                 rhats,
                 function(x) {
-                    ifelse(x < 1.05, sprintf('%.3f', x), paste0('\U274C', round(x, 3)))
+                    ifelse(x < 1.05, sprintf("%.3f", x), paste0("\U274C", round(x, 3)))
                 },
                 FUN.VALUE = character(1)
             )
@@ -264,11 +264,11 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
             )
             cli::cat_line("    ", cli::code_highlight(code, "Material"))
         }
-    } else if (algo %in% c("mergesplit", 'flip', 'cyclewalk')) {
-        if (algo == 'mergesplit') {
+    } else if (algo %in% c("mergesplit", "flip", "cyclewalk")) {
+        if (algo == "mergesplit") {
             cli::cli_text("{.strong Merge-Split MCMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
                  districts on {fmt_comma(nrow(plans_m))} units")
-        } else if (algo == 'flip') {
+        } else if (algo == "flip") {
             cli::cli_text("{.strong Flip MCMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
                  districts on {fmt_comma(nrow(plans_m))} units")
         } else {
@@ -281,7 +281,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
         cli::cli_text("Chain acceptance rate{?s}: {accept_rate}")
 
         # CycleWalk-specific diagnostics
-        if (algo == 'cyclewalk' && !is.null(all_diagn[[1]]$accept_prob)) {
+        if (algo == "cyclewalk" && !is.null(all_diagn[[1]]$accept_prob)) {
             cat("\n")
             cli::cli_text("{.strong CycleWalk diagnostics:}")
 
@@ -383,7 +383,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
             rhats_p <- vapply(
                 rhats,
                 function(x) {
-                    ifelse(x < 1.05, sprintf('%.3f', x), paste0('\U274C', round(x, 3)))
+                    ifelse(x < 1.05, sprintf("%.3f", x), paste0("\U274C", round(x, 3)))
                 },
                 FUN.VALUE = character(1)
             )
@@ -404,7 +404,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
             )
         }
 
-        if (algo == 'cyclewalk') {
+        if (algo == "cyclewalk") {
             cli::cli_li(cli::col_grey(
                 "
                 Watch out for low acceptance rates (less than 10%) and low cycle walk
@@ -435,7 +435,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
             )
         }
         if (warn_converge) {
-            if (algo == 'cyclewalk') {
+            if (algo == "cyclewalk") {
                 cli::cli_li(
                     "{.strong Chain convergence:} Increase the number of samples or run for more iterations.
                             If you are experiencing low plan diversity or low cycle walk success rates, address those issues first.

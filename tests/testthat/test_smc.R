@@ -96,7 +96,7 @@ test_that("Labeling accounted for", {
               c(3L, 4L, 7L), c(4L, 7L), 5:6)
     map <- redist_map(pop = rep(1, 8), ndists = 4, pop_tol = 0.05, adj = g)
     out <- redist_smc(map, 10e3, adapt_k_thresh = 1, resample = FALSE, silent = TRUE)
-    types = apply(as.matrix(out), 2, function(x) {
+    types <- apply(as.matrix(out), 2, function(x) {
         paste(vctrs::vec_group_id(x), collapse = "")
     }) |>
         vctrs::vec_group_id()
