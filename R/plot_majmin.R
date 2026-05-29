@@ -44,7 +44,7 @@ redist.plot.majmin <- function(grouppercent, type = "hist", title = "") {
             nloop = rep(seq_len(ncol(grouppercent)), each = nrow(grouppercent))
         ) %>%
             mutate(blk_pct = sort(blk_pct), .by = district) %>%
-            ggplot(aes(x = district, y = blk_pct, group = district)) %>%
+            ggplot(aes(x = district, y = blk_pct, group = district)) +
             geom_boxplot() +
             theme_bw() +
             labs(x = "Districts, Sorted by Minority Percent", y = "Minority Percent")

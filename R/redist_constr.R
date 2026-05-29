@@ -259,12 +259,16 @@ add_constr_status_quo <- function(constr, strength, current) {
         cli::cli_warn("Nonpositive strength may lead to unexpected results")
     }
     data <- attr(constr, "data")
-    if (missing(current)) {
+    # defuse `current` first; calling `missing()` before `enquo()` interferes
+    # with promise capture and can drop the calling-frame expression
+    current_q <- enquo(current)
+    if (rlang::quo_is_missing(current_q)) {
         current <- get_existing(data)
+    } else {
+        current <- eval_tidy(current_q, data)
     }
 
-    new_constr <- list(strength = strength,
-        current = eval_tidy(enquo(current), data))
+    new_constr <- list(strength = strength, current = current)
     if (is.null(current) || length(new_constr$current) != nrow(data)) {
         cli::cli_abort("{.arg current} must be provided, and must have as many
                   precincts as the {.cls redist_map}")
@@ -535,8 +539,12 @@ add_constr_segregation <- function(constr, strength, group_pop, total_pop = NULL
     }
     data <- attr(constr, "data")
 
+    group_q <- enquo(group_pop)
+    if (rlang::quo_is_missing(group_q)) {
+        cli::cli_abort("{.arg group_pop} missing.")
+    }
     new_constr <- list(strength = strength,
-        group_pop = eval_tidy(enquo(group_pop), data),
+        group_pop = eval_tidy(group_q, data),
         total_pop = eval_tidy(enquo(total_pop), data))
     if (is.null(new_constr$total_pop)) {
         if (!is.null(attr(data, "pop_col"))) {
@@ -544,9 +552,6 @@ add_constr_segregation <- function(constr, strength, group_pop, total_pop = NULL
         } else {
             cli::cli_abort("{.arg total_pop} missing.")
         }
-    }
-    if (is.null(new_constr$group_pop)) {
-        cli::cli_abort("{.arg group_pop} missing.")
     }
 
     stopifnot(length(new_constr$group_pop) == nrow(data))
@@ -683,7 +688,7 @@ add_constr_qps <- function(constr, strength, cities, total_pop = NULL) {
     new_constr$n_cty <- max(new_constr$cities) + 1
 
     cli::cli_inform("The QPS constraint is not officially supported and may disappear.",
-        .frequency = "once")
+        .frequency = "once", .frequency_id = "redist_qps_unsupported")
     add_to_constr(constr, "qps", new_constr)
 }
 
