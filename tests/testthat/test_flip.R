@@ -27,7 +27,8 @@ test_that("flip countysplit works", {
     cty <- rep(1, 25)
     cty[1:4] <- 2
 
-    cons <- redist_constr(fl_map) |>         add_constr_splits(
+    cons <- redist_constr(fl_map) |>
+        add_constr_splits(
             strength = 10,
             admin = cty
         )
@@ -49,7 +50,8 @@ test_that("flip countysplit works", {
 test_that("flip hinge works", {
     set.seed(1, kind = "Mersenne-Twister", normal.kind = "Inversion")
 
-    cons <- redist_constr(fl_map) |>         add_constr_grp_hinge(
+    cons <- redist_constr(fl_map) |>
+        add_constr_grp_hinge(
             strength = 5,
             group_pop = fl25$HispPop,
             tgts_group = c(0.4, 0.3, 0.2)
@@ -93,8 +95,13 @@ test_that("flip flip wrapper works", {
 
 
 test_that("log-st works", {
-    iowa_map <- suppressMessages(redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05, total_pop = pop))
-    cons <- redist_constr(iowa_map) |>         add_constr_log_st(strength = 1, admin = region)
+    iowa_map <- suppressMessages(redist_map(
+        iowa,
+        existing_plan = cd_2010,
+        pop_tol = 0.05,
+        total_pop = pop
+    ))
+    cons <- redist_constr(iowa_map) |> add_constr_log_st(strength = 1, admin = region)
 
     test <- redist_flip(iowa_map, nsims = 10, constraints = cons, silent = TRUE)
 

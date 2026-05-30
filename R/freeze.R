@@ -50,9 +50,15 @@ redist.freeze <- function(adj, freeze_row, plan = rep(1, length(adj))) {
         stop("{.arg freeze_row} must be a logical vector or have numeric/integer indices.")
     }
 
-    tb <- tibble(plan = plan, freeze_row = freeze_row) |>         mutate(id = cur_group_id(), .by = c(plan, freeze_row))
+    tb <- tibble(plan = plan, freeze_row = freeze_row) |>
+        mutate(id = cur_group_id(), .by = c(plan, freeze_row))
     cont <- contiguity(adj = adj, group = tb$id)
-    tb <- tb |>         mutate(cont = cont) |>         mutate(rn = row_number()) |>         mutate(rn = ifelse(freeze_row, min(rn), rn), .by = c(plan, cont, freeze_row)) |>         group_by(rn) |>         mutate(gid = cur_group_id())
+    tb <- tb |>
+        mutate(cont = cont) |>
+        mutate(rn = row_number()) |>
+        mutate(rn = ifelse(freeze_row, min(rn), rn), .by = c(plan, cont, freeze_row)) |>
+        group_by(rn) |>
+        mutate(gid = cur_group_id())
 
     tb$gid
 }

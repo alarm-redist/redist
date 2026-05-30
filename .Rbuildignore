@@ -11,6 +11,7 @@ README.Rmd
 ^\.claude$
 ^\.clang-format$
 ^src/\.clang-format-ignore$
+^src/cpp_code_overview\.md$
 ^air\.toml$
 ^jarl\.toml$
 ^compile_commands\.json$

@@ -21,7 +21,10 @@ test_that("redist_mergesplit works", {
 test_that("Additional constraints work", {
     skip_on_cran()
     iowa_map <- suppressMessages(redist_map(iowa, ndists = 4, pop_tol = 0.05))
-    constr <- redist_constr(iowa_map) |>         add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) |>         add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) |>         add_constr_custom(1e6, function(plan, distr) plan[7] == 2)
+    constr <- redist_constr(iowa_map) |>
+        add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) |>
+        add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) |>
+        add_constr_custom(1e6, function(plan, distr) plan[7] == 2)
 
     plans <- redist_mergesplit(
         iowa_map,
@@ -43,7 +46,10 @@ test_that("Thresholding constraints work", {
     polk_precint <- which(iowa_map$name == "Polk")
     story_precint <- which(iowa_map$name == "Story")
 
-    constr <- redist_constr(iowa_map) |>         add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) |>         add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) |>         add_constr_custom_plan(
+    constr <- redist_constr(iowa_map) |>
+        add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) |>
+        add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) |>
+        add_constr_custom_plan(
             1,
             function(plan, seats, num_regions) {
                 # return 0 if in the same region
@@ -69,7 +75,10 @@ test_that("Thresholding constraints work", {
     )
 
     # now ensure polk and story are never in the same region
-    constr <- redist_constr(iowa_map) |>         add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) |>         add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) |>         add_constr_custom_plan(
+    constr <- redist_constr(iowa_map) |>
+        add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) |>
+        add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) |>
+        add_constr_custom_plan(
             1,
             function(plan, seats, num_regions) {
                 if (num_regions == 1 || plan[polk_precint] != plan[story_precint]) {

@@ -25,8 +25,10 @@ test_that("County constraint works", {
 test_that("Single-precinct counties work", {
     bb <- sf::st_sfc(sf::st_polygon(list(rbind(c(0, 0), c(1, 0), c(1, 1), c(0, 0)))))
     grid <- sf::st_make_grid(bb, n = 4)
-    tb <- sf::st_as_sf(grid) |>         rename(geometry = x) |>         mutate(pop = 1, counties = row_number())
-    box_map <- redist_map(tb, ndists = 4, pop_tol = 0.25, total_pop = pop) |>         suppressWarnings() |>         suppressMessages()
+    tb <- sf::st_as_sf(grid) |> rename(geometry = x) |> mutate(pop = 1, counties = row_number())
+    box_map <- redist_map(tb, ndists = 4, pop_tol = 0.25, total_pop = pop) |>
+        suppressWarnings() |>
+        suppressMessages()
 
     test <- redist_smc(box_map, 50, counties = counties, silent = TRUE)
     expect_s3_class(test, "redist_plans")
@@ -73,7 +75,8 @@ test_that("Not egregiously incorrect sampling accuracy (25-prec)", {
         seq_alpha = 1L,
         resample = FALSE,
         silent = TRUE
-    ) |>         suppressWarnings() # efficiency
+    ) |>
+        suppressWarnings() # efficiency
     log_st <- round(log_st_map(adj, as.matrix(out), rep(1L, 25), 3L), 5)
     types <- match(log_st, log_st_ref)
 
@@ -133,7 +136,8 @@ test_that("Partial sampling works accurately", {
         ncores = 1L, # control = list(weight_type = "simple"),
         resample = FALSE,
         silent = TRUE
-    ) |>         suppressWarnings() # efficiency
+    ) |>
+        suppressWarnings() # efficiency
 
     # partially sample
     out1 <- redist_smc(
@@ -146,7 +150,8 @@ test_that("Partial sampling works accurately", {
         ncores = 1L, # control = list(weight_type = "simple"),
         resample = FALSE,
         silent = TRUE
-    ) |>         suppressWarnings() # efficiency
+    ) |>
+        suppressWarnings() # efficiency
     out2 <- redist_smc(
         set_pop_tol(fl_map, 0.01),
         nsims,
@@ -157,7 +162,8 @@ test_that("Partial sampling works accurately", {
         seq_alpha = 1L,
         resample = FALSE,
         silent = TRUE
-    ) |>         suppressWarnings() # efficiency
+    ) |>
+        suppressWarnings() # efficiency
 
     # get the counts of the plans in the two samples
     all_the_way_counts_df <- get_plan_counts(
@@ -186,7 +192,10 @@ test_that("Partial sampling works accurately", {
 
 test_that("Additional constraints work", {
     iowa_map <- suppressMessages(redist_map(iowa, ndists = 4, pop_tol = 0.05))
-    constr <- redist_constr(iowa_map) |>         add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) |>         add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) |>         add_constr_custom(1e2, function(plan, distr) plan[7] == 2)
+    constr <- redist_constr(iowa_map) |>
+        add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) |>
+        add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) |>
+        add_constr_custom(1e2, function(plan, distr) plan[7] == 2)
 
     plans <- redist_smc(iowa_map, 100, constraints = constr, silent = TRUE)
     expect_false(any((as.matrix(plans)[7, ] - 1L) == 2))
@@ -199,7 +208,10 @@ test_that("Thresholding constraints work", {
     polk_precint <- which(iowa_map$name == "Polk")
     story_precint <- which(iowa_map$name == "Story")
 
-    constr <- redist_constr(iowa_map) |>         add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) |>         add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) |>         add_constr_custom_plan(
+    constr <- redist_constr(iowa_map) |>
+        add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) |>
+        add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) |>
+        add_constr_custom_plan(
             1,
             function(plan, seats, num_regions) {
                 # return 0 if in the same region
@@ -219,7 +231,9 @@ test_that("Thresholding constraints work", {
     )
 
     # now ensure polk and story are never in the same region
-    constr <- redist_constr(iowa_map) |>         add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) |>         add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) |>
+    constr <- redist_constr(iowa_map) |>
+        add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) |>
+        add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) |>
         add_constr_plan_incumbency(1, c(polk_precint, story_precint), thresh = 1)
 
     plans <- redist_smc(iowa_map, 100, constraints = constr, silent = TRUE)

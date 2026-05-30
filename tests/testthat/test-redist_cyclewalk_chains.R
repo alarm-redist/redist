@@ -272,7 +272,7 @@ test_that("summary works with single chain", {
 
     result <- redist_cyclewalk(fl_map, 50, init_name = FALSE, silent = TRUE)
 
-    expect_no_error(summ <- summary(result))
+    capture.output(summ <- summary(result))
     expect_type(summ, "list")
 })
 
@@ -283,10 +283,13 @@ test_that("summary works with multiple chains", {
     result <- redist_cyclewalk(fl_map, 500, chains = 2, init_name = FALSE, silent = TRUE)
 
     # Add a summary statistic for R-hat calculation
-    result <- result |>         group_by(draw) |>         mutate(pop_dev = max(abs(total_pop / mean(total_pop) - 1))) |>         ungroup()
+    result <- result |>
+        group_by(draw) |>
+        mutate(pop_dev = max(abs(total_pop / mean(total_pop) - 1))) |>
+        ungroup()
 
     # Test that summary doesn't error and returns a list
-    expect_no_error(summ <- summary(result))
+    capture.output(summ <- summary(result))
     expect_type(summ, "list")
     expect_true("rhat" %in% names(summ))
 })
@@ -297,7 +300,7 @@ test_that("summary works for cyclewalk diagnostics", {
 
     result <- redist_cyclewalk(fl_map, 100, chains = 2, init_name = FALSE, silent = TRUE)
 
-    expect_no_error(summ <- summary(result))
+    capture.output(summ <- summary(result))
     expect_type(summ, "list")
 
     expect_false(is.null(attr(result, "diagnostics")))

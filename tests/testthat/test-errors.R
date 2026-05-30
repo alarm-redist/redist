@@ -2,7 +2,7 @@
 # and validate_* helpers. These don't run full simulations — they just
 # trigger the cli::cli_abort paths.
 
-iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05) |>     suppressMessages()
+iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05) |> suppressMessages()
 n_iowa <- nrow(iowa_map)
 ndists_iowa <- attr(iowa_map, "ndists")
 

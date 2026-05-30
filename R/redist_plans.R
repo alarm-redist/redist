@@ -587,7 +587,8 @@ add_reference <- function(plans, ref_plan, name = NULL, ref_seats = NULL) {
         x <- dplyr::bind_rows(
             tibble(district = 1:ndists, total_pop = as.numeric(distr_pop)),
             plans[, -match("draw", names(plans))]
-        ) |>             dplyr::mutate(draw = new_draw, .before = "district")
+        ) |>
+            dplyr::mutate(draw = new_draw, .before = "district")
     } else {
         x <- dplyr::bind_rows(
             tibble(
@@ -596,7 +597,8 @@ add_reference <- function(plans, ref_plan, name = NULL, ref_seats = NULL) {
                 seats = ref_seats
             ),
             plans[, -match("draw", names(plans))]
-        ) |>             dplyr::mutate(draw = new_draw, .before = "district")
+        ) |>
+            dplyr::mutate(draw = new_draw, .before = "district")
     }
 
     exist_wgts <- get_plans_weights(plans)
@@ -1009,12 +1011,12 @@ print.redist_plans <- function(x, ...) {
 
     fmt_comma <- function(x) format(x, nsmall = 0, digits = 1, big.mark = ",")
     if (n_ref > 0) {
-        cli::cli_text(
+        cat_cli(
       "A {.cls redist_plans} containing {fmt_comma(n_samp)}{cli::qty(n_samp)}
                  sampled {partial_str}plan{cli::qty(n_samp)}{?s} and {n_ref} reference plan{?s}"
     )
     } else {
-        cli::cli_text(
+        cat_cli(
       "A {.cls redist_plans} containing
                  {fmt_comma(n_samp)}{cli::qty(n_samp)} sampled {partial_str}plan{cli::qty(n_samp)}{?s}"
     )
@@ -1039,7 +1041,7 @@ print.redist_plans <- function(x, ...) {
         alg_name <- "an unknown algorithm"
     }
 
-    cli::cli_text(
+    cat_cli(
     "Plans have {nd} {region_str}{cli::qty(nd)}{?s} from a
              {fmt_comma(nrow(plans_m))}{cli::qty(nrow(plans_m))}-unit map,
              and were drawn using {alg_name}."

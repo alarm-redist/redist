@@ -55,7 +55,9 @@ get_map_parameters <- function(map, counties = NULL) {
             component > 1,
             paste0(as.character(counties), "-", component),
             as.character(counties)
-        ) |>             as.factor() |>             as.integer()
+        ) |>
+            as.factor() |>
+            as.integer()
         if (any(component > 1)) {
             cli::cli_warn("Counties were not contiguous; expect additional splits.")
         }

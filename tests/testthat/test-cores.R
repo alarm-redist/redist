@@ -2,7 +2,7 @@
 # redist.coarsen.adjacency, redist.uncoarsen, redist.reduce.adjacency.
 
 test_that("redist.identify.cores returns one core id per precinct", {
-    iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05) |>         suppressMessages()
+    iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05) |> suppressMessages()
     core <- suppressWarnings(
         redist.identify.cores(adj = get_adj(iowa_map), plan = iowa_map$cd_2010)
     )
@@ -23,7 +23,7 @@ test_that("redist.identify.cores returns one core id per precinct", {
 })
 
 test_that("redist.identify.cores accepts a plan matrix and uses the first column", {
-    iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05) |>         suppressMessages()
+    iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05) |> suppressMessages()
     mat <- cbind(iowa_map$cd_2010, iowa_map$cd_2010)
     core1 <- suppressWarnings(redist.identify.cores(
         adj = get_adj(iowa_map),

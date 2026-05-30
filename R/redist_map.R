@@ -596,7 +596,7 @@ get_ref_plan_and_seats <- function(x) {
         }
     } else {
         # then we need to relabel districts by mapping them to indexes 1:ndists
-        mapping <- setNames(seq_along(unique_district_ids), unique_district_ids)
+        mapping <- stats::setNames(seq_along(unique_district_ids), unique_district_ids)
         ref_plan <- mapping[as.character(x[[exist_col]])] |> unname()
 
         # if multi member district plan we need to return sizes as well
@@ -746,7 +746,7 @@ select.redist_map <- function(.data, ...) {
 #' @return Prints to console and returns input redist_map
 #' @export
 print.redist_map <- function(x, ...) {
-    cli::cli_text("A {.cls redist_map} with {nrow(x)} units and {ncol(x)} fields")
+    cat_cli("A {.cls redist_map} with {nrow(x)} units and {ncol(x)} fields")
 
     bounds <- attr(x, "pop_bounds")
     if (isTRUE(attr(x, "districting_scheme") == "multiple")) {

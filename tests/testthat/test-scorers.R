@@ -2,7 +2,7 @@
 # These check the interface (class, output shape, sign/zero invariants) that
 # the redist package layers on top of the redistmetrics numerical kernels.
 
-iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05) |>     suppressMessages()
+iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05) |> suppressMessages()
 plans_iowa <- matrix(iowa$cd_2010, ncol = 1)
 
 

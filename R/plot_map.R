@@ -271,7 +271,7 @@ redist.plot.adj <- function(
 
     # Drop Edges that cross District Boundaries
     if (drop) {
-        nb <- nb |>             filter(plan_to_plot[.data$i] == plan_to_plot[.data$j])
+        nb <- nb |> filter(plan_to_plot[.data$i] == plan_to_plot[.data$j])
     }
 
     # Create Plot
@@ -338,10 +338,12 @@ edge_center_df <- function(shp, adj) {
         start = rep(seq_along(nb), lengths(nb)),
         finish = unlist(nb)
     )
-    edgedf <- edgedf |>         dplyr::mutate(
+    edgedf <- edgedf |>
+        dplyr::mutate(
             i = pmin(.data$start, .data$finish),
             j = pmax(.data$start, .data$finish)
-        ) |>         dplyr::select("i", "j")
+        ) |>
+        dplyr::select("i", "j")
     edgedf <- edgedf[!duplicated(edgedf), ]
 
     geoms <- lapply(seq_len(nrow(edgedf)), function(x) {
@@ -357,7 +359,7 @@ edge_center_df <- function(shp, adj) {
         )
     })
 
-    edgedf <- edgedf |>         dplyr::mutate(geometry = sf::st_sfc(geoms))
+    edgedf <- edgedf |> dplyr::mutate(geometry = sf::st_sfc(geoms))
 
     suppressWarnings(nb <- sf::st_as_sf(edgedf))
     suppressWarnings(sf::st_crs(nb) <- sf::st_crs(shp))

@@ -4,10 +4,11 @@
 # validation around it. Numerical correctness of the resulting Gibbs penalties
 # is exercised by the SMC/MS/flip distributional tests.
 
-iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05) |>     suppressMessages()
+iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05) |> suppressMessages()
 
 test_that("add_constr_status_quo stores reference plan and district count", {
-    constr <- redist_constr(iowa_map) |>         add_constr_status_quo(strength = 1.5, current = cd_2010)
+    constr <- redist_constr(iowa_map) |>
+        add_constr_status_quo(strength = 1.5, current = cd_2010)
 
     expect_s3_class(constr, "redist_constr")
     expect_named(constr, "status_quo")
@@ -30,7 +31,8 @@ test_that("add_constr_status_quo errors without an existing plan", {
 })
 
 test_that("add_constr_grp_pow stores group/total/tgt/pow and uses default pop", {
-    constr <- redist_constr(iowa_map) |>         add_constr_grp_pow(
+    constr <- redist_constr(iowa_map) |>
+        add_constr_grp_pow(
             strength = 2,
             bvap,
             vap,
@@ -169,7 +171,7 @@ test_that("add_constr_segregation requires group_pop and stores total_pop", {
 })
 
 test_that("add_constr_polsby stores area and perimeter info", {
-    constr <- add_constr_polsby(redist_constr(iowa_map), 1) |>         suppressMessages()
+    constr <- add_constr_polsby(redist_constr(iowa_map), 1) |> suppressMessages()
     el <- constr$polsby[[1]]
     expect_length(el$area, nrow(iowa_map))
     expect_true(length(el$from) > 0)
@@ -197,7 +199,8 @@ test_that("add_constr_fry_hold accepts user ssdmat and denominator", {
         1,
         ssdmat = ssd,
         denominator = 10
-    ) |>         suppressMessages()
+    ) |>
+        suppressMessages()
     el <- constr$fry_hold[[1]]
     expect_equal(el$ssdmat, ssd)
     expect_equal(el$denominator, 10)
@@ -223,7 +226,9 @@ test_that("add_constr_qps records strength, cities, and n_cty", {
 })
 
 test_that("constraints can be stacked under the same name", {
-    constr <- redist_constr(iowa_map) |>         add_constr_grp_hinge(1, bvap, vap, tgts_group = 0.5) |>         add_constr_grp_hinge(2, hvap, vap, tgts_group = 0.4)
+    constr <- redist_constr(iowa_map) |>
+        add_constr_grp_hinge(1, bvap, vap, tgts_group = 0.5) |>
+        add_constr_grp_hinge(2, hvap, vap, tgts_group = 0.4)
     expect_length(constr$grp_hinge, 2)
     expect_equal(constr$grp_hinge[[1]]$strength, 1)
     expect_equal(constr$grp_hinge[[2]]$strength, 2)

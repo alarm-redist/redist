@@ -17,7 +17,9 @@ grid <- redist_map(
     existing_plan = init,
     pop_bounds = c(3.99, 4, 4.01),
     adj = grid_sf$adj
-) |>     suppressMessages() |>     suppressWarnings()
+) |>
+    suppressMessages() |>
+    suppressWarnings()
 
 # Tolerance checker for distribution tests
 # Allows 10% relative tolerance for large probabilities (>1%)

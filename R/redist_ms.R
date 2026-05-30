@@ -543,7 +543,8 @@ redist_mergesplit <- function(
         pop_bounds = pop_bounds,
         num_admin_units = num_admin_units,
         total_runtime = t2 - t1
-    ) |>         mutate(
+    ) |>
+        mutate(
             chain = rep(seq_len(chains), each = each_len * ndists),
             mcmc_accept = rep(acceptances, each = ndists)
         )
@@ -564,7 +565,8 @@ redist_mergesplit <- function(
                         ref_plan = init_plan[, idx],
                         name = init_names[idx],
                         ref_seats = init_seats[, idx]
-                    ) |>                         mutate(chain = dplyr::coalesce(chain, idx))
+                    ) |>
+                        mutate(chain = dplyr::coalesce(chain, idx))
                 },
                 rev(seq_len(chains)),
                 init = out

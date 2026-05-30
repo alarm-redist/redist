@@ -318,7 +318,7 @@ redist_shortburst <- function(
                 adj = adj_list,
                 init_plan = init,
                 total_pop = pop,
-                pop_tol = pop_tol,
+                pop_bounds = pop_bounds,
                 nsims = steps,
                 eprob = flip_eprob,
                 lambda = flip_lambda,

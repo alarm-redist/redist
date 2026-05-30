@@ -31,3 +31,15 @@ init_workers <- function(cl) {
     }
     invisible(NULL)
 }
+
+# Format cli markup and write to stdout. Use in place of cli::cli_text() inside
+# print/summary methods so test reporters don't pick up stray stderr messages.
+cat_cli <- function(..., .envir = parent.frame()) {
+    cat(cli::format_inline(..., .envir = .envir), "\n", sep = "")
+}
+
+# Evaluate a block of cli verbs (cli_alert_*, cli_bullets, cli_ul/cli_li, ...)
+# and write the formatted result to stdout instead of stderr.
+cat_cli_fmt <- function(expr) {
+    cat(cli::cli_fmt(expr), sep = "\n")
+}

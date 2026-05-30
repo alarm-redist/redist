@@ -6,18 +6,13 @@ test_that("constructor works", {
     expect_true(is.matrix(as.matrix(x)))
     expect_equal(attr(x, "prec_pop"), fl25$pop)
     expect_null(weights(x))
-    # print(x) emits the body to stdout and multiple messages to stderr;
-    # capture.output() catches stdout; each expect_message() consumes the matching
-    # message and we suppress the others to keep test output clean.
-    capture.output({
-        suppressMessages(expect_message(print(x), "drawn using Enumpart"))
-        suppressMessages(expect_message(print(x), "containing 927 sampled plans"))
-    })
+    expect_output(print(x), "drawn using Enumpart")
+    expect_output(print(x), "927 sampled plans")
 })
 
 test_that("add_reference works", {
     fl <- redist_map(fl25, ndists = 3, pop_tol = 0.1) |> suppressMessages()
-    x <- redist_plans(plans_10, fl, "enumpart") |>         add_reference(plans_10[, 1])
+    x <- redist_plans(plans_10, fl, "enumpart") |> add_reference(plans_10[, 1])
     expect_s3_class(x, "redist_plans")
     expect_equal(as.character(head(x$draw, 3)), rep("plans_10[, 1]", 3))
     expect_equal(colnames(as.matrix(x))[1], "plans_10[, 1]")
@@ -27,7 +22,7 @@ test_that("add_reference works", {
 
 test_that("subsetting works", {
     fl <- redist_map(fl25, ndists = 3, pop_tol = 0.1) |> suppressMessages()
-    x <- redist_plans(plans_10, fl, "enumpart") |>         add_reference(plans_10[, 1])
+    x <- redist_plans(plans_10, fl, "enumpart") |> add_reference(plans_10[, 1])
     x_samp <- subset_sampled(x)
     x_ref <- subset_ref(x)
     expect_equal(ncol(as.matrix(x_samp)), ncol(plans_10))
@@ -36,7 +31,7 @@ test_that("subsetting works", {
 
 test_that("plotting works", {
     fl <- redist_map(fl25, ndists = 3, pop_tol = 0.1) |> suppressMessages()
-    x <- redist_plans(plans_10, fl, "enumpart") |>         add_reference(plans_10[, 1])
+    x <- redist_plans(plans_10, fl, "enumpart") |> add_reference(plans_10[, 1])
     out <- plot(x)
     expect_s3_class(out, "ggplot")
     out <- hist(x, total_pop)

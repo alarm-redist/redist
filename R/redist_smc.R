@@ -856,7 +856,8 @@ redist_smc <- function(
         out <- mutate(
             out,
             chain = rep(seq_len(runs), each = n_dist_act * nsims)
-        ) |>             dplyr::relocate("chain", .after = "draw")
+        ) |>
+            dplyr::relocate("chain", .after = "draw")
     }
 
     exist_name <- attr(map, "existing_col")

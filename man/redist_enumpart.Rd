@@ -15,7 +15,8 @@ redist_enumpart(
   out_path = tempfile("enum_out"),
   weight_path = if (!is.null(lower) || !is.null(upper)) tempfile("enum_wgt") else NULL,
   read = TRUE,
-  init = !file.exists(system.file("enumpart", package = "redist"))
+  init = !file.exists(system.file("enumpart", package = "redist")),
+  verbose = FALSE
 )
 }
 \arguments{
@@ -52,6 +53,9 @@ invisibly.}
 
 \item{init}{If \code{TRUE}, builds enumpart before running. Must be
 run once after installing the package. Defaults to \code{FALSE}.}
+
+\item{verbose}{If \code{TRUE}, the stderr output of the enumpart binary (frontier
+sizes, reduction progress, etc.) is shown. Defaults to \code{FALSE}.}
 }
 \value{
 A \link{redist_plans} object, or \code{out_path} invisibly if \code{read = FALSE}.

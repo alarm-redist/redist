@@ -63,25 +63,34 @@ redist.plot.wted.adj <- function(
             geom_sf(data = shp, size = 0.1, fill = NA)
 
         if (!is.null(counties)) {
-            cty <- shp |>                 mutate(counties_input = counties) |>                 group_by(.data$counties_input) |>                 summarize(geometry = st_union(geometry))
+            cty <- shp |>
+                mutate(counties_input = counties) |>
+                group_by(.data$counties_input) |>
+                summarize(geometry = st_union(geometry))
 
             p <- p +
                 geom_sf(data = cty, size = 0.4, fill = NA)
 
-            nb <- nb |>                 filter(counties[.data$i] != counties[.data$j])
+            nb <- nb |> filter(counties[.data$i] != counties[.data$j])
         }
 
         if (is.logical(ref)) {
             if (ref) {
                 ref <- get_existing(shp)
 
-                distr <- shp |>                     mutate(ref_input = ref) |>                     group_by(.data$ref_input) |>                     summarize(geometry = st_union(geometry))
+                distr <- shp |>
+                    mutate(ref_input = ref) |>
+                    group_by(.data$ref_input) |>
+                    summarize(geometry = st_union(geometry))
                 p <- p +
                     geom_sf(data = distr, size = 1, fill = NA)
             }
         } else {
             if (length(ref) == nrow(shp)) {
-                distr <- shp |>                     mutate(ref_input = ref) |>                     group_by(.data$ref_input) |>                     summarize(geometry = st_union(geometry))
+                distr <- shp |>
+                    mutate(ref_input = ref) |>
+                    group_by(.data$ref_input) |>
+                    summarize(geometry = st_union(geometry))
                 p <- p +
                     geom_sf(data = distr, size = 1, fill = NA)
             }
@@ -90,7 +99,7 @@ redist.plot.wted.adj <- function(
 
     # Add weighted adj ----
     cooc <- prec_cooccur(plans, seq_len(ncol(plans)))
-    nb <- nb |>         mutate(wt = cooc[.data$i, .data$j])
+    nb <- nb |> mutate(wt = cooc[.data$i, .data$j])
 
     p <- p +
         geom_sf(data = nb, aes(color = nb$wt), lwd = 1) +
@@ -115,7 +124,7 @@ redist.plot.wted.adj <- function(
 #' plans <- redist_smc(shp, 100)
 #' redist.wted.adj(shp, plans = plans)
 redist.wted.adj <- function(map = NULL, plans = NULL) {
-    plans <- plans |>         subset_sampled() |>         get_plans_matrix()
+    plans <- plans |> subset_sampled() |> get_plans_matrix()
 
     adj <- get_adj(map)
 
@@ -124,7 +133,7 @@ redist.wted.adj <- function(map = NULL, plans = NULL) {
 
     # Add weighted adj ----
     cooc <- prec_cooccur(plans, seq_len(ncol(plans)))
-    nb <- nb |>         mutate(wt = cooc[.data$i, .data$j])
+    nb <- nb |> mutate(wt = cooc[.data$i, .data$j])
 
     nb
 }

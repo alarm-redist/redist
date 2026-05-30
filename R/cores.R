@@ -66,7 +66,11 @@ redist.identify.cores <- function(adj, plan, boundary = 1, focus = NULL, simplif
         core$conncomp <- conncomp
     }
 
-    tb <- tibble(dm = plan, boundary = core$k, cc = core$conncomp) |>         mutate(gid = row_number(), .by = c(.data$dm, boundary)) |>         mutate(gid = ifelse(boundary == 0, .data$cc, gid)) |>         mutate(gid = paste0(.data$dm, "-", boundary, "-", gid)) |>         mutate(group = cur_group_id(), .by = gid)
+    tb <- tibble(dm = plan, boundary = core$k, cc = core$conncomp) |>
+        mutate(gid = row_number(), .by = c(.data$dm, boundary)) |>
+        mutate(gid = ifelse(boundary == 0, .data$cc, gid)) |>
+        mutate(gid = paste0(.data$dm, "-", boundary, "-", gid)) |>
+        mutate(group = cur_group_id(), .by = gid)
 
     gid <- tb$group
 

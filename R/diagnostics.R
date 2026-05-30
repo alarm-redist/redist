@@ -107,7 +107,7 @@ summary.redist_plans <- function(
     out_list <- list()
 
     if (n_distr == 1 || nrow(plans_m) == 1) {
-        cli::cli_text("{fmt_comma(n_samp)}{cli::qty(n_samp)} sampled plan{?s} of
+        cat_cli("{fmt_comma(n_samp)}{cli::qty(n_samp)} sampled plan{?s} of
                  {n_distr} district{?s} on
                  {fmt_comma(nrow(plans_m))}{cli::qty(nrow(plans_m))} unit{?s}")
         return(invisible(out_list))
@@ -144,14 +144,14 @@ summary.redist_plans <- function(
         algo == "flip" ~ "Flip MCMC",
         algo == "cyclewalk" ~ "CycleWalk MCMC"
     )
-    cli::cli_text("{.strong {alg_display_name}:} {fmt_comma(n_samp)} sampled plans of {n_distr}
+    cat_cli("{.strong {alg_display_name}:} {fmt_comma(n_samp)} sampled plans of {n_distr}
                  districts on {fmt_comma(nrow(plans_m))} units")
 
     if (pre_v5_plans) {
         display_sampling_space <- GRAPH_PLAN_SPACE_SAMPLING
         display_splitting_method <- NAIVE_K_SPLITTING
-        cli::cli_text("Plans sampled on {display_sampling_space} using the {display_splitting_method} forward kernel.")
-        cli::cli_text("Forward kernel parameters: {.arg adapt_k_thresh}={format(all_diagn[[1]]$adapt_k_thresh, digits=3)}")
+        cat_cli("Plans sampled on {display_sampling_space} using the {display_splitting_method} forward kernel.")
+        cat_cli("Forward kernel parameters: {.arg adapt_k_thresh}={format(all_diagn[[1]]$adapt_k_thresh, digits=3)}")
     } else if (revamped_alg && !pre_v5_plans) {
         # if revamped alg check that sampling space and splitting methods all the same
         # check same sampling space
@@ -188,28 +188,28 @@ summary.redist_plans <- function(
         }
         forward_kernel_params <- all_forward_kernel_params[[1]]
 
-        cli::cli_text("Plans sampled on {display_sampling_space} using the {display_splitting_method} forward kernel.")
+        cat_cli("Plans sampled on {display_sampling_space} using the {display_splitting_method} forward kernel.")
 
         if (split_method == NAIVE_K_SPLITTING) {
             # only display adapt k threshold if k values estimated
             if (forward_kernel_params$estimate_cut_k) {
-                cli::cli_text("Forward kernel parameters: {.arg adapt_k_thresh}={format(forward_kernel_params$adapt_k_thresh, digits=3)}")
+                cat_cli("Forward kernel parameters: {.arg adapt_k_thresh}={format(forward_kernel_params$adapt_k_thresh, digits=3)}")
             } else {
-                cli::cli_text("Forward kernel parameters: {.arg manual_k_params}={forward_kernel_params$manual_k_params}")
+                cat_cli("Forward kernel parameters: {.arg manual_k_params}={forward_kernel_params$manual_k_params}")
             }
         } else if (split_method == UNIF_VALID_EDGE_SPLITTING) {} else if (
             split_method == EXP_BIGGER_ABS_DEV_SPLITTING
         ) {
-            cli::cli_text("Forward Kernel Parameters: {.arg splitting_alpha}={format(forward_kernel_params$splitting_alpha, digits=2)}")
+            cat_cli("Forward Kernel Parameters: {.arg splitting_alpha}={format(forward_kernel_params$splitting_alpha, digits=2)}")
         }
     }
 
     # print algorithm specific parameters
     print_algo_specific_params(algo, all_diagn, all_run_info, pre_v5_plans)
 
-    cli::cli_text("Plan diversity 80% range: {div_rg[1]} to {div_rg[2]}")
+    cat_cli("Plan diversity 80% range: {div_rg[1]} to {div_rg[2]}")
     if (div_bad) {
-        cli::cli_alert_danger("{.strong WARNING:} Low plan diversity")
+        cat_cli_fmt(cli::cli_alert_danger("{.strong WARNING:} Low plan diversity"))
     }
 
     # now compute rhats if more than 1 chain
@@ -297,7 +297,7 @@ summary.redist_plans <- function(
         # remove NA rhats
         if (anyNA(rhats_df$rhat)) {
             num_na_rhats <- sum(is.na(rhats_df$rhat))
-            cli::cli_inform("{num_na_rhats} rhat values are `NA`")
+            cat_cli("{num_na_rhats} rhat values are `NA`")
             rhats_df <- rhats_df[!is.na(rhats_df$rhat), ]
         }
 
@@ -309,7 +309,7 @@ summary.redist_plans <- function(
         rhat_max_thresh <- ifelse("max" %in% rhat_thresh, rhat_thresh[["max"]], 1.1)
 
         ordered_str <- ifelse(order_stats, "ordered ", "")
-        cli::cli_text("Largest R-hat values for {ordered_str}summary statistics:\n")
+        cat_cli("Largest R-hat values for {ordered_str}summary statistics:\n")
         # get maximum rhats for each statistic
         max_rhats <- tapply(rhats_df$rhat, rhats_df$stat_name, max, na.rm = TRUE)
 
@@ -325,23 +325,25 @@ summary.redist_plans <- function(
         # print counts
         rhat_vals <- rhats_df$rhat
 
-        cli::cli_ul()
-        cli::cli_li(
-            "R-hat ≤ {format(q99_rhat_thresh, digits=3)}: {sum(rhat_vals <= q99_rhat_thresh)}"
-        )
-        cli::cli_li(
-            "{format(q99_rhat_thresh, digits=3)} < R-hat ≤ {format(rhat_max_thresh, digits=3)}:
-                    {sum(rhat_vals > q99_rhat_thresh & rhat_vals <= rhat_max_thresh)}"
-        )
-        cli::cli_li(
-            "R-hat > {format(rhat_max_thresh, digits=3)}: {sum(rhat_vals > rhat_max_thresh)}"
-        )
-        cli::cli_li("Total R-hats: {length(rhat_vals)}")
-        cli::cli_end()
+        cat_cli_fmt({
+            cli::cli_ul()
+            cli::cli_li(
+                "R-hat \u2264 {format(q99_rhat_thresh, digits=3)}: {sum(rhat_vals <= q99_rhat_thresh)}"
+            )
+            cli::cli_li(
+                "{format(q99_rhat_thresh, digits=3)} < R-hat \u2264 {format(rhat_max_thresh, digits=3)}:
+                        {sum(rhat_vals > q99_rhat_thresh & rhat_vals <= rhat_max_thresh)}"
+            )
+            cli::cli_li(
+                "R-hat > {format(rhat_max_thresh, digits=3)}: {sum(rhat_vals > rhat_max_thresh)}"
+            )
+            cli::cli_li("Total R-hats: {length(rhat_vals)}")
+            cli::cli_end()
+        })
 
         # cat("Rhat Breakdown:\n")
-        # cat("R-hat ≤ 1.05:      ", sum(rhat_vals <= 1.05), "\n")
-        # cat("1.05 < R-hat ≤ 1.1:", sum(rhat_vals > 1.05 & rhat_vals <= 1.1), "\n")
+        # cat("R-hat \u2264 1.05:      ", sum(rhat_vals <= 1.05), "\n")
+        # cat("1.05 < R-hat \u2264 1.1:", sum(rhat_vals > 1.05 & rhat_vals <= 1.1), "\n")
         # cat("R-hat > 1.1:       ", sum(rhat_vals > 1.1), "\n")
 
         # get 99th quantile
@@ -355,11 +357,11 @@ summary.redist_plans <- function(
             convergence_status <- "strong"
         } else if (q99_rhat <= 1.05 && all(rhat_vals <= 1.1)) {
             convergence_status <- "weak"
-            cli::cli_alert_info("{.strong ALERT:} Chains have weakly converged.")
+            cat_cli_fmt(cli::cli_alert_info("{.strong ALERT:} Chains have weakly converged."))
         } else {
             convergence_status <- "not_converged"
             warn_converge <- TRUE
-            cli::cli_alert_danger("{.strong WARNING:} Chains have not converged.")
+            cat_cli_fmt(cli::cli_alert_danger("{.strong WARNING:} Chains have not converged."))
         }
     } else {
         rhats_computed <- FALSE
@@ -396,7 +398,7 @@ summary.redist_plans <- function(
             warn_bottlenecks <- smc_summary_result_list$warn_bottlenecks
 
             if (i == 1 || isTRUE(all_runs)) {
-                cli::cli_text("Sampling diagnostics for SMC run {i} of {n_runs} ({fmt_comma(n_samp)} samples)")
+                cat_cli("Sampling diagnostics for SMC run {i} of {n_runs} ({fmt_comma(n_samp)} samples)")
                 print(smc_tbl_print, digits = 2)
                 cat("\n")
             }
@@ -411,7 +413,7 @@ summary.redist_plans <- function(
                 smc_ms_tbl_print <- smc_ms_summary_result_list$smc_ms_print_tbl
 
                 if (i == 1 || isTRUE(all_runs)) {
-                    cli::cli_text("Sampling diagnostics for Mergesplit Steps of SMC run {i} of {n_runs} ({fmt_comma(n_samp)} samples)")
+                    cat_cli("Sampling diagnostics for Mergesplit Steps of SMC run {i} of {n_runs} ({fmt_comma(n_samp)} samples)")
                     print(smc_ms_tbl_print, digits = 2)
                     cat("\n")
                 }
@@ -425,16 +427,16 @@ summary.redist_plans <- function(
 
         #step_nums <- ave(seq_along(all_run_info[[i]]$step_types), all_run_info[[i]]$step_types, FUN = seq_along)
 
-        cli::cli_li(cli::col_grey(
+        cat_cli_fmt(cli::cli_li(cli::col_grey(
             "
             Watch out for low effective samples, very low acceptance rates (less than 1%),
             large std. devs. of the log weights (more than 3 or so),
             and low numbers of unique plans.
             R-hat values for summary statistics should be between 1 and 1.05."
-        ))
+        )))
 
         if (div_bad) {
-            cli::cli_li(
+            cat_cli_fmt(cli::cli_li(
                 "{.strong Low diversity:} Check for potential bottlenecks.
                         Increase the number of samples.
                         Examine the diversity plot with
@@ -443,17 +445,17 @@ summary.redist_plans <- function(
                         the population tolerance. If the acceptance rate drops
                         quickly in the final splits, try increasing
                         {.arg pop_temper} by 0.01."
-            )
+            ))
         }
         if (warn_converge) {
-            cli::cli_li(
+            cat_cli_fmt(cli::cli_li(
                 "{.strong SMC convergence:} Increase the number of samples.
                         If you are experiencing low plan diversity or bottlenecks as well,
                         address those issues first."
-            )
+            ))
         }
         if (warn_bottlenecks) {
-            cli::cli_li(
+            cat_cli_fmt(cli::cli_li(
                 "(*) {.strong Bottlenecks found:} Consider weakening or removing
                         constraints, or increasing the population tolerance.
                         If the acceptance rate drops quickly in the final splits,
@@ -464,7 +466,7 @@ summary.redist_plans <- function(
                         To visualize what geographic areas may be causing problems,
                         try running the following code. Highlighted areas are
                         those that may be causing the bottleneck.\n\n"
-            )
+            ))
             code <- str_glue(
                 "plot(<map object>, rowMeans(as.matrix({name}) == <bottleneck iteration>))"
             )
@@ -474,7 +476,7 @@ summary.redist_plans <- function(
         mh <- attr(object, "mh_acceptance")
         if (!is.null(mh)) {
             accept_rate <- sprintf("%0.1f%%", 100 * mh)
-            cli::cli_text("Chain acceptance rate{?s}: {accept_rate}")
+            cat_cli("Chain acceptance rate{?s}: {accept_rate}")
         }
 
         out <- tibble(
@@ -486,7 +488,7 @@ summary.redist_plans <- function(
         out_list[["mcmc_diagnostic_dfs"]] <- out
     } else if (algo %in% c("mergesplit", "flip")) {
         accept_rate <- sprintf("%0.1f%%", 100 * attr(object, "mh_acceptance"))
-        cli::cli_text("Chain acceptance rate{?s}: {accept_rate}")
+        cat_cli("Chain acceptance rate{?s}: {accept_rate}")
 
         out <- tibble(
             accept_rate = attr(object, "mh_acceptance"),
@@ -496,29 +498,29 @@ summary.redist_plans <- function(
 
         out_list[["mcmc_diagnostic_dfs"]] <- out
 
-        cli::cli_li(cli::col_grey(
+        cat_cli_fmt(cli::cli_li(cli::col_grey(
             "
             Watch out for low acceptance rates (less than 10%).
             R-hat values for summary statistics should be between 1 and 1.05.
             For district-level statistics (like district partisan leans), you
             should call `match_numbers()` or `number_by()` before examining
             the R-hat values."
-        ))
+        )))
 
         if (div_bad) {
-            cli::cli_li(
+            cat_cli_fmt(cli::cli_li(
                 "{.strong Low diversity:} Increase the number of samples.
                         Examine the diversity plot with
                         `hist(plans_diversity({name}), breaks=24)`.
                         Consider weakening or removing constraints, or increasing
                         the population tolerance."
-            )
+            ))
         }
         if (warn_converge) {
-            cli::cli_li(
+            cat_cli_fmt(cli::cli_li(
                 "{.strong Chain convergence:} Increase the number of samples.
                         If you are experiencing low plan diversity, address that issue first."
-            )
+            ))
         }
     } else {
         cli::cli_abort("{.fn summary} is not supported for the {toupper(algo)} algorithm.")
@@ -556,29 +558,29 @@ print_algo_specific_params <- function(algo, all_diagn, all_run_info, pre_v5_pla
         } else {
             weight_type <- "simple"
         }
-        cli::cli_bullets(c(
+        cat_cli_fmt(cli::cli_bullets(c(
             "SMC Parameters:",
             "*"="{.arg weight_type} = {weight_type}",
             "*"="{.arg seq_alpha} = {format(all_diagn[[1]]$seq_alpha, digits=2)}",
             "*"="{.arg pop_temper} = {format(all_diagn[[1]]$pop_temper, digits=3)}"
-        ))
+        )))
     } else if (algo == MCMC_ALG_TYPE) {
-        cli::cli_bullets(c(
+        cat_cli_fmt(cli::cli_bullets(c(
             "MCMC Parameters:",
             "*"="{.arg warmup} = {format(all_diagn[[1]]$warmup)}",
             "*"="{.arg thin} = {format(all_diagn[[1]]$thin)}",
             "*"="{.arg total_steps} = {format(all_diagn[[1]]$total_steps)}"
-        ))
+        )))
     }
     if (algo == MS_SMC_ALG_TYPE) {
         total_ms_steps <- sum(all_run_info[[1]]$step_types == "ms")
 
-        cli::cli_bullets(c(
+        cat_cli_fmt(cli::cli_bullets(c(
             "Mergesplit Parameters:",
             "*"="{.arg total_ms_steps} = {format(total_ms_steps, digits=2)}",
             "*"="{.arg mh_accept_per_smc} = {format(all_run_info[[1]]$mh_accept_per_smc, digits=2)}",
             "*"="{.arg pair_rule} = {format(all_run_info[[1]]$pair_rule, digits=2)}"
-        ))
+        )))
     }
 }
 
@@ -828,23 +830,23 @@ legacy_print_smc_information <- function(
             rownames(tbl_print) <- c(paste("Split", seq_len(nrow(tbl_print) - 1)), "Resample")
 
             if (i == 1 || isTRUE(all_runs)) {
-                cli_text("Sampling diagnostics for SMC run {i} of {n_runs} ({fmt_comma(n_samp)} samples)")
+                cat_cli("Sampling diagnostics for SMC run {i} of {n_runs} ({fmt_comma(n_samp)} samples)")
                 print(tbl_print, digits = 2)
                 cat("\n")
             }
         }
         out <- bind_rows(run_dfs)
 
-        cli::cli_li(cli::col_grey(
+        cat_cli_fmt(cli::cli_li(cli::col_grey(
             "
                 Watch out for low effective samples, very low acceptance rates (less than 1%),
                 large std. devs. of the log weights (more than 3 or so),
                 and low numbers of unique plans.
                 R-hat values for summary statistics should be between 1 and 1.05."
-        ))
+        )))
 
         if (div_bad) {
-            cli::cli_li(
+            cat_cli_fmt(cli::cli_li(
                 "{.strong Low diversity:} Check for potential bottlenecks.
                             Increase the number of samples.
                             Examine the diversity plot with
@@ -853,17 +855,17 @@ legacy_print_smc_information <- function(
                             the population tolerance. If the acceptance rate drops
                             quickly in the final splits, try increasing
                             {.arg pop_temper} by 0.01."
-            )
+            ))
         }
         if (warn_converge) {
-            cli::cli_li(
+            cat_cli_fmt(cli::cli_li(
                 "{.strong SMC convergence:} Increase the number of samples.
                             If you are experiencing low plan diversity or bottlenecks as well,
                             address those issues first."
-            )
+            ))
         }
         if (warn_bottlenecks) {
-            cli::cli_li(
+            cat_cli_fmt(cli::cli_li(
                 "(*) {.strong Bottlenecks found:} Consider weakening or removing
                             constraints, or increasing the population tolerance.
                             If the acceptance rate drops quickly in the final splits,
@@ -874,7 +876,7 @@ legacy_print_smc_information <- function(
                             To visualize what geographic areas may be causing problems,
                             try running the following code. Highlighted areas are
                             those that may be causing the bottleneck.\n\n"
-            )
+            ))
             code <- str_glue(
                 "plot(<map object>, rowMeans(as.matrix({name}) == <bottleneck iteration>))"
             )
@@ -882,11 +884,11 @@ legacy_print_smc_information <- function(
         }
     } else if (algo %in% c("mergesplit", "flip")) {
         accept_rate <- sprintf("%0.1f%%", 100 * attr(object, "mh_acceptance"))
-        cli_text("Chain acceptance rate{?s}: {accept_rate}")
+        cat_cli("Chain acceptance rate{?s}: {accept_rate}")
 
-        cli_text("Plan diversity 80% range: {div_rg[1]} to {div_rg[2]}")
+        cat_cli("Plan diversity 80% range: {div_rg[1]} to {div_rg[2]}")
         if (div_bad) {
-            cli::cli_alert_danger("{.strong WARNING:} Low plan diversity")
+            cat_cli_fmt(cli::cli_alert_danger("{.strong WARNING:} Low plan diversity"))
         }
         cat("\n")
 
@@ -896,29 +898,29 @@ legacy_print_smc_information <- function(
             div_q90 = div_rg[2]
         )
 
-        cli::cli_li(cli::col_grey(
+        cat_cli_fmt(cli::cli_li(cli::col_grey(
             "
                 Watch out for low acceptance rates (less than 10%).
                 R-hat values for summary statistics should be between 1 and 1.05.
                 For district-level statistics (like district partisan leans), you
                 should call `match_numbers()` or `number_by()` before examining
                 the R-hat values."
-        ))
+        )))
 
         if (div_bad) {
-            cli::cli_li(
+            cat_cli_fmt(cli::cli_li(
                 "{.strong Low diversity:} Increase the number of samples.
                             Examine the diversity plot with
                             `hist(plans_diversity({name}), breaks=24)`.
                             Consider weakening or removing constraints, or increasing
                             the population tolerance."
-            )
+            ))
         }
         if (warn_converge) {
-            cli::cli_li(
+            cat_cli_fmt(cli::cli_li(
                 "{.strong Chain convergence:} Increase the number of samples.
                             If you are experiencing low plan diversity, address that issue first."
-            )
+            ))
         }
     }
 

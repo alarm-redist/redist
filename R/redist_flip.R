@@ -485,7 +485,8 @@ redist_flip <- function(
         mh_acceptance = mh,
         version = packageVersion("redist"),
         diagnostics = l_diag
-    ) |>         mutate(
+    ) |>
+        mutate(
             distance_parity = rep(distance_parity, each = ndists),
             mhdecisions = rep(mhdecisions, each = ndists),
             mhprob = rep(mhprob, each = ndists),
@@ -498,11 +499,13 @@ redist_flip <- function(
 
     # Add chain column if multiple chains
     if (chains > 1) {
-        out <- out |>             mutate(chain = rep(seq_len(chains), each = each_len * ndists))
+        out <- out |> mutate(chain = rep(seq_len(chains), each = each_len * ndists))
     }
 
     # Add constraint columns
-    add_tb <- apply(psi_store, 1, function(x) rep(x, each = ndists)) |>         dplyr::as_tibble() |>         dplyr::rename_with(function(x) paste0("constraint_", x))
+    add_tb <- apply(psi_store, 1, function(x) rep(x, each = ndists)) |>
+        dplyr::as_tibble() |>
+        dplyr::rename_with(function(x) paste0("constraint_", x))
 
     names_tb <- names(add_tb)[apply(add_tb, 2, function(x) {
         !all(x == 0)
@@ -518,7 +521,8 @@ redist_flip <- function(
         } else {
             out <- Reduce(
                 function(cur, idx) {
-                    add_reference(cur, init_plans[, idx], init_names[idx]) |>                         mutate(chain = dplyr::coalesce(chain, idx))
+                    add_reference(cur, init_plans[, idx], init_names[idx]) |>
+                        mutate(chain = dplyr::coalesce(chain, idx))
                 },
                 rev(seq_len(chains)),
                 init = out
@@ -731,7 +735,8 @@ redist_flip_anneal <- function(
         nthin = thin,
         mh_acceptance = mean(algout$mhdecisions),
         version = packageVersion("redist"),
-    ) |>         mutate(
+    ) |>
+        mutate(
             distance_parity = rep(algout$distance_parity, each = ndists),
             mhdecisions = rep(algout$mhdecisions, each = ndists),
             mhprob = rep(algout$mhprob, each = ndists),
@@ -741,7 +746,9 @@ redist_flip_anneal <- function(
             boundary_partitions = rep(algout$boundary_partitions, each = ndists),
             boundary_ratio = rep(algout$boundary_partitions, each = ndists)
         )
-    add_tb <- apply(algout$psi_store, 1, function(x) rep(x, each = ndists)) |>         dplyr::as_tibble() |>         dplyr::rename_with(function(x) paste0("constraint_", x))
+    add_tb <- apply(algout$psi_store, 1, function(x) rep(x, each = ndists)) |>
+        dplyr::as_tibble() |>
+        dplyr::rename_with(function(x) paste0("constraint_", x))
 
     names_tb <- names(add_tb)[apply(add_tb, 2, function(x) {
         !all(x == 0)

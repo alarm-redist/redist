@@ -64,7 +64,9 @@ plot.redist_plans <- function(x, ..., type = "distr_qtys") {
 #'
 #' iowa <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05)
 #' plans <- redist_smc(iowa, nsims = 100, silent = TRUE)
-#' group_by(plans, draw) |> #'     summarize(pop_dev = max(abs(total_pop/mean(total_pop) - 1))) |> #'     redist.plot.hist(pop_dev)
+#' group_by(plans, draw) |>
+#'     summarize(pop_dev = max(abs(total_pop/mean(total_pop) - 1))) |>
+#'     redist.plot.hist(pop_dev)
 #'
 #' @concept plot
 #' @export
@@ -147,8 +149,12 @@ hist.redist_plans <- function(x, qty, ...) {
 #'
 #' iowa <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05, total_pop = pop)
 #' plans <- redist_smc(iowa, nsims = 100, silent = TRUE)
-#' plans |> #'     mutate(comp = distr_compactness(iowa)) |> #'     group_by(draw) |> #'     summarize(pop_dev = max(abs(total_pop/mean(total_pop) - 1)),
-#'         comp = comp[1]) |> #'     redist.plot.scatter(pop_dev, comp)
+#' plans |>
+#'     mutate(comp = distr_compactness(iowa)) |>
+#'     group_by(draw) |>
+#'     summarize(pop_dev = max(abs(total_pop/mean(total_pop) - 1)),
+#'         comp = comp[1]) |>
+#'     redist.plot.scatter(pop_dev, comp)
 #'
 #' @concept plot
 #' @export
@@ -273,7 +279,8 @@ redist.plot.distr_qtys <- function(
     }
 
     if (isFALSE(sort) || sort == "none") {
-        plans <- dplyr::group_by(plans, .data$draw) |>             dplyr::mutate(.distr_no = as.factor(.data$district))
+        plans <- dplyr::group_by(plans, .data$draw) |>
+            dplyr::mutate(.distr_no = as.factor(.data$district))
     } else {
         ord <- if (sort == "asc") {
             1
@@ -282,7 +289,8 @@ redist.plot.distr_qtys <- function(
         } else {
             cli::cli_abort("{.arg sort} not recognized: {.code {sort}}")
         }
-        plans <- dplyr::group_by(plans, .data$draw) |>             dplyr::mutate(.distr_no = as.factor(rank(ord * {{ qty }}, ties.method = "first")))
+        plans <- dplyr::group_by(plans, .data$draw) |>
+            dplyr::mutate(.distr_no = as.factor(rank(ord * {{ qty }}, ties.method = "first")))
     }
 
     val <- eval_tidy(enquo(qty), plans)
@@ -494,7 +502,9 @@ redist.plot.plans <- function(
 #' data(iowa)
 #'
 #' iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05)
-#' plans <- redist_mergesplit(iowa_map, nsims = 200, chains = 2, silent = TRUE) |> #'     mutate(dem = group_frac(iowa_map, dem_08, dem_08 + rep_08)) |> #'     number_by(dem)
+#' plans <- redist_mergesplit(iowa_map, nsims = 200, chains = 2, silent = TRUE) |>
+#'     mutate(dem = group_frac(iowa_map, dem_08, dem_08 + rep_08)) |>
+#'     number_by(dem)
 #' redist.plot.trace(plans, dem, district = 1)
 #'
 #' @concept plot
@@ -503,12 +513,15 @@ redist.plot.trace <- function(plans, qty, district = 1L, ...) {
     if (!"chain" %in% names(plans)) {
         plans$chain <- 1
     }
-    plans <- as.data.frame(plans) |>         filter(!is.na(.data$chain)) |>         mutate(chain = as.factor(.data$chain)) |>         arrange(.data$draw)
+    plans <- as.data.frame(plans) |>
+        filter(!is.na(.data$chain)) |>
+        mutate(chain = as.factor(.data$chain)) |>
+        arrange(.data$draw)
     if (!is.null(district) && "district" %in% names(plans)) {
         plans <- plans[plans$district == district, ]
     }
 
-    plans <- group_by(plans, .data$chain) |>         mutate(.draw = seq_len(n()))
+    plans <- group_by(plans, .data$chain) |> mutate(.draw = seq_len(n()))
 
     ggplot(plans, aes(.data$.draw, {{ qty }}, color = .data$chain)) +
         ggplot2::geom_line(...) +

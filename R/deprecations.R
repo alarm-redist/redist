@@ -229,7 +229,8 @@ redist.competitiveness <- function(plans, rvote, dvote, alpha = 1, beta = 1) {
 #' Schwartzberg, Joseph E. 1966. Reapportionment, Gerrymanders, and the Notion
 #' of Compactness. Minnesota Law Review. 1701.
 #'
-#' @importFrom dplyr tibble |> #' @importFrom sf st_cast st_bbox st_centroid st_within st_point_on_surface st_coordinates
+#' @importFrom dplyr tibble
+#' @importFrom sf st_cast st_bbox st_centroid st_within st_point_on_surface st_coordinates
 #' @importFrom sf st_linestring st_intersection st_area st_crs st_is_longlat st_length
 #' @importFrom sf st_convex_hull st_crs<- st_geometry st_distance st_union st_touches st_is_valid
 #' @importFrom sf st_is_longlat
@@ -385,7 +386,8 @@ redist.compactness <- function(
         FracKept = rep(NA_real_, nd * nmap),
         logSpanningTree = rep(NA_real_, nd * nmap),
         draw = draw
-    ) |>         dplyr::select(all_of(c("district", measure)), all_of(measure), draw)
+    ) |>
+        dplyr::select(all_of(c("district", measure)), all_of(measure), draw)
 
     # Compute Specified Scores for provided districts
     if ("PolsbyPopper" %in% measure) {
@@ -720,7 +722,8 @@ redist.metrics <- function(
         RankedMarginal = rep(NA_real_, nd * nmap),
         SmoothedSeat = rep(NA_real_, nd * nmap),
         draw = draw
-    ) |>         dplyr::select(all_of(c("district", measure)), draw)
+    ) |>
+        dplyr::select(all_of(c("district", measure)), draw)
 
     # Compute Metrics if desired:
     if ("DSeats" %in% measure) {

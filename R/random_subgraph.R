@@ -55,7 +55,7 @@ preproc.adj <- function(shp, adj) {
 #'
 #' @return sf dataframe with n rows
 #' @export
-#' @importFrom dplyr union setdiff slice |> #'
+#' @importFrom dplyr union setdiff slice
 #'
 redist.random.subgraph <- function(shp, n, adj = NULL) {
     # Check input:
