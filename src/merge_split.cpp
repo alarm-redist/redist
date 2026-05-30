@@ -352,11 +352,45 @@ Rcpp::List ms_plans(
         pool.join();
         MS_CRASH_TRACE("after pool.join()");
 
-        // Reset owning containers one at a time so we can see exactly
-        // which destructor crashes (if any).
-        MS_CRASH_TRACE("before reset tree_splitter_ptr_vec");
+        // Drain owning containers one at a time, narrowing which
+        // destructor causes the Windows-only silent crash.
+        MS_CRASH_TRACE("before clear tree_splitter_ptr_vec");
         tree_splitter_ptr_vec.clear();
-        MS_CRASH_TRACE("after reset tree_splitter_ptr_vec");
+        MS_CRASH_TRACE("after clear tree_splitter_ptr_vec");
+
+        // Clear PlanEnsemble internals (avoid trying to move the
+        // whole ensemble; PlanEnsemble has const members).
+        MS_CRASH_TRACE("before clear proposal_plan_ensemble.plan_ptr_vec");
+        proposal_plan_ensemble.plan_ptr_vec.clear();
+        MS_CRASH_TRACE("after clear proposal_plan_ensemble.plan_ptr_vec");
+
+        MS_CRASH_TRACE("before clear proposal_plan_ensemble flat vectors");
+        proposal_plan_ensemble.flattened_all_plans.clear();
+        proposal_plan_ensemble.flattened_all_plans.shrink_to_fit();
+        proposal_plan_ensemble.flattened_all_region_sizes.clear();
+        proposal_plan_ensemble.flattened_all_region_sizes.shrink_to_fit();
+        proposal_plan_ensemble.flattened_all_region_pops.clear();
+        proposal_plan_ensemble.flattened_all_region_pops.shrink_to_fit();
+        proposal_plan_ensemble.flattened_all_region_order_added.clear();
+        proposal_plan_ensemble.flattened_all_region_order_added.shrink_to_fit();
+        MS_CRASH_TRACE("after clear proposal_plan_ensemble flat vectors");
+
+        MS_CRASH_TRACE("before clear plan_ensemble.plan_ptr_vec");
+        plan_ensemble.plan_ptr_vec.clear();
+        MS_CRASH_TRACE("after clear plan_ensemble.plan_ptr_vec");
+
+        MS_CRASH_TRACE("before clear plan_ensemble flat vectors");
+        plan_ensemble.flattened_all_plans.clear();
+        plan_ensemble.flattened_all_plans.shrink_to_fit();
+        plan_ensemble.flattened_all_region_sizes.clear();
+        plan_ensemble.flattened_all_region_sizes.shrink_to_fit();
+        plan_ensemble.flattened_all_region_pops.clear();
+        plan_ensemble.flattened_all_region_pops.shrink_to_fit();
+        plan_ensemble.flattened_all_region_order_added.clear();
+        plan_ensemble.flattened_all_region_order_added.shrink_to_fit();
+        MS_CRASH_TRACE("after clear plan_ensemble flat vectors");
+
+        MS_CRASH_TRACE("about to close inner scope (pool, multigraphs, ust_sampler dtors)");
     }
     MS_CRASH_TRACE("after inner scope close (remaining dtors ran)");
 
@@ -375,21 +409,34 @@ Rcpp::List ms_plans(
     if (DEBUG_PURE_MS_VERBOSE)
         REprintf("Added one to plans, now creating diagnostic list.\n");
 
+    MS_CRASH_TRACE("before out[plans]");
     out["plans"] = saved_plans_mat;
+    MS_CRASH_TRACE("before out[region_pops]");
     out["region_pops"] = saved_district_pops_mat;
+    MS_CRASH_TRACE("before out[seats]");
     out["seats"] = saved_plan_sizes;
+    MS_CRASH_TRACE("before out[mhdecisions]");
     out["mhdecisions"] = mh_decisions;
+    MS_CRASH_TRACE("before out[total_steps]");
     out["total_steps"] = total_steps;
+    MS_CRASH_TRACE("before out[warmup_acceptances]");
     out["warmup_acceptances"] = warmup_acceptances;
+    MS_CRASH_TRACE("before out[post_warump_acceptances]");
     out["post_warump_acceptances"] = post_warump_acceptances;
+    MS_CRASH_TRACE("before out[log_mh_ratio]");
     out["log_mh_ratio"] = log_mh_ratios;
+    MS_CRASH_TRACE("before out[tree_sizes]");
     out["tree_sizes"] = tree_sizes;
+    MS_CRASH_TRACE("after all out[] assignments");
 
     if (diagnostic_mode) {
+        MS_CRASH_TRACE("before diagnostic transform");
         // now add 1 to plans
         std::transform(proposed_plans_mat.begin(), proposed_plans_mat.end(),
                        proposed_plans_mat.begin(), [](int x) { return x + 1; });
+        MS_CRASH_TRACE("after diagnostic transform, before out[proposed_plans]");
         out["proposed_plans"] = proposed_plans_mat;
+        MS_CRASH_TRACE("after diagnostic mode block");
     }
 
     if (DEBUG_PURE_MS_VERBOSE)
