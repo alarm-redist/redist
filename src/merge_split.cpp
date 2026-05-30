@@ -129,17 +129,26 @@ Rcpp::List ms_plans(
     int post_warump_acceptances = 0;
 
     {
+        // Hoist onto the heap via unique_ptr so we can .reset() each
+        // explicitly, with traces, instead of relying on implicit
+        // scope-close dtor ordering. Reference aliases keep loop-body
+        // syntax unchanged.
         MS_CRASH_TRACE("before USTSampler");
-        USTSampler ust_sampler(map_params, *splitting_schedule_ptr);
+        auto ust_sampler_holder =
+            std::make_unique<USTSampler>(map_params, *splitting_schedule_ptr);
+        USTSampler &ust_sampler = *ust_sampler_holder;
         MS_CRASH_TRACE("after USTSampler");
-        PlanMultigraph current_plan_multigraph(map_params, sampling_space ==
-                                                               SamplingSpace::LinkingEdgeSpace);
-        MS_CRASH_TRACE("after current PlanMultigraph");
-        PlanMultigraph proposed_plan_multigraph(
+        auto current_plan_multigraph_holder = std::make_unique<PlanMultigraph>(
             map_params, sampling_space == SamplingSpace::LinkingEdgeSpace);
+        PlanMultigraph &current_plan_multigraph = *current_plan_multigraph_holder;
+        MS_CRASH_TRACE("after current PlanMultigraph");
+        auto proposed_plan_multigraph_holder = std::make_unique<PlanMultigraph>(
+            map_params, sampling_space == SamplingSpace::LinkingEdgeSpace);
+        PlanMultigraph &proposed_plan_multigraph = *proposed_plan_multigraph_holder;
         MS_CRASH_TRACE("after proposed PlanMultigraph");
 
-        RcppThread::ThreadPool pool(1);
+        auto pool_holder = std::make_unique<RcppThread::ThreadPool>(1);
+        RcppThread::ThreadPool &pool = *pool_holder;
         MS_CRASH_TRACE("after ThreadPool(1)");
         // underlying vector from plan
         PlanEnsemble plan_ensemble = get_plan_ensemble(
@@ -390,7 +399,67 @@ Rcpp::List ms_plans(
         plan_ensemble.flattened_all_region_order_added.shrink_to_fit();
         MS_CRASH_TRACE("after clear plan_ensemble flat vectors");
 
-        MS_CRASH_TRACE("about to close inner scope (pool, multigraphs, ust_sampler dtors)");
+        // Diagnostic dump: if heap corruption happened in the loop,
+        // bogus sizes / dims here will tip us off before any dtor runs.
+        // Wrap each read in its own trace so a crash *here* (i.e. while
+        // simply reading a corrupted size word) localizes the victim.
+        auto dump_pm = [](const char *label, PlanMultigraph &pm) {
+            REprintf("[ms-state] %s: vertices_visited=%zu county_component=%zu "
+                     "component_split=%zu component_region=%zu "
+                     "region_overlap=%zu county_reindex=%zu region_reindex=%zu "
+                     "lap=%llux%llu merged_lap=%llux%llu "
+                     "num_cr_comp=%d num_cc_comp=%d\n",
+                     label,
+                     pm.vertices_visited.size(), pm.county_component.size(),
+                     pm.component_split_counts.size(),
+                     pm.component_region_counts.size(),
+                     pm.region_overlap_counties.size(),
+                     pm.county_component_reindex.size(),
+                     pm.region_reindex_vec.size(),
+                     (unsigned long long)pm.WAIT_laplacian_minor.n_rows,
+                     (unsigned long long)pm.WAIT_laplacian_minor.n_cols,
+                     (unsigned long long)pm.WAIT_merged_laplacian_minor.n_rows,
+                     (unsigned long long)pm.WAIT_merged_laplacian_minor.n_cols,
+                     pm.num_county_region_components,
+                     pm.num_county_connected_components);
+            std::fflush(stderr);
+        };
+        MS_CRASH_TRACE("dump current_plan_multigraph state");
+        dump_pm("current", current_plan_multigraph);
+        MS_CRASH_TRACE("dump proposed_plan_multigraph state");
+        dump_pm("proposed", proposed_plan_multigraph);
+        MS_CRASH_TRACE("dump ust_sampler state");
+        REprintf("[ms-state] ust_sampler: ust=%zu pops_below=%zu visited=%zu "
+                 "ignore=%zu county_pop=%llu county_members=%zu c_visited=%zu "
+                 "cty_pop_below=%zu county_path=%zu path=%zu\n",
+                 ust_sampler.ust.size(), ust_sampler.pops_below_vertex.size(),
+                 ust_sampler.visited.size(), ust_sampler.ignore.size(),
+                 (unsigned long long)ust_sampler.county_pop.n_elem,
+                 ust_sampler.county_members.size(), ust_sampler.c_visited.size(),
+                 ust_sampler.cty_pop_below.size(), ust_sampler.county_path.size(),
+                 ust_sampler.path.size());
+        std::fflush(stderr);
+        MS_CRASH_TRACE("dumps complete; reading sizes was safe");
+
+        // Explicit destruction in reverse construction order, one at a
+        // time, so we can pinpoint which dtor crashes.
+        MS_CRASH_TRACE("before reset pool_holder");
+        pool_holder.reset();
+        MS_CRASH_TRACE("after reset pool_holder");
+
+        MS_CRASH_TRACE("before reset proposed_plan_multigraph_holder");
+        proposed_plan_multigraph_holder.reset();
+        MS_CRASH_TRACE("after reset proposed_plan_multigraph_holder");
+
+        MS_CRASH_TRACE("before reset current_plan_multigraph_holder");
+        current_plan_multigraph_holder.reset();
+        MS_CRASH_TRACE("after reset current_plan_multigraph_holder");
+
+        MS_CRASH_TRACE("before reset ust_sampler_holder");
+        ust_sampler_holder.reset();
+        MS_CRASH_TRACE("after reset ust_sampler_holder");
+
+        MS_CRASH_TRACE("about to close inner scope (only empty holders + emptied ensembles left)");
     }
     MS_CRASH_TRACE("after inner scope close (remaining dtors ran)");
 
