@@ -9,9 +9,10 @@
 
 #include "redist_constants.h"
 #include "redist_types.h"
-#include "scoring.h"
 #include "smc_base.h"
 #include "tree_op.h"
+
+class ScoringFunction;
 
 // [[Rcpp::depends(RcppArmadillo)]]
 

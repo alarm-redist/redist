@@ -49,8 +49,8 @@ crsg <- function(adj_list, population, area, x_center, y_center, Ndistrict, targ
     .Call(`_redist_crsg`, adj_list, population, area, x_center, y_center, Ndistrict, target_pop, thresh, maxiter)
 }
 
-cyclewalk_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, compactness, constraints, control, edge_weights, thin, instep, cycle_walk_frac, verbosity) {
-    .Call(`_redist_cyclewalk_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, compactness, constraints, control, edge_weights, thin, instep, cycle_walk_frac, verbosity)
+cyclewalk_plans <- function(N, warmup, thin, ndists, total_seats, district_seat_sizes, adj_list, counties, pop, target, lower, upper, compactness, init_plan, init_seats, control, constraints, edge_weights, instep, cycle_walk_frac, verbosity, diagnostic_mode) {
+    .Call(`_redist_cyclewalk_plans`, N, warmup, thin, ndists, total_seats, district_seat_sizes, adj_list, counties, pop, target, lower, upper, compactness, init_plan, init_seats, control, constraints, edge_weights, instep, cycle_walk_frac, verbosity, diagnostic_mode)
 }
 
 dist_dist_diff <- function(p, i_dist, j_dist, x_center, y_center, x, y) {
@@ -81,28 +81,10 @@ calcPWDh <- function(x) {
     .Call(`_redist_calcPWDh`, x)
 }
 
-#'
-#' @returns A list with the following 
-#'     - `uncut_tree`: The spanning tree drawn on the region stored as a
-#'     0-indexed directed edge adjacency graph.
-#'     - `num_attempts`: The number of attempts it took to draw the tree.
-#' 
-#' @keywords internal
-#' @noRd
 draw_a_tree_on_a_region <- function(adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_draw_tree_on, lower, upper, region_ids, region_sizes, verbose) {
     .Call(`_redist_draw_a_tree_on_a_region`, adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_draw_tree_on, lower, upper, region_ids, region_sizes, verbose)
 }
 
-#' Splits a multidistrict into two new regions within population bounds
-#'
-#' Splits a multidistrict into two new valid regions by drawing spanning
-#' trees uniformly at random and attempting to find an edge to cut until
-#' a successful cut is made.
-#'
-#' @title Split a multidistrict into two regions
-#'
-#' @inheritParams run_redist_smc
-#' @noRd
 perform_a_valid_multidistrict_split <- function(adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_split, target, lower, upper, region_ids, region_sizes, split_dval_min, split_dval_max, split_district_only, verbose = FALSE, k_param = 1L) {
     .Call(`_redist_perform_a_valid_multidistrict_split`, adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_split, target, lower, upper, region_ids, region_sizes, split_dval_min, split_dval_max, split_district_only, verbose, k_param)
 }
@@ -159,7 +141,7 @@ infer_region_seats <- function(region_pops, lower, upper, total_seats, num_threa
     .Call(`_redist_infer_region_seats`, region_pops, lower, upper, total_seats, num_threads)
 }
 
-max_dev <- function(districts, pop, n_distr, multimember_districts = FALSE, nseats = -1L, seats_matrix = matrix(1,1), num_threads = 1L) {
+max_dev <- function(districts, pop, n_distr, multimember_districts = FALSE, nseats = -1L, seats_matrix = matrix(1, 1), num_threads = 1L) {
     .Call(`_redist_max_dev`, districts, pop, n_distr, multimember_districts, nseats, seats_matrix, num_threads)
 }
 
@@ -199,85 +181,14 @@ maximum_input_sizes <- function() {
     .Call(`_redist_maximum_input_sizes`)
 }
 
-#' Checks a matrix of seat counts is valid
-#'
-#' Checks that a matrix of seat counts associated with a plan is valid
-#' meaning that every region has a positive seat value and for each plan
-#' the sum of seats is equal to the total number of seats (`nseats`). 
-#' If anything is not correct an error will be thrown.
-#'
-#' @param init_seats A matrix of 1-indexed plans
-#' @param num_regions The number of regions in the plan.
-#' @param nseats The total number of seats in the map 
-#' @param seats_range Vector of number of seats a district is allowed to have
-#' @param split_districts_only Whether or not to check that all but the last region are
-#' districts or not. (Allows for the possibility the last region is a district too).
-#' @param num_threads The number of threads to use. Defaults to number of machine threads.
-#'
-#' @details Modifications
-#'    - None
-#'
-#' @keywords internal
-#' @noRd
 validate_init_seats_cpp <- function(init_seats, num_regions, nseats, seats_range, split_districts_only, num_threads = 1L) {
     invisible(.Call(`_redist_validate_init_seats_cpp`, init_seats, num_regions, nseats, seats_range, split_districts_only, num_threads))
 }
 
-#' Get canonically relabeled plans matrix
-#'
-#' Given a matrix of 1-indexed plans (or partial plans) this function 
-#' returns a new plans matrix with all the plans labeled canonically. 
-#' The canonical labelling of a plan is the one where the region of the 
-#' first vertex gets mapped to 1, the region of the next smallest vertex
-#' in a different region than the first gets mapped to 2, and so on. This
-#' is guaranteed to result in the same labelling for any plan where the 
-#' region ids have been permuted. 
-#'
-#'
-#' @param plans_mat A matrix of 1-indexed plans
-#' @param num_regions The number of regions in the plan
-#' @param num_threads The number of threads to use. Defaults to number of machine threads.
-#'
-#' @details Modifications
-#'    - None
-#'
-#' @returns A matrix of canonically labelled plans
-#'
-#' @keywords internal
-#' @noRd
 get_canonical_plan_labelling <- function(plans_mat, num_regions, num_threads = 0L) {
     .Call(`_redist_get_canonical_plan_labelling`, plans_mat, num_regions, num_threads)
 }
 
-#' Count how many times each plan appears in a plans matrix
-#'
-#' Given a matrix of 1-indexed plans (or partial plans) this function 
-#' returns a list mapping plan vectors as a giant concatened string to 
-#' the count of how many times the plan appears. 
-#'
-#' If `use_canonical_ordering` is set to true then the plans will be 
-#' reordered using the canonical reordering function 
-#' `get_canonical_plan_labelling`. This guarantees that the same plan
-#' will not be incorrectly counted if there are different permutations 
-#' of its labels. If `use_canonical_ordering` is not set to true then 
-#' its possible the count will be incorrect because of different 
-#' permutations of the same underlying plan.
-#'
-#'
-#' @param plans_mat A matrix of 1-indexed plans
-#' @param num_regions The number of regions in the plan
-#' @param use_canonical_ordering Whether or not to reorder the plans using the 
-#' canonical ordering on plans. 
-#' @param num_threads The number of threads to use. Defaults to number of machine threads.
-#'
-#' @details Modifications
-#'    - None
-#'
-#' @returns A list mapping plans (stored as a string concatened vector) to 
-#' how many times they appear in the matrix 
-#'
-#' @keywords internal
-#' @noRd
 get_plan_counts <- function(input_plans_mat, num_regions, use_canonical_ordering = TRUE, num_threads = 0L) {
     .Call(`_redist_get_plan_counts`, input_plans_mat, num_regions, use_canonical_ordering, num_threads)
 }
@@ -318,32 +229,6 @@ k_biggest <- function(x, k = 1L) {
     .Call(`_redist_k_biggest`, x, k)
 }
 
-#' Run SMC (optionally with Merge Split steps too)
-#'
-#' Uses smc method with optimal weights and merge split steps to generate a sample of `nsims` plans in `c++` 
-#' 
-#' 
-#' Using the procedure outlined in <PAPER HERE> this function uses Sequential
-#' Monte Carlo (SMC) methods to generate a sample of `M` plans
-#'
-#'
-#' @param ndists The number of districts the final plans will have
-#' @param adj_list A 0-indexed adjacency list representing the undirected graph
-#' which represents the underlying map the plans are to be drawn on
-#' @param counties Vector of county labels of each vertex in `g`
-#' @param pop A vector of the population associated with each vertex in `g`
-#' @param target Ideal population of a valid district. This is what deviance is calculated
-#' relative to
-#' @param lower Acceptable lower bounds on a valid district's population
-#' @param upper Acceptable upper bounds on a valid district's population
-#' @param nsims The number of plans (samples) to draw
-#' @param k_param The k parameter from the SMC algorithm, you choose among the top k_param edges
-#' @param control Named list of additional parameters.
-#' @param num_threads The number of threads the threadpool should use
-#' @param verbosity What level of detail to print out while the algorithm is
-#' running <ADD OPTIONS>
-#' @keywords internal
-#' @noRd
 run_redist_smc <- function(nsims, total_seats, ndists, district_seat_sizes, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat, log_weights) {
     .Call(`_redist_run_redist_smc`, nsims, total_seats, ndists, district_seat_sizes, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat, log_weights)
 }

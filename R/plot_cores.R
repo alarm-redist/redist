@@ -29,19 +29,11 @@ redist.plot.cores <- function(shp, plan = NULL, core = NULL, lwd = 2) {
     shp$plan <- plan
     shp$core <- core
 
-    shp_un <- shp %>%
-        group_by(plan) %>%
-        summarize(geometry = st_union(geometry), .groups = "drop") %>%
-        suppressMessages()
+    shp_un <- shp |>         group_by(plan) |>         summarize(geometry = st_union(geometry), .groups = "drop") |>         suppressMessages()
 
-    shp_cores <- shp %>%
-        group_by(plan, core) %>%
-        summarize(ct = n(), geometry = st_union(geometry), .groups = "drop") %>%
-        mutate(ct = if_else(.data$ct == 1, NA_integer_, .data$ct)) %>%
-        suppressMessages()
+    shp_cores <- shp |>         group_by(plan, core) |>         summarize(ct = n(), geometry = st_union(geometry), .groups = "drop") |>         mutate(ct = if_else(.data$ct == 1, NA_integer_, .data$ct)) |>         suppressMessages()
 
-    shp_cores %>%
-        ggplot() +
+    shp_cores |>         ggplot() +
         geom_sf(aes(fill = .data$ct)) +
         ggplot2::scale_fill_distiller(direction = 1, na.value = "white") +
         geom_sf(fill = NA, data = shp_un, color = "black", lwd = lwd) +

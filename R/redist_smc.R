@@ -265,7 +265,7 @@ redist_smc <- function(
             split_params$adapt_k_thresh <- adapt_k_thresh
             split_params$estimate_cut_k <- TRUE
         } else {
-            split_params = list(
+            split_params <- list(
         adapt_k_thresh = adapt_k_thresh,
         estimate_cut_k = TRUE
       )
@@ -506,6 +506,7 @@ redist_smc <- function(
         } else {
             cl <- makeCluster(
                 nproc,
+                outfile = nullfile(),
                 methods = FALSE,
                 useXDR = .Platform$endian != "little"
             )
@@ -593,7 +594,7 @@ redist_smc <- function(
             # Make integer since arma::umat passed back to R as double
             storage.mode(algout$ancestors) <- "integer"
 
-            diagnostic_mode = diagnostic_level == 1
+            diagnostic_mode <- diagnostic_level == 1
 
             if (!diagnostic_mode) {
                 # if not diagnostic mode
@@ -855,8 +856,7 @@ redist_smc <- function(
         out <- mutate(
             out,
             chain = rep(seq_len(runs), each = n_dist_act * nsims)
-        ) %>%
-            dplyr::relocate('chain', .after = "draw")
+        ) |>             dplyr::relocate("chain", .after = "draw")
     }
 
     exist_name <- attr(map, "existing_col")
@@ -895,9 +895,9 @@ get_splitting_schedule <- function(split_params, districting_scheme) {
         splitting_schedule <- split_params[["splitting_schedule"]]
         if (splitting_schedule == "split_district_only") {
             if (districting_scheme == "single") {
-                splitting_size_regime = "split_district_only"
+                splitting_size_regime <- "split_district_only"
             } else if (districting_scheme == "multiple") {
-                splitting_size_regime = "split_district_only_mmd"
+                splitting_size_regime <- "split_district_only_mmd"
             } else {
                 cli::cli_abort(
           "Districting scheme {districting_scheme} is not supported!"
@@ -905,7 +905,7 @@ get_splitting_schedule <- function(split_params, districting_scheme) {
             }
         } else if (splitting_schedule == "any_valid_sizes") {
             if (districting_scheme == "single") {
-                splitting_size_regime = "any_valid_sizes"
+                splitting_size_regime <- "any_valid_sizes"
             } else if (districting_scheme == "multiple") {
                 cli::cli_abort(
           "Generaliezd region splits are not supported for Multi-member districting!"
@@ -923,9 +923,9 @@ get_splitting_schedule <- function(split_params, districting_scheme) {
     } else {
         # default to  district
         if (districting_scheme == "single") {
-            splitting_size_regime = "split_district_only"
+            splitting_size_regime <- "split_district_only"
         } else if (districting_scheme == "multiple") {
-            splitting_size_regime = "split_district_only_mmd"
+            splitting_size_regime <- "split_district_only_mmd"
         } else {
             cli::cli_abort(
         "Districting scheme {districting_scheme} is not supported!"
@@ -1012,12 +1012,13 @@ get_init_plan_params <- function(
             }
             # flatten
             init_weights <- as.vector(init_weights)
-        } else if (is.vector(init_weights) && is.numeric(init_weights)) {
-            if (length(init_weights) != nsims) {
-                cli::cli_abort(
+        } else if (
+            (is.vector(init_weights) && is.numeric(init_weights)) &&
+                (length(init_weights) != nsims)
+        ) {
+            cli::cli_abort(
           "{.arg init_weights} must be of length {nsims}!"
         )
-            }
         }
         # now check all positive
         if (any(init_weights <= 0)) {

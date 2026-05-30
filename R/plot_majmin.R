@@ -14,8 +14,7 @@ redist.plot.majmin <- function(grouppercent, type = "hist", title = "") {
     if (type == "hist") {
         mm <- colSums(grouppercent > 0.5)
 
-        tibble(mm = mm) %>%
-            ggplot(aes(x = mm)) +
+        tibble(mm = mm) |>             ggplot(aes(x = mm)) +
             geom_histogram() +
             theme_bw() +
             labs(x = "Minority Majority Districts", y = "Count", title = title)
@@ -24,13 +23,7 @@ redist.plot.majmin <- function(grouppercent, type = "hist", title = "") {
             blk_pct = c(grouppercent),
             district = rep(seq_len(nrow(grouppercent)), ncol(grouppercent)),
             nloop = rep(seq_len(ncol(grouppercent)), each = nrow(grouppercent))
-        ) %>%
-            group_by(nloop) %>%
-            arrange(desc(blk_pct), .by_group = TRUE) %>%
-            mutate(group_id = row_number()) %>%
-            filter(group_id <= 2) %>%
-            summarise(first_blk = first(tot_blk_pct), second_blk = nth(tot_blk_pct, n = 2)) %>%
-            ggplot(aes(x = first_blk, y = second_blk)) +
+        ) |>             group_by(nloop) |>             arrange(desc(blk_pct), .by_group = TRUE) |>             mutate(group_id = row_number()) |>             filter(group_id <= 2) |>             summarise(first_blk = first(tot_blk_pct), second_blk = nth(tot_blk_pct, n = 2)) |>             ggplot(aes(x = first_blk, y = second_blk)) +
             geom_point() +
             geom_vline(xintercept = 0.5, color = "blue", linetype = "dotted") +
             geom_hline(yintercept = 0.5, color = "blue", linetype = "dotted") +
@@ -42,9 +35,7 @@ redist.plot.majmin <- function(grouppercent, type = "hist", title = "") {
             blk_pct = c(grouppercent),
             district = rep(seq_len(nrow(grouppercent)), ncol(grouppercent)),
             nloop = rep(seq_len(ncol(grouppercent)), each = nrow(grouppercent))
-        ) %>%
-            mutate(blk_pct = sort(blk_pct), .by = district) %>%
-            ggplot(aes(x = district, y = blk_pct, group = district)) +
+        ) |>             mutate(blk_pct = sort(blk_pct), .by = district) |>             ggplot(aes(x = district, y = blk_pct, group = district)) +
             geom_boxplot() +
             theme_bw() +
             labs(x = "Districts, Sorted by Minority Percent", y = "Minority Percent")

@@ -251,9 +251,6 @@ arma::vec compute_plans_log_optimal_weights(
     // sampling space
     SamplingSpace sampling_space = SamplingSpace::GraphSpace;
 
-    // check if final splits (ie don't do pop_temper)
-    bool is_final = num_regions == ndists;
-
     // create thread pool
     if (num_threads <= 0)
         num_threads = std::thread::hardware_concurrency();
@@ -286,11 +283,6 @@ arma::vec compute_plans_log_optimal_weights(
 
     // create the splitter
     NaiveTopKSplitter tree_splitter(map_params.V, 1);
-
-    bool compute_log_splitting_prob =
-        splitting_schedule_ptr->schedule_type != SplittingSizeScheduleType::DistrictOnlySMD &&
-        plan_ensemble.plan_ptr_vec[0]->num_regions != ndists;
-    bool const counties_on = map_params.num_counties > 1;
 
     arma::vec log_weights(num_plans, arma::fill::none);
 
@@ -371,9 +363,6 @@ arma::vec compute_plans_log_simple_weights(
     // sampling space
     SamplingSpace sampling_space = SamplingSpace::GraphSpace;
 
-    // check if final splits (ie don't do pop_temper)
-    bool is_final = num_regions == ndists;
-
     // create thread pool
     if (num_threads <= 0)
         num_threads = std::thread::hardware_concurrency();
@@ -406,11 +395,6 @@ arma::vec compute_plans_log_simple_weights(
 
     // create the splitter
     NaiveTopKSplitter tree_splitter(map_params.V, 1);
-
-    bool compute_log_splitting_prob =
-        splitting_schedule_ptr->schedule_type != SplittingSizeScheduleType::DistrictOnlySMD &&
-        plan_ensemble.plan_ptr_vec[0]->num_regions != ndists;
-    bool const counties_on = map_params.num_counties > 1;
 
     arma::vec log_weights(num_plans, arma::fill::none);
 

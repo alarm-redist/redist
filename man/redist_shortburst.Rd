@@ -12,6 +12,7 @@ redist_shortburst(
   max_bursts = 500L,
   maximize = TRUE,
   init_plan = NULL,
+  init_seats = NULL,
   counties = NULL,
   constraints = redist_constr(map),
   compactness = 1,
@@ -55,6 +56,9 @@ maximized or minimized.}
 the reference map of the \code{map} object, or if none exists, will sample
 a random initial state using \code{\link[=redist_smc]{redist_smc()}}. You can also request
 a random initial state by setting \code{init_plan="sample"}.}
+
+\item{init_seats}{Seat in each district of the \code{init_plan}. Only required if
+the initial plan passed in is a multi-member plan.}
 
 \item{counties}{A vector containing county (or other administrative or
 geographic unit) labels for each unit, which may be integers ranging from 1

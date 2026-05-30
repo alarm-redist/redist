@@ -3,8 +3,8 @@
 
 #include "redist_types.h"
 #include <RcppArmadillo.h>
-#include <RcppThread.h>
 #include <RcppEigen.h>
+#include <RcppThread.h>
 #include <Rcpp.h>
 
 using namespace Rcpp;
@@ -176,29 +176,34 @@ BEGIN_RCPP
 END_RCPP
 }
 // cyclewalk_plans
-Rcpp::List cyclewalk_plans(int N, Rcpp::List l, const arma::uvec init, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double target, double lower, double upper, double compactness, Rcpp::List constraints, Rcpp::List control, Rcpp::List edge_weights, int thin, int instep, double cycle_walk_frac, int verbosity);
-RcppExport SEXP _redist_cyclewalk_plans(SEXP NSEXP, SEXP lSEXP, SEXP initSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP compactnessSEXP, SEXP constraintsSEXP, SEXP controlSEXP, SEXP edge_weightsSEXP, SEXP thinSEXP, SEXP instepSEXP, SEXP cycle_walk_fracSEXP, SEXP verbositySEXP) {
+Rcpp::List cyclewalk_plans(int N, int warmup, int thin, int ndists, int total_seats, Rcpp::IntegerVector const& district_seat_sizes, Rcpp::List const& adj_list, arma::uvec const& counties, arma::uvec const& pop, double target, double lower, double upper, double compactness, Rcpp::IntegerMatrix const& init_plan, Rcpp::IntegerMatrix const& init_seats, Rcpp::List const& control, Rcpp::List const& constraints, Rcpp::List const& edge_weights, int instep, double cycle_walk_frac, int verbosity, bool diagnostic_mode);
+RcppExport SEXP _redist_cyclewalk_plans(SEXP NSEXP, SEXP warmupSEXP, SEXP thinSEXP, SEXP ndistsSEXP, SEXP total_seatsSEXP, SEXP district_seat_sizesSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP compactnessSEXP, SEXP init_planSEXP, SEXP init_seatsSEXP, SEXP controlSEXP, SEXP constraintsSEXP, SEXP edge_weightsSEXP, SEXP instepSEXP, SEXP cycle_walk_fracSEXP, SEXP verbositySEXP, SEXP diagnostic_modeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< int >::type N(NSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type l(lSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec >::type init(initSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
-    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
+    Rcpp::traits::input_parameter< int >::type warmup(warmupSEXP);
+    Rcpp::traits::input_parameter< int >::type thin(thinSEXP);
+    Rcpp::traits::input_parameter< int >::type ndists(ndistsSEXP);
+    Rcpp::traits::input_parameter< int >::type total_seats(total_seatsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector const& >::type district_seat_sizes(district_seat_sizesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List const& >::type adj_list(adj_listSEXP);
+    Rcpp::traits::input_parameter< arma::uvec const& >::type counties(countiesSEXP);
+    Rcpp::traits::input_parameter< arma::uvec const& >::type pop(popSEXP);
     Rcpp::traits::input_parameter< double >::type target(targetSEXP);
     Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
     Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
     Rcpp::traits::input_parameter< double >::type compactness(compactnessSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type constraints(constraintsSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type control(controlSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type edge_weights(edge_weightsSEXP);
-    Rcpp::traits::input_parameter< int >::type thin(thinSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix const& >::type init_plan(init_planSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix const& >::type init_seats(init_seatsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List const& >::type control(controlSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List const& >::type constraints(constraintsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List const& >::type edge_weights(edge_weightsSEXP);
     Rcpp::traits::input_parameter< int >::type instep(instepSEXP);
     Rcpp::traits::input_parameter< double >::type cycle_walk_frac(cycle_walk_fracSEXP);
     Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
-    rcpp_result_gen = Rcpp::wrap(cyclewalk_plans(N, l, init, counties, pop, n_distr, target, lower, upper, compactness, constraints, control, edge_weights, thin, instep, cycle_walk_frac, verbosity));
+    Rcpp::traits::input_parameter< bool >::type diagnostic_mode(diagnostic_modeSEXP);
+    rcpp_result_gen = Rcpp::wrap(cyclewalk_plans(N, warmup, thin, ndists, total_seats, district_seat_sizes, adj_list, counties, pop, target, lower, upper, compactness, init_plan, init_seats, control, constraints, edge_weights, instep, cycle_walk_frac, verbosity, diagnostic_mode));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -1040,7 +1045,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_cores", (DL_FUNC) &_redist_cores, 4},
     {"_redist_update_conncomp", (DL_FUNC) &_redist_update_conncomp, 3},
     {"_redist_crsg", (DL_FUNC) &_redist_crsg, 9},
-    {"_redist_cyclewalk_plans", (DL_FUNC) &_redist_cyclewalk_plans, 17},
+    {"_redist_cyclewalk_plans", (DL_FUNC) &_redist_cyclewalk_plans, 22},
     {"_redist_dist_dist_diff", (DL_FUNC) &_redist_dist_dist_diff, 7},
     {"_redist_get_region_multigraph", (DL_FUNC) &_redist_get_region_multigraph, 2},
     {"_redist_get_region_laplacian", (DL_FUNC) &_redist_get_region_laplacian, 2},

@@ -1,7 +1,5 @@
 #include "graph_plan_type.h"
 
-constexpr bool DEBUG_GRAPH_PLANS_VERBOSE = false; // Compile-time constant
-
 void GraphPlan::update_vertex_and_plan_specific_info_from_cut(
     TreeSplitter const &tree_splitter, USTSampler &ust_sampler, EdgeCut const cut_edge,
     const int split_region1_id, const int split_region2_id, bool const add_region) {
@@ -114,10 +112,10 @@ double GraphPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
 /*
  * Calculate the deviations for cutting at every edge in a spanning tree.
  * and returns them ordered.
-//'
-//'
-//' For each edge it returns the larger of the two deviations associated with
-//' the best region sizes assignment
+//
+//
+// For each edge it returns the larger of the two deviations associated with
+// the best region sizes assignment
  */
 std::vector<double> get_ordered_tree_cut_devs(
     Tree &ust, int root, std::vector<int> const &cut_below_pop, double const target,
@@ -221,7 +219,6 @@ int estimate_mergesplit_cut_k(Plan const &plan, PlanMultigraph const &plan_multi
     int max_V = 0;
     Tree ust = init_tree(V);
     for (int i = 0; i < N_adapt; i++) {
-        double joint_pop = 0;
         auto random_pair_index = rng_state.r_int(plan_multigraph.pair_map.hashed_pairs.size());
         auto a_pair = plan_multigraph.pair_map.hashed_pairs[random_pair_index];
         auto merged_size = plan.region_sizes[a_pair.first] + plan.region_sizes[a_pair.second];
@@ -230,7 +227,6 @@ int estimate_mergesplit_cut_k(Plan const &plan, PlanMultigraph const &plan_multi
         int n_vtx = 0;
         for (int j = 0; j < V; j++) {
             if (plan.region_ids[j] == a_pair.first || plan.region_ids[j] == a_pair.second) {
-                joint_pop += plan_multigraph.map_params.pop(j);
                 ignore[j] = false;
                 n_vtx++;
             } else {

@@ -8,21 +8,21 @@
 constexpr bool DEBUG_WEIGHTS_VERBOSE = false; // Compile-time constant
 #include "weights.h"
 
-//' Computes the effective sample size from log incremental weights
-//'
-//' Takes a vector of log incremental weights and computes the effective sample
-//' size which is the sum of the weights squared divided by the sum of squared
-//' weights
-//'
-//'
-//' @title Compute Effective Sample Size
-//'
-//' @param log_wgt vector of log incremental weights
-//'
-//' @details No modifications to inputs made
-//'
-//' @return sum of weights squared over sum of squared weights (sum(wgt)^2 / sum(wgt^2))
-//'
+// Computes the effective sample size from log incremental weights
+//
+// Takes a vector of log incremental weights and computes the effective sample
+// size which is the sum of the weights squared divided by the sum of squared
+// weights
+//
+//
+// @title Compute Effective Sample Size
+//
+// @param log_wgt vector of log incremental weights
+//
+// @details No modifications to inputs made
+//
+// @return sum of weights squared over sum of squared weights (sum(wgt)^2 / sum(wgt^2))
+//
 double compute_n_eff(const arma::subview_col<double> log_wgt) {
     double sum_wgt = 0.0;
     double sum_wgt_squared = 0.0;
@@ -37,22 +37,22 @@ double compute_n_eff(const arma::subview_col<double> log_wgt) {
     return std::exp((2 * std::log(sum_wgt)) - std::log(sum_wgt_squared));
 }
 
-//' Get the probability the union of two regions was chosen to split
-//'
-//' Given a plan object and two regions in the plan this returns the probability
-//' the union of the two regions was chosen to be split.
-//'
-//' @title Get Retroactive Split Selection Probability
-//'
-//' @param plan A plan object
-//' @param region1_id The id of the first region to union
-//' @param region2_id The id of the second region to union
-//'
-//' @details No modifications to inputs made
-//'
-//' @return the log of the probability the union of the two regions would be
-//' chosen to split.
-//'
+// Get the probability the union of two regions was chosen to split
+//
+// Given a plan object and two regions in the plan this returns the probability
+// the union of the two regions was chosen to be split.
+//
+// @title Get Retroactive Split Selection Probability
+//
+// @param plan A plan object
+// @param region1_id The id of the first region to union
+// @param region2_id The id of the second region to union
+//
+// @details No modifications to inputs made
+//
+// @return the log of the probability the union of the two regions would be
+// chosen to split.
+//
 double get_log_retroactive_splitting_prob(const Plan &plan,
                                           const std::vector<bool> &valid_region_sizes_to_split,
                                           const int region1_id, const int region2_id,
@@ -116,8 +116,6 @@ double compute_simple_log_incremental_weight(Plan const &plan, PlanMultigraph &p
         Rprintf("The two regions are %d and %d\n", region1_id, region2_id);
         Rcpp::Rcerr << std::flush;
     }
-
-    bool const use_linking_edge_space = sampling_space == SamplingSpace::LinkingEdgeSpace;
 
     // build the plan multigraph and get valid adj pairs
     auto valid_adj_pairs = plan.get_valid_smc_merge_regions(plan_multigraph, splitting_schedule,
@@ -364,7 +362,6 @@ void compute_all_plans_log_simple_incremental_weights(
     bool compute_log_splitting_prob, bool is_final_plans,
     arma::subview_col<double> log_incremental_weights, int verbosity) {
     int const nsims = (int)plans_ptr_vec.size();
-    int const num_regions = plans_ptr_vec[0]->num_regions;
     const int check_int = 50; // check for interrupts every _ iterations
 
     int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
@@ -418,27 +415,27 @@ void compute_all_plans_log_simple_incremental_weights(
 
 // eventually need to modify to allow presaved options
 // OLD DOCUMENTATION FROM GRAPH THING NEED TO UPDATE
-//' Compute the optimal log incremental weight of a plan
-//'
-//' Given a plan object this computes the minimum variance weights as derived in
-//' <PAPER NAME HERE>. This is equal to the inverse of a sum over all
-//' adjacent regions in a plan if using generalized region split and
-//' sum over all districts adajacent to the remainder if using one district
-//' split approach.
-//'
-//' @title Compute Optimal Incremental Weight of a plan
-//'
-//' @param g The underlying map graph
-//' @param plan A plan object
-//' @param split_district_only whether or not to compute the weights under
-//' the district only split scheme or not.
-//' @param target The target population for a single district
-//' @param pop_temper The population tempering parameter
-//'
-//' @details No modifications to inputs made
-//'
-//' @return the log of the incremental weight of the plan
-//'
+// Compute the optimal log incremental weight of a plan
+//
+// Given a plan object this computes the minimum variance weights as derived in
+// <PAPER NAME HERE>. This is equal to the inverse of a sum over all
+// adjacent regions in a plan if using generalized region split and
+// sum over all districts adajacent to the remainder if using one district
+// split approach.
+//
+// @title Compute Optimal Incremental Weight of a plan
+//
+// @param g The underlying map graph
+// @param plan A plan object
+// @param split_district_only whether or not to compute the weights under
+// the district only split scheme or not.
+// @param target The target population for a single district
+// @param pop_temper The population tempering parameter
+//
+// @details No modifications to inputs made
+//
+// @return the log of the incremental weight of the plan
+//
 double compute_log_optimal_incremental_weights(
     Plan const &plan, PlanMultigraph &plan_multigraph,
     const SplittingSchedule &splitting_schedule, USTSampler &ust_sampler,
@@ -465,7 +462,7 @@ double compute_log_optimal_incremental_weights(
 
     // iterate over the pairs
     if (DEBUG_WEIGHTS_VERBOSE) {
-        REprintf("There are %u adjacent pairs!\n", region_pair_log_eff_boundary_map.size());
+        REprintf("There are %zu adjacent pairs!\n", region_pair_log_eff_boundary_map.size());
     }
 
     // compute plan score if needed
@@ -608,37 +605,37 @@ double compute_log_optimal_incremental_weights(
     return incremental_weight;
 }
 
-//' NEED TO UPDATE THIS IS OLD DOCUMENTATION FOR GRAPH STUFF
-//' Computes log unnormalized weights for vector of plans
-//'
-//' Using the procedure outlined in <PAPER HERE> this function computes the log
-//' incremental weights and the unnormalized weights for a vector of plans (which
-//' may or may not be the same depending on the parameters).
-//'
-//' @title Compute Log Unnormalized Weights
-//'
-//' @param pool A threadpool for multithreading
-//' @param g A graph (adjacency list) passed by reference
-//' @param plans_ptr_vec A vector of plans to compute the log unnormalized weights
-//' of
-//' @param split_district_only whether or not to compute the weights under
-//' the district only split scheme or not. If `split_district_only` is true
-//' then uses optimal weights from one-district split scheme.
-//' @param log_incremental_weights A vector of the log incremental weights
-//' computed for the plans. The value of `log_incremental_weights[i]` is
-//' the log incremental weight for `plans_ptr_vec[i]`
-//' @param unnormalized_sampling_weights A vector of the unnormalized sampling
-//' weights to be used with sampling the `plans_ptr_vec` in the next iteration of the
-//' algorithm. Depending on the other hyperparameters this may or may not be the
-//' same as `exp(log_incremental_weights)`
-//' @param target Target population of a single district
-//' @param pop_temper <DETAILS NEEDED>
-//'
-//' @details Modifications
-//'    - The `log_incremental_weights` is updated to contain the incremental
-//'    weights of the plans
-//'    - The `unnormalized_sampling_weights` is updated to contain the unnormalized
-//'    sampling weights of the plans for the next round
+// NEED TO UPDATE THIS IS OLD DOCUMENTATION FOR GRAPH STUFF
+// Computes log unnormalized weights for vector of plans
+//
+// Using the procedure outlined in <PAPER HERE> this function computes the log
+// incremental weights and the unnormalized weights for a vector of plans (which
+// may or may not be the same depending on the parameters).
+//
+// @title Compute Log Unnormalized Weights
+//
+// @param pool A threadpool for multithreading
+// @param g A graph (adjacency list) passed by reference
+// @param plans_ptr_vec A vector of plans to compute the log unnormalized weights
+// of
+// @param split_district_only whether or not to compute the weights under
+// the district only split scheme or not. If `split_district_only` is true
+// then uses optimal weights from one-district split scheme.
+// @param log_incremental_weights A vector of the log incremental weights
+// computed for the plans. The value of `log_incremental_weights[i]` is
+// the log incremental weight for `plans_ptr_vec[i]`
+// @param unnormalized_sampling_weights A vector of the unnormalized sampling
+// weights to be used with sampling the `plans_ptr_vec` in the next iteration of the
+// algorithm. Depending on the other hyperparameters this may or may not be the
+// same as `exp(log_incremental_weights)`
+// @param target Target population of a single district
+// @param pop_temper <DETAILS NEEDED>
+//
+// @details Modifications
+//    - The `log_incremental_weights` is updated to contain the incremental
+//    weights of the plans
+//    - The `unnormalized_sampling_weights` is updated to contain the unnormalized
+//    sampling weights of the plans for the next round
 void compute_all_plans_log_optimal_incremental_weights(
     RcppThread::ThreadPool &pool, const MapParams &map_params,
     const SplittingSchedule &splitting_schedule, SamplingSpace const sampling_space,
@@ -650,7 +647,6 @@ void compute_all_plans_log_optimal_incremental_weights(
     int verbosity) {
     const int nsims = static_cast<int>(plans_ptr_vec.size());
     const int check_int = 50; // check for interrupts every _ iterations
-    const int num_regions = plans_ptr_vec[0]->num_regions;
     if (DEBUG_WEIGHTS_VERBOSE)
         Rprintf("About to start computing weights!\n");
 

@@ -16,6 +16,7 @@ builder.sh
 ^cran-comments\.md$
 ^CRAN-RELEASE$
 ^R/dev_helpers\.R$
+^inst/enumpart/enumpart$
 ^inst/enumpart/enumpart\.exe$
 ^data-raw$
 ^explore$

@@ -2,8 +2,7 @@
 # redist.coarsen.adjacency, redist.uncoarsen, redist.reduce.adjacency.
 
 test_that("redist.identify.cores returns one core id per precinct", {
-    iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05) %>%
-        suppressMessages()
+    iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05) |>         suppressMessages()
     core <- suppressWarnings(
         redist.identify.cores(adj = get_adj(iowa_map), plan = iowa_map$cd_2010)
     )
@@ -24,14 +23,15 @@ test_that("redist.identify.cores returns one core id per precinct", {
 })
 
 test_that("redist.identify.cores accepts a plan matrix and uses the first column", {
-    iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05) %>%
-        suppressMessages()
+    iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05) |>         suppressMessages()
     mat <- cbind(iowa_map$cd_2010, iowa_map$cd_2010)
     core1 <- suppressWarnings(redist.identify.cores(
-        adj = get_adj(iowa_map), plan = mat
+        adj = get_adj(iowa_map),
+        plan = mat
     ))
     core2 <- suppressWarnings(redist.identify.cores(
-        adj = get_adj(iowa_map), plan = iowa_map$cd_2010
+        adj = get_adj(iowa_map),
+        plan = iowa_map$cd_2010
     ))
     expect_equal(core1, core2)
 })
@@ -41,7 +41,7 @@ test_that("redist.identify.cores validates adj input", {
 })
 
 test_that("redist.coarsen.adjacency groups precincts and shrinks adjacency", {
-    adj0 <- list(c(1L, 2L), c(0L, 2L), c(0L, 1L, 3L), 2L)  # 0-indexed
+    adj0 <- list(c(1L, 2L), c(0L, 2L), c(0L, 1L, 3L), 2L) # 0-indexed
     # group the first two precincts together
     groups <- c(0L, 0L, 1L, 2L)
     coarse <- redist.coarsen.adjacency(adj0, groups)
@@ -69,8 +69,11 @@ test_that("redist.coarsen.adjacency validates inputs", {
 test_that("redist.uncoarsen reverses a coarsening on a plan matrix", {
     # 4 precincts collapsed into 3 groups (precincts 1+2 share a group)
     groups <- c(1L, 1L, 2L, 3L)
-    coarse_plans <- matrix(c(1L, 2L, 1L,
-                              1L, 2L, 2L), ncol = 2)
+    coarse_plans <- matrix(
+        c(1L, 2L, 1L,
+                              1L, 2L, 2L),
+        ncol = 2
+    )
     expanded <- redist.uncoarsen(coarse_plans, group_index = groups)
     expect_equal(dim(expanded), c(length(groups), ncol(coarse_plans)))
     # precincts 1 and 2 (same group) get the same district in every column
@@ -82,7 +85,7 @@ test_that("redist.uncoarsen reverses a coarsening on a plan matrix", {
 
 test_that("redist.reduce.adjacency subsets to kept rows and reindexes", {
     adj <- list(c(1L, 2L), c(0L, 2L), c(0L, 1L, 3L), 2L)
-    keep <- c(1L, 3L)  # 1-indexed in the original
+    keep <- c(1L, 3L) # 1-indexed in the original
     reduced <- redist.reduce.adjacency(adj, keep_rows = keep)
 
     expect_length(reduced, length(keep))

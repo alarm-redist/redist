@@ -30,39 +30,34 @@ TEMP_get_potential_region_size_for_loop_bounds(const int total_region_size,
     }
 }
 
-//' Draws a spanning tree uniformly at random on a region and returns it
-//'
-//' Draws a spanning tree uniformly at random on a region of a plan using
-//' Wilson's algorithm.
-//'
-//' @title Draw a uniformly random spanning tree on a region of a plan
-//'
-//'
-//' @param adj_list A 0-indexed adjacency list representing the undirected graph
-//' which represents the underlying map the plans are to be drawn on
-//' @param counties Vector of county labels of each vertex in `g`
-//' @param pop A vector of the population associated with each vertex in `g`
-//' @param ndists The number of districts the final plans will have
-//' @param num_regions The number of regions in the inputted plan
-//' @param num_districts The number of districts in the inputted plan
-//' @param region_id_to_draw_tree_on The id of the region in the plan to draw
-//' the tree on.
-//' @param lower Acceptable lower bounds on a valid district's population
-//' @param upper Acceptable upper bounds on a valid district's population
-//' @param region_ids A V by 1 matrix with the region ids of each vertex
-//' @param region_sizes A ndists by 1 matrix with the sizes of each regions
-//' @param verbose Whether or not to print out the inputted plan before
-//' attemping to draw a tree.
-//'
-//' @returns A list with the following
-//'     - `uncut_tree`: The spanning tree drawn on the region stored as a
-//'     0-indexed directed edge adjacency graph.
-//'     - `num_attempts`: The number of attempts it took to draw the tree.
-//'     - `root`: The root vertex of the tree (0-indexed)
-//'     - `pop_below`: The population below each vertex in `uncut_tree` ie
-//'     the population induced by removing the edge terminating in that vertex
-//'     - `uncut_tree_vertex_parents`: The parents of each vertex in the tree
-//' @export
+// @title Draw a uniformly random spanning tree on a region of a plan
+//
+// Draws a spanning tree uniformly at random on a region of a plan using
+// Wilson's algorithm.
+//
+// @param adj_list A 0-indexed adjacency list representing the undirected graph
+// which represents the underlying map the plans are to be drawn on
+// @param counties Vector of county labels of each vertex in `g`
+// @param pop A vector of the population associated with each vertex in `g`
+// @param ndists The number of districts the final plans will have
+// @param num_regions The number of regions in the inputted plan
+// @param num_districts The number of districts in the inputted plan
+// @param region_id_to_draw_tree_on The id of the region in the plan to draw the tree on.
+// @param lower Acceptable lower bounds on a valid district's population
+// @param upper Acceptable upper bounds on a valid district's population
+// @param region_ids A V by 1 matrix with the region ids of each vertex
+// @param region_sizes A ndists by 1 matrix with the sizes of each regions
+// @param verbose Whether or not to print out the inputted plan before attemping to draw a tree.
+//
+// @returns A list with the following
+//     - `uncut_tree`: The spanning tree drawn on the region stored as a
+//     0-indexed directed edge adjacency graph.
+//     - `num_attempts`: The number of attempts it took to draw the tree.
+//     - `root`: The root vertex of the tree (0-indexed)
+//     - `pop_below`: The population below each vertex in `uncut_tree` ie
+//     the population induced by removing the edge terminating in that vertex
+//     - `uncut_tree_vertex_parents`: The parents of each vertex in the tree
+// @export
 List draw_a_tree_on_a_region(List adj_list, const arma::uvec &counties, const arma::uvec &pop,
                              int ndists, int num_regions, int num_districts,
                              int region_id_to_draw_tree_on, double lower, double upper,
@@ -160,25 +155,25 @@ List draw_a_tree_on_a_region(List adj_list, const arma::uvec &counties, const ar
     return out;
 }
 
-//' @title Split a multidistrict into two regions
-//'
-//' Splits a multidistrict into Two New regions within population bounds
-//'
-//' Splits a multidistrict into two new valid regions by drawing spanning
-//' trees uniformly at random and attempting to find an edge to cut until
-//' a successful cut is made.
-//'
-//'
-//' @inheritParams run_redist_smc
-//' @inheritParams get_edge_to_cut
-//'
-//' @returns A list with the following
-//' \itemize{
-//'   \item{uncut_tree}{ - The spanning tree drawn stored as a 0-indexed directed
-//'   adjacency list.}
-//'   \item{root}{ - The 0-indexed root of the tree.}
-//'   \item{num_attempts}{ - The number of attempts it took to draw the tree.}
-//' }
+// @title Split a multidistrict into two regions
+//
+// Splits a multidistrict into Two New regions within population bounds
+//
+// Splits a multidistrict into two new valid regions by drawing spanning
+// trees uniformly at random and attempting to find an edge to cut until
+// a successful cut is made.
+//
+//
+// @inheritParams run_redist_smc
+// @inheritParams get_edge_to_cut
+//
+// @returns A list with the following
+// \itemize{
+//   \item{uncut_tree}{ - The spanning tree drawn stored as a 0-indexed directed
+//   adjacency list.}
+//   \item{root}{ - The 0-indexed root of the tree.}
+//   \item{num_attempts}{ - The number of attempts it took to draw the tree.}
+// }
 List perform_a_valid_multidistrict_split(List adj_list, const arma::uvec &counties,
                                          const arma::uvec &pop, int ndists, int num_regions,
                                          int num_districts, int region_id_to_split,

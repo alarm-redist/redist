@@ -13,93 +13,94 @@
 #include "base_plan_type.h"
 #include "forest_plan_type.h"
 #include "graph_plan_type.h"
+#include "lct_graph_plan_type.h"
 #include "linking_edge_plan_type.h"
 #include "redist_types.h"
 
 // [[Rcpp::export]]
 Rcpp::List maximum_input_sizes();
 
-//' Checks a matrix of seat counts is valid
-//'
-//' Checks that a matrix of seat counts associated with a plan is valid
-//' meaning that every region has a positive seat value and for each plan
-//' the sum of seats is equal to the total number of seats (`nseats`).
-//' If anything is not correct an error will be thrown.
-//'
-//' @param init_seats A matrix of 1-indexed plans
-//' @param num_regions The number of regions in the plan.
-//' @param nseats The total number of seats in the map
-//' @param seats_range Vector of number of seats a district is allowed to have
-//' @param split_districts_only Whether or not to check that all but the last region are
-//' districts or not. (Allows for the possibility the last region is a district too).
-//' @param num_threads The number of threads to use. Defaults to number of machine threads.
-//'
-//' @details Modifications
-//'    - None
-//'
-//' @keywords internal
-//' @noRd
+// Checks a matrix of seat counts is valid
+//
+// Checks that a matrix of seat counts associated with a plan is valid
+// meaning that every region has a positive seat value and for each plan
+// the sum of seats is equal to the total number of seats (`nseats`).
+// If anything is not correct an error will be thrown.
+//
+// @param init_seats A matrix of 1-indexed plans
+// @param num_regions The number of regions in the plan.
+// @param nseats The total number of seats in the map
+// @param seats_range Vector of number of seats a district is allowed to have
+// @param split_districts_only Whether or not to check that all but the last region are
+// districts or not. (Allows for the possibility the last region is a district too).
+// @param num_threads The number of threads to use. Defaults to number of machine threads.
+//
+// @details Modifications
+//    - None
+//
+// @keywords internal
+// @noRd
 // [[Rcpp::export]]
 void validate_init_seats_cpp(Rcpp::IntegerMatrix const &init_seats, int const num_regions,
                              int const nseats, Rcpp::IntegerVector const &seats_range,
                              bool const split_districts_only, int const num_threads = 1);
 
-//' Get canonically relabeled plans matrix
-//'
-//' Given a matrix of 1-indexed plans (or partial plans) this function
-//' returns a new plans matrix with all the plans labeled canonically.
-//' The canonical labelling of a plan is the one where the region of the
-//' first vertex gets mapped to 1, the region of the next smallest vertex
-//' in a different region than the first gets mapped to 2, and so on. This
-//' is guaranteed to result in the same labelling for any plan where the
-//' region ids have been permuted.
-//'
-//'
-//' @param plans_mat A matrix of 1-indexed plans
-//' @param num_regions The number of regions in the plan
-//' @param num_threads The number of threads to use. Defaults to number of machine threads.
-//'
-//' @details Modifications
-//'    - None
-//'
-//' @returns A matrix of canonically labelled plans
-//'
-//' @keywords internal
-//' @noRd
+// Get canonically relabeled plans matrix
+//
+// Given a matrix of 1-indexed plans (or partial plans) this function
+// returns a new plans matrix with all the plans labeled canonically.
+// The canonical labelling of a plan is the one where the region of the
+// first vertex gets mapped to 1, the region of the next smallest vertex
+// in a different region than the first gets mapped to 2, and so on. This
+// is guaranteed to result in the same labelling for any plan where the
+// region ids have been permuted.
+//
+//
+// @param plans_mat A matrix of 1-indexed plans
+// @param num_regions The number of regions in the plan
+// @param num_threads The number of threads to use. Defaults to number of machine threads.
+//
+// @details Modifications
+//    - None
+//
+// @returns A matrix of canonically labelled plans
+//
+// @keywords internal
+// @noRd
 // [[Rcpp::export]]
 Rcpp::IntegerMatrix get_canonical_plan_labelling(Rcpp::IntegerMatrix const &plans_mat,
                                                  int const num_regions,
                                                  int const num_threads = 0);
 
-//' Count how many times each plan appears in a plans matrix
-//'
-//' Given a matrix of 1-indexed plans (or partial plans) this function
-//' returns a list mapping plan vectors as a giant concatened string to
-//' the count of how many times the plan appears.
-//'
-//' If `use_canonical_ordering` is set to true then the plans will be
-//' reordered using the canonical reordering function
-//' `get_canonical_plan_labelling`. This guarantees that the same plan
-//' will not be incorrectly counted if there are different permutations
-//' of its labels. If `use_canonical_ordering` is not set to true then
-//' its possible the count will be incorrect because of different
-//' permutations of the same underlying plan.
-//'
-//'
-//' @param plans_mat A matrix of 1-indexed plans
-//' @param num_regions The number of regions in the plan
-//' @param use_canonical_ordering Whether or not to reorder the plans using the
-//' canonical ordering on plans.
-//' @param num_threads The number of threads to use. Defaults to number of machine threads.
-//'
-//' @details Modifications
-//'    - None
-//'
-//' @returns A list mapping plans (stored as a string concatened vector) to
-//' how many times they appear in the matrix
-//'
-//' @keywords internal
-//' @noRd
+// Count how many times each plan appears in a plans matrix
+//
+// Given a matrix of 1-indexed plans (or partial plans) this function
+// returns a list mapping plan vectors as a giant concatened string to
+// the count of how many times the plan appears.
+//
+// If `use_canonical_ordering` is set to true then the plans will be
+// reordered using the canonical reordering function
+// `get_canonical_plan_labelling`. This guarantees that the same plan
+// will not be incorrectly counted if there are different permutations
+// of its labels. If `use_canonical_ordering` is not set to true then
+// its possible the count will be incorrect because of different
+// permutations of the same underlying plan.
+//
+//
+// @param plans_mat A matrix of 1-indexed plans
+// @param num_regions The number of regions in the plan
+// @param use_canonical_ordering Whether or not to reorder the plans using the
+// canonical ordering on plans.
+// @param num_threads The number of threads to use. Defaults to number of machine threads.
+//
+// @details Modifications
+//    - None
+//
+// @returns A list mapping plans (stored as a string concatened vector) to
+// how many times they appear in the matrix
+//
+// @keywords internal
+// @noRd
 // [[Rcpp::export]]
 Rcpp::DataFrame get_plan_counts(Rcpp::IntegerMatrix const &input_plans_mat,
                                 int const num_regions, bool const use_canonical_ordering = true,

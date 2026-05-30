@@ -418,9 +418,6 @@ AnyRegionMMDSplittingSchedule::AnyRegionMMDSplittingSchedule(
             auto merged_size = region_size + potential_size;
             if (merged_size <= total_seats)
                 reachable_size[merged_size] = true;
-            // Now check if the equivalent
-            auto other_split_size = region_size - potential_size;
-            // skip if the other size isn't possible
         }
 
         // Now we want to figure out what reachable sizes can be combined to get this one

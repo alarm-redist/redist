@@ -36,7 +36,7 @@ class RegionConstraint {
   public:
     RegionConstraint(bool const score_districts_only, double const strength,
                      bool const hard_constraint, double const hard_threshold)
-        : score_districts_only(score_districts_only), strength(strength),
+        : strength(strength), score_districts_only(score_districts_only),
           hard_constraint(hard_constraint), hard_threshold(hard_threshold) {};
 
     RegionConstraint(Rcpp::List const &a_constraint)

@@ -123,13 +123,10 @@ min_move_parity <- function(map, plan, counties = NULL, penalty = 0.2) {
         lapply(seq_along(distr_adj), function(i) {
             tibble(from = i, to = distr_adj[[i]] + 1L)
         })
-    ) %>%
-        rowwise() %>%
-        filter(
+    ) |>         rowwise() |>         filter(
             .data$from < .data$to,
             any(unique(counties[plan == .data$from]) %in% counties[plan == .data$to])
-        ) %>%
-        ungroup()
+        ) |>         ungroup()
 
     n_edge <- nrow(edges)
     e_idx <- as.matrix(mutate(edges, i = row_number()))
@@ -164,8 +161,7 @@ min_move_parity <- function(map, plan, counties = NULL, penalty = 0.2) {
         from = if_else(move < 0, .data$to, .data$from),
         to = if_else(move < 0, from_old, .data$to),
         move = abs(move)
-    ) %>%
-        filter(.data$move > 0)
+    ) |>         filter(.data$move > 0)
 
     list(moves = edges,
         pop_old = pops[, 1],

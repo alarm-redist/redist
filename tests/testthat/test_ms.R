@@ -20,12 +20,8 @@ test_that("redist_mergesplit works", {
 
 test_that("Additional constraints work", {
     skip_on_cran()
-    iowa_map <- redist_map(iowa, ndists = 4, pop_tol = 0.05)
-
-    constr <- redist_constr(iowa_map) %>%
-        add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) %>%
-        add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) %>%
-        add_constr_custom(1e6, function(plan, distr) plan[7] == 2)
+    iowa_map <- suppressMessages(redist_map(iowa, ndists = 4, pop_tol = 0.05))
+    constr <- redist_constr(iowa_map) |>         add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) |>         add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) |>         add_constr_custom(1e6, function(plan, distr) plan[7] == 2)
 
     plans <- redist_mergesplit(
         iowa_map,
@@ -35,23 +31,19 @@ test_that("Additional constraints work", {
         constraints = constr,
         silent = TRUE
     )
-    skip = seq(1, which.max(by_plan(plans$mcmc_accept, 4)) - 1) # skip to first acceptance
+    skip <- seq(1, which.max(by_plan(plans$mcmc_accept, 4)) - 1) # skip to first acceptance
     # subtract 1 since plans are zero indexed in c++
     expect_false(any((as.matrix(plans)[7, -skip] - 1L) == 2))
 })
 
 
 test_that("Thresholding constraints work", {
-    iowa_map <- redist_map(iowa, ndists = 4, pop_tol = 0.05)
-
+    iowa_map <- suppressMessages(redist_map(iowa, ndists = 4, pop_tol = 0.05))
     # ensure that polk and story county are always in the same region
     polk_precint <- which(iowa_map$name == "Polk")
     story_precint <- which(iowa_map$name == "Story")
 
-    constr <- redist_constr(iowa_map) %>%
-        add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) %>%
-        add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) %>%
-        add_constr_custom_plan(
+    constr <- redist_constr(iowa_map) |>         add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) |>         add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) |>         add_constr_custom_plan(
             1,
             function(plan, seats, num_regions) {
                 # return 0 if in the same region
@@ -77,10 +69,7 @@ test_that("Thresholding constraints work", {
     )
 
     # now ensure polk and story are never in the same region
-    constr <- redist_constr(iowa_map) %>%
-        add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) %>%
-        add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) %>%
-        add_constr_custom_plan(
+    constr <- redist_constr(iowa_map) |>         add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) |>         add_constr_grp_hinge(5, bvap + hvap, vap, c(0.5, 0)) |>         add_constr_custom_plan(
             1,
             function(plan, seats, num_regions) {
                 if (num_regions == 1 || plan[polk_precint] != plan[story_precint]) {
@@ -110,7 +99,7 @@ test_that("redist_mergesplit with multiple chains works", {
     skip_on_os("windows")
     data(fl25)
     ndists <- 3
-    fl_map <- redist_map(fl25, ndists = ndists, pop_tol = 0.1) %>% suppressMessages()
+    fl_map <- redist_map(fl25, ndists = ndists, pop_tol = 0.1) |> suppressMessages()
 
     N <- 20
     chains <- 2

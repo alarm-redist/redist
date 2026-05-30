@@ -44,14 +44,14 @@
 // ' @param region_sizes A ndists by 1 matrix with the sizes of each regions
 // ' @param verbose Whether or not to print out the inputted plan before
 // ' attemping to draw a tree.
-//'
-//' @returns A list with the following
-//'     - `uncut_tree`: The spanning tree drawn on the region stored as a
-//'     0-indexed directed edge adjacency graph.
-//'     - `num_attempts`: The number of attempts it took to draw the tree.
-//'
-//' @keywords internal
-//' @noRd
+//
+// @returns A list with the following
+//     - `uncut_tree`: The spanning tree drawn on the region stored as a
+//     0-indexed directed edge adjacency graph.
+//     - `num_attempts`: The number of attempts it took to draw the tree.
+//
+// @keywords internal
+// @noRd
 // [[Rcpp::export]]
 List draw_a_tree_on_a_region(List adj_list, const arma::uvec &counties, const arma::uvec &pop,
                              int ndists, int num_regions, int num_districts,
@@ -59,16 +59,16 @@ List draw_a_tree_on_a_region(List adj_list, const arma::uvec &counties, const ar
                              Rcpp::IntegerMatrix const &region_ids,
                              Rcpp::IntegerMatrix const &region_sizes, bool verbose);
 
-//' Splits a multidistrict into two new regions within population bounds
-//'
-//' Splits a multidistrict into two new valid regions by drawing spanning
-//' trees uniformly at random and attempting to find an edge to cut until
-//' a successful cut is made.
-//'
-//' @title Split a multidistrict into two regions
-//'
-//' @inheritParams run_redist_smc
-//' @noRd
+// Splits a multidistrict into two new regions within population bounds
+//
+// Splits a multidistrict into two new valid regions by drawing spanning
+// trees uniformly at random and attempting to find an edge to cut until
+// a successful cut is made.
+//
+// @title Split a multidistrict into two regions
+//
+// @inheritParams run_redist_smc
+// @noRd
 // [[Rcpp::export]]
 List perform_a_valid_multidistrict_split(
     List adj_list, const arma::uvec &counties, const arma::uvec &pop, int ndists,

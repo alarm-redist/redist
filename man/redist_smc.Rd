@@ -216,6 +216,11 @@ reproducibility is desired, set \code{nproc=1} and
 have lower variance and lead to faster convergence but can be more
 computationally expensive, especially for computationally complex constraints
 or when \code{compactness} is not set to 1.
+\item \code{max_split_tries} The maximum number of times to try splitting
+plans before giving up. If more than \code{max_split_tries} attempts at splitting
+are made without a success then an exception will be thrown. This can be
+useful for maps and constraints where it might become impossible to split
+plans after a certain step. Defaults to not checking.
 }}
 
 \item{adapt_k_thresh}{Deprecated. Pass in through the \code{split_params} arg.

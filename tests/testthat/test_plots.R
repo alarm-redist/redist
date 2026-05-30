@@ -2,15 +2,14 @@ test_that("redist.plot.map works", {
     out <- redist.plot.map(shp = iowa, plan = iowa$cd_2010)
     expect_true("ggplot" %in% class(out))
 
-    iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
-
-    out <- iowa_map %>% redist.plot.map(shp = ., plan = get_existing(.))
+    iowa_map <- suppressMessages(redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01))
+    out <- redist.plot.map(shp = iowa_map, plan = get_existing(iowa_map))
     expect_true("ggplot" %in% class(out))
 
-    out <- iowa_map %>% redist.plot.map(shp = ., plan = cd_2010)
+    out <- redist.plot.map(iowa_map, plan = cd_2010)
     expect_true("ggplot" %in% class(out))
 
-    out <- iowa_map %>% redist.plot.map(shp = ., plan = cd_2010, fill = white)
+    out <- redist.plot.map(iowa_map, plan = cd_2010, fill = white)
     expect_true("ggplot" %in% class(out))
 })
 
@@ -19,12 +18,11 @@ test_that("redist.plot.adj works", {
     out <- redist.plot.adj(shp = iowa, plan = iowa$cd_2010)
     expect_true("ggplot" %in% class(out))
 
-    iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
-
-    out <- iowa_map %>% redist.plot.adj(shp = ., plan = get_existing(.))
+    iowa_map <- suppressMessages(redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01))
+    out <- redist.plot.adj(shp = iowa_map, plan = get_existing(iowa_map))
     expect_true("ggplot" %in% class(out))
 
-    out <- iowa_map %>% redist.plot.map(shp = ., plan = cd_2010)
+    out <- redist.plot.map(iowa_map, plan = cd_2010)
     expect_true("ggplot" %in% class(out))
 })
 
@@ -41,8 +39,7 @@ test_that("redist.plot.majmin returns a ggplot for each supported type", {
 })
 
 test_that("redist.plot.cores returns a ggplot", {
-    iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05) %>%
-        suppressMessages()
+    iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05) |>         suppressMessages()
     cores <- suppressWarnings(redist.identify.cores(
         adj = get_adj(iowa_map),
         plan = iowa_map$cd_2010
@@ -53,8 +50,7 @@ test_that("redist.plot.cores returns a ggplot", {
 
 test_that("redist.plot.varinfo returns a patchwork ggplot", {
     skip_on_cran()
-    iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05) %>%
-        suppressMessages()
+    iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05) |>         suppressMessages()
     set.seed(2)
     # Need >= 5 distinct plans for kmeans(centers = 5); jitter the existing one
     plans <- replicate(8, {
@@ -70,12 +66,8 @@ test_that("redist.plot.varinfo returns a patchwork ggplot", {
 })
 
 test_that("plot.redist_constr handles supported constraint types", {
-    iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05) %>%
-        suppressMessages()
-    constr <- redist_constr(iowa_map) %>%
-        add_constr_grp_hinge(10, bvap, vap, tgts_group = 0.5) %>%
-        add_constr_grp_inv_hinge(5, bvap, vap, tgts_group = 0.3) %>%
-        add_constr_grp_pow(1, bvap, vap, tgt_group = 0.55, tgt_other = 0.25)
+    iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05) |>         suppressMessages()
+    constr <- redist_constr(iowa_map) |>         add_constr_grp_hinge(10, bvap, vap, tgts_group = 0.5) |>         add_constr_grp_inv_hinge(5, bvap, vap, tgts_group = 0.3) |>         add_constr_grp_pow(1, bvap, vap, tgt_group = 0.55, tgt_other = 0.25)
     expect_s3_class(plot(constr), "ggplot")
     expect_error(plot(constr, type = "bogus"), "group")
 })

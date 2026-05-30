@@ -288,17 +288,15 @@ redist_map <- function(
         existing_col <- NULL
     }
 
-    if (!is.null(existing_col)) {
-        if (!is.numeric(x[[existing_col]])) {
-            temp_col <- NULL
-            suppressWarnings({
-                temp_col <- as.numeric(x[[existing_col]])
-            })
-            if (!anyNA(temp_col)) {
-                x[[existing_col]] <- temp_col
-            } else {
-                cli::cli_abort("Existing plan {.field {exist_col}} must be a numeric vector.")
-            }
+    if ((!is.null(existing_col)) && (!is.numeric(x[[existing_col]]))) {
+        temp_col <- NULL
+        suppressWarnings({
+            temp_col <- as.numeric(x[[existing_col]])
+        })
+        if (!anyNA(temp_col)) {
+            x[[existing_col]] <- temp_col
+        } else {
+            cli::cli_abort("Existing plan {.field {exist_col}} must be a numeric vector.")
         }
     }
 

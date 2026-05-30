@@ -68,10 +68,6 @@ Rcpp::List ms_plans(
     SplittingMethodType splitting_method =
         get_splitting_type(static_cast<std::string>(control["splitting_method"]));
 
-    // get the splitting size regime
-    SplittingSizeScheduleType splitting_size_regime =
-        SplittingSizeScheduleType::PureMergeSplitSize;
-
     auto splitting_schedule_ptr = std::make_unique<PureMSSplittingSchedule>(
         ndists, total_seats, as<std::vector<int>>(district_seat_sizes));
     // splitting_schedule_ptr->print_current_step_splitting_info();

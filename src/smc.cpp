@@ -346,7 +346,6 @@ void run_merge_split_step_on_all_plans(
     std::string const merge_prob_type, double const rho, bool const is_final,
     int const nsteps_to_run, int const merge_split_step_num, int const step_num,
     SMCDiagnostics &smc_diagnostics, WeightCacheEnsemble &cache_ensemble, int verbosity) {
-    int const num_regions = plan_ptrs_vec[0]->num_regions;
     const int check_int = 15; // check for interrupts every _ iterations
     int nsims = (int)plan_ptrs_vec.size();
     if (DEBUG_GSMC_PLANS_VERBOSE)
@@ -449,27 +448,27 @@ void run_merge_split_step_on_all_plans(
 //      - level 2 - Captures the parent tries mat
 //      - level 3 - Saves intermediate region dvals and plan ids
 
-//' Uses gsmc method to generate a sample of `M` plans in `c++`
-//'
-//' Using the procedure outlined in <PAPER HERE> this function uses Sequential
-//' Monte Carlo (SMC) methods to generate a sample of `M` plans
-//'
-//' @title Run redist gsmc
-//'
-//' @param ndists The number of districts the final plans will have
-//' @param adj_list A 0-indexed adjacency list representing the undirected graph
-//' which represents the underlying map the plans are to be drawn on
-//' @param counties Vector of county labels of each vertex in `g`
-//' @param pop A vector of the population associated with each vertex in `g`
-//' @param target Ideal population of a valid district. This is what deviance is calculated
-//' relative to
-//' @param lower Acceptable lower bounds on a valid district's population
-//' @param upper Acceptable upper bounds on a valid district's population
-//' @param control Named list of additional parameters.
-//' @param num_threads The number of threads the threadpool should use
-//' @param verbosity What level of detail to print out while the algorithm is
-//' running <ADD OPTIONS>
-//' @export
+// Uses gsmc method to generate a sample of `M` plans in `c++`
+//
+// Using the procedure outlined in <PAPER HERE> this function uses Sequential
+// Monte Carlo (SMC) methods to generate a sample of `M` plans
+//
+// @title Run redist gsmc
+//
+// @param ndists The number of districts the final plans will have
+// @param adj_list A 0-indexed adjacency list representing the undirected graph
+// which represents the underlying map the plans are to be drawn on
+// @param counties Vector of county labels of each vertex in `g`
+// @param pop A vector of the population associated with each vertex in `g`
+// @param target Ideal population of a valid district. This is what deviance is calculated
+// relative to
+// @param lower Acceptable lower bounds on a valid district's population
+// @param upper Acceptable upper bounds on a valid district's population
+// @param control Named list of additional parameters.
+// @param num_threads The number of threads the threadpool should use
+// @param verbosity What level of detail to print out while the algorithm is
+// running <ADD OPTIONS>
+// @export
 List run_redist_smc(
     int const nsims, int const total_seats, int const ndists,
     Rcpp::IntegerVector const district_seat_sizes, int const initial_num_regions,
@@ -631,7 +630,6 @@ List run_redist_smc(
          splitting_size_regime == SplittingSizeScheduleType::AnyValidSizeMMD);
     bool split_district_only =
         splitting_size_regime == SplittingSizeScheduleType::DistrictOnlySMD;
-    bool use_graph_plan_space = sampling_space == SamplingSpace::GraphSpace;
 
     // Do some input checking
     // Make sure first merge split argument isn't true

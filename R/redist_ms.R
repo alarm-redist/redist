@@ -294,7 +294,7 @@ redist_mergesplit <- function(
             silent = silent
         )
 
-        sampled_inidices <- sample.int(n = n_smc_nsims, size = chains, replace = F)
+        sampled_inidices <- sample.int(n = n_smc_nsims, size = chains, replace = FALSE)
 
         init_seats <- get_seats_matrix(init_plan)[,
             sampled_inidices,
@@ -351,7 +351,7 @@ redist_mergesplit <- function(
         verbosity <- 0
     }
 
-    control = list(
+    control <- list(
     splitting_method = split_method,
     do_mh = TRUE
   )
@@ -366,12 +366,12 @@ redist_mergesplit <- function(
         `%oper%` <- `%dorng%`
 
         of <- ifelse(
-            Sys.info()[['sysname']] == 'Windows',
+            Sys.info()[["sysname"]] == "Windows",
             tempfile(
-                pattern = paste0('ms_', substr(Sys.time(), 1, 10)),
-                fileext = '.txt'
+                pattern = paste0("ms_", substr(Sys.time(), 1, 10)),
+                fileext = ".txt"
             ),
-            ''
+            ""
         )
         # this makes a cluster using socket (NOT FORK) with
         if (!silent) {
@@ -384,6 +384,7 @@ redist_mergesplit <- function(
         } else {
             cl <- makeCluster(
                 ncores,
+                outfile = nullfile(),
                 methods = FALSE,
                 useXDR = .Platform$endian != "little"
             )
@@ -542,8 +543,7 @@ redist_mergesplit <- function(
         pop_bounds = pop_bounds,
         num_admin_units = num_admin_units,
         total_runtime = t2 - t1
-    ) %>%
-        mutate(
+    ) |>         mutate(
             chain = rep(seq_len(chains), each = each_len * ndists),
             mcmc_accept = rep(acceptances, each = ndists)
         )
@@ -564,8 +564,7 @@ redist_mergesplit <- function(
                         ref_plan = init_plan[, idx],
                         name = init_names[idx],
                         ref_seats = init_seats[, idx]
-                    ) %>%
-                        mutate(chain = dplyr::coalesce(chain, idx))
+                    ) |>                         mutate(chain = dplyr::coalesce(chain, idx))
                 },
                 rev(seq_len(chains)),
                 init = out

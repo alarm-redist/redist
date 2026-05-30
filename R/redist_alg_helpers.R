@@ -55,9 +55,7 @@ get_map_parameters <- function(map, counties = NULL) {
             component > 1,
             paste0(as.character(counties), "-", component),
             as.character(counties)
-        ) %>%
-            as.factor() %>%
-            as.integer()
+        ) |>             as.factor() |>             as.integer()
         if (any(component > 1)) {
             cli::cli_warn("Counties were not contiguous; expect additional splits.")
         }
@@ -242,7 +240,7 @@ validate_sample_space_and_splitting_method <- function(
             }
             # now check its between 0 and 1
             if (
-                split_params$adapt_k_thresh < 0 |
+                split_params$adapt_k_thresh < 0 ||
                     split_params$adapt_k_thresh > 1
             ) {
                 cli::cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
@@ -372,74 +370,6 @@ validate_initial_region_id_mat <- function(
 }
 
 
-#' Checks that a region seats matrix is valid
-#'
-#' Checks that a region seats matrix is valid. For plans with `init_num_regions`
-#' the seats matrix should:
-#'      - Have dimensions `init_num_regions` by `nsims`
-#'      - Each value must be at least `min(seats_range)` and no bigger than `nseats`
-#'      - Each column must sum to `nseats`
-#'
-#' If any of these conditions are not true then the function will throw an error.
-#' Else returns the validated matrix
-#'
-#'
-#' @param init_seats A ndists by nsims matrix of region sizes
-#' @param nseats The total number of seats in the plan
-#' @param seats_range The number of seats a district is allowed to have.For
-#' single member districting schemes this is always 1.
-#' @param nsims The number of simulations being run.
-#' @param init_num_regions The number of regions in partial plans stored in the
-#' `init_seats`
-#' @param split_districts_only Whether the plans should be all districts except
-#' for possible the remainder (which should have the largest index).
-#' @param ncores The number of threads to use when checking. Generally `1` is
-#' fine but for a lot of plans more threads can speed things up.
-#'
-#' @noRd
-validate_init_seats <- function(
-    init_seats,
-    nseats,
-    seats_range,
-    nsims,
-    init_num_regions,
-    split_districts_only,
-    ncores = 1L
-) {
-    # check that its a matrix
-    if (!is.matrix(init_seats)) {
-        cli::cli_abort("{.arg init_seats} must be a matrix.")
-    }
-    # check its integerish
-    if (!rlang::is_integerish(init_seats)) {
-        cli::cli_abort("{.arg init_seats} must be all integers")
-    }
-    # update the storage mode if needed
-    if (storage.mode(init_seats) != "integer") {
-        storage.mode(init_seats) <- "integer"
-    }
-    # now check dimensions
-    if (nrow(init_seats) != init_num_regions) {
-        cli::cli_abort("{.arg init_seats} must have {.arg init_num_regions} rows.")
-    }
-    if (ncol(init_seats) != nsims) {
-        cli::cli_abort("{.arg init_seats} must have {.arg nsims} columns.")
-    }
-    # now check values in c++
-    validate_init_seats_cpp(
-        init_seats,
-        init_num_regions,
-        nseats,
-        seats_range,
-        split_districts_only,
-        ncores
-    )
-
-    # now return
-    init_seats
-}
-
-
 #' Attempts to infer the number of seats for each district in a plan
 #'
 #' Attempts to guess the number of seats assigned to each region in a plans
@@ -487,7 +417,3 @@ infer_plan_seats <- function(
 
     sizes_matrix
 }
-
-# ensures the return admin units vector is indexed 1:number of admin
-# units
-get_validated_admin_units <- function(admin_units) {}

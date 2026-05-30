@@ -31,7 +31,7 @@ test_that("pareto domination is calculated correctly", {
 })
 
 test_that("short bursts run and improve the score over time", {
-    iowa_map <- suppressWarnings(redist_map(iowa, ndists = 4, pop_tol = 0.2))
+    iowa_map <- suppressWarnings(suppressMessages(redist_map(iowa, ndists = 4, pop_tol = 0.2)))
     plans <- redist_shortburst(
         iowa_map,
         scorer_frac_kept(iowa_map),
@@ -65,7 +65,7 @@ test_that("short bursts run and improve the score over time", {
 
 test_that("short bursts work with multiple scorers", {
     set.seed(1935)
-    iowa_map <- suppressWarnings(redist_map(iowa, ndists = 4, pop_tol = 0.2))
+    iowa_map <- suppressWarnings(suppressMessages(redist_map(iowa, ndists = 4, pop_tol = 0.2)))
     scorer <- cbind(
         comp = scorer_frac_kept(iowa_map),
         dem = scorer_group_pct(iowa_map, dem_08, tot_08, k = 2)
@@ -90,7 +90,7 @@ test_that("short bursts work with multiple scorers", {
 # cyclewalk backend tests
 
 test_that("cyclewalk short bursts run and improve score over time", {
-    iowa_map <- suppressWarnings(redist_map(iowa, ndists = 4, pop_tol = 0.2))
+    iowa_map <- suppressWarnings(suppressMessages(redist_map(iowa, ndists = 4, pop_tol = 0.2)))
     plans <- redist_shortburst(
         iowa_map,
         scorer_frac_kept(iowa_map),
@@ -116,7 +116,7 @@ test_that("cyclewalk short bursts run and improve score over time", {
 })
 
 test_that("cyclewalk short bursts work with multiple scorers", {
-    iowa_map <- suppressWarnings(redist_map(iowa, ndists = 4, pop_tol = 0.2))
+    iowa_map <- suppressWarnings(suppressMessages(redist_map(iowa, ndists = 4, pop_tol = 0.2)))
     scorer <- cbind(
         comp = scorer_frac_kept(iowa_map),
         dem = scorer_group_pct(iowa_map, dem_08, tot_08, k = 2)

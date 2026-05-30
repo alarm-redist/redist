@@ -38,9 +38,7 @@
 #' data(iowa)
 #'
 #' iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05)
-#' plans <- redist_mergesplit(iowa_map, nsims = 200, chains = 2, silent = TRUE) %>%
-#'     mutate(dem = group_frac(iowa_map, dem_08, dem_08 + rep_08)) %>%
-#'     number_by(dem)
+#' plans <- redist_mergesplit(iowa_map, nsims = 200, chains = 2, silent = TRUE) |> #'     mutate(dem = group_frac(iowa_map, dem_08, dem_08 + rep_08)) |> #'     number_by(dem)
 #' redist_smc_ci(plans, dem)
 #'
 #' @md
@@ -91,8 +89,7 @@ redist_smc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE)
                        "i" = "R-hat is {round(rhat, 3)}",
                        ">" = "Increase the number of samples."))
         }
-        run_means <- tapply(x, chain, mean) %>%
-            `names<-`(NULL)
+        run_means <- tapply(x, chain, mean) |>             `names<-`(NULL)
 
         if (isTRUE(by_chain)) {
             std_err <- sd(run_means)
@@ -152,6 +149,12 @@ redist_mcmc_ci <- function(
         chain <- rep(1, N)
     }
 
+    # Fall back to coda when only a single chain is available.
+    if (!use_coda && length(unique(chain)) < 2) {
+        rlang::check_installed("coda", "to calculate single-chain MCMC standard errors.")
+        use_coda <- TRUE
+    }
+
     rhat <- diag_rhat(x, chain, split = TRUE)
     if (is.finite(rhat) && rhat > 1.05) {
         cli::cli_warn(c("Runs have not converged for this statistic.",
@@ -161,7 +164,7 @@ redist_mcmc_ci <- function(
 
     if (use_coda) {
         rlang::check_installed("coda", "to calculate MCMC standard errors.")
-        mcmc = coda::mcmc.list(tapply(x, chain, coda::mcmc, thin = thin))
+        mcmc <- coda::mcmc.list(tapply(x, chain, coda::mcmc, thin = thin))
         std_err <- summary(mcmc)$statistics["Time-series SE"]
         if (isTRUE(by_chain)) {
             std_err <- std_err * sqrt(max(chain))
@@ -179,8 +182,7 @@ redist_mcmc_ci <- function(
                            "i" = "R-hat is {round(rhat, 3)}",
                            ">" = "Increase the number of samples."))
         }
-        run_means <- tapply(x, chain, mean) %>%
-            `names<-`(NULL)
+        run_means <- tapply(x, chain, mean) |>             `names<-`(NULL)
 
         if (isTRUE(by_chain)) {
             std_err <- sd(run_means)

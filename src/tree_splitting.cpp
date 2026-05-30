@@ -7,8 +7,8 @@ remove (splitting the tree)
 ********************************************************/
 
 #include "tree_splitting.h"
+#include "scoring.h"
 
-constexpr bool PRINT_PERFORANCE_TIMES = false; // Compile-time constant
 constexpr bool FINDING_EDGE_CUTS_VERBOSE = false;
 
 /*

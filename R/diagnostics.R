@@ -123,26 +123,26 @@ summary.redist_plans <- function(
     div_rg <- format(quantile(est_div, c(0.1, 0.9)), digits = 2)
     div_bad <- (mean(est_div) <= 0.35) || (mean(est_div <= 0.25) > 0.1)
 
-    summary_supported_algs <- c(SMC_ALG_TYPE, MS_SMC_ALG_TYPE, MCMC_ALG_TYPE, "flip")
+    summary_supported_algs <- c(SMC_ALG_TYPE, MS_SMC_ALG_TYPE, MCMC_ALG_TYPE, "flip", "cyclewalk")
 
     # ignore if not a supported algorithm
     if (!algo %in% summary_supported_algs) {
         cli::cli_abort("{.fn summary} is not supported for the {toupper(algo)} algorithm.")
-        return(invisible(out_list))
     }
 
     # bool for not flip
     revamped_alg <- algo %in% c(SMC_ALG_TYPE, MS_SMC_ALG_TYPE, MCMC_ALG_TYPE)
 
     # checks if plans are earlier than version 5.0
-    pre_v5_plans <- is.null(attr(object, "version")) || attr(object, "version") < '5'
+    pre_v5_plans <- is.null(attr(object, "version")) || attr(object, "version") < "5"
 
     # get the display name
     alg_display_name <- dplyr::case_when(
         algo == SMC_ALG_TYPE ~ "SMC",
         algo == MS_SMC_ALG_TYPE ~ "SMC with Merge-Split MCMC Steps",
         algo == MCMC_ALG_TYPE ~ "Merge-Split MCMC",
-        algo == "flip" ~ "Flip MCMC"
+        algo == "flip" ~ "Flip MCMC",
+        algo == "cyclewalk" ~ "CycleWalk MCMC"
     )
     cli::cli_text("{.strong {alg_display_name}:} {fmt_comma(n_samp)} sampled plans of {n_distr}
                  districts on {fmt_comma(nrow(plans_m))} units")
@@ -158,7 +158,6 @@ summary.redist_plans <- function(
         all_sampling_spaces <- sapply(all_run_info, function(x) x$sampling_space)
         if (length(unique(all_sampling_spaces)) != 1) {
             cli::cli_abort("{.fn summary} is not supported for plans sampled using different sampling spaces.")
-            return(invisible(1))
         }
         sampling_space <- all_sampling_spaces[1]
         display_sampling_space <- dplyr::case_when(
@@ -170,7 +169,6 @@ summary.redist_plans <- function(
         all_splitting_methods <- sapply(all_run_info, function(x) x$split_method)
         if (length(unique(all_splitting_methods)) != 1) {
             cli::cli_abort("{.fn summary} is not supported for plans sampled using different splitting methods")
-            return(invisible(1))
         }
         split_method <- all_splitting_methods[1]
         display_splitting_method <- dplyr::case_when(
@@ -186,7 +184,6 @@ summary.redist_plans <- function(
             all_forward_kernel_params[[i]]$cut_k_used <- NULL
             if (!identical(all_forward_kernel_params[[1]], all_forward_kernel_params[[i]])) {
                 cli::cli_abort("{.fn summary} is not supported for plans sampled using different splitting parameters")
-                return(invisible(1))
             }
         }
         forward_kernel_params <- all_forward_kernel_params[[1]]
@@ -254,7 +251,7 @@ summary.redist_plans <- function(
                     all(is.na(x)) ||
                         all(x == x[1]) ||
                         any(
-                            tapply(x, object[['chain']], FUN = function(z) length(unique(z))) ==
+                            tapply(x, object[["chain"]], FUN = function(z) length(unique(z))) ==
                                 1
                         )
                 },
@@ -284,7 +281,7 @@ summary.redist_plans <- function(
             }
         }
         rhats_computed <- TRUE
-        split_rhat = algo %in% c(MCMC_ALG_TYPE, "flip")
+        split_rhat <- algo %in% c(MCMC_ALG_TYPE, "flip")
 
         # get rhats
         rhats_df <- compute_all_rhats(
@@ -305,6 +302,7 @@ summary.redist_plans <- function(
         }
 
         out_list[["rhats_df"]] <- rhats_df
+        out_list[["rhat"]] <- rhats_df$rhat
 
         # get thresholds
         q99_rhat_thresh <- ifelse("q99" %in% rhat_thresh, rhat_thresh[["q99"]], 1.05)
@@ -318,7 +316,7 @@ summary.redist_plans <- function(
         rhats_p <- vapply(
             max_rhats,
             function(x) {
-                ifelse(x <= q99_rhat_thresh, sprintf('%.3f', x), paste0('\U274C', round(x, 3)))
+                ifelse(x <= q99_rhat_thresh, sprintf("%.3f", x), paste0("\U274C", round(x, 3)))
             },
             FUN.VALUE = character(1)
         )
@@ -472,7 +470,21 @@ summary.redist_plans <- function(
             )
             cli::cat_line("    ", cli::code_highlight(code, "Material"))
         }
-    } else if (algo %in% c("mergesplit", 'flip')) {
+    } else if (algo == "cyclewalk") {
+        mh <- attr(object, "mh_acceptance")
+        if (!is.null(mh)) {
+            accept_rate <- sprintf("%0.1f%%", 100 * mh)
+            cli::cli_text("Chain acceptance rate{?s}: {accept_rate}")
+        }
+
+        out <- tibble(
+            accept_rate = mh %||% NA_real_,
+            div_q10 = div_rg[1],
+            div_q90 = div_rg[2]
+        )
+
+        out_list[["mcmc_diagnostic_dfs"]] <- out
+    } else if (algo %in% c("mergesplit", "flip")) {
         accept_rate <- sprintf("%0.1f%%", 100 * attr(object, "mh_acceptance"))
         cli::cli_text("Chain acceptance rate{?s}: {accept_rate}")
 
@@ -868,7 +880,7 @@ legacy_print_smc_information <- function(
             )
             cli::cat_line("    ", cli::code_highlight(code, "Material"))
         }
-    } else if (algo %in% c("mergesplit", 'flip')) {
+    } else if (algo %in% c("mergesplit", "flip")) {
         accept_rate <- sprintf("%0.1f%%", 100 * attr(object, "mh_acceptance"))
         cli_text("Chain acceptance rate{?s}: {accept_rate}")
 
@@ -911,99 +923,4 @@ legacy_print_smc_information <- function(
     }
 
     out
-}
-
-
-#' Get k-step Ancestors of particles
-#'
-#' Tells you for a given index what its original ancestor was.
-#'
-#' @param parent_mat Ancestor matrix where entry [i,j] equals the index of the
-#' parent of particle i after step j
-#' @param steps_back How many steps back we should find the ancestors of (so
-#' parents are 1 step ancestors). Defaults to going all the way back to the
-#' original ancestors
-#' @param start_col Which column to start at. Defaults to the last column
-#'
-#' @returns indices of k-step ancestors for particles at iteration `start_col`
-#' @noRd
-get_k_step_ancestors <- function(parent_mat, steps_back = NULL, start_col = NULL) {
-    # check the matrix is not zero indexed
-    if (0 %in% parent_mat) {
-        cli::cli_abort("parent_mat must be 1-indexed, not 0 indexed!")
-    }
-
-    nparent_cols <- ncol(parent_mat)
-
-    # if null then just start on final set of plans
-    if (is.null(start_col)) {
-        start_col <- nparent_cols
-    } else {
-        # else assert starting column is between 1 and number of cols
-        if (
-            !(rlang::is_scalar_integerish(start_col) &&
-                start_col <= nparent_cols &&
-                start_col > 1)
-        ) {
-            cli::cli_abort("Input start_col={start_col} is not valid.
-                          Input must be a number between 1 and {nparent_cols}")
-        }
-    }
-
-    # check steps back is between [1, nnparent_cols -1]
-    if (is.null(steps_back)) {
-        steps_back <- nparent_cols - 1
-    } else {
-        if (
-            !(rlang::is_scalar_integerish(steps_back) &&
-                steps_back <= start_col - 1 &&
-                steps_back >= 1)
-        ) {
-            cli::cli_abort("Input steps_back={steps_back} is not valid.
-Input must be between 1 and the start_col value (you input {steps_back})")
-        }
-    }
-
-    # vector where index i maps to the index of its ancestor
-    # initialize to this
-    ancestor <- seq_len(nrow(parent_mat))
-
-    # iterate through each step back we select the successive parent indices
-    for (j in start_col:(start_col - steps_back + 1)) {
-        ancestor <- parent_mat[ancestor, j]
-    }
-    ancestor
-}
-
-
-#' Get Original Ancestor Matrix of particles
-#'
-#' Gets a matrix of the original ancestors (ie first splits) of the particles
-#' at each step.
-#'
-#' @param parent_mat Ancestor matrix where entry [i,j] equals the index of the
-#' parent of particle i after step j
-#'
-#' @returns indices of originals ancestors for particles at every iteration. So
-#' entry [s,j] is the original ancestor of particle j after step s
-#' @noRd
-get_original_ancestors_mat <- function(parent_mat) {
-    #if the matrix has one column then its just itself
-    if (ncol(parent_mat) == 1) {
-        return(parent_mat)
-    }
-
-    # get the original ancestors at every step from the parent matrix
-    original_ancestor_mat <- sapply(
-        2:ncol(parent_mat),
-        function(col_num) {
-            get_k_step_ancestors(parent_mat, steps_back = col_num - 1, start_col = col_num)
-        }
-    )
-
-    # add the first column where every particles ancestor is iteslf
-    cbind(
-        seq_len(nrow(parent_mat)),
-        original_ancestor_mat
-    )
 }

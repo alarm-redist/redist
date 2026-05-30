@@ -137,7 +137,8 @@ std::pair<Tree, std::vector<int>> build_admin_forest(const Graph &g,
             int u_admin_unit = admin_units[u] - 1;
             // sanity check delete later
             if (u_admin_unit != v_admin_unit) {
-                REprintf("v county %d, u county %d", admin_units(u) - 1, v_admin_unit);
+                REprintf("v county %d, u county %d", v_admin_unit,
+                         (int)admin_units(u) - 1);
                 throw Rcpp::exception("County forest went wrong!!\n");
             }
 
@@ -579,7 +580,6 @@ double CustomRegionConstraint::compute_raw_merged_region_constraint_score(
 
 void PlanConstraint::print() const {
     REprintf("Scoring Plans with Following Number of Regions:");
-    bool first_element = true;
     // just skip the first element bc size is ndists+1
     for (int i = 1; i < num_regions_to_score.size(); i++) {
         if (num_regions_to_score[i])
@@ -905,9 +905,9 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
                                  double const pop_temper, bool const smc, int const thread_id)
     : map_params(map_params), num_non_final_soft_region_constraints(0),
       num_final_soft_region_constraints(0), all_rounds_soft_region_constraints(0),
-      total_soft_plan_constraints(0), num_hard_plan_constraints(0), total_soft_constraints(0),
-      num_hard_region_constraints(0), any_soft_custom_constraints(false),
-      any_hard_custom_constraints(false) {
+      num_hard_region_constraints(0), total_soft_plan_constraints(0),
+      num_hard_plan_constraints(0), total_soft_constraints(0),
+      any_soft_custom_constraints(false), any_hard_custom_constraints(false) {
     // First add region constraints
     // add pop temper if doing that
     if (pop_temper != 0) {

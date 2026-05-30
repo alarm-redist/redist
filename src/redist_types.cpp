@@ -137,6 +137,8 @@ SamplingSpace get_sampling_space(std::string const &sampling_space_str) {
         return SamplingSpace::ForestSpace;
     } else if (sampling_space_str == "linking_edge") {
         return SamplingSpace::LinkingEdgeSpace;
+    } else if (sampling_space_str == "lct_graph") {
+        return SamplingSpace::LCTGraphSpace;
     } else {
         REprintf("Splitting Type %s is not a valid sampling space!\n",
                  sampling_space_str.c_str());
@@ -152,6 +154,8 @@ std::string sampling_space_to_str(SamplingSpace sampling_space) {
         return "Forest";
     } else if (sampling_space == SamplingSpace::LinkingEdgeSpace) {
         return "Linking Edge";
+    } else if (sampling_space == SamplingSpace::LCTGraphSpace) {
+        return "LCT Graph";
     } else {
         REprintf("Sampling Space Type ?? has no to str form!\n");
         throw Rcpp::exception("Invalid splitting type passed to_str");

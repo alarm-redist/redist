@@ -143,20 +143,12 @@ compare_plans <- function(
 
     if (inherits(shp, "sf")) {
         if (plot == "line") {
-            edges <- dplyr::as_tibble(shp) %>%
-                sf::st_as_sf() %>%
-                dplyr::select(geometry = attr(shp, "sf_column")) %>%
-                sf::st_intersection() %>%
-                dplyr::as_tibble() %>%
-                dplyr::filter(.data$n.overlaps == 2) %>%
-                dplyr::mutate(
+            edges <- dplyr::as_tibble(shp) |>                 sf::st_as_sf() |>                 dplyr::select(geometry = attr(shp, "sf_column")) |>                 sf::st_intersection() |>                 dplyr::as_tibble() |>                 dplyr::filter(.data$n.overlaps == 2) |>                 dplyr::mutate(
                     from = sapply(.data$origins, function(x) x[1]),
                     to = sapply(.data$origins, function(x) x[2]),
                     wgt1 = (evec1[.data$from] - evec1[.data$to])^2,
                     wgt2 = (evec2[.data$from] - evec2[.data$to])^2
-                ) %>%
-                dplyr::filter(sf::st_dimension(.data$geometry) == 1) %>%
-                sf::st_as_sf()
+                ) |>                 dplyr::filter(sf::st_dimension(.data$geometry) == 1) |>                 sf::st_as_sf()
 
             make_plot <- function(x, lab) {
                 ggplot(edges, aes(size = x)) +
@@ -192,8 +184,7 @@ compare_plans <- function(
             edge_cntr <- edge_center_df(shp, adj)
             nb <- edge_cntr$nb
 
-            nb <- nb %>%
-                mutate(
+            nb <- nb |>                 mutate(
                     wgt1 = (evec1[.data$i] - evec1[.data$j])^2,
                     wgt2 = (evec2[.data$j] - evec2[.data$i])^2
                 )

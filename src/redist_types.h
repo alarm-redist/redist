@@ -367,9 +367,10 @@ template <typename T> class CircularQueue {
 
 // enum for sampling spaces
 enum class SamplingSpace : unsigned char {
-    GraphSpace,      // Sampling on the space of graph partitions
-    ForestSpace,     // Sample on the space of spanning forests
-    LinkingEdgeSpace // Sample on space of forests and linking edges
+    GraphSpace,       // Sampling on the space of graph partitions
+    ForestSpace,      // Sample on the space of spanning forests
+    LinkingEdgeSpace, // Sample on space of forests and linking edges
+    LCTGraphSpace     // Graph partition with a link-cut-tree spanning forest (cyclewalk)
 };
 
 // loads a sampling spaces type enum from a control string

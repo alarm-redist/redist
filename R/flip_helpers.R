@@ -151,7 +151,7 @@ redist.ipw <- function(
     }))
 
     ## Subset the entire list
-    plans %>% slice(indx)
+    plans |> slice(indx)
 }
 
 redist.warmup.chain <- function(algout, warmup = 1) {

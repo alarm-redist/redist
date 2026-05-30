@@ -22,7 +22,7 @@ ForestPlan::ForestPlan(int const ndists, int const num_regions, const arma::uvec
                                               rng_state, 1000000);
 
             if (!result.first) {
-                REprintf("Failed to draw tree on region %d after 1000000 attempts\n",
+                REprintf("Failed to draw tree on region %zu after 1000000 attempts\n",
                          region_id);
                 Rprint(true);
                 throw Rcpp::exception(

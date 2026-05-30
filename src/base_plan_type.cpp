@@ -65,7 +65,6 @@ Plan::all_regions_connected(Graph const &g, CircularQueue<int> &vertex_queue,
         // now visit all its neighbors
         while (!vertex_queue.empty()) {
             auto u = vertex_queue.pop();
-            auto u_region = region_ids[u];
             // mark this as visited
             vertices_visited[u] = true;
 
@@ -96,7 +95,6 @@ void Plan::check_inputted_region_sizes(int ndists, bool split_district_only) con
 
     // check sum of first num_region elements is ndists and it matches expected
     // number of districts
-    int num_districts_implied_by_sizes_mat = 0;
     int total_size_implied_by_sizes_mat = 0;
     for (size_t i = 0; i < num_regions; i++) {
         // make sure each regions dval is non-zero
@@ -105,8 +103,6 @@ void Plan::check_inputted_region_sizes(int ndists, bool split_district_only) con
         }
 
         total_size_implied_by_sizes_mat += region_sizes[i];
-        if (region_sizes[i] == 1)
-            num_districts_implied_by_sizes_mat++;
 
         // add check that if split district only then only last one has size > 1
         if (split_district_only && i != num_regions - 1) {
@@ -477,24 +473,24 @@ double Plan::compute_log_plan_spanning_trees(MapParams const &map_params) const 
     return log_st;
 }
 
-//' Selects a valid multidistrict to split uniformly at random
-//'
-//' Given a plan object with at least one multidistrict this function randomly
-//' selects a valid multidistrict to split with uniform probability (ie it is
-//' one over the number of valid multidistricts to split in the plan.) and
-//' returns the log of the probability that region was chosen.
-//'
-//'
-//' @param region_to_split an integer that will be updated by reference with the
-//' id number of the region selected to split
-//' @param valid_region_sizes_to_split A 1-indexed vector mapping region sizes to
-//' whether or not they can be split. So `valid_region_sizes_to_split[r] == true`
-//' means that multidistricts of size r can be split.
-//'
-//' @details `region_id_to_split` is set to the id of the region selected
-//'
-//' @return the region id that was chosen to be split
-//'
+// Selects a valid multidistrict to split uniformly at random
+//
+// Given a plan object with at least one multidistrict this function randomly
+// selects a valid multidistrict to split with uniform probability (ie it is
+// one over the number of valid multidistricts to split in the plan.) and
+// returns the log of the probability that region was chosen.
+//
+//
+// @param region_to_split an integer that will be updated by reference with the
+// id number of the region selected to split
+// @param valid_region_sizes_to_split A 1-indexed vector mapping region sizes to
+// whether or not they can be split. So `valid_region_sizes_to_split[r] == true`
+// means that multidistricts of size r can be split.
+//
+// @details `region_id_to_split` is set to the id of the region selected
+//
+// @return the region id that was chosen to be split
+//
 int Plan::choose_multidistrict_to_split(std::vector<bool> const &valid_region_sizes_to_split,
                                         RNGState &rng_state,
                                         double const selection_alpha) const {
@@ -528,30 +524,30 @@ int Plan::choose_multidistrict_to_split(std::vector<bool> const &valid_region_si
     return region_id_to_split;
 }
 
-//' Attempts to draw a spanning tree on a region using Wilson's algorithm
-//'
-//' Attempts to draw a spanning tree on a specific region of a plan using
-//' Wilson's algorithm. The function will try `attempts_to_make` times to
-//' draw a tree and if all those fail then it will return false. If its
-//' successful true will be returned and the tree will be copied into the spanning forest.
-//'
-//' @title Attempt to Find a Valid Spanning Tree Edge to Cut into Two New Regions
-//'
-//' @param map_params Map parameters (adj graph, population, etc.)
-//' @param ust_sampler Uniform tree sampler object
-//' @param region_to_draw_tree_on The id of the region to draw the tree on
-//' @param rng_state thread safe random number generation object
-//' @param attempts_to_make How many attempts at calling wilson's algorithm to make
-//' before giving up.
-//'
-//' @details Modifications
-//'    - `ust_sampler` is modified in place to store the new tree is sampling is
-//'         successful
-//'
-//' @return `true` if tree was successfully draw, `false` otherwise.
-//'
-//' @keyword internal
-//' @noRd
+// Attempts to draw a spanning tree on a region using Wilson's algorithm
+//
+// Attempts to draw a spanning tree on a specific region of a plan using
+// Wilson's algorithm. The function will try `attempts_to_make` times to
+// draw a tree and if all those fail then it will return false. If its
+// successful true will be returned and the tree will be copied into the spanning forest.
+//
+// @title Attempt to Find a Valid Spanning Tree Edge to Cut into Two New Regions
+//
+// @param map_params Map parameters (adj graph, population, etc.)
+// @param ust_sampler Uniform tree sampler object
+// @param region_to_draw_tree_on The id of the region to draw the tree on
+// @param rng_state thread safe random number generation object
+// @param attempts_to_make How many attempts at calling wilson's algorithm to make
+// before giving up.
+//
+// @details Modifications
+//    - `ust_sampler` is modified in place to store the new tree is sampling is
+//         successful
+//
+// @return `true` if tree was successfully draw, `false` otherwise.
+//
+// @keyword internal
+// @noRd
 std::pair<bool, int>
 Plan::draw_tree_on_region(const MapParams &map_params, const int region_to_draw_tree_on,
                           Tree &ust, std::vector<bool> &visited, std::vector<bool> &ignore,
@@ -637,48 +633,48 @@ Plan::draw_tree_on_region(const MapParams &map_params, const int region_to_draw_
 }
 
 // Updates the region level info
-//' Creates new regions and updates the `Plan` object using a cut tree
-//'
-//' Takes a cut spanning tree `ust` and variables on the two new regions
-//' induced by the cuts and creates space/updates the information on those
-//' two new regions in the `plan` object. This function increases the number
-//' of regions aspect by 1 and updates the region level information and all
-//' other variables changed by adding a new region.
-//'
-//' It also sets `plan.remainder_region` equal to `new_region2_id` if
-//' split_district_only is true.
-//'
-//'
-//' @title Create and update new plan regions from cut tree
-//'
-//' @param ust A cut (ie has two partition pieces) directed spanning tree
-//' passed by reference
-//' @param plan A plan object
-//' @param split_district_only Whether or not this was split according to a
-//' one district split scheme (as in does the remainder need to be updated)
-//' @param old_split_region_id The id of the region that was split into the two
-//' new ones. Region1 will be set to this id
-//' @param new_region_id The id that region2 will be set
-//' @param new_region1_tree_root The vertex of the root of one piece of the cut
-//' tree. This always corresponds to the region with the smaller dval (allowing
-//' for the possiblity the dvals are equal).
-//' @param new_region1_dval The dval associated with the new region 1
-//' @param new_region1_pop The population associated with the new region 1
-//' @param new_region2_tree_root The vertex of the root of other piece of the cut
-//' tree. This always corresponds to the region with the bigger dval (allowing
-//' for the possiblity the dvals are equal).
-//' @param new_region2_dval The dval associated with the new region 2
-//' @param new_region2_pop The population associated with the new region 2
-//' @param new_region1_id The id the new region 1 was assigned in the plan
-//' @param new_region2_id The id the new region 2 was assigned in the plan
-//'
-//' @details Modifications
-//'    - `plan` is updated in place with the two new regions
-//'    - `new_region1_id` is set to the id new region1 was assigned
-//'    which is just the `old_split_region_id`
-//'    - `new_region2_id` is set to the id new region2 was assigned
-//'    which is just `plan.num_regions-1`
-//'
+// Creates new regions and updates the `Plan` object using a cut tree
+//
+// Takes a cut spanning tree `ust` and variables on the two new regions
+// induced by the cuts and creates space/updates the information on those
+// two new regions in the `plan` object. This function increases the number
+// of regions aspect by 1 and updates the region level information and all
+// other variables changed by adding a new region.
+//
+// It also sets `plan.remainder_region` equal to `new_region2_id` if
+// split_district_only is true.
+//
+//
+// @title Create and update new plan regions from cut tree
+//
+// @param ust A cut (ie has two partition pieces) directed spanning tree
+// passed by reference
+// @param plan A plan object
+// @param split_district_only Whether or not this was split according to a
+// one district split scheme (as in does the remainder need to be updated)
+// @param old_split_region_id The id of the region that was split into the two
+// new ones. Region1 will be set to this id
+// @param new_region_id The id that region2 will be set
+// @param new_region1_tree_root The vertex of the root of one piece of the cut
+// tree. This always corresponds to the region with the smaller dval (allowing
+// for the possiblity the dvals are equal).
+// @param new_region1_dval The dval associated with the new region 1
+// @param new_region1_pop The population associated with the new region 1
+// @param new_region2_tree_root The vertex of the root of other piece of the cut
+// tree. This always corresponds to the region with the bigger dval (allowing
+// for the possiblity the dvals are equal).
+// @param new_region2_dval The dval associated with the new region 2
+// @param new_region2_pop The population associated with the new region 2
+// @param new_region1_id The id the new region 1 was assigned in the plan
+// @param new_region2_id The id the new region 2 was assigned in the plan
+//
+// @details Modifications
+//    - `plan` is updated in place with the two new regions
+//    - `new_region1_id` is set to the id new region1 was assigned
+//    which is just the `old_split_region_id`
+//    - `new_region2_id` is set to the id new region2 was assigned
+//    which is just `plan.num_regions-1`
+//
 void Plan::update_region_info_from_cut(EdgeCut cut_edge, const int split_region1_id,
                                        const int split_region2_id, bool const add_region) {
     // Get information on the two new regions cut
@@ -1030,8 +1026,9 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau_eigen(
     if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
         REprintf("%d Components | Pre-Sorted Pairs: \n", num_county_connected_components);
         for (auto const &val : all_pairs) {
-            REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s\n",
-                     val.first.first, val.first.second, county_component[val.first.first],
+            REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s\n",
+                     (int)val.first.first, (int)val.first.second,
+                     county_component[val.first.first],
                      county_component[val.first.second],
                      (val.second.same_admin_component ? "SHARED" : "NOT SHARED"));
         }
@@ -1065,8 +1062,9 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau_eigen(
     if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
         REprintf("%d Components | NOW SORTED Pairs: \n", num_county_connected_components);
         for (auto const &val : all_pairs) {
-            REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s\n",
-                     val.first.first, val.first.second, county_component[val.first.first],
+            REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s\n",
+                     (int)val.first.first, (int)val.first.second,
+                     county_component[val.first.first],
                      county_component[val.first.second],
                      (val.second.same_admin_component ? "SHARED" : "NOT SHARED"));
         }
@@ -1157,7 +1155,7 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau_eigen(
                 }
 
                 if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
-                    REprintf("Region Pair (%d, %d) | %d | %d edges!\n ", pair_region1,
+                    REprintf("Region Pair (%d, %d) | %d | %g edges!\n ", pair_region1,
                              pair_region2, pair_val.admin_adjacent, edges);
                 }
 
@@ -1221,13 +1219,14 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau_eigen(
     }
 
     if (curr_index >= all_pairs.size() && num_county_connected_components > 1) {
-        REprintf("ERROR!!\n %u pairs, curr index %d but %d num admin components\n",
+        REprintf("ERROR!!\n %zu pairs, curr index %d but %d num admin components\n",
                  all_pairs.size(), curr_index, num_county_connected_components);
         Rprint();
         REprintf("%d Components | NOW SORTED Pairs: \n", num_county_connected_components);
         for (auto const &val : all_pairs) {
-            REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s\n",
-                     val.first.first, val.first.second, county_component[val.first.first],
+            REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s\n",
+                     (int)val.first.first, (int)val.first.second,
+                     county_component[val.first.first],
                      county_component[val.first.second],
                      (val.second.same_admin_component ? "SHARED" : "NOT SHARED"));
         }
@@ -1256,7 +1255,7 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau_eigen(
     std::vector<Eigen::Triplet<double, int>> component_laplacian_minor_trips;
 
     if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
-        REprintf("Current index now %d with %u pairs\n", curr_index, all_pairs.size());
+        REprintf("Current index now %d with %zu pairs\n", curr_index, all_pairs.size());
     }
 
     // Iterate over the remaining pairs that are across components
@@ -1274,7 +1273,7 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau_eigen(
 
         double edges = static_cast<double>(pair_val.across_county_edges);
         if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
-            REprintf("Components (%d,%d) - %d edges across!\n", component1_id, component2_id,
+            REprintf("Components (%d,%d) - %g edges across!\n", component1_id, component2_id,
                      edges);
         }
         // Now for both pairs we need to
@@ -1352,8 +1351,9 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
     if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
         REprintf("%d Components | Pre-Sorted Pairs: \n", num_county_connected_components);
         for (auto const &val : all_pairs) {
-            REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s\n",
-                     val.first.first, val.first.second, county_component[val.first.first],
+            REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s\n",
+                     (int)val.first.first, (int)val.first.second,
+                     county_component[val.first.first],
                      county_component[val.first.second],
                      (val.second.same_admin_component ? "SHARED" : "NOT SHARED"));
         }
@@ -1387,8 +1387,9 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
     if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
         REprintf("%d Components | NOW SORTED Pairs: \n", num_county_connected_components);
         for (auto const &val : all_pairs) {
-            REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s\n",
-                     val.first.first, val.first.second, county_component[val.first.first],
+            REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s\n",
+                     (int)val.first.first, (int)val.first.second,
+                     county_component[val.first.first],
                      county_component[val.first.second],
                      (val.second.same_admin_component ? "SHARED" : "NOT SHARED"));
         }
@@ -1521,13 +1522,14 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
     }
 
     if (curr_index >= all_pairs.size() && num_county_connected_components > 1) {
-        REprintf("ERROR!!\n %u pairs, curr index %d but %d num admin components\n",
+        REprintf("ERROR!!\n %zu pairs, curr index %d but %d num admin components\n",
                  all_pairs.size(), curr_index, num_county_connected_components);
         Rprint();
         REprintf("%d Components | NOW SORTED Pairs: \n", num_county_connected_components);
         for (auto const &val : all_pairs) {
-            REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s\n",
-                     val.first.first, val.first.second, county_component[val.first.first],
+            REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s\n",
+                     (int)val.first.first, (int)val.first.second,
+                     county_component[val.first.first],
                      county_component[val.first.second],
                      (val.second.same_admin_component ? "SHARED" : "NOT SHARED"));
         }
@@ -1556,7 +1558,7 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
                                         num_county_connected_components - 1, arma::fill::zeros);
 
     if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
-        REprintf("Current index now %d with %u pairs\n", curr_index, all_pairs.size());
+        REprintf("Current index now %d with %zu pairs\n", curr_index, all_pairs.size());
     }
 
     // Iterate over the remaining pairs that are across components
@@ -1697,7 +1699,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau_eigen(
     if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
         REprintf("%d Components | Pre-Sorted Pairs: \n", merged_num_admin_connected_components);
         for (auto const &val : all_pairs) {
-            REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s | Edges %d\n",
+            REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s | Edges %d\n",
                      val.first.first, val.first.second,
                      county_component_reindex[val.first.first],
                      county_component_reindex[val.first.second],
@@ -1740,7 +1742,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau_eigen(
     if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
         REprintf("%d Components | NOW SORTED Pairs: \n", merged_num_admin_connected_components);
         for (auto const &val : all_pairs) {
-            REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s | Edges %d\n",
+            REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s | Edges %d\n",
                      val.first.first, val.first.second,
                      county_component_reindex[val.first.first],
                      county_component_reindex[val.first.second],
@@ -1900,7 +1902,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau_eigen(
                 }
 
                 if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
-                    REprintf("Region Pair (%d, %d) | %d | %d edges!\n ", pair_region1,
+                    REprintf("Region Pair (%d, %d) | %d | %g edges!\n ", pair_region1,
                              pair_region2, pair_val.admin_adjacent, edges);
                 }
 
@@ -1960,13 +1962,14 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau_eigen(
     }
 
     if (curr_index >= all_pairs.size() && merged_num_admin_connected_components > 1) {
-        REprintf("ERROR!!\n %u pairs, curr index %d but %d num merged admin components\n",
+        REprintf("ERROR!!\n %zu pairs, curr index %d but %d num merged admin components\n",
                  all_pairs.size(), curr_index, merged_num_admin_connected_components);
         Rprint();
         REprintf("%d Components | NOW SORTED Pairs: \n", merged_num_admin_connected_components);
         for (auto const &val : all_pairs) {
-            REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s\n",
-                     val.first.first, val.first.second, county_component[val.first.first],
+            REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s\n",
+                     (int)val.first.first, (int)val.first.second,
+                     county_component[val.first.first],
                      county_component[val.first.second],
                      (val.second.same_admin_component ? "SHARED" : "NOT SHARED"));
         }
@@ -1977,11 +1980,11 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau_eigen(
     }
 
     if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
-        REprintf("Remaining Across Merged Component Pairs: \n",
+        REprintf("Remaining Across Merged Component Pairs: %zu\n",
                  all_pairs.size() - curr_index - 1);
         for (size_t i = curr_index; i < all_pairs.size(); i++) {
             auto val = all_pairs[i];
-            REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s | Edges %d\n",
+            REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s | Edges %d\n",
                      val.first.first, val.first.second,
                      county_component_reindex[val.first.first],
                      county_component_reindex[val.first.second],
@@ -2019,7 +2022,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau_eigen(
     std::vector<Eigen::Triplet<double, int>> merged_component_laplacian_minor_trips;
 
     if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
-        REprintf("Current index now %d with %d pairs\n", curr_index, all_pairs.size());
+        REprintf("Current index now %d with %zu pairs\n", curr_index, all_pairs.size());
     }
 
     // Now we don't care about specific component id so reindex things
@@ -2058,7 +2061,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau_eigen(
 
         double edges = static_cast<double>(pair_val.across_county_edges);
         if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
-            REprintf("Components (%d,%d) - %d edges across!\n", component1_id, component2_id,
+            REprintf("Components (%d,%d) - %g edges across!\n", component1_id, component2_id,
                      edges);
         }
         // Now for both pairs we need to
@@ -2194,7 +2197,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
     if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
         REprintf("%d Components | Pre-Sorted Pairs: \n", merged_num_admin_connected_components);
         for (auto const &val : all_pairs) {
-            REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s | Edges %d\n",
+            REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s | Edges %d\n",
                      val.first.first, val.first.second,
                      county_component_reindex[val.first.first],
                      county_component_reindex[val.first.second],
@@ -2237,7 +2240,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
     if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
         REprintf("%d Components | NOW SORTED Pairs: \n", merged_num_admin_connected_components);
         for (auto const &val : all_pairs) {
-            REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s | Edges %d\n",
+            REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s | Edges %d\n",
                      val.first.first, val.first.second,
                      county_component_reindex[val.first.first],
                      county_component_reindex[val.first.second],
@@ -2440,13 +2443,14 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
     }
 
     if (curr_index >= all_pairs.size() && merged_num_admin_connected_components > 1) {
-        REprintf("ERROR!!\n %u pairs, curr index %d but %d num merged admin components\n",
+        REprintf("ERROR!!\n %zu pairs, curr index %d but %d num merged admin components\n",
                  all_pairs.size(), curr_index, merged_num_admin_connected_components);
         Rprint();
         REprintf("%d Components | NOW SORTED Pairs: \n", merged_num_admin_connected_components);
         for (auto const &val : all_pairs) {
-            REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s\n",
-                     val.first.first, val.first.second, county_component[val.first.first],
+            REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s\n",
+                     (int)val.first.first, (int)val.first.second,
+                     county_component[val.first.first],
                      county_component[val.first.second],
                      (val.second.same_admin_component ? "SHARED" : "NOT SHARED"));
         }
@@ -2457,11 +2461,11 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
     }
 
     if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
-        REprintf("Remaining Across Merged Component Pairs: \n",
+        REprintf("Remaining Across Merged Component Pairs: %zu\n",
                  all_pairs.size() - curr_index - 1);
         for (size_t i = curr_index; i < all_pairs.size(); i++) {
             auto val = all_pairs[i];
-            REprintf("Regions (%u, %u) | Components (%d, %d) | Shared Status %s | Edges %d\n",
+            REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s | Edges %d\n",
                      val.first.first, val.first.second,
                      county_component_reindex[val.first.first],
                      county_component_reindex[val.first.second],
@@ -2500,7 +2504,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
                                         arma::fill::zeros);
 
     if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
-        REprintf("Current index now %d with %d pairs\n", curr_index, all_pairs.size());
+        REprintf("Current index now %d with %zu pairs\n", curr_index, all_pairs.size());
     }
 
     // Now we don't care about specific component id so reindex things
@@ -2779,14 +2783,11 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(PlanVector const &region
         // assign this region to the component
         county_component[region_ids[w]] = num_county_connected_components;
 
-        auto current_county = map_params.counties[w];
-        auto current_region = region_ids[w];
-
         while (!current_county_region_vertices.empty() ||
                !current_county_diff_region_vertices.empty() ||
                !other_counties_vertices.empty()) {
 
-            int v;
+            int v = -1;
 
             // first see if anything in this region and county
             if (!current_county_region_vertices.empty()) {
@@ -2798,7 +2799,6 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(PlanVector const &region
                 // this component for the first time
                 if (!vertices_visited[v]) {
                     // then change the current region and increase the count
-                    current_region = region_ids[v];
                     num_current_county_region_components++;
                     // increase global count
                     num_county_region_components++;
@@ -2815,7 +2815,6 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(PlanVector const &region
                 // this county for the first time
                 if (!vertices_visited[v]) {
                     // then change the current region and increase the count
-                    current_county = map_params.counties[v];
                     num_current_county_region_components++;
                     num_current_counties++;
                     // increase global count
@@ -2905,7 +2904,7 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(PlanVector const &region
     for (size_t component_id = 0; component_id < num_county_connected_components;
          component_id++) {
         if (DEBUG_BASE_PLANS_VERBOSE) {
-            REprintf("Component %d has %d splits and %d regions!\n", component_id,
+            REprintf("Component %zu has %d splits and %d regions!\n", component_id,
                      component_split_counts[component_id],
                      component_region_counts[component_id]);
         }
@@ -2918,13 +2917,13 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(PlanVector const &region
         } else if (component_split_counts[component_id] >=
                    component_region_counts[component_id]) {
             if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
-                REprintf("EARLY RETURN B: component %d has splits=%d regions=%d\n",
+                REprintf("EARLY RETURN B: component %zu has splits=%d regions=%d\n",
                          component_id, component_split_counts[component_id],
                          component_region_counts[component_id]);
                 Rprint();
-                REprintf("%d Region\n c(");
+                REprintf("Region\n c(");
                 for (size_t i = 0; i < region_ids.size(); i++) {
-                    REprintf("%u,", region_ids[i]);
+                    REprintf("%d,", (int)region_ids[i]);
                 }
                 REprintf(")\n");
                 throw Rcpp::exception("");
@@ -3216,7 +3215,6 @@ TreeSplitter::select_edge_to_cut(ScoringFunction const &scoring_function, Tree c
     int idx = rng_state.r_int_unnormalized_wgt(unnormalized_wgts);
     EdgeCut selected_edge_cut = valid_edges.at(idx);
     // compute selection probability if needed
-    double log_selection_prob = 0.0;
     if (save_selection_prob) {
         selected_edge_cut.log_prob =
             std::log(unnormalized_wgts(idx)) - std::log(arma::sum(unnormalized_wgts));
@@ -3272,7 +3270,7 @@ double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
                             region2_population, region1_size, region1_population);
 
     if (MERGED_TREE_SPLITTING_VERBOSE) {
-        REprintf("Finding Merge prob for (%d, %d) - %u valid edges!\n", region1_root,
+        REprintf("Finding Merge prob for (%d, %d) - %zu valid edges!\n", region1_root,
                  region2_root, valid_edges.size());
     }
 
@@ -3379,7 +3377,6 @@ std::pair<bool, EdgeCut> ExperimentalSplitter::select_edge_to_cut(
     int idx = rng_state.r_int_unnormalized_wgt(unnormalized_wgts);
     EdgeCut selected_edge_cut = valid_edges.at(idx);
     // compute selection probability if needed
-    double log_selection_prob = 0.0;
     if (save_selection_prob) {
         selected_edge_cut.log_prob =
             std::log(unnormalized_wgts(idx)) - std::log(arma::sum(unnormalized_wgts));
@@ -3465,7 +3462,6 @@ std::pair<bool, EdgeCut> ConstraintSplitter::attempt_to_find_edge_to_cut(
     int idx = rng_state.r_int_unnormalized_wgt(unnormalized_wgts);
     EdgeCut selected_edge_cut = valid_edges.at(idx);
     // compute selection probability if needed
-    double log_selection_prob = 0.0;
     if (save_selection_prob) {
         selected_edge_cut.log_prob =
             std::log(unnormalized_wgts(idx)) - std::log(arma::sum(unnormalized_wgts));
@@ -3574,7 +3570,7 @@ double ConstraintSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
                             region2_population, region1_size, region1_population);
 
     if (MERGED_TREE_SPLITTING_VERBOSE) {
-        REprintf("Finding Merge prob for (%d, %d) - %u valid edges!\n", region1_root,
+        REprintf("Finding Merge prob for (%d, %d) - %zu valid edges!\n", region1_root,
                  region2_root, valid_edges.size());
     }
 

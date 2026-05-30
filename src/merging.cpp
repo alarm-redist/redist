@@ -349,7 +349,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         return std::make_tuple(true, true, log_mh_ratio, merged_region_size);
     } else {
         if (DEBUG_MERGING_VERBOSE)
-            Rprintf("REJECTED!!\n", std::exp(log_mh_ratio));
+            Rprintf("REJECTED!! (mh_ratio=%g)\n", std::exp(log_mh_ratio));
         // else reject and do nothing
         return std::make_tuple(true, false, log_mh_ratio, merged_region_size);
     }

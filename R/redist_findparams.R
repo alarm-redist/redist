@@ -25,7 +25,7 @@ run_sims <- function(
     logarg
 ) {
     ## Get this iteration
-    p_sub <- params %>% dplyr::slice(i)
+    p_sub <- params |> dplyr::slice(i)
     if (logarg) {
         sink(paste0("log_", i, ".txt"))
         cat("Parameter Values:\n")
@@ -55,28 +55,23 @@ run_sims <- function(
     ## Set constraints
     constr <- redist_constr(map)
     if ("weight_population" %in% names) {
-        constr <- constr %>%
-            add_constr_pop_dev(strength = p_sub$weight_population)
+        constr <- constr |>             add_constr_pop_dev(strength = p_sub$weight_population)
     }
     if ("weight_compact" %in% names) {
-        constr <- constr %>%
-            add_constr_edges_rem(strength = p_sub$weight_compact)
+        constr <- constr |>             add_constr_edges_rem(strength = p_sub$weight_compact)
     }
     if ("weight_segregation" %in% names) {
-        constr <- constr %>%
-            add_constr_segregation(strength = p_sub$weight_segregation, group_pop = group_pop)
+        constr <- constr |>             add_constr_segregation(strength = p_sub$weight_segregation, group_pop = group_pop)
     }
     if ("weight_similarity" %in% names) {
-        constr <- constr %>%
-            add_constr_status_quo(strength = p_sub$weight_similarity, current = init_plan)
+        constr <- constr |>             add_constr_status_quo(strength = p_sub$weight_similarity, current = init_plan)
     }
     if ("weight_countysplit" %in% names) {
-        constr <- constr %>%
-            add_constr_splits(strength = p_sub$weight_countysplit, admin = counties)
+        constr <- constr |>             add_constr_splits(strength = p_sub$weight_countysplit, admin = counties)
     }
     ## Run siulations
     out <- redist_flip(
-        map %>% set_pop_tol(pop_tol),
+        map |> set_pop_tol(pop_tol),
         nsims = nsims,
         init_plan = init_plan,
         eprob = eprob,
@@ -84,8 +79,7 @@ run_sims <- function(
         constraints = constr,
         adapt_lambda = adapt_lambda,
         adapt_eprob = adapt_eprob
-    ) %>%
-        subset_sampled()
+    ) |>         subset_sampled()
     if (adapt_eprob) {
         final_eprob <- attr(out, "final_eprob")
     }

@@ -16,26 +16,26 @@ Rcpp::List maximum_input_sizes() {
     return out;
 }
 
-//' Checks a matrix of seat counts is valid
-//'
-//' Checks that a matrix of seat counts associated with a plan is valid
-//' meaning that every region has a positive seat value and for each plan
-//' the sum of seats is equal to the total number of seats (`nseats`).
-//' If anything is not correct an error will be thrown.
-//'
-//' @param init_seats A matrix of 1-indexed plans
-//' @param num_regions The number of regions in the plan.
-//' @param nseats The total number of seats in the map
-//' @param seats_range Vector of number of seats a district is allowed to have
-//' @param split_districts_only Whether or not to check that all but the last region are
-//' districts or not. (Allows for the possibility the last region is a district too).
-//' @param num_threads The number of threads to use. Defaults to number of machine threads.
-//'
-//' @details Modifications
-//'    - None
-//'
-//' @keywords internal
-//' @noRd
+// Checks a matrix of seat counts is valid
+//
+// Checks that a matrix of seat counts associated with a plan is valid
+// meaning that every region has a positive seat value and for each plan
+// the sum of seats is equal to the total number of seats (`nseats`).
+// If anything is not correct an error will be thrown.
+//
+// @param init_seats A matrix of 1-indexed plans
+// @param num_regions The number of regions in the plan.
+// @param nseats The total number of seats in the map
+// @param seats_range Vector of number of seats a district is allowed to have
+// @param split_districts_only Whether or not to check that all but the last region are
+// districts or not. (Allows for the possibility the last region is a district too).
+// @param num_threads The number of threads to use. Defaults to number of machine threads.
+//
+// @details Modifications
+//    - None
+//
+// @keywords internal
+// @noRd
 void validate_init_seats_cpp(Rcpp::IntegerMatrix const &init_seats, int const num_regions,
                              int const nseats, Rcpp::IntegerVector const &seats_range,
                              bool const split_districts_only, int const num_threads) {
@@ -44,7 +44,7 @@ void validate_init_seats_cpp(Rcpp::IntegerMatrix const &init_seats, int const nu
 
     // check matrix dimensions
     if (init_seats.nrow() != num_regions) {
-        REprintf("Expected init_seats to have %d rows but actually had %u!\n", num_regions,
+        REprintf("Expected init_seats to have %d rows but actually had %d!\n", num_regions,
                  init_seats.nrow());
         throw Rcpp::exception("`init_seats` matrix did not have `num_regions` rows!\n");
     }
@@ -64,17 +64,17 @@ void validate_init_seats_cpp(Rcpp::IntegerMatrix const &init_seats, int const nu
         int seat_sum = 0;
         for (size_t j = 0; j < num_regions; j++) {
             if (init_seats(i, j) <= 0) {
-                REprintf("Region %u of plan %i does not have a positive seat count (%d)!\n",
+                REprintf("Region %zu of plan %i does not have a positive seat count (%d)!\n",
                          j + 1, i + 1, init_seats(i, j));
                 throw Rcpp::exception("Non-positive seat values in `init_seats`!\n");
             } else if (init_seats(i, j) < min_district_size) {
-                REprintf("Region %u of plan %i has a seat size smaller than the smallest "
+                REprintf("Region %zu of plan %i has a seat size smaller than the smallest "
                          "district seat size!\n",
                          j + 1, i + 1);
                 throw Rcpp::exception(
                     "Seat values in `init_seats` smaller than smallest district seat size!\n");
             } else if (init_seats(i, j) > nseats) {
-                REprintf("Region %u of plan %i has %d seats, more than `nseats` (%d) number of "
+                REprintf("Region %zu of plan %i has %d seats, more than `nseats` (%d) number of "
                          "seats!\n",
                          j + 1, i + 1, init_seats(i, j), nseats);
                 throw Rcpp::exception("Seat values greater than `nseats` in `init_seats`!\n");
@@ -102,27 +102,27 @@ void validate_init_seats_cpp(Rcpp::IntegerMatrix const &init_seats, int const nu
     return;
 }
 
-//' Get canonically relabeled plans matrix
-//'
-//' Given a matrix of 1-indexed plans (or partial plans) this function
-//' returns a new plans matrix with all the plans labeled canonically.
-//' The canonical labelling of a plan is the one where the region of the
-//' first vertex gets mapped to 1, the region of the next smallest vertex
-//' in a different region than the first gets mapped to 2, and so on. This
-//' is guaranteed to result in the same labelling for any plan where the
-//' region ids have been permuted.
-//'
-//'
-//' @param plans_mat A matrix of 1-indexed plans
-//' @param num_regions The number of regions in the plan
-//' @param num_threads The number of threads to use. Defaults to number of machine threads.
-//'
-//' @details Modifications
-//'    - None
-//'
-//' @returns A matrix of canonically labelled plans
-//'
-//' @keywords internal
+// Get canonically relabeled plans matrix
+//
+// Given a matrix of 1-indexed plans (or partial plans) this function
+// returns a new plans matrix with all the plans labeled canonically.
+// The canonical labelling of a plan is the one where the region of the
+// first vertex gets mapped to 1, the region of the next smallest vertex
+// in a different region than the first gets mapped to 2, and so on. This
+// is guaranteed to result in the same labelling for any plan where the
+// region ids have been permuted.
+//
+//
+// @param plans_mat A matrix of 1-indexed plans
+// @param num_regions The number of regions in the plan
+// @param num_threads The number of threads to use. Defaults to number of machine threads.
+//
+// @details Modifications
+//    - None
+//
+// @returns A matrix of canonically labelled plans
+//
+// @keywords internal
 Rcpp::IntegerMatrix get_canonical_plan_labelling(Rcpp::IntegerMatrix const &plans_mat,
                                                  int const num_regions, int const ncores) {
     int const V = plans_mat.nrow();
@@ -183,34 +183,34 @@ Rcpp::IntegerMatrix get_canonical_plan_labelling(Rcpp::IntegerMatrix const &plan
     return relabelled_plan_mat;
 }
 
-//' Count how many times each plan appears in a plans matrix
-//'
-//' Given a matrix of 1-indexed plans (or partial plans) this function
-//' returns a list mapping plan vectors as a giant concatened string to
-//' the count of how many times the plan appears.
-//'
-//' If `use_canonical_ordering` is set to true then the plans will be
-//' reordered using the canonical reordering function
-//' `get_canonical_plan_labelling`. This guarantees that the same plan
-//' will not be incorrectly counted if there are different permutations
-//' of its labels. If `use_canonical_ordering` is not set to true then
-//' its possible the count will be incorrect because of different
-//' permutations of the same underlying plan.
-//'
-//'
-//' @param plans_mat A matrix of 1-indexed plans
-//' @param num_regions The number of regions in the plan
-//' @param use_canonical_ordering Whether or not to reorder the plans using the
-//' canonical ordering on plans.
-//' @param num_threads The number of threads to use. Defaults to number of machine threads.
-//'
-//' @details Modifications
-//'    - None
-//'
-//' @returns A list mapping plans (stored as a string concatened vector) to
-//' how many times they appear in the matrix
-//'
-//' @keywords internal
+// Count how many times each plan appears in a plans matrix
+//
+// Given a matrix of 1-indexed plans (or partial plans) this function
+// returns a list mapping plan vectors as a giant concatened string to
+// the count of how many times the plan appears.
+//
+// If `use_canonical_ordering` is set to true then the plans will be
+// reordered using the canonical reordering function
+// `get_canonical_plan_labelling`. This guarantees that the same plan
+// will not be incorrectly counted if there are different permutations
+// of its labels. If `use_canonical_ordering` is not set to true then
+// its possible the count will be incorrect because of different
+// permutations of the same underlying plan.
+//
+//
+// @param plans_mat A matrix of 1-indexed plans
+// @param num_regions The number of regions in the plan
+// @param use_canonical_ordering Whether or not to reorder the plans using the
+// canonical ordering on plans.
+// @param num_threads The number of threads to use. Defaults to number of machine threads.
+//
+// @details Modifications
+//    - None
+//
+// @returns A list mapping plans (stored as a string concatened vector) to
+// how many times they appear in the matrix
+//
+// @keywords internal
 Rcpp::DataFrame get_plan_counts(Rcpp::IntegerMatrix const &input_plans_mat,
                                 int const num_regions, bool const use_canonical_ordering,
                                 int const num_threads) {
@@ -317,6 +317,7 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params, int const total_pop, int
     bool const use_graph_space = sampling_space == SamplingSpace::GraphSpace;
     bool const use_forest_space = sampling_space == SamplingSpace::ForestSpace;
     bool const use_linking_edge_space = sampling_space == SamplingSpace::LinkingEdgeSpace;
+    bool const use_lct_graph_space = sampling_space == SamplingSpace::LCTGraphSpace;
     // create the plans
     if (verbosity >= 3) {
         Rcpp::Rcout << "Creating Blank Plans!" << std::endl;
@@ -335,6 +336,10 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params, int const total_pop, int
             plan_ptr_vec[i] =
                 std::make_unique<GraphPlan>(total_seats, total_pop, plan_region_ids, plan_sizes,
                                             plan_pops, plan_region_order_added);
+        } else if (use_lct_graph_space) {
+            plan_ptr_vec[i] = std::make_unique<LCTGraphPlan>(total_seats, total_pop,
+                                                             plan_region_ids, plan_sizes,
+                                                             plan_pops, plan_region_order_added);
         } else if (use_forest_space) {
             plan_ptr_vec[i] =
                 std::make_unique<ForestPlan>(total_seats, total_pop, plan_region_ids,
@@ -381,28 +386,28 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params,
     // check matrix dimensions
     if (plans_mat.ncol() != nsims) {
         REprintf(
-            "The number of columns (%u) in the initial plan matrix was not equal to nsims!\n",
+            "The number of columns (%d) in the initial plan matrix was not equal to nsims (%d)!\n",
             plans_mat.ncol(), nsims);
         throw Rcpp::exception(
             "The number of columns in the initial plan matrix was not equal to nsims!\n");
     }
     if (region_sizes_mat.ncol() != nsims) {
         REprintf(
-            "The number of columns (%u) in the initial sizes matrix  was not equal to nsims!\n",
+            "The number of columns (%d) in the initial sizes matrix was not equal to nsims (%d)!\n",
             region_sizes_mat.ncol(), nsims);
         throw Rcpp::exception(
             "The number of columns in the initial sizes matrix was not equal to nsims!\n");
     }
     if (plans_mat.nrow() != V) {
         REprintf(
-            "The number of rows (%u) in the initial plan matrix , was not equal to V (%d)!\n",
+            "The number of rows (%d) in the initial plan matrix , was not equal to V (%d)!\n",
             plans_mat.nrow(), V);
         throw Rcpp::exception(
             "The number of rows in the initial plan matrix , was not equal to V!\n");
     }
     if (region_sizes_mat.nrow() != num_regions) {
-        REprintf("The number of rows (%u) in the initial sizes matrix, was not equal to "
-                 "initial number of regions!\n",
+        REprintf("The number of rows (%d) in the initial sizes matrix, was not equal to "
+                 "initial number of regions (%d)!\n",
                  region_sizes_mat.nrow(), num_regions);
         throw Rcpp::exception(
             "The number of rows in the initial sizes matrix was not equal to ndists!\n");
@@ -420,8 +425,9 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params,
     bool const use_graph_space = sampling_space == SamplingSpace::GraphSpace;
     bool const use_forest_space = sampling_space == SamplingSpace::ForestSpace;
     bool const use_linking_edge_space = sampling_space == SamplingSpace::LinkingEdgeSpace;
+    bool const use_lct_graph_space = sampling_space == SamplingSpace::LCTGraphSpace;
 
-    if (!use_graph_space) {
+    if (!use_graph_space && !use_lct_graph_space) {
         if (rng_states.size() > (pool.getNumThreads() == 0 ? 1 : pool.getNumThreads())) {
             throw Rcpp::exception("RNG States vector is more than the number of threads!\n");
         }
@@ -472,6 +478,10 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params,
             plan_ptr_vec[i] =
                 std::make_unique<GraphPlan>(num_regions, map_params.pop, plan_region_ids,
                                             plan_sizes, plan_pops, plan_region_order_added);
+        } else if (use_lct_graph_space) {
+            plan_ptr_vec[i] = std::make_unique<LCTGraphPlan>(
+                num_regions, map_params.pop, plan_region_ids, plan_sizes, plan_pops,
+                plan_region_order_added);
         } else if (use_forest_space) {
             plan_ptr_vec[i] = std::make_unique<ForestPlan>(
                 ndists, num_regions, map_params.pop, plan_region_ids, plan_sizes, plan_pops,
@@ -720,24 +730,24 @@ void swap_plan_ensembles(PlanEnsemble &plan_ensemble1, PlanEnsemble &plan_ensemb
               plan_ensemble2.flattened_all_region_order_added);
 }
 
-//' Reorders all the plans in the vector by order a region was split
-//'
-//' Takes a vector of plans and uses the vector of dummy plans to reorder
-//' each of the plans by the order a region was split.
-//'
-//'
-//' @title Reorders all the plans in the vector by order a region was split
-//'
-//' @param pool A threadpool for multithreading
-//' @param plans_vec A vector of plans
-//' @param dummy_plans_vec A vector of dummy plans
-//'
-//' @details Modifications
-//'    - Each plan in the `plans_vec` object is reordered by when the region was split
-//'    - Each plan is a shallow copy of the plans in `plans_vec`
-//'
-//' @noRd
-//' @keywords internal
+// Reorders all the plans in the vector by order a region was split
+//
+// Takes a vector of plans and uses the vector of dummy plans to reorder
+// each of the plans by the order a region was split.
+//
+//
+// @title Reorders all the plans in the vector by order a region was split
+//
+// @param pool A threadpool for multithreading
+// @param plans_vec A vector of plans
+// @param dummy_plans_vec A vector of dummy plans
+//
+// @details Modifications
+//    - Each plan in the `plans_vec` object is reordered by when the region was split
+//    - Each plan is a shallow copy of the plans in `plans_vec`
+//
+// @noRd
+// @keywords internal
 void reorder_all_plans(RcppThread::ThreadPool &pool,
                        std::vector<std::unique_ptr<Plan>> &plan_ptrs_vec,
                        std::vector<std::unique_ptr<Plan>> &dummy_plan_ptrs_vec) {

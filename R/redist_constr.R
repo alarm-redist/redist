@@ -13,19 +13,16 @@ new_redist_constr <- function(constr = list(), data = tibble()) {
     constr <- reconstruct.redist_constr(constr, NULL)
 
     if (length(constr) > 0) {
-        if (is.null(names(constr))) {
-            cli::cli_abort("Null names.")
-        }
-        if (any(names(constr) == "")) {
-            cli::cli_abort("Empty names.")
+        if (is.null(names(constr)) || !all(nzchar(constr))) {
+            cli::cli_abort("{.arg constr} must have non-empty names set")
         }
         for (el in constr) {
             if (!is.list(el)) {
-                cli::cli_abort("Not a nested list")
+                cli::cli_abort("{.arg constr} has a corrupted format")
             }
             classes <- vapply(el, class, character(1))
             if (length(classes) == 0 || any(classes != "list")) {
-                cli::cli_abort("Not a nested list")
+                cli::cli_abort("{.arg constr} has a corrupted format")
             }
         }
     }
@@ -38,11 +35,8 @@ new_redist_constr <- function(constr = list(), data = tibble()) {
 
 # jarl-ignore unused_function: to be used in future, hopefully
 validate_redist_constr <- function(constr) {
-    if (!is.list(constr)) {
-        cli::cli_abort("Not a list")
-    }
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
+    if (!is.list(constr) || !inherits(constr, "redist_constr")) {
+        cli::cli_abort("{.arg constr} must be a {.cls redist_constr} object")
     }
 
     constr
@@ -890,6 +884,9 @@ add_constr_segregation <- function(
     if (!rlang::is_bool(only_districts)) {
         cli::cli_abort("{.arg only_districts} must be a boolean.")
     }
+    if (missing(group_pop)) {
+        cli::cli_abort("{.arg group_pop} is required.")
+    }
 
     if (is.null(thresh)) {
         # no thresholding
@@ -1182,7 +1179,8 @@ add_constr_qps <- function(
 
     cli::cli_inform(
     "The QPS constraint is not officially supported and may disappear.",
-    .frequency = "once"
+    .frequency = "once",
+    .frequency_id = "redist_qps_unsupported"
   )
     add_to_constr(constr, "qps", new_constr)
 }
@@ -1512,14 +1510,14 @@ add_constr_custom <- function(
     )
 
     for (nm in var_names) {
-        found = find_env(nm, constr_env)
+        found <- find_env(nm, constr_env)
         if (
             !is.null(found) &&
                 !identical(found, rlang::base_env()) &&
                 !identical(found, constr_env) &&
                 !identical(found, rlang::pkg_env("redist"))
         ) {
-            constr_env[[nm]] = get(nm, envir = found)
+            constr_env[[nm]] <- get(nm, envir = found)
         }
     }
 
@@ -1590,23 +1588,23 @@ add_constr_custom_plan <- function(
         cli::cli_abort("Function must take exactly three arguments.")
     }
 
-    constr_env = rlang::fn_env(fn)
+    constr_env <- rlang::fn_env(fn)
     constr_env <- rlang::env(constr_env)
     # every symbol used in the function (except the 3 arguments)
-    var_names = setdiff(
+    var_names <- setdiff(
         all.names(rlang::fn_body(fn)),
         names(args)
     )
 
     for (nm in var_names) {
-        found = find_env(nm, constr_env)
+        found <- find_env(nm, constr_env)
         if (
             !is.null(found) &&
                 !identical(found, rlang::base_env()) &&
                 !identical(found, constr_env) &&
                 !identical(found, rlang::pkg_env("redist"))
         ) {
-            constr_env[[nm]] = get(nm, envir = found)
+            constr_env[[nm]] <- get(nm, envir = found)
         }
     }
 
@@ -1662,7 +1660,7 @@ print.redist_constr <- function(x, header = TRUE, details = TRUE, ...) {
     print_constr <- function(x) {
         if (details) {
             idx_strength <- which(names(x) == "strength")
-            str(x[-idx_strength], no.list = T, comp.str = "   ", give.attr = FALSE)
+            str(x[-idx_strength], no.list = TRUE, comp.str = "   ", give.attr = FALSE)
         }
     }
 
@@ -1812,7 +1810,7 @@ plot.redist_constr <- function(x, y, type = "group", xlim = c(0, 1), ...) {
 
     if ("grp_pow" %in% names(x)) {
         for (obj in x$grp_pow) {
-            out$penalty = out$penalty +
+            out$penalty <- out$penalty +
                 obj$strength *
                     (abs(out$share - obj$tgt_group) *
                         abs(out$share - obj$tgt_other))^obj$pow
@@ -1823,9 +1821,9 @@ plot.redist_constr <- function(x, y, type = "group", xlim = c(0, 1), ...) {
     if ("grp_hinge" %in% names(x)) {
         for (obj in x$grp_hinge) {
             if (length(obj$tgts_group) > 1) {
-                warn_multiple = TRUE
+                warn_multiple <- TRUE
             }
-            out$penalty = out$penalty +
+            out$penalty <- out$penalty +
                 obj$strength * sqrt(pmax(0.0, obj$tgts_group[1] - out$share))
         }
     }
@@ -1833,9 +1831,9 @@ plot.redist_constr <- function(x, y, type = "group", xlim = c(0, 1), ...) {
     if ("grp_inv_hinge" %in% names(x)) {
         for (obj in x$grp_inv_hinge) {
             if (length(obj$tgts_group) > 1) {
-                warn_multiple = TRUE
+                warn_multiple <- TRUE
             }
-            out$penalty = out$penalty +
+            out$penalty <- out$penalty +
                 obj$strength * sqrt(pmax(0.0, out$share - obj$tgts_group[1]))
         }
     }

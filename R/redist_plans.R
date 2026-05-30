@@ -55,12 +55,10 @@ new_redist_plans <- function(
     if (is.null(distr_pop)) {
         # tally the population if needed
         distr_pop <- pop_tally(plans, prec_pop, ndists)
-    } else if (!inputs_safe) {
-        if (length(distr_pop) != ndists * n_sims) {
-            cli::cli_abort(
+    } else if ((!inputs_safe) && (length(distr_pop) != ndists * n_sims)) {
+        cli::cli_abort(
         "{.arg distr_pop} must be a vector of length `ndists` * `nsims`"
       )
-        }
     }
 
     # check if partial or MMD then region sizes must not be null
@@ -116,11 +114,11 @@ new_redist_plans <- function(
     if (is.null(colnames(plans))) {
         draw_fac <- as.factor(1:n_sims)
     } else {
-        draw_fac = character(n_sims)
-        ref_idx = which(nchar(colnames(plans)) > 0)
-        draw_fac[ref_idx] = colnames(plans)[ref_idx]
-        draw_fac[-ref_idx] = as.character(seq_len(n_sims - length(ref_idx)))
-        draw_fac = factor(draw_fac, levels = draw_fac)
+        draw_fac <- character(n_sims)
+        ref_idx <- which(nchar(colnames(plans)) > 0)
+        draw_fac[ref_idx] <- colnames(plans)[ref_idx]
+        draw_fac[-ref_idx] <- as.character(seq_len(n_sims - length(ref_idx)))
+        draw_fac <- factor(draw_fac, levels = draw_fac)
     }
 
     if (partial || districting_scheme == "multiple") {
@@ -182,12 +180,10 @@ validate_redist_plans <- function(x) {
     }
 
     # check if its not Single Member Districting then seats is present
-    if (isTRUE(attr(x, "districting_scheme") == "multiple")) {
-        if (!"seats" %in% names(x)) {
-            cli::cli_abort(
+    if ((isTRUE(attr(x, "districting_scheme") == "multiple")) && (!"seats" %in% names(x))) {
+        cli::cli_abort(
         "Multi-member district plans must have a {.field seats} column"
       )
-        }
     }
 
     x
@@ -572,7 +568,7 @@ add_reference <- function(plans, ref_plan, name = NULL, ref_seats = NULL) {
         }
 
         # good to go
-        plans$district = as.integer(plans$district)
+        plans$district <- as.integer(plans$district)
         cli::cli_inform(c(
       "Coercing {.val district} column to integers.",
       "i" = "You may want to run {.fn match_numbers} again to fix district labels.\n"
@@ -591,8 +587,7 @@ add_reference <- function(plans, ref_plan, name = NULL, ref_seats = NULL) {
         x <- dplyr::bind_rows(
             tibble(district = 1:ndists, total_pop = as.numeric(distr_pop)),
             plans[, -match("draw", names(plans))]
-        ) %>%
-            dplyr::mutate(draw = new_draw, .before = "district")
+        ) |>             dplyr::mutate(draw = new_draw, .before = "district")
     } else {
         x <- dplyr::bind_rows(
             tibble(
@@ -601,8 +596,7 @@ add_reference <- function(plans, ref_plan, name = NULL, ref_seats = NULL) {
                 seats = ref_seats
             ),
             plans[, -match("draw", names(plans))]
-        ) %>%
-            dplyr::mutate(draw = new_draw, .before = "district")
+        ) |>             dplyr::mutate(draw = new_draw, .before = "district")
     }
 
     exist_wgts <- get_plans_weights(plans)

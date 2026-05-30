@@ -1,11 +1,3 @@
-/********************************************************
- * CycleWalk MCMC Redistricting Sampler
- * Main entry point and MCMC loop
- *
- * This file contains the main entry point for the CycleWalk algorithm,
- * which is called from R via Rcpp.
- ********************************************************/
-
 #ifndef CW_MAIN_H
 #define CW_MAIN_H
 
@@ -16,36 +8,26 @@
 #include <string>
 
 /*
- * Main entry point for CycleWalk MCMC sampler.
+ * Cyclewalk MCMC sampler. Mirrors the modular shape used by ms_plans /
+ * run_redist_smc: a single chain over a PlanEnsemble of size 1, MapParams
+ * for graph + bounds + MMD bookkeeping, ScoringFunction for constraints,
+ * USTSampler for initial-tree construction, and a per-chain RNGState.
  *
- * Sample `N` redistricting plans on map `g`, ensuring that the
- * population deviation is between `lower` and `upper` (with target `target`).
- *
- * Returns a List with:
- *   - plans: umat of district assignments (V x n_samples)
- *   - mhdecisions: vector of MH accept/reject decisions
- *   - (future: additional diagnostics)
- *
- * Note: Rcpp::export is in cw_main.cpp, not here, to avoid duplicate entries
+ * Returns a list with at minimum: plans, mhdecisions, diagnostics. For MMD
+ * also returns plan_sizes (ndists x nsims) with seat counts.
  */
 Rcpp::List
-cyclewalk_plans(int N,                      // Number of MCMC iterations
-                Rcpp::List l,               // Adjacency list
-                const arma::uvec init,      // Initial plan
-                const arma::uvec &counties, // County assignments
-                const arma::uvec &pop,      // Population vector
-                int n_distr,                // Number of districts
-                double target,              // Target population per district
-                double lower,               // Lower population bound
-                double upper,               // Upper population bound
-                double compactness,         // Compactness parameter (0=uniform over partitions)
-                Rcpp::List constraints,     // Constraint specifications
-                Rcpp::List control,         // Control parameters
-                Rcpp::List edge_weights, // Edge weights (list of list(edge=c(u,v), weight=w))
-                int thin,                // Thinning interval
-                int instep,              // MCMC iterations per recorded sample
-                double cycle_walk_frac,  // Fraction of cycle walk vs forest walk
-                int verbosity            // Verbosity level (0=silent, 1=normal, 3=verbose)
-);
+cyclewalk_plans(int N, int warmup, int thin,
+                int ndists, int total_seats,
+                Rcpp::IntegerVector const &district_seat_sizes,
+                Rcpp::List const &adj_list,
+                arma::uvec const &counties, arma::uvec const &pop,
+                double target, double lower, double upper, double compactness,
+                Rcpp::IntegerMatrix const &init_plan,
+                Rcpp::IntegerMatrix const &init_seats,
+                Rcpp::List const &control, Rcpp::List const &constraints,
+                Rcpp::List const &edge_weights,
+                int instep, double cycle_walk_frac,
+                int verbosity, bool diagnostic_mode);
 
-#endif // CW_MAIN_H
+#endif
