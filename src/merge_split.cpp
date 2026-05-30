@@ -337,10 +337,13 @@ Rcpp::List ms_plans(
             }
             Rcpp::checkUserInterrupt();
         }
+        MS_CRASH_TRACE("after main MS loop");
         cli_progress_done(bar);
+        MS_CRASH_TRACE("after cli_progress_done");
         if (DEBUG_PURE_MS_VERBOSE)
             REprintf("Done with main MCMC loop\n");
     }
+    MS_CRASH_TRACE("after inner scope close (dtors ran)");
 
     if (verbosity >= 1) {
         Rcout << "Acceptance rate: " << std::setprecision(2)
@@ -348,9 +351,11 @@ Rcpp::List ms_plans(
               << std::endl;
     }
 
+    MS_CRASH_TRACE("before std::transform saved_plans_mat");
     // now add 1 to plans
     std::transform(saved_plans_mat.begin(), saved_plans_mat.end(), saved_plans_mat.begin(),
                    [](int x) { return x + 1; });
+    MS_CRASH_TRACE("after std::transform saved_plans_mat");
 
     if (DEBUG_PURE_MS_VERBOSE)
         REprintf("Added one to plans, now creating diagnostic list.\n");
@@ -375,5 +380,6 @@ Rcpp::List ms_plans(
     if (DEBUG_PURE_MS_VERBOSE)
         REprintf("Done now returning!\n");
 
+    MS_CRASH_TRACE("about to return from ms_plans");
     return out;
 }

@@ -6,16 +6,8 @@
  ********************************************************/
 
 #include "merging.h"
-#include <cstdio>
 
 constexpr bool DEBUG_MERGING_VERBOSE = false; // Compile-time constant
-
-// Temporary diagnostic for a Windows-only silent crash in attempt_mergesplit_step.
-#define MS_CRASH_TRACE(msg)                                                    \
-    do {                                                                       \
-        REprintf("[ms-trace] " msg "\n");                                      \
-        std::fflush(stderr);                                                   \
-    } while (0)
 
 /*
  *  Returns a sampler over a vector of adjacent pairs where the probability
@@ -170,10 +162,8 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     bool save_edge_selection_prob, std::vector<std::pair<RegionID, RegionID>> &adj_region_pairs,
     arma::vec &unnormalized_pair_wgts, double const rho, bool const is_final, bool const do_mh,
     bool const using_caching, WeightCache *weight_cache) {
-    MS_CRASH_TRACE("ams: enter");
     // sample a pair
     int sampled_pair_index = rng_state.r_int_unnormalized_wgt(unnormalized_pair_wgts);
-    MS_CRASH_TRACE("ams: after r_int_unnormalized_wgt");
     std::pair<int, int> merge_pair = adj_region_pairs[sampled_pair_index];
 
     int region1_id = merge_pair.first;
@@ -184,20 +174,17 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         Rprintf("Picked pair (%d, %d)\n", region1_id, region2_id);
     }
 
-    MS_CRASH_TRACE("ams: before attempt_to_find_valid_tree_mergesplit");
     // try to draw a region
     std::tuple<bool, EdgeCut> edge_search_result =
         ust_sampler.attempt_to_find_valid_tree_mergesplit(rng_state, scoring_function,
                                                           tree_splitter, plan, region1_id,
                                                           region2_id, save_edge_selection_prob);
-    MS_CRASH_TRACE("ams: after attempt_to_find_valid_tree_mergesplit");
     if (DEBUG_MERGING_VERBOSE) {
         Rprintf("A Splitting Checkpoint 1.\n");
     }
 
     // If nothing drawn immediately return
     if (!std::get<0>(edge_search_result)) {
-        MS_CRASH_TRACE("ams: edge search failed -> early return");
         if (DEBUG_MERGING_VERBOSE) {
             Rprintf("Failed!\n");
         }
@@ -207,10 +194,8 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     // IN THE FUTURE CAN AVOID THE COPYING BY JUST TRAVERSING THE TREE
     // Just traverse tree and check if not in merged region or something
 
-    MS_CRASH_TRACE("ams: before shallow_copy");
     // copy the new plan to be the old one
     new_plan.shallow_copy(plan);
-    MS_CRASH_TRACE("ams: after shallow_copy");
     if (DEBUG_MERGING_VERBOSE) {
         Rprintf("A Splitting Checkpoint 1.5!\n");
     }
@@ -218,14 +203,12 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     new_plan.update_from_successful_split(tree_splitter, ust_sampler,
                                           std::get<1>(edge_search_result), region1_id,
                                           region2_id, false);
-    MS_CRASH_TRACE("ams: after update_from_successful_split");
     if (DEBUG_MERGING_VERBOSE) {
         Rprintf("A Splitting Checkpoint 2.\n");
     }
     // check new plan is hierarchically valid if needed
     auto build_attempt = new_plan.attempt_to_get_valid_mergesplit_pairs(
         proposed_plan_multigraph, splitting_schedule, scoring_function, is_final);
-    MS_CRASH_TRACE("ams: after attempt_to_get_valid_mergesplit_pairs");
     // new plan is valid if build attempt successful and passes any hard constraints
     bool new_plan_valid =
         build_attempt.first &&
