@@ -342,8 +342,23 @@ Rcpp::List ms_plans(
         MS_CRASH_TRACE("after cli_progress_done");
         if (DEBUG_PURE_MS_VERBOSE)
             REprintf("Done with main MCMC loop\n");
+
+        // Explicitly drain & join the pool before any other dtor runs.
+        // Hypothesis: implicit ThreadPool dtor at scope-close is the
+        // Windows-only silent crash site.
+        MS_CRASH_TRACE("before pool.wait()");
+        pool.wait();
+        MS_CRASH_TRACE("after pool.wait(), before pool.join()");
+        pool.join();
+        MS_CRASH_TRACE("after pool.join()");
+
+        // Reset owning containers one at a time so we can see exactly
+        // which destructor crashes (if any).
+        MS_CRASH_TRACE("before reset tree_splitter_ptr_vec");
+        tree_splitter_ptr_vec.clear();
+        MS_CRASH_TRACE("after reset tree_splitter_ptr_vec");
     }
-    MS_CRASH_TRACE("after inner scope close (dtors ran)");
+    MS_CRASH_TRACE("after inner scope close (remaining dtors ran)");
 
     if (verbosity >= 1) {
         Rcout << "Acceptance rate: " << std::setprecision(2)
