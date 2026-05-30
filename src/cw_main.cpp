@@ -17,19 +17,15 @@ using namespace Rcpp;
 using namespace arma;
 
 // [[Rcpp::export]]
-Rcpp::List
-cyclewalk_plans(int N, int warmup, int thin,
-                int ndists, int total_seats,
-                Rcpp::IntegerVector const &district_seat_sizes,
-                Rcpp::List const &adj_list,
-                arma::uvec const &counties, arma::uvec const &pop,
-                double target, double lower, double upper, double compactness,
-                Rcpp::IntegerMatrix const &init_plan,
-                Rcpp::IntegerMatrix const &init_seats,
-                Rcpp::List const &control, Rcpp::List const &constraints,
-                Rcpp::List const &edge_weights,
-                int instep, double cycle_walk_frac,
-                int verbosity, bool diagnostic_mode) {
+Rcpp::List cyclewalk_plans(int N, int warmup, int thin, int ndists, int total_seats,
+                           Rcpp::IntegerVector const &district_seat_sizes,
+                           Rcpp::List const &adj_list, arma::uvec const &counties,
+                           arma::uvec const &pop, double target, double lower, double upper,
+                           double compactness, Rcpp::IntegerMatrix const &init_plan,
+                           Rcpp::IntegerMatrix const &init_seats, Rcpp::List const &control,
+                           Rcpp::List const &constraints, Rcpp::List const &edge_weights,
+                           int instep, double cycle_walk_frac, int verbosity,
+                           bool diagnostic_mode) {
     // Validate columns.
     if (init_plan.ncol() != 1 || init_seats.ncol() != 1) {
         throw Rcpp::exception("init_plan and init_seats must each be one-column matrices.");
@@ -109,8 +105,8 @@ cyclewalk_plans(int N, int warmup, int thin,
 
         // Load initial plan into a PlanEnsemble of size 1.
         PlanEnsemble plan_ensemble = get_plan_ensemble(
-            map_params, *splitting_schedule_ptr, ndists, /*nsims=*/1, sampling_space,
-            init_plan, init_seats, rng_states, pool, verbosity);
+            map_params, *splitting_schedule_ptr, ndists, /*nsims=*/1, sampling_space, init_plan,
+            init_seats, rng_states, pool, verbosity);
 
         auto *plan = static_cast<LCTGraphPlan *>(plan_ensemble.plan_ptr_vec[0].get());
 
@@ -239,25 +235,24 @@ cyclewalk_plans(int N, int warmup, int thin,
     }
 
     List diagnostics = List::create(
-        Named("accept_prob") = diagnostic_mode
-                                   ? NumericVector(diag_accept_prob.begin(), diag_accept_prob.end())
-                                   : NumericVector(),
-        Named("cycle_length") = diagnostic_mode
-                                    ? IntegerVector(diag_cycle_length.begin(), diag_cycle_length.end())
-                                    : IntegerVector(),
-        Named("n_valid_cuts") = diagnostic_mode
-                                    ? IntegerVector(diag_n_valid_cuts.begin(), diag_n_valid_cuts.end())
-                                    : IntegerVector(),
+        Named("accept_prob") =
+            diagnostic_mode ? NumericVector(diag_accept_prob.begin(), diag_accept_prob.end())
+                            : NumericVector(),
+        Named("cycle_length") =
+            diagnostic_mode ? IntegerVector(diag_cycle_length.begin(), diag_cycle_length.end())
+                            : IntegerVector(),
+        Named("n_valid_cuts") =
+            diagnostic_mode ? IntegerVector(diag_n_valid_cuts.begin(), diag_n_valid_cuts.end())
+                            : IntegerVector(),
         Named("failure_modes") = List::create(Named("no_adj") = cycle_walk_fail_no_adj,
                                               Named("few_edges") = cycle_walk_fail_few_edges,
                                               Named("no_path") = cycle_walk_fail_no_path,
                                               Named("no_cuts") = cycle_walk_fail_no_cuts));
 
     SEXP plan_sizes_out = mmd_plans ? SEXP(saved_plan_sizes) : R_NilValue;
-    List out = List::create(Named("plans") = saved_plans_mat,
-                            Named("plan_sizes") = plan_sizes_out,
-                            Named("mhdecisions") = mh_decisions,
-                            Named("diagnostics") = diagnostics,
-                            Named("algorithm") = "cyclewalk");
+    List out =
+        List::create(Named("plans") = saved_plans_mat, Named("plan_sizes") = plan_sizes_out,
+                     Named("mhdecisions") = mh_decisions, Named("diagnostics") = diagnostics,
+                     Named("algorithm") = "cyclewalk");
     return out;
 }

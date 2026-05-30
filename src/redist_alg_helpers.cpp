@@ -74,9 +74,10 @@ void validate_init_seats_cpp(Rcpp::IntegerMatrix const &init_seats, int const nu
                 throw Rcpp::exception(
                     "Seat values in `init_seats` smaller than smallest district seat size!\n");
             } else if (init_seats(i, j) > nseats) {
-                REprintf("Region %zu of plan %i has %d seats, more than `nseats` (%d) number of "
-                         "seats!\n",
-                         j + 1, i + 1, init_seats(i, j), nseats);
+                REprintf(
+                    "Region %zu of plan %i has %d seats, more than `nseats` (%d) number of "
+                    "seats!\n",
+                    j + 1, i + 1, init_seats(i, j), nseats);
                 throw Rcpp::exception("Seat values greater than `nseats` in `init_seats`!\n");
             }
 
@@ -337,9 +338,9 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params, int const total_pop, int
                 std::make_unique<GraphPlan>(total_seats, total_pop, plan_region_ids, plan_sizes,
                                             plan_pops, plan_region_order_added);
         } else if (use_lct_graph_space) {
-            plan_ptr_vec[i] = std::make_unique<LCTGraphPlan>(total_seats, total_pop,
-                                                             plan_region_ids, plan_sizes,
-                                                             plan_pops, plan_region_order_added);
+            plan_ptr_vec[i] =
+                std::make_unique<LCTGraphPlan>(total_seats, total_pop, plan_region_ids,
+                                               plan_sizes, plan_pops, plan_region_order_added);
         } else if (use_forest_space) {
             plan_ptr_vec[i] =
                 std::make_unique<ForestPlan>(total_seats, total_pop, plan_region_ids,
@@ -385,16 +386,16 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params,
 
     // check matrix dimensions
     if (plans_mat.ncol() != nsims) {
-        REprintf(
-            "The number of columns (%d) in the initial plan matrix was not equal to nsims (%d)!\n",
-            plans_mat.ncol(), nsims);
+        REprintf("The number of columns (%d) in the initial plan matrix was not equal to nsims "
+                 "(%d)!\n",
+                 plans_mat.ncol(), nsims);
         throw Rcpp::exception(
             "The number of columns in the initial plan matrix was not equal to nsims!\n");
     }
     if (region_sizes_mat.ncol() != nsims) {
-        REprintf(
-            "The number of columns (%d) in the initial sizes matrix was not equal to nsims (%d)!\n",
-            region_sizes_mat.ncol(), nsims);
+        REprintf("The number of columns (%d) in the initial sizes matrix was not equal to "
+                 "nsims (%d)!\n",
+                 region_sizes_mat.ncol(), nsims);
         throw Rcpp::exception(
             "The number of columns in the initial sizes matrix was not equal to nsims!\n");
     }
@@ -479,9 +480,9 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params,
                 std::make_unique<GraphPlan>(num_regions, map_params.pop, plan_region_ids,
                                             plan_sizes, plan_pops, plan_region_order_added);
         } else if (use_lct_graph_space) {
-            plan_ptr_vec[i] = std::make_unique<LCTGraphPlan>(
-                num_regions, map_params.pop, plan_region_ids, plan_sizes, plan_pops,
-                plan_region_order_added);
+            plan_ptr_vec[i] =
+                std::make_unique<LCTGraphPlan>(num_regions, map_params.pop, plan_region_ids,
+                                               plan_sizes, plan_pops, plan_region_order_added);
         } else if (use_forest_space) {
             plan_ptr_vec[i] = std::make_unique<ForestPlan>(
                 ndists, num_regions, map_params.pop, plan_region_ids, plan_sizes, plan_pops,

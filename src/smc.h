@@ -55,8 +55,8 @@ List run_redist_smc(
     double const upper,
     double const rho,                      // compactness
     std::string const &sampling_space_str, // sampling space (graphs, forest, etc)
-    List const &control,     // control has pop temper, k, and splitting method
-    List const &constraints, // constraints
+    List const &control,                   // control has pop temper, k, and splitting method
+    List const &constraints,               // constraints
     int const verbosity, int const diagnostic_level, Rcpp::IntegerMatrix const &region_id_mat,
     Rcpp::IntegerMatrix const &region_sizes_mat, arma::vec &log_weights);
 

@@ -94,9 +94,8 @@ class LCTGraphPlan : public GraphPlan {
     // reflect the new region assignments. Falls through to GraphPlan for
     // region_ids bookkeeping. Not exercised by the MCMC inner loop.
     void update_vertex_and_plan_specific_info_from_cut(
-        TreeSplitter const &tree_splitter, USTSampler &ust_sampler,
-        EdgeCut const cut_edge, int const split_region1_id, int const split_region2_id,
-        bool const add_region) override;
+        TreeSplitter const &tree_splitter, USTSampler &ust_sampler, EdgeCut const cut_edge,
+        int const split_region1_id, int const split_region2_id, bool const add_region) override;
 
   private:
     // Helper: load `tree` (rooted at `root`) into the LCT under `district`.

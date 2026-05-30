@@ -38,8 +38,8 @@ Rcpp::List ms_plans(
     Rcpp::IntegerMatrix const &init_plan, Rcpp::IntegerMatrix const &init_seats,
     std::string const &sampling_space_str, // sampling space (graphs, forest, etc)
     std::string const &pair_rule, // method for setting probability of picking a pair to merge
-    List const &control,     // pop temper, k, and whether only district splits are allowed
-    List const &constraints, // constraints
+    List const &control,          // pop temper, k, and whether only district splits are allowed
+    List const &constraints,      // constraints
     int const verbosity = 3, bool const diagnostic_mode = false);
 
 #endif

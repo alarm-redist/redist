@@ -701,7 +701,7 @@ List run_redist_smc(
 
         double entire_map_compactness = 0.0;
         // compute the whole map compactness if needed
-        if (initial_num_regions == 1 & rho != 1) {
+        if (initial_num_regions == 1 && rho != 1) {
             entire_map_compactness =
                 (rho - 1) *
                 plan_ensemble_ptr->plan_ptr_vec[0]->compute_log_region_spanning_trees(
@@ -1095,12 +1095,12 @@ List run_redist_smc(
                 }
                 Rcpp::checkUserInterrupt();
             }
-        } catch (RcppThread::UserInterruptException e) {
+        } catch (const RcppThread::UserInterruptException &e) {
             cli_progress_done(bar);
             Rcpp::Rcerr << "c++ threaded call interrupted!" << "\n";
             throw Rcpp::exception("c++ threaded call interrupted!\n");
             return R_NilValue;
-        } catch (Rcpp::internal::InterruptedException e) {
+        } catch (const Rcpp::internal::InterruptedException &e) {
             cli_progress_done(bar);
             Rcpp::Rcerr << "c++ call interrupted!" << "\n";
             throw Rcpp::exception("c++ call interrupted!\n");

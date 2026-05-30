@@ -137,8 +137,7 @@ std::pair<Tree, std::vector<int>> build_admin_forest(const Graph &g,
             int u_admin_unit = admin_units[u] - 1;
             // sanity check delete later
             if (u_admin_unit != v_admin_unit) {
-                REprintf("v county %d, u county %d", v_admin_unit,
-                         (int)admin_units(u) - 1);
+                REprintf("v county %d, u county %d", v_admin_unit, (int)admin_units(u) - 1);
                 throw Rcpp::exception("County forest went wrong!!\n");
             }
 

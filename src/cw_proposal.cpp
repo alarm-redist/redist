@@ -47,8 +47,8 @@ static int topological_sort_helper(std::map<int, int> &cut_pop, LCTNode *node, L
     int rc = 1 - lc;
 
     if (node->children[rc] != nullptr) {
-        remainder += topological_sort_helper(cut_pop, node->children[rc], node, pop, reversed,
-                                             mass);
+        remainder +=
+            topological_sort_helper(cut_pop, node->children[rc], node, pop, reversed, mass);
     }
     for (LCTNode *child : node->path_children) {
         remainder += topological_sort_helper(cut_pop, child, node, pop, false, 0);
@@ -193,10 +193,10 @@ std::vector<std::pair<int, int>> find_valid_cut_pairs(std::vector<int> const &cy
             int pop2 = total_pop - pop1;
 
             // Accept if EITHER assignment of (pop1,pop2) to (d1,d2) is valid.
-            bool ok_direct = (pop1 >= lower1 && pop1 <= upper1) &&
-                             (pop2 >= lower2 && pop2 <= upper2);
-            bool ok_swap = (pop1 >= lower2 && pop1 <= upper2) &&
-                           (pop2 >= lower1 && pop2 <= upper1);
+            bool ok_direct =
+                (pop1 >= lower1 && pop1 <= upper1) && (pop2 >= lower2 && pop2 <= upper2);
+            bool ok_swap =
+                (pop1 >= lower2 && pop1 <= upper2) && (pop2 >= lower1 && pop2 <= upper1);
             if (ok_direct || ok_swap)
                 valid_pairs.push_back({cut1, cut2});
         }

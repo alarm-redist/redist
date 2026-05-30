@@ -1028,8 +1028,7 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau_eigen(
         for (auto const &val : all_pairs) {
             REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s\n",
                      (int)val.first.first, (int)val.first.second,
-                     county_component[val.first.first],
-                     county_component[val.first.second],
+                     county_component[val.first.first], county_component[val.first.second],
                      (val.second.same_admin_component ? "SHARED" : "NOT SHARED"));
         }
     }
@@ -1064,8 +1063,7 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau_eigen(
         for (auto const &val : all_pairs) {
             REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s\n",
                      (int)val.first.first, (int)val.first.second,
-                     county_component[val.first.first],
-                     county_component[val.first.second],
+                     county_component[val.first.first], county_component[val.first.second],
                      (val.second.same_admin_component ? "SHARED" : "NOT SHARED"));
         }
     }
@@ -1226,8 +1224,7 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau_eigen(
         for (auto const &val : all_pairs) {
             REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s\n",
                      (int)val.first.first, (int)val.first.second,
-                     county_component[val.first.first],
-                     county_component[val.first.second],
+                     county_component[val.first.first], county_component[val.first.second],
                      (val.second.same_admin_component ? "SHARED" : "NOT SHARED"));
         }
         for (int i = 0; i < num_county_connected_components; i++) {
@@ -1353,8 +1350,7 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
         for (auto const &val : all_pairs) {
             REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s\n",
                      (int)val.first.first, (int)val.first.second,
-                     county_component[val.first.first],
-                     county_component[val.first.second],
+                     county_component[val.first.first], county_component[val.first.second],
                      (val.second.same_admin_component ? "SHARED" : "NOT SHARED"));
         }
     }
@@ -1389,8 +1385,7 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
         for (auto const &val : all_pairs) {
             REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s\n",
                      (int)val.first.first, (int)val.first.second,
-                     county_component[val.first.first],
-                     county_component[val.first.second],
+                     county_component[val.first.first], county_component[val.first.second],
                      (val.second.same_admin_component ? "SHARED" : "NOT SHARED"));
         }
     }
@@ -1529,8 +1524,7 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
         for (auto const &val : all_pairs) {
             REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s\n",
                      (int)val.first.first, (int)val.first.second,
-                     county_component[val.first.first],
-                     county_component[val.first.second],
+                     county_component[val.first.first], county_component[val.first.second],
                      (val.second.same_admin_component ? "SHARED" : "NOT SHARED"));
         }
         for (int i = 0; i < num_county_connected_components; i++) {
@@ -1969,8 +1963,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau_eigen(
         for (auto const &val : all_pairs) {
             REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s\n",
                      (int)val.first.first, (int)val.first.second,
-                     county_component[val.first.first],
-                     county_component[val.first.second],
+                     county_component[val.first.first], county_component[val.first.second],
                      (val.second.same_admin_component ? "SHARED" : "NOT SHARED"));
         }
         for (int i = 0; i < merged_num_admin_connected_components; i++) {
@@ -2450,8 +2443,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
         for (auto const &val : all_pairs) {
             REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s\n",
                      (int)val.first.first, (int)val.first.second,
-                     county_component[val.first.first],
-                     county_component[val.first.second],
+                     county_component[val.first.first], county_component[val.first.second],
                      (val.second.same_admin_component ? "SHARED" : "NOT SHARED"));
         }
         for (int i = 0; i < merged_num_admin_connected_components; i++) {

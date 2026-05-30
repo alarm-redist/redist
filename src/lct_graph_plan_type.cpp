@@ -20,7 +20,8 @@ bool CWEdge::operator<(const CWEdge &other) const {
 bool CWEdge::operator==(const CWEdge &other) const { return u == other.u && v == other.v; }
 
 bool LCTGraphPlan::init_lct_from_regions(MapParams const &map_params, USTSampler &ust_sampler,
-                                         RNGState &rng_state, int const max_attempts_per_region) {
+                                         RNGState &rng_state,
+                                         int const max_attempts_per_region) {
     int const V = map_params.V;
     lct = std::make_unique<LinkCutTree>(V);
     district_roots.assign(num_regions, -1);
