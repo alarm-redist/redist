@@ -7,18 +7,8 @@
  ********************************************************/
 
 #include "merge_split.h"
-#include <cstdio>
 
 constexpr bool DEBUG_PURE_MS_VERBOSE = false; // Compile-time constant
-
-// Temporary diagnostic for a Windows-only silent crash in ms_plans.
-// Forces unbuffered stderr writes so the last checkpoint reached is
-// preserved across an abort. Remove once the crash is localized.
-#define MS_CRASH_TRACE(msg)                                                    \
-    do {                                                                       \
-        REprintf("[ms-trace] " msg "\n");                                      \
-        std::fflush(stderr);                                                   \
-    } while (0)
 
 /*
  * Main entry point.
@@ -41,7 +31,6 @@ Rcpp::List ms_plans(
     List const &constraints, // constraints
     int const verbosity, bool const diagnostic_mode) {
     // whether or not to perform MH step
-    MS_CRASH_TRACE("enter ms_plans");
     bool do_mh = (bool)control["do_mh"];
 
     if (DEBUG_PURE_MS_VERBOSE)
@@ -129,51 +118,32 @@ Rcpp::List ms_plans(
     int post_warump_acceptances = 0;
 
     {
-        // Hoist onto the heap via unique_ptr so we can .reset() each
-        // explicitly, with traces, instead of relying on implicit
-        // scope-close dtor ordering. Reference aliases keep loop-body
-        // syntax unchanged.
-        MS_CRASH_TRACE("before USTSampler");
-        auto ust_sampler_holder =
-            std::make_unique<USTSampler>(map_params, *splitting_schedule_ptr);
-        USTSampler &ust_sampler = *ust_sampler_holder;
-        MS_CRASH_TRACE("after USTSampler");
-        auto current_plan_multigraph_holder = std::make_unique<PlanMultigraph>(
+        USTSampler ust_sampler(map_params, *splitting_schedule_ptr);
+        PlanMultigraph current_plan_multigraph(map_params, sampling_space ==
+                                                               SamplingSpace::LinkingEdgeSpace);
+        PlanMultigraph proposed_plan_multigraph(
             map_params, sampling_space == SamplingSpace::LinkingEdgeSpace);
-        PlanMultigraph &current_plan_multigraph = *current_plan_multigraph_holder;
-        MS_CRASH_TRACE("after current PlanMultigraph");
-        auto proposed_plan_multigraph_holder = std::make_unique<PlanMultigraph>(
-            map_params, sampling_space == SamplingSpace::LinkingEdgeSpace);
-        PlanMultigraph &proposed_plan_multigraph = *proposed_plan_multigraph_holder;
-        MS_CRASH_TRACE("after proposed PlanMultigraph");
 
-        auto pool_holder = std::make_unique<RcppThread::ThreadPool>(1);
-        RcppThread::ThreadPool &pool = *pool_holder;
-        MS_CRASH_TRACE("after ThreadPool(1)");
+        RcppThread::ThreadPool pool(0);
         // underlying vector from plan
         PlanEnsemble plan_ensemble = get_plan_ensemble(
             map_params, *splitting_schedule_ptr, initial_num_regions, 1, sampling_space,
             init_plan, init_seats, rng_states, pool, verbosity);
-        MS_CRASH_TRACE("after first get_plan_ensemble");
         // plan_ensemble.plan_ptr_vec[0]->Rprint(true);
         // now get for proposal plan
         PlanEnsemble proposal_plan_ensemble = get_plan_ensemble(
             map_params, *splitting_schedule_ptr, initial_num_regions, 1, sampling_space,
             init_plan, init_seats, rng_states, pool, verbosity);
-        MS_CRASH_TRACE("after second get_plan_ensemble");
 
         // splitter
         std::vector<std::unique_ptr<TreeSplitter>> tree_splitter_ptr_vec =
             get_tree_splitter_ptrs(map_params, splitting_method, control, nsims, 1);
-        MS_CRASH_TRACE("after get_tree_splitter_ptrs");
         if (DEBUG_PURE_MS_VERBOSE)
             Rprintf("Checkpoint 4!\n");
         // sanity check make sure the plan is ok
         std::vector<bool> county_component_lookup(ndists * map_params.num_counties, false);
-        MS_CRASH_TRACE("before is_hierarchically_valid");
         bool hierarchically_valid = current_plan_multigraph.is_hierarchically_valid(
             *plan_ensemble.plan_ptr_vec[0], county_component_lookup);
-        MS_CRASH_TRACE("after is_hierarchically_valid");
 
         if (!hierarchically_valid) {
             plan_ensemble.plan_ptr_vec[0]->Rprint(true);
@@ -181,11 +151,9 @@ Rcpp::List ms_plans(
                                   "counties or pass in a hierarchically valid plan\n");
         }
         // build multigraph on current plan and get pairs of adj districts to merge
-        MS_CRASH_TRACE("before first attempt_to_get_valid_mergesplit_pairs");
         auto build_result =
             plan_ensemble.plan_ptr_vec[0]->attempt_to_get_valid_mergesplit_pairs(
                 current_plan_multigraph, *splitting_schedule_ptr, scoring_function, true);
-        MS_CRASH_TRACE("after first attempt_to_get_valid_mergesplit_pairs");
         // shouldn't be possible but just a sanity check
         if (!build_result.first) {
             throw Rcpp::exception("BIG ERROR: Plan registered as hierarchically valid but we "
@@ -196,12 +164,10 @@ Rcpp::List ms_plans(
                 ->attempt_to_get_valid_mergesplit_pairs(
                     current_plan_multigraph, *splitting_schedule_ptr, scoring_function, true)
                 .second;
-        MS_CRASH_TRACE("after second attempt_to_get_valid_mergesplit_pairs");
 
         // get weights
         arma::vec current_plan_pair_unnoramalized_wgts = get_adj_pair_unnormalized_weights(
             *plan_ensemble.plan_ptr_vec[0], current_plan_adj_region_pairs, pair_rule);
-        MS_CRASH_TRACE("after get_adj_pair_unnormalized_weights");
 
         // Set or estimate k if doing graph space sampling
         if (sampling_space == SamplingSpace::GraphSpace) {
@@ -262,10 +228,8 @@ Rcpp::List ms_plans(
             }
         }
 
-        MS_CRASH_TRACE("before main MS loop");
         RObject bar = cli_progress_bar(total_steps, cli_config(false));
         for (int i = start, step_num = 0; i <= total_post_warmup_steps; i++, step_num++) {
-            if (step_num == 0) MS_CRASH_TRACE("first loop iteration");
             // Index 0 or less is warmup
             bool in_warmup = i <= 0;
             if (DEBUG_PURE_MS_VERBOSE) {
@@ -346,122 +310,10 @@ Rcpp::List ms_plans(
             }
             Rcpp::checkUserInterrupt();
         }
-        MS_CRASH_TRACE("after main MS loop");
         cli_progress_done(bar);
-        MS_CRASH_TRACE("after cli_progress_done");
         if (DEBUG_PURE_MS_VERBOSE)
             REprintf("Done with main MCMC loop\n");
-
-        // Explicitly drain & join the pool before any other dtor runs.
-        // Hypothesis: implicit ThreadPool dtor at scope-close is the
-        // Windows-only silent crash site.
-        MS_CRASH_TRACE("before pool.wait()");
-        pool.wait();
-        MS_CRASH_TRACE("after pool.wait(), before pool.join()");
-        pool.join();
-        MS_CRASH_TRACE("after pool.join()");
-
-        // Drain owning containers one at a time, narrowing which
-        // destructor causes the Windows-only silent crash.
-        MS_CRASH_TRACE("before clear tree_splitter_ptr_vec");
-        tree_splitter_ptr_vec.clear();
-        MS_CRASH_TRACE("after clear tree_splitter_ptr_vec");
-
-        // Clear PlanEnsemble internals (avoid trying to move the
-        // whole ensemble; PlanEnsemble has const members).
-        MS_CRASH_TRACE("before clear proposal_plan_ensemble.plan_ptr_vec");
-        proposal_plan_ensemble.plan_ptr_vec.clear();
-        MS_CRASH_TRACE("after clear proposal_plan_ensemble.plan_ptr_vec");
-
-        MS_CRASH_TRACE("before clear proposal_plan_ensemble flat vectors");
-        proposal_plan_ensemble.flattened_all_plans.clear();
-        proposal_plan_ensemble.flattened_all_plans.shrink_to_fit();
-        proposal_plan_ensemble.flattened_all_region_sizes.clear();
-        proposal_plan_ensemble.flattened_all_region_sizes.shrink_to_fit();
-        proposal_plan_ensemble.flattened_all_region_pops.clear();
-        proposal_plan_ensemble.flattened_all_region_pops.shrink_to_fit();
-        proposal_plan_ensemble.flattened_all_region_order_added.clear();
-        proposal_plan_ensemble.flattened_all_region_order_added.shrink_to_fit();
-        MS_CRASH_TRACE("after clear proposal_plan_ensemble flat vectors");
-
-        MS_CRASH_TRACE("before clear plan_ensemble.plan_ptr_vec");
-        plan_ensemble.plan_ptr_vec.clear();
-        MS_CRASH_TRACE("after clear plan_ensemble.plan_ptr_vec");
-
-        MS_CRASH_TRACE("before clear plan_ensemble flat vectors");
-        plan_ensemble.flattened_all_plans.clear();
-        plan_ensemble.flattened_all_plans.shrink_to_fit();
-        plan_ensemble.flattened_all_region_sizes.clear();
-        plan_ensemble.flattened_all_region_sizes.shrink_to_fit();
-        plan_ensemble.flattened_all_region_pops.clear();
-        plan_ensemble.flattened_all_region_pops.shrink_to_fit();
-        plan_ensemble.flattened_all_region_order_added.clear();
-        plan_ensemble.flattened_all_region_order_added.shrink_to_fit();
-        MS_CRASH_TRACE("after clear plan_ensemble flat vectors");
-
-        // Diagnostic dump: if heap corruption happened in the loop,
-        // bogus sizes / dims here will tip us off before any dtor runs.
-        // Wrap each read in its own trace so a crash *here* (i.e. while
-        // simply reading a corrupted size word) localizes the victim.
-        auto dump_pm = [](const char *label, PlanMultigraph &pm) {
-            REprintf("[ms-state] %s: vertices_visited=%zu county_component=%zu "
-                     "component_split=%zu component_region=%zu "
-                     "region_overlap=%zu county_reindex=%zu region_reindex=%zu "
-                     "lap=%llux%llu merged_lap=%llux%llu "
-                     "num_cr_comp=%d num_cc_comp=%d\n",
-                     label,
-                     pm.vertices_visited.size(), pm.county_component.size(),
-                     pm.component_split_counts.size(),
-                     pm.component_region_counts.size(),
-                     pm.region_overlap_counties.size(),
-                     pm.county_component_reindex.size(),
-                     pm.region_reindex_vec.size(),
-                     (unsigned long long)pm.WAIT_laplacian_minor.n_rows,
-                     (unsigned long long)pm.WAIT_laplacian_minor.n_cols,
-                     (unsigned long long)pm.WAIT_merged_laplacian_minor.n_rows,
-                     (unsigned long long)pm.WAIT_merged_laplacian_minor.n_cols,
-                     pm.num_county_region_components,
-                     pm.num_county_connected_components);
-            std::fflush(stderr);
-        };
-        MS_CRASH_TRACE("dump current_plan_multigraph state");
-        dump_pm("current", current_plan_multigraph);
-        MS_CRASH_TRACE("dump proposed_plan_multigraph state");
-        dump_pm("proposed", proposed_plan_multigraph);
-        MS_CRASH_TRACE("dump ust_sampler state");
-        REprintf("[ms-state] ust_sampler: ust=%zu pops_below=%zu visited=%zu "
-                 "ignore=%zu county_pop=%llu county_members=%zu c_visited=%zu "
-                 "cty_pop_below=%zu county_path=%zu path=%zu\n",
-                 ust_sampler.ust.size(), ust_sampler.pops_below_vertex.size(),
-                 ust_sampler.visited.size(), ust_sampler.ignore.size(),
-                 (unsigned long long)ust_sampler.county_pop.n_elem,
-                 ust_sampler.county_members.size(), ust_sampler.c_visited.size(),
-                 ust_sampler.cty_pop_below.size(), ust_sampler.county_path.size(),
-                 ust_sampler.path.size());
-        std::fflush(stderr);
-        MS_CRASH_TRACE("dumps complete; reading sizes was safe");
-
-        // Explicit destruction in reverse construction order, one at a
-        // time, so we can pinpoint which dtor crashes.
-        MS_CRASH_TRACE("before reset pool_holder");
-        pool_holder.reset();
-        MS_CRASH_TRACE("after reset pool_holder");
-
-        MS_CRASH_TRACE("before reset proposed_plan_multigraph_holder");
-        proposed_plan_multigraph_holder.reset();
-        MS_CRASH_TRACE("after reset proposed_plan_multigraph_holder");
-
-        MS_CRASH_TRACE("before reset current_plan_multigraph_holder");
-        current_plan_multigraph_holder.reset();
-        MS_CRASH_TRACE("after reset current_plan_multigraph_holder");
-
-        MS_CRASH_TRACE("before reset ust_sampler_holder");
-        ust_sampler_holder.reset();
-        MS_CRASH_TRACE("after reset ust_sampler_holder");
-
-        MS_CRASH_TRACE("about to close inner scope (only empty holders + emptied ensembles left)");
     }
-    MS_CRASH_TRACE("after inner scope close (remaining dtors ran)");
 
     if (verbosity >= 1) {
         Rcout << "Acceptance rate: " << std::setprecision(2)
@@ -469,48 +321,32 @@ Rcpp::List ms_plans(
               << std::endl;
     }
 
-    MS_CRASH_TRACE("before std::transform saved_plans_mat");
     // now add 1 to plans
     std::transform(saved_plans_mat.begin(), saved_plans_mat.end(), saved_plans_mat.begin(),
                    [](int x) { return x + 1; });
-    MS_CRASH_TRACE("after std::transform saved_plans_mat");
 
     if (DEBUG_PURE_MS_VERBOSE)
         REprintf("Added one to plans, now creating diagnostic list.\n");
 
-    MS_CRASH_TRACE("before out[plans]");
     out["plans"] = saved_plans_mat;
-    MS_CRASH_TRACE("before out[region_pops]");
     out["region_pops"] = saved_district_pops_mat;
-    MS_CRASH_TRACE("before out[seats]");
     out["seats"] = saved_plan_sizes;
-    MS_CRASH_TRACE("before out[mhdecisions]");
     out["mhdecisions"] = mh_decisions;
-    MS_CRASH_TRACE("before out[total_steps]");
     out["total_steps"] = total_steps;
-    MS_CRASH_TRACE("before out[warmup_acceptances]");
     out["warmup_acceptances"] = warmup_acceptances;
-    MS_CRASH_TRACE("before out[post_warump_acceptances]");
     out["post_warump_acceptances"] = post_warump_acceptances;
-    MS_CRASH_TRACE("before out[log_mh_ratio]");
     out["log_mh_ratio"] = log_mh_ratios;
-    MS_CRASH_TRACE("before out[tree_sizes]");
     out["tree_sizes"] = tree_sizes;
-    MS_CRASH_TRACE("after all out[] assignments");
 
     if (diagnostic_mode) {
-        MS_CRASH_TRACE("before diagnostic transform");
         // now add 1 to plans
         std::transform(proposed_plans_mat.begin(), proposed_plans_mat.end(),
                        proposed_plans_mat.begin(), [](int x) { return x + 1; });
-        MS_CRASH_TRACE("after diagnostic transform, before out[proposed_plans]");
         out["proposed_plans"] = proposed_plans_mat;
-        MS_CRASH_TRACE("after diagnostic mode block");
     }
 
     if (DEBUG_PURE_MS_VERBOSE)
         REprintf("Done now returning!\n");
 
-    MS_CRASH_TRACE("about to return from ms_plans");
     return out;
 }
