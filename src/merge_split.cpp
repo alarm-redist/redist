@@ -7,8 +7,18 @@
  ********************************************************/
 
 #include "merge_split.h"
+#include <cstdio>
 
 constexpr bool DEBUG_PURE_MS_VERBOSE = false; // Compile-time constant
+
+// Temporary diagnostic for a Windows-only silent crash in ms_plans.
+// Forces unbuffered stderr writes so the last checkpoint reached is
+// preserved across an abort. Remove once the crash is localized.
+#define MS_CRASH_TRACE(msg)                                                    \
+    do {                                                                       \
+        REprintf("[ms-trace] " msg "\n");                                      \
+        std::fflush(stderr);                                                   \
+    } while (0)
 
 /*
  * Main entry point.
@@ -31,6 +41,7 @@ Rcpp::List ms_plans(
     List const &constraints, // constraints
     int const verbosity, bool const diagnostic_mode) {
     // whether or not to perform MH step
+    MS_CRASH_TRACE("enter ms_plans");
     bool do_mh = (bool)control["do_mh"];
 
     if (DEBUG_PURE_MS_VERBOSE)
@@ -118,32 +129,42 @@ Rcpp::List ms_plans(
     int post_warump_acceptances = 0;
 
     {
+        MS_CRASH_TRACE("before USTSampler");
         USTSampler ust_sampler(map_params, *splitting_schedule_ptr);
+        MS_CRASH_TRACE("after USTSampler");
         PlanMultigraph current_plan_multigraph(map_params, sampling_space ==
                                                                SamplingSpace::LinkingEdgeSpace);
+        MS_CRASH_TRACE("after current PlanMultigraph");
         PlanMultigraph proposed_plan_multigraph(
             map_params, sampling_space == SamplingSpace::LinkingEdgeSpace);
+        MS_CRASH_TRACE("after proposed PlanMultigraph");
 
         RcppThread::ThreadPool pool(1);
+        MS_CRASH_TRACE("after ThreadPool(1)");
         // underlying vector from plan
         PlanEnsemble plan_ensemble = get_plan_ensemble(
             map_params, *splitting_schedule_ptr, initial_num_regions, 1, sampling_space,
             init_plan, init_seats, rng_states, pool, verbosity);
+        MS_CRASH_TRACE("after first get_plan_ensemble");
         // plan_ensemble.plan_ptr_vec[0]->Rprint(true);
         // now get for proposal plan
         PlanEnsemble proposal_plan_ensemble = get_plan_ensemble(
             map_params, *splitting_schedule_ptr, initial_num_regions, 1, sampling_space,
             init_plan, init_seats, rng_states, pool, verbosity);
+        MS_CRASH_TRACE("after second get_plan_ensemble");
 
         // splitter
         std::vector<std::unique_ptr<TreeSplitter>> tree_splitter_ptr_vec =
             get_tree_splitter_ptrs(map_params, splitting_method, control, nsims, 1);
+        MS_CRASH_TRACE("after get_tree_splitter_ptrs");
         if (DEBUG_PURE_MS_VERBOSE)
             Rprintf("Checkpoint 4!\n");
         // sanity check make sure the plan is ok
         std::vector<bool> county_component_lookup(ndists * map_params.num_counties, false);
+        MS_CRASH_TRACE("before is_hierarchically_valid");
         bool hierarchically_valid = current_plan_multigraph.is_hierarchically_valid(
             *plan_ensemble.plan_ptr_vec[0], county_component_lookup);
+        MS_CRASH_TRACE("after is_hierarchically_valid");
 
         if (!hierarchically_valid) {
             plan_ensemble.plan_ptr_vec[0]->Rprint(true);
@@ -151,9 +172,11 @@ Rcpp::List ms_plans(
                                   "counties or pass in a hierarchically valid plan\n");
         }
         // build multigraph on current plan and get pairs of adj districts to merge
+        MS_CRASH_TRACE("before first attempt_to_get_valid_mergesplit_pairs");
         auto build_result =
             plan_ensemble.plan_ptr_vec[0]->attempt_to_get_valid_mergesplit_pairs(
                 current_plan_multigraph, *splitting_schedule_ptr, scoring_function, true);
+        MS_CRASH_TRACE("after first attempt_to_get_valid_mergesplit_pairs");
         // shouldn't be possible but just a sanity check
         if (!build_result.first) {
             throw Rcpp::exception("BIG ERROR: Plan registered as hierarchically valid but we "
@@ -164,10 +187,12 @@ Rcpp::List ms_plans(
                 ->attempt_to_get_valid_mergesplit_pairs(
                     current_plan_multigraph, *splitting_schedule_ptr, scoring_function, true)
                 .second;
+        MS_CRASH_TRACE("after second attempt_to_get_valid_mergesplit_pairs");
 
         // get weights
         arma::vec current_plan_pair_unnoramalized_wgts = get_adj_pair_unnormalized_weights(
             *plan_ensemble.plan_ptr_vec[0], current_plan_adj_region_pairs, pair_rule);
+        MS_CRASH_TRACE("after get_adj_pair_unnormalized_weights");
 
         // Set or estimate k if doing graph space sampling
         if (sampling_space == SamplingSpace::GraphSpace) {
@@ -228,8 +253,10 @@ Rcpp::List ms_plans(
             }
         }
 
+        MS_CRASH_TRACE("before main MS loop");
         RObject bar = cli_progress_bar(total_steps, cli_config(false));
         for (int i = start, step_num = 0; i <= total_post_warmup_steps; i++, step_num++) {
+            if (step_num == 0) MS_CRASH_TRACE("first loop iteration");
             // Index 0 or less is warmup
             bool in_warmup = i <= 0;
             if (DEBUG_PURE_MS_VERBOSE) {
