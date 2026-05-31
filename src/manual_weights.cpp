@@ -84,6 +84,21 @@ Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
 
     const int check_int = 50; // check for interrupts every _ iterations
     Rcpp::Rcout << "Computing Log Target Density!" << std::endl;
+
+    int const n_threads = num_threads == 0 ? 1 : num_threads;
+    std::vector<PlanMultigraph> plan_multigraph_buffers(n_threads,
+                                                        PlanMultigraph(map_params, false));
+    std::vector<std::vector<bool>> county_component_lookup_buffers(
+        n_threads, std::vector<bool>(num_regions * map_params.num_counties, false));
+    std::vector<CircularQueue<int>> vertex_queue_buffers(n_threads,
+                                                         CircularQueue<int>(map_params.V));
+    std::vector<std::vector<bool>> vertices_visited_buffers(n_threads,
+                                                            std::vector<bool>(map_params.V));
+    std::vector<std::vector<bool>> regions_visited_buffers(n_threads,
+                                                           std::vector<bool>(num_regions));
+    std::vector<std::vector<bool>> zero_prob_component_buffers(
+        n_threads, std::vector<bool>(num_regions + 1));
+
     RcppThread::ProgressBar bar(num_plans, 1);
     pool.parallelFor(0, num_plans, [&](int i) {
         static thread_local int thread_generation_counter = -1;
@@ -96,13 +111,12 @@ Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
             thread_generation_counter = generation;
         }
 
-        static thread_local PlanMultigraph plan_multigraph(map_params, false);
-        static thread_local std::vector<bool> county_component_lookup(
-            num_regions * map_params.num_counties, false);
-        static thread_local CircularQueue<int> vertex_queue(map_params.V);
-        static thread_local std::vector<bool> vertices_visited(map_params.V);
-        static thread_local std::vector<bool> regions_visited(num_regions);
-        static thread_local std::vector<bool> zero_prob_component(num_regions + 1);
+        PlanMultigraph &plan_multigraph = plan_multigraph_buffers[thread_id];
+        std::vector<bool> &county_component_lookup = county_component_lookup_buffers[thread_id];
+        CircularQueue<int> &vertex_queue = vertex_queue_buffers[thread_id];
+        std::vector<bool> &vertices_visited = vertices_visited_buffers[thread_id];
+        std::vector<bool> &regions_visited = regions_visited_buffers[thread_id];
+        std::vector<bool> &zero_prob_component = zero_prob_component_buffers[thread_id];
         // we use this to see if a component has 0 probability meaning we can skip other
         // calculations
         std::fill(zero_prob_component.begin(), zero_prob_component.end(), false);
@@ -289,12 +303,24 @@ arma::vec compute_plans_log_optimal_weights(
     const int nsims = plan_ensemble.nsims;
     const int check_int = 50; // check for interrupts every _ iterations
 
+    static std::atomic<int> global_generation_counter{0};
+    int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
+    std::atomic<int> thread_id_counter{0};
+
+    int const n_threads = num_threads == 0 ? 1 : num_threads;
+    std::vector<PlanMultigraph> plan_multigraph_buffers(
+        n_threads,
+        PlanMultigraph(map_params, sampling_space == SamplingSpace::LinkingEdgeSpace));
     RcppThread::ProgressBar bar(nsims, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, nsims, [&](int i) {
-        static thread_local PlanMultigraph plan_multigraph(
-            map_params, sampling_space == SamplingSpace::LinkingEdgeSpace);
-        static thread_local USTSampler ust_sampler(map_params, *splitting_schedule_ptr);
+        static thread_local int thread_generation_counter = -1;
+        static thread_local int thread_id;
+        if (thread_generation_counter != generation) {
+            thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+            thread_generation_counter = generation;
+        }
+        PlanMultigraph &plan_multigraph = plan_multigraph_buffers[thread_id];
 
         // build the multigraph
         plan_multigraph.build_plan_multigraph(plan_ensemble.plan_ptr_vec[i]->region_ids,
@@ -401,12 +427,24 @@ arma::vec compute_plans_log_simple_weights(
     const int nsims = plan_ensemble.nsims;
     const int check_int = 50; // check for interrupts every _ iterations
 
+    static std::atomic<int> global_generation_counter{0};
+    int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
+    std::atomic<int> thread_id_counter{0};
+
+    int const n_threads = num_threads == 0 ? 1 : num_threads;
+    std::vector<PlanMultigraph> plan_multigraph_buffers(
+        n_threads,
+        PlanMultigraph(map_params, sampling_space == SamplingSpace::LinkingEdgeSpace));
     RcppThread::ProgressBar bar(nsims, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, nsims, [&](int i) {
-        static thread_local PlanMultigraph plan_multigraph(
-            map_params, sampling_space == SamplingSpace::LinkingEdgeSpace);
-        static thread_local USTSampler ust_sampler(map_params, *splitting_schedule_ptr);
+        static thread_local int thread_generation_counter = -1;
+        static thread_local int thread_id;
+        if (thread_generation_counter != generation) {
+            thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+            thread_generation_counter = generation;
+        }
+        PlanMultigraph &plan_multigraph = plan_multigraph_buffers[thread_id];
 
         // build the multigraph
         plan_multigraph.build_plan_multigraph(plan_ensemble.plan_ptr_vec[i]->region_ids,

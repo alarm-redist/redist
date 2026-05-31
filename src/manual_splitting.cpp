@@ -473,6 +473,25 @@ List draw_trees_on_a_region(List const &adj_list, const arma::uvec &counties,
 
     int check_int = 200;
 
+    int const n_threads = num_threads == 0 ? 1 : num_threads;
+    std::vector<Tree> ust_buffers(n_threads, init_tree(map_params.V));
+    std::vector<std::vector<bool>> visited_buffers(n_threads, std::vector<bool>(map_params.V));
+    std::vector<std::vector<bool>> ignore_buffers(n_threads,
+                                                  std::vector<bool>(map_params.V, false));
+    std::vector<Tree> county_tree_buffers(n_threads, init_tree(map_params.num_counties));
+    std::vector<TreePopStack> county_stack_buffers(n_threads,
+                                                   TreePopStack(map_params.num_counties));
+    std::vector<arma::uvec> county_pop_buffers(
+        n_threads, arma::uvec(map_params.num_counties, arma::fill::zeros));
+    std::vector<std::vector<std::vector<int>>> county_members_buffers(
+        n_threads, std::vector<std::vector<int>>(map_params.num_counties, std::vector<int>{}));
+    std::vector<std::vector<bool>> c_visited_buffers(
+        n_threads, std::vector<bool>(map_params.num_counties, true));
+    std::vector<std::vector<int>> cty_pop_below_buffers(
+        n_threads, std::vector<int>(map_params.num_counties, 0));
+    std::vector<std::vector<std::array<int, 3>>> county_path_buffers(n_threads);
+    std::vector<std::vector<int>> path_buffers(n_threads);
+
     RcppThread::ProgressBar bar(num_tree, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, num_tree, [&](int ree) {
@@ -488,18 +507,17 @@ List draw_trees_on_a_region(List const &adj_list, const arma::uvec &counties,
 
         // Stuff for drawing tree
         int root;
-        static thread_local Tree ust = init_tree(map_params.V);
-        static thread_local std::vector<bool> visited(map_params.V);
-        static thread_local std::vector<bool> ignore(map_params.V, false);
-        static thread_local Tree county_tree = init_tree(map_params.num_counties);
-        static thread_local TreePopStack county_stack(map_params.num_counties);
-        static thread_local arma::uvec county_pop(map_params.num_counties, arma::fill::zeros);
-        static thread_local std::vector<std::vector<int>> county_members(
-            map_params.num_counties, std::vector<int>{});
-        static thread_local std::vector<bool> c_visited(map_params.num_counties, true);
-        static thread_local std::vector<int> cty_pop_below(map_params.num_counties, 0);
-        static thread_local std::vector<std::array<int, 3>> county_path;
-        static thread_local std::vector<int> path;
+        Tree &ust = ust_buffers[thread_id];
+        std::vector<bool> &visited = visited_buffers[thread_id];
+        std::vector<bool> &ignore = ignore_buffers[thread_id];
+        Tree &county_tree = county_tree_buffers[thread_id];
+        TreePopStack &county_stack = county_stack_buffers[thread_id];
+        arma::uvec &county_pop = county_pop_buffers[thread_id];
+        std::vector<std::vector<int>> &county_members = county_members_buffers[thread_id];
+        std::vector<bool> &c_visited = c_visited_buffers[thread_id];
+        std::vector<int> &cty_pop_below = cty_pop_below_buffers[thread_id];
+        std::vector<std::array<int, 3>> &county_path = county_path_buffers[thread_id];
+        std::vector<int> &path = path_buffers[thread_id];
 
         // reset result
         int result = 1;
@@ -644,6 +662,10 @@ List attempt_splits_on_a_region(List const &adj_list, const arma::uvec &counties
 
     std::vector<bool> successful_update(num_plans);
 
+    int const n_threads = num_threads == 0 ? 1 : num_threads;
+    std::vector<USTSampler> ust_sampler_buffers(n_threads,
+                                                USTSampler(map_params, *splitting_schedule));
+
     RcppThread::ProgressBar bar(num_plans, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, num_plans, [&](int i) {
@@ -657,7 +679,7 @@ List attempt_splits_on_a_region(List const &adj_list, const arma::uvec &counties
             thread_generation_counter = generation;
         }
         // Stuff for drawing tree
-        static thread_local USTSampler ust_sampler(map_params, *splitting_schedule);
+        USTSampler &ust_sampler = ust_sampler_buffers[thread_id];
         // copy the plan again
         thread_plan_ensemble.plan_ptr_vec[thread_id]->shallow_copy(
             *plan_ensemble.plan_ptr_vec[0]);

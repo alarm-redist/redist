@@ -101,7 +101,7 @@ Rcpp::List cyclewalk_plans(int N, int warmup, int thin, int ndists, int total_se
     {
         // Single-thread pool (cyclewalk runs one chain at a time; parallel
         // chains are handled in R via foreach).
-        RcppThread::ThreadPool pool(1);
+        RcppThread::ThreadPool pool(0);
 
         // Load initial plan into a PlanEnsemble of size 1.
         PlanEnsemble plan_ensemble = get_plan_ensemble(

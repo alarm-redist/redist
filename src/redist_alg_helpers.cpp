@@ -445,6 +445,15 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params,
 
     auto tree_ptr = std::make_unique<UniformValidSplitter>(map_params.V);
 
+    int const n_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
+    std::vector<Tree> ust_buffers(n_threads, Tree(V));
+    std::vector<std::vector<bool>> visited_buffers(n_threads, std::vector<bool>(V));
+    std::vector<std::vector<bool>> ignore_buffers(n_threads, std::vector<bool>(V));
+    std::vector<USTSampler> ust_sampler_buffers(n_threads,
+                                                USTSampler(map_params, splitting_schedule));
+    std::vector<PlanMultigraph> plan_multigraph_buffers(n_threads, PlanMultigraph(map_params));
+    std::vector<Graph> region_graph_buffers(n_threads, Graph(num_regions));
+
     RcppThread::ProgressBar bar(nsims, 1);
     pool.parallelFor(0, nsims, [&](int i) {
         static thread_local int thread_generation_counter = -1;
@@ -457,12 +466,12 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params,
             thread_generation_counter = generation;
         }
 
-        static thread_local Tree ust(V);
-        static thread_local std::vector<bool> visited(V);
-        static thread_local std::vector<bool> ignore(V);
-        static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
-        static thread_local PlanMultigraph plan_multigraph(map_params);
-        static thread_local Graph region_graph(num_regions);
+        Tree &ust = ust_buffers[thread_id];
+        std::vector<bool> &visited = visited_buffers[thread_id];
+        std::vector<bool> &ignore = ignore_buffers[thread_id];
+        USTSampler &ust_sampler = ust_sampler_buffers[thread_id];
+        PlanMultigraph &plan_multigraph = plan_multigraph_buffers[thread_id];
+        Graph &region_graph = region_graph_buffers[thread_id];
         // create the plan attributes for this specific plan
         PlanVector plan_region_ids(flattened_all_plans, V * i, V * (i + 1));
         RegionSizes plan_sizes(flattened_all_region_sizes, ndists * i, ndists * (i + 1));
