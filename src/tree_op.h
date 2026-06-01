@@ -1,39 +1,33 @@
-#include "smc_base.h"
-
 #ifndef TREE_OP_H
 #define TREE_OP_H
+
+#include "redist_types.h"
+#include "smc_base.h"
+#include <RcppArmadillo.h>
+#include <limits>
+#include <queue>
+#include <stack>
+#include <vector>
+
+// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::plugins("cpp11")]]
+
+using namespace Rcpp;
+using namespace arma;
 
 /*
  * Generate a random vertex (integer) among unvisited vertices
  * `lower` is a lower bound (inclusive) on the index of the first unvisited element
  */
 // TESTED
-int rvtx(const std::vector<bool> &visited, int size, int remaining, int &lower);
+int rvtx(const std::vector<bool> &visited, int size, int remaining, int &lower,
+         RNGState &rng_state);
 
 /*
  * Generate a random neighbor to a vertex, except for the `last` vertex.
  */
 // TESTED
-int rnbor(const Graph &g, int vtx);
-
-/*
- * Make a county graph from a precinct graph and list of counties
- */
-// TESTED
-Multigraph county_graph(const Graph &g, const uvec &counties);
-
-/*
- * Make the district adjacency graph for `plan` from the overall precinct graph `g`
- * if `zero`=false then ignore zeros, otherwise map them to `nd`
- */
-// TESTED
-Graph district_graph(const Graph &g, const uvec &plan, int nd, bool zero = false);
-
-/*
- * Initialize empty multigraph structure on graph with `V` vertices
- */
-// TESTED
-Multigraph init_multigraph(int V);
+int rnbor(const Graph &g, int vtx, RNGState &rng_state);
 
 /*
  * Initialize empty tree structure on graph with `V` vertices
@@ -46,28 +40,52 @@ Tree init_tree(int V);
  */
 void clear_tree(Tree &tree);
 
-/*
- * Convert R adjacency list to Graph object (vector of vectors of ints).
- */
-Graph list_to_graph(const List &l);
+// print a tree
+void print_tree(Tree const &ust);
 
 /*
- * Count population below each node in tree
+ * Count population below each node in tree and get parent
  */
 // TESTED
-int tree_pop(Tree &ust, int vtx, const uvec &pop, std::vector<int> &pop_below,
+int tree_pop(Tree &ust, int vtx, const arma::uvec &pop, std::vector<int> &pop_below,
              std::vector<int> &parent);
 
 /*
- * Assign `district` to all descendants of `root` in `ust`
+ * Just Count population below each node in tree
  */
 // TESTED
-void assign_district(const Tree &ust, subview_col<uword> &districts, int root, int district);
+void get_tree_pops_below(const Tree &ust, const int root, TreePopStack &stack,
+                         const arma::uvec &pop, std::vector<int> &pop_below);
 
 /*
- * Find the root of a subtree.
+ * Assign `new_region_num_id` to all descendants of `root` in `ust`
  */
-// TESTED
-int find_subroot(const Tree &ust, const std::vector<bool> &ignore);
+void assign_region_id_from_tree(const Tree &ust, PlanVector &region_ids, int root,
+                                const int new_region_num_id,
+                                CircularQueue<std::pair<int, int>> &vertex_queue);
+
+void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_ids,
+                                           VertexGraph &forest_graph, int root,
+                                           const int new_region_id,
+                                           CircularQueue<std::pair<int, int>> &vertex_queue);
+
+/*
+ *  Erases an edge from a tree
+ *
+ *  Erases the directed edge (`cut_edge.cut_vertex_parent`, `cut_edge.cut_vertex`)
+ *  from the tree `ust`. The directed edge here means we have `child_vertex` being one of
+ *  the values in `ust[parent_vertex]`.
+ *
+ *
+ *  @param ust A directed spanning tree passed by reference
+ *  @param cut_edge An `EdgeCut` object representing the edge cut
+ *
+ *  @details Modifications
+ *     - The edge (`cut_edge.cut_vertex_parent`, `cut_edge.cut_vertex`)
+ *     is removed from `ust`
+ *
+ *
+ */
+void erase_tree_edge(Tree &ust, EdgeCut cut_edge);
 
 #endif

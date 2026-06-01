@@ -31,19 +31,19 @@ redist.plot.penalty <- function(
     .Deprecated("plot.redist_constr")
 
     tb <- tibble(x = seq(0, 1, by = 0.001))
-    tb <- tb %>%
+    tb <- tb |>
         mutate(y = strength_vra * (abs(x - tgt_min)^pow_vra) * (abs(x - tgt_other)^pow_vra))
 
     if (limits) {
-        ret <- tb %>%
-            filter(y < 500) %>%
+        ret <- tb |>
+            filter(y < 500) |>
             ggplot(aes(x = x, y = y)) +
             geom_path() +
             theme_bw() +
             lims(x = c(0, 1), y = c(0, 500)) +
             labs(x = "Group Population", y = "Penalty Size")
     } else {
-        ret <- tb %>%
+        ret <- tb |>
             ggplot(aes(x = x, y = y)) +
             geom_path() +
             theme_bw() +

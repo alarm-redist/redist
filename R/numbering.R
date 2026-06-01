@@ -90,8 +90,8 @@ match_numbers <- function(data, plan, total_pop = attr(data, "prec_pop"), col = 
     data$district <- factor(levels(plan)[renumb], levels(plan), ordered = TRUE)
 
     orig_groups <- dplyr::group_vars(data)
-    dplyr::group_by(data, .data$draw) %>%
-        dplyr::arrange(.data$district, .by_group = TRUE) %>%
+    dplyr::group_by(data, .data$draw) |>
+        dplyr::arrange(.data$district, .by_group = TRUE) |>
         dplyr::group_by(dplyr::across(dplyr::all_of(orig_groups)))
 }
 
@@ -122,9 +122,11 @@ number_by <- function(data, x, desc = FALSE) {
     ord <- 1 - 2 * desc
     m <- get_plans_matrix(data)
     orig_groups <- dplyr::group_vars(data)
-    dplyr::group_by(data, .data$draw) %>%
-        dplyr::mutate(district = rank(ord * {{ x }}, ties.method = "random")) %>%
-        set_plan_matrix(`colnames<-`(renumber_matrix(m, .$district), colnames(m))) %>%
-        dplyr::arrange(district, .by_group = TRUE) %>%
+    dplyr::group_by(data, .data$draw) |>
+        dplyr::mutate(district = rank(ord * {{ x }}, ties.method = "random")) |>
+        (\(d) {
+            set_plan_matrix(d, `colnames<-`(renumber_matrix(m, d$district), colnames(m)))
+        })() |>
+        dplyr::arrange(district, .by_group = TRUE) |>
         dplyr::group_by(dplyr::across(dplyr::all_of(orig_groups)))
 }

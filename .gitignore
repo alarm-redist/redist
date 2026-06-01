@@ -1,29 +1,38 @@
+# R / RStudio
 .Rproj.user
-.vscode
-.DS_Store
 .Rhistory
 
-.claude/
+# OS / editors
+.DS_Store
+.vscode
 .cache/
+.claude/
 CLAUDE.md
+compile_commands.json
 
-*.so
+# Compiled objects
 *.o
-*.rds
-*.tmp
+*.so
+*.dll
 *.gch
 *.pch
-*.dll
 
-inst/doc
-inst/enumpart/enumpart
+# R data / temp
+*.rds
+*.tmp
+
+# Build artifacts
 Meta
 doc
+inst/doc
+src-i386/
+
+# pkgdown / vignette caches
+docs
 docs/articles/*_cache/*
 vignettes/*_cache/*
-src-i386/
+
+# Package-specific
+inst/enumpart/enumpart
 inst/enumpart/enumpart.exe
 redist/tests/testthat/_snaps
-docs
-
-compile_commands.json

@@ -34,6 +34,8 @@
 #'   invisibly.
 #' @param init If `TRUE`, builds enumpart before running. Must be
 #'   run once after installing the package. Defaults to `FALSE`.
+#' @param verbose If `TRUE`, the stderr output of the enumpart binary (frontier
+#'   sizes, reduction progress, etc.) is shown. Defaults to `FALSE`.
 #'
 #' @return A [redist_plans] object, or `out_path` invisibly if `read = FALSE`.
 #'
@@ -65,7 +67,8 @@ redist_enumpart <- function(
     out_path = tempfile("enum_out"),
     weight_path = if (!is.null(lower) || !is.null(upper)) tempfile("enum_wgt") else NULL,
     read = TRUE,
-    init = !file.exists(system.file("enumpart", package = "redist"))
+    init = !file.exists(system.file("enumpart", package = "redist")),
+    verbose = FALSE
 ) {
     map <- validate_redist_map(map)
     adj <- get_adj(map)
@@ -137,7 +140,7 @@ redist_enumpart <- function(
             paste0(system.file("enumpart", package = "redist"), "/enumpart"),
             args = ep_args,
             std_out = paste0(out_path, ".dat"),
-            std_err = stdout()
+            std_err = if (verbose) stdout() else nullfile()
         )
     }
 

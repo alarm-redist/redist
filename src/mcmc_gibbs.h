@@ -4,6 +4,7 @@
 #include "make_swaps_helper.h"
 #include "map_calc.h"
 #include "redist_types.h"
+#include "scoring.h"
 #include <RcppArmadillo.h>
 
 double add_constraint(const std::string &name, List constraints, std::vector<int> districts,

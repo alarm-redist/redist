@@ -20,6 +20,7 @@ redist_cyclewalk(
   cl_type = "PSOCK",
   return_all = TRUE,
   init_name = NULL,
+  diagnostics = FALSE,
   verbose = FALSE,
   silent = FALSE
 )
@@ -83,6 +84,10 @@ the final plan from each chain.}
 \item{init_name}{A name for the initial plan, or \code{FALSE} to not include
 the initial plan in the output. Defaults to the column name of the
 existing plan, or \verb{<init>} if the initial plan is sampled.}
+
+\item{diagnostics}{If \code{TRUE}, collect per-step diagnostics (\code{accept_prob},
+\code{cycle_length}, \code{n_valid_cuts}, \code{failure_modes}) and attach to the
+\code{diagnostics} attribute of the output.}
 
 \item{verbose}{Whether to print out intermediate information while sampling.}
 

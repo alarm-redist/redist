@@ -50,6 +50,9 @@
 #' @param init_name A name for the initial plan, or `FALSE` to not include
 #'   the initial plan in the output. Defaults to the column name of the
 #'   existing plan, or `<init>` if the initial plan is sampled.
+#' @param diagnostics If `TRUE`, collect per-step diagnostics (`accept_prob`,
+#'   `cycle_length`, `n_valid_cuts`, `failure_modes`) and attach to the
+#'   `diagnostics` attribute of the output.
 #' @param verbose Whether to print out intermediate information while sampling.
 #' @param silent Whether to suppress all diagnostic information.
 #'
@@ -84,6 +87,7 @@ redist_cyclewalk <- function(
     cl_type = "PSOCK",
     return_all = TRUE,
     init_name = NULL,
+    diagnostics = FALSE,
     verbose = FALSE,
     silent = FALSE
 ) {
@@ -99,11 +103,8 @@ redist_cyclewalk <- function(
     if (compactness < 0) {
         cli::cli_abort("{.arg compactness} must be non-negative.")
     }
-    if (nsims <= warmup) {
-        cli::cli_abort("{.arg nsims} must be greater than {.arg warmup}.")
-    }
-    if (thin < 1 || thin > nsims - warmup) {
-        cli::cli_abort("{.arg thin} must be a positive integer, and no larger than {.arg nsims - warmup}.")
+    if (thin < 1 || thin > nsims) {
+        cli::cli_abort("{.arg thin} must be a positive integer, and no larger than {.arg nsims}.")
     }
     if (cycle_walk_frac < 0 || cycle_walk_frac > 1) {
         cli::cli_abort("{.arg cycle_walk_frac} must be between 0 and 1.")
@@ -243,6 +244,9 @@ redist_cyclewalk <- function(
         }
     } else if (!is.null(edge_weights)) {
         edge_weights <- validate_edge_weights(edge_weights, adj, V)
+        if (verbose) {
+            cat("Using ", length(edge_weights), " custom edge weights.\n", sep = "")
+        }
     } else if (!all(counties == 1L)) {
         # Build edge weights from counties: upweight intra-county edges by 10x
         edge_weights <- build_county_edge_weights(adj, counties, weight = 10.0)
@@ -304,6 +308,7 @@ redist_cyclewalk <- function(
             cl <- parallel::makeCluster(
                 ncores,
                 type = cl_type,
+                outfile = nullfile(),
                 methods = FALSE,
                 useXDR = .Platform$endian != "little"
             )
@@ -330,24 +335,38 @@ redist_cyclewalk <- function(
             t1_run <- Sys.time()
             control <- list()
 
+            # MMD bookkeeping. For SMD (the only mode currently exposed)
+            # total_seats == ndists, district_seat_sizes == rep(1, ndists),
+            # init_seats == rep(1, ndists). Threading these through matches the
+            # merge_split.cpp signature so MMD support is one-line away.
+            total_seats <- ndists
+            district_seat_sizes <- as.integer(rep(1L, ndists))
+            init_seats <- matrix(1L, nrow = ndists, ncol = 1L)
+            init_plan_mat <- matrix(as.integer(init_plans[, chain]), nrow = V, ncol = 1L)
+
             algout <- cyclewalk_plans(
-                N = nsims,
-                l = adj,
-                init = init_plans[, chain],
+                N = as.integer(nsims),
+                warmup = as.integer(warmup),
+                thin = as.integer(thin),
+                ndists = as.integer(ndists),
+                total_seats = as.integer(total_seats),
+                district_seat_sizes = district_seat_sizes,
+                adj_list = adj,
                 counties = counties,
                 pop = pop,
-                n_distr = ndists,
                 target = pop_bounds[2],
                 lower = pop_bounds[1],
                 upper = pop_bounds[3],
                 compactness = compactness,
-                constraints = constraints,
+                init_plan = init_plan_mat,
+                init_seats = init_seats,
                 control = control,
+                constraints = constraints,
                 edge_weights = edge_weights,
-                thin = thin,
                 instep = 1L,
                 cycle_walk_frac = cycle_walk_frac,
-                verbosity = run_verbosity
+                verbosity = run_verbosity,
+                diagnostic_mode = isTRUE(diagnostics)
             )
 
             t2_run <- Sys.time()
@@ -373,15 +392,12 @@ redist_cyclewalk <- function(
                 l_diag$failure_modes <- algout$diagnostics$failure_modes
             }
 
-            # Calculate warmup indices
-            warmup_idx <- c(seq_len(1 + warmup %/% thin), ncol(algout$plans))
-            if (return_all) {
-                algout$plans <- algout$plans[, -warmup_idx, drop = FALSE]
-                warmup_idx_acc <- c(seq_len(warmup %/% thin), length(acceptances))
-                algout$mhdecisions <- acceptances[-warmup_idx_acc]
+            # C++ handles warmup internally; output is already post-warmup.
+            if (!return_all) {
+                algout$plans <- algout$plans[, ncol(algout$plans), drop = FALSE]
+                algout$mhdecisions <- as.logical(acceptances[length(acceptances)])
             } else {
-                algout$plans <- algout$plans[, ncol(algout$plans) - 1L, drop = FALSE]
-                algout$mhdecisions <- as.logical(acceptances[length(acceptances) - 1L])
+                algout$mhdecisions <- acceptances
             }
 
             algout$l_diag <- l_diag
