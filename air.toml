@@ -2,4 +2,4 @@
 line-width = 96
 indent-width = 4
 indent-style = "space"
-skip = ["c", "list", "cli_abort", "cli_warn", "cli_inform", "cli_text", "cli_alert_tanger", "paste", "cat"]
+skip = ["c", "list", "cli_abort", "cli_warn", "cli_inform", "cli_text", "cli_alert_danger", "paste", "cat"]
