@@ -76,12 +76,7 @@ double compute_log_det_from_triplets(std::vector<Eigen::Triplet<double, int>> co
 
 // computes log number of spanning trees on region intersect county
 // In either a region or a merged region
-double compute_log_region_and_county_spanning_tree(Graph const &g, const uvec &counties,
-                                                   int const county,
-                                                   PlanVector const &region_ids,
-                                                   int const region1_id, int const region2_id);
-
-double compute_log_region_and_county_spanning_tree_eigen_tri(
+double compute_log_region_and_county_spanning_tree(
     Graph const &g, const arma::uvec &counties, int const county, PlanVector const &region_ids,
     int const region1_id, int const region2_id);
 
@@ -89,10 +84,6 @@ double compute_log_region_and_county_spanning_tree_eigen_tri(
  * Compute the log number of spanning trees for the contracted (ie county level) graph
  */
 double compute_log_county_level_spanning_tree(Graph const &g, const uvec &counties,
-                                              int const n_cty, PlanVector const &region_ids,
-                                              int const region1_id, int const region2_id);
-
-double compute_log_county_level_spanning_tree_eigen(Graph const &g, const uvec &counties,
                                                     int const n_cty,
                                                     PlanVector const &region_ids,
                                                     int const region1_id, int const region2_id);

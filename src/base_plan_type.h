@@ -426,14 +426,6 @@ class PlanMultigraph {
     std::vector<int> county_component_reindex;
     std::vector<int> region_reindex_vec;
 
-    arma::mat WAIT_laplacian_minor; // Minor of laplacian used for computing log spanning trees
-                                    // for plan
-    arma::mat WAIT_merged_laplacian_minor; // minor of laplacian used for computing log spanning
-                                           // trees for merged plan
-
-    // Resizes minor matrices if multigraph taus will need to be computed
-    void prep_for_calculations(int const num_regions);
-
     // Prints relevant info - for debugging
     void Rprint() const;
     void Rprint_detailed(Plan const &plan);
@@ -488,14 +480,6 @@ class PlanMultigraph {
 
     double compute_hierarchical_log_multigraph_tau(int const num_regions,
                                                    ScoringFunction const &scoring_function);
-
-    double
-    compute_hierarchical_log_multigraph_tau_eigen(int const num_regions,
-                                                  ScoringFunction const &scoring_function);
-
-    double compute_hierarchical_merged_log_multigraph_tau_eigen(
-        int const num_regions, RegionID const region1_id, RegionID const region2_id,
-        ScoringFunction const &scoring_function);
 
     double compute_hierarchical_merged_log_multigraph_tau(
         int const num_regions, RegionID const region1_id, RegionID const region2_id,

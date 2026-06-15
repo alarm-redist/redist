@@ -357,59 +357,7 @@ NumericVector colmin(const NumericMatrix x) {
     return out;
 }
 
-// computes log number of spanning trees on region intersect county
-// In either a region or a merged region
-double compute_log_region_and_county_spanning_tree(Graph const &g, const uvec &counties,
-                                                   int const county,
-                                                   PlanVector const &region_ids,
-                                                   int const region1_id, int const region2_id) {
 
-    int const V = g.size();
-    // number of precincts in this district
-    int K = 0;
-    std::vector<int> pos(V); // keep track of positions in subgraph
-    int start = 0;           // where to start loop below, to save time
-    for (int i = 0; i < V; i++) {
-        pos[i] = K - 1; // minus one because we're dropping 1st row and column
-        // Check if in either region and the county
-        if ((region_ids[i] == region1_id || region_ids[i] == region2_id) &&
-            counties(i) == county) {
-            K++;
-            if (K == 2)
-                start = i; // start 2nd vertex
-        }
-    }
-    if (K <= 1)
-        return 0;
-
-    mat adj = arma::zeros<mat>(K - 1, K - 1); // adjacency matrix (minus 1st row and column)
-    for (int i = start; i < V; i++) {
-        // ignore if not in either region or the county
-        if ((region_ids[i] != region1_id && region_ids[i] != region2_id) ||
-            counties(i) != county)
-            continue;
-
-        int prec = pos.at(i);
-        if (prec < 0)
-            continue;
-        std::vector<int> nbors = g[i];
-        int length = nbors.size();
-        int degree = 0; // keep track of index within subgraph
-        for (int j = 0; j < length; j++) {
-            int nbor = nbors[j];
-            if ((region_ids[nbor] != region1_id && region_ids[nbor] != region2_id) ||
-                counties(nbor) != county)
-                continue;
-            degree++;
-            if (pos.at(nbor) < 0)
-                continue;
-            adj(prec, pos[nbor]) = -1;
-        }
-        adj(prec, prec) = degree;
-    }
-
-    return arma::log_det_sympd(adj);
-}
 
 // This assumes the matrix is stored as upper triangular one via
 // triplets (ie every triplet (i, j, value) we have i <= j )
@@ -472,7 +420,9 @@ double compute_log_det_from_triplets(std::vector<Eigen::Triplet<double, int>> co
     return 2.0 * sumlog;
 }
 
-double compute_log_region_and_county_spanning_tree_eigen_tri(
+// computes log number of spanning trees on region intersect county
+// In either a region or a merged region
+double compute_log_region_and_county_spanning_tree(
     Graph const &g, const uvec &counties, int const county, PlanVector const &region_ids,
     int const region1_id, int const region2_id) {
 
@@ -547,7 +497,7 @@ double compute_log_region_and_county_spanning_tree_eigen_tri(
  * Compute the log number of spanning trees for the contracted (ie county level) graph
  */
 // TESTED
-double compute_log_county_level_spanning_tree_eigen(Graph const &g, const uvec &counties,
+double compute_log_county_level_spanning_tree(Graph const &g, const uvec &counties,
                                                     int const n_cty,
                                                     PlanVector const &region_ids,
                                                     int const region1_id,
@@ -623,64 +573,7 @@ double compute_log_county_level_spanning_tree_eigen(Graph const &g, const uvec &
     return compute_log_det_from_triplets(trips, minor_V);
 }
 
-/*
- * Compute the log number of spanning trees for the contracted (ie county level) graph
- */
-// TESTED
-double compute_log_county_level_spanning_tree(Graph const &g, const uvec &counties,
-                                              int const n_cty, PlanVector const &region_ids,
-                                              int const region1_id, int const region2_id) {
-    // If 1 county then just log(1) = 0
-    if (n_cty == 1)
-        return 0;
 
-    int const V = g.size();
-    // number of counties in this district
-    int K = 0;
-    std::vector<int> pos(V);          // keep track of positions in subgraph
-    std::vector<int> seen(n_cty, -2); // county lookup
-    int start = 0;
-    for (int i = 0; i < V; i++) {
-        if (region_ids[i] != region1_id && region_ids[i] != region2_id)
-            continue;
-
-        if (seen[counties(i) - 1] < 0) {
-            pos.at(i) = K - 1; // minus one because we're dropping 1st row and column
-            seen[counties(i) - 1] = K;
-            K++;
-            if (K == 2)
-                start = i; // start 2nd vertex
-        } else {
-            pos.at(i) = seen.at(counties(i) - 1) - 1;
-        }
-    }
-    if (K <= 1)
-        return 0;
-
-    mat adj = zeros<mat>(K - 1, K - 1); // adjacency matrix (minus 1st row and column)
-    for (int i = start; i < V; i++) {
-        if (region_ids[i] != region1_id && region_ids[i] != region2_id)
-            continue;
-
-        int cty = pos[i];
-        if (cty < 0)
-            continue; // skip 1st row, col
-        std::vector<int> nbors = g[i];
-        int length = nbors.size();
-        for (int j = 0; j < length; j++) {
-            int nbor = nbors.at(j);
-            if ((region_ids[nbor] != region1_id && region_ids[nbor] != region2_id) ||
-                pos.at(nbor) == cty)
-                continue;
-            adj(cty, cty)++;
-            if (pos[nbor] < 0)
-                continue; // ignore 1st row and column
-            adj(cty, pos[nbor])--;
-        }
-    }
-
-    return arma::log_det_sympd(adj);
-}
 
 // Given a numeric vector of statistics computed on each district this
 // sorts the statistics within each plan.
