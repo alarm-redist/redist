@@ -538,7 +538,7 @@ add_reference <- function(plans, ref_plan, name = NULL, ref_seats = NULL) {
     prec_pop <- attr(plans, "prec_pop")
     if (!is.null(prec_pop)) {
         distr_pop <- pop_tally(matrix(ref_plan, ncol = 1), prec_pop, ndists)
-        if (is.null(ref_seats)) {
+        if (isFALSE(attr(plans, "districting_scheme") != "single") && is.null(ref_seats)) {
             # try to infer seat sizes
             pop_bounds <- attr(plans, "pop_bounds")
             ref_seats <- infer_region_seats(
