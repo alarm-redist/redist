@@ -293,7 +293,8 @@ void DistrictOnlyMMDSplittingSchedule::set_potential_cut_sizes_for_each_valid_si
     // REprintf("Smallest Remainder Size: %d\n", presplit_smallest_possible_size);
 
     // Don't think this should be possible but just adding a flag
-    if (presplit_biggest_possible_size <= largest_district_size) {
+    if (presplit_biggest_possible_size < largest_district_size) {
+        // This 
         REprintf("BIG PROBLEM: Biggest remainder size is %d but that is less than largest "
                  "district %d!\n",
                  presplit_biggest_possible_size, largest_district_size);

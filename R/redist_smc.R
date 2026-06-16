@@ -332,8 +332,8 @@ redist_smc <- function(
     for (d_size1 in seats_range) {
         for (d_size2 in seats_range) {
             if ((d_size1 + d_size2) %in% seats_range) {
-                cli::cli_abort(
-          "SMC does not support {.arg seats_range} where one district's seats is equal to the sum of two others"
+                cli::cli_warn(
+          "{.arg redist_smc} does not currently guarantee convergence to the target distribution for {.arg seats_range} where one district seat size is equal to the sum of two others"
         )
             }
         }
