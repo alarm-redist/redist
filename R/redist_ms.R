@@ -186,17 +186,6 @@ redist_mergesplit <- function(
     seats_range <- map_params$seats_range
     districting_scheme <- map_params$districting_scheme
 
-    # check that no district is the sum of two others
-    for (d_size1 in seats_range) {
-        for (d_size2 in seats_range) {
-            if ((d_size1 + d_size2) %in% seats_range) {
-                cli::cli_warn(
-                    "{.arg redist_mergesplit} does not currently guarantee convergence to the target distribution for {.arg seats_range} where one district seat size is equal to the sum of two others"
-                )
-            }
-        }
-    }
-
     thin <- as.integer(thin)
     chains <- as.integer(chains)
 

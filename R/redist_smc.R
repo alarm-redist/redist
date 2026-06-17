@@ -328,16 +328,6 @@ redist_smc <- function(
       "For {.arg seats_range} only a continuous range of district seat sizes are allowed!"
     )
     }
-    # check that no district is the sum of two other
-    for (d_size1 in seats_range) {
-        for (d_size2 in seats_range) {
-            if ((d_size1 + d_size2) %in% seats_range) {
-                cli::cli_warn(
-          "{.arg redist_smc} does not currently guarantee convergence to the target distribution for {.arg seats_range} where one district seat size is equal to the sum of two others"
-        )
-            }
-        }
-    }
 
     # get the splitting size regime
     splitting_size_regime <- get_splitting_schedule(
