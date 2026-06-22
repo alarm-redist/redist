@@ -823,6 +823,10 @@ get_tree_splitter_ptrs(MapParams const &map_params, SplittingMethodType const sp
     return tree_splitters_ptr_vec;
 }
 
+    std::vector<double> smc_split_times; // length number of smc steps
+    std::vector<double> smc_weight_times; // length number of smc steps
+    std::vector<double> mcmc_times; // length number of ms rounds
+
 SMCDiagnostics::SMCDiagnostics(SamplingSpace const sampling_space,
                                SplittingMethodType const splitting_method_type,
                                SplittingSizeScheduleType const splitting_schedule_type,
@@ -835,7 +839,13 @@ SMCDiagnostics::SMCDiagnostics(SamplingSpace const sampling_space,
       log_wgt_stddevs(total_smc_steps), acceptance_rates(total_steps),
       nunique_parents(total_smc_steps), nunique_plans(total_steps), n_eff(total_smc_steps),
       num_merge_split_attempts_vec(total_ms_steps),
-      cut_k_values(sampling_space == SamplingSpace::GraphSpace ? total_steps : 0) {
+      cut_k_values(sampling_space == SamplingSpace::GraphSpace ? total_steps : 0),
+      smc_step_parameter_estimation_times(total_smc_steps),
+      smc_split_times(total_smc_steps),
+      smc_weight_times(total_smc_steps),
+      ms_step_parameter_estimation_times(total_ms_steps),
+      ms_step_times(total_ms_steps)
+       {
     // Level 1 Diagnostics. Not too big relative to plan size
     log_incremental_weights_mat = arma::dmat(
         nsims, total_smc_steps, arma::fill::none); // entry [i][s] is the log unnormalized
@@ -981,6 +991,11 @@ void SMCDiagnostics::add_diagnostics_to_out_list(Rcpp::List &out) {
     out["log_incremental_weights_mat"] = log_incremental_weights_mat;
     out["ms_step_counts"] = num_merge_split_attempts_vec;
     out["merge_split_success_mat"] = merge_split_successes_mat;
+    out["smc_step_parameter_estimation_times"] = smc_step_parameter_estimation_times;
+    out["smc_split_times"] = smc_split_times;
+    out["smc_weight_times"] = smc_weight_times;
+    out["ms_step_parameter_estimation_times"] = ms_step_parameter_estimation_times;
+    out["ms_step_times"] = ms_step_times;
     out["region_ids_mat_list"] = all_steps_plan_region_ids_list;
     out["region_seats_mat_list"] = region_sizes_mat_list;
     out["forest_adjs_list"] = all_steps_forests_adj_list;

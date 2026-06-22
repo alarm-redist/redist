@@ -709,6 +709,15 @@ redist_smc <- function(
             dim(algout$seats) <- NULL
             dim(algout$region_pops) <- NULL
 
+            # add the time information
+            time_breakdowns <- list(
+                smc_step_parameter_estimation_times = algout$smc_step_parameter_estimation_times,
+                smc_split_times = algout$smc_split_times,
+                smc_weight_times = algout$smc_weight_times,
+                ms_step_parameter_estimation_times = algout$ms_step_parameter_estimation_times,
+                ms_step_times = algout$ms_step_times
+            )
+
             # Internal diagnostics,
             algout$internal_diagnostics <- list(
         parent_index_mat = algout$parent_index,
@@ -720,9 +729,13 @@ redist_smc <- function(
         region_ids_mat_list = algout$region_ids_mat_list,
         region_seats_mat_list = algout$region_seats_mat_list,
         merge_split_success_mat = algout$merge_split_success_mat,
+        time_breakdowns = time_breakdowns,
         forest_adjs_list = algout$forest_adjs_list,
         linking_edges_list = algout$linking_edges_list
       )
+
+
+
 
             # Information about the run
             algout$run_information <- list(

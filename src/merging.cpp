@@ -137,13 +137,13 @@ double get_log_mh_ratio(MapParams const &map_params, ScoringFunction const &scor
     // we add forward kernel proposed to current terms
     log_mh_ratio += current_log_eff_boundary_len;
     log_mh_ratio += log_new_pair_merge_prob;
-    if (DEBUG_MERGING_VERBOSE) {
+    if constexpr (DEBUG_MERGING_VERBOSE) {
         Rprintf("We added %f and %f, ", current_log_eff_boundary_len, log_new_pair_merge_prob);
     }
     // we subtract forward kernel current to proposed terms
     log_mh_ratio -= proposed_log_eff_boundary_len;
     log_mh_ratio -= log_current_pair_merge_prob;
-    if (DEBUG_MERGING_VERBOSE) {
+    if constexpr (DEBUG_MERGING_VERBOSE) {
         Rprintf("We subtracted %f and %f, ", proposed_log_eff_boundary_len,
                 log_current_pair_merge_prob);
         Rprintf("Ratio is now %f\n", std::exp(log_mh_ratio));
@@ -170,7 +170,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     int region2_id = merge_pair.second;
     int merged_region_size = plan.region_sizes[region1_id] + plan.region_sizes[region2_id];
 
-    if (DEBUG_MERGING_VERBOSE) {
+    if constexpr (DEBUG_MERGING_VERBOSE) {
         Rprintf("Picked pair (%d, %d)\n", region1_id, region2_id);
     }
 
@@ -179,13 +179,13 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         ust_sampler.attempt_to_find_valid_tree_mergesplit(rng_state, scoring_function,
                                                           tree_splitter, plan, region1_id,
                                                           region2_id, save_edge_selection_prob);
-    if (DEBUG_MERGING_VERBOSE) {
+    if constexpr (DEBUG_MERGING_VERBOSE) {
         Rprintf("A Splitting Checkpoint 1.\n");
     }
 
     // If nothing drawn immediately return
     if (!std::get<0>(edge_search_result)) {
-        if (DEBUG_MERGING_VERBOSE) {
+        if constexpr (DEBUG_MERGING_VERBOSE) {
             Rprintf("Failed!\n");
         }
         return std::make_tuple(false, false, std::log(0.0), merged_region_size);
@@ -196,14 +196,14 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
 
     // copy the new plan to be the old one
     new_plan.shallow_copy(plan);
-    if (DEBUG_MERGING_VERBOSE) {
+    if constexpr (DEBUG_MERGING_VERBOSE) {
         Rprintf("A Splitting Checkpoint 1.5!\n");
     }
     // now split that region we found on the old one
     new_plan.update_from_successful_split(tree_splitter, ust_sampler,
                                           std::get<1>(edge_search_result), region1_id,
                                           region2_id, false);
-    if (DEBUG_MERGING_VERBOSE) {
+    if constexpr (DEBUG_MERGING_VERBOSE) {
         Rprintf("A Splitting Checkpoint 2.\n");
     }
     // check new plan is hierarchically valid if needed
@@ -214,11 +214,11 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         build_attempt.first &&
         scoring_function.new_split_ok(new_plan, region1_id, region2_id, is_final);
 
-    if (DEBUG_MERGING_VERBOSE) {
+    if constexpr (DEBUG_MERGING_VERBOSE) {
         Rprintf("%d county splits!\n", proposed_plan_multigraph.num_county_region_components);
     }
     if (!new_plan_valid) {
-        if (DEBUG_MERGING_VERBOSE) {
+        if constexpr (DEBUG_MERGING_VERBOSE) {
             REprintf("%d splits for %d regions\n",
                      proposed_plan_multigraph.num_county_region_components, plan.num_regions);
         }
@@ -269,7 +269,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
             REprintf("\n\n");
             throw Rcpp::exception("Error in merge split!\n");
         }
-        if (DEBUG_MERGING_VERBOSE) {
+        if constexpr (DEBUG_MERGING_VERBOSE) {
             Rprintf("selected new pair index is %d!\n", region_pair_proposal_index);
         }
         bool const using_linking_edge_space = sampling_space == SamplingSpace::LinkingEdgeSpace;
@@ -289,7 +289,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
                 new_plan.num_regions, scoring_function);
         }
 
-        if (DEBUG_MERGING_VERBOSE) {
+        if constexpr (DEBUG_MERGING_VERBOSE) {
             Rprintf("Finding Adjacent regions %d, %d!\n", region1_id, region2_id);
             Rprintf("Current Plan: %d Adjacent Regions and I picked index %d ",
                     (int)adj_region_pairs.size(), sampled_pair_index);
@@ -315,7 +315,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
                              new_region1_log_compactness, new_region2_log_compactness, plan,
                              new_plan, rho, is_final, using_caching, weight_cache);
         proposal_accepted = rng_state.r_unif() <= std::exp(log_mh_ratio);
-        if (DEBUG_MERGING_VERBOSE)
+        if constexpr (DEBUG_MERGING_VERBOSE)
             Rprintf("Ratio is %f and it is", std::exp(log_mh_ratio));
 
         // update the cached compactness if needed
@@ -335,7 +335,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     }
 
     if (proposal_accepted) {
-        if (DEBUG_MERGING_VERBOSE)
+        if constexpr (DEBUG_MERGING_VERBOSE)
             Rprintf("ACCEPTED!! Now updating plans\n");
         // if successful then actually update
         plan.update_from_successful_split(tree_splitter, ust_sampler,
@@ -348,7 +348,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         adj_region_pairs = new_valid_adj_region_pairs;
         return std::make_tuple(true, true, log_mh_ratio, merged_region_size);
     } else {
-        if (DEBUG_MERGING_VERBOSE)
+        if constexpr (DEBUG_MERGING_VERBOSE)
             Rprintf("REJECTED!! (mh_ratio=%g)\n", std::exp(log_mh_ratio));
         // else reject and do nothing
         return std::make_tuple(true, false, log_mh_ratio, merged_region_size);
@@ -395,7 +395,7 @@ int run_merge_split_steps(MapParams const &map_params,
             ++successful_tree_sizes[std::get<3>(mergesplit_result) - 1];
         }
     }
-    if (DEBUG_MERGING_VERBOSE)
+    if constexpr (DEBUG_MERGING_VERBOSE)
         Rprintf("Total success is %d\n", num_succesful_steps);
     return num_succesful_steps;
 }

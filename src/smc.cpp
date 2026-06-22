@@ -152,7 +152,7 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
         ust_samplers_vec.emplace_back(map_params, splitting_schedule);
     }
 
-    if (DEBUG_GSMC_PLANS_VERBOSE)
+    if constexpr (DEBUG_GSMC_PLANS_VERBOSE)
         Rprintf("About to start SMC Step for %d plans\n", M);
     // create a progress bar
     RcppThread::ProgressBar bar(M, 1);
@@ -204,7 +204,7 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
             }
             int region_to_split_size =
                 old_plan_ensemble->plan_ptr_vec[idx]->region_sizes[region_id_to_split];
-            if (DEBUG_GSMC_PLANS_VERBOSE) {
+            if constexpr (DEBUG_GSMC_PLANS_VERBOSE) {
                 REprintf("Sampled idx %d - Region %d, Size %d!\n", idx, region_id_to_split,
                          region_to_split_size);
             }
@@ -219,7 +219,7 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
                     *tree_splitters[thread_id], *old_plan_ensemble->plan_ptr_vec[idx],
                     region_id_to_split, new_region_id, save_edge_selection_prob);
 
-            if (DEBUG_GSMC_PLANS_VERBOSE) {
+            if constexpr (DEBUG_GSMC_PLANS_VERBOSE) {
                 REprintf("idx %d - Splti %s\n", idx,
                          (std::get<0>(edge_search_result) ? "SUCCESS" : "FAILURE"));
             }
@@ -227,7 +227,7 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
             // if successful update the new plan and check if satisfies any other hard
             // constraints
             if (std::get<0>(edge_search_result)) {
-                if (DEBUG_GSMC_PLANS_VERBOSE) {
+                if constexpr (DEBUG_GSMC_PLANS_VERBOSE) {
                     Rprintf("Tree on Plan %d Successfully split\n", i);
                 }
                 // make the new plan a copy of the old one
@@ -248,7 +248,7 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
                     ok = scoring_functions[thread_id].new_split_ok(
                         *new_plan_ensemble->plan_ptr_vec[i], region_id_to_split, new_region_id,
                         is_final_split);
-                    if (DEBUG_GSMC_PLANS_VERBOSE) {
+                    if constexpr (DEBUG_GSMC_PLANS_VERBOSE) {
                         Rprintf("Plan %d - New split has %s probability\n", i,
                                 (ok ? "POSITIVE" : "ZERO"));
                     }
@@ -256,7 +256,7 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
             }
 
             if (ok) {
-                if (DEBUG_GSMC_PLANS_VERBOSE) {
+                if constexpr (DEBUG_GSMC_PLANS_VERBOSE) {
                     Rprintf("Success, updating Plan %d\n", i);
                 }
                 RcppThread::checkUserInterrupt(i % check_int == 0);
@@ -298,7 +298,7 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
 
     // RcppThread::checkUserInterrupt();
 
-    if (DEBUG_GSMC_PLANS_VERBOSE) {
+    if constexpr (DEBUG_GSMC_PLANS_VERBOSE) {
         REprintf("Done splitting!\n");
     }
 
@@ -348,7 +348,7 @@ void run_merge_split_step_on_all_plans(
     SMCDiagnostics &smc_diagnostics, WeightCacheEnsemble &cache_ensemble, int verbosity) {
     const int check_int = 15; // check for interrupts every _ iterations
     int nsims = (int)plan_ptrs_vec.size();
-    if (DEBUG_GSMC_PLANS_VERBOSE)
+    if constexpr (DEBUG_GSMC_PLANS_VERBOSE)
         Rprintf("Going to run %d steps!\n", nsteps_to_run);
 
     // Diagnostics
@@ -482,7 +482,7 @@ List run_redist_smc(
     List const &constraints, // constraints
     int const verbosity, int const diagnostic_level, Rcpp::IntegerMatrix const &region_id_mat,
     Rcpp::IntegerMatrix const &region_sizes_mat, arma::vec &log_weights) {
-    if (DEBUG_GSMC_PLANS_VERBOSE)
+    if constexpr (DEBUG_GSMC_PLANS_VERBOSE)
         REprintf("Inside c++ code!\n");
     bool diagnostic_mode = diagnostic_level == 1;
     // set the number of threads
@@ -495,7 +495,7 @@ List run_redist_smc(
                                as<std::vector<int>>(district_seat_sizes), lower, target, upper);
     int V = map_params.g.size();
 
-    if (DEBUG_GSMC_PLANS_VERBOSE) {
+    if constexpr (DEBUG_GSMC_PLANS_VERBOSE) {
         REprintf("District Seat Sizes: ");
         for (int i = 1; i <= total_seats; i++) {
             REprintf("%d - %s,", i,
@@ -550,7 +550,7 @@ List run_redist_smc(
     // Legacy, in future remove
     RNGState rng_state((int)Rcpp::sample(INT_MAX, 1)[0]);
     global_seed_rng((int)Rcpp::sample(INT_MAX, 1)[0]);
-    if (DEBUG_GSMC_PLANS_VERBOSE)
+    if constexpr (DEBUG_GSMC_PLANS_VERBOSE)
         REprintf("RNG States created!\n");
 
     // unpack control params
@@ -590,7 +590,7 @@ List run_redist_smc(
         throw Rcpp::exception(
             "Desired number of splits will produce more than ndist districts!");
     }
-    if (DEBUG_GSMC_PLANS_VERBOSE)
+    if constexpr (DEBUG_GSMC_PLANS_VERBOSE)
         REprintf("Step types vec created!\n");
 
     // see if we are splitting plans all the way or just creating partial plans
@@ -621,7 +621,7 @@ List run_redist_smc(
     splitting_schedule_ptr->set_potential_cut_sizes_for_each_valid_size(0, initial_num_regions -
                                                                                1);
 
-    if (DEBUG_GSMC_PLANS_VERBOSE)
+    if constexpr (DEBUG_GSMC_PLANS_VERBOSE)
         REprintf("Splitting Schedule Obj created!\n");
 
     // Whether or not to only do district splits only
@@ -802,17 +802,19 @@ List run_redist_smc(
                     // check if k is passed in or estimate
                     if (use_naive_k_splitter) {
                         if (try_to_estimate_cut_k) {
+                            // Start timing 
+                            auto smc_param_estimation_start_time = std::chrono::high_resolution_clock::now();
                             // est k
                             int est_cut_k;
                             int last_k = smc_step_num == 0 ? std::max(1, V - 5)
                                                            : k_params.at(smc_step_num - 1);
-                            if (DEBUG_GSMC_PLANS_VERBOSE)
+                            if constexpr (DEBUG_GSMC_PLANS_VERBOSE)
                                 Rprintf("About to try to estimate cut k!\n");
                             estimate_cut_k(map_params, *splitting_schedule_ptr, rng_state,
                                            est_cut_k, last_k, unnormalized_sampling_weights,
                                            thresh, tol, plan_ensemble_ptr->plan_ptr_vec,
                                            split_district_only, verbosity);
-                            if (DEBUG_GSMC_PLANS_VERBOSE)
+                            if constexpr (DEBUG_GSMC_PLANS_VERBOSE)
                                 Rprintf("Estimated cut k!\n");
                             k_params.at(smc_step_num) = est_cut_k;
 
@@ -820,6 +822,13 @@ List run_redist_smc(
                                 Rcout << " (using estimated k = " << k_params.at(smc_step_num)
                                       << ")\n";
                             }
+
+                            // end timing 
+                            auto smc_param_estimation_time = std::chrono::high_resolution_clock::now();
+                            // add the time 
+                            std::chrono::duration<double, std::ratio<1>> smc_param_diff = smc_param_estimation_time - smc_param_estimation_start_time;
+                            smc_diagnostics.smc_step_parameter_estimation_times[smc_step_num] = smc_param_diff.count();
+
                         } else {
                             if (verbosity >= 3) {
                                 Rcout << " (using input k = " << k_params.at(smc_step_num)
@@ -837,8 +846,10 @@ List run_redist_smc(
 
                     // auto t1f = high_resolution_clock::now();
 
-                    if (DEBUG_GSMC_PLANS_VERBOSE)
+                    if constexpr (DEBUG_GSMC_PLANS_VERBOSE)
                         Rprintf("About to run smc step %d!\n", smc_step_num);
+                    // start timing the smc split
+                    auto smc_splitting_start_time = std::chrono::high_resolution_clock::now();
                     // split the map
                     run_smc_step(map_params, *splitting_schedule_ptr, scoring_functions,
                                  rng_states, sampling_space, plan_ensemble_ptr,
@@ -846,7 +857,13 @@ List run_redist_smc(
                                  normalized_cumulative_weights, smc_diagnostics, smc_step_num,
                                  step_num, is_final_splitting_step, ancestors, lags, pool,
                                  verbosity, diagnostic_mode ? 3 : 0, max_split_tries);
-                    if (DEBUG_GSMC_PLANS_VERBOSE)
+                    // end timing 
+                    auto smc_splitting_end_time = std::chrono::high_resolution_clock::now();
+                    // add the time 
+                    std::chrono::duration<double, std::ratio<1>> smc_split_diff = smc_splitting_end_time - smc_splitting_start_time;
+                    smc_diagnostics.smc_split_times[smc_step_num] = smc_split_diff.count();
+
+                    if constexpr (DEBUG_GSMC_PLANS_VERBOSE)
                         Rprintf("Ran smc step %d!\n", smc_step_num);
                     if (smc_step_num == 0 && initial_num_regions == 1) {
                         // For the first ancestor one make every ancestor themselves
@@ -872,11 +889,6 @@ List run_redist_smc(
 
                     // plan_ensemble_ptr->plan_ptr_vec[0]->Rprint(true);
 
-                    // auto t2f = std::chrono::high_resolution_clock::now();
-                    // /* Getting number of milliseconds as a double. */
-                    // std::chrono::duration<double, std::milli> ms_doublef = t2f - t1f;
-                    // Rcout << "Running SMC " << ms_doublef.count() << " ms\n";
-                    auto t1 = std::chrono::high_resolution_clock::now();
 
                     // compute splitting probability if MMD or if Anysplits SMD and num regions
                     // isn't number of districts
@@ -893,6 +905,8 @@ List run_redist_smc(
                         pool.setNumThreads(0);
                     }
 
+                    // start timing the smc split
+                    auto smc_weight_start_time = std::chrono::high_resolution_clock::now();
                     if (wgt_type == "optimal") {
                         // TODO make more princicpal in the future
                         // for now its just if not district only and not final round
@@ -918,7 +932,13 @@ List run_redist_smc(
                     } else {
                         throw Rcpp::exception("invalid weight type!");
                     }
-                    if (DEBUG_GSMC_PLANS_VERBOSE)
+                    // end timing 
+                    auto smc_weight_end_time = std::chrono::high_resolution_clock::now();
+                    // add the time 
+                    std::chrono::duration<double, std::ratio<1>> smc_weight_diff = smc_weight_end_time - smc_weight_start_time;
+                    smc_diagnostics.smc_weight_times[smc_step_num] = smc_weight_diff.count();
+
+                    if constexpr (DEBUG_GSMC_PLANS_VERBOSE)
                         Rprintf("Done computing weights!\n");
 
                     // now swap back
@@ -927,11 +947,8 @@ List run_redist_smc(
                         pool.setNumThreads(num_threads);
                     }
 
-                    auto t2 = std::chrono::high_resolution_clock::now();
-                    /* Getting number of milliseconds as a double. */
-                    std::chrono::duration<double, std::milli> ms_double = t2 - t1;
-                    if (DEBUG_GSMC_PLANS_VERBOSE) {
-                        Rcout << "Calculating log weights took" << ms_double.count() << " ms, "
+                    if constexpr (DEBUG_GSMC_PLANS_VERBOSE) {
+                        Rcout << "Calculating log weights took" << smc_weight_diff.count() << " ms, "
                               << std::endl;
                     }
 
@@ -1024,7 +1041,8 @@ List run_redist_smc(
                         pool.setNumThreads(0);
                     }
 
-                    // auto t1fm = high_resolution_clock::now();
+                    // start timing
+                    auto ms_round_start_time = std::chrono::high_resolution_clock::now();
                     run_merge_split_step_on_all_plans(
                         pool, map_params, *splitting_schedule_ptr, scoring_functions,
                         rng_states, sampling_space, plan_ensemble_ptr->plan_ptr_vec,
@@ -1032,6 +1050,12 @@ List run_redist_smc(
                         merge_prob_type, rho, is_final_splitting_step, nsteps_to_run,
                         merge_split_step_num, step_num, smc_diagnostics, *cache_ensemble_ptr,
                         verbosity);
+
+                    // end timing 
+                    auto ms_round_end_time = std::chrono::high_resolution_clock::now();
+                    // add the time 
+                    std::chrono::duration<double, std::ratio<1>> ms_round_diff = ms_round_end_time - ms_round_start_time;
+                    smc_diagnostics.ms_step_times[merge_split_step_num] = ms_round_diff.count();
 
                     // now switch back
                     if (scoring_functions[0].any_soft_custom_constraints &&
@@ -1081,7 +1105,7 @@ List run_redist_smc(
                 // Now update the diagnostic info if needed, region labels, dval column of the
                 // matrix
                 if (diagnostic_mode) {
-                    if (DEBUG_GSMC_PLANS_VERBOSE) {
+                    if constexpr (DEBUG_GSMC_PLANS_VERBOSE) {
                         REprintf("Adding full diagnostics!\n");
                     }
                     smc_diagnostics.add_full_step_diagnostics(
@@ -1113,7 +1137,7 @@ List run_redist_smc(
             Rcpp::Rcerr << "Unknown exception caught!\n";
         }
         cli_progress_done(bar);
-        if (DEBUG_GSMC_PLANS_VERBOSE) {
+        if constexpr (DEBUG_GSMC_PLANS_VERBOSE) {
             REprintf("Done with main for loop!\n");
         }
 
@@ -1126,26 +1150,26 @@ List run_redist_smc(
         // end of scope
     }
 
-    if (DEBUG_GSMC_PLANS_VERBOSE)
+    if constexpr (DEBUG_GSMC_PLANS_VERBOSE)
         Rprintf("Exiting main loop and going to do diagnostics!\n");
 
     bool plan_sizes_saved;
 
-    if (DEBUG_GSMC_PLANS_VERBOSE)
+    if constexpr (DEBUG_GSMC_PLANS_VERBOSE)
         Rprintf("Plans saved!\n");
 
     // if only sampling partial plans or MMD plans then return the size matrix
     if (!splitting_all_the_way ||
         splitting_schedule_ptr->schedule_type == SplittingSizeScheduleType::AnyValidSizeMMD ||
         splitting_schedule_ptr->schedule_type == SplittingSizeScheduleType::DistrictOnlyMMD) {
-        if (DEBUG_GSMC_PLANS_VERBOSE)
+        if constexpr (DEBUG_GSMC_PLANS_VERBOSE)
             Rprintf("Getting ready to save region sizes!\n");
         plan_sizes_saved = true;
     } else {
         plan_sizes_saved = false;
     }
 
-    if (DEBUG_GSMC_PLANS_VERBOSE)
+    if constexpr (DEBUG_GSMC_PLANS_VERBOSE)
         Rprintf("Plan matrix (and sizes potentially) saved!\n");
 
     // Return results
@@ -1166,7 +1190,7 @@ List run_redist_smc(
     // add all the diagnostics
     smc_diagnostics.add_diagnostics_to_out_list(out);
 
-    if (DEBUG_GSMC_PLANS_VERBOSE)
+    if constexpr (DEBUG_GSMC_PLANS_VERBOSE)
         Rprintf("Returning to R!\n");
     return out;
 }

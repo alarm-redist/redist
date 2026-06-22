@@ -239,6 +239,12 @@ class SMCDiagnostics {
     // counts the size of the trees
     Rcpp::IntegerMatrix tree_sizes_mat;            // ndists by total_steps matrix
     Rcpp::IntegerMatrix successful_tree_sizes_mat; // ndists by total_steps matrix
+    // These store time info
+    std::vector<double> smc_step_parameter_estimation_times; // length number of smc steps
+    std::vector<double> smc_split_times; // length number of smc steps
+    std::vector<double> smc_weight_times; // length number of smc steps
+    std::vector<double> ms_step_parameter_estimation_times; // length number of ms rounds
+    std::vector<double> ms_step_times; // length number of ms rounds
 
     // Level 2
     Rcpp::IntegerMatrix parent_unsuccessful_tries_mat;
