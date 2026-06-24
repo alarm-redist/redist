@@ -175,7 +175,7 @@ void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
     // If we're not adding a region we need to erase the old linking edge associated
     // with these two regions if it exists
     if (!add_region) {
-        if (DEBUG_L_EDGE_PLANS_VERBOSE) {
+        if constexpr (DEBUG_L_EDGE_PLANS_VERBOSE) {
             Rprintf("Adding Edge (%d, %d) - Regions (%d, %d)\n", cut_edge.cut_vertex,
                     cut_edge.cut_vertex_parent, split_region1_id, split_region2_id);
             Rprintf("Current Linking Edges:\n");
@@ -247,7 +247,7 @@ void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
             // we will recompute this later if needed
             a_linking_edge.valid_log_prob = false;
 
-            if (DEBUG_L_EDGE_PLANS_VERBOSE) {
+            if constexpr (DEBUG_L_EDGE_PLANS_VERBOSE) {
                 Rprintf("(%d,%d) in Region (%d,%d)", v, u, edge_region1, edge_region2);
                 Rprintf(" Linking edge prob is invalidated!\n");
             }
@@ -257,7 +257,7 @@ void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
     // Append the new linking edge from the region we just split
     linking_edges.push_back(
         {cut_edge.cut_vertex, cut_edge.cut_vertex_parent, cut_edge.log_prob});
-    if (DEBUG_L_EDGE_PLANS_VERBOSE) {
+    if constexpr (DEBUG_L_EDGE_PLANS_VERBOSE) {
         Rprintf("\nAdding New Edge (%d,%d) in Region (%d,%d), log prob %f\n",
                 cut_edge.cut_vertex, cut_edge.cut_vertex_parent,
                 region_ids[cut_edge.cut_vertex], region_ids[cut_edge.cut_vertex_parent],

@@ -33,7 +33,7 @@ Rcpp::List ms_plans(
     // whether or not to perform MH step
     bool do_mh = (bool)control["do_mh"];
 
-    if (DEBUG_PURE_MS_VERBOSE)
+    if constexpr (DEBUG_PURE_MS_VERBOSE)
         Rprintf("Checkpoint 1!\n");
     Rcpp::List out; // return
     // re-seed MT so that `set.seed()` works in R
@@ -61,7 +61,7 @@ Rcpp::List ms_plans(
                  initial_num_regions, init_seats.nrow());
         throw Rcpp::exception("Initial plan region sizes should match number of regions");
     }
-    if (DEBUG_PURE_MS_VERBOSE)
+    if constexpr (DEBUG_PURE_MS_VERBOSE)
         Rprintf("Checkpoint 2!\n");
 
     // get splitting type
@@ -95,7 +95,7 @@ Rcpp::List ms_plans(
     all_steps_forests_adj_list.resize(
         (diagnostic_mode && sampling_space == SamplingSpace::ForestSpace) ? nsims : 0);
 
-    if (DEBUG_PURE_MS_VERBOSE)
+    if constexpr (DEBUG_PURE_MS_VERBOSE)
         Rprintf("Checkpoint 3!\n");
 
     // Create current plan and proposal
@@ -138,7 +138,7 @@ Rcpp::List ms_plans(
         // splitter
         std::vector<std::unique_ptr<TreeSplitter>> tree_splitter_ptr_vec =
             get_tree_splitter_ptrs(map_params, splitting_method, control, nsims, 1);
-        if (DEBUG_PURE_MS_VERBOSE)
+        if constexpr (DEBUG_PURE_MS_VERBOSE)
             Rprintf("Checkpoint 4!\n");
         // sanity check make sure the plan is ok
         std::vector<bool> county_component_lookup(ndists * map_params.num_counties, false);
@@ -195,10 +195,10 @@ Rcpp::List ms_plans(
             out["cut_k"] = cut_k;
         }
 
-        if (DEBUG_PURE_MS_VERBOSE)
+        if constexpr (DEBUG_PURE_MS_VERBOSE)
             Rprintf("Checkpoint 5!\n");
 
-        if (DEBUG_PURE_MS_VERBOSE) {
+        if constexpr (DEBUG_PURE_MS_VERBOSE) {
             Rprintf("Adj regions are:");
             for (auto const &a_pair : current_plan_adj_region_pairs) {
                 Rprintf("(%d, %d), ", a_pair.first, a_pair.second);
@@ -206,7 +206,7 @@ Rcpp::List ms_plans(
             Rprintf("\n");
         }
 
-        if (DEBUG_PURE_MS_VERBOSE)
+        if constexpr (DEBUG_PURE_MS_VERBOSE)
             Rprintf("Checkpoint 6!\n");
         // Loading Info
         if (verbosity >= 1) {
@@ -232,7 +232,7 @@ Rcpp::List ms_plans(
         for (int i = start, step_num = 0; i <= total_post_warmup_steps; i++, step_num++) {
             // Index 0 or less is warmup
             bool in_warmup = i <= 0;
-            if (DEBUG_PURE_MS_VERBOSE) {
+            if constexpr (DEBUG_PURE_MS_VERBOSE) {
                 Rprintf("Iter %d and idx %d \n", i, current_plan_mat_col);
             }
 
@@ -282,7 +282,7 @@ Rcpp::List ms_plans(
                 log_mh_ratios(current_plan_mat_col) = std::get<2>(mergesplit_result);
                 mh_decisions(current_plan_mat_col) = std::get<1>(mergesplit_result);
 
-                if (DEBUG_PURE_MS_VERBOSE)
+                if constexpr (DEBUG_PURE_MS_VERBOSE)
                     Rprintf("log_mh_ratio = %f\n", std::get<2>(mergesplit_result));
 
                 // increase the count of columne we're on
@@ -311,7 +311,7 @@ Rcpp::List ms_plans(
             Rcpp::checkUserInterrupt();
         }
         cli_progress_done(bar);
-        if (DEBUG_PURE_MS_VERBOSE)
+        if constexpr (DEBUG_PURE_MS_VERBOSE)
             REprintf("Done with main MCMC loop\n");
     }
 
@@ -325,7 +325,7 @@ Rcpp::List ms_plans(
     std::transform(saved_plans_mat.begin(), saved_plans_mat.end(), saved_plans_mat.begin(),
                    [](int x) { return x + 1; });
 
-    if (DEBUG_PURE_MS_VERBOSE)
+    if constexpr (DEBUG_PURE_MS_VERBOSE)
         REprintf("Added one to plans, now creating diagnostic list.\n");
 
     out["plans"] = saved_plans_mat;
@@ -345,7 +345,7 @@ Rcpp::List ms_plans(
         out["proposed_plans"] = proposed_plans_mat;
     }
 
-    if (DEBUG_PURE_MS_VERBOSE)
+    if constexpr (DEBUG_PURE_MS_VERBOSE)
         REprintf("Done now returning!\n");
 
     return out;

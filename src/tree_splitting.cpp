@@ -66,7 +66,7 @@ get_all_valid_edge_cuts_from_edge(int const root, int const cut_vertex,
         double cut_region2_lb = lower * cut_region2_size;
         double cut_region2_ub = upper * cut_region2_size;
 
-        if (FINDING_EDGE_CUTS_VERBOSE) {
+        if constexpr (FINDING_EDGE_CUTS_VERBOSE) {
             REprintf("\tFor (%d, %d): compare %f vs %f vs %f and %f vs %f vs %f \n",
                      cut_region1_size, cut_region2_size, cut_region1_lb, below_pop,
                      cut_region1_ub, cut_region2_lb, above_pop, cut_region2_ub);
@@ -88,7 +88,7 @@ get_all_valid_edge_cuts_from_edge(int const root, int const cut_vertex,
         if (cut_region1_size == cut_region2_size)
             continue;
 
-        if (FINDING_EDGE_CUTS_VERBOSE) {
+        if constexpr (FINDING_EDGE_CUTS_VERBOSE) {
             REprintf("\tFor (%d, %d): compare %f vs %f vs %f and %f vs %f vs %f \n",
                      cut_region2_size, cut_region1_size, cut_region2_lb, below_pop,
                      cut_region2_ub, cut_region1_lb, above_pop, cut_region1_ub);
@@ -707,7 +707,7 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
         static_cast<double>(region2_pop), static_cast<double>(region1_pop), map_params.lower,
         map_params.target, map_params.upper, smaller_cut_sizes_to_try);
 
-    if (FINDING_EDGE_CUTS_VERBOSE) {
+    if constexpr (FINDING_EDGE_CUTS_VERBOSE) {
         REprintf("Pop below region2_root is %d so above is %d so foound %d\n",
                  pops_below_vertex.at(region2_root),
                  total_merged_region_pop - pops_below_vertex.at(region2_root),

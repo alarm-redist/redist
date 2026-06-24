@@ -57,7 +57,7 @@ double get_log_retroactive_splitting_prob(const Plan &plan,
                                           const std::vector<bool> &valid_region_sizes_to_split,
                                           const int region1_id, const int region2_id,
                                           double const selection_alpha = SELECTION_ALPHA) {
-    if (DEBUG_WEIGHTS_VERBOSE)
+    if constexpr (DEBUG_WEIGHTS_VERBOSE)
         Rprintf("Possible options: ");
 
     // compute weight of the merged region
@@ -67,7 +67,7 @@ double get_log_retroactive_splitting_prob(const Plan &plan,
     double prob_sum = unioned_region_prob;
 
     // add the unioned region
-    if (DEBUG_WEIGHTS_VERBOSE)
+    if constexpr (DEBUG_WEIGHTS_VERBOSE)
         Rprintf(" (unioned) %d | ", unioned_region_size);
 
     for (int region_id = 0; region_id < plan.num_regions; region_id++) {
@@ -76,7 +76,7 @@ double get_log_retroactive_splitting_prob(const Plan &plan,
         // add if valid multidistrict and not the two we started with
         if (valid_region_sizes_to_split[region_size] && region_id != region1_id &&
             region_id != region2_id) {
-            if (DEBUG_WEIGHTS_VERBOSE)
+            if constexpr (DEBUG_WEIGHTS_VERBOSE)
                 Rprintf(" %d | ", region_size);
             // add the count and label to vector
             prob_sum += std::pow(region_size, selection_alpha);
@@ -86,7 +86,7 @@ double get_log_retroactive_splitting_prob(const Plan &plan,
     // so prob of picking is weight of first over sum
     double log_prob = std::log(unioned_region_prob) - std::log(prob_sum);
 
-    if (DEBUG_WEIGHTS_VERBOSE) {
+    if constexpr (DEBUG_WEIGHTS_VERBOSE) {
         Rprintf("\nFor regions (%d,%d), size (%u,%u) - Prob is %.5f/%.5f, so log is %.5f\n",
                 region1_id, region2_id, plan.region_sizes[region1_id],
                 plan.region_sizes[region2_id], unioned_region_prob, prob_sum, log_prob);
@@ -112,7 +112,7 @@ double compute_simple_log_incremental_weight(Plan const &plan, PlanMultigraph &p
     auto region1_id = most_recent_split_regions.first;
     auto region2_id = most_recent_split_regions.second;
 
-    if (DEBUG_WEIGHTS_VERBOSE) {
+    if constexpr (DEBUG_WEIGHTS_VERBOSE) {
         Rprintf("The two regions are %d and %d\n", region1_id, region2_id);
         Rcpp::Rcerr << std::flush;
     }
@@ -206,7 +206,7 @@ double compute_simple_log_incremental_weight(Plan const &plan, PlanMultigraph &p
         // picked to split the union of the the two regions
         log_splitting_prob = get_log_retroactive_splitting_prob(
             plan, splitting_schedule.valid_region_sizes_to_split, region1_id, region2_id);
-        if (DEBUG_WEIGHTS_VERBOSE)
+        if constexpr (DEBUG_WEIGHTS_VERBOSE)
             Rprintf("Computed split prob %f\n", std::exp(log_splitting_prob));
     }
 
@@ -225,7 +225,7 @@ double compute_simple_log_incremental_weight(Plan const &plan, PlanMultigraph &p
             scoring_function
                 .compute_merged_region_full_score(plan, region1_id, region2_id, is_final_split)
                 .second;
-        if (DEBUG_WEIGHTS_VERBOSE) {
+        if constexpr (DEBUG_WEIGHTS_VERBOSE) {
             REprintf("Region (%d,%d) Scores (%f, %f) | Merged Score %f \n", region1_id,
                      region2_id, region1_score, region2_score, merged_region_score);
         }
@@ -240,7 +240,7 @@ double compute_simple_log_incremental_weight(Plan const &plan, PlanMultigraph &p
             scoring_function
                 .compute_merged_plan_score(plan, region1_id, region2_id, is_final_split)
                 .second;
-        if (DEBUG_WEIGHTS_VERBOSE) {
+        if constexpr (DEBUG_WEIGHTS_VERBOSE) {
             REprintf("Entire Plan Score %f | Previous Plan Score %f \n", plan_score,
                      prev_plan_score);
         }
@@ -320,7 +320,7 @@ double compute_simple_log_incremental_weight(Plan const &plan, PlanMultigraph &p
                              (merged_region_score + prev_plan_score) +
                              log_extra_prev_plan_terms;
 
-    if (DEBUG_WEIGHTS_VERBOSE) {
+    if constexpr (DEBUG_WEIGHTS_VERBOSE) {
         int region1_size = plan.region_sizes[region1_id];
         int region2_size = plan.region_sizes[region2_id];
         Rprintf("Doing (%d,%d) - sizes (%d, %d): forward %f, backward %f, split prob %f, ratio "
@@ -451,7 +451,7 @@ double compute_log_optimal_incremental_weights(
     // dont need to do when
     double incremental_weight = 0.0;
 
-    if (DEBUG_WEIGHTS_VERBOSE)
+    if constexpr (DEBUG_WEIGHTS_VERBOSE)
         Rprintf("Getting Pairs!\n");
 
     // get region pair to effective boundary length map
@@ -461,7 +461,7 @@ double compute_log_optimal_incremental_weights(
             edge_splitter);
 
     // iterate over the pairs
-    if (DEBUG_WEIGHTS_VERBOSE) {
+    if constexpr (DEBUG_WEIGHTS_VERBOSE) {
         REprintf("There are %zu adjacent pairs!\n", region_pair_log_eff_boundary_map.size());
     }
 
@@ -470,7 +470,7 @@ double compute_log_optimal_incremental_weights(
 
     if (scoring_function.any_soft_plan_constraints) {
         plan_score += scoring_function.compute_plan_score(plan).second;
-        if (DEBUG_WEIGHTS_VERBOSE) {
+        if constexpr (DEBUG_WEIGHTS_VERBOSE) {
             REprintf("Entire Plan Score %f \n", plan_score);
         }
     }
@@ -484,7 +484,7 @@ double compute_log_optimal_incremental_weights(
         const double eff_log_boundary_len =
             std::get<2>(pair_tuple); // get the effective boundary length
 
-        if (DEBUG_WEIGHTS_VERBOSE) {
+        if constexpr (DEBUG_WEIGHTS_VERBOSE) {
             REprintf("Pair (%d,%d) - %f\n", region1_id, region2_id,
                      std::exp(eff_log_boundary_len));
         }
@@ -499,7 +499,7 @@ double compute_log_optimal_incremental_weights(
             double log_splitting_prob = get_log_retroactive_splitting_prob(
                 plan, splitting_schedule.valid_region_sizes_to_split, region1_id, region2_id);
             log_of_sum_term += log_splitting_prob;
-            if (DEBUG_WEIGHTS_VERBOSE)
+            if constexpr (DEBUG_WEIGHTS_VERBOSE)
                 REprintf("\n");
         }
 
@@ -515,7 +515,7 @@ double compute_log_optimal_incremental_weights(
                     .compute_merged_region_full_score(plan, region1_id, region2_id,
                                                       is_final_split)
                     .second;
-            if (DEBUG_WEIGHTS_VERBOSE) {
+            if constexpr (DEBUG_WEIGHTS_VERBOSE) {
                 REprintf("Region (%u, %u) Scores (%f, %f) | Merged Score %f \n", region1_id,
                          region2_id, region1_score, region2_score, merged_region_score);
             }
@@ -530,7 +530,7 @@ double compute_log_optimal_incremental_weights(
                 scoring_function
                     .compute_merged_plan_score(plan, region1_id, region2_id, is_final_split)
                     .second;
-            if (DEBUG_WEIGHTS_VERBOSE) {
+            if constexpr (DEBUG_WEIGHTS_VERBOSE) {
                 REprintf("For Regions (%u, %u) Merged Entire Plan Score %f \n", region1_id,
                          region2_id, merged_plan_score);
             }
@@ -540,7 +540,7 @@ double compute_log_optimal_incremental_weights(
         // meaning add the difference
         log_of_sum_term += (plan_score - merged_plan_score);
 
-        if (DEBUG_WEIGHTS_VERBOSE) {
+        if constexpr (DEBUG_WEIGHTS_VERBOSE) {
             int region1_size = plan.region_sizes[region1_id];
             int region2_size = plan.region_sizes[region2_id];
             Rprintf("Adding (%d,%d) - sizes (%d, %d): len %f, split prob %f, ratio %f!\n",
@@ -550,7 +550,7 @@ double compute_log_optimal_incremental_weights(
 
         // Do taus if neccesary
         if (compute_log_tau) {
-            if (DEBUG_WEIGHTS_VERBOSE) {
+            if constexpr (DEBUG_WEIGHTS_VERBOSE) {
                 REprintf("Computing log tau ratio!\n");
             }
             double log_tau_ratio = 0.0;
@@ -564,7 +564,7 @@ double compute_log_optimal_incremental_weights(
                                     plan_multigraph.map_params, region1_id, region2_id);
             }
 
-            if (DEBUG_WEIGHTS_VERBOSE) {
+            if constexpr (DEBUG_WEIGHTS_VERBOSE) {
                 REprintf("Computing log tau for each region pair!\n");
             }
 
@@ -589,7 +589,7 @@ double compute_log_optimal_incremental_weights(
     // Now take the log
     incremental_weight = -std::log(incremental_weight);
 
-    if (DEBUG_WEIGHTS_VERBOSE) {
+    if constexpr (DEBUG_WEIGHTS_VERBOSE) {
         REprintf("Weight=%f, log weight = %f\n", std::exp(incremental_weight),
                  incremental_weight);
     }
@@ -647,7 +647,7 @@ void compute_all_plans_log_optimal_incremental_weights(
     int verbosity) {
     const int nsims = static_cast<int>(plans_ptr_vec.size());
     const int check_int = 50; // check for interrupts every _ iterations
-    if (DEBUG_WEIGHTS_VERBOSE)
+    if constexpr (DEBUG_WEIGHTS_VERBOSE)
         Rprintf("About to start computing weights!\n");
 
     int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();

@@ -490,25 +490,39 @@ redist_mergesplit <- function(
         }
     t2 <- Sys.time()
 
-    plans <- lapply(out_par, function(algout) {
-        algout$plans
-    })
-    each_len <- ncol(plans[[1]])
-    plans <- do.call(cbind, plans)
+    each_len <- ncol(out_par[[1]]$plans)
 
-    seats <- do.call(c, lapply(out_par, function(x) x$seats))
-    region_pops <- do.call(c, lapply(out_par, function(x) x$region_pops))
+    # combine results if multiple chains, else avoid wasteful memory calls
+    if(chains > 1){
+        plans <- lapply(out_par, function(algout) {
+            algout$plans
+        })
 
-    mh <- sapply(out_par, function(algout) {
-        mean(as.logical(algout$mhdecisions))
-    })
-    l_diag <- lapply(out_par, function(algout) algout$l_diag)
-    run_information <- lapply(out_par, function(x) x$run_information)
-    internal_diagnostics <- lapply(out_par, function(x) x$internal_diagnostics)
+        plans <- do.call(cbind, plans)
+        seats <- do.call(c, lapply(out_par, function(x) x$seats))
+        region_pops <- do.call(c, lapply(out_par, function(x) x$region_pops))
 
-    acceptances <- sapply(out_par, function(algout) {
-        algout$mhdecisions
-    })
+        mh <- sapply(out_par, function(algout) {
+            mean(as.logical(algout$mhdecisions))
+        })
+        l_diag <- lapply(out_par, function(algout) algout$l_diag)
+        run_information <- lapply(out_par, function(x) x$run_information)
+        internal_diagnostics <- lapply(out_par, function(x) x$internal_diagnostics)
+
+        acceptances <- sapply(out_par, function(algout) {
+            algout$mhdecisions
+        })
+    }else{
+        plans <- out_par[[1]]$plans
+        seats <- out_par[[1]]$seats
+        region_pops <- out_par[[1]]$region_pops
+        mh <- mean(as.logical(out_par[[1]]$mhdecisions))
+        l_diag <- list(out_par[[1]]$l_diag)
+        run_information <- list(out_par[[1]]$run_information)
+        internal_diagnostics <- list(out_par[[1]]$internal_diagnostics)
+        acceptances <- as.matrix(out_par[[1]]$mhdecisions, ncol = 1)
+    }
+
 
     num_admin_units <- length(unique(counties))
 

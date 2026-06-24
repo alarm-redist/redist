@@ -316,7 +316,7 @@ bool RegionConstraint::region_constraint_ok(const Plan &plan, int region_id) con
         double region_score = strength * compute_raw_region_constraint_score(
                                              plan.num_regions, plan.region_ids,
                                              plan.region_sizes, plan.region_pops, region_id);
-        if (DEBUG_SCORING_VERBOSE) {
+        if constexpr (DEBUG_SCORING_VERBOSE) {
             REprintf("Score %f, thresh %f so %d\n", region_score, hard_threshold,
                      region_score < hard_threshold);
         }
@@ -595,7 +595,7 @@ bool PlanConstraint::plan_constraint_ok(const Plan &plan) const {
         double region_score =
             strength * compute_raw_plan_constraint_score(plan.num_regions, plan.region_ids,
                                                          plan.region_sizes, plan.region_pops);
-        if (DEBUG_SCORING_VERBOSE) {
+        if constexpr (DEBUG_SCORING_VERBOSE) {
             REprintf("Score %f, thresh %f\n", region_score, hard_threshold);
         }
         return region_score < hard_threshold;
@@ -1276,7 +1276,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
     any_hard_constraints =
         static_cast<bool>(any_hard_plan_constraints + any_hard_region_constraints);
 
-    if (DEBUG_SCORING_VERBOSE) {
+    if constexpr (DEBUG_SCORING_VERBOSE) {
         REprintf("Constraint has %d soft region constraints, %d soft plan ones\n",
                  total_soft_region_constraints, total_soft_plan_constraints);
     }
@@ -1291,7 +1291,7 @@ std::pair<bool, double> ScoringFunction::compute_region_full_score(const Plan &p
     // check if its a multidistrict
     bool const is_multidistrict = !map_params.is_district[plan.region_sizes[region_id]];
 
-    if (DEBUG_SCORING_VERBOSE) {
+    if constexpr (DEBUG_SCORING_VERBOSE) {
         REprintf("Scoring region %d, size %u! %s DISTRICT, %s DISTRICT \n", region_id,
                  plan.region_sizes[region_id], (is_multidistrict ? "NOT A" : "IS A"),
                  (map_params.is_district[plan.region_sizes[region_id]] ? "IS A" : "NOT A"));
@@ -1308,7 +1308,7 @@ std::pair<bool, double> ScoringFunction::compute_region_full_score(const Plan &p
         if (!score_result.first) {
             return std::make_pair(false, 0.0);
         } else {
-            if (DEBUG_SCORING_VERBOSE) {
+            if constexpr (DEBUG_SCORING_VERBOSE) {
                 REprintf("Adding %f!\n", score_result.second);
             }
             region_score += score_result.second;

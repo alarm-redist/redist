@@ -244,7 +244,7 @@ void DistrictOnlyMMDSplittingSchedule::set_potential_cut_sizes_for_each_valid_si
     // the biggest remainder size assumes we split smallest district each time
     int presplit_biggest_possible_size = total_seats - presplit_ndists * smallest_district_size;
 
-    if (DEBUG_SPLITTING_SCHEDULES_VERBOSE) {
+    if constexpr (DEBUG_SPLITTING_SCHEDULES_VERBOSE) {
         REprintf("%d Remaining Districts!\n", remainder_ndists);
         REprintf("Total Seats: %d\n Presplit Districts: %d\n Smallest District Size: %d\n "
                  "Largest District Size: %d\n",
@@ -258,7 +258,7 @@ void DistrictOnlyMMDSplittingSchedule::set_potential_cut_sizes_for_each_valid_si
                presplit_biggest_possible_size / static_cast<double>(remainder_ndists) ||
            largest_district_size <
                presplit_biggest_possible_size / static_cast<double>(remainder_ndists)) {
-        if (DEBUG_SPLITTING_SCHEDULES_VERBOSE)
+        if constexpr (DEBUG_SPLITTING_SCHEDULES_VERBOSE)
             REprintf("%d\n", presplit_biggest_possible_size);
         presplit_biggest_possible_size--;
         if (presplit_biggest_possible_size <= 0 ||
@@ -273,7 +273,7 @@ void DistrictOnlyMMDSplittingSchedule::set_potential_cut_sizes_for_each_valid_si
     // start off with
     int presplit_smallest_possible_size =
         std::max(0, total_seats - presplit_ndists * largest_district_size);
-    if (DEBUG_SPLITTING_SCHEDULES_VERBOSE) {
+    if constexpr (DEBUG_SPLITTING_SCHEDULES_VERBOSE) {
         REprintf("There are %d presplit regions! Starting with Smallest presplit size %d\n",
                  presplit_num_regions, presplit_smallest_possible_size);
     }
@@ -282,7 +282,7 @@ void DistrictOnlyMMDSplittingSchedule::set_potential_cut_sizes_for_each_valid_si
                presplit_smallest_possible_size / static_cast<double>(remainder_ndists) ||
            largest_district_size <
                presplit_smallest_possible_size / static_cast<double>(remainder_ndists)) {
-        if (DEBUG_SPLITTING_SCHEDULES_VERBOSE)
+        if constexpr (DEBUG_SPLITTING_SCHEDULES_VERBOSE)
             REprintf("%d\n", presplit_smallest_possible_size);
         presplit_smallest_possible_size++;
         if (presplit_smallest_possible_size >= total_seats) {
@@ -304,7 +304,7 @@ void DistrictOnlyMMDSplittingSchedule::set_potential_cut_sizes_for_each_valid_si
     // reset all regions split and merge booleans
     reset_splitting_and_merge_booleans();
 
-    if (DEBUG_SPLITTING_SCHEDULES_VERBOSE) {
+    if constexpr (DEBUG_SPLITTING_SCHEDULES_VERBOSE) {
         REprintf("We're looking at remainders between %d and %d\n",
                  presplit_biggest_possible_size, presplit_smallest_possible_size);
     }

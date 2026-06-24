@@ -1011,13 +1011,13 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
     // connected component then we compute across all of them
     // First we need to sort all the pairs
 
-    if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+    if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
         Rprint();
     }
 
     auto all_pairs = pair_map.get_all_values(true);
 
-    if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+    if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
         REprintf("%d Components | Pre-Sorted Pairs: \n", num_county_connected_components);
         for (auto const &val : all_pairs) {
             REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s\n",
@@ -1052,7 +1052,7 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
         return false; // otherwise, keep existing relative order
     });
 
-    if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+    if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
         REprintf("%d Components | NOW SORTED Pairs: \n", num_county_connected_components);
         for (auto const &val : all_pairs) {
             REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s\n",
@@ -1077,7 +1077,7 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
 
         int num_component_regions = component_region_counts[component_id];
 
-        if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+        if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
             REprintf("Component %d which has %d regions!\n", component_id,
                      num_component_regions);
         }
@@ -1096,7 +1096,7 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
             // now increment index
             ++curr_index;
         } else {
-            if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+            if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
                 REprintf("3 or more regions in component!\n");
             }
             // else more than two regions so we need to reindex the regions
@@ -1108,7 +1108,7 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
                 if (county_component[a_region_id] == component_id) {
                     region_reindex_vec[a_region_id] = current_reindex;
                     ++current_reindex;
-                    if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+                    if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
                         REprintf("Mapping %d to %d!\n", a_region_id,
                                  region_reindex_vec[a_region_id]);
                     }
@@ -1146,7 +1146,7 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
                         "Error in compute_hierarchical_log_multigraph_tau");
                 }
 
-                if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+                if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
                     REprintf("Region Pair (%d, %d) | %d | %g edges!\n ", pair_region1,
                              pair_region2, pair_val.admin_adjacent, edges);
                 }
@@ -1200,7 +1200,7 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
                 // increase current index by 1
                 ++curr_index;
             }
-            if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+            if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
                 REprintf("Printing Laplacian Minor!\n");
                 // laplacian_minor.print();
             }
@@ -1245,7 +1245,7 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
     // as a sparse upper triangle matrix
     std::vector<Eigen::Triplet<double, int>> component_laplacian_minor_trips;
 
-    if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+    if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
         REprintf("Current index now %d with %zu pairs\n", curr_index, all_pairs.size());
     }
 
@@ -1263,7 +1263,7 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
         }
 
         double edges = static_cast<double>(pair_val.across_county_edges);
-        if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+        if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
             REprintf("Components (%d,%d) - %g edges across!\n", component1_id, component2_id,
                      edges);
         }
@@ -1304,7 +1304,7 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
         }
     }
 
-    if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+    if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
         REprintf("Printing Component Laplacian Minor\n");
     }
 
@@ -1335,7 +1335,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
 
     // We need to compute this hierarchically. First we compute within each
     // connected component then we compute across all of them
-    if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+    if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
         REprintf("We are merging %u and %u! in unmereged components( %d, %d) | There are %d "
                  "Unmerged Components and %d merged components | \n",
                  region1_id, region2_id, region1_component, region2_component,
@@ -1357,7 +1357,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
         } else {
             county_component_reindex[a_region_id] = this_region_component;
         }
-        if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+        if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
             REprintf("Region %d maps to component %d now! (was %d) \n", a_region_id,
                      county_component_reindex[a_region_id], county_component[a_region_id]);
         }
@@ -1394,7 +1394,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
                         all_pairs.end());
     }
 
-    if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+    if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
         REprintf("%d Components | Pre-Sorted Pairs: \n", merged_num_admin_connected_components);
         for (auto const &val : all_pairs) {
             REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s | Edges %d\n",
@@ -1437,7 +1437,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
         return false; // otherwise, keep existing relative order
     });
 
-    if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+    if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
         REprintf("%d Components | NOW SORTED Pairs: \n", merged_num_admin_connected_components);
         for (auto const &val : all_pairs) {
             REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s | Edges %d\n",
@@ -1479,7 +1479,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
                 --num_component_regions;
             }
         }
-        if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+        if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
             REprintf("Component %d which has %d regions!\n", component_id,
                      num_component_regions);
         }
@@ -1493,7 +1493,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
         // If 1 component then there only 1 tree so log(1) = 0
         if (num_component_regions <= 1) {
             // do nothing
-            if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+            if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
                 REprintf("1 Region in Component! Log tau unchanged at %f\n", log_tau);
             }
             // do nothing
@@ -1513,7 +1513,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
                     ++curr_index;
                 }
                 log_tau += std::log(static_cast<double>(merged_boundary));
-                if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+                if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
                     REprintf("2 Regions in Merged Component! | Boundary length %d |Log tau now "
                              "at %f\n",
                              merged_boundary, log_tau);
@@ -1522,7 +1522,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
                 // else if not the merged component there is actually only one pair
                 log_tau += std::log(
                     static_cast<double>(all_pairs[curr_index].second.within_county_edges));
-                if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+                if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
                     REprintf("2 Regions in Non-merged Component! | Boundary length %d |Log tau "
                              "now at %f\n",
                              all_pairs[curr_index].second.within_county_edges, log_tau);
@@ -1531,7 +1531,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
                 ++curr_index;
             }
         } else {
-            if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+            if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
                 REprintf("3 or more regions in component!\n");
             }
             if (component_id == region1_component) {
@@ -1546,7 +1546,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
                         region_reindex_vec[a_region_id] = current_reindex;
                         ++current_reindex;
                     }
-                    if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+                    if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
                         REprintf("Mapping %d to %d!\n", a_region_id,
                                  region_reindex_vec[a_region_id]);
                     }
@@ -1561,7 +1561,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
                     if (county_component_reindex[a_region_id] == component_id) {
                         region_reindex_vec[a_region_id] = current_reindex;
                         ++current_reindex;
-                        if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+                        if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
                             REprintf("Mapping %d to %d!\n", a_region_id,
                                      region_reindex_vec[a_region_id]);
                         }
@@ -1599,7 +1599,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
                         "Error in compute_hierarchical_merged_log_multigraph_tau");
                 }
 
-                if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+                if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
                     REprintf("Region Pair (%d, %d) | %d | %g edges!\n ", pair_region1,
                              pair_region2, pair_val.admin_adjacent, edges);
                 }
@@ -1650,7 +1650,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
                 // increase current index by 1
                 ++curr_index;
             }
-            if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+            if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
                 REprintf("Printing Laplacian Minor!\n");
             }
             // Now add log det
@@ -1676,7 +1676,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
         throw Rcpp::exception("! Hier\n");
     }
 
-    if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+    if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
         REprintf("Remaining Across Merged Component Pairs: %zu\n",
                  all_pairs.size() - curr_index - 1);
         for (size_t i = curr_index; i < all_pairs.size(); i++) {
@@ -1693,12 +1693,12 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
 
     // If only one connected component then we stop
     if (merged_num_admin_connected_components == 1) {
-        if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+        if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
             REprintf("1 Component in entire Merged Plan! Log tau unchanged at %f\n", log_tau);
         }
         return log_tau;
     } else if (merged_num_admin_connected_components == 2) {
-        if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+        if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
             REprintf("2 Components in entire Merged Plan!\n");
         }
         int across_component_edges = 0;
@@ -1708,7 +1708,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
         }
         // add
         log_tau += std::log(static_cast<double>(across_component_edges));
-        if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+        if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
             REprintf("Adding log of %d, Log tau now at %f\n", across_component_edges, log_tau);
         }
         return log_tau;
@@ -1718,7 +1718,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
     // as a sparse upper triangle matrix
     std::vector<Eigen::Triplet<double, int>> merged_component_laplacian_minor_trips;
 
-    if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+    if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
         REprintf("Current index now %d with %zu pairs\n", curr_index, all_pairs.size());
     }
 
@@ -1757,7 +1757,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
         }
 
         double edges = static_cast<double>(pair_val.across_county_edges);
-        if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+        if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
             REprintf("Components (%d,%d) - %g edges across!\n", component1_id, component2_id,
                      edges);
         }
@@ -1801,7 +1801,7 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
         }
     }
 
-    if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+    if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
         REprintf("Printing Component Laplacian Minor\n");
     }
 
@@ -2088,7 +2088,7 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(PlanVector const &region
         component_split_counts[num_county_connected_components] =
             num_current_county_region_components - num_current_counties;
 
-        if (DEBUG_BASE_PLANS_VERBOSE) {
+        if constexpr (DEBUG_BASE_PLANS_VERBOSE) {
             REprintf("Component %d has %d components, %d counties so %d splits!\n",
                      num_county_connected_components, num_current_county_region_components,
                      num_current_counties,
@@ -2100,7 +2100,7 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(PlanVector const &region
 
         // if too many global splits then auto reject
         if (num_county_region_components - map_params.num_counties >= num_regions) {
-            if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+            if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
                 REprintf("EARLY RETURN A: total county-region components=%d, num_counties=%d, "
                          "num_regions=%d\n",
                          num_county_region_components, map_params.num_counties, num_regions);
@@ -2119,7 +2119,7 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(PlanVector const &region
     // minus 1
     for (size_t component_id = 0; component_id < num_county_connected_components;
          component_id++) {
-        if (DEBUG_BASE_PLANS_VERBOSE) {
+        if constexpr (DEBUG_BASE_PLANS_VERBOSE) {
             REprintf("Component %zu has %d splits and %d regions!\n", component_id,
                      component_split_counts[component_id],
                      component_region_counts[component_id]);
@@ -2132,7 +2132,7 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(PlanVector const &region
                 component_region_counts[component_id], component_split_counts[component_id]);
         } else if (component_split_counts[component_id] >=
                    component_region_counts[component_id]) {
-            if (DEBUG_LOG_LINK_EDGE_VERBOSE) {
+            if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
                 REprintf("EARLY RETURN B: component %zu has splits=%d regions=%d\n",
                          component_id, component_split_counts[component_id],
                          component_region_counts[component_id]);

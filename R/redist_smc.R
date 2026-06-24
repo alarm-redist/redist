@@ -1248,6 +1248,8 @@ extract_ms_params <- function(ms_params, total_smc_steps) {
 }
 
 
+
+
 #' Deprecated Helper function to truncate importance weights
 #'
 #' Defined as \code{pmin(x, quantile(x, 1 - length(x)^(-0.5)))}
