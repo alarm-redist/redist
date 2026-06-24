@@ -669,8 +669,8 @@ scorer_splits <- function(map, counties) {
     counties <- vctrs::vec_group_id(counties)
 
     fn <- function(plans) {
-        nd <- length(unique(plans[, 1]))
-        splits(plans - 1, counties - 1, nd, 1) / length(unique(counties))
+        nd <- attr(map, "ndists")
+        splits(plans, counties, nd, 1) / length(unique(counties))
     }
     class(fn) <- c("redist_scorer", "function")
     fn
