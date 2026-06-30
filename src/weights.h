@@ -12,6 +12,7 @@
 #include "redist_types.h"
 #include "scoring.h"
 #include "splitting_schedule_types.h"
+#include "redist_alg_helpers.h"
 #include "tree_op.h"
 #include "weight_caching.h"
 #include <cmath>
@@ -20,6 +21,17 @@
 #include <string>
 #include <unordered_map>
 #include <utility> // for std::pair
+
+class SMCDiagnostics;
+
+// Simple struct for tracking granular time
+struct GranularWeightTimes {
+    double get_valid_pairs = 0.0;
+    double splitting_prob = 0.0;
+    double region_scores = 0.0;
+    double plan_scores = 0.0;
+    double tau_terms = 0.0;
+};
 
 /* Computes Compute Effective Sample Size from log incremental weights
  *
@@ -51,7 +63,8 @@ double compute_log_optimal_incremental_weights(
     TreeSplitter &edge_splitter, SamplingSpace const sampling_space,
     double const whole_map_compactness_term, ScoringFunction const &scoring_function,
     double const rho, bool compute_log_splitting_prob, bool is_final_plan,
-    bool const using_caching, WeightCache *weight_cache);
+    bool const using_caching, WeightCache *weight_cache,
+    GranularWeightTimes &granular_times);
 
 void compute_all_plans_log_optimal_incremental_weights(
     RcppThread::ThreadPool &pool, const MapParams &map_params,
@@ -61,6 +74,7 @@ void compute_all_plans_log_optimal_incremental_weights(
     std::vector<std::unique_ptr<TreeSplitter>> &tree_splitter_ptrs_vec,
     bool compute_log_splitting_prob, bool is_final_plans,
     arma::subview_col<double> log_incremental_weights, WeightCacheEnsemble &cache_ensemble,
+    SMCDiagnostics &smc_diagnostics, int const smc_step_num, int const step_num,
     int verbosity);
 
 #endif

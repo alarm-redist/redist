@@ -28,7 +28,7 @@ Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
     Rcpp::IntegerVector const &district_seat_sizes, double const lower, double const target,
     double const upper, Rcpp::IntegerMatrix const &region_ids,
     Rcpp::IntegerMatrix const &region_sizes, std::string const &output_type,
-    int const num_threads);
+    int const num_threads, int const verbosity = 3);
 
 // [[Rcpp::export]]
 arma::vec compute_plans_log_optimal_weights(

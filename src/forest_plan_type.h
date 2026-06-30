@@ -3,7 +3,6 @@
 #define FOREST_PLAN_TYPE_H
 
 #include "base_plan_type.h"
-#include "weights.h"
 
 class ForestPlan : public Plan {
 

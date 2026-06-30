@@ -396,8 +396,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // compute_log_unnormalized_target_density_components
-Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(List const& adj_list, const arma::uvec& counties, const arma::uvec& pop, List const& constraints, double const pop_temper, bool const compute_pop_temper, double const rho, int const ndists, int const total_seats, int const num_regions, Rcpp::IntegerVector const& district_seat_sizes, double const lower, double const target, double const upper, Rcpp::IntegerMatrix const& region_ids, Rcpp::IntegerMatrix const& region_sizes, std::string const& output_type, int const num_threads);
-RcppExport SEXP _redist_compute_log_unnormalized_target_density_components(SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP constraintsSEXP, SEXP pop_temperSEXP, SEXP compute_pop_temperSEXP, SEXP rhoSEXP, SEXP ndistsSEXP, SEXP total_seatsSEXP, SEXP num_regionsSEXP, SEXP district_seat_sizesSEXP, SEXP lowerSEXP, SEXP targetSEXP, SEXP upperSEXP, SEXP region_idsSEXP, SEXP region_sizesSEXP, SEXP output_typeSEXP, SEXP num_threadsSEXP) {
+Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(List const& adj_list, const arma::uvec& counties, const arma::uvec& pop, List const& constraints, double const pop_temper, bool const compute_pop_temper, double const rho, int const ndists, int const total_seats, int const num_regions, Rcpp::IntegerVector const& district_seat_sizes, double const lower, double const target, double const upper, Rcpp::IntegerMatrix const& region_ids, Rcpp::IntegerMatrix const& region_sizes, std::string const& output_type, int const num_threads, int const verbosity);
+RcppExport SEXP _redist_compute_log_unnormalized_target_density_components(SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP constraintsSEXP, SEXP pop_temperSEXP, SEXP compute_pop_temperSEXP, SEXP rhoSEXP, SEXP ndistsSEXP, SEXP total_seatsSEXP, SEXP num_regionsSEXP, SEXP district_seat_sizesSEXP, SEXP lowerSEXP, SEXP targetSEXP, SEXP upperSEXP, SEXP region_idsSEXP, SEXP region_sizesSEXP, SEXP output_typeSEXP, SEXP num_threadsSEXP, SEXP verbositySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -419,7 +419,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::IntegerMatrix const& >::type region_sizes(region_sizesSEXP);
     Rcpp::traits::input_parameter< std::string const& >::type output_type(output_typeSEXP);
     Rcpp::traits::input_parameter< int const >::type num_threads(num_threadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(compute_log_unnormalized_target_density_components(adj_list, counties, pop, constraints, pop_temper, compute_pop_temper, rho, ndists, total_seats, num_regions, district_seat_sizes, lower, target, upper, region_ids, region_sizes, output_type, num_threads));
+    Rcpp::traits::input_parameter< int const >::type verbosity(verbositySEXP);
+    rcpp_result_gen = Rcpp::wrap(compute_log_unnormalized_target_density_components(adj_list, counties, pop, constraints, pop_temper, compute_pop_temper, rho, ndists, total_seats, num_regions, district_seat_sizes, lower, target, upper, region_ids, region_sizes, output_type, num_threads, verbosity));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -1057,7 +1058,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_perform_a_valid_multidistrict_split", (DL_FUNC) &_redist_perform_a_valid_multidistrict_split, 17},
     {"_redist_draw_trees_on_a_region", (DL_FUNC) &_redist_draw_trees_on_a_region, 13},
     {"_redist_attempt_splits_on_a_region", (DL_FUNC) &_redist_attempt_splits_on_a_region, 16},
-    {"_redist_compute_log_unnormalized_target_density_components", (DL_FUNC) &_redist_compute_log_unnormalized_target_density_components, 18},
+    {"_redist_compute_log_unnormalized_target_density_components", (DL_FUNC) &_redist_compute_log_unnormalized_target_density_components, 19},
     {"_redist_compute_plans_log_optimal_weights", (DL_FUNC) &_redist_compute_plans_log_optimal_weights, 17},
     {"_redist_compute_plans_log_simple_weights", (DL_FUNC) &_redist_compute_plans_log_simple_weights, 17},
     {"_redist_group_pct_top_k", (DL_FUNC) &_redist_group_pct_top_k, 5},

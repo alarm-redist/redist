@@ -22,7 +22,7 @@ Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
     Rcpp::IntegerVector const &district_seat_sizes, double const lower, double const target,
     double const upper, Rcpp::IntegerMatrix const &region_ids,
     Rcpp::IntegerMatrix const &region_sizes, std::string const &output_type,
-    int const num_threads) {
+    int const num_threads, int const verbosity) {
     // create the map param object
     MapParams map_params(adj_list, counties, pop, ndists, total_seats,
                          as<std::vector<int>>(district_seat_sizes), lower, target, upper);
@@ -54,7 +54,7 @@ Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
 
     PlanEnsemble plan_ensemble(map_params, *splitting_schedule_ptr, num_regions, num_plans,
                                SamplingSpace::GraphSpace, region_ids, region_sizes, rng_states,
-                               pool);
+                               pool, verbosity);
 
     // we say its final if we don't want to compute pop temper
     bool is_final = !compute_pop_temper;
@@ -83,7 +83,9 @@ Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
     std::atomic<int> thread_id_counter{0};
 
     const int check_int = 50; // check for interrupts every _ iterations
-    Rcpp::Rcout << "Computing Log Target Density!" << std::endl;
+    if (verbosity >= 3) {
+        Rcpp::Rcout << "Computing Log Target Density!" << std::endl;
+    }
 
     int const n_threads = num_threads == 0 ? 1 : num_threads;
     std::vector<PlanMultigraph> plan_multigraph_buffers(n_threads,
@@ -137,7 +139,9 @@ Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
             }
         }
         if (entire_prob_zero) {
-            ++bar;
+            if (verbosity >= 3) {
+                ++bar;
+            }
             RcppThread::checkUserInterrupt(i % check_int == 0);
             return; // return to break the loop in the lambda
         }
@@ -154,7 +158,9 @@ Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
             }
         }
         if (entire_prob_zero) {
-            ++bar;
+            if (verbosity >= 3) {
+                ++bar;
+            }
             RcppThread::checkUserInterrupt(i % check_int == 0);
             return; // return to break the loop in the lambda
         }
@@ -171,7 +177,9 @@ Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
                     log_unnormalized_component_densities(region_id, i) = R_NegInf;
                 }
             }
-            ++bar;
+            if (verbosity >= 3) {
+                ++bar;
+            }
             RcppThread::checkUserInterrupt(i % check_int == 0);
             return; // return to break the loop in the lambda
         }
@@ -184,7 +192,9 @@ Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
             if (just_single_density) {
                 log_unnormalized_component_densities(0, i) = R_NegInf;
                 entire_prob_zero = true;
-                ++bar;
+                if (verbosity >= 3) {
+                    ++bar;
+                }
                 RcppThread::checkUserInterrupt(i % check_int == 0);
                 return; // return to break the loop in the lambda
             } else {
@@ -212,7 +222,9 @@ Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
                 if (just_single_density) {
                     log_unnormalized_component_densities(0, i) = R_NegInf;
                     entire_prob_zero = true;
-                    ++bar;
+                    if (verbosity >= 3) {
+                        ++bar;
+                    }
                     RcppThread::checkUserInterrupt(i % check_int == 0);
                     return; // return to break the loop in the lambda
                 } else {
@@ -243,7 +255,9 @@ Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
             }
         }
 
-        ++bar;
+        if (verbosity >= 3) {
+            ++bar;
+        }
         RcppThread::checkUserInterrupt(i % check_int == 0);
     });
 

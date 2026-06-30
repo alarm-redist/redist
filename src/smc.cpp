@@ -96,9 +96,11 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
                   const arma::vec &normalized_cumulative_weights,
                   SMCDiagnostics &smc_diagnostics, int const smc_step_num, int const step_num,
                   bool const is_final_split, umat &ancestors, const std::vector<int> &lags,
+                  bool const estimated_unbiased_normalizing_constant,
                   RcppThread::ThreadPool &pool, int verbosity, int diagnostic_level,
                   int const max_split_tries) {
     // important constants
+    int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
     const int M = old_plan_ensemble->nsims;
     bool const smd_split_district_only =
         splitting_schedule.schedule_type == SplittingSizeScheduleType::DistrictOnlySMD;
@@ -136,7 +138,22 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
     std::vector<std::vector<int>> thread_successful_tree_sizes(
         rng_states.size(), std::vector<int>(map_params.total_seats, 0));
 
-    int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
+    // granular time tracking 
+    std::vector<double> wilson_call_times (
+        perf_config::track_granular_times ? num_threads : 0
+    );
+    std::vector<double> md_selection_times (
+        perf_config::track_granular_times ? num_threads : 0
+    );
+    std::vector<double> plan_updating_times (
+        perf_config::track_granular_times ? num_threads : 0
+    );
+    std::vector<double> hard_constraint_split_times (
+        perf_config::track_granular_times ? num_threads : 0
+    );
+    
+
+    
     // Trick to give each thread a unique id
     // We need the extra steps to avoid the problem where
     // only some threads persist from previous calls but the counter resets
@@ -175,6 +192,10 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
             return;
         }
 
+        // optional time tracker for granular time tracking 
+        // no call to now() if constexpr is false, since it just declares the variable it should be optimized out
+        auto total_plan_start_time = maybe_now(); // optional timing 
+
         bool ok = false;
         int idx;
         int reject_ct = 0;
@@ -192,6 +213,7 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
 
             // Get region id the split
             int region_id_to_split;
+            auto md_selection_time = maybe_now();
             if (smd_split_district_only) {
                 // if just doing district splits just use remainder region
                 // which is always the highest id
@@ -202,6 +224,11 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
                     old_plan_ensemble->plan_ptr_vec[idx]->choose_multidistrict_to_split(
                         splitting_schedule.valid_region_sizes_to_split, rng_states[thread_id]);
             }
+            if constexpr (perf_config::track_granular_times){
+                add_elapsed(md_selection_times[thread_id], md_selection_time); // optional timing
+            }
+            
+
             int region_to_split_size =
                 old_plan_ensemble->plan_ptr_vec[idx]->region_sizes[region_id_to_split];
             if constexpr (DEBUG_GSMC_PLANS_VERBOSE) {
@@ -213,11 +240,16 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
             ++thread_tree_sizes[thread_id][region_to_split_size - 1];
 
             // Try to split the region
+            auto wilson_time = maybe_now();
             std::pair<bool, EdgeCut> edge_search_result =
                 ust_samplers_vec[thread_id].attempt_to_find_valid_tree_split(
                     rng_states[thread_id], scoring_functions[thread_id],
                     *tree_splitters[thread_id], *old_plan_ensemble->plan_ptr_vec[idx],
                     region_id_to_split, new_region_id, save_edge_selection_prob);
+            if constexpr (perf_config::track_granular_times){
+                add_elapsed(wilson_call_times[thread_id], wilson_time); // optional timing
+            }
+
 
             if constexpr (DEBUG_GSMC_PLANS_VERBOSE) {
                 REprintf("idx %d - Splti %s\n", idx,
@@ -231,12 +263,17 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
                     Rprintf("Tree on Plan %d Successfully split\n", i);
                 }
                 // make the new plan a copy of the old one
+                auto plan_updating_time = maybe_now();
                 new_plan_ensemble->plan_ptr_vec[i]->shallow_copy(
                     *old_plan_ensemble->plan_ptr_vec[idx]);
                 // now split that region we found on the old one
                 new_plan_ensemble->plan_ptr_vec[i]->update_from_successful_split(
                     *tree_splitters[thread_id], ust_samplers_vec[thread_id],
                     std::get<1>(edge_search_result), region_id_to_split, new_region_id, true);
+                if constexpr (perf_config::track_granular_times){
+                    add_elapsed(plan_updating_times[thread_id], plan_updating_time); // optional timing 
+                }
+
 
                 // check if there are any additional hard constraints
                 if (!scoring_functions[thread_id].any_hard_constraints) {
@@ -245,9 +282,13 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
                     // If custom hard constraints are used then
                     // the thread pool can only have a single thread or else everything will
                     // break
+                    auto split_hard_constraint_time = maybe_now();
                     ok = scoring_functions[thread_id].new_split_ok(
                         *new_plan_ensemble->plan_ptr_vec[i], region_id_to_split, new_region_id,
                         is_final_split);
+                    if constexpr (perf_config::track_granular_times){
+                        add_elapsed(hard_constraint_split_times[thread_id], split_hard_constraint_time); // optional timing
+                    }
                     if constexpr (DEBUG_GSMC_PLANS_VERBOSE) {
                         Rprintf("Plan %d - New split has %s probability\n", i,
                                 (ok ? "POSITIVE" : "ZERO"));
@@ -289,18 +330,101 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
         if (verbosity >= 3) {
             ++bar;
         }
+
+        if constexpr (perf_config::track_granular_times){
+            // set the time spent successfully sampling a plan
+            add_elapsed(
+                smc_diagnostics.total_plan_smc_split_times(i, smc_step_num),
+                total_plan_start_time
+            ); // optional timing
+        }
+        
     });
+
+
 
     // Wait for all the threads to finish
     pool.wait();
 
     Rcpp::checkUserInterrupt();
 
-    // RcppThread::checkUserInterrupt();
-
     if constexpr (DEBUG_GSMC_PLANS_VERBOSE) {
         REprintf("Done splitting!\n");
     }
+
+
+
+    if(estimated_unbiased_normalizing_constant){
+    // Now we sample one more plan and discard it to allow for unbiased 
+    // normalization constant estimation 
+    bool extra_plan_sampled = false;
+    int extra_particle_reject_ct = 0;
+
+    while(!extra_plan_sampled) {
+        if (check_max_split_tries && extra_particle_reject_ct >= max_split_tries) {
+            throw Rcpp::exception(
+                "Failed to split a single plan after `max_split_tries` attempts!\n");
+        }
+        // increase the number of tries for particle i by 1
+        extra_particle_reject_ct++;
+        // sample previous plan
+        int idx = rng_states[0].r_int_wgt(normalized_cumulative_weights);
+        // Get region id the split
+        int region_id_to_split;
+        if (smd_split_district_only) {
+            // if just doing district splits just use remainder region
+            // which is always the highest id
+            region_id_to_split = old_plan_ensemble->plan_ptr_vec[idx]->num_regions - 1;
+        } else {
+            // if generalized split pick a region to try to split
+            region_id_to_split =
+                old_plan_ensemble->plan_ptr_vec[idx]->choose_multidistrict_to_split(
+                    splitting_schedule.valid_region_sizes_to_split, rng_states[0]);
+        }
+
+        // Try to split the region
+        std::pair<bool, EdgeCut> edge_search_result =
+            ust_samplers_vec[0].attempt_to_find_valid_tree_split(
+                rng_states[0], scoring_functions[0],
+                *tree_splitters[0], *old_plan_ensemble->plan_ptr_vec[idx],
+                region_id_to_split, new_region_id, save_edge_selection_prob);
+
+
+
+        // if successful update the new plan and check if satisfies any other hard
+        // constraints
+        if (std::get<0>(edge_search_result)) {
+            // check if there are any additional hard constraints
+            if (!scoring_functions[0].any_hard_constraints) {
+                // if not we can stop trying 
+                extra_plan_sampled = true;
+            } else {
+                // If custom hard constraints are used then
+                // the thread pool can only have a single thread or else everything will
+                // break
+                // TODO: Make it possible to check this new plan without actually copying anything
+                // since this is an extra plan we discard
+                extra_plan_sampled = true;
+                // make the new plan a copy of the old one
+                // new_plan_ensemble->plan_ptr_vec[i]->shallow_copy(
+                //     *old_plan_ensemble->plan_ptr_vec[idx]);
+                // // now split that region we found on the old one
+                // new_plan_ensemble->plan_ptr_vec[i]->update_from_successful_split(
+                //     *tree_splitters[thread_id], ust_samplers_vec[thread_id],
+                //     std::get<1>(edge_search_result), region_id_to_split, new_region_id, true);
+
+                // ok = scoring_functions[thread_id].new_split_ok(
+                //     *new_plan_ensemble->plan_ptr_vec[i], region_id_to_split, new_region_id,
+                //     is_final_split);
+            }
+        }
+    }
+
+    // now save the number of failed attempts before sampling the extra plan
+    smc_diagnostics.tries_before_extra_particle[smc_step_num] = extra_particle_reject_ct;
+
+    }
+
 
     // now swap the old plans with the new ones. This avoids needing to actually copy
     std::swap(old_plan_ensemble, new_plan_ensemble);
@@ -314,6 +438,19 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
                 thread_successful_tree_sizes[a_thread_id][region_size];
         }
     }
+
+    // add the wilson call times 
+    if constexpr (perf_config::track_granular_times){
+        for (size_t thread_id = 0; thread_id < num_threads; thread_id++)
+        {
+            smc_diagnostics.wilson_call_times[step_num] += wilson_call_times[thread_id];
+            smc_diagnostics.md_selection_times[smc_step_num] += md_selection_times[thread_id];
+            smc_diagnostics.hard_constraint_split_times[step_num] += hard_constraint_split_times[thread_id];
+            smc_diagnostics.plan_updating_times[step_num] += plan_updating_times[thread_id];
+        }
+    }
+
+    
 
     // now compute acceptance rate and unique parents and original ancestors
     double accept_rate = M / static_cast<double>(sum(draw_tries_vec));
@@ -382,6 +519,7 @@ void run_merge_split_step_on_all_plans(
         proposed_plan_multigraphs_vec.emplace_back(
             map_params, sampling_space == SamplingSpace::LinkingEdgeSpace);
     }
+    std::vector<GranularMCMCTimes> granular_weight_times(num_threads);
 
     // create a progress bar
     RcppThread::ProgressBar bar(nsims, 1);
@@ -395,6 +533,9 @@ void run_merge_split_step_on_all_plans(
             thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
             thread_generation_counter = generation;
         }
+
+        auto total_plan_start_time = maybe_now();
+
         // store the number of succesful runs
         if (cache_ensemble.using_caching) {
             success_count_vec[i] = run_merge_split_steps(
@@ -405,7 +546,8 @@ void run_merge_split_step_on_all_plans(
                 proposed_plan_multigraphs_vec[thread_id], merge_prob_type, rho, is_final,
                 nsteps_to_run, thread_tree_sizes[thread_id],
                 thread_successful_tree_sizes[thread_id], true,
-                cache_ensemble.weight_cache_ptr_vec[i].get());
+                cache_ensemble.weight_cache_ptr_vec[i].get(),
+                granular_weight_times[thread_id]);
         } else {
             success_count_vec[i] = run_merge_split_steps(
                 map_params, splitting_schedule, scoring_functions[thread_id],
@@ -414,10 +556,18 @@ void run_merge_split_step_on_all_plans(
                 current_plan_multigraphs_vec[thread_id],
                 proposed_plan_multigraphs_vec[thread_id], merge_prob_type, rho, is_final,
                 nsteps_to_run, thread_tree_sizes[thread_id],
-                thread_successful_tree_sizes[thread_id], false, nullptr);
+                thread_successful_tree_sizes[thread_id], false, nullptr,
+                granular_weight_times[thread_id]);
         }
 
         RcppThread::checkUserInterrupt(i % check_int == 0);
+
+        if constexpr (perf_config::track_granular_times){
+            add_elapsed(
+                smc_diagnostics.total_plan_mcmc_times(i, merge_split_step_num) ,
+                total_plan_start_time
+            );
+        }
 
         if (verbosity >= 3) {
             ++bar;
@@ -436,6 +586,22 @@ void run_merge_split_step_on_all_plans(
                 thread_tree_sizes[a_thread_id][region_size];
             smc_diagnostics.successful_tree_sizes_mat(region_size, step_num) +=
                 thread_successful_tree_sizes[a_thread_id][region_size];
+        }
+    }
+
+    // add granular time if that's being tracked 
+    if constexpr (perf_config::track_granular_times){
+        for (size_t thread_id = 0; thread_id < num_threads; thread_id++)
+        {
+            smc_diagnostics.wilson_call_times[step_num] += granular_weight_times[thread_id].wilson_time;
+            smc_diagnostics.get_valid_pairs_times[step_num] += granular_weight_times[thread_id].get_valid_pairs;
+            smc_diagnostics.selecting_merge_pair_times[merge_split_step_num] += granular_weight_times[thread_id].selecting_merge_pair;
+            smc_diagnostics.hard_constraint_split_times[step_num] += granular_weight_times[thread_id].hard_constraint_time;
+            smc_diagnostics.eff_boundary_times[merge_split_step_num] += granular_weight_times[thread_id].eff_boundary_length;
+            smc_diagnostics.plan_scores_times[step_num] += granular_weight_times[thread_id].plan_scores;
+            smc_diagnostics.region_scores_times[step_num] += granular_weight_times[thread_id].region_scores;
+            smc_diagnostics.log_tau_times[step_num] += granular_weight_times[thread_id].tau_terms;
+            smc_diagnostics.plan_updating_times[step_num] += granular_weight_times[thread_id].plan_copying;
         }
     }
 
@@ -563,6 +729,12 @@ List run_redist_smc(
     bool const using_caching = as<bool>(control["cache_weights"]);
     // max tries value
     int const max_split_tries = as<int>(control["max_split_tries"]);
+    // unbiased normalizing estimate
+    bool const estimated_unbiased_normalizing_constant = as<bool>(control["est_norm_unbiased"]); 
+
+    if(estimated_unbiased_normalizing_constant && scoring_functions[0].any_hard_constraints){
+        Rcpp::warning("Unbiased normalizing constant estimation si not support right now for hard constraints!");
+    }
 
     // total number of steps to run
     int total_steps = static_cast<int>(step_types.size());
@@ -641,6 +813,7 @@ List run_redist_smc(
     SMCDiagnostics smc_diagnostics(
         sampling_space, splitting_method, splitting_size_regime, merge_split_step_vec, V, nsims,
         ndists, total_seats, initial_num_regions, total_smc_steps, total_ms_steps,
+        estimated_unbiased_normalizing_constant, 
         diagnostic_level, splitting_all_the_way, split_district_only);
 
     // Create a threadpool
@@ -656,6 +829,10 @@ List run_redist_smc(
     std::unique_ptr<PlanEnsemble> plan_ensemble_ptr = get_plan_ensemble_ptr(
         map_params, *splitting_schedule_ptr, initial_num_regions, nsims, sampling_space,
         region_id_mat, region_sizes_mat, rng_states, pool, verbosity);
+
+    // compute the log of the unnormalized density of the entire map 
+    // which is log spanning tree count  - score 
+    double log_blank_map_target_density;
 
     {
         // Ensemble of dummy plans for copying
@@ -700,12 +877,20 @@ List run_redist_smc(
                                                   sampling_space);
 
         double entire_map_compactness = 0.0;
-        // compute the whole map compactness if needed
-        if (initial_num_regions == 1 && rho != 1) {
-            entire_map_compactness =
-                (rho - 1) *
-                plan_ensemble_ptr->plan_ptr_vec[0]->compute_log_region_spanning_trees(
+        // compute the whole map compactness if we're starting from scratch
+        if (initial_num_regions == 1) {
+            double entire_map_log_st_count = plan_ensemble_ptr->plan_ptr_vec[0]->compute_log_region_spanning_trees(
                     map_params, 0);
+            entire_map_compactness = (rho - 1) * entire_map_log_st_count;
+            log_blank_map_target_density = rho * entire_map_log_st_count;
+
+            // now subtract the score 
+            auto region_score_result = scoring_functions[0].compute_region_full_score(
+                *plan_ensemble_ptr->plan_ptr_vec[0], 0, false);
+            auto plan_only_score_result =
+                scoring_functions[0].compute_plan_score(*plan_ensemble_ptr->plan_ptr_vec[0]);
+            log_blank_map_target_density -= region_score_result.second;
+            log_blank_map_target_density -= plan_only_score_result.second;
         }
 
         // Loading Info
@@ -779,11 +964,6 @@ List run_redist_smc(
                 // If we have any custom hard constraints then must switch to single threading
                 // for everything
 
-                //  using std::chrono::high_resolution_clock;
-                // using std::chrono::duration_cast;
-                // using std::chrono::duration;
-                // using std::chrono::milliseconds;
-
                 // Check what step type
                 if (!merge_split_step_vec[step_num]) {
 
@@ -803,7 +983,7 @@ List run_redist_smc(
                     if (use_naive_k_splitter) {
                         if (try_to_estimate_cut_k) {
                             // Start timing 
-                            auto smc_param_estimation_start_time = std::chrono::high_resolution_clock::now();
+                            auto smc_param_estimation_start_time = std::chrono::steady_clock::now();
                             // est k
                             int est_cut_k;
                             int last_k = smc_step_num == 0 ? std::max(1, V - 5)
@@ -824,7 +1004,7 @@ List run_redist_smc(
                             }
 
                             // end timing 
-                            auto smc_param_estimation_time = std::chrono::high_resolution_clock::now();
+                            auto smc_param_estimation_time = std::chrono::steady_clock::now();
                             // add the time 
                             std::chrono::duration<double, std::ratio<1>> smc_param_diff = smc_param_estimation_time - smc_param_estimation_start_time;
                             smc_diagnostics.smc_step_parameter_estimation_times[smc_step_num] = smc_param_diff.count();
@@ -844,21 +1024,21 @@ List run_redist_smc(
                             tree_splitter_ptrs_vec[0]->get_single_int_param();
                     }
 
-                    // auto t1f = high_resolution_clock::now();
 
                     if constexpr (DEBUG_GSMC_PLANS_VERBOSE)
                         Rprintf("About to run smc step %d!\n", smc_step_num);
                     // start timing the smc split
-                    auto smc_splitting_start_time = std::chrono::high_resolution_clock::now();
+                    auto smc_splitting_start_time = std::chrono::steady_clock::now();
                     // split the map
                     run_smc_step(map_params, *splitting_schedule_ptr, scoring_functions,
                                  rng_states, sampling_space, plan_ensemble_ptr,
                                  dummy_plan_ensemble_ptr, tree_splitter_ptrs_vec,
                                  normalized_cumulative_weights, smc_diagnostics, smc_step_num,
-                                 step_num, is_final_splitting_step, ancestors, lags, pool,
+                                 step_num, is_final_splitting_step, ancestors, lags, 
+                                 estimated_unbiased_normalizing_constant, pool,
                                  verbosity, diagnostic_mode ? 3 : 0, max_split_tries);
                     // end timing 
-                    auto smc_splitting_end_time = std::chrono::high_resolution_clock::now();
+                    auto smc_splitting_end_time = std::chrono::steady_clock::now();
                     // add the time 
                     std::chrono::duration<double, std::ratio<1>> smc_split_diff = smc_splitting_end_time - smc_splitting_start_time;
                     smc_diagnostics.smc_split_times[smc_step_num] = smc_split_diff.count();
@@ -906,7 +1086,7 @@ List run_redist_smc(
                     }
 
                     // start timing the smc split
-                    auto smc_weight_start_time = std::chrono::high_resolution_clock::now();
+                    auto smc_weight_start_time = std::chrono::steady_clock::now();
                     if (wgt_type == "optimal") {
                         // TODO make more princicpal in the future
                         // for now its just if not district only and not final round
@@ -918,7 +1098,9 @@ List run_redist_smc(
                             plan_ensemble_ptr->plan_ptr_vec, tree_splitter_ptrs_vec,
                             compute_log_splitting_prob, is_final_splitting_step,
                             smc_diagnostics.log_incremental_weights_mat.col(smc_step_num),
-                            *cache_ensemble_ptr, verbosity);
+                            *cache_ensemble_ptr, 
+                            smc_diagnostics, smc_step_num, step_num,
+                            verbosity);
                     } else if (wgt_type == "simple") {
                         if (verbosity >= 3)
                             Rprintf("Computing Simple Backwards Kernel Weights:\n");
@@ -933,7 +1115,7 @@ List run_redist_smc(
                         throw Rcpp::exception("invalid weight type!");
                     }
                     // end timing 
-                    auto smc_weight_end_time = std::chrono::high_resolution_clock::now();
+                    auto smc_weight_end_time = std::chrono::steady_clock::now();
                     // add the time 
                     std::chrono::duration<double, std::ratio<1>> smc_weight_diff = smc_weight_end_time - smc_weight_start_time;
                     smc_diagnostics.smc_weight_times[smc_step_num] = smc_weight_diff.count();
@@ -1042,7 +1224,7 @@ List run_redist_smc(
                     }
 
                     // start timing
-                    auto ms_round_start_time = std::chrono::high_resolution_clock::now();
+                    auto ms_round_start_time = std::chrono::steady_clock::now();
                     run_merge_split_step_on_all_plans(
                         pool, map_params, *splitting_schedule_ptr, scoring_functions,
                         rng_states, sampling_space, plan_ensemble_ptr->plan_ptr_vec,
@@ -1052,7 +1234,7 @@ List run_redist_smc(
                         verbosity);
 
                     // end timing 
-                    auto ms_round_end_time = std::chrono::high_resolution_clock::now();
+                    auto ms_round_end_time = std::chrono::steady_clock::now();
                     // add the time 
                     std::chrono::duration<double, std::ratio<1>> ms_round_diff = ms_round_end_time - ms_round_start_time;
                     smc_diagnostics.ms_step_times[merge_split_step_num] = ms_round_diff.count();
@@ -1068,7 +1250,7 @@ List run_redist_smc(
                             tree_splitter_ptrs_vec[0]->get_single_int_param();
                     }
 
-                    // auto t2fm = high_resolution_clock::now();
+                    // auto t2fm = steady_clock::now();
                     // /* Getting number of milliseconds as a double. */
                     // duration<double, std::milli> ms_doublefm = t2fm - t1fm;
                     // Rcout << "Running Merge split " << ms_doublefm.count() << " ms\n";
@@ -1182,7 +1364,10 @@ List run_redist_smc(
         _["region_pops"] = plan_ensemble_ptr->get_region_pops_matrix(pool),
         _["plan_seats_saved"] = plan_sizes_saved, _["log_weights"] = log_weights,
         _["ancestors"] = ancestors, _["step_types"] = step_types,
-        _["merge_split_steps"] = merge_split_step_vec);
+        _["merge_split_steps"] = merge_split_step_vec,
+        _["log_blank_map_target_density"] = log_blank_map_target_density,
+        _["multidistrict_selection_alpha"] = SELECTION_ALPHA 
+    );
 
     // to try to save memory kill the plan vector
     plan_ensemble_ptr->flattened_all_plans.clear();

@@ -437,6 +437,12 @@ redist_mergesplit <- function(
             )
             t2_run <- Sys.time()
 
+            # add the time information
+            time_breakdowns <- list(
+                warmup_time = algout$warmup_time,
+                nonwarmup_time = algout$nonwarmup_time
+            )
+
             # Internal diagnostics,
             algout$internal_diagnostics <- list(
         log_mh_ratio = algout$log_mh_ratio,
@@ -448,7 +454,9 @@ redist_mergesplit <- function(
           (nsims * thin),
         tree_sizes = algout$tree_sizes,
         successful_tree_sizes = algout$successful_tree_sizes,
-        proposed_plans = algout$proposed_plans
+        proposed_plans = algout$proposed_plans,
+        time_breakdowns = time_breakdowns,
+        granular_times = algout$granular_times
       )
 
             # add cut k for graph space
@@ -486,9 +494,24 @@ redist_mergesplit <- function(
             dim(algout$seats) <- NULL
             dim(algout$region_pops) <- NULL
 
+
+            if (run_verbosity >= 1 && chains > 1) {
+                cli::cli_text(
+                    "Chain {chain}: {format(nsims, big.mark=',')} plans sampled in
+             {format(t2_run - t1_run, digits=2)}"
+                )
+            }
+
             algout
         }
     t2 <- Sys.time()
+
+    if (verbosity >= 1) {
+        cli::cli_text(
+            "{format(nsims*chains, big.mark=',')} plans sampled in
+                 {format(t2-t1, digits=2)}"
+        )
+    }
 
     each_len <- ncol(out_par[[1]]$plans)
 

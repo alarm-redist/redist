@@ -192,6 +192,13 @@
 #' are made without a success then an exception will be thrown. This can be
 #' useful for maps and constraints where it might become impossible to split
 #' plans after a certain step. Defaults to not checking.
+#'  \item \code{est_norm_unbiased} Whether or not to perform extra work
+#'  allowing for unbiased estimation of the normalizing constant of the target
+#'  distribution. This entails at each step sampling an extra plan, saving the
+#'  number of tries before sampling the extra plan, and then discarding the
+#'  extra plan. The number of attempts can be used with the weights to form an
+#'  unbiased estimator, as opposed to the biased normalizing
+#'  constant estimators that are obtained with the weights alone.
 #' }
 #' @param adapt_k_thresh Deprecated. Pass in through the `split_params` arg.
 #' The threshold value used in the heuristic to select a
@@ -457,6 +464,7 @@ redist_smc <- function(
     weight_type <- control_params_list[["weight_type"]]
     cache_weights <- control_params_list[["cache_weights"]]
     max_split_tries <- control_params_list[["max_split_tries"]]
+    est_norm_unbiased <- control_params_list[["est_norm_unbiased"]]
 
     multiprocess <- nproc > 1
     # make sure we're not spawning more proccesses than runs
@@ -521,6 +529,7 @@ redist_smc <- function(
     weight_type = weight_type,
     cache_weights = cache_weights,
     max_split_tries = max_split_tries,
+    est_norm_unbiased = est_norm_unbiased,
     lags = lags,
     seq_alpha = seq_alpha,
     pop_temper = pop_temper,
@@ -729,7 +738,13 @@ redist_smc <- function(
         region_ids_mat_list = algout$region_ids_mat_list,
         region_seats_mat_list = algout$region_seats_mat_list,
         merge_split_success_mat = algout$merge_split_success_mat,
+        tries_before_extra_particle = ifelse(est_norm_unbiased, algout$tries_before_extra_particle, NULL),
+        log_blank_map_target_density = ifelse(
+            init_num_regions == 1,
+            algout$log_blank_map_target_density,
+            NA),
         time_breakdowns = time_breakdowns,
+        granular_times = algout$granular_times,
         forest_adjs_list = algout$forest_adjs_list,
         linking_edges_list = algout$linking_edges_list
       )
@@ -760,6 +775,10 @@ redist_smc <- function(
             if (sampling_space == GRAPH_PLAN_SPACE_SAMPLING) {
                 run_forward_kernel_params$cut_k_used <- algout$cut_k_vals
             }
+            # add multidistrict selection parameters
+            if (splitting_size_regime == "any_valid_sizes"){
+                run_forward_kernel_params$multidistrict_selection_alpha <- algout$multidistrict_selection_alpha
+            }
 
             # add high level diagnostic stuff
             algout$l_diag <- list(
@@ -777,7 +796,7 @@ redist_smc <- function(
         runtime = as.numeric(t2_run - t1_run, units = "secs")
       )
 
-            if (verbosity >= 1 && runs > 1) {
+            if (run_verbosity >= 1 && runs > 1) {
                 cli::cli_text(
           "Chain {chain}: {format(nsims, big.mark=',')} plans sampled in
                  {format(t2_run - t1_run, digits=2)}"
@@ -1056,12 +1075,15 @@ get_init_plan_params <- function(
 #'     - `weight_type`: Must be either simple or optimal. Defaults to optimal
 #' @noRd
 extract_control_params <- function(control, compactness) {
-    control_param_names <- c("nproc", "weight_type", "cache_weights", "max_split_tries")
+    control_param_names <- c("nproc", "weight_type",
+                             "cache_weights", "max_split_tries",
+                             "est_norm_unbiased")
 
     default_nproc <- 1L
     default_weight_type <- "optimal"
     default_cache_weights <- compactness != 1
     default_max_split_tries <- 0L
+    default_est_norm_unbiased <- TRUE
 
     if ("nproc" %in% names(control)) {
         nproc <- control[["nproc"]]
@@ -1116,11 +1138,22 @@ extract_control_params <- function(control, compactness) {
         max_split_tries <- default_max_split_tries
     }
 
+    if ("est_norm_unbiased" %in% names(control)) {
+        est_norm_unbiased <- control[["est_norm_unbiased"]]
+        if (!rlang::is_scalar_logical(est_norm_unbiased)) {
+            cli::cli_abort("{.arg est_norm_unbiased} must be a scalar boolean")
+        }
+    } else {
+        # else default
+        est_norm_unbiased <- default_est_norm_unbiased
+    }
+
     control_params <- list(
     nproc = nproc,
     weight_type = weight_type,
     cache_weights = cache_weights,
-    max_split_tries = max_split_tries
+    max_split_tries = max_split_tries,
+    est_norm_unbiased = est_norm_unbiased
   )
 
     control_params
@@ -1248,7 +1281,265 @@ extract_ms_params <- function(ms_params, total_smc_steps) {
 }
 
 
+#' Estimates the log of normalizing constant of plans sampled with `redist_smc`
+#'
+#' Returns an estimate of the log normalizing constant for plans sampled using
+#' `redist_smc`
+#'
+#' @param plans A `redist_plans` object generated using `Redist 5.0` or later.
+#' @inheritParams redist_smc
+#'
+#' @return An estimate of the normalizing constant from each run
+#'
+#'
+#' @md
+#' @order 1
+#' @export
+est_norm_biased <- function(
+        map,
+        plans
+){
+    if (!inherits(plans, "redist_plans")) {
+        cli::cli_abort("{.arg plans} must be a {.cls redist_plans} type!")
+    }
+    if (attr(plans, "version") < "5.0"){
+        cli::cli_abort("{.arg plans} must have been sampled with Redist 5.0 or later!")
+    }
+    plan_matrix <- matrix(1L, nrow = nrow(map), ncol = 1)
+    num_regions <- dplyr::n_distinct(plan_matrix[, 1])
 
+    # get validated inputs
+    map_params <- get_map_parameters(map, attr(plans, "counties"))
+    map <- map_params$map
+    adj_list <- map_params$adj_list
+    counties <- map_params$counties
+    pop <- map_params$pop
+    pop_bounds <- map_params$pop_bounds
+
+    ndists <- map_params$ndists
+    total_seats <- map_params$nseats
+    district_seat_sizes <- map_params$seats_range
+    districting_scheme <- map_params$districting_scheme
+
+    sizes_matrix <- matrix(total_seats)
+    constraints <- attr(plans, "constraints")
+    compactness <- attr(plans, "compactness")
+
+    # compute the weight of the blank map
+    initial_weight <- compute_log_unnormalized_target_density_components(
+        adj_list,
+        counties,
+        pop,
+        constraints,
+        pop_temper = 0,
+        compute_pop_temper = FALSE,
+        rho = compactness,
+        ndists = ndists,
+        total_seats = total_seats,
+        num_regions = num_regions,
+        district_seat_sizes = district_seat_sizes,
+        lower = pop_bounds[1],
+        target = pop_bounds[2],
+        upper = pop_bounds[3],
+        region_ids = plan_matrix,
+        region_sizes = sizes_matrix,
+        output_type = "single",
+        num_threads = 1,
+        verbosity = 1
+    )[1,1]
+
+    wgt_mats <- lapply(
+        attr(plans, "internal_diagnostics"),
+        function(x) x$log_incremental_weights_mat
+    )
+
+    # extract the estimated k value if needed
+    sampling_space <- attr(plans, "run_information")[[1]]$sampling_space
+    nruns <- length(attr(plans, "run_information"))
+
+    smc_steps <- lapply(
+        attr(plans, "run_information"),
+        function(a_run_list) a_run_list$step_types == "smc"
+    )
+
+    # get the number of attempts
+    log_attempt_counts <- lapply(
+        seq_along(attr(plans, "internal_diagnostics")),
+        function(i) colSums(attr(plans, "internal_diagnostics")[[i]]$draw_tries_mat)[smc_steps[[i]]] |>
+            log()
+            )
+
+    if(sampling_space == GRAPH_PLAN_SPACE_SAMPLING){
+        # get the k values
+        param_mat <- lapply(
+                seq_along(attr(plans, "diagnostics")),
+                function(i){
+                    attr(plans, "diagnostics")[[i]]$forward_kernel_params$cut_k_used[smc_steps[[i]]] |>
+                        log()
+                }
+            )
+
+    }else{
+        # else just do nothing
+        param_mat <- lapply(
+            smc_steps,
+            function(x) rep(0L, sum(x))
+            )
+    }
+
+    # adds the log parameter value to the log weights
+    # equivalent to weights * parameter value and
+    # then exponentiates and sums and takes log
+    log_of_wgt_step_sums <- Map(
+        function(W, p) {
+            stopifnot(ncol(W) == nrow(p))
+            sweep(W, MARGIN = 2, STATS = p, FUN = "+") |>
+                exp() |>
+                colSums() |>
+                log()
+        },
+        wgt_mats,
+        param_mat
+    )
+
+    # now for each smc step we want to divide the sum of the weights
+    # by the number of attempts and take their product
+    log_norm_estimates <- mapply(
+        function(W, tries) {
+            stopifnot(length(W) == length(tries))
+            initial_weight + sum(W - tries)
+        },
+        log_of_wgt_step_sums,
+        log_attempt_counts
+    )
+
+    ratio_estimates <- mapply(
+        function(W, tries) {
+            stopifnot(length(W) == length(tries))
+            W - tries
+        },
+        log_of_wgt_step_sums,
+        log_attempt_counts
+    )
+
+    return(log_norm_estimates)
+
+}
+
+
+#' Unbiased Estimates the log of normalizing constant of plans sampled with `redist_smc`
+#'
+#' Returns an estimate of the log normalizing constant for plans sampled using
+#' `redist_smc`
+#'
+#' @param plans A `redist_plans` object generated using `Redist 5.1` or later.
+#' @inheritParams redist_smc
+#'
+#' @return An estimate of the normalizing constant from each run
+#'
+#'
+#' @md
+#' @order 1
+#' @export
+est_norm_unbiased <- function(
+        map,
+        plans
+){
+    if (!inherits(plans, "redist_plans")) {
+        cli::cli_abort("{.arg plans} must be a {.cls redist_plans} type!")
+    }
+    if (attr(plans, "version") < "5.0"){
+        cli::cli_abort("{.arg plans} must have been sampled with Redist 5.0 or later!")
+    }
+    # check if it was generated after the try counts were added
+    extra_info_added <- sapply(attr(plans, "internal_diagnostics"),
+           function(x) "tries_before_extra_particle" %in% names(x)) |>
+        all()
+    if (!extra_info_added){
+        cli::cli_abort("{.arg plans} must have been sampled with a version of Redist that
+                       tracked {.arg tries_before_extra_particle} in {.arg internal_diagnostics}")
+    }
+    # get initial weight
+    initial_log_weights <- sapply(attr(plans, "internal_diagnostics"),
+                              function(x) x$log_blank_map_target_density)
+    # Warn if they are not all the same
+    if(!all(abs(initial_log_weights[1] - initial_log_weights) < 1e-14)){
+        cli::cli_warn("{.arg log_blank_map_target_density} in {.arg internal_diagnostics}
+                       are not equal accross runs. These plans may have been sampled on
+                      different maps or with different values for {.arg counties}")
+    }
+
+    wgt_mats <- lapply(
+        attr(plans, "internal_diagnostics"),
+        function(x) x$log_incremental_weights_mat
+    )
+
+    # extract the estimated k value if needed
+    sampling_space <- attr(plans, "run_information")[[1]]$sampling_space
+    nruns <- length(attr(plans, "run_information"))
+
+    smc_steps <- lapply(
+        attr(plans, "run_information"),
+        function(a_run_list) a_run_list$step_types == "smc"
+    )
+
+    # get the log of the number of attempts (with the extra discarded try added on)
+    log_attempt_counts <- Map(
+        function(idiag, smc_step_vec) {
+            log(colSums(idiag$draw_tries_mat)[smc_step_vec] + idiag$tries_before_extra_particle)
+        },
+        attr(plans, "internal_diagnostics"),
+        smc_steps
+    )
+
+    if(sampling_space == GRAPH_PLAN_SPACE_SAMPLING){
+        # get the k values
+        param_mat <- lapply(
+            seq_along(attr(plans, "diagnostics")),
+            function(i){
+                attr(plans, "diagnostics")[[i]]$forward_kernel_params$cut_k_used[smc_steps[[i]]] |>
+                    log()
+            }
+        )
+
+    }else{
+        # else just do nothing
+        param_mat <- lapply(
+            smc_steps,
+            function(x) rep(0L, sum(x))
+        )
+    }
+
+    # adds the log parameter value to the log weights
+    # equivalent to weights * parameter value and
+    # then exponentiates and sums and takes log
+    log_of_wgt_step_sums <- Map(
+        function(W, p) {
+            stopifnot(ncol(W) == nrow(p))
+            sweep(W, MARGIN = 2, STATS = p, FUN = "+") |>
+                exp() |>
+                colSums() |>
+                log()
+        },
+        wgt_mats,
+        param_mat
+    )
+
+    # now for each smc step we want to divide the sum of the weights
+    # by the number of attempts and take their product
+    log_norm_estimates <- mapply(
+        function(W, tries, initital_log_weight) {
+            stopifnot(length(W) == length(tries))
+            initital_log_weight + sum(W - tries)
+        },
+        log_of_wgt_step_sums,
+        log_attempt_counts,
+        lapply(initial_log_weights, function(x) x)
+    )
+
+    return(log_norm_estimates)
+
+}
 
 #' Deprecated Helper function to truncate importance weights
 #'

@@ -20,6 +20,31 @@
 // [[Rcpp::export]]
 Rcpp::List maximum_input_sizes();
 
+
+// gets current time if tracking granular times
+inline Clock::time_point maybe_now() {
+    if constexpr (perf_config::track_granular_times) {
+        return Clock::now();
+    } else {
+        return {};
+    }
+}
+
+// Adds the time elapsed to slot 
+inline void add_elapsed(
+    double &slot,
+    Clock::time_point const start
+) {
+    if constexpr (perf_config::track_granular_times) {
+        slot += std::chrono::duration<double, std::ratio<1>>(
+            Clock::now() - start
+        ).count();
+    }else{
+        throw Rcpp::exception("Time elapsed is being called when TRACK_GRANULAR_PERFORMANCE_TIMES = false");
+    }
+}
+
+
 // Checks a matrix of seat counts is valid
 //
 // Checks that a matrix of seat counts associated with a plan is valid
@@ -207,6 +232,7 @@ class SMCDiagnostics {
                    std::vector<bool> const &merge_split_step_vec, int const V, int const nsims,
                    int const ndists, int const total_seats, int const initial_num_regions,
                    int const total_smc_steps, int const total_ms_steps,
+                   bool const estimated_unbiased_normalizing_constant,
                    int const diagnostic_level, bool const splitting_all_the_way,
                    bool const split_district_only);
 
@@ -239,6 +265,7 @@ class SMCDiagnostics {
     // counts the size of the trees
     Rcpp::IntegerMatrix tree_sizes_mat;            // ndists by total_steps matrix
     Rcpp::IntegerMatrix successful_tree_sizes_mat; // ndists by total_steps matrix
+    std::vector<int> tries_before_extra_particle; // length number of smc stesp 
     // These store time info
     std::vector<double> smc_step_parameter_estimation_times; // length number of smc steps
     std::vector<double> smc_split_times; // length number of smc steps
@@ -256,6 +283,24 @@ class SMCDiagnostics {
     std::vector<std::vector<int>> all_steps_valid_region_sizes_to_split;
     std::vector<std::vector<int>> all_steps_valid_split_region_sizes;
     std::vector<Rcpp::IntegerMatrix> region_sizes_mat_list;
+
+    // These are granular time stuff that is only tracked when 
+    // TRACK_GRANULAR_PERFORMANCE_TIMES (in redist_constants.h) is set to true 
+    std::vector<double> wilson_call_times; // time spent drawing spanning trees with wilson
+    std::vector<double> md_selection_times; // time spent picking a multidistrict to split 
+    std::vector<double> plan_updating_times; // Times spent updating a plan object after a split 
+    std::vector<double> hard_constraint_split_times; // Time spent checking hard constraints in splitting 
+    Rcpp::NumericMatrix total_plan_smc_split_times; // Time spent in smc splitting step per plan
+    std::vector<double> get_valid_pairs_times; // Time spent finding adjacent pairs and effective boundary lengths for smc. Just time getting pairs for mcmc
+    std::vector<double> plan_scores_times; // Time spent computing plan based scores in smc weights and mergesplit
+    std::vector<double> region_scores_times; // Time spent computing region based scores in smc weights and mergesplit
+    std::vector<double> log_tau_times; // Time spent computing log spanning trees in smc weights and mergesplit 
+    std::vector<double> retro_splitting_prob_times; // Time spent computing retroactive splitting prob in smc weights
+    Rcpp::NumericMatrix total_plan_smc_weight_times; // total time spent on smc weights 
+    std::vector<double> selecting_merge_pair_times; // Time spent related to picking pair to merge 
+    std::vector<double> eff_boundary_times; // time spent computing effective boundary lengths 
+    Rcpp::NumericMatrix total_plan_mcmc_times; // total time spent running mergesplit on a plan
+
 
     // adds full diagnostics (takes a lot of memory)
     void add_full_step_diagnostics(int const total_steps, bool const splitting_all_the_way,

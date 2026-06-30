@@ -655,12 +655,12 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
     const int region2_pop, const int min_potential_cut_size, const int max_potential_cut_size,
     std::vector<int> const &smaller_cut_sizes_to_try, const int total_merged_region_size) {
     int const total_merged_region_pop = region1_pop + region2_pop;
-    // auto func_start = std::chrono::high_resolution_clock::now();
+    // auto func_start = std::chrono::steady_clock::now();
     // reset pops_below_vertex
     std::fill(pops_below_vertex.begin(), pops_below_vertex.end(), 0);
     std::fill(no_valid_edges_vertices.begin(), no_valid_edges_vertices.end(), false);
 
-    // auto t1_start = std::chrono::high_resolution_clock::now();
+    // auto t1_start = std::chrono::steady_clock::now();
 
     // find the valid edges in this half of the tree
     std::vector<EdgeCut> valid_tree1_edges = get_all_valid_edges_in_undirected_tree(
@@ -669,12 +669,12 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
         smaller_cut_sizes_to_try, total_merged_region_pop, total_merged_region_size,
         map_params.lower, map_params.upper, map_params.target);
 
-    // auto t1_end = std::chrono::high_resolution_clock::now();
+    // auto t1_end = std::chrono::steady_clock::now();
     // //     /* Getting number of milliseconds as a double. */
     // std::chrono::duration<double, std::milli> t1 = t1_end - t1_start;
 
     // build the tree starting from root 2
-    // auto t2_start = std::chrono::high_resolution_clock::now();
+    // auto t2_start = std::chrono::steady_clock::now();
 
     // find the valid edges in this half of the tree
     std::vector<EdgeCut> valid_tree2_edges = get_all_valid_edges_in_undirected_tree(
@@ -683,7 +683,7 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
         smaller_cut_sizes_to_try, total_merged_region_pop, total_merged_region_size,
         map_params.lower, map_params.upper, map_params.target);
 
-    // auto t2_end = std::chrono::high_resolution_clock::now();
+    // auto t2_end = std::chrono::steady_clock::now();
     // //     /* Getting number of milliseconds as a double. */
     // std::chrono::duration<double, std::milli> t2 = t2_end - t2_start;
 
@@ -691,7 +691,7 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
     //     << t1_build.count() + t2_build.count() + t1_search.count() + t2_search.count()
     //     << " - Tree 1:" << t1_build.count();
 
-    // auto func_end = std::chrono::high_resolution_clock::now();
+    // auto func_end = std::chrono::steady_clock::now();
     // std::chrono::duration<double, std::milli> func_time = func_end - func_start;
 
     // REprintf(

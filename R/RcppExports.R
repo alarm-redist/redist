@@ -97,8 +97,8 @@ attempt_splits_on_a_region <- function(adj_list, counties, pop, ndists, init_num
     .Call(`_redist_attempt_splits_on_a_region`, adj_list, counties, pop, ndists, init_num_regions, region_id_to_split, lower, target, upper, region_ids, region_sizes, splitting_schedule_str, k_param, num_plans, num_threads, verbose)
 }
 
-compute_log_unnormalized_target_density_components <- function(adj_list, counties, pop, constraints, pop_temper, compute_pop_temper, rho, ndists, total_seats, num_regions, district_seat_sizes, lower, target, upper, region_ids, region_sizes, output_type, num_threads) {
-    .Call(`_redist_compute_log_unnormalized_target_density_components`, adj_list, counties, pop, constraints, pop_temper, compute_pop_temper, rho, ndists, total_seats, num_regions, district_seat_sizes, lower, target, upper, region_ids, region_sizes, output_type, num_threads)
+compute_log_unnormalized_target_density_components <- function(adj_list, counties, pop, constraints, pop_temper, compute_pop_temper, rho, ndists, total_seats, num_regions, district_seat_sizes, lower, target, upper, region_ids, region_sizes, output_type, num_threads, verbosity = 3L) {
+    .Call(`_redist_compute_log_unnormalized_target_density_components`, adj_list, counties, pop, constraints, pop_temper, compute_pop_temper, rho, ndists, total_seats, num_regions, district_seat_sizes, lower, target, upper, region_ids, region_sizes, output_type, num_threads, verbosity)
 }
 
 compute_plans_log_optimal_weights <- function(adj_list, counties, pop, constraints, pop_temper, rho, splitting_schedule_str, ndists, total_seats, district_seat_sizes, num_regions, lower, target, upper, region_ids, region_sizes, num_threads) {

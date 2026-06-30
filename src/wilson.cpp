@@ -70,7 +70,7 @@ int sample_sub_ust(MapParams const &map_params, Tree &tree, int &root, double co
                    std::vector<bool> &c_visited, std::vector<int> &cty_pop_below,
                    std::vector<std::array<int, 3>> &county_path, std::vector<int> &path,
                    RNGState &rng_state) {
-    // auto t1_start = std::chrono::high_resolution_clock::now();
+    // auto t1_start = std::chrono::steady_clock::now();
     int const n_county = map_params.num_counties;
     std::fill(c_visited.begin(), c_visited.end(), true);
     // reset county pops to zero
@@ -220,7 +220,7 @@ int sample_sub_ust(MapParams const &map_params, Tree &tree, int &root, double co
             }
         }
     }
-    // auto t1_end = std::chrono::high_resolution_clock::now();
+    // auto t1_end = std::chrono::steady_clock::now();
     // std::chrono::duration<double, std::milli> t1 = t1_end - t1_start;
     // Rcout << "  " << std::setprecision(2) << "Total Time "
     //     << t1.count() << std::endl;

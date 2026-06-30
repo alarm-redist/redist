@@ -116,6 +116,12 @@ Rcpp::List ms_plans(
     int warmup_acceptances = 0;
     // Track total number of successes after warmup
     int post_warump_acceptances = 0;
+    // Track timing 
+    double warmup_time;
+    double nonwarmup_time;
+    // granular timing if that's being tracked 
+    GranularMCMCTimes granular_times;
+
 
     {
         USTSampler ust_sampler(map_params, *splitting_schedule_ptr);
@@ -129,7 +135,6 @@ Rcpp::List ms_plans(
         PlanEnsemble plan_ensemble = get_plan_ensemble(
             map_params, *splitting_schedule_ptr, initial_num_regions, 1, sampling_space,
             init_plan, init_seats, rng_states, pool, verbosity);
-        // plan_ensemble.plan_ptr_vec[0]->Rprint(true);
         // now get for proposal plan
         PlanEnsemble proposal_plan_ensemble = get_plan_ensemble(
             map_params, *splitting_schedule_ptr, initial_num_regions, 1, sampling_space,
@@ -228,8 +233,24 @@ Rcpp::List ms_plans(
             }
         }
 
+        // Declare the timer for the nonwarmup part 
+        std::chrono::steady_clock::time_point nonwarmup_start_time;  // no call to now(), just declares variable
+
+        // start timing the warmup 
+        auto warmup_start_time = std::chrono::steady_clock::now();
+
         RObject bar = cli_progress_bar(total_steps, cli_config(false));
         for (int i = start, step_num = 0; i <= total_post_warmup_steps; i++, step_num++) {
+            if (i == 1){
+                // stop timing warmup and switch to timing runs 
+                // end timing 
+                auto warmup_end_time = std::chrono::steady_clock::now();
+                // compute the time taken
+                std::chrono::duration<double, std::ratio<1>> warmup_diff = warmup_end_time - warmup_start_time;
+                warmup_time = warmup_diff.count();
+                // Now start timing the rest of the code 
+                nonwarmup_start_time = std::chrono::steady_clock::now();
+            }
             // Index 0 or less is warmup
             bool in_warmup = i <= 0;
             if constexpr (DEBUG_PURE_MS_VERBOSE) {
@@ -243,7 +264,8 @@ Rcpp::List ms_plans(
                 *proposal_plan_ensemble.plan_ptr_vec[0], ust_sampler, *tree_splitter_ptr_vec[0],
                 current_plan_multigraph, proposed_plan_multigraph, pair_rule,
                 save_edge_selection_prob, current_plan_adj_region_pairs,
-                current_plan_pair_unnoramalized_wgts, rho, true, do_mh, false, nullptr);
+                current_plan_pair_unnoramalized_wgts, rho, true, do_mh, false, nullptr,
+                granular_times);
             // count size
             ++tree_sizes[std::get<3>(mergesplit_result) - 1];
 
@@ -313,6 +335,11 @@ Rcpp::List ms_plans(
         cli_progress_done(bar);
         if constexpr (DEBUG_PURE_MS_VERBOSE)
             REprintf("Done with main MCMC loop\n");
+
+        auto nonwarmup_end_time = std::chrono::steady_clock::now();
+        // compute the time taken
+        std::chrono::duration<double, std::ratio<1>> nonwarmup_diff = nonwarmup_end_time - nonwarmup_start_time;
+        nonwarmup_time = nonwarmup_diff.count();
     }
 
     if (verbosity >= 1) {
@@ -337,6 +364,9 @@ Rcpp::List ms_plans(
     out["post_warump_acceptances"] = post_warump_acceptances;
     out["log_mh_ratio"] = log_mh_ratios;
     out["tree_sizes"] = tree_sizes;
+    out["successful_tree_sizes"] = successful_tree_sizes;
+    out["warmup_time"] = warmup_time;
+    out["nonwarmup_time"] = nonwarmup_time;
 
     if (diagnostic_mode) {
         // now add 1 to plans
@@ -344,6 +374,31 @@ Rcpp::List ms_plans(
                        proposed_plans_mat.begin(), [](int x) { return x + 1; });
         out["proposed_plans"] = proposed_plans_mat;
     }
+
+
+    // add granular time info 
+    Rcpp::List granular_timing;
+    if constexpr (perf_config::track_granular_times){
+        granular_timing = List::create(
+            _["granular_time_tracked"] = true,
+            _["wilson_call_times"] = granular_times.wilson_time,
+            _["selecting_merge_pair"] = granular_times.selecting_merge_pair,
+            _["hard_constraint_split_times"] = granular_times.hard_constraint_time,
+            _["eff_boundary_times"] = granular_times.eff_boundary_length,
+            _["computing_plan_scores_times"] = granular_times.plan_scores,
+            _["computing_region_scores_times"] = granular_times.region_scores,
+            _["getting_valid_pairs_times"] = granular_times.get_valid_pairs,
+            _["computing_spanning_tree_count_times"] = granular_times.tau_terms,   
+            _["plan_updating_times"] = granular_times.plan_copying
+        );
+
+    }else{
+        granular_timing = List::create(
+            _["granular_time_tracked"] = false
+        );
+    }
+
+    out["granular_times"] = granular_timing;
 
     if constexpr (DEBUG_PURE_MS_VERBOSE)
         REprintf("Done now returning!\n");

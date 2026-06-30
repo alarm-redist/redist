@@ -8,6 +8,9 @@
 constexpr bool DEBUG_WEIGHTS_VERBOSE = false; // Compile-time constant
 #include "weights.h"
 
+
+
+
 // Computes the effective sample size from log incremental weights
 //
 // Takes a vector of log incremental weights and computes the effective sample
@@ -260,48 +263,6 @@ double compute_simple_log_incremental_weight(Plan const &plan, PlanMultigraph &p
             double merged_tau = plan_multigraph.compute_merged_log_multigraph_tau(
                 plan.num_regions, region1_id, region2_id, scoring_function);
             log_extra_prev_plan_terms -= merged_tau;
-
-            // // TEMP just rebuild the multigraph
-            // std::vector<RegionID> flattened_all_plans(plan_multigraph.map_params.V);
-            // PlanVector plan_region_ids(flattened_all_plans, 0, plan_multigraph.map_params.V);
-            // // REprintf("Size is %u!\n", plan_region_ids.size());
-
-            // // set merge reindex
-            // int const merged_reindex = plan.num_regions-2;
-            // for (int current_reindex = 0, i = 0; i < plan.num_regions; i++){
-            //     if(i == region1_id || i == region2_id){
-            //         merge_index_reshuffle[i] = merged_reindex;
-            //     }else{
-            //         merge_index_reshuffle[i] = current_reindex;
-            //         ++current_reindex;
-            //     }
-            //     // REprintf("Mapping %d to %d!\n", i, merge_index_reshuffle[i]);
-            // }
-
-            // // REprintf("Merging (%u, %u)\n", region1_id, region2_id);
-            // for (size_t i = 0; i < plan.region_ids.size(); i++)
-            // {
-            //     plan_region_ids[i] = merge_index_reshuffle[plan.region_ids[i]];
-            //     // REprintf("Plan %u | Merged %u \n", plan.region_ids[i],
-            //     plan_region_ids[i]);
-            // }
-
-            // PlanMultigraph temp_multi(plan_multigraph.map_params, true);
-            // temp_multi.build_plan_multigraph(plan_region_ids, plan.num_regions -1);
-
-            // double temp_tau = temp_multi.compute_log_multigraph_tau(plan.num_regions-1,
-            // scoring_function);
-
-            // if(std::fabs(merged_tau - temp_tau) > 1e16){
-            //     REprintf("Difference %f | Merging (%u, %u) | Merged Plan - Merged Code - %f,
-            //     NO MERGE Code - %f and Equality Check = %s\n",
-            //         merged_tau - temp_tau,
-            //         region1_id, region2_id,
-            //     merged_tau, temp_tau,
-            //     (merged_tau == temp_tau) ? "TRUE" : "FALSE" );
-            //     plan.Rprint(true);
-            //     throw Rcpp::exception("DIFFERENT LOG TAU VALUES!\n");
-            //     }
         }
     }
 
@@ -442,7 +403,8 @@ double compute_log_optimal_incremental_weights(
     TreeSplitter &edge_splitter, SamplingSpace const sampling_space,
     ScoringFunction const &scoring_function, double const rho,
     double const whole_map_compactness_term, bool compute_log_splitting_prob,
-    bool is_final_split, bool const using_caching, WeightCache *weight_cache) {
+    bool is_final_split, bool const using_caching, WeightCache *weight_cache,
+    GranularWeightTimes &granular_times) {
     // plan.Rprint();
     // bool for whether we'll need to compute spanning tree count
     bool const compute_log_tau = rho != 1;
@@ -455,10 +417,15 @@ double compute_log_optimal_incremental_weights(
         Rprintf("Getting Pairs!\n");
 
     // get region pair to effective boundary length map
+    auto time_get_pairs = maybe_now(); // optional timing 
     auto region_pair_log_eff_boundary_map =
         plan.get_valid_adj_regions_and_eff_log_boundary_lens(
             plan_multigraph, splitting_schedule, scoring_function, is_final_split, ust_sampler,
             edge_splitter);
+    if constexpr (perf_config::track_granular_times){
+        add_elapsed(granular_times.get_valid_pairs, time_get_pairs); // optional timing 
+    }
+    
 
     // iterate over the pairs
     if constexpr (DEBUG_WEIGHTS_VERBOSE) {
@@ -469,7 +436,12 @@ double compute_log_optimal_incremental_weights(
     double plan_score = 0.0;
 
     if (scoring_function.any_soft_plan_constraints) {
+        auto time_plan_score = maybe_now(); // optional timing 
         plan_score += scoring_function.compute_plan_score(plan).second;
+        if constexpr (perf_config::track_granular_times){
+            add_elapsed(granular_times.plan_scores, time_plan_score); // optional timing 
+        }
+
         if constexpr (DEBUG_WEIGHTS_VERBOSE) {
             REprintf("Entire Plan Score %f \n", plan_score);
         }
@@ -496,8 +468,14 @@ double compute_log_optimal_incremental_weights(
         if (compute_log_splitting_prob) {
             // in generalized region split find probability you would have
             // picked to split the union of the the two regions
+            auto time_split_prob = maybe_now(); // optional timing 
             double log_splitting_prob = get_log_retroactive_splitting_prob(
                 plan, splitting_schedule.valid_region_sizes_to_split, region1_id, region2_id);
+    
+            if constexpr (perf_config::track_granular_times){
+                add_elapsed(granular_times.splitting_prob, time_split_prob); // optional timing 
+            }
+
             log_of_sum_term += log_splitting_prob;
             if constexpr (DEBUG_WEIGHTS_VERBOSE)
                 REprintf("\n");
@@ -505,6 +483,7 @@ double compute_log_optimal_incremental_weights(
 
         // compute score ratio if any constraints
         if (scoring_function.any_soft_region_constraints) {
+            auto time_region_score = maybe_now(); // optional timing 
             // compute scoring functions
             const double region1_score =
                 scoring_function.compute_region_soft_score(plan, region1_id, is_final_split);
@@ -515,6 +494,10 @@ double compute_log_optimal_incremental_weights(
                     .compute_merged_region_full_score(plan, region1_id, region2_id,
                                                       is_final_split)
                     .second;
+             
+            if constexpr (perf_config::track_granular_times){
+                add_elapsed(granular_times.region_scores, time_region_score); // optional timing
+            }
             if constexpr (DEBUG_WEIGHTS_VERBOSE) {
                 REprintf("Region (%u, %u) Scores (%f, %f) | Merged Score %f \n", region1_id,
                          region2_id, region1_score, region2_score, merged_region_score);
@@ -526,10 +509,14 @@ double compute_log_optimal_incremental_weights(
 
         double merged_plan_score = 0.0;
         if (scoring_function.any_soft_plan_constraints) {
+            auto time_plan_score = maybe_now(); // optional timing 
             merged_plan_score =
                 scoring_function
                     .compute_merged_plan_score(plan, region1_id, region2_id, is_final_split)
-                    .second;
+                    .second; 
+            if constexpr (perf_config::track_granular_times){
+                add_elapsed(granular_times.region_scores, time_plan_score); // optional timing
+            }
             if constexpr (DEBUG_WEIGHTS_VERBOSE) {
                 REprintf("For Regions (%u, %u) Merged Entire Plan Score %f \n", region1_id,
                          region2_id, merged_plan_score);
@@ -550,6 +537,7 @@ double compute_log_optimal_incremental_weights(
 
         // Do taus if neccesary
         if (compute_log_tau) {
+            auto time_log_tau = maybe_now(); // optional timing 
             if constexpr (DEBUG_WEIGHTS_VERBOSE) {
                 REprintf("Computing log tau ratio!\n");
             }
@@ -575,6 +563,10 @@ double compute_log_optimal_incremental_weights(
             log_tau_ratio -= compute_or_fetch_log_region_compactness(
                 plan, region2_id, plan_multigraph.map_params, rho, using_caching, weight_cache);
             log_of_sum_term += log_tau_ratio;
+
+            if constexpr (perf_config::track_granular_times){
+                add_elapsed(granular_times.tau_terms, time_log_tau); // optional timing 
+            }
         }
 
         // Now exponentiate and add to the sum
@@ -644,6 +636,7 @@ void compute_all_plans_log_optimal_incremental_weights(
     std::vector<std::unique_ptr<TreeSplitter>> &tree_splitter_ptrs_vec,
     bool compute_log_splitting_prob, bool is_final_plans,
     arma::subview_col<double> log_incremental_weights, WeightCacheEnsemble &cache_ensemble,
+    SMCDiagnostics &smc_diagnostics, int const smc_step_num, int const step_num,
     int verbosity) {
     const int nsims = static_cast<int>(plans_ptr_vec.size());
     const int check_int = 50; // check for interrupts every _ iterations
@@ -666,6 +659,7 @@ void compute_all_plans_log_optimal_incremental_weights(
         plan_multigraphs_vec.emplace_back(map_params,
                                           sampling_space == SamplingSpace::LinkingEdgeSpace);
     }
+    std::vector<GranularWeightTimes> granular_weight_times(num_threads);
 
     RcppThread::ProgressBar bar(nsims, 1);
     // Parallel thread pool where all objects in memory shared by default
@@ -673,6 +667,7 @@ void compute_all_plans_log_optimal_incremental_weights(
         static thread_local int thread_generation_counter = -1;
         static thread_local int thread_id;
 
+        auto total_weight_time = maybe_now(); // optional timing 
         // check if the thread id was generated this function call
         if (thread_generation_counter != generation) {
             // if not then give it a new id
@@ -686,25 +681,48 @@ void compute_all_plans_log_optimal_incremental_weights(
                 ust_samplers_vec[thread_id], *tree_splitter_ptrs_vec[thread_id], sampling_space,
                 scoring_functions[thread_id], rho, whole_map_compactness_term,
                 compute_log_splitting_prob, is_final_plans, cache_ensemble.using_caching,
-                cache_ensemble.weight_cache_ptr_vec[i].get());
+                cache_ensemble.weight_cache_ptr_vec[i].get(), 
+                granular_weight_times[thread_id]);
         } else {
             log_incremental_weights[i] = compute_log_optimal_incremental_weights(
                 *plans_ptr_vec[i], plan_multigraphs_vec[thread_id], splitting_schedule,
                 ust_samplers_vec[thread_id], *tree_splitter_ptrs_vec[thread_id], sampling_space,
                 scoring_functions[thread_id], rho, whole_map_compactness_term,
                 compute_log_splitting_prob, is_final_plans, cache_ensemble.using_caching,
-                nullptr);
+                nullptr, granular_weight_times[thread_id]);
         }
+
+        
+
+        if constexpr (perf_config::track_granular_times){
+            add_elapsed(
+                smc_diagnostics.total_plan_smc_weight_times(i, smc_step_num), 
+                total_weight_time
+            ); // optional timing 
+        }
+        
 
         if (verbosity >= 3) {
             ++bar;
         }
 
         RcppThread::checkUserInterrupt(i % check_int == 0);
+
     });
 
     // Wait for all the threads to finish
     pool.wait();
+
+    // add granular time if that's being tracked 
+    if constexpr (perf_config::track_granular_times){
+        for (size_t thread_id = 0; thread_id < num_threads; thread_id++)
+        {
+            smc_diagnostics.get_valid_pairs_times[step_num] += granular_weight_times[thread_id].get_valid_pairs;
+            smc_diagnostics.plan_scores_times[step_num] += granular_weight_times[thread_id].plan_scores;
+            smc_diagnostics.region_scores_times[step_num] += granular_weight_times[thread_id].region_scores;
+            smc_diagnostics.log_tau_times[step_num] += granular_weight_times[thread_id].tau_terms;
+        }
+    }
 
     return;
 }

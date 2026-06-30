@@ -174,6 +174,13 @@ plans before giving up. If more than \code{max_split_tries} attempts at splittin
 are made without a success then an exception will be thrown. This can be
 useful for maps and constraints where it might become impossible to split
 plans after a certain step. Defaults to not checking.
+\item \code{est_norm_unbiased} Whether or not to perform extra work
+allowing for unbiased estimation of the normalizing constant of the target
+distribution. This entails at each step sampling an extra plan, saving the
+number of tries before sampling the extra plan, and then discarding the
+extra plan. The number of attempts can be used with the weights to form an
+unbiased estimator, as opposed to the biased normalizing
+constant estimators that are obtained with the weights alone.
 }}
 
 \item{adapt_k_thresh}{The threshold value used in the heuristic to select a

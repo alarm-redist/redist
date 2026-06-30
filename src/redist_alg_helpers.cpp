@@ -823,28 +823,50 @@ get_tree_splitter_ptrs(MapParams const &map_params, SplittingMethodType const sp
     return tree_splitters_ptr_vec;
 }
 
-    std::vector<double> smc_split_times; // length number of smc steps
-    std::vector<double> smc_weight_times; // length number of smc steps
-    std::vector<double> mcmc_times; // length number of ms rounds
-
 SMCDiagnostics::SMCDiagnostics(SamplingSpace const sampling_space,
                                SplittingMethodType const splitting_method_type,
                                SplittingSizeScheduleType const splitting_schedule_type,
                                std::vector<bool> const &merge_split_step_vec, int const V,
                                int const nsims, int const ndists, int const total_seats,
                                int const initial_num_regions, int const total_smc_steps,
-                               int const total_ms_steps, int const diagnostic_level,
+                               int const total_ms_steps, 
+                               bool const estimated_unbiased_normalizing_constant,
+                               int const diagnostic_level,
                                bool const splitting_all_the_way, bool const split_district_only)
     : diagnostic_level(diagnostic_level), total_steps(total_smc_steps + total_ms_steps),
       log_wgt_stddevs(total_smc_steps), acceptance_rates(total_steps),
       nunique_parents(total_smc_steps), nunique_plans(total_steps), n_eff(total_smc_steps),
       num_merge_split_attempts_vec(total_ms_steps),
       cut_k_values(sampling_space == SamplingSpace::GraphSpace ? total_steps : 0),
+      tries_before_extra_particle(estimated_unbiased_normalizing_constant ? total_smc_steps : 0),
       smc_step_parameter_estimation_times(total_smc_steps),
       smc_split_times(total_smc_steps),
       smc_weight_times(total_smc_steps),
       ms_step_parameter_estimation_times(total_ms_steps),
-      ms_step_times(total_ms_steps)
+      ms_step_times(total_ms_steps),
+      wilson_call_times(perf_config::track_granular_times ? total_smc_steps + total_ms_steps : 0),
+      md_selection_times(perf_config::track_granular_times ? total_smc_steps : 0),
+      plan_updating_times(perf_config::track_granular_times ? total_smc_steps + total_ms_steps : 0),
+      hard_constraint_split_times(perf_config::track_granular_times ? total_smc_steps + total_ms_steps : 0),
+      total_plan_smc_split_times(
+        perf_config::track_granular_times ? nsims : 0,
+        perf_config::track_granular_times ? total_smc_steps : 0
+      ),
+      get_valid_pairs_times(perf_config::track_granular_times ? total_smc_steps + total_ms_steps : 0),
+      plan_scores_times(perf_config::track_granular_times ? total_smc_steps + total_ms_steps : 0),
+      region_scores_times(perf_config::track_granular_times ? total_smc_steps + total_ms_steps : 0),
+      log_tau_times(perf_config::track_granular_times ? total_smc_steps + total_ms_steps : 0),
+      retro_splitting_prob_times(perf_config::track_granular_times ? total_smc_steps : 0),
+      total_plan_smc_weight_times(
+        perf_config::track_granular_times ? nsims : 0,
+        perf_config::track_granular_times ? total_smc_steps : 0
+      ),
+      selecting_merge_pair_times(perf_config::track_granular_times ? total_ms_steps : 0),
+      eff_boundary_times(perf_config::track_granular_times ? total_ms_steps : 0),
+      total_plan_mcmc_times(
+        perf_config::track_granular_times ? nsims : 0,
+        perf_config::track_granular_times ? total_ms_steps : 0
+      )
        {
     // Level 1 Diagnostics. Not too big relative to plan size
     log_incremental_weights_mat = arma::dmat(
@@ -977,6 +999,33 @@ void SMCDiagnostics::add_diagnostics_to_out_list(Rcpp::List &out) {
     std::transform(parent_index_mat.begin(), parent_index_mat.end(), parent_index_mat.begin(),
                    [](int x) { return x + 1; });
 
+    // add granular time info 
+    Rcpp::List granular_timing;
+    if constexpr (perf_config::track_granular_times){
+        granular_timing = List::create(
+            _["granular_time_tracked"] = true,
+            _["wilson_call_times"] = wilson_call_times,
+            _["multidistrict_selection_times"] = md_selection_times,
+            _["plan_updating_times"] = plan_updating_times,
+            _["hard_constraint_split_times"] = hard_constraint_split_times,
+            _["total_plan_smc_split_times"] = total_plan_smc_split_times,
+            _["getting_valid_pairs_times"] = get_valid_pairs_times,
+            _["computing_plan_scores_times"] = plan_scores_times,
+            _["computing_region_scores_times"] = region_scores_times,
+            _["computing_spanning_tree_count_times"] = log_tau_times,   
+            _["computing_retro_splitting_prob_times"] = retro_splitting_prob_times,     
+            _["total_plan_smc_weight_times"] = total_plan_smc_weight_times,
+            _["selecting_merge_pair"] = selecting_merge_pair_times,
+            _["eff_boundary_times"] = eff_boundary_times,
+            _["total_plan_mcmc_times"] = total_plan_mcmc_times
+        );
+
+    }else{
+        granular_timing = List::create(
+            _["granular_time_tracked"] = false
+        );
+    }
+    
     out["acceptance_rates"] = acceptance_rates;
     out["draw_tries_mat"] = draw_tries_mat;
     out["parent_index"] = parent_index_mat;
@@ -991,11 +1040,13 @@ void SMCDiagnostics::add_diagnostics_to_out_list(Rcpp::List &out) {
     out["log_incremental_weights_mat"] = log_incremental_weights_mat;
     out["ms_step_counts"] = num_merge_split_attempts_vec;
     out["merge_split_success_mat"] = merge_split_successes_mat;
+    out["tries_before_extra_particle"] = tries_before_extra_particle;
     out["smc_step_parameter_estimation_times"] = smc_step_parameter_estimation_times;
     out["smc_split_times"] = smc_split_times;
     out["smc_weight_times"] = smc_weight_times;
     out["ms_step_parameter_estimation_times"] = ms_step_parameter_estimation_times;
     out["ms_step_times"] = ms_step_times;
+    out["granular_times"] = granular_timing;
     out["region_ids_mat_list"] = all_steps_plan_region_ids_list;
     out["region_seats_mat_list"] = region_sizes_mat_list;
     out["forest_adjs_list"] = all_steps_forests_adj_list;

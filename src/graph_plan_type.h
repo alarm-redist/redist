@@ -4,7 +4,6 @@
 
 #include "base_plan_type.h"
 #include "tree_op.h"
-#include "weights.h"
 
 class GraphPlan : public Plan {
     // private member variable
