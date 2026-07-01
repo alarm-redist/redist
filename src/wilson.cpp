@@ -84,7 +84,7 @@ int sample_sub_ust(MapParams const &map_params, Tree &tree, int &root, double co
     int remaining = 0;
     int const V = map_params.V;
     for (int i = 0; i < V; i++) {
-        if (ignore.at(i)) {
+        if (ignore[i]) {
             visited[i] = true;
         } else {
             visited[i] = false;
@@ -101,7 +101,7 @@ int sample_sub_ust(MapParams const &map_params, Tree &tree, int &root, double co
 
     int c_remaining = 0;
     for (int i = 0; i < n_county; i++) {
-        c_remaining += 1 - c_visited.at(i);
+        c_remaining += 1 - c_visited[i];
     }
 
     // pick root
@@ -110,7 +110,7 @@ int sample_sub_ust(MapParams const &map_params, Tree &tree, int &root, double co
     root = rvtx(visited, V, remaining, lower_i, rng_state);
     visited[root] = true;
     remaining--;
-    c_visited.at(map_params.counties[root] - 1) = true;
+    c_visited[map_params.counties[root] - 1] = true;
     c_remaining--;
 
     // Connect counties
@@ -127,15 +127,15 @@ int sample_sub_ust(MapParams const &map_params, Tree &tree, int &root, double co
             return 1;
         }
         c_remaining -= added;
-        c_visited.at(add) = true;
+        c_visited[add] = true;
         for (int i = 0; i < added; i++) {
-            c_visited.at(county_path[i][0]) = true;
+            c_visited[county_path[i][0]] = true;
             // reverse path so that arrows point away from root
-            tree.at(county_path[i][2]).push_back(county_path[i][1]);
-            cty_tree.at(county_path[i][0])
+            tree[county_path[i][2]].push_back(county_path[i][1]);
+            cty_tree[county_path[i][0]]
                 .push_back(map_params.counties(county_path[i][1]) - 1);
 
-            visited.at(county_path[i][1]) = true; // root for next district
+            visited[county_path[i][1]] = true; // root for next district
             remaining--;
         }
     }
@@ -181,17 +181,17 @@ int sample_sub_ust(MapParams const &map_params, Tree &tree, int &root, double co
                 int cty_root = -1;
                 for (int j = 0; j < n_vtx; j++) {
                     int vtx_idx = county_members[i][j];
-                    if (visited.at(vtx_idx)) { // county root
+                    if (visited[vtx_idx]) { // county root
                         cty_root = j;
                     }
                     if (j > 0 && j != cty_root + 1) {
-                        tree.at(vtx_idx).push_back(county_members[i][j - 1]);
+                        tree[vtx_idx].push_back(county_members[i][j - 1]);
                     }
-                    visited.at(vtx_idx) = true;
+                    visited[vtx_idx] = true;
                 }
 
                 if (cty_root < n_vtx - 1) {
-                    tree.at(county_members[i][cty_root])
+                    tree[county_members[i][cty_root]]
                         .push_back(county_members[i][n_vtx - 1]);
                 }
             }
@@ -214,9 +214,9 @@ int sample_sub_ust(MapParams const &map_params, Tree &tree, int &root, double co
             }
             remaining -= added - 1; // minus 1 because ending vertex already in tree
             for (int i = 0; i < added - 1; i++) {
-                visited.at(path[i]) = true;
+                visited[path[i]] = true;
                 // reverse path so that arrows point away from root
-                tree.at(path[i + 1]).push_back(path[i]);
+                tree[path[i + 1]].push_back(path[i]);
             }
         }
     }
@@ -280,11 +280,11 @@ void walk_until_cty(const Multigraph &mg, int root, std::vector<std::array<int, 
     int i;
     int max = visited.size() * 500;
     for (i = 0; i < max; i++) {
-        int prop_idx = rng_state.r_int((int)mg.at(curr).size());
+        int prop_idx = rng_state.r_int((int)mg[curr].size());
         int proposal = mg[curr][prop_idx][0];
         if (ignore[mg[curr][prop_idx][2]] || ignore[mg[curr][prop_idx][1]]) {
             continue;
-        } else if (!visited.at(proposal)) {
+        } else if (!visited[proposal]) {
             path.push_back(mg[curr][prop_idx]);
             loop_erase_cty(path, proposal, root);
         } else {
