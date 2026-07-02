@@ -144,7 +144,7 @@ Rcpp::NumericVector runif1(int n, int max) {
 }
 
 // helper
-int find_u(double u, int max, vec cum_wgts) {
+int find_u(const double u, const int max, const vec &cum_wgts) {
     int low = 0, high = max - 1;
 
     if (cum_wgts[0] > u)
@@ -164,7 +164,7 @@ int find_u(double u, int max, vec cum_wgts) {
 /*
  * Generate a random integer in [0, cum_wgts.size()) according to normalized cumulative weights.
  */
-int RNGState::r_int_wgt(vec cum_wgts) { return find_u(r_unif(), cum_wgts.size(), cum_wgts); }
+int RNGState::r_int_wgt(const vec &cum_wgts) { return find_u(r_unif(), cum_wgts.size(), cum_wgts); }
 
 /*
  *  Generate a random index of `unnormalized_wgts` with probability proportional to its weight
