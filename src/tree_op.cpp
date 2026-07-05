@@ -64,6 +64,46 @@ void print_tree(Tree const &ust) {
     }
 }
 
+void print_tree(VertexGraph const &ust) {
+    Rprintf("Printing Tree:\n");
+    for (int i = 0; i < ust.size(); i++) {
+        Rprintf("%d: (", i);
+        for (auto &node : ust.at(i)) {
+            Rprintf("%d ", node);
+        }
+        Rprintf(")\n");
+    }
+}
+
+void check_tree_equality(VertexGraph const &ust1, VertexGraph const &ust2) {
+    if(ust1.size() != ust2.size()){
+        REprintf("Tree 1 has size %u and Tree 2 has size %u!\n", 
+            ust1.size(), ust2.size());
+        throw Rcpp::exception("");
+    }
+
+    for (size_t v = 0; v < ust1.size(); v++)
+    {
+        // check same size 
+        if(ust1[v].size() != ust2[v].size()){
+            REprintf("Tree 1 has size %u and Tree 2 has size %u at vertex %u!\n", 
+                ust1[v].size(), ust2[v].size(), v);
+            print_tree(ust1);
+            print_tree(ust2);
+            throw Rcpp::exception("");
+        }
+        // Convert both vectors to unordered sets
+        std::unordered_set<int> s1(ust1[v].begin(), ust1[v].end());
+        std::unordered_set<int> s2(ust2[v].begin(), ust2[v].end());
+
+        if(s1 != s2){
+            REprintf("Vertex %u does not have the same neighbors!\n", v);
+        }
+        
+    }
+    
+}
+
 /*
  * Count population below each node in tree and get each node's parent
  */
@@ -155,7 +195,7 @@ void assign_region_id_from_tree(Tree const &ust, PlanVector &region_ids, int con
     return;
 }
 
-// updates both the vertex labels and the forest adjacency
+// updates both the vertex labels and the forest adjacency from a directed tree
 void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_ids,
                                            VertexGraph &forest_graph, int root,
                                            const int new_region_id,
@@ -203,6 +243,51 @@ void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_i
     return;
 }
 
+
+// updates both the vertex labels and the forest adjacency
+// NOTE: This assumes that the region has already been reset in the packed forest
+void assign_region_id_and_forest_from_tree_NEW(const Tree &ust, PlanVector &region_ids,
+                                           EdgeBitset &forest_edges, int root,
+                                           const int new_region_id,
+                                           const GraphEdgeIndex &graph_edge_index,
+                                           CircularQueue<std::pair<int, int>> &vertex_queue) {
+
+    // clear the queue of vertex, parent
+    vertex_queue.clear();
+
+    // update root region id
+    region_ids[root] = new_region_id;
+
+
+    // add roots children to queue
+    for (auto const &child_vertex : ust[root]) {
+        vertex_queue.push({child_vertex, root});
+        // Now add this edge to the packed forest 
+        forest_edges.set_edge(root, child_vertex, graph_edge_index);
+    }
+
+    // update all the children
+    while (!vertex_queue.empty()) {
+        // get and remove head of queue
+        auto [vertex, parent_vertex] = vertex_queue.pop();
+
+        // update region ids
+        region_ids[vertex] = new_region_id;
+        // add this edge to the packed forest
+        forest_edges.set_edge(vertex, parent_vertex, graph_edge_index);
+
+        // TODO check if set edge is neccesary here. I don't think so but leaving to be safe 
+        for (auto const &child_vertex : ust[vertex]) {
+            // add children to queue
+            vertex_queue.push({child_vertex, vertex});
+            // add this edge from vertex to its children
+            forest_edges.set_edge(vertex, child_vertex, graph_edge_index);
+        }
+    }
+
+    return;
+}
+
 /*
  *  Erases an edge from a tree
  *
@@ -233,4 +318,99 @@ void erase_tree_edge(Tree &ust, EdgeCut cut_edge) {
 
     // Now remove the edge corresponding to `cut_vertex` from the tree
     siblings->erase(siblings->begin() + j);
+}
+
+
+
+
+void EdgeBitset::clear_region_tree(
+        PlanVector const &region_ids,
+        RegionID const region_id,
+        GraphEdgeIndex const &edge_index
+){
+        int const V = static_cast<int>(region_ids.size());
+
+        // iterate through the graph 
+        for (int v = 0; v < V; ++v) {
+            // skip if not in that region
+            if (region_ids[v] != region_id) {
+                continue;
+            }
+
+            // Now check each of the edges 
+            for (auto const &incident_edge : edge_index.incident_edges[v]) {
+                int const u = static_cast<int>(incident_edge.neighbor);
+
+                // Avoid clearing the same undirected edge twice.
+                if (v < u && region_ids[u] == region_id) {
+                    // clears the edge 
+                    clear_edge_id(incident_edge.edge_id);
+                }
+            }
+        }
+}
+
+
+void EdgeBitset::clear_region_trees(
+        PlanVector const &region_ids,
+        RegionID const region_id1, RegionID const region_id2,
+        GraphEdgeIndex const &edge_index
+){
+        int const V = static_cast<int>(region_ids.size());
+
+        // iterate through the graph 
+        for (int v = 0; v < V; ++v) {
+            // skip if not in that region
+            if (region_ids[v] != region_id1 && region_ids[v] != region_id2) {
+                continue;
+            }
+
+            // Now check each of the edges 
+            for (auto const &incident_edge : edge_index.incident_edges[v]) {
+                int const u = static_cast<int>(incident_edge.neighbor);
+
+                // Avoid clearing the same undirected edge twice.
+                if (v < u && (region_ids[u] == region_id1 || region_ids[u] == region_id2)) {
+                    // clears the edge 
+                    clear_edge_id(incident_edge.edge_id);
+                }
+            }
+        }
+}
+
+
+void EdgeBitset::fill_vector_tree(
+        GraphEdgeIndex const &edge_index,
+        Tree &ust
+) const{
+    // iterate through the graph
+    for (int v = 0; v < edge_index.V; ++v) {
+        // clear this vertices edges in the tree 
+        ust[v].clear();
+        // Check each of v's edges 
+        for (auto const &incident_edge : edge_index.incident_edges[v]) {
+            // if its adjacent in the packed forest then add it. 
+            if (test_edge_id(incident_edge.edge_id)) {
+                ust[v].push_back(static_cast<int>(incident_edge.neighbor));
+            }
+        }
+    }
+}
+
+void EdgeBitset::fill_vector_tree(
+        GraphEdgeIndex const &edge_index,
+        VertexGraph &ust
+) const{
+    // iterate through the graph
+    for (int v = 0; v < edge_index.V; ++v) {
+        // clear this vertices edges in the tree 
+        ust[v].clear();
+        // Check each of v's edges 
+        for (auto const &incident_edge : edge_index.incident_edges[v]) {
+            // if its adjacent in the packed forest then add it. 
+            if (test_edge_id(incident_edge.edge_id)) {
+                ust[v].push_back(static_cast<int>(incident_edge.neighbor));
+            }
+        }
+    }
 }

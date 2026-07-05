@@ -93,9 +93,10 @@ LinkingEdgePlan::LinkingEdgePlan(int const total_seats, int const total_pop,
                                  PlanVector &this_plan_region_ids,
                                  RegionSizes &this_plan_region_sizes,
                                  IntPlanAttribute &this_plan_region_pops,
-                                 IntPlanAttribute &this_plan_order_added)
+                                 IntPlanAttribute &this_plan_order_added,
+                                 PlanEdgeBits &this_plan_forest_edge_bits)
     : Plan(total_seats, total_pop, this_plan_region_ids, this_plan_region_sizes,
-           this_plan_region_pops, this_plan_order_added) {
+           this_plan_region_pops, this_plan_order_added, this_plan_forest_edge_bits) {
     forest_graph.resize(region_ids.size());
     linking_edges.reserve(this_plan_region_sizes.size() - 1);
 };
@@ -104,11 +105,12 @@ LinkingEdgePlan::LinkingEdgePlan(
     int const ndists, int const num_regions, const arma::uvec &pop,
     PlanVector &this_plan_region_ids, RegionSizes &this_plan_region_sizes,
     IntPlanAttribute &this_plan_region_pops, IntPlanAttribute &this_plan_order_added,
+    PlanEdgeBits &this_plan_forest_edge_bits,
     TreeSplitter const &tree_splitter, USTSampler &ust_sampler, PlanMultigraph &plan_multigraph,
     Graph &region_graph, RNGState &rng_state, const Rcpp::List &initial_forest_adj_list,
     const std::vector<std::array<double, 3>> &input_initial_linking_edges)
     : Plan(num_regions, pop, this_plan_region_ids, this_plan_region_sizes,
-           this_plan_region_pops, this_plan_order_added) {
+           this_plan_region_pops, this_plan_order_added, this_plan_forest_edge_bits) {
     // resize the forest graph
     forest_graph.resize(region_ids.size());
 
@@ -213,22 +215,13 @@ void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
         }
     }
 
-    // Get the root of the tree associated with region 1 and 2
-    int split_region1_tree_root, split_region2_tree_root;
-    int split_region1_size, split_region2_size;
-    int split_region1_pop, split_region2_pop;
-
-    cut_edge.get_split_regions_info(split_region1_tree_root, split_region1_size,
-                                    split_region1_pop, split_region2_tree_root,
-                                    split_region2_size, split_region2_pop);
-    // update the vertex labels and the tree
-    assign_region_id_and_forest_from_tree(ust_sampler.ust, region_ids, forest_graph,
-                                          split_region1_tree_root, split_region1_id,
-                                          ust_sampler.vertex_queue);
-
-    assign_region_id_and_forest_from_tree(ust_sampler.ust, region_ids, forest_graph,
-                                          split_region2_tree_root, split_region2_id,
-                                          ust_sampler.vertex_queue);
+    // NOTE This code is also called when updating forest plans
+    // it updates the plan ids and the forest but doesn't touch the linking edges 
+    update_plan_ids_and_forest_from_cut(tree_splitter, 
+        ust_sampler, cut_edge,
+        split_region1_id, split_region2_id, add_region
+    );
+            
 
     // TODO need to find the edge and update that stuff
     // Now update the linking edge stuff

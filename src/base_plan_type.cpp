@@ -10,6 +10,7 @@
 bool constexpr DEBUG_BASE_PLANS_VERBOSE = false;
 bool constexpr DEBUG_LOG_LINK_EDGE_VERBOSE = false;
 
+
 bool Plan::check_region_pop_valid(MapParams const &map_params, int const region_id) const {
     auto region_pop = region_pops[region_id];
     auto region_size = region_sizes[region_id];
@@ -164,8 +165,9 @@ void Plan::check_inputted_region_ids(int ndists) const {
 // Constructs existing parital plan
 Plan::Plan(int const num_regions, const arma::uvec &pop, PlanVector &this_plan_region_ids,
            RegionSizes &this_plan_region_sizes, IntPlanAttribute &this_plan_region_pops,
-           IntPlanAttribute &this_plan_order_added)
-    : region_ids(this_plan_region_ids), region_sizes(this_plan_region_sizes),
+           IntPlanAttribute &this_plan_order_added, PlanEdgeBits &this_plan_forest_edge_bits)
+    : forest_edges(this_plan_forest_edge_bits),
+      region_ids(this_plan_region_ids), region_sizes(this_plan_region_sizes),
       region_pops(this_plan_region_pops), region_added_order(this_plan_order_added),
       num_regions(num_regions), region_order_max(num_regions + 2) {
 
@@ -182,8 +184,9 @@ Plan::Plan(int const num_regions, const arma::uvec &pop, PlanVector &this_plan_r
 // assumes that the inputted attributes are all zero
 Plan::Plan(int const total_seats, int const total_pop, PlanVector &this_plan_region_ids,
            RegionSizes &this_plan_region_sizes, IntPlanAttribute &this_plan_region_pops,
-           IntPlanAttribute &this_plan_order_added)
-    : region_ids(this_plan_region_ids), region_sizes(this_plan_region_sizes),
+           IntPlanAttribute &this_plan_order_added, PlanEdgeBits &this_plan_forest_edge_bits)
+    : forest_edges(this_plan_forest_edge_bits),
+      region_ids(this_plan_region_ids), region_sizes(this_plan_region_sizes),
       region_pops(this_plan_region_pops), region_added_order(this_plan_order_added),
       num_regions(1), region_order_max(total_seats + 1) {
     region_pops[0] = total_pop;
@@ -367,8 +370,11 @@ void Plan::shallow_copy(Plan const &plan_to_copy) {
     region_pops.copy(plan_to_copy.region_pops);
     // copy order added tracker
     region_added_order.copy(plan_to_copy.region_added_order);
+    // It should be 
+    // if (forest_edges.empty())
     // if forest graph bigger than 1 copy that
     if (plan_to_copy.forest_graph.size() > 0) {
+        forest_edges.copy(plan_to_copy.forest_edges);
         for (auto i = 0; i < forest_graph.size(); ++i) {
             forest_graph[i].assign(plan_to_copy.forest_graph[i].begin(),
                                    plan_to_copy.forest_graph[i].end());
@@ -595,6 +601,13 @@ Plan::draw_tree_on_region(const MapParams &map_params, const int region_to_draw_
     // update root region id
     // and its forest vertices
     int n_desc = ust[root].size();
+
+    // clear the tree in the packed forest  
+    forest_edges.clear_region_tree(
+        region_ids, region_to_draw_tree_on,
+        map_params.graph_edge_index
+    );
+
     // clear this vertices neighbors in the graph and reserve size for children
     forest_graph[root].clear();
     forest_graph[root].reserve(n_desc);
@@ -605,6 +618,8 @@ Plan::draw_tree_on_region(const MapParams &map_params, const int region_to_draw_
     for (auto const &child_vertex : ust[root]) {
         vertex_queue.push({child_vertex, root});
         forest_graph[root].push_back(child_vertex);
+        // Add this edge to the packed forest 
+        forest_edges.set_edge(root, child_vertex, map_params.graph_edge_index);
     }
 
     // update all the children
@@ -621,13 +636,20 @@ Plan::draw_tree_on_region(const MapParams &map_params, const int region_to_draw_
         // add the edge from vertex to parent
         forest_graph[vertex].push_back(parent_vertex);
 
+        // Add this edge to the packed forest 
+        forest_edges.set_edge(vertex, parent_vertex, map_params.graph_edge_index);
+
         for (auto const &child_vertex : ust[vertex]) {
             // add children to queue
             vertex_queue.push({child_vertex, vertex});
             // add this edge from vertex to its children
             forest_graph[vertex].push_back(child_vertex);
+            forest_edges.set_edge(vertex, child_vertex, map_params.graph_edge_index);
         }
     }
+
+    // print_tree(ust);
+    // // forest_edges.print(map_params.graph_edge_index);
 
     return std::make_pair(true, num_attempts);
 }
@@ -709,6 +731,59 @@ void Plan::update_region_info_from_cut(EdgeCut cut_edge, const int split_region1
     region_added_order[split_region2_id] = new_region2_order_added_num;
     region_pops[split_region2_id] = split_region2_pop;
 }
+
+void Plan::update_plan_ids_and_forest_from_cut(TreeSplitter const &tree_splitter, 
+        USTSampler &ust_sampler, EdgeCut const cut_edge,
+        const int split_region1_id, const int split_region2_id, bool const add_region){
+    // Get the root of the tree associated with region 1 and 2
+    int split_region1_tree_root, split_region2_tree_root;
+    int split_region1_size, split_region2_size;
+    int split_region1_pop, split_region2_pop;
+
+    cut_edge.get_split_regions_info(split_region1_tree_root, split_region1_size,
+                                    split_region1_pop, split_region2_tree_root,
+                                    split_region2_size, split_region2_pop);
+
+    // If we're adding the region just clear this one 
+    if (add_region){
+        // We assume split_region1_id is the multidistrict we split s
+        forest_edges.clear_region_tree(
+                region_ids,
+                split_region1_id,
+                ust_sampler.map_params.graph_edge_index
+        );
+    }else{
+        // else we need to clear both regions 
+        forest_edges.clear_region_trees(
+                region_ids,
+                split_region1_id, split_region2_id,
+                ust_sampler.map_params.graph_edge_index
+        );
+    }
+
+
+    // update the vertex labels and the tree
+    assign_region_id_and_forest_from_tree_NEW(ust_sampler.ust, region_ids, forest_edges,
+                                          split_region1_tree_root, split_region1_id,
+                                          ust_sampler.map_params.graph_edge_index, ust_sampler.vertex_queue);
+
+    assign_region_id_and_forest_from_tree_NEW(ust_sampler.ust, region_ids, forest_edges,
+                                          split_region2_tree_root, split_region2_id,
+                                          ust_sampler.map_params.graph_edge_index, ust_sampler.vertex_queue);
+
+    // OLD
+    // update the vertex labels and the tree
+    assign_region_id_and_forest_from_tree(ust_sampler.ust, region_ids, forest_graph,
+                                          split_region1_tree_root, split_region1_id,
+                                          ust_sampler.vertex_queue);
+
+    assign_region_id_and_forest_from_tree(ust_sampler.ust, region_ids, forest_graph,
+                                          split_region2_tree_root, split_region2_id,
+                                          ust_sampler.vertex_queue);
+
+    check_tree_equality(forest_graph, forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index));
+}
+
 
 void Plan::update_from_successful_split(TreeSplitter const &tree_splitter,
                                         USTSampler &ust_sampler, EdgeCut const &cut_edge,

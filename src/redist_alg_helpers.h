@@ -195,6 +195,9 @@ class PlanEnsemble {
     std::vector<RegionID> flattened_all_region_sizes;
     std::vector<int> flattened_all_region_pops;
     std::vector<int> flattened_all_region_order_added;
+    // Empty unless sampling space is ForestSpace or LinkingEdgeSpace.
+    int const num_forest_edge_bit_words_per_plan;
+    std::vector<EdgeBitWord> flattened_all_forest_edge_bits;
     std::vector<std::unique_ptr<Plan>> plan_ptr_vec;
 
     // exports current plans to 1-indexed Rcpp matrix

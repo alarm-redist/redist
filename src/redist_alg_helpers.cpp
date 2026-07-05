@@ -311,7 +311,18 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params, int const total_pop, int
       total_seats(map_params.total_seats), flattened_all_plans(V * nsims, 0),
       flattened_all_region_sizes(ndists * nsims, 0),
       flattened_all_region_pops(ndists * nsims, 0),
-      flattened_all_region_order_added(ndists * nsims, -1), plan_ptr_vec(nsims) {
+      flattened_all_region_order_added(ndists * nsims, -1), 
+      num_forest_edge_bit_words_per_plan(
+      sampling_space == SamplingSpace::ForestSpace ||
+      sampling_space == SamplingSpace::LinkingEdgeSpace
+          ? map_params.num_edge_bit_words
+          : 0
+    ),
+    flattened_all_forest_edge_bits(
+        nsims * num_forest_edge_bit_words_per_plan,
+        EdgeBitWord{0}
+    ),
+      plan_ptr_vec(nsims) {
     if (ndists < 2)
         throw Rcpp::exception("Tried to create a plan with fewer than 2 districts!");
 
@@ -332,23 +343,29 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params, int const total_pop, int
         IntPlanAttribute plan_pops(flattened_all_region_pops, ndists * i, ndists * (i + 1));
         IntPlanAttribute plan_region_order_added(flattened_all_region_order_added, ndists * i,
                                                  ndists * (i + 1));
+        PlanEdgeBits plan_forest_edge_bits(
+            flattened_all_forest_edge_bits,
+            i * num_forest_edge_bit_words_per_plan,
+            (i + 1) * num_forest_edge_bit_words_per_plan
+        );
+
         // create the plans
         if (use_graph_space) {
             plan_ptr_vec[i] =
                 std::make_unique<GraphPlan>(total_seats, total_pop, plan_region_ids, plan_sizes,
-                                            plan_pops, plan_region_order_added);
+                                            plan_pops, plan_region_order_added, plan_forest_edge_bits);
         } else if (use_lct_graph_space) {
             plan_ptr_vec[i] =
                 std::make_unique<LCTGraphPlan>(total_seats, total_pop, plan_region_ids,
-                                               plan_sizes, plan_pops, plan_region_order_added);
+                                               plan_sizes, plan_pops, plan_region_order_added, plan_forest_edge_bits);
         } else if (use_forest_space) {
             plan_ptr_vec[i] =
                 std::make_unique<ForestPlan>(total_seats, total_pop, plan_region_ids,
-                                             plan_sizes, plan_pops, plan_region_order_added);
+                                             plan_sizes, plan_pops, plan_region_order_added, plan_forest_edge_bits);
         } else if (use_linking_edge_space) {
             plan_ptr_vec[i] = std::make_unique<LinkingEdgePlan>(
                 total_seats, total_pop, plan_region_ids, plan_sizes, plan_pops,
-                plan_region_order_added);
+                plan_region_order_added, plan_forest_edge_bits);
         } else {
             throw Rcpp::exception("Input is invalid\n");
         }
@@ -373,7 +390,18 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params,
       flattened_all_plans(plans_mat.begin(), plans_mat.end()),
       flattened_all_region_sizes(ndists * nsims, 0),
       flattened_all_region_pops(ndists * nsims, 0),
-      flattened_all_region_order_added(ndists * nsims, -1), plan_ptr_vec(nsims) {
+      flattened_all_region_order_added(ndists * nsims, -1), 
+      num_forest_edge_bit_words_per_plan(
+      sampling_space == SamplingSpace::ForestSpace ||
+      sampling_space == SamplingSpace::LinkingEdgeSpace
+          ? map_params.num_edge_bit_words
+          : 0
+    ),
+    flattened_all_forest_edge_bits(
+        nsims * num_forest_edge_bit_words_per_plan,
+        EdgeBitWord{0}
+    ),
+      plan_ptr_vec(nsims) {
     // make sure 0 indexed plans were not passed in
     if (*std::min_element(flattened_all_plans.begin(), flattened_all_plans.end()) <= 0) {
         throw Rcpp::exception(
@@ -478,6 +506,11 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params,
         IntPlanAttribute plan_pops(flattened_all_region_pops, ndists * i, ndists * (i + 1));
         IntPlanAttribute plan_region_order_added(flattened_all_region_order_added, ndists * i,
                                                  ndists * (i + 1));
+        PlanEdgeBits plan_forest_edge_bits(
+            flattened_all_forest_edge_bits,
+            i * num_forest_edge_bit_words_per_plan,
+            (i + 1) * num_forest_edge_bit_words_per_plan
+        );
 
         // copy the sizes from matrix into the vector
         std::copy(region_sizes_mat.begin() + i * num_regions,
@@ -487,20 +520,22 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params,
         if (use_graph_space) {
             plan_ptr_vec[i] =
                 std::make_unique<GraphPlan>(num_regions, map_params.pop, plan_region_ids,
-                                            plan_sizes, plan_pops, plan_region_order_added);
+                                            plan_sizes, plan_pops, plan_region_order_added, plan_forest_edge_bits);
         } else if (use_lct_graph_space) {
             plan_ptr_vec[i] =
                 std::make_unique<LCTGraphPlan>(num_regions, map_params.pop, plan_region_ids,
-                                               plan_sizes, plan_pops, plan_region_order_added);
+                                               plan_sizes, plan_pops, plan_region_order_added, plan_forest_edge_bits);
         } else if (use_forest_space) {
             plan_ptr_vec[i] = std::make_unique<ForestPlan>(
                 ndists, num_regions, map_params.pop, plan_region_ids, plan_sizes, plan_pops,
-                plan_region_order_added, map_params, ust, visited, ignore,
+                plan_region_order_added, plan_forest_edge_bits, 
+                map_params, ust, visited, ignore,
                 rng_states[thread_id]);
         } else if (use_linking_edge_space) {
             plan_ptr_vec[i] = std::make_unique<LinkingEdgePlan>(
                 ndists, num_regions, map_params.pop, plan_region_ids, plan_sizes, plan_pops,
-                plan_region_order_added, *tree_ptr, ust_sampler, plan_multigraph, region_graph,
+                plan_region_order_added, plan_forest_edge_bits, 
+                *tree_ptr, ust_sampler, plan_multigraph, region_graph,
                 rng_states[thread_id]);
         } else {
             throw Rcpp::exception("This plan type not supported!\n");
@@ -738,6 +773,9 @@ void swap_plan_ensembles(PlanEnsemble &plan_ensemble1, PlanEnsemble &plan_ensemb
               plan_ensemble2.flattened_all_region_pops);
     std::swap(plan_ensemble1.flattened_all_region_order_added,
               plan_ensemble2.flattened_all_region_order_added);
+    std::swap(plan_ensemble1.flattened_all_forest_edge_bits,
+              plan_ensemble2.flattened_all_forest_edge_bits);
+              
 }
 
 // Reorders all the plans in the vector by order a region was split

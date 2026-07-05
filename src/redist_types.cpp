@@ -79,6 +79,39 @@ Graph build_restricted_county_graph(Graph const &g, arma::uvec const &counties) 
     return county_graph;
 }
 
+
+int count_undirected_edges(Graph const &g) {
+    int edge_count = 0;
+    int total_edge_count = 0;
+
+    for (int v = 0; v < static_cast<int>(g.size()); ++v) {
+        for (int u : g[v]) {
+            if (u < 0 || u >= static_cast<int>(g.size())) {
+                throw Rcpp::exception("GraphEdgeIndex found invalid neighbor index!");
+            }
+            total_edge_count++; // this counts total edges
+
+            if (v < u) {
+                ++edge_count;
+            }
+        }
+    }
+
+    if (edge_count > static_cast<std::size_t>(std::numeric_limits<EdgeID>::max())) {
+        throw Rcpp::exception("Too many graph edges for EdgeID!\n");
+    }
+
+    if (edge_count > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
+        throw Rcpp::exception("Too many graph edges for int!\n");
+    }
+
+    if (total_edge_count != edge_count * 2){
+        throw Rcpp::exception("The inputted adjacency list is not symmetric!\n");
+    }
+
+    return edge_count;
+}
+
 void EdgeCut::get_split_regions_info(int &split_region1_tree_root, int &split_region1_dval,
                                      int &split_region1_pop, int &split_region2_tree_root,
                                      int &split_region2_dval, int &split_region2_pop) const {

@@ -56,6 +56,8 @@ class LinkingEdge {
     };
 };
 
+
+
 /*
  * Abstract Class implementation of plan
  *
@@ -90,18 +92,23 @@ class Plan {
     void check_inputted_region_sizes(int ndists, bool split_district_only) const;
 
   protected:
-    VertexGraph forest_graph;
+    EdgeBitset forest_edges;
     mutable std::vector<LinkingEdge> linking_edges;
+    // Temporary compatibility cache.
+    // Keep this while migrating old code that expects VertexGraph.
+    VertexGraph forest_graph;
+
+    
 
   public:
     // constructor for a blank plan
     Plan(int const total_seats, int const total_pop, PlanVector &this_plan_region_ids,
          RegionSizes &this_plan_region_sizes, IntPlanAttribute &this_plan_region_pops,
-         IntPlanAttribute &this_plan_order_added);
+         IntPlanAttribute &this_plan_order_added, PlanEdgeBits &this_plan_forest_edge_bits);
     // constructor for partial plan (more than 1 region)
     Plan(int const num_regions, const arma::uvec &pop, PlanVector &this_plan_region_ids,
          RegionSizes &this_plan_region_sizes, IntPlanAttribute &this_plan_region_pops,
-         IntPlanAttribute &this_plan_order_added);
+         IntPlanAttribute &this_plan_order_added, PlanEdgeBits &this_plan_forest_edge_bits);
 
     // shallow copy methods
     void shallow_copy(Plan const &plan_to_copy);
@@ -130,6 +137,18 @@ class Plan {
         throw Rcpp::exception(
             "Get Linking edges not Supported for this concrete Plan class!\n");
     };
+
+    EdgeBitset const &get_forest_edges() const {
+        return forest_edges;
+    }
+
+    EdgeBitset &get_forest_edges() {
+        return forest_edges;
+    }
+
+    void rebuild_forest_graph_from_edges(MapParams const &map_params) {
+        forest_graph = forest_edges.to_vertex_graph(map_params.graph_edge_index, map_params.V);
+    }
 
     // methods for checking plans are connected/in population bounds
     bool check_region_pop_valid(MapParams const &map_params, int const region_id) const;
@@ -181,6 +200,13 @@ class Plan {
 
     void update_region_info_from_cut(EdgeCut cut_edge, const int split_region1_id,
                                      const int split_region2_id, bool const add_region);
+
+    // Updates both the plan id vector and the forest at once 
+    // this code is shared by both forest and linking edge plans 
+    // DOES NOT TOUCH LINKING EDGES
+    void update_plan_ids_and_forest_from_cut(TreeSplitter const &tree_splitter, 
+        USTSampler &ust_sampler, EdgeCut const cut_edge,
+        const int split_region1_id, const int split_region2_id, bool const add_region);
 
     void update_from_successful_split(TreeSplitter const &tree_splitter,
                                       USTSampler &ust_sampler, EdgeCut const &cut_edge,

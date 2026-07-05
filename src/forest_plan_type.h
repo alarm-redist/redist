@@ -10,9 +10,9 @@ class ForestPlan : public Plan {
     // constructor for a blank plan
     ForestPlan(int const total_seats, int const total_pop, PlanVector &this_plan_region_ids,
                RegionSizes &this_plan_region_sizes, IntPlanAttribute &this_plan_region_pops,
-               IntPlanAttribute &this_plan_order_added)
+               IntPlanAttribute &this_plan_order_added, PlanEdgeBits &this_plan_forest_edge_bits)
         : Plan(total_seats, total_pop, this_plan_region_ids, this_plan_region_sizes,
-               this_plan_region_pops, this_plan_order_added) {
+               this_plan_region_pops, this_plan_order_added, this_plan_forest_edge_bits) {
         forest_graph.resize(region_ids.size());
     };
 
@@ -20,6 +20,7 @@ class ForestPlan : public Plan {
     ForestPlan(int const ndists, int const num_regions, const arma::uvec &pop,
                PlanVector &this_plan_region_ids, RegionSizes &this_plan_region_sizes,
                IntPlanAttribute &this_plan_region_pops, IntPlanAttribute &this_plan_order_added,
+               PlanEdgeBits &this_plan_forest_edge_bits,
                MapParams const &map_params, Tree &ust, std::vector<bool> &visited,
                std::vector<bool> &ignore, RNGState &rng_state,
                const Rcpp::List &initial_forest_adj_list = {});

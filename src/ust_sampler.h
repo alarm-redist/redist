@@ -18,7 +18,8 @@ class USTSampler {
   private:
   public:
     USTSampler(MapParams const &map_params, SplittingSchedule const &splitting_schedule)
-        : ust(init_tree(map_params.V)), pops_below_vertex(map_params.V, 0),
+        : ust(init_tree(map_params.V)), graph_ust(map_params.V),
+        pops_below_vertex(map_params.V, 0),
           visited(map_params.V), ignore(map_params.V), stack(map_params.V + 1),
           county_tree(init_tree(map_params.num_counties)),
           county_stack(map_params.num_counties + 1),
@@ -26,9 +27,18 @@ class USTSampler {
           county_members(map_params.num_counties, std::vector<int>{}),
           c_visited(map_params.num_counties, true), cty_pop_below(map_params.num_counties, 0),
           vertex_queue(map_params.V), map_params(map_params),
-          splitting_schedule(splitting_schedule) {};
+          splitting_schedule(splitting_schedule) {
+            // reserve the max capacity now 
+            for (size_t v = 0; v < map_params.V; v++)
+            {
+              ust[v].reserve(map_params.g[v].size());
+              graph_ust[v].reserve(map_params.g[v].size());
+            }
+             
+          };
 
     Tree ust;
+    VertexGraph graph_ust;
     std::vector<int> pops_below_vertex;
     std::vector<bool> visited, ignore;
     int root;

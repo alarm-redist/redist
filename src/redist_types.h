@@ -14,6 +14,7 @@
 #include <queue>
 #include <stdint.h>
 #include <vector>
+#include "redist_constants.h"
 
 // [[Rcpp::depends(RcppArmadillo)]]
 #include <RcppArmadillo.h>
@@ -43,6 +44,21 @@ typedef std::vector<std::unordered_map<int, int>> RegionMultigraphCount;
 typedef std::tuple<CountyRegion, RegionID, CountyID> CountyComponentVertex;
 typedef std::vector<std::vector<CountyComponentVertex>> CountyComponentGraph;
 
+// -----------------------------------------------------------------------------
+// Packed forest edge storage
+// The idea is we have a list of all the edges in the graph and represent
+// a forest as a boolean vector where true means the edge is in the forest and 
+// false means not 
+// -----------------------------------------------------------------------------
+typedef std::uint32_t EdgeID;       // identifies edge number e
+typedef std::uint64_t EdgeBitWord;  // stores 64 edge booleans
+
+constexpr int EDGE_BITS_PER_WORD = 64;
+
+inline int num_edge_bit_words(int num_graph_edges) {
+    return (num_graph_edges + EDGE_BITS_PER_WORD - 1) / EDGE_BITS_PER_WORD;
+}
+
 // old types
 typedef std::vector<std::vector<int>> Tree;
 typedef std::vector<std::vector<int>> Graph;
@@ -60,6 +76,8 @@ template <typename T> class PlanAttribute {
     PlanAttribute(std::vector<T> &underyling_long_vec, int offset_start, int offset_end)
         : offset_start(offset_start), offset_end(offset_end), long_vec(underyling_long_vec) {};
 
+    // Checks if empty 
+    bool empty() const { return offset_start == offset_end; }
     // methods for accessing
     // Const version for read-only access
     const T operator[](int index) const { return long_vec[offset_start + index]; };
@@ -86,6 +104,7 @@ typedef PlanAttribute<RegionID> PlanVector;
 typedef PlanAttribute<RegionID> RegionSizes;
 typedef PlanAttribute<int> IntPlanAttribute;
 typedef PlanAttribute<double> DoublePlanAttribute;
+typedef PlanAttribute<EdgeBitWord> PlanEdgeBits;
 
 // uniquely maps pairs (x,y) of the form
 // 0 <= x < y < container_size
@@ -128,8 +147,133 @@ Graph list_to_graph(const Rcpp::List &l);
  */
 Graph build_restricted_county_graph(Graph const &g, arma::uvec const &counties);
 
-// Essentially just a useful container for map parameters
+// Counts the number of undirected edges in a graph. 
+// It also checks the graph is actually symmetric 
+int count_undirected_edges(Graph const &g);
 
+// Class for storing the graph as a long vector of edges 
+// Allows you to take a vertex and get neighbors 
+class GraphEdgeIndex {
+  public:
+  // incident edge stores both the vertex adjacent to v and the edge_id associated with this edge
+    struct IncidentEdge {
+        VertexID neighbor;
+        EdgeID edge_id;
+    };
+
+    int const num_edges;
+    int const V;
+
+    GraphEdgeIndex() = default;
+
+    explicit GraphEdgeIndex(Graph const &g, int const num_edges)
+        : incident_edges(g.size()), num_edges(num_edges), V(g.size()) {
+
+        if (g.size() > MAX_SUPPORTED_NUM_VERTICES) {
+            throw Rcpp::exception("Too many vertices for VertexID in GraphEdgeIndex!");
+        }
+        int const V = static_cast<int>(g.size());
+        for (int v = 0; v < V; ++v) {
+            incident_edges[v].reserve(g[v].size());
+
+            for (auto u : g[v]) {
+                if (u < 0 || u >= V) {
+                    throw Rcpp::exception("GraphEdgeIndex found invalid neighbor index!");
+                }
+
+                // Only create one undirected edge id.
+                // The incident lists get populated for both endpoints.
+                if (v < u) {
+                    if (edges.size() > std::numeric_limits<EdgeID>::max()) {
+                        throw Rcpp::exception("Too many graph edges for EdgeID!");
+                    }
+                    // get the idea of this new edge 
+                    EdgeID const eid = static_cast<EdgeID>(edges.size());
+                    // store the edge, convention is (v,u) where v < u
+                    edges.push_back({
+                        static_cast<VertexID>(v),
+                        static_cast<VertexID>(u)
+                    });
+
+                    incident_edges[v].push_back({
+                        static_cast<VertexID>(u),
+                        eid
+                    });
+
+                    incident_edges[u].push_back({
+                        static_cast<VertexID>(v),
+                        eid
+                    });
+
+                }
+            }
+        }
+    }
+
+    // Takes two vertices and returns their edge id
+    EdgeID get_edge_id(int v, int u) const {
+        if constexpr (perf_config::unnecessary_input_checks){
+            check_vertex(v, "GraphEdgeIndex::get_edge_id received invalid v!");
+            check_vertex(u, "GraphEdgeIndex::get_edge_id received invalid u!");
+        }
+        // 
+        VertexID const target = static_cast<VertexID>(u);
+
+        for (auto const &incident_edge : incident_edges[v]) {
+            if (incident_edge.neighbor == target) {
+                return incident_edge.edge_id;
+            }
+        }
+
+        throw Rcpp::exception("GraphEdgeIndex::get_edge_id called on non-edge!");
+    }
+
+    bool has_edge(int v, int u) const {
+        if constexpr (perf_config::unnecessary_input_checks){
+            if (!is_valid_vertex(v) || !is_valid_vertex(u)) {
+                return false;
+            }
+        }
+
+        VertexID const target = static_cast<VertexID>(u);
+
+        for (auto const &incident_edge : incident_edges[v]) {
+            if (incident_edge.neighbor == target) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // takes an edge id and return the pair associated with it
+    std::pair<VertexID, VertexID> get_edge_endpoints(EdgeID edge_id) const {
+        if constexpr (perf_config::unnecessary_input_checks){
+            if (static_cast<std::size_t>(edge_id) >= edges.size()) {
+                throw Rcpp::exception("GraphEdgeIndex::get_edge_endpoints received invalid edge_id!");
+            }
+        }
+
+        return edges[edge_id];
+    }
+
+    std::vector<std::pair<VertexID, VertexID>> edges;
+    std::vector<std::vector<IncidentEdge>> incident_edges;
+
+  private:
+    bool is_valid_vertex(int v) const {
+        return v >= 0 && v < static_cast<int>(incident_edges.size());
+    }
+
+    void check_vertex(int v, char const *message) const {
+        if (!is_valid_vertex(v)) {
+            throw Rcpp::exception(message);
+        }
+    }
+
+};
+
+// Essentially just a useful container for map and some algorithm parameters
 class MapParams {
   public:
     // Constructor
@@ -137,13 +281,8 @@ class MapParams {
               int const ndists, int const total_seats,
               std::vector<int> const &district_seat_sizes, double const lower,
               double const target, double const upper)
-        : g(list_to_graph(adj_list)), num_edges([this]() {
-              int total = 0;
-              for (const auto &vec : g) {
-                  total += vec.size();
-              }
-              return total / 2;
-          }()),
+        : g(list_to_graph(adj_list)), num_edges(count_undirected_edges(g)),
+        graph_edge_index(g, num_edges), num_edge_bit_words(num_edges),
           counties(counties), num_counties(max(counties)), cg(county_graph(g, counties)),
           county_restricted_graph(num_counties > 1 ? build_restricted_county_graph(g, counties)
                                                    : Graph(0)),
@@ -205,6 +344,8 @@ class MapParams {
 
     Graph const g;                       // The graph as undirected adjacency list
     int const num_edges;                 // number of undirected edges in g
+    GraphEdgeIndex const graph_edge_index; // bitpacked boolean storage of graph
+    int const num_edge_bit_words; // used for bitpacked stuff
     arma::uvec const counties;           // county labels
     int const num_counties;              // The number of distinct counties
     Multigraph const cg;                 // county multigraph

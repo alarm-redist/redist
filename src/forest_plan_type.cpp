@@ -4,11 +4,13 @@
 ForestPlan::ForestPlan(int const ndists, int const num_regions, const arma::uvec &pop,
                        PlanVector &this_plan_region_ids, RegionSizes &this_plan_region_sizes,
                        IntPlanAttribute &this_plan_region_pops,
-                       IntPlanAttribute &this_plan_order_added, MapParams const &map_params,
+                       IntPlanAttribute &this_plan_order_added, 
+                       PlanEdgeBits &this_plan_forest_edge_bits,
+                       MapParams const &map_params,
                        Tree &ust, std::vector<bool> &visited, std::vector<bool> &ignore,
                        RNGState &rng_state, const Rcpp::List &initial_forest_adj_list)
     : Plan(num_regions, pop, this_plan_region_ids, this_plan_region_sizes,
-           this_plan_region_pops, this_plan_order_added) {
+           this_plan_region_pops, this_plan_order_added, this_plan_forest_edge_bits) {
     // resize the forest graph
     forest_graph.resize(region_ids.size());
 
@@ -30,29 +32,25 @@ ForestPlan::ForestPlan(int const ndists, int const num_regions, const arma::uvec
             }
         }
     }
+
+    // print_tree(forest_graph);
+    // forest_edges.print_full_tree(map_params.graph_edge_index);
+
+    check_tree_equality(forest_graph, forest_edges.get_graph_tree(map_params.graph_edge_index));
 }
 
 VertexGraph ForestPlan::get_forest_adj() { return forest_graph; }
 
+// IT IS VERY IMPORTANT THAT FOR SMC split_region1_id is the id of the multidistrict
+// The idea is any other split regions have not actually been updated yet 
 void ForestPlan::update_vertex_and_plan_specific_info_from_cut(
     TreeSplitter const &tree_splitter, USTSampler &ust_sampler, EdgeCut const cut_edge,
     const int split_region1_id, const int split_region2_id, bool const add_region) {
-    // Get the root of the tree associated with region 1 and 2
-    int split_region1_tree_root, split_region2_tree_root;
-    int split_region1_size, split_region2_size;
-    int split_region1_pop, split_region2_pop;
 
-    cut_edge.get_split_regions_info(split_region1_tree_root, split_region1_size,
-                                    split_region1_pop, split_region2_tree_root,
-                                    split_region2_size, split_region2_pop);
-    // update the vertex labels and the tree
-    assign_region_id_and_forest_from_tree(ust_sampler.ust, region_ids, forest_graph,
-                                          split_region1_tree_root, split_region1_id,
-                                          ust_sampler.vertex_queue);
-
-    assign_region_id_and_forest_from_tree(ust_sampler.ust, region_ids, forest_graph,
-                                          split_region2_tree_root, split_region2_id,
-                                          ust_sampler.vertex_queue);
+    update_plan_ids_and_forest_from_cut(tree_splitter, 
+        ust_sampler, cut_edge,
+        split_region1_id, split_region2_id, add_region
+    );
 
     return;
 }
@@ -89,10 +87,14 @@ void ForestPlan::update_vertex_and_plan_specific_info_from_cut(
  * between them in `g`.
  */
 std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundary_lens(
-    const ForestPlan &plan, VertexGraph const &forest_graph, PlanMultigraph &plan_multigraph,
+    const ForestPlan &plan, EdgeBitset const &forest_edges,
+    VertexGraph const &forest_graph, PlanMultigraph &plan_multigraph,
     const SplittingSchedule &splitting_schedule, USTSampler &ust_sampler,
     TreeSplitter &edge_splitter, ScoringFunction const &scoring_function) {
     int const V = plan_multigraph.map_params.V;
+
+    // copy the packed forest into the vector tree
+    forest_edges.fill_vector_tree(ust_sampler.map_params.graph_edge_index, ust_sampler.graph_ust);
 
     for (int v = 0; v < V; v++) {
         // Find out which region this vertex corresponds to
@@ -154,7 +156,7 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
 
             double log_edge_selection_prob =
                 edge_splitter.get_log_retroactive_splitting_prob_for_joined_tree(
-                    plan_multigraph.map_params, scoring_function, forest_graph,
+                    plan_multigraph.map_params, scoring_function, ust_sampler.graph_ust,
                     ust_sampler.stack, ust_sampler.visited, ust_sampler.pops_below_vertex, v,
                     v_nbor, plan, min_possible_cut_size, max_possible_cut_size,
                     splitting_schedule
@@ -198,7 +200,7 @@ ForestPlan::get_valid_adj_regions_and_eff_log_boundary_lens(
 
     // get pairs and log tree effective boundary
     auto region_pairs_tuple_vec = compute_log_tree_eff_boundary_lens(
-        *this, forest_graph, plan_multigraph, splitting_schedule, ust_sampler, tree_splitter,
+        *this, forest_edges, forest_graph, plan_multigraph, splitting_schedule, ust_sampler, tree_splitter,
         scoring_function);
 
     return region_pairs_tuple_vec;
