@@ -537,6 +537,11 @@ void run_merge_split_step_on_all_plans(
             thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
             thread_generation_counter = generation;
         }
+        if (thread_id < 0 || thread_id >= num_threads) {
+            RcppThread::Rcerr << "Thread id thing broke, thread id is " << thread_id
+                              << " but num threads is  " << num_threads << std::endl;
+            return;
+        }
 
         auto total_plan_start_time = maybe_now();
 

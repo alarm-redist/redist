@@ -96,6 +96,10 @@ template <typename T> class PlanAttribute {
         std::copy(other_attr.begin(), other_attr.end(), begin());
     }
 
+    // debug functions 
+    int debug_get_start() { return offset_start;}
+    int debug_get_end() { return offset_end;}
+
     std::size_t size() const noexcept { return offset_end - offset_start; };
 };
 
@@ -171,24 +175,52 @@ class GraphEdgeIndex {
         if (g.size() > MAX_SUPPORTED_NUM_VERTICES) {
             throw Rcpp::exception("Too many vertices for VertexID in GraphEdgeIndex!");
         }
+
+        std::unordered_set<std::uint64_t> seen_edges;
+        seen_edges.reserve(static_cast<std::size_t>(num_edges) * 2);
+
         int const V = static_cast<int>(g.size());
+
         for (int v = 0; v < V; ++v) {
             incident_edges[v].reserve(g[v].size());
 
-            for (auto u : g[v]) {
+            std::unordered_set<int> seen_neighbors_for_v;
+            seen_neighbors_for_v.reserve(g[v].size());
+
+            for (int u : g[v]) {
                 if (u < 0 || u >= V) {
                     throw Rcpp::exception("GraphEdgeIndex found invalid neighbor index!");
                 }
 
-                // Only create one undirected edge id.
-                // The incident lists get populated for both endpoints.
+                if (!seen_neighbors_for_v.insert(u).second) {
+                    std::ostringstream oss;
+                    Rcpp::Rcerr << "Duplicate neighbor in graph adjacency list: "
+                        << "vertex " << v << " has neighbor " << u << " more than once.";
+                    
+                    throw Rcpp::exception("GraphEdgeIndex Constructor\n");
+                    throw std::runtime_error(oss.str());
+                }
+
                 if (v < u) {
+                    std::uint64_t const key =
+                        (static_cast<std::uint64_t>(v) << 32) |
+                        static_cast<std::uint32_t>(u);
+
+                    if (!seen_edges.insert(key).second) {
+                        std::ostringstream oss;
+                        Rcpp::Rcerr << "Duplicate undirected edge in GraphEdgeIndex: ("
+                            << v << ", " << u << ")";
+                        
+                        throw Rcpp::exception("GraphEdgeIndex Constructor\n");
+                        throw std::runtime_error(oss.str());
+                    }
+
                     if (edges.size() > std::numeric_limits<EdgeID>::max()) {
                         throw Rcpp::exception("Too many graph edges for EdgeID!");
                     }
-                    // get the idea of this new edge 
+
                     EdgeID const eid = static_cast<EdgeID>(edges.size());
-                    // store the edge, convention is (v,u) where v < u
+
                     edges.push_back({
                         static_cast<VertexID>(v),
                         static_cast<VertexID>(u)
@@ -203,9 +235,18 @@ class GraphEdgeIndex {
                         static_cast<VertexID>(v),
                         eid
                     });
-
                 }
             }
+        }
+
+        if (static_cast<int>(edges.size()) != num_edges) {
+            std::ostringstream oss;
+            Rcpp::Rcerr << "GraphEdgeIndex edge count mismatch. "
+                << "expected " << num_edges
+                << ", built " << edges.size();
+            
+            throw Rcpp::exception("GraphEdgeIndex Constructor\n");
+            throw std::runtime_error(oss.str());
         }
     }
 

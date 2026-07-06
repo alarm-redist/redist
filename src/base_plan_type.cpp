@@ -744,6 +744,12 @@ void Plan::update_plan_ids_and_forest_from_cut(TreeSplitter const &tree_splitter
     cut_edge.get_split_regions_info(split_region1_tree_root, split_region1_size,
                                     split_region1_pop, split_region2_tree_root,
                                     split_region2_size, split_region2_pop);
+    
+    check_forest_equality(
+        forest_graph,
+        forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
+        "IN update_plan_ids_and_forest_from_cut BEFORE updating, checking forest_graph vs forest edges (through get_graph_tree)"
+    );
 
     // If we're adding the region just clear this one 
     if (add_region){
@@ -762,26 +768,26 @@ void Plan::update_plan_ids_and_forest_from_cut(TreeSplitter const &tree_splitter
         );
     }
 
-    // OLD
+    // TODO: Remove old vertex graph 
     // update the vertex labels and the tree
-    assign_region_id_and_forest_from_tree(ust_sampler.ust, region_ids, forest_graph,
+    assign_region_id_and_forest_from_tree(ust_sampler.ust, region_ids, 
+                                          forest_graph, forest_edges,
                                           split_region1_tree_root, split_region1_id,
+                                          ust_sampler.map_params.graph_edge_index,
                                           ust_sampler.vertex_queue);
 
-    assign_region_id_and_forest_from_tree(ust_sampler.ust, region_ids, forest_graph,
+    assign_region_id_and_forest_from_tree(ust_sampler.ust, region_ids, 
+                                          forest_graph, forest_edges,
                                           split_region2_tree_root, split_region2_id,
+                                          ust_sampler.map_params.graph_edge_index,
                                           ust_sampler.vertex_queue);
 
-    // update the vertex labels and the tree
-    assign_region_id_and_forest_from_tree_NEW(ust_sampler.ust, region_ids, forest_edges,
-                                          split_region1_tree_root, split_region1_id,
-                                          ust_sampler.map_params.graph_edge_index, ust_sampler.vertex_queue);
+    check_forest_equality(
+        forest_graph,
+        forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
+        "IN update_plan_ids_and_forest_from_cut AFTER updating, checking forest_graph vs forest edges (through get_graph_tree)"
+    );
 
-    assign_region_id_and_forest_from_tree_NEW(ust_sampler.ust, region_ids, forest_edges,
-                                          split_region2_tree_root, split_region2_id,
-                                          ust_sampler.map_params.graph_edge_index, ust_sampler.vertex_queue);
-
-    check_tree_equality(forest_graph, forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index));
 }
 
 
@@ -856,6 +862,84 @@ std::vector<std::pair<RegionID, RegionID>> Plan::get_valid_smc_merge_regions(
     }
 
     return output_pairs;
+}
+
+// Plan debugging functions 
+void Plan::check_forest_equality(
+    Tree const &ust1, Tree const &ust2, std::string_view msg
+) const{
+    if(ust1.size() != ust2.size()){
+        REprintf("Tree 1 has size %zu and Tree 2 has size %zu!\n", 
+            ust1.size(), ust2.size());
+        std::cerr << msg << std::endl;
+        REprintf("Printing Tree 1\n");
+        print_tree(ust1);
+        REprintf("Printing Tree 2\n");
+        print_tree(ust2);
+        Rprint(true);
+        throw Rcpp::exception("");
+
+    }
+
+    for (size_t v = 0; v < ust1.size(); v++)
+    {
+        // check same size 
+        if(ust1[v].size() != ust2[v].size()){
+            REprintf("Tree 1 has size %zu and Tree 2 has size %zu at vertex %zu!\n", 
+                ust1[v].size(), ust2[v].size(), v);
+            std::cerr << msg << std::endl;
+            REprintf("Printing Tree 1\n");
+            print_tree(ust1);
+            REprintf("Printing Tree 2\n");
+            print_tree(ust2);
+            Rprint(true);
+            throw Rcpp::exception("");
+        }
+        // Convert both vectors to unordered sets
+        std::unordered_set<int> s1(ust1[v].begin(), ust1[v].end());
+        std::unordered_set<int> s2(ust2[v].begin(), ust2[v].end());
+
+
+        if (s1 != s2) {
+            REprintf("Vertex %zu does not have the same neighbors!\n", v);
+            std::cerr << msg << std::endl;
+            REprintf("forest_graph[%zu]: ", v);
+            for (auto const u : ust1[v]) {
+                REprintf("%d ", static_cast<int>(u));
+            }
+            REprintf("\n");
+
+            REprintf("packed_forest[%zu]: ", v);
+            for (auto const u : ust2[v]) {
+                REprintf("%d ", static_cast<int>(u));
+            }
+            REprintf("\n");
+
+            REprintf("In forest_graph but not packed_forest: ");
+            for (auto const u : s1) {
+                if (s2.find(u) == s2.end()) {
+                    REprintf("(%zu, %d) ", v, u);
+                }
+            }
+            REprintf("\n");
+
+            REprintf("In packed_forest but not forest_graph: ");
+            for (auto const u : s2) {
+                if (s1.find(u) == s1.end()) {
+                    REprintf("(%zu, %d) ", v, u);
+                }
+            }
+            REprintf("\n");
+            REprintf("Printing Tree 1\n");
+            print_tree(ust1);
+            REprintf("Printing Tree 2\n");
+            print_tree(ust2);
+            Rprint(true);
+            throw Rcpp::exception("");
+            throw Rcpp::exception("forest_graph and packed forest differ!");
+        }
+        
+    }
 }
 
 // Prints relevant info - for debugging

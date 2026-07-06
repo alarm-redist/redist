@@ -44,7 +44,6 @@ void clear_tree(Tree &tree);
 
 // print a tree
 void print_tree(Tree const &ust);
-void check_tree_equality(Tree const &ust1, Tree const &ust2);
 
 /*
  * Count population below each node in tree and get parent
@@ -100,14 +99,51 @@ class EdgeBitset {
     }
 
     bool test_edge_id(EdgeID edge_id) const {
+        if constexpr (perf_config::unnecessary_input_checks){
+            int const word = word_index(edge_id);
+            if (word < 0 || word >= static_cast<int>(edge_bits.size())) {
+                std::ostringstream oss;
+                Rcpp::Rcerr << "EdgeBitset::test_edge_id out of range. "
+                    << "edge_id=" << edge_id
+                    << ", word=" << word
+                    << ", edge_bits.size()=" << edge_bits.size();
+                throw Rcpp::exception("test_edge_id");
+                throw std::runtime_error(oss.str());
+            }
+        }
+
         return (edge_bits[word_index(edge_id)] & bit_mask(edge_id)) != 0;
     }
 
     void set_edge_id(EdgeID edge_id) {
+        if constexpr (perf_config::unnecessary_input_checks){
+            int const word = word_index(edge_id);
+            if (word < 0 || word >= static_cast<int>(edge_bits.size())) {
+                std::ostringstream oss;
+                Rcpp::Rcerr << "EdgeBitset::test_edge_id out of range. "
+                    << "edge_id=" << edge_id
+                    << ", word=" << word
+                    << ", edge_bits.size()=" << edge_bits.size();
+                throw Rcpp::exception("set_edge_id");
+                throw std::runtime_error(oss.str());
+            }
+        }
         edge_bits[word_index(edge_id)] |= bit_mask(edge_id);
     }
 
     void clear_edge_id(EdgeID edge_id) {
+        if constexpr (perf_config::unnecessary_input_checks){
+            int const word = word_index(edge_id);
+            if (word < 0 || word >= static_cast<int>(edge_bits.size())) {
+                std::ostringstream oss;
+                Rcpp::Rcerr << "EdgeBitset::test_edge_id out of range. "
+                    << "edge_id=" << edge_id
+                    << ", word=" << word
+                    << ", edge_bits.size()=" << edge_bits.size();
+                throw Rcpp::exception("clear_edge_id");
+                throw std::runtime_error(oss.str());
+            }
+        }
         edge_bits[word_index(edge_id)] &= ~bit_mask(edge_id);
     }
 
@@ -121,26 +157,6 @@ class EdgeBitset {
 
     bool test_edge(int v, int u, GraphEdgeIndex const &edge_index) const {
         return test_edge_id(edge_index.get_edge_id(v, u));
-    }
-
-    template <typename Fn>
-    void for_each_tree_neighbor(int v, GraphEdgeIndex const &edge_index, Fn &&fn) const {
-        for (auto const &incident_edge : edge_index.incident_edges[v]) {
-            if (test_edge_id(incident_edge.edge_id)) {
-                fn(static_cast<int>(incident_edge.neighbor));
-            }
-        }
-    }
-
-    template <typename Fn>
-    void for_each_tree_edge(GraphEdgeIndex const &edge_index, Fn &&fn) const {
-        for (EdgeID edge_id = 0; edge_id < static_cast<EdgeID>(edge_index.edges.size());
-             ++edge_id) {
-            if (test_edge_id(edge_id)) {
-                auto const [v, u] = edge_index.edges[edge_id];
-                fn(static_cast<int>(v), static_cast<int>(u));
-            }
-        }
     }
 
     Tree get_graph_tree(GraphEdgeIndex const &edge_index) const {
@@ -232,16 +248,6 @@ class EdgeBitset {
         Tree &ust
     ) const;
 
-    Tree to_vertex_graph(GraphEdgeIndex const &edge_index, int V) const {
-        Tree forest_graph(V);
-
-        for_each_tree_edge(edge_index, [&](int v, int u) {
-            forest_graph[v].push_back(static_cast<VertexID>(u));
-            forest_graph[u].push_back(static_cast<VertexID>(v));
-        });
-
-        return forest_graph;
-    }
 };
 
 
@@ -255,8 +261,10 @@ void assign_region_id_from_tree(const Tree &ust, PlanVector &region_ids, int roo
                                 CircularQueue<std::pair<int, int>> &vertex_queue);
 
 void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_ids,
-                                           Tree &forest_graph, int root,
+                                           Tree &forest_graph, EdgeBitset &forest_edges,
+                                           int root,
                                            const int new_region_id,
+                                           const GraphEdgeIndex &graph_edge_index,
                                            CircularQueue<std::pair<int, int>> &vertex_queue);
 
 /*

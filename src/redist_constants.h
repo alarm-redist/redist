@@ -16,7 +16,7 @@ namespace perf_config {
     // No solid estimates of performance hit but could cause anywhere from 
     // .1 to 5% slowdown depending on how expensive a call to CPU clock is versus
     // the SMC functions    
-    inline constexpr bool unnecessary_input_checks = false; 
+    inline constexpr bool unnecessary_input_checks = true; 
     // Turns on input checking for functions that should theoretically be unneccesary. 
     // Helpful to turn on when checking for bugs as it will help catch weird things sooner
 }

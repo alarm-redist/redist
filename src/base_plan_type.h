@@ -9,6 +9,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <string_view>
 
 #include "graph_ops.h"
 #include "map_calc.h"
@@ -146,9 +147,6 @@ class Plan {
         return forest_edges;
     }
 
-    void rebuild_forest_graph_from_edges(MapParams const &map_params) {
-        forest_graph = forest_edges.to_vertex_graph(map_params.graph_edge_index, map_params.V);
-    }
 
     // methods for checking plans are connected/in population bounds
     bool check_region_pop_valid(MapParams const &map_params, int const region_id) const;
@@ -243,6 +241,10 @@ class Plan {
                                                     bool const is_final_split,
                                                     USTSampler &ust_sampler,
                                                     TreeSplitter &tree_splitter) const = 0;
+
+
+    // Debugging functions 
+    void check_forest_equality(Tree const &ust1, Tree const &ust2, std::string_view msg) const;
 };
 
 // simple struct
