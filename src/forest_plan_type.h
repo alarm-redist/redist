@@ -26,7 +26,7 @@ class ForestPlan : public Plan {
                const Rcpp::List &initial_forest_adj_list = {});
 
     // We now need to keep track of trees as undirected graphs
-    VertexGraph get_forest_adj() override;
+    Tree get_forest_adj() override;
 
     void update_vertex_and_plan_specific_info_from_cut(
         TreeSplitter const &tree_splitter, USTSampler &ust_sampler, EdgeCut const cut_edge,

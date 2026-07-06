@@ -96,7 +96,7 @@ class Plan {
     mutable std::vector<LinkingEdge> linking_edges;
     // Temporary compatibility cache.
     // Keep this while migrating old code that expects VertexGraph.
-    VertexGraph forest_graph;
+    Tree forest_graph;
 
     
 
@@ -129,7 +129,7 @@ class Plan {
     std::pair<int, int> get_most_recently_split_regions() const;
     std::pair<int, int> get_num_district_and_multidistricts() const;
 
-    virtual VertexGraph get_forest_adj() {
+    virtual Tree get_forest_adj() {
         throw Rcpp::exception("Get Forest Adj not Supported for this!\n");
     };
 

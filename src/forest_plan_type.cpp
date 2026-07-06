@@ -39,7 +39,7 @@ ForestPlan::ForestPlan(int const ndists, int const num_regions, const arma::uvec
     check_tree_equality(forest_graph, forest_edges.get_graph_tree(map_params.graph_edge_index));
 }
 
-VertexGraph ForestPlan::get_forest_adj() { return forest_graph; }
+Tree ForestPlan::get_forest_adj() { return forest_graph; }
 
 // IT IS VERY IMPORTANT THAT FOR SMC split_region1_id is the id of the multidistrict
 // The idea is any other split regions have not actually been updated yet 
@@ -88,13 +88,16 @@ void ForestPlan::update_vertex_and_plan_specific_info_from_cut(
  */
 std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundary_lens(
     const ForestPlan &plan, EdgeBitset const &forest_edges,
-    VertexGraph const &forest_graph, PlanMultigraph &plan_multigraph,
+    Tree const &forest_graph, PlanMultigraph &plan_multigraph,
     const SplittingSchedule &splitting_schedule, USTSampler &ust_sampler,
     TreeSplitter &edge_splitter, ScoringFunction const &scoring_function) {
     int const V = plan_multigraph.map_params.V;
 
     // copy the packed forest into the vector tree
     forest_edges.fill_vector_tree(ust_sampler.map_params.graph_edge_index, ust_sampler.forest_scratch_tree);
+
+    check_tree_equality(forest_graph, forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index));
+    check_tree_equality(forest_graph, ust_sampler.forest_scratch_tree);
 
     for (int v = 0; v < V; v++) {
         // Find out which region this vertex corresponds to
@@ -217,6 +220,9 @@ double ForestPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
     // TODO write version that only edits the edges in the region 
     // copy the packed forest into the vector tree
     forest_edges.fill_vector_tree(ust_sampler.map_params.graph_edge_index, ust_sampler.forest_scratch_tree);
+
+    check_tree_equality(forest_graph, forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index));
+    check_tree_equality(forest_graph, ust_sampler.forest_scratch_tree);
 
     int const V = plan_multigraph.map_params.V;
     int const merged_region_size = region_sizes[region1_id] + region_sizes[region2_id];

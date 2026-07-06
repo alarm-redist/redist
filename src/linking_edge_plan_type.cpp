@@ -87,7 +87,7 @@ std::vector<std::pair<int, int>> get_intial_linking_edges(PlanMultigraph &plan_m
     return initial_edges;
 }
 
-VertexGraph LinkingEdgePlan::get_forest_adj() { return forest_graph; }
+Tree LinkingEdgePlan::get_forest_adj() { return forest_graph; }
 
 LinkingEdgePlan::LinkingEdgePlan(int const total_seats, int const total_pop,
                                  PlanVector &this_plan_region_ids,
@@ -165,6 +165,9 @@ double LinkingEdgePlan::get_regions_log_splitting_prob(ScoringFunction const &sc
 
     // TODO refine the logic so this happens outside the call
     forest_edges.fill_vector_tree(ust_sampler.map_params.graph_edge_index, ust_sampler.forest_scratch_tree);
+
+    check_tree_equality(forest_graph, forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index));
+    check_tree_equality(forest_graph, ust_sampler.forest_scratch_tree);
 
     // get the log probability
     return tree_splitter.get_log_retroactive_splitting_prob_for_joined_tree(

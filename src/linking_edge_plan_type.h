@@ -25,7 +25,7 @@ class LinkingEdgePlan : public Plan {
                     const Rcpp::List &initial_forest_adj_list = {},
                     const std::vector<std::array<double, 3>> &input_initial_linking_edges = {});
 
-    VertexGraph get_forest_adj() override;
+    Tree get_forest_adj() override;
 
     void Rprint(bool verbose = false) const override;
 

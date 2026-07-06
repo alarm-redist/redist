@@ -2764,7 +2764,7 @@ std::pair<bool, EdgeCut> ConstraintSplitter::attempt_to_find_edge_to_cut(
 
 // assumes two trees in spanning forest have been joined
 void assign_region_ids_from_joined_undirected_tree(
-    VertexGraph const &forest_graph, PlanVector &region_ids, int const cut_vertex_root,
+    Tree const &forest_graph, PlanVector &region_ids, int const cut_vertex_root,
     int const cut_vertex_root_region_id, int const cut_vertex_parent,
     int const cut_parent_region_id, CircularQueue<std::pair<int, int>> &vertex_queue) {
     // clear the queue

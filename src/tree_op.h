@@ -44,8 +44,7 @@ void clear_tree(Tree &tree);
 
 // print a tree
 void print_tree(Tree const &ust);
-void print_tree(VertexGraph const &ust);
-void check_tree_equality(VertexGraph const &ust1, VertexGraph const &ust2);
+void check_tree_equality(Tree const &ust1, Tree const &ust2);
 
 /*
  * Count population below each node in tree and get parent
@@ -144,8 +143,8 @@ class EdgeBitset {
         }
     }
 
-    VertexGraph get_graph_tree(GraphEdgeIndex const &edge_index) const {
-        VertexGraph full_tree(edge_index.V);
+    Tree get_graph_tree(GraphEdgeIndex const &edge_index) const {
+        Tree full_tree(edge_index.V);
 
         for (EdgeID edge_id = 0;
             edge_id < static_cast<EdgeID>(edge_index.edges.size());
@@ -233,13 +232,8 @@ class EdgeBitset {
         Tree &ust
     ) const;
 
-    void fill_vector_tree(
-            GraphEdgeIndex const &edge_index,
-            VertexGraph &ust
-    ) const;
-
-    VertexGraph to_vertex_graph(GraphEdgeIndex const &edge_index, int V) const {
-        VertexGraph forest_graph(V);
+    Tree to_vertex_graph(GraphEdgeIndex const &edge_index, int V) const {
+        Tree forest_graph(V);
 
         for_each_tree_edge(edge_index, [&](int v, int u) {
             forest_graph[v].push_back(static_cast<VertexID>(u));
@@ -261,7 +255,7 @@ void assign_region_id_from_tree(const Tree &ust, PlanVector &region_ids, int roo
                                 CircularQueue<std::pair<int, int>> &vertex_queue);
 
 void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_ids,
-                                           VertexGraph &forest_graph, int root,
+                                           Tree &forest_graph, int root,
                                            const int new_region_id,
                                            CircularQueue<std::pair<int, int>> &vertex_queue);
 

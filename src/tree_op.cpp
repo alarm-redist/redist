@@ -64,18 +64,8 @@ void print_tree(Tree const &ust) {
     }
 }
 
-void print_tree(VertexGraph const &ust) {
-    Rprintf("Printing Tree:\n");
-    for (int i = 0; i < ust.size(); i++) {
-        Rprintf("%d: (", i);
-        for (auto &node : ust.at(i)) {
-            Rprintf("%d ", node);
-        }
-        Rprintf(")\n");
-    }
-}
 
-void check_tree_equality(VertexGraph const &ust1, VertexGraph const &ust2) {
+void check_tree_equality(Tree const &ust1, Tree const &ust2) {
     if(ust1.size() != ust2.size()){
         REprintf("Tree 1 has size %zu and Tree 2 has size %zu!\n", 
             ust1.size(), ust2.size());
@@ -228,7 +218,7 @@ void assign_region_id_from_tree(Tree const &ust, PlanVector &region_ids, int con
 
 // updates both the vertex labels and the forest adjacency from a directed tree
 void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_ids,
-                                           VertexGraph &forest_graph, int root,
+                                           Tree &forest_graph, int root,
                                            const int new_region_id,
                                            CircularQueue<std::pair<int, int>> &vertex_queue) {
 
@@ -442,20 +432,3 @@ void EdgeBitset::fill_vector_tree(
     }
 }
 
-void EdgeBitset::fill_vector_tree(
-        GraphEdgeIndex const &edge_index,
-        VertexGraph &ust
-) const{
-    // iterate through the graph
-    for (int v = 0; v < edge_index.V; ++v) {
-        // clear this vertices edges in the tree 
-        ust[v].clear();
-        // Check each of v's edges 
-        for (auto const &incident_edge : edge_index.incident_edges[v]) {
-            // if its adjacent in the packed forest then add it. 
-            if (test_edge_id(incident_edge.edge_id)) {
-                ust[v].push_back(static_cast<int>(incident_edge.neighbor));
-            }
-        }
-    }
-}
