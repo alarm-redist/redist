@@ -548,7 +548,7 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
  */
 // a_ust can be either a directed or undirected tree!!
 std::vector<EdgeCut> get_all_valid_edges_in_undirected_tree(
-    const VertexGraph &a_ust, const int root, const arma::uvec &pop, TreePopStack &stack,
+    const Tree &a_ust, const int root, const arma::uvec &pop, TreePopStack &stack,
     std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
     const int min_potential_cut_size, const int max_potential_cut_size,
     std::vector<int> const &smaller_cut_sizes_to_try, const int total_region_pop,
@@ -649,7 +649,7 @@ std::vector<EdgeCut> get_all_valid_edges_in_undirected_tree(
 // with the edge (region1_root, region2_root)
 // THIS INCLUDES (region1_root, region2_root) as an edge!!
 std::vector<EdgeCut> get_valid_edges_in_joined_tree(
-    MapParams const &map_params, VertexGraph const &forest_graph, TreePopStack &stack,
+    MapParams const &map_params, Tree const &forest_graph, TreePopStack &stack,
     std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
     const int region1_root, const int region1_pop, const int region2_root,
     const int region2_pop, const int min_potential_cut_size, const int max_potential_cut_size,

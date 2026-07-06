@@ -254,7 +254,7 @@ Rcpp::List ms_plans(
             // Index 0 or less is warmup
             bool in_warmup = i <= 0;
             if constexpr (DEBUG_PURE_MS_VERBOSE) {
-                Rprintf("Iter %d and idx %d \n", i, current_plan_mat_col);
+                Rprintf("Iter %d and idx %d: Starting\n", i, current_plan_mat_col);
             }
 
             // attempt to mergesplit
@@ -266,6 +266,10 @@ Rcpp::List ms_plans(
                 save_edge_selection_prob, current_plan_adj_region_pairs,
                 current_plan_pair_unnoramalized_wgts, rho, true, do_mh, false, nullptr,
                 granular_times);
+
+            if constexpr (DEBUG_PURE_MS_VERBOSE) {
+                Rprintf("Iter %d and idx %d: Attempted Mergesplit \n", i, current_plan_mat_col);
+            }
             // count size
             ++tree_sizes[std::get<3>(mergesplit_result) - 1];
 

@@ -355,12 +355,14 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
 
 
     if(estimated_unbiased_normalizing_constant){
+        REprintf("Starting estimation: ");
     // Now we sample one more plan and discard it to allow for unbiased 
     // normalization constant estimation 
     bool extra_plan_sampled = false;
     int extra_particle_reject_ct = 0;
 
     while(!extra_plan_sampled) {
+        REprintf("%d ", extra_particle_reject_ct);
         if (check_max_split_tries && extra_particle_reject_ct >= max_split_tries) {
             throw Rcpp::exception(
                 "Failed to split a single plan after `max_split_tries` attempts!\n");
@@ -419,6 +421,7 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
             }
         }
     }
+    REprintf("Done!\n");
 
     // now save the number of failed attempts before sampling the extra plan
     smc_diagnostics.tries_before_extra_particle[smc_step_num] = extra_particle_reject_ct;
@@ -428,6 +431,7 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
 
     // now swap the old plans with the new ones. This avoids needing to actually copy
     std::swap(old_plan_ensemble, new_plan_ensemble);
+    REprintf("Swapped!\n");
 
     // update tree sizes counts
     for (size_t region_size = 0; region_size < map_params.total_seats; region_size++) {

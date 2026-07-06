@@ -131,6 +131,8 @@ LinkingEdgePlan::LinkingEdgePlan(
         }
     }
 
+    check_tree_equality(forest_graph, forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index));
+
     auto initial_linking_edges =
         get_intial_linking_edges(plan_multigraph, region_ids, num_regions, region_graph);
 
@@ -161,9 +163,12 @@ double LinkingEdgePlan::get_regions_log_splitting_prob(ScoringFunction const &sc
     int min_possible_cut_size = cut_size_bounds.first;
     int max_possible_cut_size = cut_size_bounds.second;
 
+    // TODO refine the logic so this happens outside the call
+    forest_edges.fill_vector_tree(ust_sampler.map_params.graph_edge_index, ust_sampler.forest_scratch_tree);
+
     // get the log probability
     return tree_splitter.get_log_retroactive_splitting_prob_for_joined_tree(
-        ust_sampler.map_params, scoring_function, forest_graph, ust_sampler.stack,
+        ust_sampler.map_params, scoring_function, ust_sampler.forest_scratch_tree, ust_sampler.stack,
         ust_sampler.visited, ust_sampler.pops_below_vertex, region1_root, region2_root, *this,
         min_possible_cut_size, max_possible_cut_size,
         ust_sampler.splitting_schedule

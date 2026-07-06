@@ -376,7 +376,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
                              granular_times);
         proposal_accepted = rng_state.r_unif() <= std::exp(log_mh_ratio);
         if constexpr (DEBUG_MERGING_VERBOSE)
-            Rprintf("Ratio is %f and it is", std::exp(log_mh_ratio));
+            Rprintf("Ratio is %f and it is ", std::exp(log_mh_ratio));
 
         // update the cached compactness if needed
         if (proposal_accepted && using_caching) {
@@ -405,6 +405,8 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         if constexpr (perf_config::track_granular_times){
             add_elapsed(granular_times.plan_copying, final_copy_time); // optional timing
         }
+        if constexpr (DEBUG_MERGING_VERBOSE)
+            Rprintf("Plan updated, now swapping multigraphs\n");
 
         // swap the plan multigraphs
         swap_plan_multigraphs(current_plan_multigraph, proposed_plan_multigraph);

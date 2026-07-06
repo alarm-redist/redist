@@ -77,7 +77,7 @@ void print_tree(VertexGraph const &ust) {
 
 void check_tree_equality(VertexGraph const &ust1, VertexGraph const &ust2) {
     if(ust1.size() != ust2.size()){
-        REprintf("Tree 1 has size %u and Tree 2 has size %u!\n", 
+        REprintf("Tree 1 has size %zu and Tree 2 has size %zu!\n", 
             ust1.size(), ust2.size());
         throw Rcpp::exception("");
     }
@@ -86,7 +86,7 @@ void check_tree_equality(VertexGraph const &ust1, VertexGraph const &ust2) {
     {
         // check same size 
         if(ust1[v].size() != ust2[v].size()){
-            REprintf("Tree 1 has size %u and Tree 2 has size %u at vertex %u!\n", 
+            REprintf("Tree 1 has size %zu and Tree 2 has size %zu at vertex %zu!\n", 
                 ust1[v].size(), ust2[v].size(), v);
             print_tree(ust1);
             print_tree(ust2);
@@ -96,8 +96,39 @@ void check_tree_equality(VertexGraph const &ust1, VertexGraph const &ust2) {
         std::unordered_set<int> s1(ust1[v].begin(), ust1[v].end());
         std::unordered_set<int> s2(ust2[v].begin(), ust2[v].end());
 
-        if(s1 != s2){
-            REprintf("Vertex %u does not have the same neighbors!\n", v);
+
+        if (s1 != s2) {
+            REprintf("Vertex %zu does not have the same neighbors!\n", v);
+
+            REprintf("forest_graph[%zu]: ", v);
+            for (auto const u : ust1[v]) {
+                REprintf("%d ", static_cast<int>(u));
+            }
+            REprintf("\n");
+
+            REprintf("packed_forest[%zu]: ", v);
+            for (auto const u : ust2[v]) {
+                REprintf("%d ", static_cast<int>(u));
+            }
+            REprintf("\n");
+
+            REprintf("In forest_graph but not packed_forest: ");
+            for (auto const u : s1) {
+                if (s2.find(u) == s2.end()) {
+                    REprintf("(%zu, %d) ", v, u);
+                }
+            }
+            REprintf("\n");
+
+            REprintf("In packed_forest but not forest_graph: ");
+            for (auto const u : s2) {
+                if (s1.find(u) == s1.end()) {
+                    REprintf("(%zu, %d) ", v, u);
+                }
+            }
+            REprintf("\n");
+
+            throw Rcpp::exception("forest_graph and packed forest differ!");
         }
         
     }
@@ -266,6 +297,7 @@ void assign_region_id_and_forest_from_tree_NEW(const Tree &ust, PlanVector &regi
         forest_edges.set_edge(root, child_vertex, graph_edge_index);
     }
 
+
     // update all the children
     while (!vertex_queue.empty()) {
         // get and remove head of queue
@@ -346,6 +378,12 @@ void EdgeBitset::clear_region_tree(
                     // clears the edge 
                     clear_edge_id(incident_edge.edge_id);
                 }
+
+                if(region_ids[u] != region_id && test_edge(v, u, edge_index)){
+                    REprintf("Somehow pair (%d, %d) has an edge despite %d not being in region %d (its in region %d)!\n",
+                    u, v, u, static_cast<int>(region_id) ,static_cast<int>(region_ids[u]));
+                    print_full_tree(edge_index);
+                }
             }
         }
 }
@@ -373,6 +411,13 @@ void EdgeBitset::clear_region_trees(
                 if (v < u && (region_ids[u] == region_id1 || region_ids[u] == region_id2)) {
                     // clears the edge 
                     clear_edge_id(incident_edge.edge_id);
+                }
+
+                if( (region_ids[u] == region_id1 || region_ids[u] == region_id2) && test_edge(v, u, edge_index)){
+                    REprintf("Somehow pair (%d, %d) has an edge despite %d not being in region %d  or %d (its in region %d)!\n",
+                    u, v, u, static_cast<int>(region_id1), static_cast<int>(region_id2),
+                    static_cast<int>(region_ids[u]));
+                    print_full_tree(edge_index);
                 }
             }
         }

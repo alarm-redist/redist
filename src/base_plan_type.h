@@ -553,7 +553,7 @@ class TreeSplitter {
     // the trees in the two regions
     virtual double get_log_retroactive_splitting_prob_for_joined_tree(
         MapParams const &map_params, ScoringFunction const &scoring_function,
-        VertexGraph const &forest_graph, TreePopStack &stack, std::vector<bool> &visited,
+        Tree const &forest_graph, TreePopStack &stack, std::vector<bool> &visited,
         std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
         Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
         std::vector<int> const &smaller_cut_sizes_to_try);
@@ -717,7 +717,7 @@ class ConstraintSplitter : public TreeSplitter {
     RegionSizes region_sizes;
     IntPlanAttribute region_pops;
     CircularQueue<std::pair<int, int>> vertex_queue;
-    VertexGraph dummy_forest;
+    Tree dummy_forest;
 
     // Takes a spanning tree and returns the edge to cut if successful
     std::pair<bool, EdgeCut> attempt_to_find_edge_to_cut(
@@ -731,7 +731,7 @@ class ConstraintSplitter : public TreeSplitter {
 
     double get_log_retroactive_splitting_prob_for_joined_tree(
         MapParams const &map_params, ScoringFunction const &scoring_function,
-        VertexGraph const &forest_graph, TreePopStack &stack, std::vector<bool> &visited,
+        Tree const &forest_graph, TreePopStack &stack, std::vector<bool> &visited,
         std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
         Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
         std::vector<int> const &smaller_cut_sizes_to_try) override;

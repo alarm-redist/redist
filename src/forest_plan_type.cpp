@@ -94,7 +94,7 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
     int const V = plan_multigraph.map_params.V;
 
     // copy the packed forest into the vector tree
-    forest_edges.fill_vector_tree(ust_sampler.map_params.graph_edge_index, ust_sampler.graph_ust);
+    forest_edges.fill_vector_tree(ust_sampler.map_params.graph_edge_index, ust_sampler.forest_scratch_tree);
 
     for (int v = 0; v < V; v++) {
         // Find out which region this vertex corresponds to
@@ -156,7 +156,7 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
 
             double log_edge_selection_prob =
                 edge_splitter.get_log_retroactive_splitting_prob_for_joined_tree(
-                    plan_multigraph.map_params, scoring_function, ust_sampler.graph_ust,
+                    plan_multigraph.map_params, scoring_function, ust_sampler.forest_scratch_tree,
                     ust_sampler.stack, ust_sampler.visited, ust_sampler.pops_below_vertex, v,
                     v_nbor, plan, min_possible_cut_size, max_possible_cut_size,
                     splitting_schedule
@@ -214,6 +214,9 @@ double ForestPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
                                             const int region1_id, int const region2_id) const {
     // reset the neccesary variables
     ust_sampler.stack.clear();
+    // TODO write version that only edits the edges in the region 
+    // copy the packed forest into the vector tree
+    forest_edges.fill_vector_tree(ust_sampler.map_params.graph_edge_index, ust_sampler.forest_scratch_tree);
 
     int const V = plan_multigraph.map_params.V;
     int const merged_region_size = region_sizes[region1_id] + region_sizes[region2_id];
@@ -248,7 +251,7 @@ double ForestPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
 
             double log_edge_selection_prob =
                 tree_splitter.get_log_retroactive_splitting_prob_for_joined_tree(
-                    plan_multigraph.map_params, scoring_function, forest_graph,
+                    plan_multigraph.map_params, scoring_function, ust_sampler.forest_scratch_tree,
                     ust_sampler.stack, ust_sampler.visited, ust_sampler.pops_below_vertex, v,
                     nbor, *this, min_possible_cut_size, max_possible_cut_size,
                     splitting_schedule

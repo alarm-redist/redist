@@ -371,10 +371,11 @@ void Plan::shallow_copy(Plan const &plan_to_copy) {
     // copy order added tracker
     region_added_order.copy(plan_to_copy.region_added_order);
     // It should be 
-    // if (forest_edges.empty())
+    if (!forest_edges.empty()){
+        forest_edges.copy(plan_to_copy.forest_edges);
+    }
     // if forest graph bigger than 1 copy that
     if (plan_to_copy.forest_graph.size() > 0) {
-        forest_edges.copy(plan_to_copy.forest_edges);
         for (auto i = 0; i < forest_graph.size(); ++i) {
             forest_graph[i].assign(plan_to_copy.forest_graph[i].begin(),
                                    plan_to_copy.forest_graph[i].end());
@@ -761,16 +762,6 @@ void Plan::update_plan_ids_and_forest_from_cut(TreeSplitter const &tree_splitter
         );
     }
 
-
-    // update the vertex labels and the tree
-    assign_region_id_and_forest_from_tree_NEW(ust_sampler.ust, region_ids, forest_edges,
-                                          split_region1_tree_root, split_region1_id,
-                                          ust_sampler.map_params.graph_edge_index, ust_sampler.vertex_queue);
-
-    assign_region_id_and_forest_from_tree_NEW(ust_sampler.ust, region_ids, forest_edges,
-                                          split_region2_tree_root, split_region2_id,
-                                          ust_sampler.map_params.graph_edge_index, ust_sampler.vertex_queue);
-
     // OLD
     // update the vertex labels and the tree
     assign_region_id_and_forest_from_tree(ust_sampler.ust, region_ids, forest_graph,
@@ -780,6 +771,15 @@ void Plan::update_plan_ids_and_forest_from_cut(TreeSplitter const &tree_splitter
     assign_region_id_and_forest_from_tree(ust_sampler.ust, region_ids, forest_graph,
                                           split_region2_tree_root, split_region2_id,
                                           ust_sampler.vertex_queue);
+
+    // update the vertex labels and the tree
+    assign_region_id_and_forest_from_tree_NEW(ust_sampler.ust, region_ids, forest_edges,
+                                          split_region1_tree_root, split_region1_id,
+                                          ust_sampler.map_params.graph_edge_index, ust_sampler.vertex_queue);
+
+    assign_region_id_and_forest_from_tree_NEW(ust_sampler.ust, region_ids, forest_edges,
+                                          split_region2_tree_root, split_region2_id,
+                                          ust_sampler.map_params.graph_edge_index, ust_sampler.vertex_queue);
 
     check_tree_equality(forest_graph, forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index));
 }
@@ -2538,7 +2538,7 @@ double TreeSplitter::get_log_selection_prob(std::vector<EdgeCut> &valid_edges, i
 
 double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
     MapParams const &map_params, ScoringFunction const &scoring_function,
-    VertexGraph const &forest_graph, TreePopStack &stack, std::vector<bool> &visited,
+    Tree const &forest_graph, TreePopStack &stack, std::vector<bool> &visited,
     std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
     Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
     std::vector<int> const &smaller_cut_sizes_to_try) {
@@ -2829,7 +2829,7 @@ void assign_region_ids_from_joined_undirected_tree(
 
 double ConstraintSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
     MapParams const &map_params, ScoringFunction const &scoring_function,
-    VertexGraph const &forest_graph, TreePopStack &stack, std::vector<bool> &visited,
+    Tree const &forest_graph, TreePopStack &stack, std::vector<bool> &visited,
     std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
     Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
     std::vector<int> const &smaller_cut_sizes_to_try) {
@@ -2895,10 +2895,12 @@ double ConstraintSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
         region_pops[region1_id] = valid_edges[i].cut_above_pop;
         region_pops[region2_id] = valid_edges[i].cut_below_pop;
 
+        // TODO: Reimplement this 
+        throw Rcpp::exception("Constraint splitter code is under maintenance right now!\n");
         // update the region ids
-        assign_region_ids_from_joined_undirected_tree(
-            forest_graph, region_ids, valid_edges[i].cut_vertex, region1_id,
-            valid_edges[i].cut_vertex_parent, region2_id, vertex_queue);
+        // assign_region_ids_from_joined_undirected_tree(
+        //     forest_graph, region_ids, valid_edges[i].cut_vertex, region1_id,
+        //     valid_edges[i].cut_vertex_parent, region2_id, vertex_queue);
 
         // get the soft score
         double const score = scoring_function.compute_full_split_plan_soft_score(

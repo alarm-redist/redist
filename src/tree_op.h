@@ -168,7 +168,7 @@ class EdgeBitset {
     }
 
     void print(GraphEdgeIndex const &edge_index) const {
-        REprintf("Packed Forest with %u edges!", edge_index.edges.size());
+        REprintf("Packed Forest with %zu edges!", edge_index.edges.size());
         for (EdgeID edge_id = 0;
             edge_id < static_cast<EdgeID>(edge_index.edges.size());
             ++edge_id) {

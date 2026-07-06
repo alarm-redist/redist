@@ -55,7 +55,7 @@ typedef std::uint64_t EdgeBitWord;  // stores 64 edge booleans
 
 constexpr int EDGE_BITS_PER_WORD = 64;
 
-inline int num_edge_bit_words(int num_graph_edges) {
+inline int compute_num_edge_bit_words(int num_graph_edges) {
     return (num_graph_edges + EDGE_BITS_PER_WORD - 1) / EDGE_BITS_PER_WORD;
 }
 
@@ -282,7 +282,7 @@ class MapParams {
               std::vector<int> const &district_seat_sizes, double const lower,
               double const target, double const upper)
         : g(list_to_graph(adj_list)), num_edges(count_undirected_edges(g)),
-        graph_edge_index(g, num_edges), num_edge_bit_words(num_edges),
+        graph_edge_index(g, num_edges), num_edge_bit_words(compute_num_edge_bit_words(num_edges)),
           counties(counties), num_counties(max(counties)), cg(county_graph(g, counties)),
           county_restricted_graph(num_counties > 1 ? build_restricted_county_graph(g, counties)
                                                    : Graph(0)),
