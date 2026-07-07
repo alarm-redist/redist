@@ -199,6 +199,10 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         Rprintf("Picked pair (%d, %d)\n", region1_id, region2_id);
     }
 
+    plan.check_forest_integrity(
+        map_params.graph_edge_index,
+        "In attempt_mergesplit_step, calling on `plan` before wilson call"
+    );
     // try to draw a region
     auto wilson_time = maybe_now(); // optional timing 
     std::tuple<bool, EdgeCut> edge_search_result =
@@ -208,7 +212,10 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     if constexpr (perf_config::track_granular_times){
         add_elapsed(granular_times.wilson_time, wilson_time); // optional timing
     }
- 
+     plan.check_forest_integrity(
+        map_params.graph_edge_index,
+        "In attempt_mergesplit_step, calling on `plan` after wilson call"
+    );
 
     if constexpr (DEBUG_MERGING_VERBOSE) {
         Rprintf("A Splitting Checkpoint 1.\n");
@@ -225,12 +232,20 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     // IN THE FUTURE CAN AVOID THE COPYING BY JUST TRAVERSING THE TREE
     // Just traverse tree and check if not in merged region or something
 
+    new_plan.check_forest_integrity(
+        map_params.graph_edge_index,
+        "In attempt_mergesplit_step, calling on `new_plan` before copying"
+    );
     // copy the new plan to be the old one
     auto initial_copy_time = maybe_now(); // optional timing 
     new_plan.shallow_copy(plan);
     if constexpr (DEBUG_MERGING_VERBOSE) {
         Rprintf("A Splitting Checkpoint 1.5!\n");
     }
+    new_plan.check_forest_integrity(
+        map_params.graph_edge_index,
+        "In attempt_mergesplit_step, calling on `new_plan` after copying"
+    );
     // now split that region we found on the old one
     new_plan.update_from_successful_split(tree_splitter, ust_sampler,
                                           std::get<1>(edge_search_result), region1_id,
@@ -241,7 +256,10 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     if constexpr (perf_config::track_granular_times){
         add_elapsed(granular_times.plan_copying, initial_copy_time); // optional timing 
     }
-    
+    new_plan.check_forest_integrity(
+        map_params.graph_edge_index,
+        "In attempt_mergesplit_step, calling on `new_plan` after successful update"
+    );
     
     // check new plan is hierarchically valid if needed
     auto new_pair_building_time = maybe_now(); // optional timing 
@@ -407,6 +425,11 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         }
         if constexpr (DEBUG_MERGING_VERBOSE)
             Rprintf("Plan updated, now swapping multigraphs\n");
+
+        new_plan.check_forest_integrity(
+            map_params.graph_edge_index,
+            "In attempt_mergesplit_step, calling on `plan` after successful update (mh passed)"
+        );
 
         // swap the plan multigraphs
         swap_plan_multigraphs(current_plan_multigraph, proposed_plan_multigraph);

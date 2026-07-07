@@ -213,50 +213,6 @@ void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_i
 }
 
 
-// updates both the vertex labels and the forest adjacency
-// NOTE: This assumes that the region has already been reset in the packed forest
-void assign_region_id_and_forest_from_tree_NEW(const Tree &ust, PlanVector &region_ids,
-                                           EdgeBitset &forest_edges, int root,
-                                           const int new_region_id,
-                                           const GraphEdgeIndex &graph_edge_index,
-                                           CircularQueue<std::pair<int, int>> &vertex_queue) {
-
-    // clear the queue of vertex, parent
-    vertex_queue.clear();
-
-    // update root region id
-    region_ids[root] = new_region_id;
-
-
-    // add roots children to queue
-    for (auto const &child_vertex : ust[root]) {
-        vertex_queue.push({child_vertex, root});
-        // Now add this edge to the packed forest 
-        forest_edges.set_edge(root, child_vertex, graph_edge_index);
-    }
-
-
-    // update all the children
-    while (!vertex_queue.empty()) {
-        // get and remove head of queue
-        auto [vertex, parent_vertex] = vertex_queue.pop();
-
-        // update region ids
-        region_ids[vertex] = new_region_id;
-        // add this edge to the packed forest
-        forest_edges.set_edge(vertex, parent_vertex, graph_edge_index);
-
-        // TODO check if set edge is neccesary here. I don't think so but leaving to be safe 
-        for (auto const &child_vertex : ust[vertex]) {
-            // add children to queue
-            vertex_queue.push({child_vertex, vertex});
-            // add this edge from vertex to its children
-            forest_edges.set_edge(vertex, child_vertex, graph_edge_index);
-        }
-    }
-
-    return;
-}
 
 /*
  *  Erases an edge from a tree
@@ -277,17 +233,25 @@ void assign_region_id_and_forest_from_tree_NEW(const Tree &ust, PlanVector &regi
  */
 void erase_tree_edge(Tree &ust, EdgeCut cut_edge) {
     // Get all of the descendents of `cut_vertex_parent`
-    std::vector<int> *siblings = &ust[cut_edge.cut_vertex_parent];
-    int length = siblings->size();
-    int j;
+    std::vector<int> &siblings = ust[cut_edge.cut_vertex_parent];
+
     // find index of `cut_vertex` among `cut_vertex_parent`'s children
-    for (j = 0; j < length; j++) {
-        if ((*siblings)[j] == cut_edge.cut_vertex)
-            break;
+    auto it = std::find(
+        siblings.begin(),
+        siblings.end(),
+        cut_edge.cut_vertex
+    );
+
+    if constexpr (perf_config::unnecessary_input_checks){
+        if (it == siblings.end()) {
+            throw Rcpp::exception(
+                "Actual cut edge not found in valid_edges."
+            );
+        }
     }
 
     // Now remove the edge corresponding to `cut_vertex` from the tree
-    siblings->erase(siblings->begin() + j);
+    siblings.erase(it);
 }
 
 
@@ -311,17 +275,20 @@ void EdgeBitset::clear_region_tree(
             for (auto const &incident_edge : edge_index.incident_edges[v]) {
                 int const u = static_cast<int>(incident_edge.neighbor);
 
+                if(region_ids[u] != region_id && test_edge(v, u, edge_index)){
+                    REprintf("Somehow pair (%d, %d) has an edge despite %d not being in region %d (its in region %d)!\n",
+                    u, v, u, static_cast<int>(region_id) ,static_cast<int>(region_ids[u]));
+                    print_full_tree(edge_index);
+                    throw Rcpp::exception("Clear region!!\n");
+                }
+
                 // Avoid clearing the same undirected edge twice.
                 if (v < u && region_ids[u] == region_id) {
                     // clears the edge 
                     clear_edge_id(incident_edge.edge_id);
                 }
 
-                if(region_ids[u] != region_id && test_edge(v, u, edge_index)){
-                    REprintf("Somehow pair (%d, %d) has an edge despite %d not being in region %d (its in region %d)!\n",
-                    u, v, u, static_cast<int>(region_id) ,static_cast<int>(region_ids[u]));
-                    print_full_tree(edge_index);
-                }
+
             }
         }
 }
@@ -345,18 +312,21 @@ void EdgeBitset::clear_region_trees(
             for (auto const &incident_edge : edge_index.incident_edges[v]) {
                 int const u = static_cast<int>(incident_edge.neighbor);
 
+                if(region_ids[u] != region_id1 && region_ids[u] != region_id2 && test_edge(v, u, edge_index)){
+                    REprintf("Somehow pair (%d, %d) has an edge despite %d not being in region %d  or %d (its in region %d)!\n",
+                    u, v, u, static_cast<int>(region_id1), static_cast<int>(region_id2),
+                    static_cast<int>(region_ids[u]));
+                    print_full_tree(edge_index);
+                    throw Rcpp::exception("STOP!!\n");
+                }
+
                 // Avoid clearing the same undirected edge twice.
                 if (v < u && (region_ids[u] == region_id1 || region_ids[u] == region_id2)) {
                     // clears the edge 
                     clear_edge_id(incident_edge.edge_id);
                 }
 
-                if( (region_ids[u] == region_id1 || region_ids[u] == region_id2) && test_edge(v, u, edge_index)){
-                    REprintf("Somehow pair (%d, %d) has an edge despite %d not being in region %d  or %d (its in region %d)!\n",
-                    u, v, u, static_cast<int>(region_id1), static_cast<int>(region_id2),
-                    static_cast<int>(region_ids[u]));
-                    print_full_tree(edge_index);
-                }
+
             }
         }
 }

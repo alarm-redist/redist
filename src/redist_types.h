@@ -93,14 +93,55 @@ template <typename T> class PlanAttribute {
 
     // This copies one plans data from another
     void copy(PlanAttribute const &other_attr) {
+        if constexpr (perf_config::unnecessary_input_checks){
+            if (size() != other_attr.size()) {
+                std::ostringstream oss;
+                Rcpp::Rcerr << "PlanAttribute::copy size mismatch. "
+                    << "dest.size()=" << size()
+                    << ", source.size()=" << other_attr.size();
+                throw Rcpp::exception("PlanAttribute Copy!\n");
+                throw std::runtime_error(oss.str());
+            }
+        }
         std::copy(other_attr.begin(), other_attr.end(), begin());
     }
 
-    // debug functions 
-    int debug_get_start() { return offset_start;}
-    int debug_get_end() { return offset_end;}
-
     std::size_t size() const noexcept { return offset_end - offset_start; };
+
+    // debug functions 
+    int debug_offset_start() const {
+        return offset_start;
+    }
+
+    int debug_offset_end() const {
+        return offset_end;
+    }
+
+    std::size_t debug_size() const {
+        return static_cast<std::size_t>(offset_end - offset_start);
+    }
+
+    std::vector<T> const *debug_backing_vector_address() const {
+        return &long_vec;
+    }
+
+    T const *debug_data_begin() const {
+        return long_vec.data() + offset_start;
+    }
+
+    T const *debug_data_end() const {
+        return long_vec.data() + offset_end;
+    }
+
+    bool debug_overlaps(PlanAttribute<T> const &other) const {
+        if (&long_vec != &other.long_vec) {
+            return false;
+        }
+
+        return offset_start < other.offset_end &&
+            other.offset_start < offset_end;
+    }
+
 };
 
 typedef PlanAttribute<RegionID> PlanVector;
@@ -481,10 +522,20 @@ template <typename T> class FixedStack {
     size_t max_size() const { return capacity; }
 
     void push(const T &value) {
+        if constexpr (perf_config::unnecessary_input_checks){
+            if (count >= capacity) {
+                throw Rcpp::exception("CircularQueue overflow.");
+            }
+        }
         buffer[count++] = value; // copy
     }
 
     void push(T &&value) {
+        if constexpr (perf_config::unnecessary_input_checks){
+            if (count >= capacity) {
+                throw Rcpp::exception("CircularQueue overflow.");
+            }
+        }
         buffer[count++] = std::move(value); // move
     }
 
@@ -492,7 +543,14 @@ template <typename T> class FixedStack {
 
     const T &top() const { return buffer[count - 1]; }
 
-    T pop() { return std::move(buffer[--count]); }
+    T pop() { 
+        if constexpr (perf_config::unnecessary_input_checks){
+            if (count >= capacity) {
+                throw Rcpp::exception("CircularQueue overflow.");
+            }
+        }
+        return std::move(buffer[--count]); 
+    }
 
     void clear() { count = 0; }
 };
@@ -517,18 +575,35 @@ template <typename T> class CircularQueue {
     size_t max_size() const { return capacity; }
 
     void push(const T &value) {
+        if constexpr (perf_config::unnecessary_input_checks){
+            if (size >= capacity) {
+                throw Rcpp::exception("CircularQueue overflow.");
+            }
+        }
+
         buffer[tail] = value;
         tail = (tail + 1) % capacity;
         ++size;
     }
 
     void push(T &&value) {
+        if constexpr (perf_config::unnecessary_input_checks){
+            if (size >= capacity) {
+                throw Rcpp::exception("CircularQueue overflow.");
+            }
+        }
         buffer[tail] = std::move(value);
         tail = (tail + 1) % capacity;
         ++size;
     }
 
     T pop() {
+        if constexpr (perf_config::unnecessary_input_checks){
+            if (size >= capacity) {
+                throw Rcpp::exception("CircularQueue overflow.");
+            }
+        }
+
         T value = std::move(buffer[head]);
         head = (head + 1) % capacity;
         --size;

@@ -260,6 +260,10 @@ void assign_region_id_from_tree(const Tree &ust, PlanVector &region_ids, int roo
                                 const int new_region_num_id,
                                 CircularQueue<std::pair<int, int>> &vertex_queue);
 
+/*
+ * Assign `new_region_num_id` to all descendants of `root` in `ust` where
+ * `ust` is a directed spanning tree 
+ */
 void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_ids,
                                            Tree &forest_graph, EdgeBitset &forest_edges,
                                            int root,
@@ -267,15 +271,8 @@ void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_i
                                            const GraphEdgeIndex &graph_edge_index,
                                            CircularQueue<std::pair<int, int>> &vertex_queue);
 
-/*
- * Assign `new_region_num_id` to all descendants of `root` in `ust` where
- * `ust` is a directed spanning tree 
- */
-void assign_region_id_and_forest_from_tree_NEW(const Tree &ust, PlanVector &region_ids,
-                                           EdgeBitset &forest_edges, int root,
-                                           const int new_region_id,
-                                           const GraphEdgeIndex &graph_edge_index,
-                                           CircularQueue<std::pair<int, int>> &vertex_queue);
+
+
 
 /*
  *  Erases an edge from a tree

@@ -134,6 +134,7 @@ LinkingEdgePlan::LinkingEdgePlan(
     check_forest_equality(
         forest_graph,
         forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
+        ust_sampler.map_params.graph_edge_index,
         "IN Partial Linking Edge Plan Constructor, checking forest_graph vs forest edges (through get_graph_tree)"
     );
 
@@ -174,12 +175,14 @@ double LinkingEdgePlan::get_regions_log_splitting_prob(ScoringFunction const &sc
     check_forest_equality(
         forest_graph,
         forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
+        ust_sampler.map_params.graph_edge_index,
         "IN get_regions_log_splitting_prob, checking forest_graph vs forest edges (through get_graph_tree)"
     );
 
     check_forest_equality(
         forest_graph,
         ust_sampler.forest_scratch_tree,
+        ust_sampler.map_params.graph_edge_index,
         "IN get_regions_log_splitting_prob, checking forest_graph vs forest scratch tree"
     );
 

@@ -748,6 +748,7 @@ void Plan::update_plan_ids_and_forest_from_cut(TreeSplitter const &tree_splitter
     check_forest_equality(
         forest_graph,
         forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
+        ust_sampler.map_params.graph_edge_index,
         "IN update_plan_ids_and_forest_from_cut BEFORE updating, checking forest_graph vs forest edges (through get_graph_tree)"
     );
 
@@ -785,6 +786,7 @@ void Plan::update_plan_ids_and_forest_from_cut(TreeSplitter const &tree_splitter
     check_forest_equality(
         forest_graph,
         forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
+        ust_sampler.map_params.graph_edge_index, 
         "IN update_plan_ids_and_forest_from_cut AFTER updating, checking forest_graph vs forest edges (through get_graph_tree)"
     );
 
@@ -866,8 +868,15 @@ std::vector<std::pair<RegionID, RegionID>> Plan::get_valid_smc_merge_regions(
 
 // Plan debugging functions 
 void Plan::check_forest_equality(
-    Tree const &ust1, Tree const &ust2, std::string_view msg
+    Tree const &ust1, Tree const &ust2, 
+    GraphEdgeIndex const &graph_edge_index, std::string_view msg
 ) const{
+
+    check_forest_integrity(
+        graph_edge_index,
+        msg
+    );
+
     if(ust1.size() != ust2.size()){
         REprintf("Tree 1 has size %zu and Tree 2 has size %zu!\n", 
             ust1.size(), ust2.size());
@@ -939,6 +948,140 @@ void Plan::check_forest_equality(
             throw Rcpp::exception("forest_graph and packed forest differ!");
         }
         
+    }
+}
+
+// checks the forests have no edges crossing regions
+void Plan::check_forest_integrity(
+    GraphEdgeIndex const &graph_edge_index,
+    std::string_view msg
+) const {
+    if (forest_graph.size() != static_cast<size_t>(graph_edge_index.V)) {
+        std::cerr << msg << std::endl;
+
+        REprintf(
+            "FOREST GRAPH: Somehow forest_graph is size %zu when V=%d!\n",
+            forest_graph.size(),
+            graph_edge_index.V
+        );
+
+        throw Rcpp::exception(
+            "In check_forest_integrity on Graph Forest Size check!!\n"
+        );
+    }
+
+    bool graph_forest_has_cross_region_edges = false;
+    bool packed_forest_has_cross_region_edges = false;
+
+    int graph_forest_cross_region_edge_count = 0;
+    int packed_forest_cross_region_edge_count = 0;
+
+    // Go through every vertex.
+    for (int v = 0; v < graph_edge_index.V; ++v) {
+        RegionID const v_region = region_ids[v];
+
+        // Check forest_graph.
+        for (auto const u_raw : forest_graph[v]) {
+            int const u = static_cast<int>(u_raw);
+
+            if (u < 0 || u >= graph_edge_index.V) {
+                std::cerr << msg << std::endl;
+
+                REprintf(
+                    "FOREST GRAPH: Invalid neighbor %d found in forest_graph[%d] when V=%d!\n",
+                    u,
+                    v,
+                    graph_edge_index.V
+                );
+
+                throw Rcpp::exception(
+                    "In check_forest_integrity on Graph Forest Invalid Neighbor check!!\n"
+                );
+            }
+
+            RegionID const u_region = region_ids[u];
+
+            if (v_region != u_region) {
+                graph_forest_has_cross_region_edges = true;
+                ++graph_forest_cross_region_edge_count;
+
+                REprintf(
+                    "FOREST GRAPH CROSS-REGION EDGE: pair (%d, %d), "
+                    "v-region=%d, u-region=%d\n",
+                    v,
+                    u,
+                    static_cast<int>(v_region),
+                    static_cast<int>(u_region)
+                );
+            }
+        }
+
+        // Check packed forest.
+        //
+        // Only check each undirected graph edge once. Otherwise, since
+        // graph_edge_index.incident_edges is symmetric, each packed forest
+        // cross-region edge would be printed twice.
+        for (auto const &incident_edge : graph_edge_index.incident_edges[v]) {
+            int const u = static_cast<int>(incident_edge.neighbor);
+
+            if (v > u) {
+                continue;
+            }
+
+            RegionID const u_region = region_ids[u];
+
+            if (v_region != u_region &&
+                forest_edges.test_edge_id(incident_edge.edge_id)) {
+                packed_forest_has_cross_region_edges = true;
+                ++packed_forest_cross_region_edge_count;
+
+                REprintf(
+                    "PACKED FOREST CROSS-REGION EDGE: pair (%d, %d), "
+                    "v-region=%d, u-region=%d, edge_id=%u\n",
+                    v,
+                    u,
+                    static_cast<int>(v_region),
+                    static_cast<int>(u_region),
+                    static_cast<unsigned int>(incident_edge.edge_id)
+                );
+            }
+        }
+    }
+
+    if (graph_forest_has_cross_region_edges ||
+        packed_forest_has_cross_region_edges) {
+        std::cerr << msg << std::endl;
+
+        REprintf(
+            "Forest integrity check failed after scanning whole graph.\n"
+        );
+
+        REprintf(
+            "Graph forest cross-region edge count: %d\n",
+            graph_forest_cross_region_edge_count
+        );
+
+        REprintf(
+            "Packed forest cross-region edge count: %d\n",
+            packed_forest_cross_region_edge_count
+        );
+
+        if (graph_forest_has_cross_region_edges &&
+            packed_forest_has_cross_region_edges) {
+            throw Rcpp::exception(
+                "In check_forest_integrity: BOTH graph forest and packed forest have cross-region edges!!\n"
+            );
+        }
+
+        if (graph_forest_has_cross_region_edges) {
+            throw Rcpp::exception(
+                "In check_forest_integrity: graph forest has cross-region edges!!\n"
+            );
+        }
+
+        throw Rcpp::exception(
+            "In check_forest_integrity: packed forest has cross-region edges!!\n"
+        );
     }
 }
 
@@ -2653,6 +2796,15 @@ double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
     // it should be 0 if pop bounds are tight but this allows it to work even
     // if not.
     auto it = std::find(valid_edges.begin(), valid_edges.end(), actual_cut_edge);
+
+    if constexpr (perf_config::unnecessary_input_checks){
+        if (it == valid_edges.end()) {
+            throw Rcpp::exception(
+                "Actual cut edge not found in valid_edges."
+            );
+        }
+    }
+
 
     int actual_cut_edge_index = std::distance(valid_edges.begin(), it);
     if (MERGED_TREE_SPLITTING_VERBOSE) {

@@ -39,6 +39,7 @@ ForestPlan::ForestPlan(int const ndists, int const num_regions, const arma::uvec
     check_forest_equality(
         forest_graph,
         forest_edges.get_graph_tree(map_params.graph_edge_index),
+        map_params.graph_edge_index,
         "IN Partial Forest Plan Constructor, checking forest_graph vs forest edges (through get_graph_tree)"
     );
 }
@@ -104,11 +105,13 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
     plan.check_forest_equality(
         forest_graph,
         forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
+        ust_sampler.map_params.graph_edge_index,
         "IN compute_log_tree_eff_boundary_lens, checking forest_graph vs forest edges (through get_graph_tree)"
     );
     plan.check_forest_equality(
         forest_graph,
         ust_sampler.forest_scratch_tree,
+        ust_sampler.map_params.graph_edge_index,
         "IN compute_log_tree_eff_boundary_lens, checking forest_graph vs forest scratch tree"
     );
 
@@ -240,12 +243,14 @@ double ForestPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
     check_forest_equality(
         forest_graph,
         forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
+        ust_sampler.map_params.graph_edge_index,
         "IN get_log_eff_boundary_len, checking forest_graph vs forest edges (through get_graph_tree)"
     );
 
     check_forest_equality(
         forest_graph,
         ust_sampler.forest_scratch_tree,
+        ust_sampler.map_params.graph_edge_index,
         "IN get_log_eff_boundary_len, checking forest_graph vs forest scratch tree"
     );
 

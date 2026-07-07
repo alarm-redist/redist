@@ -222,8 +222,7 @@ std::unique_ptr<PlanEnsemble> get_plan_ensemble_ptr(
     Rcpp::IntegerMatrix const &plans_mat, Rcpp::IntegerMatrix const &region_sizes_mat,
     std::vector<RNGState> &rng_states, RcppThread::ThreadPool &pool, int const verbosity);
 
-// swaps the contents of two plan ensembles
-void swap_plan_ensembles(PlanEnsemble &plan_ensemble1, PlanEnsemble &plan_ensemble2);
+
 
 // Wrapper object for all non-essential SMC diagnostics
 class SMCDiagnostics {

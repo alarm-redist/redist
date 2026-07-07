@@ -375,6 +375,24 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params, int const total_pop, int
     });
 
     pool.wait();
+
+    // if constexpr(perf_config::unnecessary_input_checks){
+    //     // Debug check: make sure successive plans' packed forest bit slices do not overlap.
+    //     for (int i = 0; i + 1 < nsims; ++i) {
+    //         auto const &bits_i =
+    //             plan_ptr_vec[i]->debug_forest_edges_attr().debug_edge_bits_attr();
+
+    //         auto const &bits_next =
+    //             plan_ptr_vec[i + 1]->debug_forest_edges_attr().debug_edge_bits_attr();
+
+    //         if (bits_i.debug_offset_end() > bits_next.debug_offset_start()) {
+    //             Rcpp::stop(
+    //                 "Overlapping forest edge bit slices between successive plans!"
+    //             );
+    //         }
+    //     }
+    // }
+
 }
 
 // creates plan ensemble of partial plans
@@ -761,22 +779,6 @@ std::unique_ptr<PlanEnsemble> get_plan_ensemble_ptr(
     }
 }
 
-void swap_plan_ensembles(PlanEnsemble &plan_ensemble1, PlanEnsemble &plan_ensemble2) {
-    // We only swap the pointers to the plans themselves
-    // Note this does not properly swap the underlying vectors
-    // so care is needed
-    std::swap(plan_ensemble1.plan_ptr_vec, plan_ensemble2.plan_ptr_vec);
-    std::swap(plan_ensemble1.flattened_all_plans, plan_ensemble2.flattened_all_plans);
-    std::swap(plan_ensemble1.flattened_all_region_sizes,
-              plan_ensemble2.flattened_all_region_sizes);
-    std::swap(plan_ensemble1.flattened_all_region_pops,
-              plan_ensemble2.flattened_all_region_pops);
-    std::swap(plan_ensemble1.flattened_all_region_order_added,
-              plan_ensemble2.flattened_all_region_order_added);
-    std::swap(plan_ensemble1.flattened_all_forest_edge_bits,
-              plan_ensemble2.flattened_all_forest_edge_bits);
-              
-}
 
 // Reorders all the plans in the vector by order a region was split
 //

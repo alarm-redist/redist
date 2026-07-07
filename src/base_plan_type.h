@@ -244,7 +244,9 @@ class Plan {
 
 
     // Debugging functions 
-    void check_forest_equality(Tree const &ust1, Tree const &ust2, std::string_view msg) const;
+    void check_forest_equality(Tree const &ust1, Tree const &ust2, 
+        GraphEdgeIndex const &graph_edge_index, std::string_view msg) const;
+    void check_forest_integrity(GraphEdgeIndex const &graph_edge_index, std::string_view msg) const;
 };
 
 // simple struct
