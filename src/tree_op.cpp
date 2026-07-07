@@ -164,6 +164,15 @@ void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_i
                                            const GraphEdgeIndex &graph_edge_index,
                                            CircularQueue<std::pair<int, int>> &vertex_queue) {
 
+    int const V = forest_graph.size();
+
+    if constexpr (perf_config::unnecessary_input_checks){
+        if (static_cast<int>(ust.size()) != V) {
+            throw std::runtime_error("assign_region_id_and_forest_from_tree received wrong-sized ust.");
+        }
+    }
+
+
     // clear the queue of vertex, parent
     vertex_queue.clear();
 
@@ -177,6 +186,9 @@ void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_i
 
     // add roots children to queue
     for (auto const &child_vertex : ust[root]) {
+        if constexpr (perf_config::unnecessary_input_checks){
+            check_vertex_in_range(child_vertex, V, "assign_region_id_and_forest_from_tree root child (1st time)");
+        }
         vertex_queue.push({child_vertex, root});
         forest_graph[root].push_back(child_vertex);
         // Now add this edge to the packed forest 
@@ -187,6 +199,12 @@ void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_i
     while (!vertex_queue.empty()) {
         // get and remove head of queue
         auto [vertex, parent_vertex] = vertex_queue.pop();
+
+        if constexpr (perf_config::unnecessary_input_checks){
+            check_vertex_in_range(vertex, V, "assign_region_id_and_forest_from_tree vertex");
+            check_vertex_in_range(parent_vertex, V, "assign_region_id_and_forest_from_tree parent_vertex");
+        }
+
 
         // update region ids
         region_ids[vertex] = new_region_id;
@@ -200,6 +218,9 @@ void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_i
         forest_edges.set_edge(vertex, parent_vertex, graph_edge_index);
 
         for (auto const &child_vertex : ust[vertex]) {
+            if constexpr (perf_config::unnecessary_input_checks){
+                check_vertex_in_range(child_vertex, V, "assign_region_id_and_forest_from_tree child_vertex");
+            }
             // add children to queue
             vertex_queue.push({child_vertex, vertex});
             // add this edge from vertex to its children

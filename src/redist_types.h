@@ -524,7 +524,7 @@ template <typename T> class FixedStack {
     void push(const T &value) {
         if constexpr (perf_config::unnecessary_input_checks){
             if (count >= capacity) {
-                throw Rcpp::exception("CircularQueue overflow.");
+                throw Rcpp::exception("FixedStack overflow.");
             }
         }
         buffer[count++] = value; // copy
@@ -533,20 +533,33 @@ template <typename T> class FixedStack {
     void push(T &&value) {
         if constexpr (perf_config::unnecessary_input_checks){
             if (count >= capacity) {
-                throw Rcpp::exception("CircularQueue overflow.");
+                throw Rcpp::exception("FixedStack overflow.");
             }
         }
         buffer[count++] = std::move(value); // move
     }
 
-    T &top() { return buffer[count - 1]; }
+    T &top() { 
+        if constexpr (perf_config::unnecessary_input_checks){
+            if (count == 0) {
+                throw Rcpp::exception("FixedStack underflow.");
+            }
+        }
+        return buffer[count - 1]; 
+    }
 
-    const T &top() const { return buffer[count - 1]; }
+    const T &top() const { 
+        if constexpr (perf_config::unnecessary_input_checks){
+            if (count == 0) {
+                throw Rcpp::exception("FixedStack underflow.");
+            }
+        }
+        return buffer[count - 1]; }
 
     T pop() { 
         if constexpr (perf_config::unnecessary_input_checks){
-            if (count >= capacity) {
-                throw Rcpp::exception("CircularQueue overflow.");
+            if (count == 0) {
+                throw Rcpp::exception("FixedStack underflow.");
             }
         }
         return std::move(buffer[--count]); 
@@ -599,8 +612,8 @@ template <typename T> class CircularQueue {
 
     T pop() {
         if constexpr (perf_config::unnecessary_input_checks){
-            if (size >= capacity) {
-                throw Rcpp::exception("CircularQueue overflow.");
+            if (size == 0) {
+                throw Rcpp::exception("CircularQueue underlow.");
             }
         }
 

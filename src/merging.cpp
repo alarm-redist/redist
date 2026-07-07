@@ -264,8 +264,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         "In attempt_mergesplit_step, calling on `new_plan` after successful update"
     );
 
-    Tree const forest_graph_a = plan.get_forest_adj();
-    if (!plan.forest_graph_equals_order_insensitive(forest_graph_a, diff_msg)) {
+    if (!plan.forest_graph_equals_order_insensitive(forest_graph_before, diff_msg)) {
         throw std::runtime_error(
             "Current plan forest_graph changed by update_from_successful_split on NEW plan.\n" +
             diff_msg
@@ -476,6 +475,10 @@ int run_merge_split_steps(MapParams const &map_params,
                           std::vector<int> &tree_sizes, std::vector<int> &successful_tree_sizes,
                           bool const using_caching, WeightCache *weight_cache,
                           GranularMCMCTimes &granular_times) {
+    plan.check_forest_integrity(
+        map_params.graph_edge_index,
+        "In run_merge_split_steps, calling on `plan` before any code"
+    );
     int num_succesful_steps = 0;
     bool save_edge_selection_prob = sampling_space == SamplingSpace::LinkingEdgeSpace;
 
@@ -488,7 +491,10 @@ int run_merge_split_steps(MapParams const &map_params,
     if constexpr (perf_config::track_granular_times){
         add_elapsed(granular_times.get_valid_pairs, pair_building_time); // optional timing
     }
- 
+    plan.check_forest_integrity(
+        map_params.graph_edge_index,
+        "In run_merge_split_steps, calling on `plan` after initial multigraph built"
+    );
 
     auto pair_weight_time = maybe_now();
     arma::vec current_plan_pair_unnoramalized_wgts =
@@ -499,6 +505,24 @@ int run_merge_split_steps(MapParams const &map_params,
 
     // run the merge split steps and count success
     for (size_t i = 0; i < num_steps_to_run; i++) {
+
+
+    std::string const plan_msg =
+        "In run_merge_split_steps, for loop i = " + std::to_string(i) +
+        ", calling on `plan`";
+        plan.check_forest_integrity(
+            map_params.graph_edge_index,
+            plan_msg
+        );
+
+    std::string const dummy_plan_msg =
+        "In run_merge_split_steps, for loop i = " + std::to_string(i) +
+        ", calling on `dummy_plan`";
+        dummy_plan.check_forest_integrity(
+            map_params.graph_edge_index,
+            dummy_plan_msg
+        );
+
         std::tuple<bool, bool, double, int> mergesplit_result = attempt_mergesplit_step(
             map_params, splitting_schedule, scoring_function, rng_state, sampling_space, plan,
             dummy_plan, ust_sampler, tree_splitter, current_plan_multigraph,

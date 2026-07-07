@@ -543,6 +543,22 @@ void run_merge_split_step_on_all_plans(
             return;
         }
 
+        std::string const plan_msg =
+        "In run_merge_split_step_on_all_plans, for plan i = " + std::to_string(i) +
+        ", calling on `plan`";
+        plan_ptrs_vec[i]->check_forest_integrity(
+            map_params.graph_edge_index,
+            plan_msg
+        );
+
+        std::string const new_plan_msg =
+        "In run_merge_split_step_on_all_plans, for new_plan i = " + std::to_string(i) +
+        ", calling on `plan`";
+        new_plan_ptrs_vec[i]->check_forest_integrity(
+            map_params.graph_edge_index,
+            new_plan_msg
+        );
+
         auto total_plan_start_time = maybe_now();
 
         // store the number of succesful runs
@@ -577,6 +593,23 @@ void run_merge_split_step_on_all_plans(
                 total_plan_start_time
             );
         }
+
+
+        std::string const plan_msga =
+        "In run_merge_split_step_on_all_plans, for plan i = " + std::to_string(i) +
+        ", calling on `plan` AFTER ALL MS STEPS";
+        plan_ptrs_vec[i]->check_forest_integrity(
+            map_params.graph_edge_index,
+            plan_msga
+        );
+
+        std::string const new_plan_msga =
+        "In run_merge_split_step_on_all_plans, for new_plan i = " + std::to_string(i) +
+        ", calling on `plan` AFTER ALL MS STEPS";
+        new_plan_ptrs_vec[i]->check_forest_integrity(
+            map_params.graph_edge_index,
+            new_plan_msga
+        );
 
         if (verbosity >= 3) {
             ++bar;

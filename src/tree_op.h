@@ -15,7 +15,14 @@
 using namespace Rcpp;
 using namespace arma;
 
-
+// for error checking
+static inline void check_vertex_in_range(int v, int V, char const *where) {
+    if (v < 0 || v >= V) {
+        std::ostringstream oss;
+        oss << where << ": invalid vertex " << v << " when V=" << V;
+        throw std::runtime_error(oss.str());
+    }
+}
 
 /*
  * Generate a random vertex (integer) among unvisited vertices
