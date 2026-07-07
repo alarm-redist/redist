@@ -143,9 +143,9 @@ class Plan {
         return forest_edges;
     }
 
-    EdgeBitset &get_forest_edges() {
-        return forest_edges;
-    }
+    // EdgeBitset &get_forest_edges() {
+    //     return forest_edges;
+    // }
 
 
     // methods for checking plans are connected/in population bounds
@@ -247,6 +247,12 @@ class Plan {
     void check_forest_equality(Tree const &ust1, Tree const &ust2, 
         GraphEdgeIndex const &graph_edge_index, std::string_view msg) const;
     void check_forest_integrity(GraphEdgeIndex const &graph_edge_index, std::string_view msg) const;
+
+    bool forest_graph_equals_order_insensitive(
+        Tree const &other,
+        std::string &out
+    ) const;
+
 };
 
 // simple struct

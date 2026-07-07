@@ -1085,6 +1085,85 @@ void Plan::check_forest_integrity(
     }
 }
 
+bool Plan::forest_graph_equals_order_insensitive(
+    Tree const &other,
+    std::string &out
+) const {
+    std::ostringstream oss;
+
+    if (forest_graph.size() != other.size()) {
+        oss << "forest_graph sizes differ: "
+            << forest_graph.size() << " vs " << other.size() << "\n";
+
+        out = oss.str();
+        return false;
+    }
+
+    std::vector<int> a;
+    std::vector<int> b;
+
+    for (std::size_t v = 0; v < forest_graph.size(); ++v) {
+        a.assign(forest_graph[v].begin(), forest_graph[v].end());
+        b.assign(other[v].begin(), other[v].end());
+
+        std::sort(a.begin(), a.end());
+        std::sort(b.begin(), b.end());
+
+        if (a != b) {
+            oss << "Vertex " << v << " does not have the same neighbors!\n";
+
+            oss << "forest_graph[" << v << "]: ";
+            for (int const u : a) {
+                oss << u << " ";
+            }
+            oss << "\n";
+
+            oss << "other[" << v << "]: ";
+            for (int const u : b) {
+                oss << u << " ";
+            }
+            oss << "\n";
+
+            oss << "In forest_graph but not other: ";
+            std::size_t i = 0;
+            std::size_t j = 0;
+
+            while (i < a.size()) {
+                if (j >= b.size() || a[i] < b[j]) {
+                    oss << "(" << v << ", " << a[i] << ") ";
+                    ++i;
+                } else if (b[j] < a[i]) {
+                    ++j;
+                } else {
+                    ++i;
+                    ++j;
+                }
+            }
+            oss << "\n";
+
+            oss << "In other but not forest_graph: ";
+            i = 0;
+            j = 0;
+
+            while (j < b.size()) {
+                if (i >= a.size() || b[j] < a[i]) {
+                    oss << "(" << v << ", " << b[j] << ") ";
+                    ++j;
+                } else if (a[i] < b[j]) {
+                    ++i;
+                } else {
+                    ++i;
+                    ++j;
+                }
+            }
+            oss << "\n";
+        }
+    }
+
+    out = oss.str();
+    return out.empty();
+}
+
 // Prints relevant info - for debugging
 void RegionPairHash::Rprint(std::vector<int> const &county_component) const {
     REprintf("Pair Map has %d Elements:\n", num_hashed_pairs);

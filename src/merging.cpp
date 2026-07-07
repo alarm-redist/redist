@@ -203,6 +203,8 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         map_params.graph_edge_index,
         "In attempt_mergesplit_step, calling on `plan` before wilson call"
     );
+    std::string diff_msg;
+    Tree const forest_graph_before = plan.get_forest_adj();
     // try to draw a region
     auto wilson_time = maybe_now(); // optional timing 
     std::tuple<bool, EdgeCut> edge_search_result =
@@ -211,6 +213,12 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
                                                           region2_id, save_edge_selection_prob);
     if constexpr (perf_config::track_granular_times){
         add_elapsed(granular_times.wilson_time, wilson_time); // optional timing
+    }
+    if (!plan.forest_graph_equals_order_insensitive(forest_graph_before, diff_msg)) {
+        throw std::runtime_error(
+            "Current plan forest_graph changed wcalling attempt_to_find_valid_tree_mergesplit on plan.\n" +
+            diff_msg
+        );
     }
      plan.check_forest_integrity(
         map_params.graph_edge_index,
@@ -231,11 +239,6 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
 
     // IN THE FUTURE CAN AVOID THE COPYING BY JUST TRAVERSING THE TREE
     // Just traverse tree and check if not in merged region or something
-
-    new_plan.check_forest_integrity(
-        map_params.graph_edge_index,
-        "In attempt_mergesplit_step, calling on `new_plan` before copying"
-    );
     // copy the new plan to be the old one
     auto initial_copy_time = maybe_now(); // optional timing 
     new_plan.shallow_copy(plan);
@@ -260,7 +263,15 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         map_params.graph_edge_index,
         "In attempt_mergesplit_step, calling on `new_plan` after successful update"
     );
-    
+
+    Tree const forest_graph_a = plan.get_forest_adj();
+    if (!plan.forest_graph_equals_order_insensitive(forest_graph_a, diff_msg)) {
+        throw std::runtime_error(
+            "Current plan forest_graph changed by update_from_successful_split on NEW plan.\n" +
+            diff_msg
+        );
+    }
+
     // check new plan is hierarchically valid if needed
     auto new_pair_building_time = maybe_now(); // optional timing 
     auto build_attempt = new_plan.attempt_to_get_valid_mergesplit_pairs(
@@ -268,7 +279,12 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     if constexpr (perf_config::track_granular_times){
         add_elapsed(granular_times.get_valid_pairs, new_pair_building_time); // optional timing 
     }
-    
+
+    new_plan.check_forest_integrity(
+        map_params.graph_edge_index,
+        "In attempt_mergesplit_step, calling on `new_plan` after attempt_to_get_valid_mergesplit_pairs"
+    );
+
     // new plan is valid if build attempt successful and passes any hard constraints
     auto hard_constraint_time = maybe_now();
     bool new_plan_valid =
@@ -415,20 +431,22 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     if (proposal_accepted) {
         if constexpr (DEBUG_MERGING_VERBOSE)
             Rprintf("ACCEPTED!! Now updating plans\n");
+        new_plan.check_forest_integrity(
+            map_params.graph_edge_index,
+            "In attempt_mergesplit_step, calling on `new_plan` after proposal accepted"
+        );
         // if successful then actually update
         auto final_copy_time = maybe_now(); // optional timing 
-        plan.update_from_successful_split(tree_splitter, ust_sampler,
-                                          std::get<1>(edge_search_result), region1_id,
-                                          region2_id, false);
+        plan.shallow_copy(new_plan);
         if constexpr (perf_config::track_granular_times){
             add_elapsed(granular_times.plan_copying, final_copy_time); // optional timing
         }
         if constexpr (DEBUG_MERGING_VERBOSE)
             Rprintf("Plan updated, now swapping multigraphs\n");
 
-        new_plan.check_forest_integrity(
+        plan.check_forest_integrity(
             map_params.graph_edge_index,
-            "In attempt_mergesplit_step, calling on `plan` after successful update (mh passed)"
+            "In attempt_mergesplit_step, calling on `plan` after proposal accepted and new plan copied"
         );
 
         // swap the plan multigraphs

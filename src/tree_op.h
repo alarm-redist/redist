@@ -159,6 +159,34 @@ class EdgeBitset {
         return test_edge_id(edge_index.get_edge_id(v, u));
     }
 
+    template <typename Fn>
+    void for_each_tree_edge(GraphEdgeIndex const &edge_index, Fn &&fn) const {
+        for (EdgeID edge_id = 0; edge_id < static_cast<EdgeID>(edge_index.edges.size());
+             ++edge_id) {
+            if (test_edge_id(edge_id)) {
+                auto const [v, u] = edge_index.edges[edge_id];
+                fn(static_cast<int>(v), static_cast<int>(u));
+            }
+        }
+    }
+
+    std::uint64_t hash_words() const {
+        // FNV-1a 64-bit
+        std::uint64_t h = 1469598103934665603ULL;
+
+        for (auto const word : edge_bits) {
+            std::uint64_t x = static_cast<std::uint64_t>(word);
+
+            for (int b = 0; b < 8; ++b) {
+                h ^= static_cast<unsigned char>(x & 0xff);
+                h *= 1099511628211ULL;
+                x >>= 8;
+            }
+        }
+
+        return h;
+    }
+
     Tree get_graph_tree(GraphEdgeIndex const &edge_index) const {
         Tree full_tree(edge_index.V);
 
