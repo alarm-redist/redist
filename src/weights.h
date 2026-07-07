@@ -2,9 +2,6 @@
 #ifndef WEIGHTS_H
 #define WEIGHTS_H
 
-// [[Rcpp::depends(redistmetrics)]]
-
-#include "smc_base.h"
 
 #include "base_plan_type.h"
 #include "graph_ops.h"

@@ -12,6 +12,7 @@
 #include "redist_types.h"
 #include "sw_mh_helper.h"
 #include "tree_op.h"
+#include "utils.h"
 #include <R.h>
 #include <RcppArmadillo.h>
 #include <RcppArmadilloExtensions/sample.h>

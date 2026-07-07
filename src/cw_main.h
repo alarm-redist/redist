@@ -1,7 +1,7 @@
 #ifndef CW_MAIN_H
 #define CW_MAIN_H
 
-#include "smc_base.h"
+#include "utils.h"
 #include "tree_op.h"
 
 #include <cli/progress.h>

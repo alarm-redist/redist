@@ -2,10 +2,6 @@
 #ifndef MANUAL_SPLITTING_H
 #define MANUAL_SPLITTING_H
 
-// [[Rcpp::depends(redistmetrics)]]
-
-#include "smc_base.h"
-
 #include <RcppThread.h>
 #include <cli/progress.h>
 #include <cmath>
@@ -19,7 +15,6 @@
 #include "splitting_schedule_types.h"
 #include "tree_op.h"
 #include "wilson.h"
-#include <kirchhoff_inline.h>
 
 // ' Draws a spanning tree uniformly at random on a region and returns it
 // '

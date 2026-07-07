@@ -376,23 +376,6 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params, int const total_pop, int
 
     pool.wait();
 
-    // if constexpr(perf_config::unnecessary_input_checks){
-    //     // Debug check: make sure successive plans' packed forest bit slices do not overlap.
-    //     for (int i = 0; i + 1 < nsims; ++i) {
-    //         auto const &bits_i =
-    //             plan_ptr_vec[i]->debug_forest_edges_attr().debug_edge_bits_attr();
-
-    //         auto const &bits_next =
-    //             plan_ptr_vec[i + 1]->debug_forest_edges_attr().debug_edge_bits_attr();
-
-    //         if (bits_i.debug_offset_end() > bits_next.debug_offset_start()) {
-    //             Rcpp::stop(
-    //                 "Overlapping forest edge bit slices between successive plans!"
-    //             );
-    //         }
-    //     }
-    // }
-
 }
 
 // creates plan ensemble of partial plans
@@ -779,6 +762,288 @@ std::unique_ptr<PlanEnsemble> get_plan_ensemble_ptr(
     }
 }
 
+
+void PlanEnsemble::check_all_plans_valid(
+    MapParams const &map_params,
+    std::string_view where,
+    bool check_forest
+) {
+    std::ostringstream oss;
+
+    auto fail = [&](std::string const &msg) {
+        std::ostringstream full;
+        full << "PlanEnsemble validity check failed.\n";
+        full << "Where: " << where << "\n";
+        full << msg << "\n";
+        throw std::runtime_error(full.str());
+    };
+
+    if (nsims < 0) {
+        fail("nsims is negative.");
+    }
+
+    if (V != map_params.V) {
+        std::ostringstream msg;
+        msg << "PlanEnsemble V does not match map_params.V. "
+            << "V=" << V << ", map_params.V=" << map_params.V;
+        fail(msg.str());
+    }
+
+    if (ndists != map_params.ndists) {
+        std::ostringstream msg;
+        msg << "PlanEnsemble ndists does not match map_params.ndists. "
+            << "ndists=" << ndists << ", map_params.ndists=" << map_params.ndists;
+        fail(msg.str());
+    }
+
+    if (static_cast<int>(plan_ptr_vec.size()) != nsims) {
+        std::ostringstream msg;
+        msg << "plan_ptr_vec.size() != nsims. "
+            << "plan_ptr_vec.size()=" << plan_ptr_vec.size()
+            << ", nsims=" << nsims;
+        fail(msg.str());
+    }
+
+    if (static_cast<int>(flattened_all_plans.size()) != nsims * V) {
+        std::ostringstream msg;
+        msg << "flattened_all_plans has wrong size. "
+            << "size=" << flattened_all_plans.size()
+            << ", expected=" << nsims * V;
+        fail(msg.str());
+    }
+
+    if (static_cast<int>(flattened_all_region_sizes.size()) != nsims * ndists) {
+        std::ostringstream msg;
+        msg << "flattened_all_region_sizes has wrong size. "
+            << "size=" << flattened_all_region_sizes.size()
+            << ", expected=" << nsims * ndists;
+        fail(msg.str());
+    }
+
+    if (static_cast<int>(flattened_all_region_pops.size()) != nsims * ndists) {
+        std::ostringstream msg;
+        msg << "flattened_all_region_pops has wrong size. "
+            << "size=" << flattened_all_region_pops.size()
+            << ", expected=" << nsims * ndists;
+        fail(msg.str());
+    }
+
+    if (static_cast<int>(flattened_all_region_order_added.size()) != nsims * ndists) {
+        std::ostringstream msg;
+        msg << "flattened_all_region_order_added has wrong size. "
+            << "size=" << flattened_all_region_order_added.size()
+            << ", expected=" << nsims * ndists;
+        fail(msg.str());
+    }
+
+    if (num_forest_edge_bit_words_per_plan < 0) {
+        fail("num_forest_edge_bit_words_per_plan is negative.");
+    }
+
+    if (num_forest_edge_bit_words_per_plan > 0) {
+        std::size_t const expected_forest_words =
+            static_cast<std::size_t>(nsims) *
+            static_cast<std::size_t>(num_forest_edge_bit_words_per_plan);
+
+        if (flattened_all_forest_edge_bits.size() != expected_forest_words) {
+            std::ostringstream msg;
+            msg << "flattened_all_forest_edge_bits has wrong size. "
+                << "size=" << flattened_all_forest_edge_bits.size()
+                << ", expected=" << expected_forest_words;
+            fail(msg.str());
+        }
+    }
+
+    if (static_cast<int>(map_params.pop.n_elem) != V) {
+        std::ostringstream msg;
+        msg << "map_params.pop has wrong size. "
+            << "pop.n_elem=" << map_params.pop.n_elem
+            << ", V=" << V;
+        fail(msg.str());
+    }
+
+    for (int i = 0; i < nsims; ++i) {
+        Plan *plan = plan_ptr_vec[i].get();
+
+        if (plan == nullptr) {
+            std::ostringstream msg;
+            msg << "plan_ptr_vec[" << i << "] is null.";
+            fail(msg.str());
+        }
+
+        auto fail_plan = [&](std::string const &msg) {
+            std::ostringstream full;
+            full << "Invalid plan in PlanEnsemble.\n";
+            full << "Where: " << where << "\n";
+            full << "Plan index: " << i << "\n";
+            full << msg << "\n";
+            full << plan->debug_string(true);
+            throw std::runtime_error(full.str());
+        };
+
+        if (static_cast<int>(plan->region_ids.size()) != V) {
+            std::ostringstream msg;
+            msg << "region_ids has wrong size. "
+                << "size=" << plan->region_ids.size()
+                << ", expected V=" << V;
+            fail_plan(msg.str());
+        }
+
+        if (static_cast<int>(plan->region_sizes.size()) != ndists) {
+            std::ostringstream msg;
+            msg << "region_sizes has wrong size. "
+                << "size=" << plan->region_sizes.size()
+                << ", expected ndists=" << ndists;
+            fail_plan(msg.str());
+        }
+
+        if (static_cast<int>(plan->region_pops.size()) != ndists) {
+            std::ostringstream msg;
+            msg << "region_pops has wrong size. "
+                << "size=" << plan->region_pops.size()
+                << ", expected ndists=" << ndists;
+            fail_plan(msg.str());
+        }
+
+        if (static_cast<int>(plan->region_added_order.size()) != ndists) {
+            std::ostringstream msg;
+            msg << "region_added_order has wrong size. "
+                << "size=" << plan->region_added_order.size()
+                << ", expected ndists=" << ndists;
+            fail_plan(msg.str());
+        }
+
+        if (plan->num_regions < 1 || plan->num_regions > ndists) {
+            std::ostringstream msg;
+            msg << "num_regions is invalid. "
+                << "num_regions=" << plan->num_regions
+                << ", ndists=" << ndists;
+            fail_plan(msg.str());
+        }
+
+        std::vector<int> counted_region_sizes(ndists, 0);
+        std::vector<int> counted_region_pops(ndists, 0);
+
+        for (int v = 0; v < V; ++v) {
+            int const region_id = static_cast<int>(plan->region_ids[v]);
+
+            if (region_id < 0 || region_id >= plan->num_regions) {
+                std::ostringstream msg;
+                msg << "Invalid region id. "
+                    << "vertex=" << v
+                    << ", region_id=" << region_id
+                    << ", num_regions=" << plan->num_regions;
+                fail_plan(msg.str());
+            }
+
+            ++counted_region_sizes[region_id];
+            counted_region_pops[region_id] += static_cast<int>(map_params.pop[v]);
+        }
+
+        int total_counted_vertices = 0;
+        int total_counted_pop = 0;
+
+        for (int region_id = 0; region_id < plan->num_regions; ++region_id) {
+            int const stored_size = static_cast<int>(plan->region_sizes[region_id]);
+            int const stored_pop = static_cast<int>(plan->region_pops[region_id]);
+
+            total_counted_vertices += counted_region_sizes[region_id];
+            total_counted_pop += counted_region_pops[region_id];
+
+            if (stored_pop != counted_region_pops[region_id]) {
+                std::ostringstream msg;
+                msg << "Stored region pop does not match counted pop. "
+                    << "region_id=" << region_id
+                    << ", stored_pop=" << stored_pop
+                    << ", counted_pop=" << counted_region_pops[region_id];
+                fail_plan(msg.str());
+            }
+
+            if (stored_size <= 0) {
+                std::ostringstream msg;
+                msg << "Active region has nonpositive size. "
+                    << "region_id=" << region_id
+                    << ", stored_size=" << stored_size;
+                fail_plan(msg.str());
+            }
+        }
+
+        if (total_counted_vertices != V) {
+            std::ostringstream msg;
+            msg << "Total counted vertices does not equal V. "
+                << "total_counted_vertices=" << total_counted_vertices
+                << ", V=" << V;
+            fail_plan(msg.str());
+        }
+
+        int map_total_pop = 0;
+        for (int v = 0; v < V; ++v) {
+            map_total_pop += static_cast<int>(map_params.pop[v]);
+        }
+
+        if (total_counted_pop != map_total_pop) {
+            std::ostringstream msg;
+            msg << "Total counted pop does not equal map total pop. "
+                << "total_counted_pop=" << total_counted_pop
+                << ", map_total_pop=" << map_total_pop;
+            fail_plan(msg.str());
+        }
+
+        for (int region_id = plan->num_regions; region_id < ndists; ++region_id) {
+            int const stored_size = static_cast<int>(plan->region_sizes[region_id]);
+            int const stored_pop = static_cast<int>(plan->region_pops[region_id]);
+
+            if (stored_size != 0) {
+                std::ostringstream msg;
+                msg << "Inactive region has nonzero size. "
+                    << "region_id=" << region_id
+                    << ", stored_size=" << stored_size
+                    << ", num_regions=" << plan->num_regions;
+                fail_plan(msg.str());
+            }
+
+            if (stored_pop != 0) {
+                std::ostringstream msg;
+                msg << "Inactive region has nonzero pop. "
+                    << "region_id=" << region_id
+                    << ", stored_pop=" << stored_pop
+                    << ", num_regions=" << plan->num_regions;
+                fail_plan(msg.str());
+            }
+        }
+
+        if (check_forest && num_forest_edge_bit_words_per_plan > 0) {
+            std::string const forest_msg =
+                std::string(where) +
+                ", PlanEnsemble::check_all_plans_valid, plan i = " +
+                std::to_string(i);
+
+            plan->check_forest_integrity(
+                map_params.graph_edge_index,
+                forest_msg
+            );
+
+            try {
+                Tree const forest_graph = plan->get_forest_adj();
+                Tree const packed_graph =
+                    plan->get_forest_edges().get_graph_tree(map_params.graph_edge_index);
+
+                plan->check_forest_equality(
+                    forest_graph,
+                    packed_graph,
+                    map_params.graph_edge_index,
+                    forest_msg + ", checking forest_graph vs packed forest"
+                );
+            } catch (std::exception const &e) {
+                std::ostringstream msg;
+                msg << "Forest graph / packed forest equality check failed or is unsupported.\n";
+                msg << "Underlying exception:\n";
+                msg << e.what() << "\n";
+                fail_plan(msg.str());
+            }
+        }
+    }
+}
 
 // Reorders all the plans in the vector by order a region was split
 //

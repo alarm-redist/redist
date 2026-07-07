@@ -27,6 +27,8 @@ class LinkingEdgePlan : public Plan {
 
     Tree get_forest_adj() override;
 
+    std::string linking_edges_to_string() const;
+    std::string debug_string(bool print_region_ids = true) const override;
     void Rprint(bool verbose = false) const override;
 
     void update_vertex_and_plan_specific_info_from_cut(

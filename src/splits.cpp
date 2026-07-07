@@ -1,4 +1,5 @@
-#include "smc_base.h"
+#include <RcppArmadillo.h>
+using namespace Rcpp;
 #include <redistmetrics.h>
 
 // [[Rcpp::export]]

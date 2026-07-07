@@ -24,11 +24,13 @@ ForestPlan::ForestPlan(int const ndists, int const num_regions, const arma::uvec
                                               rng_state, 1000000);
 
             if (!result.first) {
-                REprintf("Failed to draw tree on region %zu after 1000000 attempts\n",
-                         region_id);
-                Rprint(true);
-                throw Rcpp::exception(
-                    "Forest Space - Could not draw a tree on a region after 1000000 attempts");
+                std::ostringstream oss;
+
+                oss << "Failed to draw tree on region " << region_id
+                    << " after 1000000 attempts.\n";
+                oss << debug_string(true);
+
+                throw std::runtime_error(oss.str());
             }
         }
     }

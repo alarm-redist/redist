@@ -249,7 +249,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // log_st_map
-NumericVector log_st_map(const Graph& g, const arma::umat& districts, const arma::uvec& counties, int n_distr);
+Rcpp::NumericVector log_st_map(const Graph& g, const arma::umat& districts, const arma::uvec& counties, int n_distr);
 RcppExport SEXP _redist_log_st_map(SEXP gSEXP, SEXP districtsSEXP, SEXP countiesSEXP, SEXP n_distrSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -263,7 +263,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // n_removed
-NumericVector n_removed(const Graph& g, const arma::umat& districts, int n_distr);
+Rcpp::NumericVector n_removed(const Graph& g, const arma::umat& districts, int n_distr);
 RcppExport SEXP _redist_n_removed(SEXP gSEXP, SEXP districtsSEXP, SEXP n_distrSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;

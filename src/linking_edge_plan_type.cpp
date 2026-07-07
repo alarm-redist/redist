@@ -534,20 +534,43 @@ LinkingEdgePlan::attempt_to_get_valid_mergesplit_pairs(
     return std::make_pair(true, valid_adj_region);
 };
 
-void LinkingEdgePlan::Rprint(bool verbose) const {
-    Plan::Rprint(verbose);
-    if (verbose) {
-        Rprintf("Current Linking Edges:\n");
-        for (auto const &a_edge : linking_edges) {
-            if (a_edge.valid_log_prob) {
-                Rprintf("\tEdge(%d, %d) - Region (%d, %d)- Prob %f \n", a_edge.vertex1,
-                        a_edge.vertex2, region_ids[a_edge.vertex1], region_ids[a_edge.vertex2],
-                        std::exp(a_edge.log_prob));
-            } else {
-                Rprintf("\tEdge(%d, %d) - Region (%d, %d)- No valid Prob\n", a_edge.vertex1,
-                        a_edge.vertex2, region_ids[a_edge.vertex1], region_ids[a_edge.vertex2]);
-            }
+std::string LinkingEdgePlan::linking_edges_to_string() const {
+    std::ostringstream oss;
+
+    oss << "Current Linking Edges:\n";
+
+    for (auto const &edge : linking_edges) {
+        int const v1 = static_cast<int>(edge.vertex1);
+        int const v2 = static_cast<int>(edge.vertex2);
+
+        oss << "\tEdge(" << v1 << ", " << v2 << ")";
+
+        if (v1 >= 0 && v1 < static_cast<int>(region_ids.size()) &&
+            v2 >= 0 && v2 < static_cast<int>(region_ids.size())) {
+            oss << " - Region ("
+                << static_cast<int>(region_ids[v1]) << ", "
+                << static_cast<int>(region_ids[v2]) << ")";
+        } else {
+            oss << " - Region (invalid endpoint)";
         }
-        Rprintf("\n");
+
+        if (std::isfinite(edge.log_prob)) {
+            oss << " - Prob " << edge.log_prob;
+        } else {
+            oss << " - No valid Prob";
+        }
+
+        oss << "\n";
     }
+
+    return oss.str();
+}
+
+std::string LinkingEdgePlan::debug_string(bool print_region_ids) const {
+    auto plan_str = Plan::debug_string(print_region_ids);
+    return plan_str + linking_edges_to_string();
+}
+
+void LinkingEdgePlan::Rprint(bool verbose) const {
+    Rcpp::Rcerr << debug_string(verbose);
 }

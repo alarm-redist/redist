@@ -333,27 +333,47 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
             }
         }
         // means disconnected thing glitch. If encountered just print and ignore
-        if (region_pair_proposal_index == -1) {
-            REprintf("Merged and Split Regions %d and %d no longer adjacent!\n", region1_id,
-                     region2_id);
-            REprintf("Current adj pairs: ");
-            for (const auto &a_pair : adj_region_pairs) {
-                REprintf("(%d, %d), ", a_pair.first, a_pair.second);
+        if (region_pair_proposal_index == -1)
+        {
+            std::ostringstream oss;
+
+            oss << "Merged and split regions "
+                << region1_id << " and " << region2_id
+                << " no longer adjacent.\n";
+
+            oss << "Current adj pairs: ";
+            for (auto const &a_pair : adj_region_pairs) {
+                oss << "(" << static_cast<int>(a_pair.first)
+                    << ", " << static_cast<int>(a_pair.second) << "), ";
             }
-            REprintf("\nProposed adj pairs: ");
-            for (const auto &a_pair : new_valid_adj_region_pairs) {
-                REprintf("(%d, %d), ", a_pair.first, a_pair.second);
+            oss << "\n";
+
+            oss << "Proposed adj pairs: ";
+            for (auto const &a_pair : new_valid_adj_region_pairs) {
+                oss << "(" << static_cast<int>(a_pair.first)
+                    << ", " << static_cast<int>(a_pair.second) << "), ";
             }
-            REprintf("\nCurrent Plan is:\n");
-            for (const auto &id : plan.region_ids) {
-                REprintf("%d;", id);
+            oss << "\n";
+
+            oss << "Current Plan IDs:\n";
+            for (auto const id : plan.region_ids) {
+                oss << static_cast<int>(id) << ";";
             }
-            REprintf("\n\nProposed Plan is:\n");
-            for (const auto &id : new_plan.region_ids) {
-                REprintf("%d;", id);
+            oss << "\n";
+
+            oss << "Proposed Plan IDs:\n";
+            for (auto const id : new_plan.region_ids) {
+                oss << static_cast<int>(id) << ";";
             }
-            REprintf("\n\n");
-            throw Rcpp::exception("Error in merge split!\n");
+            oss << "\n";
+
+            oss << "Current plan debug:\n";
+            oss << plan.debug_string(true);
+
+            oss << "Proposed plan debug:\n";
+            oss << new_plan.debug_string(true);
+
+            throw std::runtime_error(oss.str());
         }
         if constexpr (DEBUG_MERGING_VERBOSE) {
             Rprintf("selected new pair index is %d!\n", region_pair_proposal_index);
@@ -515,13 +535,6 @@ int run_merge_split_steps(MapParams const &map_params,
             plan_msg
         );
 
-    std::string const dummy_plan_msg =
-        "In run_merge_split_steps, for loop i = " + std::to_string(i) +
-        ", calling on `dummy_plan`";
-        dummy_plan.check_forest_integrity(
-            map_params.graph_edge_index,
-            dummy_plan_msg
-        );
 
         std::tuple<bool, bool, double, int> mergesplit_result = attempt_mergesplit_step(
             map_params, splitting_schedule, scoring_function, rng_state, sampling_space, plan,
@@ -541,5 +554,13 @@ int run_merge_split_steps(MapParams const &map_params,
     }
     if constexpr (DEBUG_MERGING_VERBOSE)
         Rprintf("Total success is %d\n", num_succesful_steps);
+
+    std::string const after_plan_msg =
+        "In run_merge_split_steps, after all steps, calling on `dummy_plan`";
+        plan.check_forest_integrity(
+            map_params.graph_edge_index,
+            after_plan_msg
+    );
+
     return num_succesful_steps;
 }

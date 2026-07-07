@@ -1,9 +1,9 @@
 #ifndef MERGESPLIT_H
 #define MERGESPLIT_H
 
-#include "smc_base.h"
 
-#include <cli/progress.h>
+
+
 #include <cmath>
 #include <string>
 
@@ -19,7 +19,9 @@
 #include "tree_op.h"
 #include "ust_sampler.h"
 #include "wilson.h"
+#include "utils.h"
 #include <kirchhoff_inline.h>
+#include <cli/progress.h>
 
 /*
  * Main entry point.

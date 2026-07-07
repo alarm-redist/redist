@@ -125,6 +125,7 @@ class Plan {
     virtual ~Plan() = default;
 
     // methods
+    virtual std::string debug_string(bool print_region_ids = true) const;
     virtual void Rprint(bool verbose = false) const;
     void reorder_plan_by_oldest_split(Plan &dummy_plan);
     std::pair<int, int> get_most_recently_split_regions() const;

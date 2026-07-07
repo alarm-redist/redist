@@ -2,9 +2,6 @@
 #ifndef MERGING_H
 #define MERGING_H
 
-// [[Rcpp::depends(redistmetrics)]]
-
-#include "smc_base.h"
 
 #include <RcppThread.h>
 #include <cli/progress.h>

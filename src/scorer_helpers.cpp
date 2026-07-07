@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <vector>
 
-#include "smc_base.h"
+#include "random.h"
 
 using namespace Rcpp;
 

@@ -2,9 +2,6 @@
 #ifndef SMC_ALG_HELPERS_H
 #define SMC_ALG_HELPERS_H
 
-// [[Rcpp::depends(redistmetrics)]]
-// [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::plugins("cpp11")]]
 
 #include <RcppThread.h>
 #include <limits>
@@ -208,6 +205,14 @@ class PlanEnsemble {
     Rcpp::IntegerMatrix get_region_pops_matrix(RcppThread::ThreadPool &pool);
     // counts the number of unique plans in the ensemble
     int count_unique_plans(RcppThread::ThreadPool &pool) const;
+
+    // debugging methods
+    // checks all plans are valid. 
+    void check_all_plans_valid(
+        MapParams const &map_params,
+        std::string_view where,
+        bool check_forest = true
+    );
 };
 
 PlanEnsemble get_plan_ensemble(

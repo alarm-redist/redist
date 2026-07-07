@@ -110,6 +110,11 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
     const int n_lags = lags.size();
     umat ancestors_new(M, n_lags); // lags/ancestor thing
 
+    old_plan_ensemble->check_all_plans_valid(
+        map_params,
+        "In run_smc_step before the for loop"
+    );
+
     // Because of multithreading we have to add specific checks for if the user
     // wants to quit the program
     const int reject_check_int = 200; // check for interrupts every _ rejections
@@ -123,20 +128,22 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
     // we only save for linking edge
     bool save_edge_selection_prob = sampling_space == SamplingSpace::LinkingEdgeSpace;
 
-    // These are Rcpp::IntegerMatrix::Column type
-    Rcpp::IntegerMatrix::Column parent_index_vec =
-        smc_diagnostics.parent_index_mat.column(smc_step_num);
-    Rcpp::IntegerMatrix::Column draw_tries_vec =
-        smc_diagnostics.draw_tries_mat.column(step_num);
-    Rcpp::IntegerMatrix::Column parent_unsuccessful_tries_vec =
-        smc_diagnostics.parent_unsuccessful_tries_mat.column(smc_step_num);
+    // temporary buffers to hold info 
+    std::vector<int> parent_index_buffer(M, 0);
+    std::vector<int> draw_tries_buffer(M, 0);
+    // std::vector<int> parent_unsuccessful_by_thread(num_threads * M, 0);
+    std::vector<std::atomic<int>> parent_unsuccessful_tries_atomic(M);
+
+    for (int i = 0; i < M; ++i) {
+        parent_unsuccessful_tries_atomic[i].store(0, std::memory_order_relaxed);
+    }
 
     // count the sizes we draw trees on
     std::vector<std::vector<int>> thread_tree_sizes(
-        rng_states.size(), std::vector<int>(map_params.total_seats, 0));
+        num_threads, std::vector<int>(map_params.total_seats, 0));
     // count the sizes of regions successful trees drawn on
     std::vector<std::vector<int>> thread_successful_tree_sizes(
-        rng_states.size(), std::vector<int>(map_params.total_seats, 0));
+        num_threads, std::vector<int>(map_params.total_seats, 0));
 
     // granular time tracking 
     std::vector<double> wilson_call_times (
@@ -176,20 +183,20 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&](int i) {
         static thread_local int thread_generation_counter = -1;
-        static thread_local int thread_id;
+        static thread_local int thread_id = -1;
 
         // check if the thread id was generated this function call
         if (thread_generation_counter != generation) {
             // if not then give it a new id
             thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
             thread_generation_counter = generation;
-            // REprintf("Thread ID %d\n", thread_id);
         }
 
         if (thread_id < 0 || thread_id >= num_threads) {
-            RcppThread::Rcerr << "Thread id thing broke, thread id is " << thread_id
+            std::ostringstream oss;
+            oss << "In `run_smc_step` Thread id broke, thread id is " << thread_id
                               << " but num threads is  " << num_threads << std::endl;
-            return;
+            throw std::runtime_error(oss.str());
         }
 
         // optional time tracker for granular time tracking 
@@ -207,7 +214,7 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
                     "Failed to split a single plan after `max_split_tries` attempts!\n");
             }
             // increase the number of tries for particle i by 1
-            draw_tries_vec[i]++;
+            draw_tries_buffer[i]++;
             // sample previous plan
             idx = rng_states[thread_id].r_int_wgt(normalized_cumulative_weights);
 
@@ -303,7 +310,7 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
                 RcppThread::checkUserInterrupt(i % check_int == 0);
                 // means idx was ok
                 // record index of new plan's parent
-                parent_index_vec[i] = idx;
+                parent_index_buffer[i] = idx;
                 // add as successful tree size
                 ++thread_successful_tree_sizes[thread_id][region_to_split_size - 1];
             } else { // else bad sample so try again
@@ -313,7 +320,12 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
                 if (diagnostic_level >= 0) {
                     // not atomic so technically not thread safe but doesn't seem to differ in
                     // practice
-                    parent_unsuccessful_tries_vec[idx]++;
+                    parent_unsuccessful_tries_atomic[idx].fetch_add(
+                        1,
+                        std::memory_order_relaxed
+                    );
+                    // parent_unsuccessful_by_thread[idx]++;
+                    // ++parent_unsuccessful_by_thread[thread_id * M + idx];
                 }
             }
         }
@@ -352,7 +364,10 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
         REprintf("Done splitting!\n");
     }
 
-
+    new_plan_ensemble->check_all_plans_valid(
+        map_params,
+        "In run_smc_step after the main for loop"
+    );
 
     if(estimated_unbiased_normalizing_constant){
         REprintf("Starting estimation: ");
@@ -428,14 +443,31 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
 
     }
 
+    new_plan_ensemble->check_all_plans_valid(
+        map_params,
+        "In run_smc_step after the extra particle loop"
+    );
 
     // now swap the old plans with the new ones. This avoids needing to actually copy
     std::swap(old_plan_ensemble, new_plan_ensemble);
-    REprintf("Swapped!\n");
+    old_plan_ensemble->check_all_plans_valid(
+        map_params,
+        "In run_smc_step after the extra particle loop"
+    );
+
+    // Add the buffer info in
+    for (int i = 0; i < M; ++i) {
+        smc_diagnostics.parent_index_mat(i, smc_step_num) = parent_index_buffer[i]; 
+        smc_diagnostics.draw_tries_mat(i, step_num) = draw_tries_buffer[i];
+
+        smc_diagnostics.parent_unsuccessful_tries_mat(i, smc_step_num) =
+            parent_unsuccessful_tries_atomic[i].load(std::memory_order_relaxed);
+    }
+    
 
     // update tree sizes counts
     for (size_t region_size = 0; region_size < map_params.total_seats; region_size++) {
-        for (size_t a_thread_id = 0; a_thread_id < rng_states.size(); a_thread_id++) {
+        for (size_t a_thread_id = 0; a_thread_id < num_threads; a_thread_id++) {
             smc_diagnostics.tree_sizes_mat(region_size, step_num) +=
                 thread_tree_sizes[a_thread_id][region_size];
             smc_diagnostics.successful_tree_sizes_mat(region_size, step_num) +=
@@ -457,11 +489,11 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
     
 
     // now compute acceptance rate and unique parents and original ancestors
-    double accept_rate = M / static_cast<double>(sum(draw_tries_vec));
+    double accept_rate = M / static_cast<double>(std::accumulate(draw_tries_buffer.begin(), draw_tries_buffer.end(), 0));
     smc_diagnostics.acceptance_rates.at(step_num) = accept_rate;
 
     // Get number of unique parents
-    std::set<int> unique_parents(parent_index_vec.begin(), parent_index_vec.end());
+    std::set<int> unique_parents(parent_index_buffer.begin(), parent_index_buffer.end());
     smc_diagnostics.nunique_parents.at(smc_step_num) = unique_parents.size();
     // Get the number of unique plans
     smc_diagnostics.nunique_plans[step_num] = old_plan_ensemble->count_unique_plans(pool);
@@ -487,22 +519,26 @@ void run_merge_split_step_on_all_plans(
     std::string const merge_prob_type, double const rho, bool const is_final,
     int const nsteps_to_run, int const merge_split_step_num, int const step_num,
     SMCDiagnostics &smc_diagnostics, WeightCacheEnsemble &cache_ensemble, int verbosity) {
+
     const int check_int = 15; // check for interrupts every _ iterations
     int nsims = (int)plan_ptrs_vec.size();
+    int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
     if constexpr (DEBUG_GSMC_PLANS_VERBOSE)
         Rprintf("Going to run %d steps!\n", nsteps_to_run);
 
     // Diagnostics
-    Rcpp::IntegerMatrix::Column success_count_vec =
-        smc_diagnostics.merge_split_successes_mat.column(merge_split_step_num);
+    std::vector<int> success_count_buffer(nsims, 0);
+    std::vector<double> total_plan_mcmc_time_buffer(
+        perf_config::track_granular_times ? nsims : 0,
+        0.0
+    );
 
     // count the sizes we draw trees on
     std::vector<std::vector<int>> thread_tree_sizes(
-        rng_states.size(), std::vector<int>(map_params.total_seats, 0));
+        num_threads, std::vector<int>(map_params.total_seats, 0));
     std::vector<std::vector<int>> thread_successful_tree_sizes(
-        rng_states.size(), std::vector<int>(map_params.total_seats, 0));
+        num_threads, std::vector<int>(map_params.total_seats, 0));
 
-    int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
     // thread safe id counter
     static std::atomic<int> global_generation_counter{0};
     int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
@@ -530,7 +566,7 @@ void run_merge_split_step_on_all_plans(
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, nsims, [&](int i) {
         static thread_local int thread_generation_counter = -1;
-        static thread_local int thread_id;
+        static thread_local int thread_id = -1;
         // check if the thread id was generated this function call
         if (thread_generation_counter != generation) {
             // if not then give it a new id
@@ -538,9 +574,10 @@ void run_merge_split_step_on_all_plans(
             thread_generation_counter = generation;
         }
         if (thread_id < 0 || thread_id >= num_threads) {
-            RcppThread::Rcerr << "Thread id thing broke, thread id is " << thread_id
+            std::ostringstream oss;
+            oss << "In `run_merge_split_step_on_all_plans` Thread id broke, thread id is " << thread_id
                               << " but num threads is  " << num_threads << std::endl;
-            return;
+            throw std::runtime_error(oss.str());
         }
 
         std::string const plan_msg =
@@ -551,19 +588,11 @@ void run_merge_split_step_on_all_plans(
             plan_msg
         );
 
-        std::string const new_plan_msg =
-        "In run_merge_split_step_on_all_plans, for new_plan i = " + std::to_string(i) +
-        ", calling on `plan`";
-        new_plan_ptrs_vec[i]->check_forest_integrity(
-            map_params.graph_edge_index,
-            new_plan_msg
-        );
-
         auto total_plan_start_time = maybe_now();
 
         // store the number of succesful runs
         if (cache_ensemble.using_caching) {
-            success_count_vec[i] = run_merge_split_steps(
+            success_count_buffer[i] = run_merge_split_steps(
                 map_params, splitting_schedule, scoring_functions[thread_id],
                 rng_states[thread_id], sampling_space, *plan_ptrs_vec[i], *new_plan_ptrs_vec[i],
                 ust_samplers_vec[thread_id], *tree_splitter_ptrs_vec[thread_id],
@@ -574,7 +603,7 @@ void run_merge_split_step_on_all_plans(
                 cache_ensemble.weight_cache_ptr_vec[i].get(),
                 granular_weight_times[thread_id]);
         } else {
-            success_count_vec[i] = run_merge_split_steps(
+            success_count_buffer[i] = run_merge_split_steps(
                 map_params, splitting_schedule, scoring_functions[thread_id],
                 rng_states[thread_id], sampling_space, *plan_ptrs_vec[i], *new_plan_ptrs_vec[i],
                 ust_samplers_vec[thread_id], *tree_splitter_ptrs_vec[thread_id],
@@ -589,7 +618,7 @@ void run_merge_split_step_on_all_plans(
 
         if constexpr (perf_config::track_granular_times){
             add_elapsed(
-                smc_diagnostics.total_plan_mcmc_times(i, merge_split_step_num) ,
+                total_plan_mcmc_time_buffer[i],
                 total_plan_start_time
             );
         }
@@ -603,13 +632,6 @@ void run_merge_split_step_on_all_plans(
             plan_msga
         );
 
-        std::string const new_plan_msga =
-        "In run_merge_split_step_on_all_plans, for new_plan i = " + std::to_string(i) +
-        ", calling on `plan` AFTER ALL MS STEPS";
-        new_plan_ptrs_vec[i]->check_forest_integrity(
-            map_params.graph_edge_index,
-            new_plan_msga
-        );
 
         if (verbosity >= 3) {
             ++bar;
@@ -621,9 +643,19 @@ void run_merge_split_step_on_all_plans(
 
     Rcpp::checkUserInterrupt();
 
+    // update
+    for (size_t i = 0; i < nsims; i++)
+    {
+        smc_diagnostics.merge_split_successes_mat(i, merge_split_step_num) = success_count_buffer[i];
+        if constexpr (perf_config::track_granular_times){
+            smc_diagnostics.total_plan_mcmc_times(i, merge_split_step_num) = total_plan_mcmc_time_buffer[i];
+        }
+    }
+    
+
     // update tree sizes counts
     for (size_t region_size = 0; region_size < map_params.total_seats; region_size++) {
-        for (size_t a_thread_id = 0; a_thread_id < rng_states.size(); a_thread_id++) {
+        for (size_t a_thread_id = 0; a_thread_id < num_threads; a_thread_id++) {
             smc_diagnostics.tree_sizes_mat(region_size, step_num) +=
                 thread_tree_sizes[a_thread_id][region_size];
             smc_diagnostics.successful_tree_sizes_mat(region_size, step_num) +=
@@ -1126,7 +1158,10 @@ List run_redist_smc(
                         !scoring_functions[0].any_hard_custom_constraints) {
                         pool.setNumThreads(0);
                     }
-
+                    plan_ensemble_ptr->check_all_plans_valid(
+                        map_params,
+                        "Called before calcuating smc weights"
+                    );
                     // start timing the smc split
                     auto smc_weight_start_time = std::chrono::steady_clock::now();
                     if (wgt_type == "optimal") {
@@ -1264,6 +1299,11 @@ List run_redist_smc(
                         !scoring_functions[0].any_hard_custom_constraints) {
                         pool.setNumThreads(0);
                     }
+                    
+                    plan_ensemble_ptr->check_all_plans_valid(
+                        map_params,
+                        "Called before calling run_merge_split_step_on_all_plans"
+                    );
 
                     // start timing
                     auto ms_round_start_time = std::chrono::steady_clock::now();
@@ -1280,6 +1320,11 @@ List run_redist_smc(
                     // add the time 
                     std::chrono::duration<double, std::ratio<1>> ms_round_diff = ms_round_end_time - ms_round_start_time;
                     smc_diagnostics.ms_step_times[merge_split_step_num] = ms_round_diff.count();
+
+                    plan_ensemble_ptr->check_all_plans_valid(
+                        map_params,
+                        "Called after calling run_merge_split_step_on_all_plans"
+                    );
 
                     // now switch back
                     if (scoring_functions[0].any_soft_custom_constraints &&
@@ -1343,23 +1388,19 @@ List run_redist_smc(
                 }
                 Rcpp::checkUserInterrupt();
             }
-        } catch (const RcppThread::UserInterruptException &e) {
-            cli_progress_done(bar);
-            Rcpp::Rcerr << "c++ threaded call interrupted!" << "\n";
-            throw Rcpp::exception("c++ threaded call interrupted!\n");
-            return R_NilValue;
-        } catch (const Rcpp::internal::InterruptedException &e) {
-            cli_progress_done(bar);
-            Rcpp::Rcerr << "c++ call interrupted!" << "\n";
-            throw Rcpp::exception("c++ call interrupted!\n");
-            return R_NilValue;
-        } catch (const std::exception &e) {
-            cli_progress_done(bar);
-            Rcpp::Rcerr << "Standard exception: " << e.what() << "\n";
-            return R_NilValue;
-        } catch (...) {
-            Rcpp::Rcerr << "Unknown exception caught!\n";
-        }
+        }  catch (const RcppThread::UserInterruptException &e) {
+                cli_progress_done(bar);
+                Rcpp::stop("redist_smc was interrupted by the user.");
+            } catch (const Rcpp::internal::InterruptedException &e) {
+                cli_progress_done(bar);
+                Rcpp::stop("redist_smc was interrupted by the user.");
+            } catch (const std::exception &e) {
+                cli_progress_done(bar);
+                Rcpp::stop("redist_smc failed with error message:\n%s", e.what());
+            } catch (...) {
+                cli_progress_done(bar);
+                Rcpp::stop("redist_smc failed with an unknown C++ exception.");
+            }
         cli_progress_done(bar);
         if constexpr (DEBUG_GSMC_PLANS_VERBOSE) {
             REprintf("Done with main for loop!\n");

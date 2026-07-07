@@ -1,19 +1,19 @@
 #ifndef TREE_OP_H
 #define TREE_OP_H
 
-#include "redist_types.h"
-#include "smc_base.h"
+
 #include <RcppArmadillo.h>
 #include <limits>
 #include <queue>
 #include <stack>
 #include <vector>
+#include "redist_types.h"
+#include "random.h"
 
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::plugins("cpp11")]]
 
 using namespace Rcpp;
-using namespace arma;
 
 // for error checking
 static inline void check_vertex_in_range(int v, int V, char const *where) {
@@ -110,11 +110,11 @@ class EdgeBitset {
             int const word = word_index(edge_id);
             if (word < 0 || word >= static_cast<int>(edge_bits.size())) {
                 std::ostringstream oss;
-                Rcpp::Rcerr << "EdgeBitset::test_edge_id out of range. "
-                    << "edge_id=" << edge_id
+                oss << "EdgeBitset::test_edge_id out of range. "
+                    << "edge_id=" << static_cast<unsigned int>(edge_id)
                     << ", word=" << word
                     << ", edge_bits.size()=" << edge_bits.size();
-                throw Rcpp::exception("test_edge_id");
+
                 throw std::runtime_error(oss.str());
             }
         }
@@ -127,11 +127,11 @@ class EdgeBitset {
             int const word = word_index(edge_id);
             if (word < 0 || word >= static_cast<int>(edge_bits.size())) {
                 std::ostringstream oss;
-                Rcpp::Rcerr << "EdgeBitset::test_edge_id out of range. "
-                    << "edge_id=" << edge_id
+                oss << "EdgeBitset::set_edge_id out of range. "
+                    << "edge_id=" << static_cast<unsigned int>(edge_id)
                     << ", word=" << word
                     << ", edge_bits.size()=" << edge_bits.size();
-                throw Rcpp::exception("set_edge_id");
+
                 throw std::runtime_error(oss.str());
             }
         }
@@ -143,11 +143,11 @@ class EdgeBitset {
             int const word = word_index(edge_id);
             if (word < 0 || word >= static_cast<int>(edge_bits.size())) {
                 std::ostringstream oss;
-                Rcpp::Rcerr << "EdgeBitset::test_edge_id out of range. "
-                    << "edge_id=" << edge_id
+                oss << "EdgeBitset::clear_edge_id out of range. "
+                    << "edge_id=" << static_cast<unsigned int>(edge_id)
                     << ", word=" << word
                     << ", edge_bits.size()=" << edge_bits.size();
-                throw Rcpp::exception("clear_edge_id");
+
                 throw std::runtime_error(oss.str());
             }
         }
@@ -200,7 +200,6 @@ class EdgeBitset {
         for (EdgeID edge_id = 0;
             edge_id < static_cast<EdgeID>(edge_index.edges.size());
             ++edge_id) {
-
             if (!test_edge_id(edge_id)) {
                 continue;
             }
@@ -210,28 +209,62 @@ class EdgeBitset {
             int const u = static_cast<int>(endpoints.first);
             int const v = static_cast<int>(endpoints.second);
 
+            if (u < 0 || u >= edge_index.V || v < 0 || v >= edge_index.V) {
+                std::ostringstream oss;
+                oss << "EdgeBitset::get_graph_tree got invalid edge endpoint. "
+                    << "edge_id=" << static_cast<unsigned int>(edge_id)
+                    << ", u=" << u
+                    << ", v=" << v
+                    << ", V=" << edge_index.V;
+
+                throw std::runtime_error(oss.str());
+            }
+
             full_tree[u].push_back(v);
             full_tree[v].push_back(u);
+        }
+
+        for (int v = 0; v < edge_index.V; ++v) {
+            for (int const u : full_tree[v]) {
+                if (u < 0 || u >= edge_index.V) {
+                    std::ostringstream oss;
+                    oss << "EdgeBitset::get_graph_tree produced invalid neighbor. "
+                        << "vertex=" << v
+                        << ", neighbor=" << u
+                        << ", V=" << edge_index.V;
+
+                    throw std::runtime_error(oss.str());
+                }
+            }
         }
 
         return full_tree;
     }
 
-    void print(GraphEdgeIndex const &edge_index) const {
-        REprintf("Packed Forest with %zu edges!", edge_index.edges.size());
+    std::string debug_string(GraphEdgeIndex const &edge_index) const {
+        std::ostringstream oss;
+
+        oss << "Packed Forest with " << edge_index.edges.size() << " map edges\n";
+
         for (EdgeID edge_id = 0;
             edge_id < static_cast<EdgeID>(edge_index.edges.size());
             ++edge_id) {
-
             auto const endpoints = edge_index.edges[edge_id];
 
             int const u = static_cast<int>(endpoints.first);
             int const v = static_cast<int>(endpoints.second);
 
-            Rcpp::Rcout << "(" << u << ", " << v << "): "
-                        << (test_edge_id(edge_id) ? "INCLUDED" : "NOT INCLUDED")
-                        << "\n";
+            oss << "edge_id=" << static_cast<unsigned int>(edge_id)
+                << " (" << u << ", " << v << "): "
+                << (test_edge_id(edge_id) ? "INCLUDED" : "NOT INCLUDED")
+                << "\n";
         }
+
+        return oss.str();
+    }
+
+    void print(GraphEdgeIndex const &edge_index) const {
+        Rcpp::Rcerr << debug_string(edge_index);
     }
 
     void print_full_tree(GraphEdgeIndex const &edge_index) const {
@@ -329,7 +362,13 @@ void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_i
 void erase_tree_edge(Tree &ust, EdgeCut cut_edge);
 
 
+// Debug related functions 
+std::string tree_to_string(Tree const &ust);
 
+std::string edge_bitset_to_string(
+    EdgeBitset const &forest_edges,
+    GraphEdgeIndex const &edge_index
+);
 
 
 

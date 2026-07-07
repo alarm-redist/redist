@@ -1,10 +1,11 @@
-#include "smc_base.h"
-#include "tree_op.h"
+#include "tree_op.h" //rcpp armadillo must be loaded first for some reason
 #include <Eigen/Sparse>
 #include <RcppEigen.h>
 #include <RcppThread.h>
 #include <algorithm>
 #include <set>
+
+
 
 #ifndef MAP_CALC_H
 #define MAP_CALC_H

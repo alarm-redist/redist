@@ -322,8 +322,56 @@ std::pair<int, int> Plan::get_num_district_and_multidistricts() const {
     return std::make_pair(num_districts, num_multidistricts);
 }
 
+std::string Plan::debug_string(bool print_region_ids) const {
+    auto region_counts = get_num_district_and_multidistricts();
+    int num_districts = region_counts.first;
+    int num_multidistricts = region_counts.second;
+    std::ostringstream oss;
+
+    oss << "Plan with "
+        << num_regions << " regions, "
+        << num_districts << " districts, "
+        << num_multidistricts << " multidistricts and "
+        << num_districts << " total seats and "
+        << region_ids.size() << " Vertices.\n";
+
+    oss << "Region Level Values:[";
+    for (int region_id = 0; region_id < num_regions; ++region_id) {
+        oss << "(Region " << region_id
+            << ", Size=" << static_cast<int>(region_sizes[region_id])
+            << ", pop= " << static_cast<int>(region_pops[region_id])
+            << "), ";
+    }
+    oss << "]\n";
+
+    if (print_region_ids) {
+        oss << "Plan IDs: c(";
+        for (std::size_t i = 0; i < region_ids.size(); ++i) {
+            oss << static_cast<int>(region_ids[i]);
+            if (i + 1 < region_ids.size()) {
+                oss << ", ";
+            }
+        }
+
+        oss << ")\nPlan Sizes: c(";
+        for (int i = 0; i < num_regions; ++i) {
+            oss << static_cast<int>(region_sizes[i]);
+            if (i + 1 < num_regions) {
+                oss << ", ";
+            }
+        }
+        oss << ")\n";
+    }
+
+    return oss.str();
+}
+
 // Prints our object using Rcout. Should be used in Rcpp call
 void Plan::Rprint(bool verbose) const {
+    auto print_str = debug_string(verbose);
+    Rcerr << print_str;
+    return;
+
     auto region_counts = get_num_district_and_multidistricts();
     int num_districts = region_counts.first;
     int num_multidistricts = region_counts.second;
@@ -868,86 +916,125 @@ std::vector<std::pair<RegionID, RegionID>> Plan::get_valid_smc_merge_regions(
 
 // Plan debugging functions 
 void Plan::check_forest_equality(
-    Tree const &ust1, Tree const &ust2, 
-    GraphEdgeIndex const &graph_edge_index, std::string_view msg
-) const{
+    Tree const &ust1,
+    Tree const &ust2,
+    GraphEdgeIndex const &graph_edge_index,
+    std::string_view msg
+) const {
+    check_forest_integrity(graph_edge_index, msg);
 
-    check_forest_integrity(
-        graph_edge_index,
-        msg
-    );
+    std::ostringstream oss;
+    bool failed = false;
 
-    if(ust1.size() != ust2.size()){
-        REprintf("Tree 1 has size %zu and Tree 2 has size %zu!\n", 
-            ust1.size(), ust2.size());
-        std::cerr << msg << std::endl;
-        REprintf("Printing Tree 1\n");
-        print_tree(ust1);
-        REprintf("Printing Tree 2\n");
-        print_tree(ust2);
-        Rprint(true);
-        throw Rcpp::exception("");
+    if (ust1.size() != ust2.size()) {
+        failed = true;
 
+        oss << msg << "\n";
+        oss << "Tree 1 has size " << ust1.size()
+            << " and Tree 2 has size " << ust2.size() << "!\n";
+
+        oss << "Printing Tree 1\n";
+        oss << tree_to_string(ust1);
+
+        oss << "Printing Tree 2\n";
+        oss << tree_to_string(ust2);
+
+        oss << debug_string(true);
+
+        throw std::runtime_error(oss.str());
     }
 
-    for (size_t v = 0; v < ust1.size(); v++)
-    {
-        // check same size 
-        if(ust1[v].size() != ust2[v].size()){
-            REprintf("Tree 1 has size %zu and Tree 2 has size %zu at vertex %zu!\n", 
-                ust1[v].size(), ust2[v].size(), v);
-            std::cerr << msg << std::endl;
-            REprintf("Printing Tree 1\n");
-            print_tree(ust1);
-            REprintf("Printing Tree 2\n");
-            print_tree(ust2);
-            Rprint(true);
-            throw Rcpp::exception("");
-        }
-        // Convert both vectors to unordered sets
-        std::unordered_set<int> s1(ust1[v].begin(), ust1[v].end());
-        std::unordered_set<int> s2(ust2[v].begin(), ust2[v].end());
+    for (std::size_t v = 0; v < ust1.size(); ++v) {
+        if (ust1[v].size() != ust2[v].size()) {
+            failed = true;
 
+            oss << msg << "\n";
+            oss << "Tree 1 has size " << ust1[v].size()
+                << " and Tree 2 has size " << ust2[v].size()
+                << " at vertex " << v << "!\n";
+
+            oss << "Printing Tree 1\n";
+            oss << tree_to_string(ust1);
+
+            oss << "Printing Tree 2\n";
+            oss << tree_to_string(ust2);
+
+            oss << debug_string(true);
+
+            throw std::runtime_error(oss.str());
+        }
+
+        std::unordered_multiset<int> s1(ust1[v].begin(), ust1[v].end());
+        std::unordered_multiset<int> s2(ust2[v].begin(), ust2[v].end());
 
         if (s1 != s2) {
-            REprintf("Vertex %zu does not have the same neighbors!\n", v);
-            std::cerr << msg << std::endl;
-            REprintf("forest_graph[%zu]: ", v);
-            for (auto const u : ust1[v]) {
-                REprintf("%d ", static_cast<int>(u));
-            }
-            REprintf("\n");
+            failed = true;
 
-            REprintf("packed_forest[%zu]: ", v);
-            for (auto const u : ust2[v]) {
-                REprintf("%d ", static_cast<int>(u));
-            }
-            REprintf("\n");
+            std::vector<int> a(ust1[v].begin(), ust1[v].end());
+            std::vector<int> b(ust2[v].begin(), ust2[v].end());
 
-            REprintf("In forest_graph but not packed_forest: ");
-            for (auto const u : s1) {
-                if (s2.find(u) == s2.end()) {
-                    REprintf("(%zu, %d) ", v, u);
+            std::sort(a.begin(), a.end());
+            std::sort(b.begin(), b.end());
+
+            oss << msg << "\n";
+            oss << "Vertex " << v << " does not have the same neighbors!\n";
+
+            oss << "forest_graph[" << v << "]: ";
+            for (int const u : a) {
+                oss << u << " ";
+            }
+            oss << "\n";
+
+            oss << "packed_forest[" << v << "]: ";
+            for (int const u : b) {
+                oss << u << " ";
+            }
+            oss << "\n";
+
+            oss << "In forest_graph but not packed_forest: ";
+            std::size_t i = 0;
+            std::size_t j = 0;
+
+            while (i < a.size()) {
+                if (j >= b.size() || a[i] < b[j]) {
+                    oss << "(" << v << ", " << a[i] << ") ";
+                    ++i;
+                } else if (b[j] < a[i]) {
+                    ++j;
+                } else {
+                    ++i;
+                    ++j;
                 }
             }
-            REprintf("\n");
+            oss << "\n";
 
-            REprintf("In packed_forest but not forest_graph: ");
-            for (auto const u : s2) {
-                if (s1.find(u) == s1.end()) {
-                    REprintf("(%zu, %d) ", v, u);
+            oss << "In packed_forest but not forest_graph: ";
+            i = 0;
+            j = 0;
+
+            while (j < b.size()) {
+                if (i >= a.size() || b[j] < a[i]) {
+                    oss << "(" << v << ", " << b[j] << ") ";
+                    ++j;
+                } else if (a[i] < b[j]) {
+                    ++i;
+                } else {
+                    ++i;
+                    ++j;
                 }
             }
-            REprintf("\n");
-            REprintf("Printing Tree 1\n");
-            print_tree(ust1);
-            REprintf("Printing Tree 2\n");
-            print_tree(ust2);
-            Rprint(true);
-            throw Rcpp::exception("");
-            throw Rcpp::exception("forest_graph and packed forest differ!");
+            oss << "\n";
+
+            oss << "Printing Tree 1\n";
+            oss << tree_to_string(ust1);
+
+            oss << "Printing Tree 2\n";
+            oss << tree_to_string(ust2);
+
+            oss << debug_string(true);
+
+            throw std::runtime_error(oss.str());
         }
-        
     }
 }
 
@@ -956,132 +1043,99 @@ void Plan::check_forest_integrity(
     GraphEdgeIndex const &graph_edge_index,
     std::string_view msg
 ) const {
-    if (forest_graph.size() != static_cast<size_t>(graph_edge_index.V)) {
-        std::cerr << msg << std::endl;
+    std::ostringstream oss;
+    bool failed = false;
 
-        REprintf(
-            "FOREST GRAPH: Somehow forest_graph is size %zu when V=%d!\n",
-            forest_graph.size(),
-            graph_edge_index.V
-        );
+    if (forest_graph.size() != static_cast<std::size_t>(graph_edge_index.V)) {
+        oss << msg << "\n";
+        oss << "FOREST GRAPH: forest_graph is size "
+            << forest_graph.size()
+            << " when V=" << graph_edge_index.V << "!\n";
+        oss << debug_string(true);
 
-        throw Rcpp::exception(
-            "In check_forest_integrity on Graph Forest Size check!!\n"
-        );
+        throw std::runtime_error(oss.str());
     }
-
-    bool graph_forest_has_cross_region_edges = false;
-    bool packed_forest_has_cross_region_edges = false;
 
     int graph_forest_cross_region_edge_count = 0;
     int packed_forest_cross_region_edge_count = 0;
 
-    // Go through every vertex.
     for (int v = 0; v < graph_edge_index.V; ++v) {
-        RegionID const v_region = region_ids[v];
+        int const v_region = static_cast<int>(region_ids[v]);
 
-        // Check forest_graph.
-        for (auto const u_raw : forest_graph[v]) {
+        if (v_region < 0 || v_region >= num_regions) {
+            failed = true;
+            oss << "Invalid region id at vertex " << v
+                << ": region_ids[" << v << "]=" << v_region
+                << ", num_regions=" << num_regions << "\n";
+            continue;
+        }
+
+        for (int const u_raw : forest_graph[v]) {
             int const u = static_cast<int>(u_raw);
 
             if (u < 0 || u >= graph_edge_index.V) {
-                std::cerr << msg << std::endl;
+                failed = true;
 
-                REprintf(
-                    "FOREST GRAPH: Invalid neighbor %d found in forest_graph[%d] when V=%d!\n",
-                    u,
-                    v,
-                    graph_edge_index.V
-                );
+                oss << "FOREST GRAPH: Invalid neighbor "
+                    << u << " found in forest_graph[" << v
+                    << "] when V=" << graph_edge_index.V << "!\n";
 
-                throw Rcpp::exception(
-                    "In check_forest_integrity on Graph Forest Invalid Neighbor check!!\n"
-                );
+                continue;
             }
 
-            RegionID const u_region = region_ids[u];
+            int const u_region = static_cast<int>(region_ids[u]);
 
             if (v_region != u_region) {
-                graph_forest_has_cross_region_edges = true;
+                failed = true;
                 ++graph_forest_cross_region_edge_count;
 
-                REprintf(
-                    "FOREST GRAPH CROSS-REGION EDGE: pair (%d, %d), "
-                    "v-region=%d, u-region=%d\n",
-                    v,
-                    u,
-                    static_cast<int>(v_region),
-                    static_cast<int>(u_region)
-                );
+                oss << "FOREST GRAPH CROSS-REGION EDGE: pair ("
+                    << v << ", " << u << "), v-region="
+                    << v_region << ", u-region=" << u_region << "\n";
             }
         }
 
-        // Check packed forest.
-        //
-        // Only check each undirected graph edge once. Otherwise, since
-        // graph_edge_index.incident_edges is symmetric, each packed forest
-        // cross-region edge would be printed twice.
         for (auto const &incident_edge : graph_edge_index.incident_edges[v]) {
             int const u = static_cast<int>(incident_edge.neighbor);
+
+            if (u < 0 || u >= graph_edge_index.V) {
+                failed = true;
+                oss << "GRAPH EDGE INDEX: Invalid incident neighbor "
+                    << u << " found for vertex " << v << "\n";
+                continue;
+            }
 
             if (v > u) {
                 continue;
             }
 
-            RegionID const u_region = region_ids[u];
+            int const u_region = static_cast<int>(region_ids[u]);
 
             if (v_region != u_region &&
                 forest_edges.test_edge_id(incident_edge.edge_id)) {
-                packed_forest_has_cross_region_edges = true;
+                failed = true;
                 ++packed_forest_cross_region_edge_count;
 
-                REprintf(
-                    "PACKED FOREST CROSS-REGION EDGE: pair (%d, %d), "
-                    "v-region=%d, u-region=%d, edge_id=%u\n",
-                    v,
-                    u,
-                    static_cast<int>(v_region),
-                    static_cast<int>(u_region),
-                    static_cast<unsigned int>(incident_edge.edge_id)
-                );
+                oss << "PACKED FOREST CROSS-REGION EDGE: pair ("
+                    << v << ", " << u << "), v-region="
+                    << v_region << ", u-region=" << u_region
+                    << ", edge_id="
+                    << static_cast<unsigned int>(incident_edge.edge_id)
+                    << "\n";
             }
         }
     }
 
-    if (graph_forest_has_cross_region_edges ||
-        packed_forest_has_cross_region_edges) {
-        std::cerr << msg << std::endl;
+    if (failed) {
+        oss << msg << "\n";
+        oss << "Forest integrity check failed after scanning whole graph.\n";
+        oss << "Graph forest cross-region edge count: "
+            << graph_forest_cross_region_edge_count << "\n";
+        oss << "Packed forest cross-region edge count: "
+            << packed_forest_cross_region_edge_count << "\n";
+        oss << debug_string(true);
 
-        REprintf(
-            "Forest integrity check failed after scanning whole graph.\n"
-        );
-
-        REprintf(
-            "Graph forest cross-region edge count: %d\n",
-            graph_forest_cross_region_edge_count
-        );
-
-        REprintf(
-            "Packed forest cross-region edge count: %d\n",
-            packed_forest_cross_region_edge_count
-        );
-
-        if (graph_forest_has_cross_region_edges &&
-            packed_forest_has_cross_region_edges) {
-            throw Rcpp::exception(
-                "In check_forest_integrity: BOTH graph forest and packed forest have cross-region edges!!\n"
-            );
-        }
-
-        if (graph_forest_has_cross_region_edges) {
-            throw Rcpp::exception(
-                "In check_forest_integrity: graph forest has cross-region edges!!\n"
-            );
-        }
-
-        throw Rcpp::exception(
-            "In check_forest_integrity: packed forest has cross-region edges!!\n"
-        );
+        throw std::runtime_error(oss.str());
     }
 }
 

@@ -2,9 +2,6 @@
 #ifndef MANUAL_SPLITTING_H
 #define MANUAL_SPLITTING_H
 
-// [[Rcpp::depends(redistmetrics)]]
-
-#include "smc_base.h"
 
 #include <RcppThread.h>
 #include <cli/progress.h>
@@ -18,7 +15,7 @@
 #include "tree_op.h"
 #include "weights.h"
 #include "wilson.h"
-#include <kirchhoff_inline.h>
+
 
 // [[Rcpp::export]]
 Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(

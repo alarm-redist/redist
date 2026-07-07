@@ -296,11 +296,18 @@ void EdgeBitset::clear_region_tree(
             for (auto const &incident_edge : edge_index.incident_edges[v]) {
                 int const u = static_cast<int>(incident_edge.neighbor);
 
-                if(region_ids[u] != region_id && test_edge(v, u, edge_index)){
-                    REprintf("Somehow pair (%d, %d) has an edge despite %d not being in region %d (its in region %d)!\n",
-                    u, v, u, static_cast<int>(region_id) ,static_cast<int>(region_ids[u]));
-                    print_full_tree(edge_index);
-                    throw Rcpp::exception("Clear region!!\n");
+                if (region_ids[u] != region_id && test_edge(v, u, edge_index)) {
+                    std::ostringstream oss;
+
+                    oss << "EdgeBitset::clear_region_tree found cross-region packed edge.\n";
+                    oss << "pair=(" << v << ", " << u << ")\n";
+                    oss << "target region=" << static_cast<int>(region_id) << "\n";
+                    oss << "region_ids[" << v << "]=" << static_cast<int>(region_ids[v]) << "\n";
+                    oss << "region_ids[" << u << "]=" << static_cast<int>(region_ids[u]) << "\n";
+                    oss << "Packed forest materialized tree:\n";
+                    oss << tree_to_string(get_graph_tree(edge_index));
+
+                    throw std::runtime_error(oss.str());
                 }
 
                 // Avoid clearing the same undirected edge twice.
@@ -333,12 +340,23 @@ void EdgeBitset::clear_region_trees(
             for (auto const &incident_edge : edge_index.incident_edges[v]) {
                 int const u = static_cast<int>(incident_edge.neighbor);
 
-                if(region_ids[u] != region_id1 && region_ids[u] != region_id2 && test_edge(v, u, edge_index)){
-                    REprintf("Somehow pair (%d, %d) has an edge despite %d not being in region %d  or %d (its in region %d)!\n",
-                    u, v, u, static_cast<int>(region_id1), static_cast<int>(region_id2),
-                    static_cast<int>(region_ids[u]));
-                    print_full_tree(edge_index);
-                    throw Rcpp::exception("STOP!!\n");
+                if (region_ids[u] != region_id1 &&
+                    region_ids[u] != region_id2 &&
+                    test_edge(v, u, edge_index)) {
+
+                    std::ostringstream oss;
+
+                    oss << "EdgeBitset::clear_region_trees found cross-region packed edge.\n";
+                    oss << "pair=(" << v << ", " << u << ")\n";
+                    oss << "target regions=("
+                        << static_cast<int>(region_id1) << ", "
+                        << static_cast<int>(region_id2) << ")\n";
+                    oss << "region_ids[" << v << "]=" << static_cast<int>(region_ids[v]) << "\n";
+                    oss << "region_ids[" << u << "]=" << static_cast<int>(region_ids[u]) << "\n";
+                    oss << "Packed forest materialized tree:\n";
+                    oss << tree_to_string(get_graph_tree(edge_index));
+
+                    throw std::runtime_error(oss.str());
                 }
 
                 // Avoid clearing the same undirected edge twice.
@@ -354,33 +372,56 @@ void EdgeBitset::clear_region_trees(
 
 
 void EdgeBitset::fill_vector_tree(
-        GraphEdgeIndex const &edge_index,
-        Tree &ust
-) const{
-    if constexpr (perf_config::unnecessary_input_checks){
-        if (static_cast<int>(ust.size()) != edge_index.V) {
-            std::ostringstream oss;
-            Rcpp::Rcerr << "EdgeBitset::fill_vector_tree received wrong-sized Tree. "
-                << "ust.size()=" << ust.size()
-                << ", edge_index.V=" << edge_index.V;
-            
-            throw Rcpp::exception("fill_vector_tree");
-            throw std::runtime_error(oss.str());
-        }
+    GraphEdgeIndex const &edge_index,
+    Tree &ust
+) const {
+    if (static_cast<int>(ust.size()) != edge_index.V) {
+        std::ostringstream oss;
+
+        oss << "EdgeBitset::fill_vector_tree received wrong-sized Tree. "
+            << "ust.size()=" << ust.size()
+            << ", edge_index.V=" << edge_index.V;
+
+        throw std::runtime_error(oss.str());
     }
 
-
-    // iterate through the graph
     for (int v = 0; v < edge_index.V; ++v) {
-        // clear this vertices edges in the tree 
         ust[v].clear();
-        // Check each of v's edges 
+
         for (auto const &incident_edge : edge_index.incident_edges[v]) {
-            // if its adjacent in the packed forest then add it. 
+            int const u = static_cast<int>(incident_edge.neighbor);
+
+            if (u < 0 || u >= edge_index.V) {
+                std::ostringstream oss;
+                oss << "EdgeBitset::fill_vector_tree saw invalid incident neighbor. "
+                    << "v=" << v
+                    << ", neighbor=" << u
+                    << ", V=" << edge_index.V;
+
+                throw std::runtime_error(oss.str());
+            }
+
             if (test_edge_id(incident_edge.edge_id)) {
-                ust[v].push_back(static_cast<int>(incident_edge.neighbor));
+                ust[v].push_back(u);
             }
         }
     }
 }
 
+std::string tree_to_string(Tree const &ust) {
+    std::ostringstream oss;
+
+    oss << "Printing Tree:\n";
+
+    for (std::size_t i = 0; i < ust.size(); ++i) {
+        oss << i << ": (";
+
+        for (int const node : ust[i]) {
+            oss << node << " ";
+        }
+
+        oss << ")\n";
+    }
+
+    return oss.str();
+}
