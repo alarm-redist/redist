@@ -79,9 +79,36 @@ template <typename T> class PlanAttribute {
     bool empty() const { return offset_start == offset_end; }
     // methods for accessing
     // Const version for read-only access
-    const T operator[](int index) const { return long_vec[offset_start + index]; };
+    const T operator[](int index) const { 
+        if constexpr(perf_config::bounds_checking){
+            if (index < 0 || index >= static_cast<int>(size())) {
+                std::ostringstream oss;
+                oss << "PlanAttribute::operator[] const out of range.\n";
+                oss << "index=" << index << "\n";
+                oss << "size=" << size() << "\n";
+                oss << "offset_start=" << offset_start << "\n";
+                oss << "offset_end=" << offset_end << "\n";
+                throw std::runtime_error(oss.str());
+            }
+        }
+
+        return long_vec[offset_start + index]; 
+    };
     // non constant for modification
-    T &operator[](int index) { return long_vec[offset_start + index]; };
+    T &operator[](int index) { 
+        if constexpr(perf_config::bounds_checking){
+            if (index < 0 || index >= static_cast<int>(size())) {
+                std::ostringstream oss;
+                oss << "PlanAttribute::operator[] out of range.\n";
+                oss << "index=" << index << "\n";
+                oss << "size=" << size() << "\n";
+                oss << "offset_start=" << offset_start << "\n";
+                oss << "offset_end=" << offset_end << "\n";
+                throw std::runtime_error(oss.str());
+            }
+        }
+        return long_vec[offset_start + index]; 
+    };
 
     // Non-const iterator accessors
     auto begin() { return long_vec.begin() + offset_start; }
@@ -93,13 +120,12 @@ template <typename T> class PlanAttribute {
 
     // This copies one plans data from another
     void copy(PlanAttribute const &other_attr) {
-        if constexpr (perf_config::unnecessary_input_checks){
+        if constexpr (perf_config::bounds_checking){
             if (size() != other_attr.size()) {
                 std::ostringstream oss;
-                Rcpp::Rcerr << "PlanAttribute::copy size mismatch. "
+                oss << "PlanAttribute::copy size mismatch. "
                     << "dest.size()=" << size()
                     << ", source.size()=" << other_attr.size();
-                throw Rcpp::exception("PlanAttribute Copy!\n");
                 throw std::runtime_error(oss.str());
             }
         }
@@ -293,7 +319,7 @@ class GraphEdgeIndex {
 
     // Takes two vertices and returns their edge id
     EdgeID get_edge_id(int v, int u) const {
-        if constexpr (perf_config::unnecessary_input_checks){
+        if constexpr (perf_config::bounds_checking){
             check_vertex(v, "GraphEdgeIndex::get_edge_id received invalid v!");
             check_vertex(u, "GraphEdgeIndex::get_edge_id received invalid u!");
         }
@@ -323,7 +349,7 @@ class GraphEdgeIndex {
     }
 
     bool has_edge(int v, int u) const {
-        if constexpr (perf_config::unnecessary_input_checks){
+        if constexpr (perf_config::bounds_checking){
             if (!is_valid_vertex(v) || !is_valid_vertex(u)) {
                 return false;
             }
@@ -342,7 +368,7 @@ class GraphEdgeIndex {
 
     // takes an edge id and return the pair associated with it
     std::pair<VertexID, VertexID> get_edge_endpoints(EdgeID edge_id) const {
-        if constexpr (perf_config::unnecessary_input_checks){
+        if constexpr (perf_config::bounds_checking){
             if (static_cast<std::size_t>(edge_id) >= edges.size()) {
                 throw Rcpp::exception("GraphEdgeIndex::get_edge_endpoints received invalid edge_id!");
             }
@@ -535,7 +561,7 @@ template <typename T> class FixedStack {
     size_t max_size() const { return capacity; }
 
     void push(const T &value) {
-        if constexpr (perf_config::unnecessary_input_checks){
+        if constexpr (perf_config::bounds_checking){
             if (count >= capacity) {
                 throw Rcpp::exception("FixedStack overflow.");
             }
@@ -544,7 +570,7 @@ template <typename T> class FixedStack {
     }
 
     void push(T &&value) {
-        if constexpr (perf_config::unnecessary_input_checks){
+        if constexpr (perf_config::bounds_checking){
             if (count >= capacity) {
                 throw Rcpp::exception("FixedStack overflow.");
             }
@@ -553,7 +579,7 @@ template <typename T> class FixedStack {
     }
 
     T &top() { 
-        if constexpr (perf_config::unnecessary_input_checks){
+        if constexpr (perf_config::bounds_checking){
             if (count == 0) {
                 throw Rcpp::exception("FixedStack underflow.");
             }
@@ -562,7 +588,7 @@ template <typename T> class FixedStack {
     }
 
     const T &top() const { 
-        if constexpr (perf_config::unnecessary_input_checks){
+        if constexpr (perf_config::bounds_checking){
             if (count == 0) {
                 throw Rcpp::exception("FixedStack underflow.");
             }
@@ -570,7 +596,7 @@ template <typename T> class FixedStack {
         return buffer[count - 1]; }
 
     T pop() { 
-        if constexpr (perf_config::unnecessary_input_checks){
+        if constexpr (perf_config::bounds_checking){
             if (count == 0) {
                 throw Rcpp::exception("FixedStack underflow.");
             }
@@ -601,7 +627,7 @@ template <typename T> class CircularQueue {
     size_t max_size() const { return capacity; }
 
     void push(const T &value) {
-        if constexpr (perf_config::unnecessary_input_checks){
+        if constexpr (perf_config::bounds_checking){
             if (size >= capacity) {
                 throw Rcpp::exception("CircularQueue overflow.");
             }
@@ -613,7 +639,7 @@ template <typename T> class CircularQueue {
     }
 
     void push(T &&value) {
-        if constexpr (perf_config::unnecessary_input_checks){
+        if constexpr (perf_config::bounds_checking){
             if (size >= capacity) {
                 throw Rcpp::exception("CircularQueue overflow.");
             }
@@ -624,7 +650,7 @@ template <typename T> class CircularQueue {
     }
 
     T pop() {
-        if constexpr (perf_config::unnecessary_input_checks){
+        if constexpr (perf_config::bounds_checking){
             if (size == 0) {
                 throw Rcpp::exception("CircularQueue underlow.");
             }
