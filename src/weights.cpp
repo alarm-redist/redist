@@ -325,7 +325,7 @@ void compute_all_plans_log_simple_incremental_weights(
     int const nsims = (int)plans_ptr_vec.size();
     const int check_int = 50; // check for interrupts every _ iterations
 
-    int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
+    int const num_threads = get_num_threads(pool);
     // thread safe id counter
     static std::atomic<int> global_generation_counter{0};
     int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
@@ -649,7 +649,7 @@ void compute_all_plans_log_optimal_incremental_weights(
     if constexpr (DEBUG_WEIGHTS_VERBOSE)
         Rprintf("About to start computing weights!\n");
 
-    int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
+    int const num_threads = get_num_threads(pool);
     // thread safe id counter
     static std::atomic<int> global_generation_counter{0};
     int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
@@ -685,7 +685,7 @@ void compute_all_plans_log_optimal_incremental_weights(
                               << " but num threads is  " << num_threads << std::endl;
             throw std::runtime_error(oss.str());
         }
-        
+
         auto total_weight_time = maybe_now(); // optional timing 
 
 

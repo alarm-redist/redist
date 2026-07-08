@@ -28,6 +28,15 @@ bool USTSampler::attempt_to_draw_tree_on_region(RNGState &rng_state, Plan const 
                                 county_tree, county_stack, county_pop, county_members,
                                 c_visited, cty_pop_below, county_path, path, rng_state);
 
+    if constexpr(perf_config::object_integrity_checking){
+        if (result != 0){
+            check_directed_tree_edges_are_graph_edges(
+                ust, map_params.graph_edge_index,
+                "Just called `sample_sub_ust` in attempt_to_draw_tree_on_region\n"
+            );
+        }
+    }
+
     // result == 0 means it was successful
     return (result == 0);
 }
@@ -56,6 +65,15 @@ bool USTSampler::attempt_to_draw_tree_on_merged_region(RNGState &rng_state, Plan
                                 min_max_pair.second * map_params.upper, visited, ignore,
                                 county_tree, county_stack, county_pop, county_members,
                                 c_visited, cty_pop_below, county_path, path, rng_state);
+
+    if constexpr(perf_config::object_integrity_checking){
+        if (result != 0){
+            check_directed_tree_edges_are_graph_edges(
+                ust, map_params.graph_edge_index,
+                "Just called `sample_sub_ust` in attempt_to_draw_tree_on_merged_region\n"
+            );
+        }
+    }
 
     // result == 0 means it was successful
     return (result == 0);

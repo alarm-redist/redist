@@ -21,6 +21,7 @@
 #include "tree_splitting.h"
 #include "ust_sampler.h"
 #include "wilson.h"
+#include "utils.h"
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
@@ -427,6 +428,7 @@ class RegionPairHash {
         return;
     }
 
+    std::string debug_string(std::vector<int> const &county_component) const;
     void Rprint(std::vector<int> const &county_component) const;
 };
 
@@ -464,6 +466,8 @@ class PlanMultigraph {
     std::vector<int> region_reindex_vec;
 
     // Prints relevant info - for debugging
+    std::string debug_string() const;
+    std::string debug_string_detailed(Plan const &plan) const;
     void Rprint() const;
     void Rprint_detailed(Plan const &plan);
 

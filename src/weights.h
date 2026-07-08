@@ -12,6 +12,7 @@
 #include "redist_alg_helpers.h"
 #include "tree_op.h"
 #include "weight_caching.h"
+#include "utils.h"
 #include <cmath>
 #include <random>
 #include <set>

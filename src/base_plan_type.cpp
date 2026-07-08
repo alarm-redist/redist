@@ -92,76 +92,122 @@ Plan::all_regions_connected(Graph const &g, CircularQueue<int> &vertex_queue,
 // checks the inputted plan has the number of regions it claims it does
 // checks the sizes and that the labels make sense.
 // if makes sense then it counts the number of districts and multidistricts
+// NOTE: This needs to be updated for multimember districts 
 void Plan::check_inputted_region_sizes(int ndists, bool split_district_only) const {
-
-    // check sum of first num_region elements is ndists and it matches expected
-    // number of districts
     int total_size_implied_by_sizes_mat = 0;
-    for (size_t i = 0; i < num_regions; i++) {
-        // make sure each regions dval is non-zero
-        if (region_sizes[i] <= 0) {
-            throw Rcpp::exception("Region size input for region is 0 or less!");
+
+    for (int i = 0; i < num_regions; ++i) {
+        int const size_i = static_cast<int>(region_sizes[i]);
+
+        if (size_i <= 0) {
+            std::ostringstream oss;
+            oss << "Region size input for active region is 0 or less.\n";
+            oss << "region_id=" << i << "\n";
+            oss << "region_sizes[" << i << "]=" << size_i << "\n";
+            oss << "num_regions=" << num_regions << "\n";
+            oss << "ndists=" << ndists << "\n";
+            oss << debug_string(true);
+
+            throw std::runtime_error(oss.str());
         }
 
-        total_size_implied_by_sizes_mat += region_sizes[i];
+        total_size_implied_by_sizes_mat += size_i;
 
-        // add check that if split district only then only last one has size > 1
-        if (split_district_only && i != num_regions - 1) {
-            if (region_sizes[i] != 1)
-                throw Rcpp::exception(
-                    "For partial plan the remainder does not have region id=num_regions-1!");
+        if (split_district_only && i != num_regions - 1 && size_i != 1) {
+            std::ostringstream oss;
+            oss << "For partial plan, all non-remainder regions must have size 1.\n";
+            oss << "region_id=" << i << "\n";
+            oss << "region_sizes[" << i << "]=" << size_i << "\n";
+            oss << "num_regions=" << num_regions << "\n";
+            oss << "remainder_region_id=" << (num_regions - 1) << "\n";
+            oss << debug_string(true);
+
+            throw std::runtime_error(oss.str());
         }
     }
 
     if (total_size_implied_by_sizes_mat != ndists) {
-        throw Rcpp::exception("Sum of sizez in region sizes mat does equal ndists!");
+        std::ostringstream oss;
+        oss << "Sum of region sizes does not equal ndists.\n";
+        oss << "sum_active_region_sizes=" << total_size_implied_by_sizes_mat << "\n";
+        oss << "ndists=" << ndists << "\n";
+        oss << "num_regions=" << num_regions << "\n";
+        oss << debug_string(true);
+
+        throw std::runtime_error(oss.str());
     }
 
-    // check the other entries are zero
-    for (int i = num_regions; i < ndists; i++) {
-        // check that the values are 0,...,num_regions - 1
-        if (region_sizes[i] != 0) {
-            REprintf("Expected Region %d to be zero it was actually %d!\n", i,
-                     (int)region_sizes[i]);
-            throw Rcpp::exception(
-                "Plan didn't have the correct expected region size matrix!\n");
+    for (int i = num_regions; i < ndists; ++i) {
+        int const size_i = static_cast<int>(region_sizes[i]);
+
+        if (size_i != 0) {
+            std::ostringstream oss;
+            oss << "Inactive region has nonzero size.\n";
+            oss << "region_id=" << i << "\n";
+            oss << "region_sizes[" << i << "]=" << size_i << "\n";
+            oss << "num_regions=" << num_regions << "\n";
+            oss << "ndists=" << ndists << "\n";
+            oss << debug_string(true);
+
+            throw std::runtime_error(oss.str());
         }
     }
-
-    return;
 }
 
 void Plan::check_inputted_region_ids(int ndists) const {
-    // Use std::unordered_set to store unique elements
     std::unordered_set<int> unique_ids;
     unique_ids.reserve(num_regions);
-    // get unique labels
-    for (size_t i = 0; i < region_ids.size(); ++i) {
-        unique_ids.insert(region_ids[i]); // Insert each element of the subview column
-    }
-    int actual_num_regions = static_cast<int>(unique_ids.size());
 
-    // make sure the size is the number of regions
+    for (std::size_t i = 0; i < region_ids.size(); ++i) {
+        int const rid = static_cast<int>(region_ids[i]);
+
+        if (rid < 0 || rid >= num_regions) {
+            std::ostringstream oss;
+            oss << "Invalid region id in inputted plan.\n";
+            oss << "vertex=" << i << "\n";
+            oss << "region_ids[" << i << "]=" << rid << "\n";
+            oss << "num_regions=" << num_regions << "\n";
+            oss << "ndists=" << ndists << "\n";
+            oss << debug_string(true);
+
+            throw std::runtime_error(oss.str());
+        }
+
+        unique_ids.insert(rid);
+    }
+
+    int const actual_num_regions = static_cast<int>(unique_ids.size());
+
     if (actual_num_regions != num_regions) {
-        REprintf("Expected %d regions in plan but there were actually %d!\n", num_regions,
-                 actual_num_regions);
-        throw Rcpp::exception("Plan didn't have the expected number of regions!\n");
+        std::ostringstream oss;
+        oss << "Plan did not have expected number of unique region ids.\n";
+        oss << "expected num_regions=" << num_regions << "\n";
+        oss << "actual_num_regions=" << actual_num_regions << "\n";
+        oss << debug_string(true);
+
+        throw std::runtime_error(oss.str());
     }
 
-    // now check the labels are as expected
     std::vector<int> sorted_labels(unique_ids.begin(), unique_ids.end());
     std::sort(sorted_labels.begin(), sorted_labels.end());
-    for (int i = 0; i < num_regions; i++) {
-        // check that the values are 0,...,num_regions - 1
+
+    for (int i = 0; i < num_regions; ++i) {
         if (sorted_labels.at(i) != i) {
-            REprintf("Expected Region ID %d but it was actually %d!\n", i, sorted_labels.at(i));
-            throw Rcpp::exception("Plan didn't have the expected region ids!\n");
+            std::ostringstream oss;
+            oss << "Plan did not have expected consecutive region ids.\n";
+            oss << "expected label=" << i << "\n";
+            oss << "actual sorted label=" << sorted_labels.at(i) << "\n";
+            oss << "All sorted labels: ";
+            for (int const label : sorted_labels) {
+                oss << label << " ";
+            }
+            oss << "\n";
+            oss << debug_string(true);
+
+            throw std::runtime_error(oss.str());
         }
     }
-
-    return;
 }
-
 // Constructs existing parital plan
 Plan::Plan(int const num_regions, const arma::uvec &pop, PlanVector &this_plan_region_ids,
            RegionSizes &this_plan_region_sizes, IntPlanAttribute &this_plan_region_pops,
@@ -1218,23 +1264,110 @@ bool Plan::forest_graph_equals_order_insensitive(
     return out.empty();
 }
 
+
+
+std::string component_counts_to_string(
+    std::vector<int> const &component_region_counts,
+    int const num_components
+) {
+    std::ostringstream oss;
+
+    oss << "Component region counts:\n";
+    for (int i = 0; i < num_components; ++i) {
+        oss << "  Component " << i
+            << " - " << component_region_counts[i]
+            << " Regions\n";
+    }
+
+    return oss.str();
+}
+
+std::string sorted_pairs_to_string(
+    std::vector<std::pair<std::pair<RegionID, RegionID>, PairHashData>> const &all_pairs,
+    std::vector<int> const &county_component,
+    std::string_view title
+) {
+    std::ostringstream oss;
+
+    oss << title << "\n";
+    for (auto const &val : all_pairs) {
+        int const r1 = static_cast<int>(val.first.first);
+        int const r2 = static_cast<int>(val.first.second);
+
+        oss << "Regions (" << r1 << ", " << r2 << ")";
+
+        if (r1 >= 0 && r1 < static_cast<int>(county_component.size()) &&
+            r2 >= 0 && r2 < static_cast<int>(county_component.size())) {
+            oss << " | Components ("
+                << county_component[r1] << ", "
+                << county_component[r2] << ")";
+        } else {
+            oss << " | Components (invalid region id)";
+        }
+
+        oss << " | Shared Status "
+            << (val.second.same_admin_component ? "SHARED" : "NOT SHARED")
+            << " | Admin Adjacent "
+            << (val.second.admin_adjacent ? "YES" : "NOT")
+            << " | Hier Merge Valid "
+            << (val.second.merge_is_hier_valid ? "YES" : "NOT")
+            << " | within_county_edges=" << val.second.within_county_edges
+            << " | across_county_edges=" << val.second.across_county_edges
+            << "\n";
+    }
+
+    return oss.str();
+}
+
+
+// Creates helpful debug string 
+std::string RegionPairHash::debug_string(
+    std::vector<int> const &county_component
+) const {
+    std::ostringstream oss;
+
+    oss << "Pair Map has " << num_hashed_pairs << " Elements:\n";
+
+    for (auto const &a_pair : hashed_pairs) {
+        auto val = get_value(a_pair.first, a_pair.second).second;
+
+        int const r1 = static_cast<int>(a_pair.first);
+        int const r2 = static_cast<int>(a_pair.second);
+
+        oss << "    Regions: (" << r1 << ", " << r2 << ")";
+
+        if (r1 >= 0 && r1 < static_cast<int>(county_component.size()) &&
+            r2 >= 0 && r2 < static_cast<int>(county_component.size())) {
+            oss << " | Components ("
+                << county_component[r1] << ", "
+                << county_component[r2] << ") "
+                << (county_component[r1] == county_component[r2]
+                        ? "SAME(check now)"
+                        : "NOT SAME(check now)");
+        } else {
+            oss << " | Components invalid";
+        }
+
+        oss << " | "
+            << (val.same_admin_component ? "SAME(attr)" : "NOT SAME(attr)")
+            << " | "
+            << (val.merge_is_hier_valid ? "YES" : "NOT")
+            << " Hier Merge Valid"
+            << " | "
+            << (val.admin_adjacent ? "YES" : "NOT")
+            << " Admin Adjacent"
+            << " | " << val.within_county_edges << " within county edges"
+            << " | " << val.across_county_edges << " across county edges"
+            << "\n";
+    }
+
+    return oss.str();
+}
+
+
 // Prints relevant info - for debugging
 void RegionPairHash::Rprint(std::vector<int> const &county_component) const {
-    REprintf("Pair Map has %d Elements:\n", num_hashed_pairs);
-    for (auto const &a_pair : hashed_pairs) {
-        auto val = get_value(a_pair.first, a_pair.second);
-        REprintf("    Regions: (%u, %u) | Components (%d, %d) %s %s | %s Hier Merge Valid | %s "
-                 "Admin Adjacent | %d within county edges, %d across county edges\n",
-                 a_pair.first, a_pair.second, county_component[a_pair.first],
-                 county_component[a_pair.second],
-                 (county_component[a_pair.first] == county_component[a_pair.second]
-                      ? "SAME(check now)"
-                      : "NOT SAME (check now)"),
-                 (val.second.same_admin_component ? "SAME(attr)" : "NOT SAME(attr)"),
-                 (val.second.merge_is_hier_valid ? "YES" : "NOT"),
-                 (val.second.admin_adjacent ? "YES" : "NOT"), val.second.within_county_edges,
-                 val.second.across_county_edges);
-    }
+    Rcpp::Rcerr << debug_string(county_component);
 };
 
 double PlanMultigraph::compute_non_hierarchical_log_multigraph_tau(
@@ -1287,9 +1420,17 @@ double PlanMultigraph::compute_non_hierarchical_log_multigraph_tau(
                 laplacian_minor_trips.emplace_back(a_pair.second,
                                                     a_pair.first, -edges);
             } else {
-                REprintf("ERROR in compute non-hierarchical linking edge: index %d=%d\n",
-                            a_pair.first, a_pair.second);
-                throw Rcpp::exception("Big time error! \n");
+                std::ostringstream oss;
+                oss << "ERROR in compute_non_hierarchical_log_multigraph_tau: "
+                    << "unexpected equal region indices while constructing Laplacian minor.\n";
+                oss << "a_pair=("
+                    << static_cast<int>(a_pair.first) << ", "
+                    << static_cast<int>(a_pair.second) << ")\n";
+                oss << "num_regions=" << num_regions << "\n";
+                oss << "edges=" << edges << "\n";
+                oss << debug_string();
+
+                throw std::runtime_error(oss.str());
             }
         } else if (a_pair.first != num_regions - 1) {
             // increase the degree
@@ -1386,9 +1527,22 @@ double PlanMultigraph::compute_non_hierarchical_merged_log_multigraph_tau(
                 merged_laplacian_minor_trips.emplace_back(reshuffled_pair2,
                                                     reshuffled_pair1, -edges);
             } else {
-                REprintf("ERROR in compute non-hierarchical linking edge: index %d=%d\n",
-                            reshuffled_pair1, reshuffled_pair2);
-                throw Rcpp::exception("Big time error! \n");
+                std::ostringstream oss;
+                oss << "ERROR in compute_non_hierarchical_merged_log_multigraph_tau: "
+                    << "unexpected equal reindexed region indices while constructing Laplacian minor.\n";
+                oss << "original pair=("
+                    << static_cast<int>(a_pair.first) << ", "
+                    << static_cast<int>(a_pair.second) << ")\n";
+                oss << "reshuffled_pair1=" << reshuffled_pair1 << "\n";
+                oss << "reshuffled_pair2=" << reshuffled_pair2 << "\n";
+                oss << "region1_id=" << static_cast<int>(region1_id) << "\n";
+                oss << "region2_id=" << static_cast<int>(region2_id) << "\n";
+                oss << "num_regions=" << num_regions << "\n";
+                oss << "merged_reindex=" << merged_reindex << "\n";
+                oss << vec_to_string(region_reindex_vec, "region_reindex_vec");
+                oss << debug_string();
+
+                throw std::runtime_error(oss.str());
             }
 
         } else if (reshuffled_pair1 != merged_reindex) {
@@ -1571,14 +1725,23 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
                     edges =
                         static_cast<double>(all_pairs[curr_index].second.within_county_edges);
                 } else {
-                    REprintf("%d Components | Region Pair (%d, %d) is not administratively "
-                             "adjacent!",
-                             num_county_connected_components, pair_region1, pair_region2);
-                    Rprint();
-                    REprintf(
-                        "Error! in BASE PLAN TYPE NON ADMIN ADJACENT HIER MERGE INVALID!\n");
-                    throw Rcpp::exception(
-                        "Error in compute_hierarchical_log_multigraph_tau");
+                    std::ostringstream oss;
+
+                    oss << "Error in compute_hierarchical_log_multigraph_tau.\n";
+                    oss << "Region pair is not administratively adjacent but was treated as hier-merge invalid.\n";
+                    oss << "num_county_connected_components=" << num_county_connected_components << "\n";
+                    oss << "pair_region1=" << pair_region1 << "\n";
+                    oss << "pair_region2=" << pair_region2 << "\n";
+
+                    if (pair_region1 >= 0 && pair_region1 < static_cast<int>(county_component.size()) &&
+                        pair_region2 >= 0 && pair_region2 < static_cast<int>(county_component.size())) {
+                        oss << "county_component[pair_region1]=" << county_component[pair_region1] << "\n";
+                        oss << "county_component[pair_region2]=" << county_component[pair_region2] << "\n";
+                    }
+
+                    oss << debug_string();
+
+                    throw std::runtime_error(oss.str());
                 }
 
                 if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
@@ -1616,9 +1779,17 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
                         laplacian_minor_trips.emplace_back(reindexed_pair_region2,
                                                            reindexed_pair_region1, -edges);
                     } else {
-                        REprintf("ERROR in compute hierarchical linking edge: Reindex %d=%d\n",
-                                 reindexed_pair_region1, reindexed_pair_region2);
-                        throw Rcpp::exception("Big time error! \n");
+                        std::ostringstream oss;
+                        oss << "ERROR in compute_hierarchical_log_multigraph_tau: "
+                            << "equal reindexed pair inside component Laplacian.\n";
+                        oss << "reindexed_pair_region1=" << reindexed_pair_region1 << "\n";
+                        oss << "reindexed_pair_region2=" << reindexed_pair_region2 << "\n";
+                        oss << "component_id=" << component_id << "\n";
+                        oss << "num_component_regions=" << num_component_regions << "\n";
+                        oss << "edges=" << edges << "\n";
+                        oss << debug_string();
+
+                        throw std::runtime_error(oss.str());
                     }
 
                 } else if (reindexed_pair_region1 != num_component_regions - 1) {
@@ -1646,20 +1817,29 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
     }
 
     if (curr_index >= all_pairs.size() && num_county_connected_components > 1) {
-        REprintf("ERROR!!\n %zu pairs, curr index %d but %d num admin components\n",
-                 all_pairs.size(), curr_index, num_county_connected_components);
-        Rprint();
-        REprintf("%d Components | NOW SORTED Pairs: \n", num_county_connected_components);
-        for (auto const &val : all_pairs) {
-            REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s\n",
-                     (int)val.first.first, (int)val.first.second,
-                     county_component[val.first.first], county_component[val.first.second],
-                     (val.second.same_admin_component ? "SHARED" : "NOT SHARED"));
-        }
-        for (int i = 0; i < num_county_connected_components; i++) {
-            REprintf("Component %d - %d Regions\n", i, component_region_counts[i]);
-        }
-        throw Rcpp::exception("! Hier\n");
+        std::ostringstream oss;
+
+        oss << "ERROR in compute_hierarchical_log_multigraph_tau: "
+            << "curr_index ran past all_pairs before processing all admin components.\n";
+        oss << "all_pairs.size()=" << all_pairs.size() << "\n";
+        oss << "curr_index=" << curr_index << "\n";
+        oss << "num_county_connected_components="
+            << num_county_connected_components << "\n";
+
+        oss << sorted_pairs_to_string(
+            all_pairs,
+            county_component,
+            "NOW SORTED Pairs:"
+        );
+
+        oss << component_counts_to_string(
+            component_region_counts,
+            num_county_connected_components
+        );
+
+        oss << debug_string();
+
+        throw std::runtime_error(oss.str());
     }
 
     // If only one connected component then we stop
@@ -1724,9 +1904,16 @@ double PlanMultigraph::compute_hierarchical_log_multigraph_tau(
                 component_laplacian_minor_trips.emplace_back(component2_id, component1_id,
                                                              -edges);
             } else {
-                REprintf("ERROR in compute hierarchical linking edge: Reindex %d=%d\n",
-                         component1_id, component2_id);
-                throw Rcpp::exception("Big time error! \n");
+                std::ostringstream oss;
+                oss << "ERROR in compute_hierarchical_log_multigraph_tau: "
+                    << "equal component ids while constructing component Laplacian.\n";
+                oss << "component1_id=" << component1_id << "\n";
+                oss << "component2_id=" << component2_id << "\n";
+                oss << "num_county_connected_components=" << num_county_connected_components << "\n";
+                oss << "edges=" << edges << "\n";
+                oss << debug_string();
+
+                throw std::runtime_error(oss.str());
             }
         } else if (component1_id != num_county_connected_components - 1) {
             // increase the degree
@@ -2025,14 +2212,25 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
                     edges =
                         static_cast<double>(all_pairs[curr_index].second.within_county_edges);
                 } else {
-                    REprintf("Region Pair (%d, %d) is not administratively adjacent!",
-                             pair_region1, pair_region2);
-                    Rprint();
-                    REprintf(
-                        "Error! in BASE PLAN TYPE NON ADMIN ADJACENT HIER MERGE INVALID!\n");
-                    throw Rcpp::exception(
-                        "Error in compute_hierarchical_merged_log_multigraph_tau");
-                }
+                        std::ostringstream oss;
+
+                        oss << "Error in compute_hierarchical_merged_log_multigraph_tau.\n";
+                        oss << "Region pair is not administratively adjacent but was treated as hier-merge invalid.\n";
+                        oss << "merged_num_admin_connected_components="
+                            << merged_num_admin_connected_components << "\n";
+                        oss << "pair_region1=" << pair_region1 << "\n";
+                        oss << "pair_region2=" << pair_region2 << "\n";
+
+                        if (pair_region1 >= 0 && pair_region1 < static_cast<int>(county_component.size()) &&
+                            pair_region2 >= 0 && pair_region2 < static_cast<int>(county_component.size())) {
+                            oss << "county_component[pair_region1]=" << county_component[pair_region1] << "\n";
+                            oss << "county_component[pair_region2]=" << county_component[pair_region2] << "\n";
+                        }
+
+                        oss << debug_string();
+
+                        throw std::runtime_error(oss.str());
+                    }
 
                 if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
                     REprintf("Region Pair (%d, %d) | %d | %g edges!\n ", pair_region1,
@@ -2067,9 +2265,17 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
                         laplacian_minor_trips.emplace_back(reindexed_pair_region2,
                                                            reindexed_pair_region1, -edges);
                     } else {
-                        REprintf("ERROR in compute hierarchical linking edge: Reindex %d=%d\n",
-                                 reindexed_pair_region1, reindexed_pair_region2);
-                        throw Rcpp::exception("Big time error! \n");
+                        std::ostringstream oss;
+                        oss << "ERROR in compute_hierarchical_merged_log_multigraph_tau: "
+                            << "equal reindexed pair inside component Laplacian.\n";
+                        oss << "reindexed_pair_region1=" << reindexed_pair_region1 << "\n";
+                        oss << "reindexed_pair_region2=" << reindexed_pair_region2 << "\n";
+                        oss << "component_id=" << component_id << "\n";
+                        oss << "num_component_regions=" << num_component_regions << "\n";
+                        oss << "edges=" << edges << "\n";
+                        oss << debug_string();
+
+                        throw std::runtime_error(oss.str());
                     }
                 } else if (reindexed_pair_region1 != num_component_regions - 1) {
                     // increase the degree
@@ -2095,20 +2301,29 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
     }
 
     if (curr_index >= all_pairs.size() && merged_num_admin_connected_components > 1) {
-        REprintf("ERROR!!\n %zu pairs, curr index %d but %d num merged admin components\n",
-                 all_pairs.size(), curr_index, merged_num_admin_connected_components);
-        Rprint();
-        REprintf("%d Components | NOW SORTED Pairs: \n", merged_num_admin_connected_components);
-        for (auto const &val : all_pairs) {
-            REprintf("Regions (%d, %d) | Components (%d, %d) | Shared Status %s\n",
-                     (int)val.first.first, (int)val.first.second,
-                     county_component[val.first.first], county_component[val.first.second],
-                     (val.second.same_admin_component ? "SHARED" : "NOT SHARED"));
-        }
-        for (int i = 0; i < merged_num_admin_connected_components; i++) {
-            REprintf("Component %d - %d Regions\n", i, component_region_counts[i]);
-        }
-        throw Rcpp::exception("! Hier\n");
+        std::ostringstream oss;
+
+        oss << "ERROR in compute_hierarchical_merged_log_multigraph_tau: "
+            << "curr_index ran past all_pairs before processing all merged admin components.\n";
+        oss << "all_pairs.size()=" << all_pairs.size() << "\n";
+        oss << "curr_index=" << curr_index << "\n";
+        oss << "merged_num_admin_connected_components="
+            << merged_num_admin_connected_components << "\n";
+
+        oss << sorted_pairs_to_string(
+            all_pairs,
+            county_component,
+            "NOW SORTED Pairs:"
+        );
+
+        oss << component_counts_to_string(
+            component_region_counts,
+            merged_num_admin_connected_components
+        );
+
+        oss << debug_string();
+
+        throw std::runtime_error(oss.str());
     }
 
     if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
@@ -2219,9 +2434,17 @@ double PlanMultigraph::compute_hierarchical_merged_log_multigraph_tau(
                 merged_component_laplacian_minor_trips.emplace_back(component2_id,
                                                                     component1_id, -edges);
             } else {
-                REprintf("ERROR in compute hierarchical linking edge: Reindex %d=%d\n",
-                         component1_id, component2_id);
-                throw Rcpp::exception("Big time error! \n");
+                std::ostringstream oss;
+                oss << "ERROR in compute_hierarchical_merged_log_multigraph_tau: "
+                    << "equal component ids while constructing merged component Laplacian.\n";
+                oss << "component1_id=" << component1_id << "\n";
+                oss << "component2_id=" << component2_id << "\n";
+                oss << "merged_num_admin_connected_components="
+                    << merged_num_admin_connected_components << "\n";
+                oss << "edges=" << edges << "\n";
+                oss << debug_string();
+
+                throw std::runtime_error(oss.str());
             }
         } else if (component1_id != merged_num_admin_connected_components - 1) {
             // increase the degree
@@ -2273,25 +2496,64 @@ PlanMultigraph::PlanMultigraph(MapParams const &map_params,
       };
 
 
+
+std::string PlanMultigraph::debug_string() const {
+    std::ostringstream oss;
+
+    oss << (counties_on ? "YES" : "NO")
+        << " Counties | Pair Map has "
+        << pair_map.num_hashed_pairs
+        << " Elements and "
+        << num_county_connected_components
+        << " components:\n";
+
+    oss << pair_map.debug_string(county_component);
+
+    return oss.str();
+}
+
 void PlanMultigraph::Rprint() const {
-    REprintf("%s Counties | Pair Map has %d Elements and %d components:\n",
-             (counties_on ? "YES" : "NO"), pair_map.num_hashed_pairs,
-             num_county_connected_components);
-    pair_map.Rprint(county_component);
+    Rcpp::Rcerr << debug_string();
+}
+
+std::string PlanMultigraph::debug_string_detailed(Plan const &plan) const {
+    std::ostringstream oss;
+
+    oss << (counties_on ? "YES" : "NO")
+        << " Counties | Pair Map has "
+        << pair_map.num_hashed_pairs
+        << " Elements:\n";
+
+    for (auto const &a_pair : pair_map.hashed_pairs) {
+        auto val = pair_map.get_value(a_pair.first, a_pair.second).second;
+
+        int const r1 = static_cast<int>(a_pair.first);
+        int const r2 = static_cast<int>(a_pair.second);
+
+        oss << "    Regions: (" << r1 << ", " << r2 << ")";
+
+        if (r1 >= 0 && r1 < plan.num_regions &&
+            r2 >= 0 && r2 < plan.num_regions) {
+            oss << " | Sizes ("
+                << static_cast<int>(plan.region_sizes[r1]) << ", "
+                << static_cast<int>(plan.region_sizes[r2]) << ")";
+        } else {
+            oss << " | Sizes invalid";
+        }
+
+        oss << " | "
+            << (val.admin_adjacent ? "YES" : "NOT")
+            << " Hierarchically Adjacent"
+            << " | " << val.within_county_edges << " within county edges"
+            << " | " << val.across_county_edges << " across county edges"
+            << "\n";
+    }
+
+    return oss.str();
 }
 
 void PlanMultigraph::Rprint_detailed(Plan const &plan) {
-    REprintf("%s Counties | Pair Map has %d Elements:\n", (counties_on ? "YES" : "NO"),
-             pair_map.num_hashed_pairs);
-    return;
-    for (auto const &a_pair : pair_map.hashed_pairs) {
-        auto val = pair_map.get_value(a_pair.first, a_pair.second);
-        REprintf("    Regions: (%u, %u) | Sizes (%u, %u) | %s Hierarchically Adjacent | %d "
-                 "within county edges, %d across county edges\n",
-                 a_pair.first, a_pair.second, plan.region_sizes[a_pair.first],
-                 plan.region_sizes[a_pair.second], (val.second.admin_adjacent ? "YES" : "NOT"),
-                 val.second.within_county_edges, val.second.across_county_edges);
-    }
+    Rcpp::Rcerr << debug_string_detailed(plan);
 }
 
 // indexing (i,j) in a matrix
@@ -2568,16 +2830,27 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(PlanVector const &region
         } else if (component_split_counts[component_id] >=
                    component_region_counts[component_id]) {
             if constexpr (DEBUG_LOG_LINK_EDGE_VERBOSE) {
-                REprintf("EARLY RETURN B: component %zu has splits=%d regions=%d\n",
-                         component_id, component_split_counts[component_id],
-                         component_region_counts[component_id]);
-                Rprint();
-                REprintf("Region\n c(");
-                for (size_t i = 0; i < region_ids.size(); i++) {
-                    REprintf("%d,", (int)region_ids[i]);
+                std::ostringstream oss;
+
+                oss << "EARLY RETURN B in hierarchical merge-valid check.\n";
+                oss << "component_id=" << component_id << "\n";
+                oss << "component_split_counts[component_id]="
+                    << component_split_counts[component_id] << "\n";
+                oss << "component_region_counts[component_id]="
+                    << component_region_counts[component_id] << "\n";
+
+                oss << "Region ids: c(";
+                for (std::size_t k = 0; k < region_ids.size(); ++k) {
+                    oss << static_cast<int>(region_ids[k]);
+                    if (k + 1 < region_ids.size()) {
+                        oss << ",";
+                    }
                 }
-                REprintf(")\n");
-                throw Rcpp::exception("");
+                oss << ")\n";
+
+                oss << debug_string();
+
+                throw std::runtime_error(oss.str());
             }
             return false;
         }
@@ -2930,16 +3203,68 @@ double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
     // if not.
     auto it = std::find(valid_edges.begin(), valid_edges.end(), actual_cut_edge);
 
-    if constexpr (perf_config::unnecessary_input_checks){
+    if constexpr (perf_config::bounds_checking){
         if (it == valid_edges.end()) {
-            throw Rcpp::exception(
-                "Actual cut edge not found in valid_edges."
-            );
+            std::ostringstream oss;
+
+            oss << "Actual cut edge not found in valid_edges in "
+                << "get_log_retroactive_splitting_prob_for_joined_tree.\n";
+
+            oss << "region1_root=" << region1_root << "\n";
+            oss << "region2_root=" << region2_root << "\n";
+            oss << "region1_id=" << static_cast<int>(plan.region_ids[region1_root]) << "\n";
+            oss << "region2_id=" << static_cast<int>(plan.region_ids[region2_root]) << "\n";
+            oss << "region1_size=" << region1_size << "\n";
+            oss << "region2_size=" << region2_size << "\n";
+            oss << "region1_population=" << region1_population << "\n";
+            oss << "region2_population=" << region2_population << "\n";
+            oss << "valid_edges.size()=" << valid_edges.size() << "\n";
+
+            oss << "Actual cut edge: "
+                << "tree_root=" << actual_cut_edge.tree_root
+                << ", cut_vertex=" << actual_cut_edge.cut_vertex
+                << ", cut_vertex_parent=" << actual_cut_edge.cut_vertex_parent
+                << ", cut_below_region_size=" << actual_cut_edge.cut_below_region_size
+                << ", cut_below_pop=" << actual_cut_edge.cut_below_pop
+                << ", cut_above_region_size=" << actual_cut_edge.cut_above_region_size
+                << ", cut_above_pop=" << actual_cut_edge.cut_above_pop
+                << "\n";
+
+            oss << "Valid edges:\n";
+            for (std::size_t k = 0; k < valid_edges.size(); ++k) {
+                auto const &e = valid_edges[k];
+
+                oss << "  [" << k << "] "
+                    << "tree_root=" << e.tree_root
+                    << ", cut_vertex=" << e.cut_vertex
+                    << ", cut_vertex_parent=" << e.cut_vertex_parent
+                    << ", cut_below_region_size=" << e.cut_below_region_size
+                    << ", cut_below_pop=" << e.cut_below_pop
+                    << ", cut_above_region_size=" << e.cut_above_region_size
+                    << ", cut_above_pop=" << e.cut_above_pop
+                    << ", log_prob=" << e.log_prob
+                    << "\n";
+            }
+
+            throw std::runtime_error(oss.str());
         }
     }
 
 
     int actual_cut_edge_index = std::distance(valid_edges.begin(), it);
+    
+    if constexpr (perf_config::bounds_checking){
+        if (actual_cut_edge_index < 0 ||
+        actual_cut_edge_index >= static_cast<int>(valid_edges.size())) {
+            std::ostringstream oss;
+            oss << "actual_cut_edge_index out of bounds. "
+                << "actual_cut_edge_index=" << actual_cut_edge_index
+                << ", valid_edges.size()=" << valid_edges.size();
+
+            throw std::runtime_error(oss.str());
+        }
+    }
+
     if (MERGED_TREE_SPLITTING_VERBOSE) {
         REprintf("Actual Cut Edge at Index %d and so prob is %f \n", actual_cut_edge_index,
                  get_log_selection_prob(valid_edges, actual_cut_edge_index));
@@ -2949,8 +3274,13 @@ double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
 }
 
 void NaiveTopKSplitter::update_single_int_param(int int_param) {
-    if (int_param <= 0)
-        throw Rcpp::exception("Splitting k must be at least 1!\n");
+    if (int_param <= 0) {
+        std::ostringstream oss;
+        oss << "Splitting k must be at least 1.\n";
+        oss << "Received int_param=" << int_param << "\n";
+
+        throw std::runtime_error(oss.str());
+    }
     k_param = int_param;
 }
 
@@ -3265,7 +3595,10 @@ double ConstraintSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
         region_pops[region2_id] = valid_edges[i].cut_below_pop;
 
         // TODO: Reimplement this 
-        throw Rcpp::exception("Constraint splitter code is under maintenance right now!\n");
+        std::ostringstream oss;
+        oss << "Constraint splitter code is under maintenance right now.\n";
+        oss << "This path should not be called.\n";
+        throw std::runtime_error(oss.str());
         // update the region ids
         // assign_region_ids_from_joined_undirected_tree(
         //     forest_graph, region_ids, valid_edges[i].cut_vertex, region1_id,

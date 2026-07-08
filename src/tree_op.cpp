@@ -276,6 +276,46 @@ void erase_tree_edge(Tree &ust, EdgeCut cut_edge) {
 }
 
 
+// checks that every edge in the tree is in the underlying 
+// edge list 
+void check_directed_tree_edges_are_graph_edges(
+    Tree const &tree,
+    GraphEdgeIndex const &edge_index,
+    std::string_view where
+){
+    int const V = static_cast<int>(tree.size());
+
+    if (V != edge_index.V) {
+        std::ostringstream oss;
+        oss << where << ": tree.size() != edge_index.V. "
+            << "tree.size()=" << tree.size()
+            << ", edge_index.V=" << edge_index.V;
+        throw std::runtime_error(oss.str());
+    }
+
+    for (int v = 0; v < V; ++v) {
+        for (int const u : tree[v]) {
+            if (u < 0 || u >= V) {
+                std::ostringstream oss;
+                oss << where << ": invalid tree neighbor. "
+                    << "v=" << v
+                    << ", u=" << u
+                    << ", V=" << V;
+                throw std::runtime_error(oss.str());
+            }
+
+            try {
+                edge_index.get_edge_id(v, u);
+            } catch (std::exception const &e) {
+                std::ostringstream oss;
+                oss << where << ": tree contains non-graph edge.\n";
+                oss << "edge=(" << v << ", " << u << ")\n";
+                oss << "underlying error: " << e.what() << "\n";
+                throw std::runtime_error(oss.str());
+            }
+        }
+    }
+}
 
 
 void EdgeBitset::clear_region_tree(

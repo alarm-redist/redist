@@ -293,15 +293,7 @@ void set_merged_region_reindex_vec(int const num_regions, std::vector<int> &regi
     return;
 }
 
-RcppThread::ThreadPool get_thread_pool(int const num_threads) {
-    if (num_threads == 1) {
-        return RcppThread::ThreadPool(0);
-    } else if (num_threads > 1) {
-        return RcppThread::ThreadPool(num_threads);
-    } else {
-        return RcppThread::ThreadPool(std::thread::hardware_concurrency());
-    }
-}
+
 
 // creates plan ensemble of blank plans
 PlanEnsemble::PlanEnsemble(MapParams const &map_params, int const total_pop, int const nsims,
@@ -474,7 +466,7 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params,
 
     auto tree_ptr = std::make_unique<UniformValidSplitter>(map_params.V);
 
-    int const n_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
+    int const n_threads = get_num_threads(pool); 
     std::vector<Tree> ust_buffers(n_threads, Tree(V));
     std::vector<std::vector<bool>> visited_buffers(n_threads, std::vector<bool>(V));
     std::vector<std::vector<bool>> ignore_buffers(n_threads, std::vector<bool>(V));
@@ -585,7 +577,7 @@ Rcpp::IntegerMatrix PlanEnsemble::get_R_sizes_matrix(RcppThread::ThreadPool &poo
 
 int PlanEnsemble::count_unique_plans(RcppThread::ThreadPool &pool) const {
     int const num_regions = plan_ptr_vec[0]->num_regions;
-    int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
+    int const num_threads = get_num_threads(pool);
     std::vector<std::unordered_set<std::string>> plan_count_maps_vec(num_threads);
 
     // Trick to give each thread a unique id

@@ -370,6 +370,11 @@ std::string edge_bitset_to_string(
     GraphEdgeIndex const &edge_index
 );
 
+void check_directed_tree_edges_are_graph_edges(
+    Tree const &tree,
+    GraphEdgeIndex const &edge_index,
+    std::string_view where
+);
 
 
 #endif

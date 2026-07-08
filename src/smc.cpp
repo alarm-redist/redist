@@ -100,7 +100,7 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
                   RcppThread::ThreadPool &pool, int verbosity, int diagnostic_level,
                   int const max_split_tries) {
     // important constants
-    int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
+    int const num_threads = get_num_threads(pool);
     const int M = old_plan_ensemble->nsims;
     bool const smd_split_district_only =
         splitting_schedule.schedule_type == SplittingSizeScheduleType::DistrictOnlySMD;
@@ -168,6 +168,15 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
     static std::atomic<int> global_generation_counter{0};
     int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
     std::atomic<int> thread_id_counter{0};
+    // optional extra checking 
+    std::vector<std::atomic<int>> active_users(
+        perf_config::check_threadpool_integrity ? num_threads : 0);
+
+    if constexpr (perf_config::check_threadpool_integrity){
+        for (int t = 0; t < num_threads; ++t) {
+            active_users[t].store(0, std::memory_order_relaxed);
+        }
+    }
 
     // now make the vectors of important variables to be used by threads
     std::vector<USTSampler> ust_samplers_vec;
@@ -197,6 +206,9 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
             oss << "In `run_smc_step` Thread id broke, thread id is " << thread_id
                               << " but num threads is  " << num_threads << std::endl;
             throw std::runtime_error(oss.str());
+        }
+        if constexpr (perf_config::check_threadpool_integrity){
+            ActiveUserGuard active_guard(active_users[thread_id]);
         }
 
         // optional time tracker for granular time tracking 
@@ -339,16 +351,16 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
                 ancestors_new(i, j) = ancestors(idx, j);
             }
         }
-        if (verbosity >= 3) {
-            ++bar;
-        }
-
         if constexpr (perf_config::track_granular_times){
             // set the time spent successfully sampling a plan
             add_elapsed(
                 smc_diagnostics.total_plan_smc_split_times(i, smc_step_num),
                 total_plan_start_time
             ); // optional timing
+        }
+        
+        if (verbosity >= 3) {
+            ++bar;
         }
         
     });
@@ -522,7 +534,7 @@ void run_merge_split_step_on_all_plans(
 
     const int check_int = 15; // check for interrupts every _ iterations
     int nsims = (int)plan_ptrs_vec.size();
-    int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
+    int const num_threads = get_num_threads(pool);
     if constexpr (DEBUG_GSMC_PLANS_VERBOSE)
         Rprintf("Going to run %d steps!\n", nsteps_to_run);
 

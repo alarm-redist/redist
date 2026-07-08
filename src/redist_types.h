@@ -306,7 +306,20 @@ class GraphEdgeIndex {
             }
         }
 
-        throw Rcpp::exception("GraphEdgeIndex::get_edge_id called on non-edge!");
+        std::ostringstream oss;
+        oss << "GraphEdgeIndex::get_edge_id called on non-edge. "
+            << "v=" << v
+            << ", u=" << u
+            << ", V=" << incident_edges.size()
+            << ". Neighbors of v: ";
+
+        if (v >= 0 && v < static_cast<int>(incident_edges.size())) {
+            for (auto const &incident_edge : incident_edges[v]) {
+                oss << static_cast<int>(incident_edge.neighbor) << " ";
+            }
+        }
+
+        throw std::runtime_error(oss.str());
     }
 
     bool has_edge(int v, int u) const {

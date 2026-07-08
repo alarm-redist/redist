@@ -13,6 +13,7 @@
 #include "lct_graph_plan_type.h"
 #include "linking_edge_plan_type.h"
 #include "redist_types.h"
+#include "utils.h"
 
 // [[Rcpp::export]]
 Rcpp::List maximum_input_sizes();
@@ -128,12 +129,7 @@ Rcpp::DataFrame get_plan_counts(Rcpp::IntegerMatrix const &input_plans_mat,
                                 int const num_regions, bool const use_canonical_ordering = true,
                                 int const num_threads = 0);
 
-/*
- * Creates a Rcpp Threadpool
- *
- *
- */
-RcppThread::ThreadPool get_thread_pool(int const num_threads);
+
 
 /*
  * Creates a reindexing vector for the plan with two regions merged
