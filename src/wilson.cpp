@@ -1,5 +1,164 @@
 #include "wilson.h"
 
+
+/*
+ * Builds a deterministic spanning tree on a county using depth first search
+ */
+static void add_county_to_tree_dfs(
+    Graph const &g,
+    int const county_id,
+    arma::uvec const &counties,
+    std::vector<int> const &county_vertices, // vector of vertices in the county 
+    std::vector<bool> &visited,
+    FixedStack<int> &stack,
+    Tree &ust
+) {
+    int const V = static_cast<int>(g.size());
+    int const n_vtx = static_cast<int>(county_vertices.size());
+
+    // Optional checks 
+    if constexpr(perf_config::supposedly_safe_input_checks){
+        if (n_vtx <= 0) {
+            return;
+        }
+    }
+
+    // set the root as the first county vertex 
+    int root = -1;
+
+    bool break_loop = false;
+    // Walk through the vertices in the county 
+    for (int const v : county_vertices) {
+        // optional bounds checking 
+        if constexpr (perf_config::bounds_checking){
+            if (v < 0 || v >= V) {
+                std::ostringstream oss;
+                oss << "add_county_dfs_tree_edges got invalid county vertex.\n";
+                oss << "county_id=" << county_id << "\n";
+                oss << "v=" << v << "\n";
+                oss << "V=" << V << "\n";
+                throw std::runtime_error(oss.str());
+            }
+        }
+
+        // Check if we have already visited this vertex in the Wilson call (sample_sub_ust)
+        // If yes then that means this is the vertex to use as the root for this county's portion
+        // of the tree. 
+        if (visited[v]) {
+            // Checks we haven't already found a root 
+            if constexpr(!perf_config::supposedly_safe_input_checks){
+                // This shouldn't be neccesary if the tree is truly a directed tree
+                if (root != -1) {
+                    std::ostringstream oss;
+                    oss << "add_county_dfs_tree_edges found multiple already-visited "
+                        << "vertices in county.\n";
+                    oss << "county_id=" << county_id << "\n";
+                    oss << "first_root=" << root << "\n";
+                    oss << "second_root=" << v << "\n";
+                    throw std::runtime_error(oss.str());
+                }
+            }
+            // we've found the vertex to use as the root so we can exit if not error checking
+            root = v;
+            // if not error checking then break out now since the tree is supposed to be
+            // a directed tree 
+            if constexpr(!perf_config::supposedly_safe_input_checks){
+                break_loop = true;
+            }
+        }
+
+        if(break_loop) break;
+    }
+
+    if constexpr(perf_config::bounds_checking){
+        if (root < 0) {
+            std::ostringstream oss;
+            oss << "add_county_dfs_tree_edges could not find already-visited county root.\n";
+            oss << "county_id=" << county_id << "\n";
+            oss << "county_vertices.size()=" << county_vertices.size() << "\n";
+            throw std::runtime_error(oss.str());
+        }
+    }
+
+    // clear the stack and start from the root
+    stack.clear();
+    stack.push(root);
+
+    int seen_count = 1;
+
+    // perform DFS
+    while (!stack.empty()) {
+        int const v = stack.pop();
+
+        if constexpr(perf_config::bounds_checking){
+            if (v < 0 || v >= V) {
+                std::ostringstream oss;
+                oss << "add_county_dfs_tree_edges popped invalid vertex.\n";
+                oss << "county_id=" << county_id << "\n";
+                oss << "v=" << v << "\n";
+                oss << "V=" << V << "\n";
+                throw std::runtime_error(oss.str());
+            }
+        }
+
+
+        for (auto const u : g[v]) {
+            if (u < 0 || u >= V) {
+                if constexpr(perf_config::bounds_checking){
+                    std::ostringstream oss;
+                    oss << "add_county_dfs_tree_edges saw invalid graph neighbor.\n";
+                    oss << "county_id=" << county_id << "\n";
+                    oss << "v=" << v << "\n";
+                    oss << "u=" << u << "\n";
+                    oss << "V=" << V << "\n";
+                    throw std::runtime_error(oss.str());
+                }
+            }
+
+            // skip if not in the county 
+            if (counties[u] != county_id){
+                continue;
+            }
+            // ignore if we've already visited this vertex since it was added to the stack
+            if (visited[u]) {
+                continue;
+            }
+
+            // This is a real graph edge v--u, oriented away from the county root.
+            ust[v].push_back(u);
+            // mark as visited and add this to stack
+            visited[u] = true;
+            stack.push(u);
+
+            if constexpr(perf_config::redundancy_checks) ++seen_count;
+        }
+    }
+
+    // This just checks we visited the number of vertices we expected to visit 
+    if constexpr(perf_config::redundancy_checks){
+        if (seen_count != n_vtx) {
+            std::ostringstream oss;
+            oss << "add_county_dfs_tree_edges could not span county-induced subgraph.\n";
+            oss << "county_id=" << county_id << "\n";
+            oss << "root=" << root << "\n";
+            oss << "seen_count=" << seen_count << "\n";
+            oss << "n_vtx=" << n_vtx << "\n";
+
+            oss << "Unvisited county vertices: ";
+            for (int const v : county_vertices) {
+                if (!visited[v]) {
+                    oss << v << " ";
+                }
+            }
+            oss << "\n";
+
+            throw std::runtime_error(oss.str());
+        }
+    }
+
+}
+
+
 /*
  * Random walk along `g` from `root` until something in `visited` is hit
  */
@@ -46,6 +205,7 @@ Tree sample_ust(List l, const arma::uvec &pop, double lower, double upper,
     std::vector<bool> visited(V);
     Tree county_tree = init_tree(map_params.num_counties);
     TreePopStack county_stack(map_params.num_counties + 1);
+    FixedStack<int> dummy_county_tree_stack(map_params.V);
     arma::uvec county_pop(map_params.num_counties, arma::fill::zeros);
     std::vector<std::vector<int>> county_members(map_params.num_counties, std::vector<int>{});
     std::vector<bool> c_visited(map_params.num_counties, true);
@@ -54,7 +214,8 @@ Tree sample_ust(List l, const arma::uvec &pop, double lower, double upper,
     std::vector<int> path;
 
     sample_sub_ust(map_params, tree, root, lower, upper, visited, ignore, county_tree,
-                   county_stack, county_pop, county_members, c_visited, cty_pop_below,
+                   county_stack, dummy_county_tree_stack, 
+                   county_pop, county_members, c_visited, cty_pop_below,
                    county_path, path, rng_state);
     return tree;
 }
@@ -66,6 +227,7 @@ Tree sample_ust(List l, const arma::uvec &pop, double lower, double upper,
 int sample_sub_ust(MapParams const &map_params, Tree &tree, int &root, double const lower,
                    double const upper, std::vector<bool> &visited,
                    const std::vector<bool> &ignore, Tree &cty_tree, TreePopStack &county_stack,
+                   FixedStack<int> &dummy_county_tree_stack,
                    arma::uvec &county_pop, std::vector<std::vector<int>> &county_members,
                    std::vector<bool> &c_visited, std::vector<int> &cty_pop_below,
                    std::vector<std::array<int, 3>> &county_path, std::vector<int> &path,
@@ -174,26 +336,19 @@ int sample_sub_ust(MapParams const &map_params, Tree &tree, int &root, double co
             bool miss_second = (tot_pop - split_lb) < lower || (tot_pop - split_ub) > upper;
 
             // impossible for this county to need to be split
+            // so we fill in a dummy tree 
             if (cty_pop_below[i] >= 0 && (miss_first && miss_second)) {
+                add_county_to_tree_dfs(
+                    map_params.g,
+                    map_params.counties[county_members[i][0]], // pass in the county CAREFUL COUNTIES ARE 1-indexed
+                    map_params.counties,
+                    county_members[i],
+                    visited,
+                    dummy_county_tree_stack,
+                    tree
+                );
 
-                // fill in with a dummy tree
                 remaining -= n_vtx - 1; // already visited county root
-                int cty_root = -1;
-                for (int j = 0; j < n_vtx; j++) {
-                    int vtx_idx = county_members[i][j];
-                    if (visited[vtx_idx]) { // county root
-                        cty_root = j;
-                    }
-                    if (j > 0 && j != cty_root + 1) {
-                        tree[vtx_idx].push_back(county_members[i][j - 1]);
-                    }
-                    visited[vtx_idx] = true;
-                }
-
-                if (cty_root < n_vtx - 1) {
-                    tree[county_members[i][cty_root]]
-                        .push_back(county_members[i][n_vtx - 1]);
-                }
             }
         }
     }

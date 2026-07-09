@@ -23,6 +23,7 @@ class USTSampler {
           visited(map_params.V), ignore(map_params.V), stack(map_params.V + 1),
           county_tree(init_tree(map_params.num_counties)),
           county_stack(map_params.num_counties + 1),
+          dummy_county_tree_stack(map_params.V),
           county_pop(map_params.num_counties, arma::fill::zeros),
           county_members(map_params.num_counties, std::vector<int>{}),
           c_visited(map_params.num_counties, true), cty_pop_below(map_params.num_counties, 0),
@@ -45,6 +46,7 @@ class USTSampler {
     TreePopStack stack;
     Tree county_tree;
     TreePopStack county_stack;
+    FixedStack<int> dummy_county_tree_stack;
     arma::uvec county_pop;
     std::vector<std::vector<int>> county_members;
     std::vector<bool> c_visited;

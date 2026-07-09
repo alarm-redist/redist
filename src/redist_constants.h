@@ -17,10 +17,12 @@ namespace perf_config {
     // Turns on granular tracking of each part of SMC algorithm
     // No solid estimates of performance hit but could cause anywhere from 
     // .1 to 5% slowdown depending on how expensive a call to CPU clock is versus
-    // the SMC functions    
+    // the SMC functions 
     inline constexpr bool supposedly_safe_input_checks = true; 
-    // Turns on input checking for functions that should theoretically be unneccesary. 
-    // Helpful to turn on when checking for bugs as it will help catch weird things sooner
+    // Performs checks that shouldn't be neccessary if the input is as expected
+    // Helpful to turn on when checking for bugs as it will help catch problems 
+    // where something is corrupted somewhere without segfaulting and it gets passed on
+    // to later functions. Helps catch weird things sooner
     inline constexpr bool check_threadpool_integrity = true;
     // Will perform extra checking on RcppThread::Pool object calls like ensuring 
     // thread ids are generated properly. 
@@ -32,7 +34,12 @@ namespace perf_config {
     // Can be very expensive but good for spotting strange errors
     // Currently checks the following types of objects
     //  - Spanning trees returned from Wilson's algorithm
-    //  - Integrity of plan objects 
+    //  - Integrity of plan objects
+    inline constexpr bool redundancy_checks = true; 
+    // Performs checks in a function that should be redundant if the function is 
+    // doing what its supposed to. e.g., imagine a function should walk through every
+    // vertex in a county and we know the size of the county. Then this would turn on
+    // a check that all county vertices were indeed visitied
 }
 
 

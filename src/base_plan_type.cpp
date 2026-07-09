@@ -689,6 +689,7 @@ Plan::draw_tree_on_region(const MapParams &map_params, const int region_to_draw_
 
     Tree county_tree = init_tree(map_params.num_counties);
     TreePopStack county_stack(map_params.num_counties);
+    FixedStack<int> dummy_county_tree_stack(map_params.V);
     arma::uvec county_pop(map_params.num_counties, arma::fill::zeros);
     std::vector<std::vector<int>> county_members(map_params.num_counties, std::vector<int>{});
     std::vector<bool> c_visited(map_params.num_counties, true);
@@ -712,9 +713,9 @@ Plan::draw_tree_on_region(const MapParams &map_params, const int region_to_draw_
         // Get a tree
         int result = sample_sub_ust(map_params, ust, root, map_params.lower * the_region_size,
                                     map_params.upper * the_region_size, visited, ignore,
-                                    county_tree, county_stack, county_pop, county_members,
+                                    county_tree, county_stack, dummy_county_tree_stack, county_pop, county_members,
                                     c_visited, cty_pop_below, county_path, path, rng_state);
-
+                                    
         tree_drawn = result == 0;
 
         // if successful return
