@@ -209,10 +209,6 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
                               << " but num threads is  " << num_threads << std::endl;
             throw std::runtime_error(oss.str());
         }
-        if constexpr (perf_config::check_threadpool_integrity){
-            ActiveUserGuard active_guard(active_users[thread_id]);
-        }
-
         // debug thing REMOVE LATER IF POSSIBLE 
         std::unique_ptr<ActiveUserGuard> active_guard;
 
@@ -264,22 +260,21 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
                          region_to_split_size);
             }
 
+            if constexpr(perf_config::supposedly_safe_input_checks){
+                // count tree size
+                std::ostringstream oss;
+                oss << "Calling on thread_tree_sizes, thread id " << thread_id <<" in `run smc step`, ";
+                oss << "smc index i=" << i << "\n";
+                oss << old_plan_ensemble->plan_ptr_vec[idx]->debug_string(true);
+                tree_size_check(
+                    map_params, 
+                    region_to_split_size - 1, 
+                    thread_tree_sizes[thread_id],
+                    oss.str()
+                );
+            }
             // increase the count
             ++thread_tree_sizes[thread_id][region_to_split_size - 1];
-
-        if constexpr(perf_config::supposedly_safe_input_checks){
-            // count tree size
-            std::ostringstream oss;
-            oss << "Calling on thread_tree_sizes, thread id " << thread_id <<" in `run_merge_split_steps`, ";
-            oss << "smc index i=" << i << "\n";
-            oss << old_plan_ensemble->plan_ptr_vec[idx]->debug_string(true);
-            tree_size_check(
-                map_params, 
-                region_to_split_size - 1, 
-                thread_tree_sizes[thread_id],
-                oss.str()
-            );
-        }
 
             // Try to split the region
             auto wilson_time = maybe_now();
@@ -349,7 +344,7 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
                 if constexpr(perf_config::supposedly_safe_input_checks){
                     // count tree size
                     std::ostringstream oss;
-                    oss << "Calling on thread_successful_tree_sizes, thread id " << thread_id <<" in `run_merge_split_steps`, ";
+                    oss << "Calling on thread_successful_tree_sizes, thread id " << thread_id <<" in `run smc step`, ";
                     oss << "smc index i=" << i << "\n";
                     oss << old_plan_ensemble->plan_ptr_vec[idx]->debug_string(true);
                     tree_size_check(
@@ -418,14 +413,17 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
     );
 
     if(estimated_unbiased_normalizing_constant){
-        REprintf("Starting estimation: ");
+        if constexpr(DEBUG_GSMC_PLANS_VERBOSE){
+            REprintf("Starting estimation: ");
+        }
+
     // Now we sample one more plan and discard it to allow for unbiased 
     // normalization constant estimation 
     bool extra_plan_sampled = false;
     int extra_particle_reject_ct = 0;
 
     while(!extra_plan_sampled) {
-        REprintf("%d ", extra_particle_reject_ct);
+        if constexpr(DEBUG_GSMC_PLANS_VERBOSE) REprintf("%d ", extra_particle_reject_ct);
         if (check_max_split_tries && extra_particle_reject_ct >= max_split_tries) {
             throw Rcpp::exception(
                 "Failed to split a single plan after `max_split_tries` attempts!\n");
@@ -484,7 +482,10 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
             }
         }
     }
-    REprintf("Done!\n");
+    if constexpr(DEBUG_GSMC_PLANS_VERBOSE){
+        REprintf("Done!\n");
+    }
+    
 
     // now save the number of failed attempts before sampling the extra plan
     smc_diagnostics.tries_before_extra_particle[smc_step_num] = extra_particle_reject_ct;
@@ -638,7 +639,7 @@ void run_merge_split_step_on_all_plans(
         }
 
         std::string const plan_msg =
-        "In run_merge_split_step_on_all_plans, for plan i = " + std::to_string(i) +
+        "In run_merge_split_step_on_all_plans BEFORE ms, for plan i = " + std::to_string(i) +
         ", calling on `plan`";
         plan_ptrs_vec[i]->check_forest_integrity(
             map_params.graph_edge_index,

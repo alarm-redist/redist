@@ -184,6 +184,7 @@ class PlanEnsemble {
     int const V;
     int const ndists;
     int const total_seats;
+    SamplingSpace const sampling_space;
     std::vector<RegionID> flattened_all_plans;
     std::vector<RegionID> flattened_all_region_sizes;
     std::vector<int> flattened_all_region_pops;
@@ -206,8 +207,7 @@ class PlanEnsemble {
     // checks all plans are valid. 
     void check_all_plans_valid(
         MapParams const &map_params,
-        std::string_view where,
-        bool check_forest = true
+        std::string_view where
     );
 };
 

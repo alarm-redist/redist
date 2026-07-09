@@ -117,8 +117,6 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
         "IN compute_log_tree_eff_boundary_lens, checking forest_graph vs forest scratch tree"
     );
 
-
-
     for (int v = 0; v < V; v++) {
         // Find out which region this vertex corresponds to
         auto v_region_num = plan.region_ids[v];

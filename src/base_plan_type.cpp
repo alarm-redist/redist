@@ -1136,6 +1136,7 @@ void Plan::check_forest_integrity(
     GraphEdgeIndex const &graph_edge_index,
     std::string_view msg
 ) const {
+    if (forest_edges.empty()) return;
     std::ostringstream oss;
     bool failed = false;
 

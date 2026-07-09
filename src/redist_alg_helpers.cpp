@@ -300,7 +300,8 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params, int const total_pop, int
                            SamplingSpace const sampling_space, RcppThread::ThreadPool &pool,
                            int const verbosity)
     : nsims(nsims), V(map_params.V), ndists(map_params.ndists),
-      total_seats(map_params.total_seats), flattened_all_plans(V * nsims, 0),
+      total_seats(map_params.total_seats), sampling_space(sampling_space),
+      flattened_all_plans(V * nsims, 0),
       flattened_all_region_sizes(ndists * nsims, 0),
       flattened_all_region_pops(ndists * nsims, 0),
       flattened_all_region_order_added(ndists * nsims, -1), 
@@ -379,7 +380,7 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params,
                            std::vector<RNGState> &rng_states, RcppThread::ThreadPool &pool,
                            int const verbosity)
     : nsims(nsims), V(map_params.V), ndists(map_params.ndists),
-      total_seats(map_params.total_seats),
+      total_seats(map_params.total_seats), sampling_space(sampling_space),
       flattened_all_plans(plans_mat.begin(), plans_mat.end()),
       flattened_all_region_sizes(ndists * nsims, 0),
       flattened_all_region_pops(ndists * nsims, 0),
@@ -757,9 +758,9 @@ std::unique_ptr<PlanEnsemble> get_plan_ensemble_ptr(
 
 void PlanEnsemble::check_all_plans_valid(
     MapParams const &map_params,
-    std::string_view where,
-    bool check_forest
+    std::string_view where
 ) {
+    bool const check_forest = sampling_space != SamplingSpace::GraphSpace;
     std::ostringstream oss;
 
     auto fail = [&](std::string const &msg) {
@@ -854,6 +855,11 @@ void PlanEnsemble::check_all_plans_valid(
         fail(msg.str());
     }
 
+    int map_total_pop = 0;
+    for (int v = 0; v < V; ++v) {
+        map_total_pop += static_cast<int>(map_params.pop[v]);
+    }
+
     for (int i = 0; i < nsims; ++i) {
         Plan *plan = plan_ptr_vec[i].get();
 
@@ -913,7 +919,7 @@ void PlanEnsemble::check_all_plans_valid(
             fail_plan(msg.str());
         }
 
-        std::vector<int> counted_region_sizes(ndists, 0);
+        std::vector<int> counted_region_vertices(ndists, 0);
         std::vector<int> counted_region_pops(ndists, 0);
 
         for (int v = 0; v < V; ++v) {
@@ -928,7 +934,7 @@ void PlanEnsemble::check_all_plans_valid(
                 fail_plan(msg.str());
             }
 
-            ++counted_region_sizes[region_id];
+            ++counted_region_vertices[region_id];
             counted_region_pops[region_id] += static_cast<int>(map_params.pop[v]);
         }
 
@@ -939,7 +945,7 @@ void PlanEnsemble::check_all_plans_valid(
             int const stored_size = static_cast<int>(plan->region_sizes[region_id]);
             int const stored_pop = static_cast<int>(plan->region_pops[region_id]);
 
-            total_counted_vertices += counted_region_sizes[region_id];
+            total_counted_vertices += counted_region_vertices[region_id];
             total_counted_pop += counted_region_pops[region_id];
 
             if (stored_pop != counted_region_pops[region_id]) {
@@ -966,11 +972,6 @@ void PlanEnsemble::check_all_plans_valid(
                 << "total_counted_vertices=" << total_counted_vertices
                 << ", V=" << V;
             fail_plan(msg.str());
-        }
-
-        int map_total_pop = 0;
-        for (int v = 0; v < V; ++v) {
-            map_total_pop += static_cast<int>(map_params.pop[v]);
         }
 
         if (total_counted_pop != map_total_pop) {

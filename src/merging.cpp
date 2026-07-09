@@ -204,7 +204,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         "In attempt_mergesplit_step, calling on `plan` before wilson call"
     );
     std::string diff_msg;
-    Tree const forest_graph_before = plan.get_forest_adj();
+    // Tree const forest_graph_before = plan.get_forest_adj();
     // try to draw a region
     auto wilson_time = maybe_now(); // optional timing 
     std::tuple<bool, EdgeCut> edge_search_result =
@@ -214,12 +214,12 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     if constexpr (perf_config::track_granular_times){
         add_elapsed(granular_times.wilson_time, wilson_time); // optional timing
     }
-    if (!plan.forest_graph_equals_order_insensitive(forest_graph_before, diff_msg)) {
-        throw std::runtime_error(
-            "Current plan forest_graph changed wcalling attempt_to_find_valid_tree_mergesplit on plan.\n" +
-            diff_msg
-        );
-    }
+    // if (!plan.forest_graph_equals_order_insensitive(forest_graph_before, diff_msg)) {
+    //     throw std::runtime_error(
+    //         "Current plan forest_graph changed wcalling attempt_to_find_valid_tree_mergesplit on plan.\n" +
+    //         diff_msg
+    //     );
+    // }
      plan.check_forest_integrity(
         map_params.graph_edge_index,
         "In attempt_mergesplit_step, calling on `plan` after wilson call"
@@ -264,12 +264,12 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         "In attempt_mergesplit_step, calling on `new_plan` after successful update"
     );
 
-    if (!plan.forest_graph_equals_order_insensitive(forest_graph_before, diff_msg)) {
-        throw std::runtime_error(
-            "Current plan forest_graph changed by update_from_successful_split on NEW plan.\n" +
-            diff_msg
-        );
-    }
+    // if (!plan.forest_graph_equals_order_insensitive(forest_graph_before, diff_msg)) {
+    //     throw std::runtime_error(
+    //         "Current plan forest_graph changed by update_from_successful_split on NEW plan.\n" +
+    //         diff_msg
+    //     );
+    // }
 
     // check new plan is hierarchically valid if needed
     auto new_pair_building_time = maybe_now(); // optional timing 
@@ -504,12 +504,19 @@ int run_merge_split_steps(MapParams const &map_params,
 
     // Build the multigraph and get pairs of adj districts
     auto pair_building_time = maybe_now(); // optional timing 
-    auto current_plan_adj_region_pairs =
-        plan.attempt_to_get_valid_mergesplit_pairs(current_plan_multigraph, splitting_schedule,
-                                                   scoring_function, is_final)
-            .second;
+    auto pair_build_attempt = plan.attempt_to_get_valid_mergesplit_pairs(current_plan_multigraph, splitting_schedule,
+                                                   scoring_function, is_final);
+
+    auto current_plan_adj_region_pairs = pair_build_attempt.second;
     if constexpr (perf_config::track_granular_times){
         add_elapsed(granular_times.get_valid_pairs, pair_building_time); // optional timing
+    }
+    if (!pair_build_attempt.first) {
+        std::ostringstream oss;
+        oss << "Building plan multigraph failed but plan should be valid.\n";
+        oss << "pairs.size()=" << current_plan_adj_region_pairs.size() << "\n";
+        throw std::runtime_error(oss.str());
+        return 0;
     }
     plan.check_forest_integrity(
         map_params.graph_edge_index,
@@ -521,6 +528,13 @@ int run_merge_split_steps(MapParams const &map_params,
         get_adj_pair_unnormalized_weights(plan, current_plan_adj_region_pairs, merge_prob_type);
     if constexpr (perf_config::track_granular_times){
         add_elapsed(granular_times.selecting_merge_pair, pair_weight_time); // optional timing 
+    }
+    if (current_plan_pair_unnoramalized_wgts.n_elem <= 0) {
+        std::ostringstream oss;
+        oss << "Getting plan multigraph weights failed.\n";
+        oss << "weights.n_elem=" << current_plan_pair_unnoramalized_wgts.n_elem << "\n";
+        throw std::runtime_error(oss.str());
+        return 0;
     }
 
     // run the merge split steps and count success

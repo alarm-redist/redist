@@ -398,6 +398,8 @@ void estimate_cut_k(const MapParams &map_params, const SplittingSchedule &splitt
             if (plan_ptrs_vec.at(i)->region_ids[j] != biggest_region_id) {
                 ignore[j] = true;
                 n_vtx--;
+            }else{
+                ignore[j] = false;
             }
         }
 
