@@ -106,7 +106,7 @@ class EdgeBitset {
     }
 
     bool test_edge_id(EdgeID edge_id) const {
-        if constexpr (perf_config::unnecessary_input_checks){
+        if constexpr (perf_config::supposedly_safe_input_checks){
             int const word = word_index(edge_id);
             if (word < 0 || word >= static_cast<int>(edge_bits.size())) {
                 std::ostringstream oss;
@@ -123,7 +123,7 @@ class EdgeBitset {
     }
 
     void set_edge_id(EdgeID edge_id) {
-        if constexpr (perf_config::unnecessary_input_checks){
+        if constexpr (perf_config::supposedly_safe_input_checks){
             int const word = word_index(edge_id);
             if (word < 0 || word >= static_cast<int>(edge_bits.size())) {
                 std::ostringstream oss;
@@ -139,7 +139,7 @@ class EdgeBitset {
     }
 
     void clear_edge_id(EdgeID edge_id) {
-        if constexpr (perf_config::unnecessary_input_checks){
+        if constexpr (perf_config::supposedly_safe_input_checks){
             int const word = word_index(edge_id);
             if (word < 0 || word >= static_cast<int>(edge_bits.size())) {
                 std::ostringstream oss;
@@ -376,5 +376,15 @@ void check_directed_tree_edges_are_graph_edges(
     std::string_view where
 );
 
+// checks ust is actually a directed tree 
+void check_is_directed_tree(
+    Tree const &ust,
+    std::string_view const where,
+    int const root,
+    int const expected_tree_vertices,
+    bool const check_vertex_count,
+    std::vector<bool> &visited,
+    TreePopStack &stack
+);
 
 #endif

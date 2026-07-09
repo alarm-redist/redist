@@ -220,10 +220,7 @@ int sample_sub_ust(MapParams const &map_params, Tree &tree, int &root, double co
             }
         }
     }
-    // auto t1_end = std::chrono::steady_clock::now();
-    // std::chrono::duration<double, std::milli> t1 = t1_end - t1_start;
-    // Rcout << "  " << std::setprecision(2) << "Total Time "
-    //     << t1.count() << std::endl;
+
     return 0;
 }
 

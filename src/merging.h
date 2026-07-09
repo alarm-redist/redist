@@ -18,6 +18,7 @@
 #include "weight_caching.h"
 #include "weights.h"
 #include "wilson.h"
+#include "utils.h"
 
 
 // Simple struct for tracking granular time

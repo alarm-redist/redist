@@ -9,6 +9,8 @@ constexpr bool DEBUG_GSMC_PLANS_VERBOSE = false; // Compile-time constant
 
 #include "smc.h"
 
+
+
 /*
  *  Use SMC Sampler method to split a multidistrict in all of the plans
  *
@@ -211,6 +213,13 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
             ActiveUserGuard active_guard(active_users[thread_id]);
         }
 
+        // debug thing REMOVE LATER IF POSSIBLE 
+        std::unique_ptr<ActiveUserGuard> active_guard;
+
+        if constexpr (perf_config::check_threadpool_integrity) {
+            active_guard = std::make_unique<ActiveUserGuard>(active_users[thread_id]);
+        }
+
         // optional time tracker for granular time tracking 
         // no call to now() if constexpr is false, since it just declares the variable it should be optimized out
         auto total_plan_start_time = maybe_now(); // optional timing 
@@ -257,6 +266,20 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
 
             // increase the count
             ++thread_tree_sizes[thread_id][region_to_split_size - 1];
+
+        if constexpr(perf_config::supposedly_safe_input_checks){
+            // count tree size
+            std::ostringstream oss;
+            oss << "Calling on thread_tree_sizes, thread id " << thread_id <<" in `run_merge_split_steps`, ";
+            oss << "smc index i=" << i << "\n";
+            oss << old_plan_ensemble->plan_ptr_vec[idx]->debug_string(true);
+            tree_size_check(
+                map_params, 
+                region_to_split_size - 1, 
+                thread_tree_sizes[thread_id],
+                oss.str()
+            );
+        }
 
             // Try to split the region
             auto wilson_time = maybe_now();
@@ -323,6 +346,19 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
                 // means idx was ok
                 // record index of new plan's parent
                 parent_index_buffer[i] = idx;
+                if constexpr(perf_config::supposedly_safe_input_checks){
+                    // count tree size
+                    std::ostringstream oss;
+                    oss << "Calling on thread_successful_tree_sizes, thread id " << thread_id <<" in `run_merge_split_steps`, ";
+                    oss << "smc index i=" << i << "\n";
+                    oss << old_plan_ensemble->plan_ptr_vec[idx]->debug_string(true);
+                    tree_size_check(
+                        map_params, 
+                        region_to_split_size - 1, 
+                        thread_successful_tree_sizes[thread_id],
+                        oss.str()
+                    );
+                }
                 // add as successful tree size
                 ++thread_successful_tree_sizes[thread_id][region_to_split_size - 1];
             } else { // else bad sample so try again
@@ -358,7 +394,7 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
                 total_plan_start_time
             ); // optional timing
         }
-        
+
         if (verbosity >= 3) {
             ++bar;
         }
@@ -555,6 +591,9 @@ void run_merge_split_step_on_all_plans(
     static std::atomic<int> global_generation_counter{0};
     int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
     std::atomic<int> thread_id_counter{0};
+    // debug thing
+    std::vector<std::atomic<int>> active_users(
+        perf_config::check_threadpool_integrity ? num_threads : 0);
 
     // now make the vectors of important variables to be used by threads
     std::vector<USTSampler> ust_samplers_vec;
@@ -590,6 +629,12 @@ void run_merge_split_step_on_all_plans(
             oss << "In `run_merge_split_step_on_all_plans` Thread id broke, thread id is " << thread_id
                               << " but num threads is  " << num_threads << std::endl;
             throw std::runtime_error(oss.str());
+        }
+        // debug thing REMOVE LATER IF POSSIBLE 
+        std::unique_ptr<ActiveUserGuard> active_guard;
+
+        if constexpr (perf_config::check_threadpool_integrity) {
+            active_guard = std::make_unique<ActiveUserGuard>(active_users[thread_id]);
         }
 
         std::string const plan_msg =

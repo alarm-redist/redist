@@ -73,11 +73,17 @@ std::string vec_to_string(std::vector<T> const &x, std::string_view name) {
     oss << ")\n";
 
     return oss.str();
-}
+};
 
 
 
-
+// Simple helper to make sure no tree size indexing 
+void tree_size_check(
+    MapParams const &map_params, 
+    int const proposed_tree_size, 
+    std::vector<int> const &tree_sizes,
+    std::string_view const where
+);
 
 
 #endif

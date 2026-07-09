@@ -10,10 +10,16 @@
 bool USTSampler::attempt_to_draw_tree_on_region(RNGState &rng_state, Plan const &plan,
                                                 const int region_to_draw_tree_on) {
     int V = map_params.V;
+    // optional for checking 
+    int num_region_vertices = 0;
 
     // Mark it as ignore if its not in the region to split
     for (int i = 0; i < V; i++) {
         ignore[i] = plan.region_ids[i] != region_to_draw_tree_on;
+        if constexpr(perf_config::object_integrity_checking){
+            // count vertices we're not ignoring 
+            num_region_vertices += !ignore[i];
+        }
     }
 
     // get upper and lower bounds on region pops
@@ -29,10 +35,13 @@ bool USTSampler::attempt_to_draw_tree_on_region(RNGState &rng_state, Plan const 
                                 c_visited, cty_pop_below, county_path, path, rng_state);
 
     if constexpr(perf_config::object_integrity_checking){
-        if (result != 0){
-            check_directed_tree_edges_are_graph_edges(
-                ust, map_params.graph_edge_index,
-                "Just called `sample_sub_ust` in attempt_to_draw_tree_on_region\n"
+        if (result == 0){
+            check_tree_integrity(
+                ust,
+                "Just called `sample_sub_ust` in attempt_to_draw_tree_on_region\n",
+                root,
+                num_region_vertices,
+                true
             );
         }
     }
@@ -45,11 +54,17 @@ bool USTSampler::attempt_to_draw_tree_on_merged_region(RNGState &rng_state, Plan
                                                        const int region1_to_draw_tree_on,
                                                        const int region2_to_draw_tree_on) {
     int V = map_params.V;
+    // optional for checking 
+    int num_merged_region_vertices = 0;
 
     // Mark it as ignore if its not in either of the two regions
     for (int i = 0; i < V; i++) {
         ignore[i] = plan.region_ids[i] != region1_to_draw_tree_on &&
                     plan.region_ids[i] != region2_to_draw_tree_on;
+        if constexpr(perf_config::object_integrity_checking){
+            // count vertices we're not ignoring 
+            num_merged_region_vertices += !ignore[i];
+        }
     }
 
     int merged_region_size =
@@ -67,10 +82,13 @@ bool USTSampler::attempt_to_draw_tree_on_merged_region(RNGState &rng_state, Plan
                                 c_visited, cty_pop_below, county_path, path, rng_state);
 
     if constexpr(perf_config::object_integrity_checking){
-        if (result != 0){
-            check_directed_tree_edges_are_graph_edges(
-                ust, map_params.graph_edge_index,
-                "Just called `sample_sub_ust` in attempt_to_draw_tree_on_merged_region\n"
+        if (result == 0){
+            check_tree_integrity(
+                ust,
+                "Just called `sample_sub_ust` in attempt_to_draw_tree_on_merged_region\n",
+                root,
+                num_merged_region_vertices,
+                true
             );
         }
     }
@@ -155,4 +173,29 @@ std::pair<bool, EdgeCut> USTSampler::attempt_to_find_valid_tree_mergesplit(
     return try_to_sample_splittable_tree(plan, merge_region1, merge_region2, scoring_function,
                                          rng_state, tree_splitter, region_to_split_population,
                                          region_to_split_size, save_selection_prob);
+}
+
+
+void USTSampler::check_tree_integrity(
+      Tree const &a_ust,
+      std::string_view where,
+      int root,
+      int expected_tree_vertices,
+      bool check_vertex_count
+    ){
+    // check no garbage vertices in the tree 
+    check_directed_tree_edges_are_graph_edges(
+        a_ust, map_params.graph_edge_index,
+        where
+    );
+    // now check the tree returned is actually a directed tree
+    check_is_directed_tree(
+        a_ust,
+        where,
+        root,
+        expected_tree_vertices,
+        check_vertex_count,
+        visited,
+        stack
+    );
 }

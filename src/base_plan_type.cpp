@@ -599,8 +599,23 @@ int Plan::choose_multidistrict_to_split(std::vector<bool> const &valid_region_si
     // make vectors with cumulative d value and region label for later
     std::vector<int> valid_region_ids, associated_region_sizes;
 
+
+
     for (int region_id = 0; region_id < num_regions; region_id++) {
         auto region_size = region_sizes[region_id];
+        if constexpr(perf_config::supposedly_safe_input_checks){
+            if (region_size < 0 ||
+                region_size >= static_cast<int>(valid_region_sizes_to_split.size())) {
+                std::ostringstream oss;
+                oss << "Region size out of bounds in choose_multidistrict_to_split.\n";
+                oss << "region_id=" << region_id << "\n";
+                oss << "region_size=" << region_size << "\n";
+                oss << "valid_region_sizes_to_split.size()="
+                    << valid_region_sizes_to_split.size() << "\n";
+                oss << debug_string(true);
+                throw std::runtime_error(oss.str());
+            }
+        }
         // if valid then add id to vector
         if (valid_region_sizes_to_split[region_size]) {
             // add the count and label to vector
@@ -611,8 +626,26 @@ int Plan::choose_multidistrict_to_split(std::vector<bool> const &valid_region_si
     auto num_candidates = valid_region_ids.size();
 
     // If one just return that
-    if (num_candidates == 1)
+    if (num_candidates == 1){
         return valid_region_ids[0];
+    }else if (num_candidates == 0) {
+        std::ostringstream oss;
+        oss << "Plan::choose_multidistrict_to_split found no valid regions to split.\n";
+        oss << "num_regions=" << num_regions << "\n";
+        oss << "valid_region_sizes_to_split.size()="
+            << valid_region_sizes_to_split.size() << "\n";
+
+        oss << "Region sizes: ";
+        for (int region_id = 0; region_id < num_regions; ++region_id) {
+            oss << static_cast<int>(region_sizes[region_id]) << " ";
+        }
+        oss << "\n";
+
+        oss << debug_string(true);
+
+        throw std::runtime_error(oss.str());
+    }
+        
 
     arma::vec region_wgts(valid_region_ids.size());
 
@@ -864,6 +897,13 @@ void Plan::update_plan_ids_and_forest_from_cut(TreeSplitter const &tree_splitter
     }
 
     // TODO: Remove old vertex graph 
+    ust_sampler.check_tree_integrity(
+        ust_sampler.ust,
+        "Before calling `assign_region_id_and_forest_from_tree` on split_region1_id\n",
+        split_region1_tree_root,
+        0,
+        false
+    );
     // update the vertex labels and the tree
     assign_region_id_and_forest_from_tree(ust_sampler.ust, region_ids, 
                                           forest_graph, forest_edges,
@@ -871,6 +911,13 @@ void Plan::update_plan_ids_and_forest_from_cut(TreeSplitter const &tree_splitter
                                           ust_sampler.map_params.graph_edge_index,
                                           ust_sampler.vertex_queue);
 
+    ust_sampler.check_tree_integrity(
+        ust_sampler.ust,
+        "Before calling `assign_region_id_and_forest_from_tree` on split_region2_id\n",
+        split_region2_tree_root,
+        0,
+        false
+    );
     assign_region_id_and_forest_from_tree(ust_sampler.ust, region_ids, 
                                           forest_graph, forest_edges,
                                           split_region2_tree_root, split_region2_id,

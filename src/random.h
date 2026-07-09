@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <random>
 #include <vector>
+#include "redist_constants.h"
 
 using namespace arma;
 

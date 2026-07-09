@@ -330,6 +330,8 @@ void compute_all_plans_log_simple_incremental_weights(
     static std::atomic<int> global_generation_counter{0};
     int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
     std::atomic<int> thread_id_counter{0};
+    std::vector<std::atomic<int>> active_users(
+        perf_config::check_threadpool_integrity ? num_threads : 0);
     // now make the vectors of important variables to be used by threads
     std::vector<USTSampler> ust_samplers_vec;
     ust_samplers_vec.reserve(num_threads);
@@ -346,7 +348,6 @@ void compute_all_plans_log_simple_incremental_weights(
     pool.parallelFor(0, nsims, [&](int i) {
         static thread_local int thread_generation_counter = -1;
         static thread_local int thread_id = -1;
-
         // check if the thread id was generated this function call
         if (thread_generation_counter != generation) {
             // if not then give it a new id
@@ -355,9 +356,15 @@ void compute_all_plans_log_simple_incremental_weights(
         }
         if (thread_id < 0 || thread_id >= num_threads) {
             std::ostringstream oss;
-            oss << "In `compute_all_plans_log_simple_incremental_weights` Thread id broke, thread id is " << thread_id
+            oss << "In `run_merge_split_step_on_all_plans` Thread id broke, thread id is " << thread_id
                               << " but num threads is  " << num_threads << std::endl;
             throw std::runtime_error(oss.str());
+        }
+        // debug thing REMOVE LATER IF POSSIBLE 
+        std::unique_ptr<ActiveUserGuard> active_guard;
+
+        if constexpr (perf_config::check_threadpool_integrity) {
+            active_guard = std::make_unique<ActiveUserGuard>(active_users[thread_id]);
         }
 
         double log_incr_weight = compute_simple_log_incremental_weight(
@@ -654,6 +661,8 @@ void compute_all_plans_log_optimal_incremental_weights(
     static std::atomic<int> global_generation_counter{0};
     int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
     std::atomic<int> thread_id_counter{0};
+    std::vector<std::atomic<int>> active_users(
+        perf_config::check_threadpool_integrity ? num_threads : 0);
 
     // now make the vectors of important variables to be used by threads
     std::vector<USTSampler> ust_samplers_vec;
@@ -672,18 +681,23 @@ void compute_all_plans_log_optimal_incremental_weights(
     pool.parallelFor(0, nsims, [&](int i) {
         static thread_local int thread_generation_counter = -1;
         static thread_local int thread_id = -1;
-
+        // check if the thread id was generated this function call
         if (thread_generation_counter != generation) {
             // if not then give it a new id
             thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
             thread_generation_counter = generation;
         }
-        // check if the thread id was generated this function call
         if (thread_id < 0 || thread_id >= num_threads) {
             std::ostringstream oss;
-            oss << "In `compute_all_plans_log_optimal_incremental_weights` Thread id broke, thread id is " << thread_id
+            oss << "In `run_merge_split_step_on_all_plans` Thread id broke, thread id is " << thread_id
                               << " but num threads is  " << num_threads << std::endl;
             throw std::runtime_error(oss.str());
+        }
+        // debug thing REMOVE LATER IF POSSIBLE 
+        std::unique_ptr<ActiveUserGuard> active_guard;
+
+        if constexpr (perf_config::check_threadpool_integrity) {
+            active_guard = std::make_unique<ActiveUserGuard>(active_users[thread_id]);
         }
 
         auto total_weight_time = maybe_now(); // optional timing 

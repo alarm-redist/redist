@@ -166,7 +166,7 @@ void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_i
 
     int const V = forest_graph.size();
 
-    if constexpr (perf_config::unnecessary_input_checks){
+    if constexpr (perf_config::supposedly_safe_input_checks){
         if (static_cast<int>(ust.size()) != V) {
             throw std::runtime_error("assign_region_id_and_forest_from_tree received wrong-sized ust.");
         }
@@ -186,7 +186,7 @@ void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_i
 
     // add roots children to queue
     for (auto const &child_vertex : ust[root]) {
-        if constexpr (perf_config::unnecessary_input_checks){
+        if constexpr (perf_config::supposedly_safe_input_checks){
             check_vertex_in_range(child_vertex, V, "assign_region_id_and_forest_from_tree root child (1st time)");
         }
         vertex_queue.push({child_vertex, root});
@@ -200,7 +200,7 @@ void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_i
         // get and remove head of queue
         auto [vertex, parent_vertex] = vertex_queue.pop();
 
-        if constexpr (perf_config::unnecessary_input_checks){
+        if constexpr (perf_config::supposedly_safe_input_checks){
             check_vertex_in_range(vertex, V, "assign_region_id_and_forest_from_tree vertex");
             check_vertex_in_range(parent_vertex, V, "assign_region_id_and_forest_from_tree parent_vertex");
         }
@@ -218,7 +218,7 @@ void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_i
         forest_edges.set_edge(vertex, parent_vertex, graph_edge_index);
 
         for (auto const &child_vertex : ust[vertex]) {
-            if constexpr (perf_config::unnecessary_input_checks){
+            if constexpr (perf_config::supposedly_safe_input_checks){
                 check_vertex_in_range(child_vertex, V, "assign_region_id_and_forest_from_tree child_vertex");
             }
             // add children to queue
@@ -253,6 +253,29 @@ void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_i
  *
  */
 void erase_tree_edge(Tree &ust, EdgeCut cut_edge) {
+    if constexpr (perf_config::supposedly_safe_input_checks){
+        int const V = static_cast<int>(ust.size());
+        if (cut_edge.cut_vertex_parent < 0 || cut_edge.cut_vertex_parent >= V) {
+            std::ostringstream oss;
+            oss << "erase_tree_edge invalid cut_vertex_parent.\n";
+            oss << "cut_vertex_parent=" << cut_edge.cut_vertex_parent << "\n";
+            oss << "cut_vertex=" << cut_edge.cut_vertex << "\n";
+            oss << "tree_root=" << cut_edge.tree_root << "\n";
+            oss << "ust.size()=" << V << "\n";
+            throw std::runtime_error(oss.str());
+        }
+
+        if (cut_edge.cut_vertex < 0 || cut_edge.cut_vertex >= V) {
+            std::ostringstream oss;
+            oss << "erase_tree_edge invalid cut_vertex.\n";
+            oss << "cut_vertex_parent=" << cut_edge.cut_vertex_parent << "\n";
+            oss << "cut_vertex=" << cut_edge.cut_vertex << "\n";
+            oss << "tree_root=" << cut_edge.tree_root << "\n";
+            oss << "ust.size()=" << V << "\n";
+            throw std::runtime_error(oss.str());
+        }
+    }
+
     // Get all of the descendents of `cut_vertex_parent`
     std::vector<int> &siblings = ust[cut_edge.cut_vertex_parent];
 
@@ -263,7 +286,7 @@ void erase_tree_edge(Tree &ust, EdgeCut cut_edge) {
         cut_edge.cut_vertex
     );
 
-    if constexpr (perf_config::unnecessary_input_checks){
+    if constexpr (perf_config::supposedly_safe_input_checks){
         if (it == siblings.end()) {
             throw Rcpp::exception(
                 "Actual cut edge not found in valid_edges."
@@ -317,6 +340,195 @@ void check_directed_tree_edges_are_graph_edges(
     }
 }
 
+void check_is_directed_tree(
+    Tree const &ust,
+    std::string_view const where,
+    int const root,
+    int const expected_tree_vertices,
+    bool const check_vertex_count,
+    std::vector<bool> &visited,
+    TreePopStack &stack
+) {
+    int const V = static_cast<int>(ust.size());
+
+    if (V <= 0) {
+        std::ostringstream oss;
+        oss << where << ": check_is_directed_tree received empty ust.\n";
+        oss << "ust.size()=" << ust.size() << "\n";
+        oss << "root=" << root << "\n";
+        if(check_vertex_count){
+            oss << "expected_tree_vertices=" << expected_tree_vertices << "\n";
+        }
+        throw std::runtime_error(oss.str());
+    }
+
+    if (root < 0 || root >= V) {
+        std::ostringstream oss;
+        oss << where << ": check_is_directed_tree received invalid root.\n";
+        oss << "root=" << root << "\n";
+        oss << "ust.size()=" << ust.size() << "\n";
+        if(check_vertex_count){
+            oss << "expected_tree_vertices=" << expected_tree_vertices << "\n";
+        }
+        throw std::runtime_error(oss.str());
+    }
+
+    if (check_vertex_count && (expected_tree_vertices <= 0 || expected_tree_vertices > V)) {
+        std::ostringstream oss;
+        oss << where << ": check_is_directed_tree received invalid expected_tree_vertices.\n";
+        oss << "expected_tree_vertices=" << expected_tree_vertices << "\n";
+        oss << "ust.size()=" << ust.size() << "\n";
+        oss << "root=" << root << "\n";
+        throw std::runtime_error(oss.str());
+    }
+
+    if (static_cast<int>(visited.size()) != V) {
+        visited.assign(static_cast<std::size_t>(V), false);
+    } else {
+        std::fill(visited.begin(), visited.end(), false);
+    }
+
+    stack.clear();
+
+    visited[root] = true;
+    stack.push({root, -1, false});
+
+    int visited_count = 0;
+    int traversed_edge_count = 0;
+
+    while (!stack.empty()) {
+        auto const [v, parent, is_revisiting] = stack.pop();
+
+        if (is_revisiting) {
+            std::ostringstream oss;
+            oss << where << ": check_is_directed_tree unexpectedly popped "
+                << "a revisiting stack item.\n";
+            oss << "v=" << v << "\n";
+            oss << "parent=" << parent << "\n";
+            oss << "root=" << root << "\n";
+            if(check_vertex_count){
+                oss << "expected_tree_vertices=" << expected_tree_vertices << "\n";
+            }
+            throw std::runtime_error(oss.str());
+        }
+
+        if (v < 0 || v >= V) {
+            std::ostringstream oss;
+            oss << where << ": internal traversal reached invalid vertex.\n";
+            oss << "v=" << v << "\n";
+            oss << "parent=" << parent << "\n";
+            oss << "ust.size()=" << ust.size() << "\n";
+            oss << "root=" << root << "\n";
+            if(check_vertex_count){
+                oss << "expected_tree_vertices=" << expected_tree_vertices << "\n";
+            }
+            throw std::runtime_error(oss.str());
+        }
+
+        ++visited_count;
+
+        if (check_vertex_count && visited_count > expected_tree_vertices) {
+            std::ostringstream oss;
+            oss << where << ": directed tree traversal visited too many vertices.\n";
+            oss << "visited_count=" << visited_count << "\n";
+            oss << "expected_tree_vertices=" << expected_tree_vertices << "\n";
+            oss << "root=" << root << "\n";
+            oss << "current_vertex=" << v << "\n";
+            oss << "parent=" << parent << "\n";
+            throw std::runtime_error(oss.str());
+        }
+
+        for (int const child : ust[v]) {
+            if (child < 0 || child >= V) {
+                std::ostringstream oss;
+                oss << where << ": directed tree contains invalid child vertex.\n";
+                oss << "parent=" << v << "\n";
+                oss << "child=" << child << "\n";
+                oss << "ust.size()=" << ust.size() << "\n";
+                oss << "root=" << root << "\n";
+                if(check_vertex_count){
+                    oss << "expected_tree_vertices=" << expected_tree_vertices << "\n";
+                }
+                throw std::runtime_error(oss.str());
+            }
+
+            if (child == v) {
+                std::ostringstream oss;
+                oss << where << ": directed tree contains self-loop.\n";
+                oss << "vertex=" << v << "\n";
+                oss << "root=" << root << "\n";
+                if(check_vertex_count){
+                    oss << "expected_tree_vertices=" << expected_tree_vertices << "\n";
+                }
+                throw std::runtime_error(oss.str());
+            }
+
+            ++traversed_edge_count;
+
+            if (visited[child]) {
+                std::ostringstream oss;
+                oss << where << ": directed tree visits a vertex more than once.\n";
+                oss << "duplicate_child=" << child << "\n";
+                oss << "encountered_from_parent=" << v << "\n";
+                oss << "current_stack_parent=" << parent << "\n";
+                oss << "root=" << root << "\n";
+                if(check_vertex_count){
+                    oss << "expected_tree_vertices=" << expected_tree_vertices << "\n";
+                }
+                oss << "visited_count_so_far=" << visited_count << "\n";
+
+                oss << "Children of duplicate_child: ";
+                for (int const grandchild : ust[child]) {
+                    oss << grandchild << " ";
+                }
+                oss << "\n";
+
+                throw std::runtime_error(oss.str());
+            }
+
+            visited[child] = true;
+            stack.push({child, v, false});
+        }
+    }
+
+    if (check_vertex_count && visited_count != expected_tree_vertices) {
+        std::ostringstream oss;
+        oss << where << ": directed tree did not visit expected number of vertices.\n";
+        oss << "visited_count=" << visited_count << "\n";
+        oss << "expected_tree_vertices=" << expected_tree_vertices << "\n";
+        oss << "root=" << root << "\n";
+        oss << "ust.size()=" << ust.size() << "\n";
+
+        oss << "Visited vertices: ";
+        for (int v = 0; v < V; ++v) {
+            if (visited[v]) {
+                oss << v << " ";
+            }
+        }
+        oss << "\n";
+
+        oss << "Unvisited vertices: ";
+        for (int v = 0; v < V; ++v) {
+            if (!visited[v]) {
+                oss << v << " ";
+            }
+        }
+        oss << "\n";
+
+        throw std::runtime_error(oss.str());
+    }
+
+    if (check_vertex_count && traversed_edge_count != expected_tree_vertices - 1) {
+        std::ostringstream oss;
+        oss << where << ": directed tree has wrong number of traversed edges.\n";
+        oss << "traversed_edge_count=" << traversed_edge_count << "\n";
+        oss << "expected_edges=" << (expected_tree_vertices - 1) << "\n";
+        oss << "visited_count=" << visited_count << "\n";
+        oss << "root=" << root << "\n";
+        oss << "expected_tree_vertices=" << expected_tree_vertices << "\n";
+        throw std::runtime_error(oss.str());
+    }
+}
 
 void EdgeBitset::clear_region_tree(
         PlanVector const &region_ids,

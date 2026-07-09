@@ -542,7 +542,35 @@ int run_merge_split_steps(MapParams const &map_params,
             proposed_plan_multigraph, merge_prob_type, save_edge_selection_prob,
             current_plan_adj_region_pairs, current_plan_pair_unnoramalized_wgts, rho, is_final,
             true, using_caching, weight_cache, granular_times);
-        // count tree size
+
+        if constexpr(perf_config::supposedly_safe_input_checks){
+            // count tree size
+            std::ostringstream oss;
+            oss << "Calling on tree_sizes in `run_merge_split_steps`, ";
+            oss << "num_steps_to_run=" << num_steps_to_run << "\n";
+            oss << "merge-split inner iteration i=" << i << "\n";
+            oss << plan.debug_string(true);
+            tree_size_check(
+                map_params, 
+                std::get<3>(mergesplit_result) - 1, 
+                tree_sizes,
+                oss.str()
+            );
+
+            std::ostringstream poss;
+            poss << "Calling on successful_tree_sizes in `run_merge_split_steps`, ";
+            poss << "num_steps_to_run=" << num_steps_to_run << "\n";
+            poss << "merge-split inner iteration i=" << i << "\n";
+            poss << plan.debug_string(true);
+            tree_size_check(
+                map_params, 
+                std::get<3>(mergesplit_result) - 1, 
+                successful_tree_sizes,
+                oss.str()
+            );
+
+        }
+
         ++tree_sizes[std::get<3>(mergesplit_result) - 1];
         // increase count if successful
         if (std::get<1>(mergesplit_result)) {

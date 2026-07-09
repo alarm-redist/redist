@@ -80,6 +80,16 @@ class USTSampler {
         RNGState &rng_state, ScoringFunction const &scoring_function,
         TreeSplitter &tree_splitter, Plan const &plan, int const merge_region1,
         int const merge_region2, bool const save_selection_prob);
+
+    // checks that all the vertices in the tree are valid and 
+    // its a directed tree 
+    void check_tree_integrity(
+      Tree const &a_ust,
+      std::string_view where,
+      int root,
+      int expected_tree_vertices,
+      bool check_vertex_count
+    );
 };
 
 #endif

@@ -31,3 +31,21 @@ int get_num_threads(const RcppThread::ThreadPool &pool){
         return pool_threads;
     }
 }
+
+
+void tree_size_check(
+    MapParams const &map_params, 
+    int const proposed_tree_size, 
+    std::vector<int> const &tree_sizes,
+    std::string_view const where
+){
+    if (proposed_tree_size <= 0 ||
+        proposed_tree_size > static_cast<int>(tree_sizes.size())
+    ) {
+        std::ostringstream oss;
+        oss << "Invalid tree size.\n" << where << "\n"; 
+        oss << "proposed_tree_size=" << proposed_tree_size << "\n";
+        oss << "tree sizes vector.size()=" << tree_sizes.size() << "\n";
+        throw std::runtime_error(oss.str());
+    }
+}
