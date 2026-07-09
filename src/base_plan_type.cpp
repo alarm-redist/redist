@@ -897,39 +897,46 @@ void Plan::update_plan_ids_and_forest_from_cut(TreeSplitter const &tree_splitter
     }
 
     // TODO: Remove old vertex graph 
-    ust_sampler.check_tree_integrity(
-        ust_sampler.ust,
-        "Before calling `assign_region_id_and_forest_from_tree` on split_region1_id\n",
-        split_region1_tree_root,
-        0,
-        false
-    );
-    // update the vertex labels and the tree
+    if constexpr(perf_config::object_integrity_checking){
+        // Checks the tree starting at `split_region1_tree_root` is actually a directed tree
+        ust_sampler.check_tree_integrity(
+            ust_sampler.ust,
+            "Before calling `assign_region_id_and_forest_from_tree` on split_region1_id\n",
+            split_region1_tree_root,
+            0,
+            false
+        );
+    }
+    // update the vertex labels and the tree for region 1
     assign_region_id_and_forest_from_tree(ust_sampler.ust, region_ids, 
                                           forest_graph, forest_edges,
                                           split_region1_tree_root, split_region1_id,
                                           ust_sampler.map_params.graph_edge_index,
                                           ust_sampler.vertex_queue);
 
-    ust_sampler.check_tree_integrity(
-        ust_sampler.ust,
-        "Before calling `assign_region_id_and_forest_from_tree` on split_region2_id\n",
-        split_region2_tree_root,
-        0,
-        false
-    );
+    if constexpr(perf_config::object_integrity_checking){
+        ust_sampler.check_tree_integrity(
+            ust_sampler.ust,
+            "Before calling `assign_region_id_and_forest_from_tree` on split_region2_id\n",
+            split_region2_tree_root,
+            0,
+            false
+        );
+    }
     assign_region_id_and_forest_from_tree(ust_sampler.ust, region_ids, 
                                           forest_graph, forest_edges,
                                           split_region2_tree_root, split_region2_id,
                                           ust_sampler.map_params.graph_edge_index,
                                           ust_sampler.vertex_queue);
 
-    check_forest_equality(
-        forest_graph,
-        forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
-        ust_sampler.map_params.graph_edge_index, 
-        "IN update_plan_ids_and_forest_from_cut AFTER updating, checking forest_graph vs forest edges (through get_graph_tree)"
-    );
+    if constexpr(perf_config::object_integrity_checking){
+        check_forest_equality(
+            forest_graph,
+            forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
+            ust_sampler.map_params.graph_edge_index, 
+            "IN update_plan_ids_and_forest_from_cut AFTER updating, checking forest_graph vs forest edges (through get_graph_tree)"
+        );
+    }
 
 }
 

@@ -112,11 +112,6 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
     const int n_lags = lags.size();
     umat ancestors_new(M, n_lags); // lags/ancestor thing
 
-    old_plan_ensemble->check_all_plans_valid(
-        map_params,
-        "In run_smc_step before the for loop"
-    );
-
     // Because of multithreading we have to add specific checks for if the user
     // wants to quit the program
     const int reject_check_int = 200; // check for interrupts every _ rejections
@@ -407,11 +402,6 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
         REprintf("Done splitting!\n");
     }
 
-    new_plan_ensemble->check_all_plans_valid(
-        map_params,
-        "In run_smc_step after the main for loop"
-    );
-
     if(estimated_unbiased_normalizing_constant){
         if constexpr(DEBUG_GSMC_PLANS_VERBOSE){
             REprintf("Starting estimation: ");
@@ -492,17 +482,8 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
 
     }
 
-    new_plan_ensemble->check_all_plans_valid(
-        map_params,
-        "In run_smc_step after the extra particle loop"
-    );
-
     // now swap the old plans with the new ones. This avoids needing to actually copy
     std::swap(old_plan_ensemble, new_plan_ensemble);
-    old_plan_ensemble->check_all_plans_valid(
-        map_params,
-        "In run_smc_step after the extra particle loop"
-    );
 
     // Add the buffer info in
     for (int i = 0; i < M; ++i) {
@@ -638,14 +619,6 @@ void run_merge_split_step_on_all_plans(
             active_guard = std::make_unique<ActiveUserGuard>(active_users[thread_id]);
         }
 
-        std::string const plan_msg =
-        "In run_merge_split_step_on_all_plans BEFORE ms, for plan i = " + std::to_string(i) +
-        ", calling on `plan`";
-        plan_ptrs_vec[i]->check_forest_integrity(
-            map_params.graph_edge_index,
-            plan_msg
-        );
-
         auto total_plan_start_time = maybe_now();
 
         // store the number of succesful runs
@@ -680,16 +653,6 @@ void run_merge_split_step_on_all_plans(
                 total_plan_start_time
             );
         }
-
-
-        std::string const plan_msga =
-        "In run_merge_split_step_on_all_plans, for plan i = " + std::to_string(i) +
-        ", calling on `plan` AFTER ALL MS STEPS";
-        plan_ptrs_vec[i]->check_forest_integrity(
-            map_params.graph_edge_index,
-            plan_msga
-        );
-
 
         if (verbosity >= 3) {
             ++bar;
@@ -1159,6 +1122,17 @@ List run_redist_smc(
 
                     if constexpr (DEBUG_GSMC_PLANS_VERBOSE)
                         Rprintf("About to run smc step %d!\n", smc_step_num);
+                    // optional integrity check 
+                    if constexpr (perf_config::object_integrity_checking){
+                        std::ostringstream oss;
+                        oss << "Plan integrity check failed BEFORE calling `run_smc_step` ";
+                        oss << "on smc_step =" << smc_step_num;
+                        oss << " total step " << step_num << "\n";
+                        plan_ensemble_ptr->check_all_plans_valid(
+                            map_params,
+                            "oss.str()"
+                        );                        
+                    }
                     // start timing the smc split
                     auto smc_splitting_start_time = std::chrono::steady_clock::now();
                     // split the map
@@ -1174,6 +1148,17 @@ List run_redist_smc(
                     // add the time 
                     std::chrono::duration<double, std::ratio<1>> smc_split_diff = smc_splitting_end_time - smc_splitting_start_time;
                     smc_diagnostics.smc_split_times[smc_step_num] = smc_split_diff.count();
+
+                    if constexpr (perf_config::object_integrity_checking){
+                        std::ostringstream oss;
+                        oss << "Plan integrity check failed AFTER calling `run_smc_step` ";
+                        oss << "on smc_step =" << smc_step_num;
+                        oss << " total step " << step_num << "\n";
+                        plan_ensemble_ptr->check_all_plans_valid(
+                            map_params,
+                            "oss.str()"
+                        );                        
+                    }
 
                     if constexpr (DEBUG_GSMC_PLANS_VERBOSE)
                         Rprintf("Ran smc step %d!\n", smc_step_num);
@@ -1198,9 +1183,6 @@ List run_redist_smc(
                         // now we swap the two pointers so the cache ensemble one is aligned
                         std::swap(cache_ensemble_ptr, dummy_cache_ensemble_ptr);
                     }
-
-                    // plan_ensemble_ptr->plan_ptr_vec[0]->Rprint(true);
-
 
                     // compute splitting probability if MMD or if Anysplits SMD and num regions
                     // isn't number of districts
@@ -1275,8 +1257,6 @@ List run_redist_smc(
                         // parent we use unnormalized_sampling_weights to hold new values then
                         // swap later
                         for (size_t i = 0; i < nsims; i++) {
-                            // REprintf("Sending %u to %d \n", i,
-                            // smc_diagnostics.parent_index_mat(i, smc_step_num));
                             unnormalized_sampling_weights[i] =
                                 log_weights[smc_diagnostics.parent_index_mat(i, smc_step_num)];
                         }
@@ -1358,10 +1338,17 @@ List run_redist_smc(
                         pool.setNumThreads(0);
                     }
                     
-                    plan_ensemble_ptr->check_all_plans_valid(
-                        map_params,
-                        "Called before calling run_merge_split_step_on_all_plans"
-                    );
+                    // optional integrity check 
+                    if constexpr (perf_config::object_integrity_checking){
+                        std::ostringstream oss;
+                        oss << "Plan integrity check failed BEFORE calling `run_merge_split_step_on_all_plans` ";
+                        oss << "on ms_step =" << merge_split_step_num;
+                        oss << " total step " << step_num << "\n";
+                        plan_ensemble_ptr->check_all_plans_valid(
+                            map_params,
+                            "oss.str()"
+                        );                        
+                    }
 
                     // start timing
                     auto ms_round_start_time = std::chrono::steady_clock::now();
@@ -1379,10 +1366,18 @@ List run_redist_smc(
                     std::chrono::duration<double, std::ratio<1>> ms_round_diff = ms_round_end_time - ms_round_start_time;
                     smc_diagnostics.ms_step_times[merge_split_step_num] = ms_round_diff.count();
 
-                    plan_ensemble_ptr->check_all_plans_valid(
-                        map_params,
-                        "Called after calling run_merge_split_step_on_all_plans"
-                    );
+                    // optional integrity check 
+                    if constexpr (perf_config::object_integrity_checking){
+                        std::ostringstream oss;
+                        oss << "Plan integrity check failed AFTER calling `run_merge_split_step_on_all_plans` ";
+                        oss << "on ms_step =" << merge_split_step_num;
+                        oss << " total step " << step_num << "\n";
+                        plan_ensemble_ptr->check_all_plans_valid(
+                            map_params,
+                            "oss.str()"
+                        );                        
+                    }
+
 
                     // now switch back
                     if (scoring_functions[0].any_soft_custom_constraints &&
@@ -1395,10 +1390,6 @@ List run_redist_smc(
                             tree_splitter_ptrs_vec[0]->get_single_int_param();
                     }
 
-                    // auto t2fm = steady_clock::now();
-                    // /* Getting number of milliseconds as a double. */
-                    // duration<double, std::milli> ms_doublefm = t2fm - t1fm;
-                    // Rcout << "Running Merge split " << ms_doublefm.count() << " ms\n";
 
                     // set the acceptance rate
                     int total_ms_successes = Rcpp::sum(

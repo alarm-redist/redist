@@ -131,12 +131,15 @@ LinkingEdgePlan::LinkingEdgePlan(
         }
     }
 
-    check_forest_equality(
-        forest_graph,
-        forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
-        ust_sampler.map_params.graph_edge_index,
-        "IN Partial Linking Edge Plan Constructor, checking forest_graph vs forest edges (through get_graph_tree)"
-    );
+    if constexpr (perf_config::object_integrity_checking){
+        check_forest_equality(
+            forest_graph,
+            forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
+            ust_sampler.map_params.graph_edge_index,
+            "IN Partial Linking Edge Plan Constructor, checking forest_graph vs forest edges (through get_graph_tree)"
+        );
+    }
+
 
     auto initial_linking_edges =
         get_intial_linking_edges(plan_multigraph, region_ids, num_regions, region_graph);
@@ -171,20 +174,21 @@ double LinkingEdgePlan::get_regions_log_splitting_prob(ScoringFunction const &sc
     // TODO refine the logic so this happens outside the call
     forest_edges.fill_vector_tree(ust_sampler.map_params.graph_edge_index, ust_sampler.forest_scratch_tree);
 
+    if constexpr (perf_config::object_integrity_checking){
+        check_forest_equality(
+            forest_graph,
+            forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
+            ust_sampler.map_params.graph_edge_index,
+            "IN get_regions_log_splitting_prob, checking forest_graph vs forest edges (through get_graph_tree)"
+        );
 
-    check_forest_equality(
-        forest_graph,
-        forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
-        ust_sampler.map_params.graph_edge_index,
-        "IN get_regions_log_splitting_prob, checking forest_graph vs forest edges (through get_graph_tree)"
-    );
-
-    check_forest_equality(
-        forest_graph,
-        ust_sampler.forest_scratch_tree,
-        ust_sampler.map_params.graph_edge_index,
-        "IN get_regions_log_splitting_prob, checking forest_graph vs forest scratch tree"
-    );
+        check_forest_equality(
+            forest_graph,
+            ust_sampler.forest_scratch_tree,
+            ust_sampler.map_params.graph_edge_index,
+            "IN get_regions_log_splitting_prob, checking forest_graph vs forest scratch tree"
+        );        
+    }
 
     // get the log probability
     return tree_splitter.get_log_retroactive_splitting_prob_for_joined_tree(

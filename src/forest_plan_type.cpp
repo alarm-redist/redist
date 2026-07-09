@@ -35,15 +35,15 @@ ForestPlan::ForestPlan(int const ndists, int const num_regions, const arma::uvec
         }
     }
 
-    // print_tree(forest_graph);
-    // forest_edges.print_full_tree(map_params.graph_edge_index);
+    if constexpr(perf_config::object_integrity_checking){
+        check_forest_equality(
+            forest_graph,
+            forest_edges.get_graph_tree(map_params.graph_edge_index),
+            map_params.graph_edge_index,
+            "IN Partial Forest Plan Constructor, checking forest_graph vs forest edges (through get_graph_tree)"
+        );
+    }
 
-    check_forest_equality(
-        forest_graph,
-        forest_edges.get_graph_tree(map_params.graph_edge_index),
-        map_params.graph_edge_index,
-        "IN Partial Forest Plan Constructor, checking forest_graph vs forest edges (through get_graph_tree)"
-    );
 }
 
 Tree ForestPlan::get_forest_adj() { return forest_graph; }
@@ -103,19 +103,20 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
     // copy the packed forest into the vector tree
     forest_edges.fill_vector_tree(ust_sampler.map_params.graph_edge_index, ust_sampler.forest_scratch_tree);
 
-
-    plan.check_forest_equality(
-        forest_graph,
-        forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
-        ust_sampler.map_params.graph_edge_index,
-        "IN compute_log_tree_eff_boundary_lens, checking forest_graph vs forest edges (through get_graph_tree)"
-    );
-    plan.check_forest_equality(
-        forest_graph,
-        ust_sampler.forest_scratch_tree,
-        ust_sampler.map_params.graph_edge_index,
-        "IN compute_log_tree_eff_boundary_lens, checking forest_graph vs forest scratch tree"
-    );
+    if constexpr (perf_config::object_integrity_checking){
+        plan.check_forest_equality(
+            forest_graph,
+            forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
+            ust_sampler.map_params.graph_edge_index,
+            "IN compute_log_tree_eff_boundary_lens, checking forest_graph vs forest edges (through get_graph_tree)"
+        );
+        plan.check_forest_equality(
+            forest_graph,
+            ust_sampler.forest_scratch_tree,
+            ust_sampler.map_params.graph_edge_index,
+            "IN compute_log_tree_eff_boundary_lens, checking forest_graph vs forest scratch tree"
+        );
+    }
 
     for (int v = 0; v < V; v++) {
         // Find out which region this vertex corresponds to
@@ -239,20 +240,22 @@ double ForestPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
     // copy the packed forest into the vector tree
     forest_edges.fill_vector_tree(ust_sampler.map_params.graph_edge_index, ust_sampler.forest_scratch_tree);
 
+    if constexpr (perf_config::object_integrity_checking){
+        check_forest_equality(
+            forest_graph,
+            forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
+            ust_sampler.map_params.graph_edge_index,
+            "IN get_log_eff_boundary_len, checking forest_graph vs forest edges (through get_graph_tree)"
+        );
 
-    check_forest_equality(
-        forest_graph,
-        forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
-        ust_sampler.map_params.graph_edge_index,
-        "IN get_log_eff_boundary_len, checking forest_graph vs forest edges (through get_graph_tree)"
-    );
+        check_forest_equality(
+            forest_graph,
+            ust_sampler.forest_scratch_tree,
+            ust_sampler.map_params.graph_edge_index,
+            "IN get_log_eff_boundary_len, checking forest_graph vs forest scratch tree"
+        );        
+    }
 
-    check_forest_equality(
-        forest_graph,
-        ust_sampler.forest_scratch_tree,
-        ust_sampler.map_params.graph_edge_index,
-        "IN get_log_eff_boundary_len, checking forest_graph vs forest scratch tree"
-    );
 
     int const V = plan_multigraph.map_params.V;
     int const merged_region_size = region_sizes[region1_id] + region_sizes[region2_id];
