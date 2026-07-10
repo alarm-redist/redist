@@ -46,7 +46,7 @@ static void add_county_to_tree_dfs(
         // of the tree. 
         if (visited[v]) {
             // Checks we haven't already found a root 
-            if constexpr(!perf_config::supposedly_safe_input_checks){
+            if constexpr(perf_config::supposedly_safe_input_checks){
                 // This shouldn't be neccesary if the tree is truly a directed tree
                 if (root != -1) {
                     std::ostringstream oss;

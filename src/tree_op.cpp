@@ -163,66 +163,120 @@ void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_i
                                            const int new_region_id,
                                            const GraphEdgeIndex &graph_edge_index,
                                            CircularQueue<std::pair<int, int>> &vertex_queue) {
-
     int const V = graph_edge_index.V;
+    // optional bounds checking 
+    if constexpr (perf_config::bounds_checking) {
+        if (root < 0 || root >= V) {
+            std::ostringstream oss;
+            oss << "assign_region_id_and_forest_from_tree got invalid root.\n";
+            oss << "root=" << root << "\n";
+            oss << "V=" << V << "\n";
+            throw std::runtime_error(oss.str());
+        }
 
-    if constexpr (perf_config::supposedly_safe_input_checks){
         if (static_cast<int>(ust.size()) != V) {
-            throw std::runtime_error("assign_region_id_and_forest_from_tree received wrong-sized ust.");
+            std::ostringstream oss;
+            oss << "assign_region_id_and_forest_from_tree got tree with wrong size.\n";
+            oss << "tree.size()=" << ust.size() << "\n";
+            oss << "V=" << V << "\n";
+            throw std::runtime_error(oss.str());
+        }
+
+        if (new_region_id < std::numeric_limits<int8_t>::min() ||
+            new_region_id > std::numeric_limits<int8_t>::max()) {
+            std::ostringstream oss;
+            oss << "assign_region_id_and_forest_from_tree got invalid region id.\n";
+            oss << "new_region_id=" << new_region_id << "\n";
+            throw std::runtime_error(oss.str());
         }
     }
 
-
-    // clear the queue of vertex, parent
+    // start from the root
     vertex_queue.clear();
+    vertex_queue.push({root, -1});
 
-    // update root region id
-    region_ids[root] = new_region_id;
-    // and its forest vertices
-    int n_desc = ust[root].size();
-
-    // add roots children to queue
-    for (auto const &child_vertex : ust[root]) {
-        if constexpr (perf_config::supposedly_safe_input_checks){
-            check_vertex_in_range(child_vertex, V, "assign_region_id_and_forest_from_tree root child (1st time)");
-        }
-        vertex_queue.push({child_vertex, root});
-        // Now add this edge to the packed forest 
-        forest_edges.set_edge(root, child_vertex, graph_edge_index);
-    }
-
-    // update all the children
     while (!vertex_queue.empty()) {
-        // get and remove head of queue
-        auto [vertex, parent_vertex] = vertex_queue.pop();
+        auto const [v, parent] = vertex_queue.pop();
 
-        if constexpr (perf_config::supposedly_safe_input_checks){
-            check_vertex_in_range(vertex, V, "assign_region_id_and_forest_from_tree vertex");
-            check_vertex_in_range(parent_vertex, V, "assign_region_id_and_forest_from_tree parent_vertex");
+        if constexpr (perf_config::bounds_checking) {
+            if (v < 0 || v >= V) {
+                std::ostringstream oss;
+                oss << "assign_region_id_and_forest_from_tree popped invalid vertex.\n";
+                oss << "v=" << v << "\n";
+                oss << "parent=" << parent << "\n";
+                oss << "V=" << V << "\n";
+                throw std::runtime_error(oss.str());
+            }
+
+            if (parent < -1 || parent >= V) {
+                std::ostringstream oss;
+                oss << "assign_region_id_and_forest_from_tree got invalid parent.\n";
+                oss << "v=" << v << "\n";
+                oss << "parent=" << parent << "\n";
+                oss << "V=" << V << "\n";
+                throw std::runtime_error(oss.str());
+            }
         }
 
+        region_ids[v] = new_region_id;
 
-        // update region ids
-        region_ids[vertex] = new_region_id;
-        // clear this vertices neighbors in the graph and reserve size for children and parent
-        int n_desc = ust[vertex].size();
-        // set the packed edge 
-        forest_edges.set_edge(vertex, parent_vertex, graph_edge_index);
+        // Clear stale packed forest edges incident to v.
+        //
+        // Do NOT clear the edge to parent, because that is the new tree edge
+        // connecting v to the already-processed part of this tree.
+        for (auto const &incident_edge : graph_edge_index.incident_edges[v]) {
+            int const u = static_cast<int>(incident_edge.neighbor);
 
-        for (auto const &child_vertex : ust[vertex]) {
-            if constexpr (perf_config::supposedly_safe_input_checks){
-                check_vertex_in_range(child_vertex, V, "assign_region_id_and_forest_from_tree child_vertex");
+            if constexpr (perf_config::bounds_checking) {
+                if (u < 0 || u >= V) {
+                    std::ostringstream oss;
+                    oss << "assign_region_id_and_forest_from_tree saw invalid neighbor.\n";
+                    oss << "v=" << v << "\n";
+                    oss << "u=" << u << "\n";
+                    oss << "V=" << V << "\n";
+                    throw std::runtime_error(oss.str());
+                }
             }
-            // add children to queue
-            vertex_queue.push({child_vertex, vertex});
-            // add this edge from vertex to its children
-            // set the packed edge
-            forest_edges.set_edge(vertex, child_vertex, graph_edge_index);
+
+            if (u == parent) {
+                continue;
+            }
+            // clear the edge
+            forest_edges.clear_edge_id(incident_edge.edge_id);
+        }
+
+        // Add the new tree edge from parent to v.
+        // this just makes sure you don't add the root 
+        if (parent != -1) {
+            forest_edges.set_edge(v, parent, graph_edge_index);
+        }
+
+        for (int const child : ust[v]) {
+            if constexpr (perf_config::bounds_checking) {
+                if (child < 0 || child >= V) {
+                    std::ostringstream oss;
+                    oss << "assign_region_id_and_forest_from_tree saw invalid child.\n";
+                    oss << "v=" << v << "\n";
+                    oss << "child=" << child << "\n";
+                    oss << "V=" << V << "\n";
+                    throw std::runtime_error(oss.str());
+                }
+
+                if (child == v) {
+                    std::ostringstream oss;
+                    oss << "assign_region_id_and_forest_from_tree saw self-loop child.\n";
+                    oss << "v=" << v << "\n";
+                    throw std::runtime_error(oss.str());
+                }
+            }
+
+            vertex_queue.push({child, v});
         }
     }
-
-    return;
 }
+
+
+
 
 
 

@@ -853,24 +853,7 @@ void Plan::update_plan_ids_and_forest_from_cut(TreeSplitter const &tree_splitter
                                     split_region1_pop, split_region2_tree_root,
                                     split_region2_size, split_region2_pop);
 
-    // If we're adding the region just clear this one 
-    if (add_region){
-        // We assume split_region1_id is the multidistrict we split s
-        forest_edges.clear_region_tree(
-                region_ids,
-                split_region1_id,
-                ust_sampler.map_params.graph_edge_index
-        );
-    }else{
-        // else we need to clear both regions 
-        forest_edges.clear_region_trees(
-                region_ids,
-                split_region1_id, split_region2_id,
-                ust_sampler.map_params.graph_edge_index
-        );
-    }
 
-    // TODO: Remove old vertex graph 
     if constexpr(perf_config::object_integrity_checking){
         // Checks the tree starting at `split_region1_tree_root` is actually a directed tree
         ust_sampler.check_tree_integrity(
