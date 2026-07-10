@@ -360,12 +360,11 @@ void compute_all_plans_log_simple_incremental_weights(
                               << " but num threads is  " << num_threads << std::endl;
             throw std::runtime_error(oss.str());
         }
-        // debug thing REMOVE LATER IF POSSIBLE 
-        std::unique_ptr<ActiveUserGuard> active_guard;
-
-        if constexpr (perf_config::check_threadpool_integrity) {
-            active_guard = std::make_unique<ActiveUserGuard>(active_users[thread_id]);
-        }
+        // UNCOMMENT FOR THREADPOOL CHECKING
+        // std::unique_ptr<ActiveUserGuard> active_guard;
+        // if constexpr (perf_config::check_threadpool_integrity) {
+        //     active_guard = std::make_unique<ActiveUserGuard>(active_users[thread_id]);
+        // }
 
         double log_incr_weight = compute_simple_log_incremental_weight(
             *plans_ptr_vec[i], plan_multigraphs_vec[thread_id], splitting_schedule,
@@ -693,12 +692,11 @@ void compute_all_plans_log_optimal_incremental_weights(
                               << " but num threads is  " << num_threads << std::endl;
             throw std::runtime_error(oss.str());
         }
-        // debug thing REMOVE LATER IF POSSIBLE 
-        std::unique_ptr<ActiveUserGuard> active_guard;
-
-        if constexpr (perf_config::check_threadpool_integrity) {
-            active_guard = std::make_unique<ActiveUserGuard>(active_users[thread_id]);
-        }
+        // UNCOMMENT FOR THREADPOOL CHECKING
+        // std::unique_ptr<ActiveUserGuard> active_guard;
+        // if constexpr (perf_config::check_threadpool_integrity) {
+        //     active_guard = std::make_unique<ActiveUserGuard>(active_users[thread_id]);
+        // }
 
         auto total_weight_time = maybe_now(); // optional timing 
 

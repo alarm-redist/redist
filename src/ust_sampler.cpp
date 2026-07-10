@@ -31,7 +31,7 @@ bool USTSampler::attempt_to_draw_tree_on_region(RNGState &rng_state, Plan const 
     // Get a uniform spanning tree drawn on that region
     int result = sample_sub_ust(map_params, ust, root, min_max_pair.first * map_params.lower,
                                 min_max_pair.second * map_params.upper, visited, ignore,
-                                county_tree, county_stack, dummy_county_tree_stack,
+                                county_tree, county_stack, dummy_county_tree_queue,
                                 county_pop, county_members,
                                 c_visited, cty_pop_below, county_path, path, rng_state);
 
@@ -79,7 +79,7 @@ bool USTSampler::attempt_to_draw_tree_on_merged_region(RNGState &rng_state, Plan
     // Get a uniform spanning tree drawn on that region
     int result = sample_sub_ust(map_params, ust, root, min_max_pair.first * map_params.lower,
                                 min_max_pair.second * map_params.upper, visited, ignore,
-                                county_tree, county_stack, dummy_county_tree_stack,
+                                county_tree, county_stack, dummy_county_tree_queue,
                                 county_pop, county_members,
                                 c_visited, cty_pop_below, county_path, path, rng_state);
 

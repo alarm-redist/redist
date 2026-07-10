@@ -205,12 +205,11 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
                               << " but num threads is  " << num_threads << std::endl;
             throw std::runtime_error(oss.str());
         }
-        // debug thing REMOVE LATER IF POSSIBLE 
-        std::unique_ptr<ActiveUserGuard> active_guard;
-
-        if constexpr (perf_config::check_threadpool_integrity) {
-            active_guard = std::make_unique<ActiveUserGuard>(active_users[thread_id]);
-        }
+        // UNCOMMENT FOR THREADPOOL CHECKING
+        // std::unique_ptr<ActiveUserGuard> active_guard;
+        // if constexpr (perf_config::check_threadpool_integrity) {
+        //     active_guard = std::make_unique<ActiveUserGuard>(active_users[thread_id]);
+        // }
 
         // optional time tracker for granular time tracking 
         // no call to now() if constexpr is false, since it just declares the variable it should be optimized out
@@ -617,12 +616,11 @@ void run_merge_split_step_on_all_plans(
                               << " but num threads is  " << num_threads << std::endl;
             throw std::runtime_error(oss.str());
         }
-        // debug thing REMOVE LATER IF POSSIBLE 
-        std::unique_ptr<ActiveUserGuard> active_guard;
-
-        if constexpr (perf_config::check_threadpool_integrity) {
-            active_guard = std::make_unique<ActiveUserGuard>(active_users[thread_id]);
-        }
+        // UNCOMMENT FOR THREADPOOL CHECKING
+        // std::unique_ptr<ActiveUserGuard> active_guard;
+        // if constexpr (perf_config::check_threadpool_integrity) {
+        //     active_guard = std::make_unique<ActiveUserGuard>(active_users[thread_id]);
+        // }
 
         auto total_plan_start_time = maybe_now();
 

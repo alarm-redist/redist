@@ -682,6 +682,8 @@ template <typename T> class CircularQueue {
     void clear() { head = tail = size = 0; }
 };
 
+typedef CircularQueue<int> DummyTreeQueue;
+
 // enum for sampling spaces
 enum class SamplingSpace : unsigned char {
     GraphSpace,       // Sampling on the space of graph partitions

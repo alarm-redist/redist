@@ -107,7 +107,7 @@ List draw_a_tree_on_a_region(List adj_list, const arma::uvec &counties, const ar
     std::vector<int> tree_vertex_parents(V, -2);
     Tree county_tree = init_tree(map_params.num_counties);
     TreePopStack county_stack(map_params.num_counties);
-    FixedStack<int> dummy_county_tree_stack(map_params.V);
+    DummyTreeQueue dummy_county_tree_queue(map_params.V);
     arma::uvec county_pop(map_params.num_counties, arma::fill::zeros);
     std::vector<std::vector<int>> county_members(map_params.num_counties, std::vector<int>{});
     std::vector<bool> c_visited(map_params.num_counties, true);
@@ -136,7 +136,7 @@ List draw_a_tree_on_a_region(List adj_list, const arma::uvec &counties, const ar
         clear_tree(ust);
         // Get a uniform spanning tree drawn on that region
         int result = sample_sub_ust(map_params, ust, root, lower, upper, visited, ignore,
-                                    county_tree, county_stack, dummy_county_tree_stack,
+                                    county_tree, county_stack, dummy_county_tree_queue,
                                     county_pop, county_members,
                                     c_visited, cty_pop_below, county_path, path, rng_state);
 
@@ -483,8 +483,8 @@ List draw_trees_on_a_region(List const &adj_list, const arma::uvec &counties,
     std::vector<Tree> county_tree_buffers(n_threads, init_tree(map_params.num_counties));
     std::vector<TreePopStack> county_stack_buffers(n_threads,
                                                    TreePopStack(map_params.num_counties));
-    std::vector<FixedStack<int>> dummy_county_tree_stack_buffers(n_threads,
-                                                   FixedStack<int>(map_params.V));
+    std::vector<DummyTreeQueue> dummy_county_tree_stack_buffers(n_threads,
+                                                   DummyTreeQueue(map_params.V));
     std::vector<arma::uvec> county_pop_buffers(
         n_threads, arma::uvec(map_params.num_counties, arma::fill::zeros));
     std::vector<std::vector<std::vector<int>>> county_members_buffers(
@@ -516,7 +516,7 @@ List draw_trees_on_a_region(List const &adj_list, const arma::uvec &counties,
         std::vector<bool> &ignore = ignore_buffers[thread_id];
         Tree &county_tree = county_tree_buffers[thread_id];
         TreePopStack &county_stack = county_stack_buffers[thread_id];
-        FixedStack<int> dummy_county_tree_stack = dummy_county_tree_stack_buffers[thread_id];
+        DummyTreeQueue dummy_county_tree_queue = dummy_county_tree_stack_buffers[thread_id];
         arma::uvec &county_pop = county_pop_buffers[thread_id];
         std::vector<std::vector<int>> &county_members = county_members_buffers[thread_id];
         std::vector<bool> &c_visited = c_visited_buffers[thread_id];
@@ -536,7 +536,7 @@ List draw_trees_on_a_region(List const &adj_list, const arma::uvec &counties,
             // sample until successful
             result =
                 sample_sub_ust(map_params, ust, root, lower, upper, visited, ignore,
-                               county_tree, county_stack, dummy_county_tree_stack,
+                               county_tree, county_stack, dummy_county_tree_queue,
                                county_pop, county_members, c_visited,
                                cty_pop_below, county_path, path, rng_states[thread_id]);
 

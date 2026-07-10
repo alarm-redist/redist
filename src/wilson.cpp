@@ -9,7 +9,7 @@ static void add_county_to_tree_dfs(
     int const county_id,
     std::vector<int> const &county_vertices, // vector of vertices in the county 
     std::vector<bool> &visited,
-    FixedStack<int> &stack,
+    DummyTreeQueue &queue,
     Tree &ust
 ) {
     int const V = static_cast<int>(county_restricted_g.size());
@@ -25,7 +25,6 @@ static void add_county_to_tree_dfs(
     // set the root as the first county vertex 
     int root = -1;
 
-    bool break_loop = false;
     // Walk through the vertices in the county 
     for (int const v : county_vertices) {
         // optional bounds checking 
@@ -62,11 +61,10 @@ static void add_county_to_tree_dfs(
             // if not error checking then break out now since the tree is supposed to be
             // a directed tree 
             if constexpr(!perf_config::supposedly_safe_input_checks){
-                break_loop = true;
+                break;
             }
         }
 
-        if(break_loop) break;
     }
 
     if constexpr(perf_config::bounds_checking){
@@ -80,14 +78,14 @@ static void add_county_to_tree_dfs(
     }
 
     // clear the stack and start from the root
-    stack.clear();
-    stack.push(root);
+    queue.clear();
+    queue.push(root);
 
     int seen_count = 1;
 
     // perform DFS
-    while (!stack.empty()) {
-        int const v = stack.pop();
+    while (!queue.empty()) {
+        int const v = queue.pop();
 
         if constexpr(perf_config::bounds_checking){
             if (v < 0 || v >= V) {
@@ -126,7 +124,7 @@ static void add_county_to_tree_dfs(
             ust[v].push_back(u);
             // mark as visited and add this to stack
             visited[u] = true;
-            stack.push(u);
+            queue.push(u);
 
             if constexpr(perf_config::redundancy_checks) ++seen_count;
         }
@@ -203,7 +201,7 @@ Tree sample_ust(List l, const arma::uvec &pop, double lower, double upper,
     std::vector<bool> visited(V);
     Tree county_tree = init_tree(map_params.num_counties);
     TreePopStack county_stack(map_params.num_counties + 1);
-    FixedStack<int> dummy_county_tree_stack(map_params.V);
+    DummyTreeQueue dummy_county_tree_queue(map_params.V);
     arma::uvec county_pop(map_params.num_counties, arma::fill::zeros);
     std::vector<std::vector<int>> county_members(map_params.num_counties, std::vector<int>{});
     std::vector<bool> c_visited(map_params.num_counties, true);
@@ -212,7 +210,7 @@ Tree sample_ust(List l, const arma::uvec &pop, double lower, double upper,
     std::vector<int> path;
 
     sample_sub_ust(map_params, tree, root, lower, upper, visited, ignore, county_tree,
-                   county_stack, dummy_county_tree_stack, 
+                   county_stack, dummy_county_tree_queue, 
                    county_pop, county_members, c_visited, cty_pop_below,
                    county_path, path, rng_state);
     return tree;
@@ -225,7 +223,7 @@ Tree sample_ust(List l, const arma::uvec &pop, double lower, double upper,
 int sample_sub_ust(MapParams const &map_params, Tree &tree, int &root, double const lower,
                    double const upper, std::vector<bool> &visited,
                    const std::vector<bool> &ignore, Tree &cty_tree, TreePopStack &county_stack,
-                   FixedStack<int> &dummy_county_tree_stack,
+                   DummyTreeQueue &dummy_county_tree_queue,
                    arma::uvec &county_pop, std::vector<std::vector<int>> &county_members,
                    std::vector<bool> &c_visited, std::vector<int> &cty_pop_below,
                    std::vector<std::array<int, 3>> &county_path, std::vector<int> &path,
@@ -341,7 +339,7 @@ int sample_sub_ust(MapParams const &map_params, Tree &tree, int &root, double co
                     map_params.counties[county_members[i][0]], // pass in the county CAREFUL COUNTIES ARE 1-indexed
                     county_members[i],
                     visited,
-                    dummy_county_tree_stack,
+                    dummy_county_tree_queue,
                     tree
                 );
 

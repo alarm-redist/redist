@@ -206,7 +206,7 @@ int estimate_mergesplit_cut_k(Plan const &plan, PlanMultigraph const &plan_multi
     std::vector<bool> visited(V);
     std::vector<int> cut_below_pop(V, 0);
     TreePopStack pop_stack(V + 1);
-    FixedStack<int> dummy_county_tree_stack(V+1);
+    DummyTreeQueue dummy_county_tree_queue(V+1);
     Tree county_tree = init_tree(plan_multigraph.map_params.num_counties);
     TreePopStack county_stack(plan_multigraph.map_params.num_counties);
     arma::uvec county_pop(plan_multigraph.map_params.num_counties, arma::fill::zeros);
@@ -240,7 +240,7 @@ int estimate_mergesplit_cut_k(Plan const &plan, PlanMultigraph const &plan_multi
         clear_tree(ust);
         int result = sample_sub_ust(plan_multigraph.map_params, ust, root, lower * merged_size,
                                     upper * merged_size, visited, ignore, county_tree,
-                                    county_stack, dummy_county_tree_stack,
+                                    county_stack, dummy_county_tree_queue,
                                     county_pop, county_members, c_visited,
                                     cty_pop_below, county_path, path, rng_state);
         if (result != 0) {
@@ -335,7 +335,7 @@ void estimate_cut_k(const MapParams &map_params, const SplittingSchedule &splitt
     std::vector<bool> visited(V);
     std::vector<int> cut_below_pop(V, 0);
     TreePopStack pop_stack(V + 1);
-    FixedStack<int> dummy_county_tree_stack(V + 1);
+    DummyTreeQueue dummy_county_tree_queue(V + 1);
     Tree county_tree = init_tree(map_params.num_counties);
     TreePopStack county_stack(map_params.num_counties);
     arma::uvec county_pop(map_params.num_counties, arma::fill::zeros);
@@ -420,7 +420,7 @@ void estimate_cut_k(const MapParams &map_params, const SplittingSchedule &splitt
         clear_tree(ust);
         int result = sample_sub_ust(map_params, ust, root, lower * min_possible_cut_size,
                                     upper * min_possible_cut_size, visited, ignore, county_tree,
-                                    county_stack, dummy_county_tree_stack, county_pop,
+                                    county_stack, dummy_county_tree_queue, county_pop,
                                     county_members, c_visited,
                                     cty_pop_below, county_path, path, rng_state);
 
