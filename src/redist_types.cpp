@@ -69,7 +69,7 @@ Graph build_restricted_county_graph(Graph const &g, arma::uvec const &counties) 
     // iterate through g and only add edges in the same county
     for (int v = 0; v < g.size(); v++) {
         // iterate over v's neighbors
-        for (const auto &u : g[v]) {
+        for (const auto u : g[v]) {
             // if same county add the edge
             if (counties(v) == counties(u)) {
                 county_graph[v].push_back(u);

@@ -12,18 +12,19 @@ remove (splitting the tree)
 constexpr bool FINDING_EDGE_CUTS_VERBOSE = false;
 
 /*
- * Return a vector of all valid edge cuts for a particular edge and cut region sizes range
+ * Appends all valid edge cuts for a particular edge and cut region sizes range
+ *
  *
  *
  * Given an edge in a spanning tree and a range of region sizes to consider for
- * the two cut regions this returns a vector of all the the valid edge cuts
+ * the two cut regions this appends to the input edge cut vector all the the valid edge cuts
  * (ie an edge and region sizes for the two cuts) that can be made. For strict
  * population bounds this should be only one but if bounds are loose it can
  * be multiple. An empty vector means there are no valid edge cuts.
  *
  *
  *
- *
+ * @param existing_cuts A vector of edge cuts 
  * @param root The root vertex of the spanning tree
  * @param cut_vertex The vertex where we are cutting below it
  * @param cut_vertex_parent The parent of `cut_vertex` (if we think of the tree
@@ -43,19 +44,18 @@ constexpr bool FINDING_EDGE_CUTS_VERBOSE = false;
  * @param cut_size_loop_end The final value of the for loop for the range
  * of potential cut region sizes to loop over.
  *
- * @details No modifications made
+ * @details Appends any valid edge cuts to existing_cuts
  *
  * @return A vector of EdgeCut objects
  *
  */
-inline std::vector<EdgeCut>
-get_all_valid_edge_cuts_from_edge(int const root, int const cut_vertex,
+inline void
+get_all_valid_edge_cuts_from_edge(std::vector<EdgeCut> &existing_cuts, int const root, int const cut_vertex,
                                   int const cut_vertex_parent, int const total_region_size,
                                   double const below_pop, double const above_pop,
                                   double const lower, double const target, double const upper,
                                   std::vector<int> const &smaller_cut_sizes_to_try) {
 
-    std::vector<EdgeCut> valid_edges;
     // iterate over all possible valid sizes of the smaller region
     for (auto const cut_region1_size : smaller_cut_sizes_to_try) {
         int cut_region2_size = total_region_size - cut_region1_size;
@@ -80,7 +80,7 @@ get_all_valid_edge_cuts_from_edge(int const root, int const cut_vertex,
             // cut region 1 size is cut below
             int cut_below_region_size = cut_region1_size;
             int cut_above_region_size = cut_region2_size;
-            valid_edges.emplace_back(root, cut_vertex, cut_vertex_parent, cut_below_region_size,
+            existing_cuts.emplace_back(root, cut_vertex, cut_vertex_parent, cut_below_region_size,
                                      below_pop, cut_above_region_size, above_pop);
         }
 
@@ -102,12 +102,12 @@ get_all_valid_edge_cuts_from_edge(int const root, int const cut_vertex,
             // cut region 1 size is cut above
             int cut_below_region_size = cut_region2_size;
             int cut_above_region_size = cut_region1_size;
-            valid_edges.emplace_back(root, cut_vertex, cut_vertex_parent, cut_below_region_size,
+            existing_cuts.emplace_back(root, cut_vertex, cut_vertex_parent, cut_below_region_size,
                                      below_pop, cut_above_region_size, above_pop);
         }
     }
 
-    return valid_edges;
+    return;
 }
 
 /*
@@ -494,18 +494,12 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
             }
 
             // See if any valid edge cuts can be made with this edge
-            std::vector<EdgeCut> new_valid_edges = get_all_valid_edge_cuts_from_edge(
+            // if there are any the function will automatically add them 
+            get_all_valid_edge_cuts_from_edge(
+                valid_edges,
                 root, vtx, parent, total_region_size, pops_below_vertex[vtx],
                 total_region_pop - pops_below_vertex[vtx], lower, target, upper,
                 smaller_cut_sizes_to_try);
-
-            // if yes then add them
-            if (new_valid_edges.size() > 0) {
-                // REprintf("Added v=%d: Pop above = %f, Pop below = %f, parent = %d\n",
-                // cut_vertex, pop_above, pop_below, cut_vertex_parent);
-                valid_edges.insert(valid_edges.end(), new_valid_edges.begin(),
-                                   new_valid_edges.end());
-            }
         }
     }
 
@@ -514,7 +508,7 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
 }
 
 /*
- * Return a vector of all valid edge cuts in the tree
+ * Appends all valid edge cuts in the tree to existing_cuts
  *
  *
  * Returns a vector of all the valid edge cuts (ie an edge and regions for
@@ -541,12 +535,13 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
  * @param target Ideal population of a valid district. This is what deviance is calculated
  * relative to
  *
- * @details No modifications made
+ * @details Adds valid cuts to existing_cuts
  *
  * @return A vector of EdgeCut objects
  *
  */
-std::vector<EdgeCut> get_all_valid_edges_in_undirected_tree(
+void get_all_valid_edges_in_undirected_tree(
+    std::vector<EdgeCut> &existing_cuts,
     GraphEdgeIndex const &edge_index,
     EdgeBitset const &forest_edges, 
     const int root, const arma::uvec &pop, TreePopStack &stack,
@@ -555,7 +550,6 @@ std::vector<EdgeCut> get_all_valid_edges_in_undirected_tree(
     std::vector<int> const &smaller_cut_sizes_to_try, const int total_region_pop,
     const int total_region_size, const double lower, const double upper, const double target) {
 
-    std::vector<EdgeCut> valid_edges;
     // this is the largest size a region can be
     // If the population above is bigger than this you can terminate the serach
     // since pop above only gets larger as you continue down the tree
@@ -639,23 +633,15 @@ std::vector<EdgeCut> get_all_valid_edges_in_undirected_tree(
             }
 
             // See if any valid edge cuts can be made with this edge
-            std::vector<EdgeCut> new_valid_edges = get_all_valid_edge_cuts_from_edge(
+            // if yes,then the function will add them
+            get_all_valid_edge_cuts_from_edge(
+                existing_cuts,
                 root, vtx, parent, total_region_size, pops_below_vertex[vtx],
                 total_region_pop - pops_below_vertex[vtx], lower, target, upper,
                 smaller_cut_sizes_to_try);
-
-            // if yes then add them
-            if (new_valid_edges.size() > 0) {
-                // REprintf("Added v=%d: Pop above = %f, Pop below = %f, parent = %d\n",
-                // cut_vertex, pop_above, pop_below, cut_vertex_parent);
-                valid_edges.insert(valid_edges.end(), new_valid_edges.begin(),
-                                   new_valid_edges.end());
-            }
         }
     }
 
-    // Return the total population at the root
-    return valid_edges;
 }
 
 // finds all valid edges if you joined the two trees
@@ -673,8 +659,11 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
     std::fill(pops_below_vertex.begin(), pops_below_vertex.end(), 0);
     std::fill(no_valid_edges_vertices.begin(), no_valid_edges_vertices.end(), false);
 
+    // create the valid cut list
+    std::vector<EdgeCut> edge_across_valid_edge_cuts;
+
     // find the valid edges in this half of the tree
-    std::vector<EdgeCut> valid_tree1_edges = get_all_valid_edges_in_undirected_tree(
+    get_all_valid_edges_in_undirected_tree(edge_across_valid_edge_cuts,
         map_params.graph_edge_index, forest_edges,
         region1_root, map_params.pop, stack, pops_below_vertex,
         no_valid_edges_vertices, min_potential_cut_size, max_potential_cut_size,
@@ -682,7 +671,7 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
         map_params.lower, map_params.upper, map_params.target);
 
     // find the valid edges in this half of the tree
-    std::vector<EdgeCut> valid_tree2_edges = get_all_valid_edges_in_undirected_tree(
+    get_all_valid_edges_in_undirected_tree(edge_across_valid_edge_cuts,
         map_params.graph_edge_index, forest_edges, 
         region2_root, map_params.pop, stack, pops_below_vertex,
         no_valid_edges_vertices, min_potential_cut_size, max_potential_cut_size,
@@ -691,7 +680,8 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
 
     // Now add the joined cut
     // we make region2 the cut vertex and region1 the parent
-    std::vector<EdgeCut> edge_across_valid_edge_cuts = get_all_valid_edge_cuts_from_edge(
+    
+    get_all_valid_edge_cuts_from_edge(edge_across_valid_edge_cuts, 
         region1_root, region2_root, region1_root, total_merged_region_size,
         static_cast<double>(region2_pop), static_cast<double>(region1_pop), map_params.lower,
         map_params.target, map_params.upper, smaller_cut_sizes_to_try);
@@ -703,12 +693,6 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
                  (int)edge_across_valid_edge_cuts.size());
     }
 
-    // now add the edges from the two trees
-    edge_across_valid_edge_cuts.insert(edge_across_valid_edge_cuts.end(),
-                                       valid_tree1_edges.begin(), valid_tree1_edges.end());
-
-    edge_across_valid_edge_cuts.insert(edge_across_valid_edge_cuts.end(),
-                                       valid_tree2_edges.begin(), valid_tree2_edges.end());
 
     return edge_across_valid_edge_cuts;
 }

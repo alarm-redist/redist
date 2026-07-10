@@ -5,15 +5,14 @@
  * Builds a deterministic spanning tree on a county using depth first search
  */
 static void add_county_to_tree_dfs(
-    Graph const &g,
+    Graph const &county_restricted_g,
     int const county_id,
-    arma::uvec const &counties,
     std::vector<int> const &county_vertices, // vector of vertices in the county 
     std::vector<bool> &visited,
     FixedStack<int> &stack,
     Tree &ust
 ) {
-    int const V = static_cast<int>(g.size());
+    int const V = static_cast<int>(county_restricted_g.size());
     int const n_vtx = static_cast<int>(county_vertices.size());
 
     // Optional checks 
@@ -102,9 +101,9 @@ static void add_county_to_tree_dfs(
         }
 
 
-        for (auto const u : g[v]) {
-            if (u < 0 || u >= V) {
-                if constexpr(perf_config::bounds_checking){
+        for (auto const u : county_restricted_g[v]) {
+            if constexpr(perf_config::bounds_checking){
+                if (u < 0 || u >= V) {
                     std::ostringstream oss;
                     oss << "add_county_dfs_tree_edges saw invalid graph neighbor.\n";
                     oss << "county_id=" << county_id << "\n";
@@ -115,10 +114,9 @@ static void add_county_to_tree_dfs(
                 }
             }
 
-            // skip if not in the county 
-            if (counties[u] != county_id){
-                continue;
-            }
+            // because this graph only contains within county edges we don't need to check
+            // county status
+
             // ignore if we've already visited this vertex since it was added to the stack
             if (visited[u]) {
                 continue;
@@ -339,9 +337,8 @@ int sample_sub_ust(MapParams const &map_params, Tree &tree, int &root, double co
             // so we fill in a dummy tree 
             if (cty_pop_below[i] >= 0 && (miss_first && miss_second)) {
                 add_county_to_tree_dfs(
-                    map_params.g,
+                    map_params.county_restricted_graph,
                     map_params.counties[county_members[i][0]], // pass in the county CAREFUL COUNTIES ARE 1-indexed
-                    map_params.counties,
                     county_members[i],
                     visited,
                     dummy_county_tree_stack,

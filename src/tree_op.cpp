@@ -193,7 +193,51 @@ void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_i
 
     // start from the root
     vertex_queue.clear();
-    vertex_queue.push({root, -1});
+
+    // Handle root separately. The root has no parent edge to preserve or add.
+    region_ids[root] = new_region_id;
+
+    // Clear all stale packed forest edges incident to the root.
+    for (auto const &incident_edge : graph_edge_index.incident_edges[root]) {
+        int const u = static_cast<int>(incident_edge.neighbor);
+
+        if constexpr (perf_config::bounds_checking) {
+            if (u < 0 || u >= V) {
+                std::ostringstream oss;
+                oss << "assign_region_id_and_forest_from_tree saw invalid root neighbor.\n";
+                oss << "root=" << root << "\n";
+                oss << "u=" << u << "\n";
+                oss << "V=" << V << "\n";
+                throw std::runtime_error(oss.str());
+            }
+        }
+
+        forest_edges.clear_edge_id(incident_edge.edge_id);
+    }
+
+
+    // Push root's children. Every queued vertex now has a real parent.
+    for (int const child : ust[root]) {
+        if constexpr (perf_config::bounds_checking) {
+            if (child < 0 || child >= V) {
+                std::ostringstream oss;
+                oss << "assign_region_id_and_forest_from_tree saw invalid root child.\n";
+                oss << "root=" << root << "\n";
+                oss << "child=" << child << "\n";
+                oss << "V=" << V << "\n";
+                throw std::runtime_error(oss.str());
+            }
+
+            if (child == root) {
+                std::ostringstream oss;
+                oss << "assign_region_id_and_forest_from_tree saw root self-loop child.\n";
+                oss << "root=" << root << "\n";
+                throw std::runtime_error(oss.str());
+            }
+        }
+
+        vertex_queue.push({child, root});
+    }
 
     while (!vertex_queue.empty()) {
         auto const [v, parent] = vertex_queue.pop();
@@ -220,6 +264,10 @@ void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_i
 
         region_ids[v] = new_region_id;
 
+
+        // optional for sanity checking. Should be optimized out by compiler when not checking
+        bool found_parent_edge = false;
+
         // Clear stale packed forest edges incident to v.
         //
         // Do NOT clear the edge to parent, because that is the new tree edge
@@ -239,16 +287,29 @@ void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_i
             }
 
             if (u == parent) {
+                // Add the new tree edge from parent to v.
+                if constexpr (perf_config::supposedly_safe_input_checks){
+                    // this branch adds an extra check that we find a parent edge period. 
+                    found_parent_edge = true;
+                }else{ 
+                    // else we're not checking if a parent edge was found so just set now 
+                    forest_edges.set_edge_id(incident_edge.edge_id);
+                }
+                // continue so we don't remove this edge
                 continue;
             }
             // clear the edge
             forest_edges.clear_edge_id(incident_edge.edge_id);
         }
-
-        // Add the new tree edge from parent to v.
-        // this just makes sure you don't add the root 
-        if (parent != -1) {
-            forest_edges.set_edge(v, parent, graph_edge_index);
+        
+        if constexpr (perf_config::supposedly_safe_input_checks) {
+            if (!found_parent_edge) {
+                std::ostringstream oss;
+                oss << "assign_region_id_and_forest_from_tree could not find parent edge.\n";
+                oss << "v=" << v << "\n";
+                oss << "parent=" << parent << "\n";
+                throw std::runtime_error(oss.str());
+            }
         }
 
         for (int const child : ust[v]) {
