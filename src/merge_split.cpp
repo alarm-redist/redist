@@ -215,7 +215,7 @@ Rcpp::List ms_plans(
             Rprintf("Checkpoint 6!\n");
         // Loading Info
         if (verbosity >= 1) {
-            Rcout.imbue(std::locale::classic());
+            Rcout.imbue(std::locale(""));
             Rcout << std::fixed << std::setprecision(0);
             Rcout << "MERGE SPLIT MONTE CARLO" << std::endl;
             Rcout << "Using " << sampling_space_to_str(sampling_space);

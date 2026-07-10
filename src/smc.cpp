@@ -128,12 +128,13 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
     // temporary buffers to hold info 
     std::vector<int> parent_index_buffer(M, 0);
     std::vector<int> draw_tries_buffer(M, 0);
-    // std::vector<int> parent_unsuccessful_by_thread(num_threads * M, 0);
-    std::vector<std::atomic<int>> parent_unsuccessful_tries_atomic(M);
+    std::vector<int> parent_unsuccessful_by_thread(num_threads * M, 0);
+    // std::vector<std::atomic<int>> parent_unsuccessful_tries_atomic(M);
 
-    for (int i = 0; i < M; ++i) {
-        parent_unsuccessful_tries_atomic[i].store(0, std::memory_order_relaxed);
-    }
+    // for (int i = 0; i < M; ++i) {
+    //     parent_unsuccessful_tries_atomic[i].store(0, std::memory_order_relaxed);
+    // }
+
 
     // count the sizes we draw trees on
     std::vector<std::vector<int>> thread_tree_sizes(
@@ -358,12 +359,11 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
                 if (diagnostic_level >= 0) {
                     // not atomic so technically not thread safe but doesn't seem to differ in
                     // practice
-                    parent_unsuccessful_tries_atomic[idx].fetch_add(
-                        1,
-                        std::memory_order_relaxed
-                    );
-                    // parent_unsuccessful_by_thread[idx]++;
-                    // ++parent_unsuccessful_by_thread[thread_id * M + idx];
+                    // parent_unsuccessful_tries_atomic[idx].fetch_add(
+                    //     1,
+                    //     std::memory_order_relaxed
+                    // );
+                    ++parent_unsuccessful_by_thread[thread_id * M + idx];
                 }
             }
         }
@@ -490,10 +490,15 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
         smc_diagnostics.parent_index_mat(i, smc_step_num) = parent_index_buffer[i]; 
         smc_diagnostics.draw_tries_mat(i, step_num) = draw_tries_buffer[i];
 
-        smc_diagnostics.parent_unsuccessful_tries_mat(i, smc_step_num) =
-            parent_unsuccessful_tries_atomic[i].load(std::memory_order_relaxed);
+        // smc_diagnostics.parent_unsuccessful_tries_mat(i, smc_step_num) =
+        //     parent_unsuccessful_tries_atomic[i].load(std::memory_order_relaxed);
+        for (size_t thread_id = 0; thread_id < num_threads; thread_id++)
+        {
+            smc_diagnostics.parent_unsuccessful_tries_mat(i, smc_step_num) +=
+            parent_unsuccessful_by_thread[thread_id * M + i];
+        }
     }
-    
+
 
     // update tree sizes counts
     for (size_t region_size = 0; region_size < map_params.total_seats; region_size++) {
@@ -990,7 +995,7 @@ List run_redist_smc(
 
         // Loading Info
         if (verbosity >= 1) {
-            Rcout.imbue(std::locale::classic());
+            Rcout.imbue(std::locale(""));
             Rcout << std::fixed << std::setprecision(0);
             if (!split_district_only) {
                 Rcout << "GENERALIZED SEQUENTIAL MONTE CARLO";
