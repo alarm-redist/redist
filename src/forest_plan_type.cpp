@@ -98,15 +98,10 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
     TreeSplitter &edge_splitter, ScoringFunction const &scoring_function) {
     int const V = plan_multigraph.map_params.V;
 
-    // copy the packed forest into the vector tree
-    forest_edges.fill_vector_tree(ust_sampler.map_params.graph_edge_index, ust_sampler.forest_scratch_tree);
-
     if constexpr (perf_config::object_integrity_checking){
-        plan.check_forest_equality(
-            forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
-            ust_sampler.forest_scratch_tree,
+        plan.check_forest_integrity(
             ust_sampler.map_params.graph_edge_index,
-            "IN compute_log_tree_eff_boundary_lens, checking forest_edges vs forest scratch tree"
+            "IN compute_log_tree_eff_boundary_lens, checking forest_edges integrity"
         );
     }
 
@@ -170,7 +165,7 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
 
             double log_edge_selection_prob =
                 edge_splitter.get_log_retroactive_splitting_prob_for_joined_tree(
-                    plan_multigraph.map_params, scoring_function, ust_sampler.forest_scratch_tree,
+                    plan_multigraph.map_params, scoring_function, forest_edges,
                     ust_sampler.stack, ust_sampler.visited, ust_sampler.pops_below_vertex, v,
                     v_nbor, plan, min_possible_cut_size, max_possible_cut_size,
                     splitting_schedule
@@ -228,17 +223,12 @@ double ForestPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
                                             const int region1_id, int const region2_id) const {
     // reset the neccesary variables
     ust_sampler.stack.clear();
-    // TODO write version that only edits the edges in the region 
-    // copy the packed forest into the vector tree
-    forest_edges.fill_vector_tree(ust_sampler.map_params.graph_edge_index, ust_sampler.forest_scratch_tree);
 
     if constexpr (perf_config::object_integrity_checking){
-        check_forest_equality(
-            forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
-            ust_sampler.forest_scratch_tree,
+        check_forest_integrity(
             ust_sampler.map_params.graph_edge_index,
-            "IN get_log_eff_boundary_len, checking forest_edges vs forest scratch tree"
-        );        
+            "IN get_log_eff_boundary_len, checking forest_edges integrity"
+        );
     }
 
 
@@ -275,7 +265,7 @@ double ForestPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
 
             double log_edge_selection_prob =
                 tree_splitter.get_log_retroactive_splitting_prob_for_joined_tree(
-                    plan_multigraph.map_params, scoring_function, ust_sampler.forest_scratch_tree,
+                    plan_multigraph.map_params, scoring_function, forest_edges,
                     ust_sampler.stack, ust_sampler.visited, ust_sampler.pops_below_vertex, v,
                     nbor, *this, min_possible_cut_size, max_possible_cut_size,
                     splitting_schedule

@@ -18,7 +18,7 @@ class USTSampler {
   private:
   public:
     USTSampler(MapParams const &map_params, SplittingSchedule const &splitting_schedule)
-        : ust(init_tree(map_params.V)), forest_scratch_tree(init_tree(map_params.V)),
+        : ust(init_tree(map_params.V)),
         pops_below_vertex(map_params.V, 0),
           visited(map_params.V), ignore(map_params.V), stack(map_params.V + 1),
           county_tree(init_tree(map_params.num_counties)),
@@ -33,13 +33,11 @@ class USTSampler {
             for (size_t v = 0; v < map_params.V; v++)
             {
               ust[v].reserve(map_params.g[v].size());
-              forest_scratch_tree[v].reserve(map_params.g[v].size());
             }
              
           };
 
     Tree ust;
-    Tree forest_scratch_tree;
     std::vector<int> pops_below_vertex;
     std::vector<bool> visited, ignore;
     int root;

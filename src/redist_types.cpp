@@ -87,7 +87,7 @@ int count_undirected_edges(Graph const &g) {
     for (int v = 0; v < static_cast<int>(g.size()); ++v) {
         for (int u : g[v]) {
             if (u < 0 || u >= static_cast<int>(g.size())) {
-                throw Rcpp::exception("GraphEdgeIndex found invalid neighbor index!");
+                throw std::runtime_error("GraphEdgeIndex found invalid neighbor index!");
             }
             total_edge_count++; // this counts total edges
 

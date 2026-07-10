@@ -92,14 +92,15 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
     const int total_region_size, const double lower, const double upper, const double target);
 
 std::vector<EdgeCut> get_all_valid_edges_in_undirected_tree(
-    const Tree &a_ust, const int root, const arma::uvec &pop, TreePopStack &stack,
+    GraphEdgeIndex const &edge_index, EdgeBitset const &forest_edges,  
+    const int root, const arma::uvec &pop, TreePopStack &stack,
     std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
     const int min_potential_cut_size, const int max_potential_cut_size,
     std::vector<int> const &smaller_cut_sizes_to_try, const int total_region_pop,
     const int total_region_size, const double lower, const double upper, const double target);
 
 std::vector<EdgeCut> get_valid_edges_in_joined_tree(
-    MapParams const &map_params, Tree const &forest_graph, TreePopStack &stack,
+    MapParams const &map_params, EdgeBitset const &forest_edges, TreePopStack &stack,
     std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
     const int region1_root, const int region1_pop, const int region2_root,
     const int region2_pop, const int min_potential_cut_size, const int max_potential_cut_size,

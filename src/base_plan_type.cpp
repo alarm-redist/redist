@@ -3159,7 +3159,7 @@ double TreeSplitter::get_log_selection_prob(std::vector<EdgeCut> &valid_edges, i
 
 double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
     MapParams const &map_params, ScoringFunction const &scoring_function,
-    Tree const &forest_graph, TreePopStack &stack, std::vector<bool> &visited,
+    EdgeBitset const &forest_edges, TreePopStack &stack, std::vector<bool> &visited,
     std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
     Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
     std::vector<int> const &smaller_cut_sizes_to_try) {
@@ -3172,7 +3172,7 @@ double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
 
     // Get all the valid edges in the joined tree
     std::vector<EdgeCut> valid_edges = get_valid_edges_in_joined_tree(
-        map_params, forest_graph, stack, pops_below_vertex, visited, region1_root,
+        map_params, forest_edges, stack, pops_below_vertex, visited, region1_root,
         region1_population, region2_root, region2_population, min_potential_cut_size,
         max_potential_cut_size, smaller_cut_sizes_to_try, total_merged_region_size);
 
@@ -3516,7 +3516,7 @@ void assign_region_ids_from_joined_undirected_tree(
 
 double ConstraintSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
     MapParams const &map_params, ScoringFunction const &scoring_function,
-    Tree const &forest_graph, TreePopStack &stack, std::vector<bool> &visited,
+    EdgeBitset const &forest_edges, TreePopStack &stack, std::vector<bool> &visited,
     std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
     Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
     std::vector<int> const &smaller_cut_sizes_to_try) {
@@ -3532,7 +3532,7 @@ double ConstraintSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
 
     // Get all the valid edges in the joined tree
     std::vector<EdgeCut> valid_edges = get_valid_edges_in_joined_tree(
-        map_params, forest_graph, stack, pops_below_vertex, visited, region1_root,
+        map_params, forest_edges, stack, pops_below_vertex, visited, region1_root,
         region1_population, region2_root, region2_population, min_potential_cut_size,
         max_potential_cut_size, smaller_cut_sizes_to_try, total_merged_region_size);
 
@@ -3566,7 +3566,7 @@ double ConstraintSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
 
     int actual_cut_edge_index = std::distance(valid_edges.begin(), it);
     // copy the forest over
-    dummy_forest = forest_graph;
+    dummy_forest = forest_edges.get_graph_tree(map_params.graph_edge_index);
     // add the actual removed edge back
     dummy_forest[region1_root].push_back(region2_root);
     dummy_forest[region2_root].push_back(region1_root);

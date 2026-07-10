@@ -564,7 +564,7 @@ class TreeSplitter {
     // the trees in the two regions
     virtual double get_log_retroactive_splitting_prob_for_joined_tree(
         MapParams const &map_params, ScoringFunction const &scoring_function,
-        Tree const &forest_graph, TreePopStack &stack, std::vector<bool> &visited,
+        EdgeBitset const &forest_edges, TreePopStack &stack, std::vector<bool> &visited,
         std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
         Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
         std::vector<int> const &smaller_cut_sizes_to_try);
@@ -742,7 +742,7 @@ class ConstraintSplitter : public TreeSplitter {
 
     double get_log_retroactive_splitting_prob_for_joined_tree(
         MapParams const &map_params, ScoringFunction const &scoring_function,
-        Tree const &forest_graph, TreePopStack &stack, std::vector<bool> &visited,
+        EdgeBitset const &forest_edges, TreePopStack &stack, std::vector<bool> &visited,
         std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
         Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
         std::vector<int> const &smaller_cut_sizes_to_try) override;

@@ -546,9 +546,10 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
  * @return A vector of EdgeCut objects
  *
  */
-// a_ust can be either a directed or undirected tree!!
 std::vector<EdgeCut> get_all_valid_edges_in_undirected_tree(
-    const Tree &a_ust, const int root, const arma::uvec &pop, TreePopStack &stack,
+    GraphEdgeIndex const &edge_index,
+    EdgeBitset const &forest_edges, 
+    const int root, const arma::uvec &pop, TreePopStack &stack,
     std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
     const int min_potential_cut_size, const int max_potential_cut_size,
     std::vector<int> const &smaller_cut_sizes_to_try, const int total_region_pop,
@@ -569,10 +570,14 @@ std::vector<EdgeCut> get_all_valid_edges_in_undirected_tree(
     // Elements are: vertex, parent, is_revisiting
     stack.clear();
 
+
     // Start by adding all the roots children to the stack
-    for (auto const &root_children : a_ust[root]) {
-        stack.push({root_children, root, false});
-    }
+    // This essentially iterates over each vertex which is adjacent
+    // to the root in the forest edge and applies the anonymous function
+    // so root_child is the neighbor of root
+    forest_edges.for_each_neighbor(root, edge_index, [&](int const root_child) {
+        stack.push({root_child, root, false});
+    });
 
     // Loop until the stack is empty
     while (!stack.empty()) {
@@ -584,14 +589,16 @@ std::vector<EdgeCut> get_all_valid_edges_in_undirected_tree(
             // Push the vertex back onto the stack as "revisiting"
             stack.push({vtx, parent, true});
 
+
             // Push unvisited child vertices onto the stack to get pop below
-            for (const auto &child_vtx : a_ust[vtx]) {
-                // if its the parent then skip it
-                if (child_vtx == parent)
-                    continue;
-                // else add to the stack
+            // Again using the anonymous function
+            forest_edges.for_each_neighbor(vtx, edge_index, [&](int const child_vtx) {
+                // skip if its the parent
+                if (child_vtx == parent) {
+                    return;
+                }
                 stack.push({child_vtx, vtx, false});
-            }
+            });
         } else if (no_valid_edges_vertices[vtx]) {
             // if parent isn't valid then neither is its parent so mark that
             no_valid_edges_vertices[parent] = true;
@@ -602,14 +609,20 @@ std::vector<EdgeCut> get_all_valid_edges_in_undirected_tree(
             // anymore
 
             // All children of this vertex are processed; calculate its population below
-            int pop_below_vtx = pop(vtx); // Start with the vertex's own population
+            int pop_below_vtx = pop[vtx]; // Start with the vertex's own population
+            
+
             // Add population below from each child
-            for (const auto &child : a_ust[vtx]) {
-                // ignore the parent
-                if (child == parent)
-                    continue;
-                pop_below_vtx += pops_below_vertex[child]; // Add population from child vertices
-            }
+            // again using anonymous lambdas
+            forest_edges.for_each_neighbor(vtx, edge_index, [&](int const child) {
+                // ignore the parent 
+                if (child == parent) {
+                    return;
+                }
+                // sum up the pop below 
+                pop_below_vtx += pops_below_vertex[child];
+            });
+
             pops_below_vertex[vtx] = pop_below_vtx;
 
             // Check if any cut can be made
@@ -649,7 +662,7 @@ std::vector<EdgeCut> get_all_valid_edges_in_undirected_tree(
 // with the edge (region1_root, region2_root)
 // THIS INCLUDES (region1_root, region2_root) as an edge!!
 std::vector<EdgeCut> get_valid_edges_in_joined_tree(
-    MapParams const &map_params, Tree const &forest_graph, TreePopStack &stack,
+    MapParams const &map_params, EdgeBitset const &forest_edges, TreePopStack &stack,
     std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
     const int region1_root, const int region1_pop, const int region2_root,
     const int region2_pop, const int min_potential_cut_size, const int max_potential_cut_size,
@@ -660,45 +673,21 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
     std::fill(pops_below_vertex.begin(), pops_below_vertex.end(), 0);
     std::fill(no_valid_edges_vertices.begin(), no_valid_edges_vertices.end(), false);
 
-    // auto t1_start = std::chrono::steady_clock::now();
-
     // find the valid edges in this half of the tree
     std::vector<EdgeCut> valid_tree1_edges = get_all_valid_edges_in_undirected_tree(
-        forest_graph, region1_root, map_params.pop, stack, pops_below_vertex,
+        map_params.graph_edge_index, forest_edges,
+        region1_root, map_params.pop, stack, pops_below_vertex,
         no_valid_edges_vertices, min_potential_cut_size, max_potential_cut_size,
         smaller_cut_sizes_to_try, total_merged_region_pop, total_merged_region_size,
         map_params.lower, map_params.upper, map_params.target);
-
-    // auto t1_end = std::chrono::steady_clock::now();
-    // //     /* Getting number of milliseconds as a double. */
-    // std::chrono::duration<double, std::milli> t1 = t1_end - t1_start;
-
-    // build the tree starting from root 2
-    // auto t2_start = std::chrono::steady_clock::now();
 
     // find the valid edges in this half of the tree
     std::vector<EdgeCut> valid_tree2_edges = get_all_valid_edges_in_undirected_tree(
-        forest_graph, region2_root, map_params.pop, stack, pops_below_vertex,
+        map_params.graph_edge_index, forest_edges, 
+        region2_root, map_params.pop, stack, pops_below_vertex,
         no_valid_edges_vertices, min_potential_cut_size, max_potential_cut_size,
         smaller_cut_sizes_to_try, total_merged_region_pop, total_merged_region_size,
         map_params.lower, map_params.upper, map_params.target);
-
-    // auto t2_end = std::chrono::steady_clock::now();
-    // //     /* Getting number of milliseconds as a double. */
-    // std::chrono::duration<double, std::milli> t2 = t2_end - t2_start;
-
-    // Rcout << "  " << std::setprecision(2) << "Total Time "
-    //     << t1_build.count() + t2_build.count() + t1_search.count() + t2_search.count()
-    //     << " - Tree 1:" << t1_build.count();
-
-    // auto func_end = std::chrono::steady_clock::now();
-    // std::chrono::duration<double, std::milli> func_time = func_end - func_start;
-
-    // REprintf(
-    //     "NEW CODE - Total Time %.6f ms - Tree op Time %.6f ms - Tree 1: %.6f, Tree 2 %.6f
-    //     \n\n", func_time.count(), t1.count() + t2.count(), t1.count(),  t2.count()
-    // );
-    // REprintf("%f), ", func_time.count());
 
     // Now add the joined cut
     // we make region2 the cut vertex and region1 the parent

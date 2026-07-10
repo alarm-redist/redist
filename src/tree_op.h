@@ -166,6 +166,57 @@ class EdgeBitset {
         return test_edge_id(edge_index.get_edge_id(v, u));
     }
 
+    // Applies a function to each 
+    template <typename Fn>
+    void for_each_neighbor(
+        int const v,
+        GraphEdgeIndex const &edge_index,
+        Fn &&fn
+    ) const {
+        if constexpr (perf_config::bounds_checking) {
+            if (v < 0 || v >= edge_index.V) {
+                std::ostringstream oss;
+                oss << "EdgeBitset::for_each_neighbor got invalid vertex.\n";
+                oss << "v=" << v << "\n";
+                oss << "edge_index.V=" << edge_index.V << "\n";
+                throw std::runtime_error(oss.str());
+            }
+        }
+
+        for (auto const &incident_edge : edge_index.incident_edges[v]) {
+            if (test_edge_id(incident_edge.edge_id)) {
+                fn(static_cast<int>(incident_edge.neighbor));
+            }
+        }
+    }
+
+    // files the vector out with all the neighbors of v in the packed forest
+    std::vector<int> neighbors(
+        int const v,
+        GraphEdgeIndex const &edge_index
+    ) const {
+        if constexpr (perf_config::bounds_checking) {
+            if (v < 0 || v >= edge_index.V) {
+                std::ostringstream oss;
+                oss << "EdgeBitset::neighbors got invalid vertex.\n";
+                oss << "v=" << v << "\n";
+                oss << "edge_index.V=" << edge_index.V << "\n";
+                throw std::runtime_error(oss.str());
+            }
+        }
+
+        std::vector<int> out;
+        out.reserve(edge_index.incident_edges[v].size());
+
+        for (auto const &incident_edge : edge_index.incident_edges[v]) {
+            if (test_edge_id(incident_edge.edge_id)) {
+                out.push_back(static_cast<int>(incident_edge.neighbor));
+            }
+        }
+
+        return out;
+    }
+
     template <typename Fn>
     void for_each_tree_edge(GraphEdgeIndex const &edge_index, Fn &&fn) const {
         for (EdgeID edge_id = 0; edge_id < static_cast<EdgeID>(edge_index.edges.size());

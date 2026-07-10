@@ -233,6 +233,7 @@ class GraphEdgeIndex {
 
     int const num_edges;
     int const V;
+    int max_num_edges; // TODO make constant and initialized lated 
 
     GraphEdgeIndex() = default;
 
@@ -247,9 +248,17 @@ class GraphEdgeIndex {
         seen_edges.reserve(static_cast<std::size_t>(num_edges) * 2);
 
         int const V = static_cast<int>(g.size());
+        max_num_edges = 1;
 
         for (int v = 0; v < V; ++v) {
-            incident_edges[v].reserve(g[v].size());
+            auto num_v_edges = g[v].size();
+            incident_edges[v].reserve(num_v_edges);
+
+            // update the max number of edges if this is larger
+            if (num_v_edges > max_num_edges){
+                max_num_edges = num_v_edges;
+            }
+           
 
             std::unordered_set<int> seen_neighbors_for_v;
             seen_neighbors_for_v.reserve(g[v].size());
