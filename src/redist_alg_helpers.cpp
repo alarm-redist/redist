@@ -1015,25 +1015,6 @@ void PlanEnsemble::check_all_plans_valid(
                 map_params.graph_edge_index,
                 forest_msg
             );
-
-            try {
-                Tree const forest_graph = plan->get_forest_adj();
-                Tree const packed_graph =
-                    plan->get_forest_edges().get_graph_tree(map_params.graph_edge_index);
-
-                plan->check_forest_equality(
-                    forest_graph,
-                    packed_graph,
-                    map_params.graph_edge_index,
-                    forest_msg + ", checking forest_graph vs packed forest"
-                );
-            } catch (std::exception const &e) {
-                std::ostringstream msg;
-                msg << "Forest graph / packed forest equality check failed or is unsupported.\n";
-                msg << "Underlying exception:\n";
-                msg << e.what() << "\n";
-                fail_plan(msg.str());
-            }
         }
     }
 }

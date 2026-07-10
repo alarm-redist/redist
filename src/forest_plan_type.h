@@ -13,7 +13,6 @@ class ForestPlan : public Plan {
                IntPlanAttribute &this_plan_order_added, PlanEdgeBits &this_plan_forest_edge_bits)
         : Plan(total_seats, total_pop, this_plan_region_ids, this_plan_region_sizes,
                this_plan_region_pops, this_plan_order_added, this_plan_forest_edge_bits) {
-        forest_graph.resize(region_ids.size());
     };
 
     // constructor for partial plan (more than 1 region)

@@ -96,11 +96,6 @@ class Plan {
   protected:
     EdgeBitset forest_edges;
     mutable std::vector<LinkingEdge> linking_edges;
-    // Temporary compatibility cache.
-    // Keep this while migrating old code that expects VertexGraph.
-    Tree forest_graph;
-
-    
 
   public:
     // constructor for a blank plan
@@ -252,6 +247,7 @@ class Plan {
 
     bool forest_graph_equals_order_insensitive(
         Tree const &other,
+        GraphEdgeIndex const &graph_edge_index,
         std::string &out
     ) const;
 

@@ -11,8 +11,6 @@ ForestPlan::ForestPlan(int const ndists, int const num_regions, const arma::uvec
                        RNGState &rng_state, const Rcpp::List &initial_forest_adj_list)
     : Plan(num_regions, pop, this_plan_region_ids, this_plan_region_sizes,
            this_plan_region_pops, this_plan_order_added, this_plan_forest_edge_bits) {
-    // resize the forest graph
-    forest_graph.resize(region_ids.size());
 
     if (initial_forest_adj_list.size() > 1) {
         throw Rcpp::exception("Input Forest list not supported right now\n");
@@ -37,7 +35,7 @@ ForestPlan::ForestPlan(int const ndists, int const num_regions, const arma::uvec
 
     if constexpr(perf_config::object_integrity_checking){
         check_forest_equality(
-            forest_graph,
+            ust,
             forest_edges.get_graph_tree(map_params.graph_edge_index),
             map_params.graph_edge_index,
             "IN Partial Forest Plan Constructor, checking forest_graph vs forest edges (through get_graph_tree)"
@@ -46,7 +44,7 @@ ForestPlan::ForestPlan(int const ndists, int const num_regions, const arma::uvec
 
 }
 
-Tree ForestPlan::get_forest_adj() { return forest_graph; }
+Tree ForestPlan::get_forest_adj() { throw std::runtime_error("get_forest_adj not supported right now!\n") ; }
 
 // IT IS VERY IMPORTANT THAT FOR SMC split_region1_id is the id of the multidistrict
 // The idea is any other split regions have not actually been updated yet 
@@ -95,7 +93,7 @@ void ForestPlan::update_vertex_and_plan_specific_info_from_cut(
  */
 std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundary_lens(
     const ForestPlan &plan, EdgeBitset const &forest_edges,
-    Tree const &forest_graph, PlanMultigraph &plan_multigraph,
+    PlanMultigraph &plan_multigraph,
     const SplittingSchedule &splitting_schedule, USTSampler &ust_sampler,
     TreeSplitter &edge_splitter, ScoringFunction const &scoring_function) {
     int const V = plan_multigraph.map_params.V;
@@ -105,16 +103,10 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
 
     if constexpr (perf_config::object_integrity_checking){
         plan.check_forest_equality(
-            forest_graph,
             forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
-            ust_sampler.map_params.graph_edge_index,
-            "IN compute_log_tree_eff_boundary_lens, checking forest_graph vs forest edges (through get_graph_tree)"
-        );
-        plan.check_forest_equality(
-            forest_graph,
             ust_sampler.forest_scratch_tree,
             ust_sampler.map_params.graph_edge_index,
-            "IN compute_log_tree_eff_boundary_lens, checking forest_graph vs forest scratch tree"
+            "IN compute_log_tree_eff_boundary_lens, checking forest_edges vs forest scratch tree"
         );
     }
 
@@ -222,7 +214,7 @@ ForestPlan::get_valid_adj_regions_and_eff_log_boundary_lens(
 
     // get pairs and log tree effective boundary
     auto region_pairs_tuple_vec = compute_log_tree_eff_boundary_lens(
-        *this, forest_edges, forest_graph, plan_multigraph, splitting_schedule, ust_sampler, tree_splitter,
+        *this, forest_edges, plan_multigraph, splitting_schedule, ust_sampler, tree_splitter,
         scoring_function);
 
     return region_pairs_tuple_vec;
@@ -242,17 +234,10 @@ double ForestPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
 
     if constexpr (perf_config::object_integrity_checking){
         check_forest_equality(
-            forest_graph,
             forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
-            ust_sampler.map_params.graph_edge_index,
-            "IN get_log_eff_boundary_len, checking forest_graph vs forest edges (through get_graph_tree)"
-        );
-
-        check_forest_equality(
-            forest_graph,
             ust_sampler.forest_scratch_tree,
             ust_sampler.map_params.graph_edge_index,
-            "IN get_log_eff_boundary_len, checking forest_graph vs forest scratch tree"
+            "IN get_log_eff_boundary_len, checking forest_edges vs forest scratch tree"
         );        
     }
 

@@ -468,13 +468,6 @@ void Plan::shallow_copy(Plan const &plan_to_copy) {
     if (!forest_edges.empty()){
         forest_edges.copy(plan_to_copy.forest_edges);
     }
-    // if forest graph bigger than 1 copy that
-    if (plan_to_copy.forest_graph.size() > 0) {
-        for (auto i = 0; i < forest_graph.size(); ++i) {
-            forest_graph[i].assign(plan_to_copy.forest_graph[i].begin(),
-                                   plan_to_copy.forest_graph[i].end());
-        }
-    }
 
     // if linking edges exist then copy that
     if (plan_to_copy.linking_edges.size() > 0) {
@@ -737,16 +730,11 @@ Plan::draw_tree_on_region(const MapParams &map_params, const int region_to_draw_
         map_params.graph_edge_index
     );
 
-    // clear this vertices neighbors in the graph and reserve size for children
-    forest_graph[root].clear();
-    forest_graph[root].reserve(n_desc);
-
     // make a queue of vertex, parent
     std::queue<std::pair<int, int>> vertex_queue;
     // add roots children to queue
     for (auto const &child_vertex : ust[root]) {
         vertex_queue.push({child_vertex, root});
-        forest_graph[root].push_back(child_vertex);
         // Add this edge to the packed forest 
         forest_edges.set_edge(root, child_vertex, map_params.graph_edge_index);
     }
@@ -758,13 +746,6 @@ Plan::draw_tree_on_region(const MapParams &map_params, const int region_to_draw_
         int vertex = queue_pair.first;
         int parent_vertex = queue_pair.second;
         vertex_queue.pop();
-
-        // clear this vertices neighbors in the graph and reserve size for children and parent
-        forest_graph[vertex].clear();
-        forest_graph[vertex].reserve(ust[vertex].size() + 1);
-        // add the edge from vertex to parent
-        forest_graph[vertex].push_back(parent_vertex);
-
         // Add this edge to the packed forest 
         forest_edges.set_edge(vertex, parent_vertex, map_params.graph_edge_index);
 
@@ -772,7 +753,6 @@ Plan::draw_tree_on_region(const MapParams &map_params, const int region_to_draw_
             // add children to queue
             vertex_queue.push({child_vertex, vertex});
             // add this edge from vertex to its children
-            forest_graph[vertex].push_back(child_vertex);
             forest_edges.set_edge(vertex, child_vertex, map_params.graph_edge_index);
         }
     }
@@ -872,13 +852,6 @@ void Plan::update_plan_ids_and_forest_from_cut(TreeSplitter const &tree_splitter
     cut_edge.get_split_regions_info(split_region1_tree_root, split_region1_size,
                                     split_region1_pop, split_region2_tree_root,
                                     split_region2_size, split_region2_pop);
-    
-    check_forest_equality(
-        forest_graph,
-        forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
-        ust_sampler.map_params.graph_edge_index,
-        "IN update_plan_ids_and_forest_from_cut BEFORE updating, checking forest_graph vs forest edges (through get_graph_tree)"
-    );
 
     // If we're adding the region just clear this one 
     if (add_region){
@@ -910,7 +883,7 @@ void Plan::update_plan_ids_and_forest_from_cut(TreeSplitter const &tree_splitter
     }
     // update the vertex labels and the tree for region 1
     assign_region_id_and_forest_from_tree(ust_sampler.ust, region_ids, 
-                                          forest_graph, forest_edges,
+                                          forest_edges,
                                           split_region1_tree_root, split_region1_id,
                                           ust_sampler.map_params.graph_edge_index,
                                           ust_sampler.vertex_queue);
@@ -925,19 +898,10 @@ void Plan::update_plan_ids_and_forest_from_cut(TreeSplitter const &tree_splitter
         );
     }
     assign_region_id_and_forest_from_tree(ust_sampler.ust, region_ids, 
-                                          forest_graph, forest_edges,
+                                          forest_edges,
                                           split_region2_tree_root, split_region2_id,
                                           ust_sampler.map_params.graph_edge_index,
                                           ust_sampler.vertex_queue);
-
-    if constexpr(perf_config::object_integrity_checking){
-        check_forest_equality(
-            forest_graph,
-            forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
-            ust_sampler.map_params.graph_edge_index, 
-            "IN update_plan_ids_and_forest_from_cut AFTER updating, checking forest_graph vs forest edges (through get_graph_tree)"
-        );
-    }
 
 }
 
@@ -1148,16 +1112,6 @@ void Plan::check_forest_integrity(
     std::ostringstream oss;
     bool failed = false;
 
-    if (forest_graph.size() != static_cast<std::size_t>(graph_edge_index.V)) {
-        oss << msg << "\n";
-        oss << "FOREST GRAPH: forest_graph is size "
-            << forest_graph.size()
-            << " when V=" << graph_edge_index.V << "!\n";
-        oss << debug_string(true);
-
-        throw std::runtime_error(oss.str());
-    }
-
     int graph_forest_cross_region_edge_count = 0;
     int packed_forest_cross_region_edge_count = 0;
 
@@ -1170,31 +1124,6 @@ void Plan::check_forest_integrity(
                 << ": region_ids[" << v << "]=" << v_region
                 << ", num_regions=" << num_regions << "\n";
             continue;
-        }
-
-        for (int const u_raw : forest_graph[v]) {
-            int const u = static_cast<int>(u_raw);
-
-            if (u < 0 || u >= graph_edge_index.V) {
-                failed = true;
-
-                oss << "FOREST GRAPH: Invalid neighbor "
-                    << u << " found in forest_graph[" << v
-                    << "] when V=" << graph_edge_index.V << "!\n";
-
-                continue;
-            }
-
-            int const u_region = static_cast<int>(region_ids[u]);
-
-            if (v_region != u_region) {
-                failed = true;
-                ++graph_forest_cross_region_edge_count;
-
-                oss << "FOREST GRAPH CROSS-REGION EDGE: pair ("
-                    << v << ", " << u << "), v-region="
-                    << v_region << ", u-region=" << u_region << "\n";
-            }
         }
 
         for (auto const &incident_edge : graph_edge_index.incident_edges[v]) {
@@ -1243,9 +1172,12 @@ void Plan::check_forest_integrity(
 
 bool Plan::forest_graph_equals_order_insensitive(
     Tree const &other,
+    GraphEdgeIndex const &graph_edge_index, 
     std::string &out
 ) const {
     std::ostringstream oss;
+
+    auto forest_graph = forest_edges.get_graph_tree(graph_edge_index);
 
     if (forest_graph.size() != other.size()) {
         oss << "forest_graph sizes differ: "

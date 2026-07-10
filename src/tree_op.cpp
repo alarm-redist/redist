@@ -158,13 +158,13 @@ void assign_region_id_from_tree(Tree const &ust, PlanVector &region_ids, int con
 
 // updates both the vertex labels and the forest adjacency from a directed tree
 void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_ids,
-                                           Tree &forest_graph, EdgeBitset &forest_edges,
+                                           EdgeBitset &forest_edges,
                                            int root,
                                            const int new_region_id,
                                            const GraphEdgeIndex &graph_edge_index,
                                            CircularQueue<std::pair<int, int>> &vertex_queue) {
 
-    int const V = forest_graph.size();
+    int const V = graph_edge_index.V;
 
     if constexpr (perf_config::supposedly_safe_input_checks){
         if (static_cast<int>(ust.size()) != V) {
@@ -180,9 +180,6 @@ void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_i
     region_ids[root] = new_region_id;
     // and its forest vertices
     int n_desc = ust[root].size();
-    // clear this vertices neighbors in the graph and reserve size for children
-    forest_graph[root].clear();
-    forest_graph[root].reserve(n_desc);
 
     // add roots children to queue
     for (auto const &child_vertex : ust[root]) {
@@ -190,7 +187,6 @@ void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_i
             check_vertex_in_range(child_vertex, V, "assign_region_id_and_forest_from_tree root child (1st time)");
         }
         vertex_queue.push({child_vertex, root});
-        forest_graph[root].push_back(child_vertex);
         // Now add this edge to the packed forest 
         forest_edges.set_edge(root, child_vertex, graph_edge_index);
     }
@@ -210,10 +206,6 @@ void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_i
         region_ids[vertex] = new_region_id;
         // clear this vertices neighbors in the graph and reserve size for children and parent
         int n_desc = ust[vertex].size();
-        forest_graph[vertex].clear();
-        forest_graph[vertex].reserve(n_desc + 1);
-        // add the edge from vertex to parent
-        forest_graph[vertex].push_back(parent_vertex);
         // set the packed edge 
         forest_edges.set_edge(vertex, parent_vertex, graph_edge_index);
 
@@ -224,7 +216,6 @@ void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_i
             // add children to queue
             vertex_queue.push({child_vertex, vertex});
             // add this edge from vertex to its children
-            forest_graph[vertex].push_back(child_vertex);
             // set the packed edge
             forest_edges.set_edge(vertex, child_vertex, graph_edge_index);
         }

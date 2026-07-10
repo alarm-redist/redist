@@ -87,7 +87,7 @@ std::vector<std::pair<int, int>> get_intial_linking_edges(PlanMultigraph &plan_m
     return initial_edges;
 }
 
-Tree LinkingEdgePlan::get_forest_adj() { return forest_graph; }
+Tree LinkingEdgePlan::get_forest_adj() { throw std::runtime_error("get_forest_adj not supported right now!\n"); }
 
 LinkingEdgePlan::LinkingEdgePlan(int const total_seats, int const total_pop,
                                  PlanVector &this_plan_region_ids,
@@ -97,7 +97,6 @@ LinkingEdgePlan::LinkingEdgePlan(int const total_seats, int const total_pop,
                                  PlanEdgeBits &this_plan_forest_edge_bits)
     : Plan(total_seats, total_pop, this_plan_region_ids, this_plan_region_sizes,
            this_plan_region_pops, this_plan_order_added, this_plan_forest_edge_bits) {
-    forest_graph.resize(region_ids.size());
     linking_edges.reserve(this_plan_region_sizes.size() - 1);
 };
 
@@ -111,8 +110,6 @@ LinkingEdgePlan::LinkingEdgePlan(
     const std::vector<std::array<double, 3>> &input_initial_linking_edges)
     : Plan(num_regions, pop, this_plan_region_ids, this_plan_region_sizes,
            this_plan_region_pops, this_plan_order_added, this_plan_forest_edge_bits) {
-    // resize the forest graph
-    forest_graph.resize(region_ids.size());
 
     if (initial_forest_adj_list.size() > 1) {
         throw Rcpp::exception("Input Forest list not supported right now\n");
@@ -133,10 +130,10 @@ LinkingEdgePlan::LinkingEdgePlan(
 
     if constexpr (perf_config::object_integrity_checking){
         check_forest_equality(
-            forest_graph,
+            ust_sampler.ust,
             forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
             ust_sampler.map_params.graph_edge_index,
-            "IN Partial Linking Edge Plan Constructor, checking forest_graph vs forest edges (through get_graph_tree)"
+            "IN Partial Linking Edge Plan Constructor, checking ust vs forest edges (through get_graph_tree)"
         );
     }
 
@@ -176,17 +173,10 @@ double LinkingEdgePlan::get_regions_log_splitting_prob(ScoringFunction const &sc
 
     if constexpr (perf_config::object_integrity_checking){
         check_forest_equality(
-            forest_graph,
             forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
-            ust_sampler.map_params.graph_edge_index,
-            "IN get_regions_log_splitting_prob, checking forest_graph vs forest edges (through get_graph_tree)"
-        );
-
-        check_forest_equality(
-            forest_graph,
             ust_sampler.forest_scratch_tree,
             ust_sampler.map_params.graph_edge_index,
-            "IN get_regions_log_splitting_prob, checking forest_graph vs forest scratch tree"
+            "IN get_regions_log_splitting_prob, checking forest_edges vs forest scratch tree"
         );        
     }
 

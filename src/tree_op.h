@@ -333,7 +333,7 @@ void assign_region_id_from_tree(const Tree &ust, PlanVector &region_ids, int roo
  * `ust` is a directed spanning tree 
  */
 void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_ids,
-                                           Tree &forest_graph, EdgeBitset &forest_edges,
+                                           EdgeBitset &forest_edges,
                                            int root,
                                            const int new_region_id,
                                            const GraphEdgeIndex &graph_edge_index,
