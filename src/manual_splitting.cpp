@@ -212,7 +212,7 @@ List perform_a_valid_multidistrict_split(List adj_list, const arma::uvec &counti
 
     // Create tree splitter
     TreeSplitter *tree_splitter =
-        new ExperimentalSplitter(map_params.V, .0001, map_params.target);
+        new ExperimentalSplitter(map_params.V, SamplingSpace::GraphSpace, .0001, map_params.target);
 
     if (verbose) {
         Rprintf("Splitting Plan: ");
@@ -650,7 +650,7 @@ List attempt_splits_on_a_region(List const &adj_list, const arma::uvec &counties
                                       SamplingSpace::GraphSpace, pool);
 
     // create the splitter
-    NaiveTopKSplitter tree_splitter(map_params.V, k_param);
+    NaiveTopKSplitter tree_splitter(map_params.V, SamplingSpace::GraphSpace, k_param);
 
     // Create the vector of plans to return
     Rcpp::IntegerMatrix saved_plans_mat(map_params.V, num_plans);

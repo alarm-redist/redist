@@ -940,7 +940,8 @@ List run_redist_smc(
 
         // Get the tree splitter
         std::vector<std::unique_ptr<TreeSplitter>> tree_splitter_ptrs_vec =
-            get_tree_splitter_ptrs(map_params, splitting_method, control, nsims, num_threads);
+            get_tree_splitter_ptrs(map_params, splitting_method, sampling_space,
+                 control, nsims, num_threads);
 
         bool use_naive_k_splitter = splitting_method == SplittingMethodType::NaiveTopK;
         // adaptive k estimation threshold

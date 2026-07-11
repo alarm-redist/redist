@@ -367,6 +367,13 @@ class EdgeBitset {
         Tree &ust
     ) const;
 
+    void fill_vector_tree_regions(
+        GraphEdgeIndex const &edge_index,
+        PlanVector const &region_ids,
+        int const region1_id, int const region2_id,
+        Tree &ust
+    ) const;
+
 };
 
 

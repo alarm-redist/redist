@@ -647,7 +647,7 @@ void get_all_valid_edges_in_undirected_tree(
 // finds all valid edges if you joined the two trees
 // with the edge (region1_root, region2_root)
 // THIS INCLUDES (region1_root, region2_root) as an edge!!
-std::vector<EdgeCut> get_valid_edges_in_joined_tree(
+std::vector<EdgeCut> get_valid_edges_in_joined_packed_tree(
     MapParams const &map_params, EdgeBitset const &forest_edges, TreePopStack &stack,
     std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
     const int region1_root, const int region1_pop, const int region2_root,
@@ -673,6 +673,190 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
     // find the valid edges in this half of the tree
     get_all_valid_edges_in_undirected_tree(edge_across_valid_edge_cuts,
         map_params.graph_edge_index, forest_edges, 
+        region2_root, map_params.pop, stack, pops_below_vertex,
+        no_valid_edges_vertices, min_potential_cut_size, max_potential_cut_size,
+        smaller_cut_sizes_to_try, total_merged_region_pop, total_merged_region_size,
+        map_params.lower, map_params.upper, map_params.target);
+
+    // Now add the joined cut
+    // we make region2 the cut vertex and region1 the parent
+    
+    get_all_valid_edge_cuts_from_edge(edge_across_valid_edge_cuts, 
+        region1_root, region2_root, region1_root, total_merged_region_size,
+        static_cast<double>(region2_pop), static_cast<double>(region1_pop), map_params.lower,
+        map_params.target, map_params.upper, smaller_cut_sizes_to_try);
+
+    if constexpr (FINDING_EDGE_CUTS_VERBOSE) {
+        REprintf("Pop below region2_root is %d so above is %d so foound %d\n",
+                 pops_below_vertex.at(region2_root),
+                 total_merged_region_pop - pops_below_vertex.at(region2_root),
+                 (int)edge_across_valid_edge_cuts.size());
+    }
+
+
+    return edge_across_valid_edge_cuts;
+}
+
+
+
+/*
+ * Appends all valid edge cuts in the tree to existing_cuts
+ *
+ *
+ * Returns a vector of all the valid edge cuts (ie an edge and regions for
+ * the two cuts) where at least one of the regions is between
+ * `min_potential_cut_size` and `max_potential_cut_size` inclusive. Returns
+ * the edges as EdgeCut objects. An empty vector means there are no
+ * valid edges.
+ *
+ *
+ *
+ * @param ust A directed edge spanning tree.
+ * @param root The root vertex of the spanning tree.
+ * @param cut_below_pops The population corresponding to cutting below each vertex.
+ * So `cut_below_pops[v]` is the population associated with the region made by cutting
+ * below the vertex `v`
+ * @param min_potential_cut_size The smallest potential region size at least one of
+ * the regions cut must be
+ * @param max_potential_cut_size The largest potential region size at least one of
+ * the regions cut must be. Setting this to 1 will result in only 1 district splits.
+ * @param total_region_pop The total population of the region being split
+ * @param total_region_size The size of the region being split
+ * @param lower Acceptable lower bounds on a valid district's population
+ * @param upper Acceptable upper bounds on a valid district's population
+ * @param target Ideal population of a valid district. This is what deviance is calculated
+ * relative to
+ *
+ * @details Adds valid cuts to existing_cuts
+ *
+ * @return A vector of EdgeCut objects
+ *
+ */
+void get_all_valid_edges_in_undirected_vertex_tree(
+    std::vector<EdgeCut> &existing_cuts,
+    Tree const &forest_graph, 
+    const int root, const arma::uvec &pop, TreePopStack &stack,
+    std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
+    const int min_potential_cut_size, const int max_potential_cut_size,
+    std::vector<int> const &smaller_cut_sizes_to_try, const int total_region_pop,
+    const int total_region_size, const double lower, const double upper, const double target) {
+
+    // this is the largest size a region can be
+    // If the population above is bigger than this you can terminate the serach
+    // since pop above only gets larger as you continue down the tree
+    double biggest_upper_bound = upper * max_potential_cut_size;
+
+    // this is the smallest size a region can be
+    // If the pop below is below this then you can terminate the search since
+    // pop below only gets smaller as you continue along the tree
+    double smallest_lower_bound = lower * min_potential_cut_size;
+
+    // Stack for DFS
+    // Elements are: vertex, parent, is_revisiting
+    stack.clear();
+
+
+    // Start by adding all the roots children to the stack
+    for (auto const &root_children : forest_graph[root]) {
+        stack.push({root_children, root, false});
+    }
+
+    // Loop until the stack is empty
+    while (!stack.empty()) {
+        // get the top of the stack
+        auto [vtx, parent, is_revisiting] = stack.pop();
+
+        if (!is_revisiting) { // This is the first time visiting the node
+
+            // Push the vertex back onto the stack as "revisiting"
+            stack.push({vtx, parent, true});
+
+
+            // Push unvisited child vertices onto the stack to get pop below
+            for (const auto &child_vtx : forest_graph[vtx]) {
+                // if its the parent then skip it
+                if (child_vtx == parent)
+                    continue;
+                // else add to the stack
+                stack.push({child_vtx, vtx, false});
+            }
+        } else if (no_valid_edges_vertices[vtx]) {
+            // if parent isn't valid then neither is its parent so mark that
+            no_valid_edges_vertices[parent] = true;
+        } else if (!no_valid_edges_vertices[parent]) {
+            // if revisiting it true that means we already visited all the nodes children
+            // so we can get pop_below
+            // if no valid edges is true we no there's no point in searching up this path
+            // anymore
+
+            // All children of this vertex are processed; calculate its population below
+            int pop_below_vtx = pop[vtx]; // Start with the vertex's own population
+            
+
+            // Add population below from each child
+            for (const auto &child : forest_graph[vtx]) {
+                // ignore the parent
+                if (child == parent)
+                    continue;
+                pop_below_vtx += pops_below_vertex[child]; // Add population from child vertices
+            }
+            pops_below_vertex[vtx] = pop_below_vtx;
+
+            // Check if any cut can be made
+            // If pop below is too small we need to keep going up
+            if (pop_below_vtx < smallest_lower_bound ||
+                total_region_pop - pop_below_vtx > biggest_upper_bound) {
+                continue;
+            } else if (pop_below_vtx > biggest_upper_bound ||
+                       total_region_pop - pop_below_vtx < smallest_lower_bound) {
+                no_valid_edges_vertices[parent] = true;
+                continue;
+                // Recall pop below is only increasing for the parent so we can skip this entire
+                // lineage if we want
+            }
+
+            // See if any valid edge cuts can be made with this edge
+            // if yes,then the function will add them
+            get_all_valid_edge_cuts_from_edge(
+                existing_cuts,
+                root, vtx, parent, total_region_size, pops_below_vertex[vtx],
+                total_region_pop - pops_below_vertex[vtx], lower, target, upper,
+                smaller_cut_sizes_to_try);
+        }
+    }
+
+}
+
+
+// finds all valid edges if you joined the two trees
+// with the edge (region1_root, region2_root)
+// THIS INCLUDES (region1_root, region2_root) as an edge!!
+std::vector<EdgeCut> get_valid_edges_in_joined_vertex_tree(
+    MapParams const &map_params, Tree const &forest_graph, TreePopStack &stack,
+    std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
+    const int region1_root, const int region1_pop, const int region2_root,
+    const int region2_pop, const int min_potential_cut_size, const int max_potential_cut_size,
+    std::vector<int> const &smaller_cut_sizes_to_try, const int total_merged_region_size) {
+    int const total_merged_region_pop = region1_pop + region2_pop;
+    // auto func_start = std::chrono::steady_clock::now();
+    // reset pops_below_vertex
+    std::fill(pops_below_vertex.begin(), pops_below_vertex.end(), 0);
+    std::fill(no_valid_edges_vertices.begin(), no_valid_edges_vertices.end(), false);
+
+    // create the valid cut list
+    std::vector<EdgeCut> edge_across_valid_edge_cuts;
+
+    // find the valid edges in this half of the tree
+    get_all_valid_edges_in_undirected_vertex_tree(edge_across_valid_edge_cuts,
+        forest_graph,
+        region1_root, map_params.pop, stack, pops_below_vertex,
+        no_valid_edges_vertices, min_potential_cut_size, max_potential_cut_size,
+        smaller_cut_sizes_to_try, total_merged_region_pop, total_merged_region_size,
+        map_params.lower, map_params.upper, map_params.target);
+
+    // find the valid edges in this half of the tree
+    get_all_valid_edges_in_undirected_vertex_tree(edge_across_valid_edge_cuts,
+        forest_graph, 
         region2_root, map_params.pop, stack, pops_below_vertex,
         no_valid_edges_vertices, min_potential_cut_size, max_potential_cut_size,
         smaller_cut_sizes_to_try, total_merged_region_pop, total_merged_region_size,

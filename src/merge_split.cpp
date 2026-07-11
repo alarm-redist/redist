@@ -142,7 +142,8 @@ Rcpp::List ms_plans(
 
         // splitter
         std::vector<std::unique_ptr<TreeSplitter>> tree_splitter_ptr_vec =
-            get_tree_splitter_ptrs(map_params, splitting_method, control, nsims, 1);
+            get_tree_splitter_ptrs(map_params, splitting_method, sampling_space,
+                control, nsims, 1);
         if constexpr (DEBUG_PURE_MS_VERBOSE)
             Rprintf("Checkpoint 4!\n");
         // sanity check make sure the plan is ok

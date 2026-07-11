@@ -163,6 +163,7 @@ void reorder_all_plans(RcppThread::ThreadPool &pool,
 
 std::vector<std::unique_ptr<TreeSplitter>>
 get_tree_splitter_ptrs(MapParams const &map_params, SplittingMethodType const splitting_method,
+                       SamplingSpace const sampling_space,
                        Rcpp::List const &control, int const nsims, int const num_threads);
 
 // lightweight container for plans

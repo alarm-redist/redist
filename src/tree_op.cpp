@@ -733,14 +733,16 @@ void EdgeBitset::fill_vector_tree(
     GraphEdgeIndex const &edge_index,
     Tree &ust
 ) const {
-    if (static_cast<int>(ust.size()) != edge_index.V) {
-        std::ostringstream oss;
+    if constexpr(perf_config::supposedly_safe_input_checks){
+        if (static_cast<int>(ust.size()) != edge_index.V) {
+            std::ostringstream oss;
 
-        oss << "EdgeBitset::fill_vector_tree received wrong-sized Tree. "
-            << "ust.size()=" << ust.size()
-            << ", edge_index.V=" << edge_index.V;
+            oss << "EdgeBitset::fill_vector_tree received wrong-sized Tree. "
+                << "ust.size()=" << ust.size()
+                << ", edge_index.V=" << edge_index.V;
 
-        throw std::runtime_error(oss.str());
+            throw std::runtime_error(oss.str());
+        }
     }
 
     for (int v = 0; v < edge_index.V; ++v) {
@@ -749,14 +751,63 @@ void EdgeBitset::fill_vector_tree(
         for (auto const &incident_edge : edge_index.incident_edges[v]) {
             int const u = static_cast<int>(incident_edge.neighbor);
 
-            if (u < 0 || u >= edge_index.V) {
-                std::ostringstream oss;
-                oss << "EdgeBitset::fill_vector_tree saw invalid incident neighbor. "
-                    << "v=" << v
-                    << ", neighbor=" << u
-                    << ", V=" << edge_index.V;
+            if constexpr(perf_config::bounds_checking){
+                if (u < 0 || u >= edge_index.V) {
+                    std::ostringstream oss;
+                    oss << "EdgeBitset::fill_vector_tree saw invalid incident neighbor. "
+                        << "v=" << v
+                        << ", neighbor=" << u
+                        << ", V=" << edge_index.V;
 
-                throw std::runtime_error(oss.str());
+                    throw std::runtime_error(oss.str());
+                }
+            }
+
+            if (test_edge_id(incident_edge.edge_id)) {
+                ust[v].push_back(u);
+            }
+        }
+    }
+}
+
+void EdgeBitset::fill_vector_tree_regions(
+    GraphEdgeIndex const &edge_index,
+    PlanVector const &region_ids,
+    int const region1_id, int const region2_id,
+    Tree &ust
+) const {
+    if constexpr(perf_config::supposedly_safe_input_checks){
+        if (static_cast<int>(ust.size()) != edge_index.V) {
+            std::ostringstream oss;
+
+            oss << "EdgeBitset::fill_vector_tree received wrong-sized Tree. "
+                << "ust.size()=" << ust.size()
+                << ", edge_index.V=" << edge_index.V;
+
+            throw std::runtime_error(oss.str());
+        }
+    }
+
+    for (int v = 0; v < edge_index.V; ++v) {
+        auto v_region = region_ids[v];
+        // ignore if not the region we want 
+        if (v_region != region1_id && v_region != region2_id) continue;
+        // clear the vertex
+        ust[v].clear();
+
+        for (auto const &incident_edge : edge_index.incident_edges[v]) {
+            int const u = static_cast<int>(incident_edge.neighbor);
+
+            if constexpr(perf_config::bounds_checking){
+                if (u < 0 || u >= edge_index.V) {
+                    std::ostringstream oss;
+                    oss << "EdgeBitset::fill_vector_tree saw invalid incident neighbor. "
+                        << "v=" << v
+                        << ", neighbor=" << u
+                        << ", V=" << edge_index.V;
+
+                    throw std::runtime_error(oss.str());
+                }
             }
 
             if (test_edge_id(incident_edge.edge_id)) {

@@ -3140,7 +3140,7 @@ double TreeSplitter::get_log_selection_prob(std::vector<EdgeCut> &valid_edges, i
     return std::log(idx_weight) - std::log(weight_sum);
 }
 
-double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
+double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_packed_tree(
     MapParams const &map_params, ScoringFunction const &scoring_function,
     EdgeBitset const &forest_edges, TreePopStack &stack, std::vector<bool> &visited,
     std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
@@ -3154,7 +3154,7 @@ double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
     int total_merged_region_size = region1_size + region2_size;
 
     // Get all the valid edges in the joined tree
-    std::vector<EdgeCut> valid_edges = get_valid_edges_in_joined_tree(
+    std::vector<EdgeCut> valid_edges = get_valid_edges_in_joined_packed_tree(
         map_params, forest_edges, stack, pops_below_vertex, visited, region1_root,
         region1_population, region2_root, region2_population, min_potential_cut_size,
         max_potential_cut_size, smaller_cut_sizes_to_try, total_merged_region_size);
@@ -3179,7 +3179,112 @@ double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
             std::ostringstream oss;
 
             oss << "Actual cut edge not found in valid_edges in "
-                << "get_log_retroactive_splitting_prob_for_joined_tree.\n";
+                << "get_log_retroactive_splitting_prob_for_joined_packed_tree.\n";
+
+            oss << "region1_root=" << region1_root << "\n";
+            oss << "region2_root=" << region2_root << "\n";
+            oss << "region1_id=" << static_cast<int>(plan.region_ids[region1_root]) << "\n";
+            oss << "region2_id=" << static_cast<int>(plan.region_ids[region2_root]) << "\n";
+            oss << "region1_size=" << region1_size << "\n";
+            oss << "region2_size=" << region2_size << "\n";
+            oss << "region1_population=" << region1_population << "\n";
+            oss << "region2_population=" << region2_population << "\n";
+            oss << "valid_edges.size()=" << valid_edges.size() << "\n";
+
+            oss << "Actual cut edge: "
+                << "tree_root=" << actual_cut_edge.tree_root
+                << ", cut_vertex=" << actual_cut_edge.cut_vertex
+                << ", cut_vertex_parent=" << actual_cut_edge.cut_vertex_parent
+                << ", cut_below_region_size=" << actual_cut_edge.cut_below_region_size
+                << ", cut_below_pop=" << actual_cut_edge.cut_below_pop
+                << ", cut_above_region_size=" << actual_cut_edge.cut_above_region_size
+                << ", cut_above_pop=" << actual_cut_edge.cut_above_pop
+                << "\n";
+
+            oss << "Valid edges:\n";
+            for (std::size_t k = 0; k < valid_edges.size(); ++k) {
+                auto const &e = valid_edges[k];
+
+                oss << "  [" << k << "] "
+                    << "tree_root=" << e.tree_root
+                    << ", cut_vertex=" << e.cut_vertex
+                    << ", cut_vertex_parent=" << e.cut_vertex_parent
+                    << ", cut_below_region_size=" << e.cut_below_region_size
+                    << ", cut_below_pop=" << e.cut_below_pop
+                    << ", cut_above_region_size=" << e.cut_above_region_size
+                    << ", cut_above_pop=" << e.cut_above_pop
+                    << ", log_prob=" << e.log_prob
+                    << "\n";
+            }
+
+            throw std::runtime_error(oss.str());
+        }
+    }
+
+
+    int actual_cut_edge_index = std::distance(valid_edges.begin(), it);
+    
+    if constexpr (perf_config::bounds_checking){
+        if (actual_cut_edge_index < 0 ||
+        actual_cut_edge_index >= static_cast<int>(valid_edges.size())) {
+            std::ostringstream oss;
+            oss << "actual_cut_edge_index out of bounds. "
+                << "actual_cut_edge_index=" << actual_cut_edge_index
+                << ", valid_edges.size()=" << valid_edges.size();
+
+            throw std::runtime_error(oss.str());
+        }
+    }
+
+    if (MERGED_TREE_SPLITTING_VERBOSE) {
+        REprintf("Actual Cut Edge at Index %d and so prob is %f \n", actual_cut_edge_index,
+                 get_log_selection_prob(valid_edges, actual_cut_edge_index));
+    }
+
+    return get_log_selection_prob(valid_edges, actual_cut_edge_index);
+}
+
+
+double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_vertex_tree(
+    MapParams const &map_params, ScoringFunction const &scoring_function,
+    Tree const &forest_graph, TreePopStack &stack, std::vector<bool> &visited,
+    std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
+    Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
+    std::vector<int> const &smaller_cut_sizes_to_try) {
+    const int region1_population = plan.region_pops[plan.region_ids[region1_root]];
+    const int region2_population = plan.region_pops[plan.region_ids[region2_root]];
+
+    const int region1_size = plan.region_sizes[plan.region_ids[region1_root]];
+    const int region2_size = plan.region_sizes[plan.region_ids[region2_root]];
+    int total_merged_region_size = region1_size + region2_size;
+
+    // Get all the valid edges in the joined tree
+    std::vector<EdgeCut> valid_edges = get_valid_edges_in_joined_vertex_tree(
+        map_params, forest_graph, stack, pops_below_vertex, visited, region1_root,
+        region1_population, region2_root, region2_population, min_potential_cut_size,
+        max_potential_cut_size, smaller_cut_sizes_to_try, total_merged_region_size);
+
+    // find the index of the actual edge we cut
+    // where we take region2 root as the cut_vertex
+    EdgeCut actual_cut_edge(region1_root, region2_root, region1_root, region2_size,
+                            region2_population, region1_size, region1_population);
+
+    if (MERGED_TREE_SPLITTING_VERBOSE) {
+        REprintf("Finding Merge prob for (%d, %d) - %zu valid edges!\n", region1_root,
+                 region2_root, valid_edges.size());
+    }
+
+    // find the index of the edge we actually removed to get these two regions.
+    // it should be 0 if pop bounds are tight but this allows it to work even
+    // if not.
+    auto it = std::find(valid_edges.begin(), valid_edges.end(), actual_cut_edge);
+
+    if constexpr (perf_config::bounds_checking){
+        if (it == valid_edges.end()) {
+            std::ostringstream oss;
+
+            oss << "Actual cut edge not found in valid_edges in "
+                << "get_log_retroactive_splitting_prob_for_joined_vertex_tree.\n";
 
             oss << "region1_root=" << region1_root << "\n";
             oss << "region2_root=" << region2_root << "\n";
@@ -3497,7 +3602,7 @@ void assign_region_ids_from_joined_undirected_tree(
     return;
 }
 
-double ConstraintSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
+double ConstraintSplitter::get_log_retroactive_splitting_prob_for_joined_packed_tree(
     MapParams const &map_params, ScoringFunction const &scoring_function,
     EdgeBitset const &forest_edges, TreePopStack &stack, std::vector<bool> &visited,
     std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
@@ -3514,7 +3619,7 @@ double ConstraintSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
     auto const region2_id = plan.region_ids[region2_root];
 
     // Get all the valid edges in the joined tree
-    std::vector<EdgeCut> valid_edges = get_valid_edges_in_joined_tree(
+    std::vector<EdgeCut> valid_edges = get_valid_edges_in_joined_packed_tree(
         map_params, forest_edges, stack, pops_below_vertex, visited, region1_root,
         region1_population, region2_root, region2_population, min_potential_cut_size,
         max_potential_cut_size, smaller_cut_sizes_to_try, total_merged_region_size);

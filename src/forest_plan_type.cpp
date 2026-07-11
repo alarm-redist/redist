@@ -104,6 +104,17 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
             "IN compute_log_tree_eff_boundary_lens, checking forest_edges integrity"
         );
     }
+    // copy the packed forest into the vector tree
+    forest_edges.fill_vector_tree(ust_sampler.map_params.graph_edge_index, edge_splitter.forest_graph);
+
+    if constexpr (perf_config::object_integrity_checking){
+        plan.check_forest_equality(
+            forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
+            edge_splitter.forest_graph,
+            ust_sampler.map_params.graph_edge_index,
+            "IN compute_log_tree_eff_boundary_lens, checking forest_edges vs forest scratch tree"
+        );
+    }
 
     for (int v = 0; v < V; v++) {
         // Find out which region this vertex corresponds to
@@ -164,8 +175,8 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
             auto max_possible_cut_size = cut_size_bounds.second;
 
             double log_edge_selection_prob =
-                edge_splitter.get_log_retroactive_splitting_prob_for_joined_tree(
-                    plan_multigraph.map_params, scoring_function, forest_edges,
+                edge_splitter.get_log_retroactive_splitting_prob_for_joined_vertex_tree(
+                    plan_multigraph.map_params, scoring_function, edge_splitter.forest_graph,
                     ust_sampler.stack, ust_sampler.visited, ust_sampler.pops_below_vertex, v,
                     v_nbor, plan, min_possible_cut_size, max_possible_cut_size,
                     splitting_schedule
@@ -231,6 +242,14 @@ double ForestPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
         );
     }
 
+    // fill in the forest tree 
+    forest_edges.fill_vector_tree_regions(
+        ust_sampler.map_params.graph_edge_index,
+        region_ids,
+        region1_id, region2_id,
+        tree_splitter.forest_graph
+    );
+
 
     int const V = plan_multigraph.map_params.V;
     int const merged_region_size = region_sizes[region1_id] + region_sizes[region2_id];
@@ -264,8 +283,8 @@ double ForestPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
                 continue;
 
             double log_edge_selection_prob =
-                tree_splitter.get_log_retroactive_splitting_prob_for_joined_tree(
-                    plan_multigraph.map_params, scoring_function, forest_edges,
+                tree_splitter.get_log_retroactive_splitting_prob_for_joined_vertex_tree(
+                    plan_multigraph.map_params, scoring_function, tree_splitter.forest_graph,
                     ust_sampler.stack, ust_sampler.visited, ust_sampler.pops_below_vertex, v,
                     nbor, *this, min_possible_cut_size, max_possible_cut_size,
                     splitting_schedule
