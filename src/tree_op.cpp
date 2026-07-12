@@ -817,6 +817,95 @@ void EdgeBitset::fill_vector_tree_regions(
     }
 }
 
+// starting from the root it clears the edges of 
+// every vertex in the component 
+void EdgeBitset::fill_vector_tree_component_from_root(
+    GraphEdgeIndex const &edge_index,
+    int const root,
+    Tree &ust,
+    TreePopStack &stack
+) const {
+    int const V = edge_index.V;
+
+    if constexpr (perf_config::bounds_checking) {
+        if (root < 0 || root >= V) {
+            std::ostringstream oss;
+            oss << "EdgeBitset::fill_vector_tree_component_from_packed got invalid root.\n";
+            oss << "root=" << root << "\n";
+            oss << "V=" << V << "\n";
+            throw std::runtime_error(oss.str());
+        }
+
+        if (static_cast<int>(ust.size()) != V) {
+            std::ostringstream oss;
+            oss << "EdgeBitset::fill_vector_tree_component_from_packed got wrong-sized Tree.\n";
+            oss << "ust.size()=" << ust.size() << "\n";
+            oss << "V=" << V << "\n";
+            throw std::runtime_error(oss.str());
+        }
+    }
+
+    stack.clear();
+    stack.push({root, -1, false});
+
+    while (!stack.empty()) {
+        auto const [v, parent, unused] = stack.pop();
+
+        if constexpr (perf_config::bounds_checking) {
+            if (v < 0 || v >= V) {
+                std::ostringstream oss;
+                oss << "EdgeBitset::fill_vector_tree_component_from_packed popped invalid vertex.\n";
+                oss << "v=" << v << "\n";
+                oss << "parent=" << parent << "\n";
+                oss << "V=" << V << "\n";
+                throw std::runtime_error(oss.str());
+            }
+
+            if (parent < -1 || parent >= V) {
+                std::ostringstream oss;
+                oss << "EdgeBitset::fill_vector_tree_component_from_packed got invalid parent.\n";
+                oss << "v=" << v << "\n";
+                oss << "parent=" << parent << "\n";
+                oss << "V=" << V << "\n";
+                throw std::runtime_error(oss.str());
+            }
+        }
+        // clear this vertex 
+        ust[v].clear();
+        
+        // Now visit every neighbor to add to the tree
+        for (auto const &incident_edge : edge_index.incident_edges[v]) {
+            int const u = static_cast<int>(incident_edge.neighbor);
+
+            if constexpr (perf_config::bounds_checking) {
+                if (u < 0 || u >= V) {
+                    std::ostringstream oss;
+                    oss << "EdgeBitset::fill_vector_tree_component_from_packed saw invalid neighbor.\n";
+                    oss << "v=" << v << "\n";
+                    oss << "u=" << u << "\n";
+                    oss << "V=" << V << "\n";
+                    throw std::runtime_error(oss.str());
+                }
+            }
+
+            if (!test_edge_id(incident_edge.edge_id)) {
+                continue;
+            }
+
+            // Fill the vector adjacency for v.
+            // This includes the parent edge, so ust is undirected.
+            ust[v].push_back(u);
+
+            // But do not walk back to the parent.
+            if (u == parent) {
+                continue;
+            }
+
+            stack.push({u, v, false});
+        }
+    }
+}
+
 std::string tree_to_string(Tree const &ust) {
     std::ostringstream oss;
 

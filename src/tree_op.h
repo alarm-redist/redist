@@ -374,6 +374,13 @@ class EdgeBitset {
         Tree &ust
     ) const;
 
+    void fill_vector_tree_component_from_root(
+        GraphEdgeIndex const &edge_index,
+        int const root,
+        Tree &ust,
+        TreePopStack &stack
+    ) const;
+
 };
 
 

@@ -242,15 +242,6 @@ double ForestPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
         );
     }
 
-    // fill in the forest tree 
-    forest_edges.fill_vector_tree_regions(
-        ust_sampler.map_params.graph_edge_index,
-        region_ids,
-        region1_id, region2_id,
-        tree_splitter.forest_graph
-    );
-
-
     int const V = plan_multigraph.map_params.V;
     int const merged_region_size = region_sizes[region1_id] + region_sizes[region2_id];
 
@@ -269,6 +260,8 @@ double ForestPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
         count_edges_across = true;
     }
 
+    // To save time we'll wait until we find vertices in the region 
+    bool region_trees_cleared = false;
     double tree_selection_probs = 0.0;
     for (int v = 0; v < V; v++) {
         if (region_ids[v] != region1_id)
@@ -281,6 +274,21 @@ double ForestPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
             // ignore if we can't count this boundary
             if (v_county != plan_multigraph.map_params.counties[nbor] && !count_edges_across)
                 continue;
+
+            if(!region_trees_cleared){
+                // if we haven't cleared the dummy tree do it now 
+                // Start with v
+                forest_edges.fill_vector_tree_component_from_root(
+                    ust_sampler.map_params.graph_edge_index, v,
+                    tree_splitter.forest_graph, ust_sampler.stack
+                );
+                // now clear from nbor
+                forest_edges.fill_vector_tree_component_from_root(
+                    ust_sampler.map_params.graph_edge_index, nbor,
+                    tree_splitter.forest_graph, ust_sampler.stack
+                );
+                region_trees_cleared = true;
+            }
 
             double log_edge_selection_prob =
                 tree_splitter.get_log_retroactive_splitting_prob_for_joined_vertex_tree(
