@@ -103,7 +103,7 @@ double get_log_mh_ratio(MapParams const &map_params, ScoringFunction const &scor
                         const double log_new_pair_merge_prob,
                         double &new_region1_log_compactness,
                         double &new_region2_log_compactness, Plan const &current_plan,
-                        Plan const &proposed_plan, double const rho, bool const is_final,
+                        Plan const &proposed_plan, double const rho, 
                         bool const using_caching, WeightCache *weight_cache,
                         GranularMCMCTimes &granular_times) {
     double log_mh_ratio = 0.0;
@@ -112,13 +112,13 @@ double get_log_mh_ratio(MapParams const &map_params, ScoringFunction const &scor
     // first we'll start with the regions 
     auto region_score_time = maybe_now(); // optional timing 
     log_mh_ratio +=
-        scoring_function.compute_region_soft_score(current_plan, region1_id, is_final);
+        scoring_function.compute_region_soft_score(current_plan, region1_id);
     log_mh_ratio +=
-        scoring_function.compute_region_soft_score(current_plan, region2_id, is_final);
+        scoring_function.compute_region_soft_score(current_plan, region2_id);
     log_mh_ratio -=
-        scoring_function.compute_region_soft_score(proposed_plan, region1_id, is_final);
+        scoring_function.compute_region_soft_score(proposed_plan, region1_id);
     log_mh_ratio -=
-        scoring_function.compute_region_soft_score(proposed_plan, region2_id, is_final);
+        scoring_function.compute_region_soft_score(proposed_plan, region2_id);
     if constexpr (perf_config::track_granular_times){
         add_elapsed(granular_times.region_scores, region_score_time);
     }
@@ -252,7 +252,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     auto hard_constraint_time = maybe_now();
     bool new_plan_valid =
         build_attempt.first &&
-        scoring_function.new_split_ok(new_plan, region1_id, region2_id, is_final);
+        scoring_function.new_split_ok(new_plan, region1_id, region2_id, 0); // this split adds 0 new regions
     if constexpr (perf_config::track_granular_times){
         add_elapsed(granular_times.hard_constraint_time, hard_constraint_time); // optional timing 
     }
@@ -389,7 +389,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
                              std::log(new_valid_pair_weights(region_pair_proposal_index)) -
                                  std::log(arma::sum(new_valid_pair_weights)),
                              new_region1_log_compactness, new_region2_log_compactness, plan,
-                             new_plan, rho, is_final, using_caching, weight_cache,
+                             new_plan, rho, using_caching, weight_cache,
                              granular_times);
         proposal_accepted = rng_state.r_unif() <= std::exp(log_mh_ratio);
         if constexpr (DEBUG_MERGING_VERBOSE)

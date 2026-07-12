@@ -436,8 +436,8 @@ int cycle_walk(LCTGraphPlan &plan, MapParams const &map_params,
 
     // ---- scoring on the OLD state ----
     bool const is_final = true; // cyclewalk plans are always fully districted
-    double old_soft_score_d1 = scoring_function.compute_region_soft_score(plan, d1, is_final);
-    double old_soft_score_d2 = scoring_function.compute_region_soft_score(plan, d2, is_final);
+    double old_soft_score_d1 = scoring_function.compute_region_soft_score(plan, d1);
+    double old_soft_score_d2 = scoring_function.compute_region_soft_score(plan, d2);
     auto old_plan_score = scoring_function.compute_plan_score(plan);
     double old_log_st = 0.0;
     if (compactness != 1.0) {
@@ -506,8 +506,8 @@ int cycle_walk(LCTGraphPlan &plan, MapParams const &map_params,
     apply_update(plan, map_params, update);
 
     // ---- scoring on the NEW state ----
-    double new_soft_score_d1 = scoring_function.compute_region_soft_score(plan, d1, is_final);
-    double new_soft_score_d2 = scoring_function.compute_region_soft_score(plan, d2, is_final);
+    double new_soft_score_d1 = scoring_function.compute_region_soft_score(plan, d1);
+    double new_soft_score_d2 = scoring_function.compute_region_soft_score(plan, d2);
     auto new_plan_score = scoring_function.compute_plan_score(plan);
     double new_log_st = 0.0;
     if (compactness != 1.0) {

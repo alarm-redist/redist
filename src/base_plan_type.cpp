@@ -950,7 +950,7 @@ std::vector<std::pair<RegionID, RegionID>> Plan::get_valid_smc_merge_regions(
 
         // now check hard constraints are satisfied
         bool const hard_constr_result =
-            scoring_function.merged_plan_ok(*this, a_pair.first, a_pair.second, is_final_split);
+            scoring_function.merged_plan_ok(*this, a_pair.first, a_pair.second);
 
         if (!hard_constr_result)
             continue;
@@ -2899,7 +2899,7 @@ void PlanMultigraph::remove_invalid_hard_constraint_pairs(
                        [&](std::pair<RegionID, RegionID> a_pair) {
                            // check if merging the region invalidates hard constraints
                            bool failed_constraint = !scoring_function.merged_plan_ok(
-                               plan, a_pair.first, a_pair.second, is_final_split);
+                               plan, a_pair.first, a_pair.second);
 
                            // if invalid then reset data in pair map
                            if (failed_constraint) {

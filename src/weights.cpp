@@ -221,12 +221,12 @@ double compute_simple_log_incremental_weight(Plan const &plan, PlanMultigraph &p
     if (scoring_function.any_soft_region_constraints) {
         // compute scoring functions
         region1_score =
-            scoring_function.compute_region_soft_score(plan, region1_id, is_final_split);
+            scoring_function.compute_region_soft_score(plan, region1_id);
         region2_score =
-            scoring_function.compute_region_soft_score(plan, region2_id, is_final_split);
+            scoring_function.compute_region_soft_score(plan, region2_id);
         merged_region_score =
             scoring_function
-                .compute_merged_region_full_score(plan, region1_id, region2_id, is_final_split)
+                .compute_merged_region_full_score(plan, region1_id, region2_id)
                 .second;
         if constexpr (DEBUG_WEIGHTS_VERBOSE) {
             REprintf("Region (%d,%d) Scores (%f, %f) | Merged Score %f \n", region1_id,
@@ -241,7 +241,7 @@ double compute_simple_log_incremental_weight(Plan const &plan, PlanMultigraph &p
         plan_score = scoring_function.compute_plan_score(plan).second;
         prev_plan_score =
             scoring_function
-                .compute_merged_plan_score(plan, region1_id, region2_id, is_final_split)
+                .compute_merged_plan_score(plan, region1_id, region2_id)
                 .second;
         if constexpr (DEBUG_WEIGHTS_VERBOSE) {
             REprintf("Entire Plan Score %f | Previous Plan Score %f \n", plan_score,
@@ -498,13 +498,13 @@ double compute_log_optimal_incremental_weights(
             auto time_region_score = maybe_now(); // optional timing 
             // compute scoring functions
             const double region1_score =
-                scoring_function.compute_region_soft_score(plan, region1_id, is_final_split);
+                scoring_function.compute_region_soft_score(plan, region1_id);
             const double region2_score =
-                scoring_function.compute_region_soft_score(plan, region2_id, is_final_split);
+                scoring_function.compute_region_soft_score(plan, region2_id);
             const double merged_region_score =
                 scoring_function
-                    .compute_merged_region_full_score(plan, region1_id, region2_id,
-                                                      is_final_split)
+                    .compute_merged_region_full_score(plan, region1_id, region2_id
+                                                      )
                     .second;
              
             if constexpr (perf_config::track_granular_times){
@@ -524,7 +524,7 @@ double compute_log_optimal_incremental_weights(
             auto time_plan_score = maybe_now(); // optional timing 
             merged_plan_score =
                 scoring_function
-                    .compute_merged_plan_score(plan, region1_id, region2_id, is_final_split)
+                    .compute_merged_plan_score(plan, region1_id, region2_id)
                     .second; 
             if constexpr (perf_config::track_granular_times){
                 add_elapsed(granular_times.region_scores, time_plan_score); // optional timing

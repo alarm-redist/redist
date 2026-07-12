@@ -317,7 +317,7 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
                     auto split_hard_constraint_time = maybe_now();
                     ok = scoring_functions[thread_id].new_split_ok(
                         *new_plan_ensemble->plan_ptr_vec[i], region_id_to_split, new_region_id,
-                        is_final_split);
+                        1); // this split adds 1 new region
                     if constexpr (perf_config::track_granular_times){
                         add_elapsed(hard_constraint_split_times[thread_id], split_hard_constraint_time); // optional timing
                     }
@@ -985,7 +985,7 @@ List run_redist_smc(
 
             // now subtract the score 
             auto region_score_result = scoring_functions[0].compute_region_full_score(
-                *plan_ensemble_ptr->plan_ptr_vec[0], 0, false);
+                *plan_ensemble_ptr->plan_ptr_vec[0], 0);
             auto plan_only_score_result =
                 scoring_functions[0].compute_plan_score(*plan_ensemble_ptr->plan_ptr_vec[0]);
             log_blank_map_target_density -= region_score_result.second;
