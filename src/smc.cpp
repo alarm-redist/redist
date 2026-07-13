@@ -1202,10 +1202,6 @@ List run_redist_smc(
                         !scoring_functions[0].any_hard_custom_constraints) {
                         pool.setNumThreads(0);
                     }
-                    plan_ensemble_ptr->check_all_plans_valid(
-                        map_params,
-                        "Called before calcuating smc weights"
-                    );
                     // start timing the smc split
                     auto smc_weight_start_time = std::chrono::steady_clock::now();
                     if (wgt_type == "optimal") {
