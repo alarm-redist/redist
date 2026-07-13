@@ -181,8 +181,9 @@ test_that('MEW acceptance rate', {
   diag <- attr(out, 'diagnostics')
   avg_accept <- mean(diag$accept_rate)
 
-  expect_true(avg_accept >= 0.3)
+  expect_true(avg_accept >= 0.1)
   expect_true(avg_accept <= 1.0)
+  expect_equal(tail(diag$avg_proposal_tries, 1), 1)
 })
 
 test_that('MEW integration test with larger sample', {

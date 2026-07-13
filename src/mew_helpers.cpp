@@ -405,78 +405,50 @@ MEWProposal mew_proposal(const Graph &g, const Tree &tree,
                         const uvec &pop, int n_distr,
                         double target, double lower, double upper) {
     int V = g.size();
-    const int MAX_TRIES = 50000;
+    // Invalid proposals become self-loops rather than being redrawn.
+    MEWProposal proposal;
+    proposal.n_rejects = 0;
+    proposal.valid = false;
+    proposal.partition = tree_to_partition(tree, marked_edges, V, n_distr);
 
-    // Keep trying until we get a valid proposal
-    Tree current_tree = tree;
-    MarkedEdgeSet current_marked = marked_edges;
-    int n_rejects = 0;
-
-    while (n_rejects < MAX_TRIES) {
-        // Propose tree update
-        CycleProposal cycle_prop = cycle_basis_step(g, current_tree, current_marked);
-
-        // If cycle proposal is invalid (all edges marked), skip this iteration
-        if (!cycle_prop.valid) {
-            n_rejects++;
-            continue;
-        }
-
-        // Propose marked edge update using NEW tree T' (paper Section 3, step 2:
-        // "Choose a neighbor v in N_{T'}(u)").
-        MarkedEdgeProposal marked_prop = marked_edge_step(cycle_prop.tree_new, current_marked);
-
-        // Convert to partition
-        uvec partition = tree_to_partition(cycle_prop.tree_new, marked_prop.marked_new, V, n_distr);
-
-        // Compute district populations
-        std::vector<double> dist_pop(n_distr, 0.0);
-        for (int i = 0; i < V; i++) {
-            int dist = partition(i) - 1;  // Convert to 0-indexed
-            if (dist >= 0 && dist < n_distr) {
-                dist_pop[dist] += pop(i);
-            }
-        }
-
-        // Check if all districts meet population constraints
-        bool valid = true;
-        for (int d = 0; d < n_distr; d++) {
-            if (dist_pop[d] < lower || dist_pop[d] > upper) {
-                valid = false;
-                break;
-            }
-        }
-
-        if (valid) {
-            // Valid proposal found
-            MEWProposal proposal;
-            proposal.cycle = cycle_prop;
-            proposal.marked = marked_prop;
-            proposal.n_rejects = n_rejects;
-            proposal.valid = true;
-            proposal.partition = partition;
-            return proposal;
-        }
-
-        // Invalid - reset and try again
-        current_tree = tree;
-        current_marked = marked_edges;
-        n_rejects++;
+    CycleProposal cycle_prop = cycle_basis_step(g, tree, marked_edges);
+    proposal.cycle = cycle_prop;
+    if (!cycle_prop.valid) {
+        proposal.marked.old_edge = make_edge(0, 0);
+        proposal.marked.new_edge = make_edge(0, 0);
+        proposal.marked.marked_new = marked_edges;
+        return proposal;
     }
 
-    // Failed to find valid proposal after MAX_TRIES
-    MEWProposal proposal;
-    proposal.cycle.tree_new = tree;
-    proposal.cycle.edge_plus = make_edge(0, 0);
-    proposal.cycle.edge_minus = make_edge(0, 0);
-    proposal.cycle.cycle_edges.clear();
-    proposal.cycle.valid = false;
-    proposal.marked.old_edge = make_edge(0, 0);
-    proposal.marked.new_edge = make_edge(0, 0);
-    proposal.marked.marked_new = marked_edges;
-    proposal.n_rejects = n_rejects;
-    proposal.valid = false;  // Mark as invalid to trigger rejection in main loop
-    proposal.partition = tree_to_partition(tree, marked_edges, V, n_distr);
+    MarkedEdgeProposal marked_prop = marked_edge_step(cycle_prop.tree_new, marked_edges);
+    proposal.marked = marked_prop;
+
+    if (marked_prop.marked_new.size() != marked_edges.size()) {
+        return proposal;
+    }
+
+    auto components = tree_components_list(cycle_prop.tree_new, marked_prop.marked_new);
+    if ((int)components.size() != n_distr) {
+        return proposal;
+    }
+
+    uvec partition = tree_to_partition(
+        cycle_prop.tree_new, marked_prop.marked_new, V, n_distr);
+    proposal.partition = partition;
+
+    std::vector<double> dist_pop(n_distr, 0.0);
+    for (int i = 0; i < V; i++) {
+        int dist = partition(i) - 1;
+        dist_pop[dist] += pop(i);
+    }
+
+    for (int d = 0; d < n_distr; d++) {
+        if (dist_pop[d] < lower || dist_pop[d] > upper) {
+            return proposal;
+        }
+    }
+
+    proposal.valid = true;
     return proposal;
 }
 

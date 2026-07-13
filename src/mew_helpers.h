@@ -42,7 +42,7 @@ struct MarkedEdgeProposal {
 struct MEWProposal {
     CycleProposal cycle;            // Tree update
     MarkedEdgeProposal marked;      // Marked edge update
-    int n_rejects;                  // Number of rejections before valid proposal
+    int n_rejects;                  // Number of internal redraws
     bool valid;                     // Whether proposal meets population constraints
     uvec partition;                 // Cached partition from population check
 };
