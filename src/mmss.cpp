@@ -794,7 +794,7 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
             }
         }
 
-        // For l_merge >= 3: apply the region-size correction
+        // For l_merge >= 3: apply the effective top-k correction
         if (l_merge >= 3) {
             int total_region = (int) iter_region.size();
             int fwd_cumsize = 0, rev_cumsize = 0;
@@ -806,8 +806,11 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                 }
                 fwd_cumsize += fwd_s;
                 rev_cumsize += rev_s;
-                prop_correction += std::log((double)(total_region - fwd_cumsize - 1) /
-                                            (double)(total_region - rev_cumsize - 1));
+                int fwd_edges = total_region - fwd_cumsize - 1;
+                int rev_edges = total_region - rev_cumsize - 1;
+                int k_fwd = std::min(fixed_k_seq[s], fwd_edges);
+                int k_rev = std::min(fixed_k_seq[s], rev_edges);
+                prop_correction += std::log((double) k_fwd / (double) k_rev);
             }
         }
 
@@ -945,7 +948,7 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     Rcpp::colnames(valid_cuts_mat) = col_names;
     Rcpp::rownames(valid_cuts_mat) = row_names;
     out["valid_cuts_by_step"] = valid_cuts_mat;
-    // Fixed top-k sequence (same for all proposals; k_s cancels in MH ratio)
+    // Fixed top-k sequence; its effective value is min(k_s, |V(H)|-1).
     out["k_seq"] = Rcpp::IntegerVector(fixed_k_seq.begin(), fixed_k_seq.end());
 
     return out;
