@@ -9,7 +9,6 @@
 
 #include "redist_constants.h"
 #include "redist_types.h"
-#include "smc_base.h"
 #include "tree_op.h"
 
 class ScoringFunction;
@@ -81,7 +80,7 @@ arma::vec compute_soft_constraint_edge_cut_weights(
 
 arma::uvec compute_retroactive_soft_constraint_edge_cut_weights(
     std::vector<EdgeCut> &valid_edges, ScoringFunction const &scoring_function,
-    VertexGraph const &ust, int const num_regions, PlanVector &region_ids,
+    Tree const &ust, int const num_regions, PlanVector &region_ids,
     RegionSizes &region_sizes, IntPlanAttribute &region_pops, int const split_region_id1,
     int const split_region_id2, CircularQueue<std::pair<int, int>> &vertex_queue);
 
@@ -92,15 +91,15 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
     std::vector<int> const &smaller_cut_sizes_to_try, const int total_region_pop,
     const int total_region_size, const double lower, const double upper, const double target);
 
-std::vector<EdgeCut> get_all_valid_edges_in_undirected_tree(
-    const VertexGraph &a_ust, const int root, const arma::uvec &pop, TreePopStack &stack,
+std::vector<EdgeCut> get_valid_edges_in_joined_packed_tree(
+    MapParams const &map_params, EdgeBitset const &forest_edges, TreePopStack &stack,
     std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
-    const int min_potential_cut_size, const int max_potential_cut_size,
-    std::vector<int> const &smaller_cut_sizes_to_try, const int total_region_pop,
-    const int total_region_size, const double lower, const double upper, const double target);
+    const int region1_root, const int region1_pop, const int region2_root,
+    const int region2_pop, const int min_potential_cut_size, const int max_potential_cut_size,
+    std::vector<int> const &smaller_cut_sizes_to_try, const int total_merged_region_size);
 
-std::vector<EdgeCut> get_valid_edges_in_joined_tree(
-    MapParams const &map_params, VertexGraph const &forest_graph, TreePopStack &stack,
+std::vector<EdgeCut> get_valid_edges_in_joined_vertex_tree(
+    MapParams const &map_params, Tree const &forest_graph, TreePopStack &stack,
     std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
     const int region1_root, const int region1_pop, const int region2_root,
     const int region2_pop, const int min_potential_cut_size, const int max_potential_cut_size,

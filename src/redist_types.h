@@ -14,6 +14,7 @@
 #include <queue>
 #include <stdint.h>
 #include <vector>
+#include "redist_constants.h"
 
 // [[Rcpp::depends(RcppArmadillo)]]
 #include <RcppArmadillo.h>
@@ -38,10 +39,24 @@ constexpr unsigned int MAX_SUPPORTED_COUNTYREGION_VALUE =
 typedef std::vector<RegionID> AllPlansVector;
 typedef std::vector<RegionID> AllRegionSizesVector;
 typedef std::vector<RegionID> RegionSizeVector;
-typedef std::vector<std::vector<VertexID>> VertexGraph; // graphs on vertices
 typedef std::vector<std::unordered_map<int, int>> RegionMultigraphCount;
 typedef std::tuple<CountyRegion, RegionID, CountyID> CountyComponentVertex;
 typedef std::vector<std::vector<CountyComponentVertex>> CountyComponentGraph;
+
+// -----------------------------------------------------------------------------
+// Packed forest edge storage
+// The idea is we have a list of all the edges in the graph and represent
+// a forest as a boolean vector where true means the edge is in the forest and 
+// false means not 
+// -----------------------------------------------------------------------------
+typedef std::uint32_t EdgeID;       // identifies edge number e
+typedef std::uint64_t EdgeBitWord;  // stores 64 edge booleans
+
+constexpr int EDGE_BITS_PER_WORD = 64;
+
+inline int compute_num_edge_bit_words(int num_graph_edges) {
+    return (num_graph_edges + EDGE_BITS_PER_WORD - 1) / EDGE_BITS_PER_WORD;
+}
 
 // old types
 typedef std::vector<std::vector<int>> Tree;
@@ -60,11 +75,40 @@ template <typename T> class PlanAttribute {
     PlanAttribute(std::vector<T> &underyling_long_vec, int offset_start, int offset_end)
         : offset_start(offset_start), offset_end(offset_end), long_vec(underyling_long_vec) {};
 
+    // Checks if empty 
+    bool empty() const { return offset_start == offset_end; }
     // methods for accessing
     // Const version for read-only access
-    const T operator[](int index) const { return long_vec[offset_start + index]; };
+    const T operator[](int index) const { 
+        if constexpr(perf_config::bounds_checking){
+            if (index < 0 || index >= static_cast<int>(size())) {
+                std::ostringstream oss;
+                oss << "PlanAttribute::operator[] const out of range.\n";
+                oss << "index=" << index << "\n";
+                oss << "size=" << size() << "\n";
+                oss << "offset_start=" << offset_start << "\n";
+                oss << "offset_end=" << offset_end << "\n";
+                throw std::runtime_error(oss.str());
+            }
+        }
+
+        return long_vec[offset_start + index]; 
+    };
     // non constant for modification
-    T &operator[](int index) { return long_vec[offset_start + index]; };
+    T &operator[](int index) { 
+        if constexpr(perf_config::bounds_checking){
+            if (index < 0 || index >= static_cast<int>(size())) {
+                std::ostringstream oss;
+                oss << "PlanAttribute::operator[] out of range.\n";
+                oss << "index=" << index << "\n";
+                oss << "size=" << size() << "\n";
+                oss << "offset_start=" << offset_start << "\n";
+                oss << "offset_end=" << offset_end << "\n";
+                throw std::runtime_error(oss.str());
+            }
+        }
+        return long_vec[offset_start + index]; 
+    };
 
     // Non-const iterator accessors
     auto begin() { return long_vec.begin() + offset_start; }
@@ -76,16 +120,61 @@ template <typename T> class PlanAttribute {
 
     // This copies one plans data from another
     void copy(PlanAttribute const &other_attr) {
+        if constexpr (perf_config::bounds_checking){
+            if (size() != other_attr.size()) {
+                std::ostringstream oss;
+                oss << "PlanAttribute::copy size mismatch. "
+                    << "dest.size()=" << size()
+                    << ", source.size()=" << other_attr.size();
+                throw std::runtime_error(oss.str());
+            }
+        }
         std::copy(other_attr.begin(), other_attr.end(), begin());
     }
 
     std::size_t size() const noexcept { return offset_end - offset_start; };
+
+    // debug functions 
+    int debug_offset_start() const {
+        return offset_start;
+    }
+
+    int debug_offset_end() const {
+        return offset_end;
+    }
+
+    std::size_t debug_size() const {
+        return static_cast<std::size_t>(offset_end - offset_start);
+    }
+
+    std::vector<T> const *debug_backing_vector_address() const {
+        return &long_vec;
+    }
+
+    T const *debug_data_begin() const {
+        return long_vec.data() + offset_start;
+    }
+
+    T const *debug_data_end() const {
+        return long_vec.data() + offset_end;
+    }
+
+    bool debug_overlaps(PlanAttribute<T> const &other) const {
+        if (&long_vec != &other.long_vec) {
+            return false;
+        }
+
+        return offset_start < other.offset_end &&
+            other.offset_start < offset_end;
+    }
+
 };
 
 typedef PlanAttribute<RegionID> PlanVector;
 typedef PlanAttribute<RegionID> RegionSizes;
 typedef PlanAttribute<int> IntPlanAttribute;
 typedef PlanAttribute<double> DoublePlanAttribute;
+typedef PlanAttribute<EdgeBitWord> PlanEdgeBits;
 
 // uniquely maps pairs (x,y) of the form
 // 0 <= x < y < container_size
@@ -128,8 +217,192 @@ Graph list_to_graph(const Rcpp::List &l);
  */
 Graph build_restricted_county_graph(Graph const &g, arma::uvec const &counties);
 
-// Essentially just a useful container for map parameters
+// Counts the number of undirected edges in a graph. 
+// It also checks the graph is actually symmetric 
+int count_undirected_edges(Graph const &g);
 
+// Class for storing the graph as a long vector of edges 
+// Allows you to take a vertex and get neighbors 
+class GraphEdgeIndex {
+  public:
+  // incident edge stores both the vertex adjacent to v and the edge_id associated with this edge
+    struct IncidentEdge {
+        VertexID neighbor;
+        EdgeID edge_id;
+    };
+
+    int const num_edges;
+    int const V;
+    int max_num_edges; // TODO make constant and initialized lated 
+
+    GraphEdgeIndex() = default;
+
+    explicit GraphEdgeIndex(Graph const &g, int const num_edges)
+        : incident_edges(g.size()), num_edges(num_edges), V(g.size()) {
+
+        if (g.size() > MAX_SUPPORTED_NUM_VERTICES) {
+            throw Rcpp::exception("Too many vertices for VertexID in GraphEdgeIndex!");
+        }
+
+        std::unordered_set<std::uint64_t> seen_edges;
+        seen_edges.reserve(static_cast<std::size_t>(num_edges) * 2);
+
+        int const V = static_cast<int>(g.size());
+        max_num_edges = 1;
+
+        for (int v = 0; v < V; ++v) {
+            auto num_v_edges = g[v].size();
+            incident_edges[v].reserve(num_v_edges);
+
+            // update the max number of edges if this is larger
+            if (num_v_edges > max_num_edges){
+                max_num_edges = num_v_edges;
+            }
+           
+
+            std::unordered_set<int> seen_neighbors_for_v;
+            seen_neighbors_for_v.reserve(g[v].size());
+
+            for (int u : g[v]) {
+                if (u < 0 || u >= V) {
+                    throw Rcpp::exception("GraphEdgeIndex found invalid neighbor index!");
+                }
+
+                if (!seen_neighbors_for_v.insert(u).second) {
+                    std::ostringstream oss;
+                    Rcpp::Rcerr << "Duplicate neighbor in graph adjacency list: "
+                        << "vertex " << v << " has neighbor " << u << " more than once.";
+                    
+                    throw Rcpp::exception("GraphEdgeIndex Constructor\n");
+                    throw std::runtime_error(oss.str());
+                }
+
+                if (v < u) {
+                    std::uint64_t const key =
+                        (static_cast<std::uint64_t>(v) << 32) |
+                        static_cast<std::uint32_t>(u);
+
+                    if (!seen_edges.insert(key).second) {
+                        std::ostringstream oss;
+                        Rcpp::Rcerr << "Duplicate undirected edge in GraphEdgeIndex: ("
+                            << v << ", " << u << ")";
+                        
+                        throw Rcpp::exception("GraphEdgeIndex Constructor\n");
+                        throw std::runtime_error(oss.str());
+                    }
+
+                    if (edges.size() > std::numeric_limits<EdgeID>::max()) {
+                        throw Rcpp::exception("Too many graph edges for EdgeID!");
+                    }
+
+                    EdgeID const eid = static_cast<EdgeID>(edges.size());
+
+                    edges.push_back({
+                        static_cast<VertexID>(v),
+                        static_cast<VertexID>(u)
+                    });
+
+                    incident_edges[v].push_back({
+                        static_cast<VertexID>(u),
+                        eid
+                    });
+
+                    incident_edges[u].push_back({
+                        static_cast<VertexID>(v),
+                        eid
+                    });
+                }
+            }
+        }
+
+        if (static_cast<int>(edges.size()) != num_edges) {
+            std::ostringstream oss;
+            Rcpp::Rcerr << "GraphEdgeIndex edge count mismatch. "
+                << "expected " << num_edges
+                << ", built " << edges.size();
+            
+            throw Rcpp::exception("GraphEdgeIndex Constructor\n");
+            throw std::runtime_error(oss.str());
+        }
+    }
+
+    // Takes two vertices and returns their edge id
+    EdgeID get_edge_id(int v, int u) const {
+        if constexpr (perf_config::bounds_checking){
+            check_vertex(v, "GraphEdgeIndex::get_edge_id received invalid v!");
+            check_vertex(u, "GraphEdgeIndex::get_edge_id received invalid u!");
+        }
+        // 
+        VertexID const target = static_cast<VertexID>(u);
+
+        for (auto const &incident_edge : incident_edges[v]) {
+            if (incident_edge.neighbor == target) {
+                return incident_edge.edge_id;
+            }
+        }
+
+        std::ostringstream oss;
+        oss << "GraphEdgeIndex::get_edge_id called on non-edge. "
+            << "v=" << v
+            << ", u=" << u
+            << ", V=" << incident_edges.size()
+            << ". Neighbors of v: ";
+
+        if (v >= 0 && v < static_cast<int>(incident_edges.size())) {
+            for (auto const &incident_edge : incident_edges[v]) {
+                oss << static_cast<int>(incident_edge.neighbor) << " ";
+            }
+        }
+
+        throw std::runtime_error(oss.str());
+    }
+
+    bool has_edge(int v, int u) const {
+        if constexpr (perf_config::bounds_checking){
+            if (!is_valid_vertex(v) || !is_valid_vertex(u)) {
+                return false;
+            }
+        }
+
+        VertexID const target = static_cast<VertexID>(u);
+
+        for (auto const &incident_edge : incident_edges[v]) {
+            if (incident_edge.neighbor == target) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // takes an edge id and return the pair associated with it
+    std::pair<VertexID, VertexID> get_edge_endpoints(EdgeID edge_id) const {
+        if constexpr (perf_config::bounds_checking){
+            if (static_cast<std::size_t>(edge_id) >= edges.size()) {
+                throw Rcpp::exception("GraphEdgeIndex::get_edge_endpoints received invalid edge_id!");
+            }
+        }
+
+        return edges[edge_id];
+    }
+
+    std::vector<std::pair<VertexID, VertexID>> edges;
+    std::vector<std::vector<IncidentEdge>> incident_edges;
+
+  private:
+    bool is_valid_vertex(int v) const {
+        return v >= 0 && v < static_cast<int>(incident_edges.size());
+    }
+
+    void check_vertex(int v, char const *message) const {
+        if (!is_valid_vertex(v)) {
+            throw Rcpp::exception(message);
+        }
+    }
+
+};
+
+// Essentially just a useful container for map and some algorithm parameters
 class MapParams {
   public:
     // Constructor
@@ -137,13 +410,8 @@ class MapParams {
               int const ndists, int const total_seats,
               std::vector<int> const &district_seat_sizes, double const lower,
               double const target, double const upper)
-        : g(list_to_graph(adj_list)), num_edges([this]() {
-              int total = 0;
-              for (const auto &vec : g) {
-                  total += vec.size();
-              }
-              return total / 2;
-          }()),
+        : g(list_to_graph(adj_list)), num_edges(count_undirected_edges(g)),
+        graph_edge_index(g, num_edges), num_edge_bit_words(compute_num_edge_bit_words(num_edges)),
           counties(counties), num_counties(max(counties)), cg(county_graph(g, counties)),
           county_restricted_graph(num_counties > 1 ? build_restricted_county_graph(g, counties)
                                                    : Graph(0)),
@@ -205,6 +473,8 @@ class MapParams {
 
     Graph const g;                       // The graph as undirected adjacency list
     int const num_edges;                 // number of undirected edges in g
+    GraphEdgeIndex const graph_edge_index; // bitpacked boolean storage of graph
+    int const num_edge_bit_words; // used for bitpacked stuff
     arma::uvec const counties;           // county labels
     int const num_counties;              // The number of distinct counties
     Multigraph const cg;                 // county multigraph
@@ -300,18 +570,48 @@ template <typename T> class FixedStack {
     size_t max_size() const { return capacity; }
 
     void push(const T &value) {
+        if constexpr (perf_config::bounds_checking){
+            if (count >= capacity) {
+                throw Rcpp::exception("FixedStack overflow.");
+            }
+        }
         buffer[count++] = value; // copy
     }
 
     void push(T &&value) {
+        if constexpr (perf_config::bounds_checking){
+            if (count >= capacity) {
+                throw Rcpp::exception("FixedStack overflow.");
+            }
+        }
         buffer[count++] = std::move(value); // move
     }
 
-    T &top() { return buffer[count - 1]; }
+    T &top() { 
+        if constexpr (perf_config::bounds_checking){
+            if (count == 0) {
+                throw Rcpp::exception("FixedStack underflow.");
+            }
+        }
+        return buffer[count - 1]; 
+    }
 
-    const T &top() const { return buffer[count - 1]; }
+    const T &top() const { 
+        if constexpr (perf_config::bounds_checking){
+            if (count == 0) {
+                throw Rcpp::exception("FixedStack underflow.");
+            }
+        }
+        return buffer[count - 1]; }
 
-    T pop() { return std::move(buffer[--count]); }
+    T pop() { 
+        if constexpr (perf_config::bounds_checking){
+            if (count == 0) {
+                throw Rcpp::exception("FixedStack underflow.");
+            }
+        }
+        return std::move(buffer[--count]); 
+    }
 
     void clear() { count = 0; }
 };
@@ -336,18 +636,35 @@ template <typename T> class CircularQueue {
     size_t max_size() const { return capacity; }
 
     void push(const T &value) {
+        if constexpr (perf_config::bounds_checking){
+            if (size >= capacity) {
+                throw Rcpp::exception("CircularQueue overflow.");
+            }
+        }
+
         buffer[tail] = value;
         tail = (tail + 1) % capacity;
         ++size;
     }
 
     void push(T &&value) {
+        if constexpr (perf_config::bounds_checking){
+            if (size >= capacity) {
+                throw Rcpp::exception("CircularQueue overflow.");
+            }
+        }
         buffer[tail] = std::move(value);
         tail = (tail + 1) % capacity;
         ++size;
     }
 
     T pop() {
+        if constexpr (perf_config::bounds_checking){
+            if (size == 0) {
+                throw Rcpp::exception("CircularQueue underlow.");
+            }
+        }
+
         T value = std::move(buffer[head]);
         head = (head + 1) % capacity;
         --size;
@@ -364,6 +681,8 @@ template <typename T> class CircularQueue {
 
     void clear() { head = tail = size = 0; }
 };
+
+typedef CircularQueue<int> DummyTreeQueue;
 
 // enum for sampling spaces
 enum class SamplingSpace : unsigned char {

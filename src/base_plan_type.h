@@ -9,6 +9,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <string_view>
 
 #include "graph_ops.h"
 #include "map_calc.h"
@@ -20,6 +21,7 @@
 #include "tree_splitting.h"
 #include "ust_sampler.h"
 #include "wilson.h"
+#include "utils.h"
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
@@ -56,6 +58,8 @@ class LinkingEdge {
     };
 };
 
+
+
 /*
  * Abstract Class implementation of plan
  *
@@ -90,18 +94,18 @@ class Plan {
     void check_inputted_region_sizes(int ndists, bool split_district_only) const;
 
   protected:
-    VertexGraph forest_graph;
+    EdgeBitset forest_edges;
     mutable std::vector<LinkingEdge> linking_edges;
 
   public:
     // constructor for a blank plan
     Plan(int const total_seats, int const total_pop, PlanVector &this_plan_region_ids,
          RegionSizes &this_plan_region_sizes, IntPlanAttribute &this_plan_region_pops,
-         IntPlanAttribute &this_plan_order_added);
+         IntPlanAttribute &this_plan_order_added, PlanEdgeBits &this_plan_forest_edge_bits);
     // constructor for partial plan (more than 1 region)
     Plan(int const num_regions, const arma::uvec &pop, PlanVector &this_plan_region_ids,
          RegionSizes &this_plan_region_sizes, IntPlanAttribute &this_plan_region_pops,
-         IntPlanAttribute &this_plan_order_added);
+         IntPlanAttribute &this_plan_order_added, PlanEdgeBits &this_plan_forest_edge_bits);
 
     // shallow copy methods
     void shallow_copy(Plan const &plan_to_copy);
@@ -117,12 +121,13 @@ class Plan {
     virtual ~Plan() = default;
 
     // methods
+    virtual std::string debug_string(bool print_region_ids = true) const;
     virtual void Rprint(bool verbose = false) const;
     void reorder_plan_by_oldest_split(Plan &dummy_plan);
     std::pair<int, int> get_most_recently_split_regions() const;
     std::pair<int, int> get_num_district_and_multidistricts() const;
 
-    virtual VertexGraph get_forest_adj() {
+    virtual Tree get_forest_adj() {
         throw Rcpp::exception("Get Forest Adj not Supported for this!\n");
     };
 
@@ -130,6 +135,15 @@ class Plan {
         throw Rcpp::exception(
             "Get Linking edges not Supported for this concrete Plan class!\n");
     };
+
+    EdgeBitset const &get_forest_edges() const {
+        return forest_edges;
+    }
+
+    // EdgeBitset &get_forest_edges() {
+    //     return forest_edges;
+    // }
+
 
     // methods for checking plans are connected/in population bounds
     bool check_region_pop_valid(MapParams const &map_params, int const region_id) const;
@@ -182,6 +196,13 @@ class Plan {
     void update_region_info_from_cut(EdgeCut cut_edge, const int split_region1_id,
                                      const int split_region2_id, bool const add_region);
 
+    // Updates both the plan id vector and the forest at once 
+    // this code is shared by both forest and linking edge plans 
+    // DOES NOT TOUCH LINKING EDGES
+    void update_plan_ids_and_forest_from_cut(TreeSplitter const &tree_splitter, 
+        USTSampler &ust_sampler, EdgeCut const cut_edge,
+        const int split_region1_id, const int split_region2_id, bool const add_region);
+
     void update_from_successful_split(TreeSplitter const &tree_splitter,
                                       USTSampler &ust_sampler, EdgeCut const &cut_edge,
                                       int const new_region1_id, int const new_region2_id,
@@ -217,6 +238,19 @@ class Plan {
                                                     bool const is_final_split,
                                                     USTSampler &ust_sampler,
                                                     TreeSplitter &tree_splitter) const = 0;
+
+
+    // Debugging functions 
+    void check_forest_equality(Tree const &ust1, Tree const &ust2, 
+        GraphEdgeIndex const &graph_edge_index, std::string_view msg) const;
+    void check_forest_integrity(GraphEdgeIndex const &graph_edge_index, std::string_view msg) const;
+
+    bool forest_graph_equals_order_insensitive(
+        Tree const &other,
+        GraphEdgeIndex const &graph_edge_index,
+        std::string &out
+    ) const;
+
 };
 
 // simple struct
@@ -390,6 +424,7 @@ class RegionPairHash {
         return;
     }
 
+    std::string debug_string(std::vector<int> const &county_component) const;
     void Rprint(std::vector<int> const &county_component) const;
 };
 
@@ -427,6 +462,8 @@ class PlanMultigraph {
     std::vector<int> region_reindex_vec;
 
     // Prints relevant info - for debugging
+    std::string debug_string() const;
+    std::string debug_string_detailed(Plan const &plan) const;
     void Rprint() const;
     void Rprint_detailed(Plan const &plan);
 
@@ -502,8 +539,12 @@ class TreeSplitter {
 
   public:
     // Default Constructor
-    TreeSplitter(int V) {};
+    TreeSplitter(int V, SamplingSpace const sampling_space) :
+    forest_graph(sampling_space == SamplingSpace::ForestSpace ? init_tree(V) : Tree{})
+    {};
     virtual ~TreeSplitter() = default;
+
+    Tree forest_graph; // used for computing get_log_retroactive_splitting_prob_for_joined_vertex_tree
 
     // Returns a vector of all the valid edges in the tree
     std::vector<EdgeCut> get_all_valid_pop_edge_cuts_in_directed_tree(
@@ -524,10 +565,23 @@ class TreeSplitter {
         bool save_selection_prob = false);
 
     // Get probability a specific edge was cut in the tree made by joining
-    // the trees in the two regions
-    virtual double get_log_retroactive_splitting_prob_for_joined_tree(
+    // the trees in the two regions where the forest is stored as a packed forest
+    // This is called by linking edge plans since its not worth it to copy 
+    // over to a vertex forest 
+    virtual double get_log_retroactive_splitting_prob_for_joined_packed_tree(
         MapParams const &map_params, ScoringFunction const &scoring_function,
-        VertexGraph const &forest_graph, TreePopStack &stack, std::vector<bool> &visited,
+        EdgeBitset const &forest_edges, TreePopStack &stack, std::vector<bool> &visited,
+        std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
+        Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
+        std::vector<int> const &smaller_cut_sizes_to_try);
+
+    // Get probability a specific edge was cut in the tree made by joining
+    // the trees in the two regions where the forest is stored as a vertex of vertex forest
+    // This is primarily called by forest space plans since its cheaper to copy to vertex
+    // forest once for the indexing gains 
+    virtual double get_log_retroactive_splitting_prob_for_joined_vertex_tree(
+        MapParams const &map_params, ScoringFunction const &scoring_function,
+        Tree const &forest_graph, TreePopStack &stack, std::vector<bool> &visited,
         std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
         Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
         std::vector<int> const &smaller_cut_sizes_to_try);
@@ -563,7 +617,8 @@ class NaiveTopKSplitter : public TreeSplitter {
 
   public:
     // Constructor for NaiveTopKSplitter
-    NaiveTopKSplitter(int V, int k_param) : TreeSplitter(V), k_param(k_param) {}
+    NaiveTopKSplitter(int V, SamplingSpace const sampling_space, int k_param) 
+    : TreeSplitter(V, sampling_space), k_param(k_param) {}
 
     // Attributes specific to NaiveTopKSplitter
     int k_param; // Top k valuex
@@ -588,7 +643,8 @@ class UniformValidSplitter : public TreeSplitter {
 
   public:
     // implementation of the pure virtual function
-    UniformValidSplitter(int V) : TreeSplitter(V) {};
+    UniformValidSplitter(int V, SamplingSpace const sampling_space) : 
+    TreeSplitter(V, sampling_space) {};
 
     std::pair<bool, EdgeCut> select_edge_to_cut(ScoringFunction const &scoring_function,
                                                 Tree const &ust, RNGState &rng_state,
@@ -605,8 +661,9 @@ class UniformValidSplitter : public TreeSplitter {
 class ExpoWeightedSplitter : public TreeSplitter {
 
   public:
-    ExpoWeightedSplitter(int V, double alpha, double target)
-        : TreeSplitter(V), alpha(alpha), target(target) {
+    ExpoWeightedSplitter(int V, SamplingSpace const sampling_space,
+        double alpha, double target)
+        : TreeSplitter(V, sampling_space), alpha(alpha), target(target) {
         if (alpha < 0.0)
             throw Rcpp::exception("Alpha must be greater than zero!");
     }
@@ -620,8 +677,9 @@ class ExpoWeightedSplitter : public TreeSplitter {
 class ExpoWeightedSmallerDevSplitter : public TreeSplitter {
 
   public:
-    ExpoWeightedSmallerDevSplitter(int V, double alpha, double target)
-        : TreeSplitter(V), alpha(alpha), target(target) {
+    ExpoWeightedSmallerDevSplitter(int V, SamplingSpace const sampling_space,
+        double alpha, double target)
+        : TreeSplitter(V, sampling_space), alpha(alpha), target(target) {
         if (alpha < 0.0)
             throw Rcpp::exception("Alpha must be greater than zero!");
     }
@@ -637,8 +695,9 @@ class PopTemperSplitter : public TreeSplitter {
 
   public:
     // implementation of the pure virtual function
-    PopTemperSplitter(int V, double const target, double const pop_temper, int const ndists)
-        : TreeSplitter(V), target(target), pop_temper(pop_temper), ndists(ndists) {};
+    PopTemperSplitter(int V, SamplingSpace const sampling_space,
+        double const target, double const pop_temper, int const ndists)
+        : TreeSplitter(V, sampling_space), target(target), pop_temper(pop_temper), ndists(ndists) {};
 
     double const target;
     double const pop_temper;
@@ -651,8 +710,9 @@ class PopTemperSplitter : public TreeSplitter {
 class ExperimentalSplitter : public TreeSplitter {
 
   public:
-    ExperimentalSplitter(int V, double epsilon, double target)
-        : TreeSplitter(V), epsilon(epsilon), target(target) {
+    ExperimentalSplitter(int V, SamplingSpace const sampling_space,
+        double epsilon, double target)
+        : TreeSplitter(V, sampling_space), epsilon(epsilon), target(target) {
         if (epsilon < 0.0)
             throw Rcpp::exception("Epsilon must be greater than zero!");
     }
@@ -676,8 +736,8 @@ class ConstraintSplitter : public TreeSplitter {
     std::vector<int> underlying_pops_vec;
 
   public:
-    ConstraintSplitter(int const V, int const ndists)
-        : TreeSplitter(V), underlying_plans_vec(V, 0), underlying_sizes_vec(ndists, 0),
+    ConstraintSplitter(int const V, SamplingSpace const sampling_space, int const ndists)
+        : TreeSplitter(V, sampling_space), underlying_plans_vec(V, 0), underlying_sizes_vec(ndists, 0),
           underlying_pops_vec(ndists, 0), V(V), ndists(ndists),
           region_ids(underlying_plans_vec, 0, V), region_sizes(underlying_sizes_vec, 0, ndists),
           region_pops(underlying_pops_vec, 0, ndists), vertex_queue(V), dummy_forest(V) {
@@ -691,7 +751,7 @@ class ConstraintSplitter : public TreeSplitter {
     RegionSizes region_sizes;
     IntPlanAttribute region_pops;
     CircularQueue<std::pair<int, int>> vertex_queue;
-    VertexGraph dummy_forest;
+    Tree dummy_forest;
 
     // Takes a spanning tree and returns the edge to cut if successful
     std::pair<bool, EdgeCut> attempt_to_find_edge_to_cut(
@@ -703,9 +763,9 @@ class ConstraintSplitter : public TreeSplitter {
         const int max_potential_cut_size, std::vector<int> const &smaller_cut_sizes_to_try,
         bool save_selection_prob = false) override;
 
-    double get_log_retroactive_splitting_prob_for_joined_tree(
+    double get_log_retroactive_splitting_prob_for_joined_packed_tree(
         MapParams const &map_params, ScoringFunction const &scoring_function,
-        VertexGraph const &forest_graph, TreePopStack &stack, std::vector<bool> &visited,
+        EdgeBitset const &forest_edges, TreePopStack &stack, std::vector<bool> &visited,
         std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
         Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
         std::vector<int> const &smaller_cut_sizes_to_try) override;

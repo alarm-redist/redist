@@ -11,23 +11,7 @@ constexpr bool DEBUG_SCORING_VERBOSE = false;
 
 // helpers
 
-std::vector<std::vector<int>> build_admin_vertex_lists(const Graph &g,
-                                                       const arma::uvec &admin_units) {
-    // we assume admin units is 1 indexed and if `k` units then values are in `1:k`
-    int const num_counties = arma::max(admin_units);
-    std::vector<std::vector<int>> admin_vertex_lists(num_counties);
-    // nothing if only 1 county
-    if (num_counties == 1)
-        return admin_vertex_lists;
-    // else walk through the graph and add each vertex to list for each unit
-    int const V = g.size();
 
-    for (int v = 0; v < V; v++) {
-        int v_admin_unit = admin_units[v] - 1;
-        admin_vertex_lists[v_admin_unit].push_back(v);
-    }
-    return admin_vertex_lists;
-}
 
 // counts how many administrative unit are split by a plan
 // We say a unit is split if there is more than one region inside it
@@ -902,15 +886,15 @@ double ValidDistrictsConstraint::compute_raw_plan_constraint_score(
 // Scoring function
 ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &constraints,
                                  double const pop_temper, bool const smc, int const thread_id)
-    : map_params(map_params), num_non_final_soft_region_constraints(0),
-      num_final_soft_region_constraints(0), all_rounds_soft_region_constraints(0),
-      num_hard_region_constraints(0), total_soft_plan_constraints(0),
+    : map_params(map_params),
+      num_hard_region_constraints(0), total_soft_region_constraints(0),
+      total_soft_plan_constraints(0), 
       num_hard_plan_constraints(0), total_soft_constraints(0),
       any_soft_custom_constraints(false), any_hard_custom_constraints(false) {
     // First add region constraints
     // add pop temper if doing that
     if (pop_temper != 0) {
-        non_final_region_constraint_ptrs.emplace_back(std::make_unique<PopTemperConstraint>(
+        region_constraint_ptrs.emplace_back(std::make_unique<PopTemperConstraint>(
             map_params.target, map_params.ndists, map_params, pop_temper));
     }
 
@@ -921,7 +905,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
             region_constraint_ptrs.emplace_back(std::make_unique<PopDevConstraint>(
-                constr_inst, map_params.target, map_params.pop));
+                constr_inst, map_params));
         }
     }
     if (constraints.containsElementNamed("status_quo")) {
@@ -929,8 +913,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
             region_constraint_ptrs.emplace_back(std::make_unique<StatusQuoConstraint>(
-                constr_inst, as<arma::uvec>(constr_inst["current"]), map_params.pop,
-                map_params.ndists, as<int>(constr_inst["n_current"]), map_params.V));
+                constr_inst, map_params));
         }
     }
     if (constraints.containsElementNamed("segregation")) {
@@ -938,30 +921,28 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
             region_constraint_ptrs.emplace_back(std::make_unique<SegregationConstraint>(
-                constr_inst, as<arma::uvec>(constr_inst["group_pop"]),
-                as<arma::uvec>(constr_inst["total_pop"]), map_params.V));
+                constr_inst, map_params));
         }
     }
     if (constraints.containsElementNamed("grp_pow")) {
         Rcpp::List constr = constraints["grp_pow"];
         for (int i = 0; i < constr.size(); i++) {
-            List constr_inst = constr[i];
-            region_constraint_ptrs.emplace_back(std::make_unique<GroupPowerConstraint>(
-                constr_inst, map_params.V, as<arma::uvec>(constr_inst["group_pop"]),
-                as<arma::uvec>(constr_inst["total_pop"]), as<double>(constr_inst["tgt_group"]),
-                as<double>(constr_inst["tgt_other"]), as<double>(constr_inst["pow"])));
+            Rcpp::List constr_inst = constr[i];
+
+            region_constraint_ptrs.emplace_back(
+                GroupPowerConstraint::from_group_power(constr_inst, map_params)
+            );
         }
     }
+
     if (constraints.containsElementNamed("compet")) {
         Rcpp::List constr = constraints["compet"];
         for (int i = 0; i < constr.size(); i++) {
-            List constr_inst = constr[i];
-            // Competition is just group power with group target and other target .5
-            arma::uvec dvote = constr_inst["dvote"];
-            arma::uvec total = dvote + as<arma::uvec>(constr_inst["rvote"]);
+            Rcpp::List constr_inst = constr[i];
+
             region_constraint_ptrs.emplace_back(
-                std::make_unique<GroupPowerConstraint>(constr_inst, map_params.V, dvote, total,
-                                                       .5, .5, as<double>(constr_inst["pow"])));
+                GroupPowerConstraint::from_competition(constr_inst, map_params)
+            );
         }
     }
     if (constraints.containsElementNamed("grp_hinge")) {
@@ -970,9 +951,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
             region_constraint_ptrs.emplace_back(std::make_unique<GroupHingeConstraint>(
-                constr_inst, map_params.V, as<arma::vec>(constr_inst["tgts_group"]),
-                as<arma::uvec>(constr_inst["group_pop"]),
-                as<arma::uvec>(constr_inst["total_pop"])));
+                constr_inst, map_params));
         }
     }
     if (constraints.containsElementNamed("grp_inv_hinge")) {
@@ -982,9 +961,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
             region_constraint_ptrs.emplace_back(std::make_unique<GroupHingeConstraint>(
-                constr_inst, map_params.V, as<arma::vec>(constr_inst["tgts_group"]),
-                as<arma::uvec>(constr_inst["group_pop"]),
-                as<arma::uvec>(constr_inst["total_pop"])));
+                constr_inst, map_params));
         }
     }
     if (constraints.containsElementNamed("incumbency")) {
@@ -992,7 +969,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
             region_constraint_ptrs.emplace_back(std::make_unique<IncumbentConstraint>(
-                constr_inst, as<arma::uvec>(constr_inst["incumbents"])));
+                constr_inst, map_params));
         }
     }
     if (constraints.containsElementNamed("splits")) {
@@ -1000,8 +977,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
             region_constraint_ptrs.emplace_back(std::make_unique<SplitsConstraint>(
-                constr_inst, as<arma::uvec>(constr_inst["admin"]), as<int>(constr_inst["n"]),
-                smc));
+                constr_inst, map_params, smc));
         }
     }
     if (constraints.containsElementNamed("multisplits")) {
@@ -1009,8 +985,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
             region_constraint_ptrs.emplace_back(std::make_unique<MultisplitsConstraint>(
-                constr_inst, as<arma::uvec>(constr_inst["admin"]), as<int>(constr_inst["n"]),
-                smc));
+                constr_inst, map_params, smc));
         }
     }
     if (constraints.containsElementNamed("total_splits")) {
@@ -1018,8 +993,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
             region_constraint_ptrs.emplace_back(std::make_unique<TotalSplitsConstraint>(
-                constr_inst, as<arma::uvec>(constr_inst["admin"]), as<int>(constr_inst["n"]),
-                smc));
+                constr_inst, map_params, smc));
         }
     }
     if (constraints.containsElementNamed("polsby")) {
@@ -1027,27 +1001,49 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
             region_constraint_ptrs.emplace_back(std::make_unique<PolsbyConstraint>(
-                constr_inst, map_params.V, as<arma::ivec>(constr_inst["from"]),
-                as<arma::ivec>(constr_inst["to"]), as<arma::vec>(constr_inst["area"]),
-                as<arma::vec>(constr_inst["perimeter"])));
+                constr_inst, map_params));
         }
     }
 
-    // lp[i] += add_constraint("fry_hold", constraints,
-    //     [&] (List l) -> double {
-    //         return eval_fry_hold(districts.col(i), j,
-    //                              as<uvec>(l["total_pop"]),
-    //                              as<mat>(l["ssdmat"]),
-    //                              as<double>(l["denominator"]));
-    //     });
+    if (constraints.containsElementNamed("fry_hold")) {
+        Rcpp::List constr = constraints["fry_hold"];
+        throw std::runtime_error("Fry hold constraint not supported right now!\n");
+        for (int i = 0; i < constr.size(); i++) {
+            List constr_inst = constr[i];
+            // region_constraint_ptrs.emplace_back(std::make_unique<PolsbyConstraint>(
+            //     constr_inst, map_params));
+        }
+    }
 
-    // lp[i] += add_constraint("qps", constraints,
-    //     [&] (List l) -> double {
-    //         return eval_qps(districts.col(i), j,
-    //                         as<uvec>(l["total_pop"]),
-    //                         as<uvec>(l["cities"]), as<int>(l["n_city"]),
-    //                         n_distr);
-    //     });
+    if (constraints.containsElementNamed("qps")) {
+        Rcpp::List constr = constraints["qps"];
+        throw std::runtime_error("QPS constraint not supported right now!\n");
+        for (int i = 0; i < constr.size(); i++) {
+            List constr_inst = constr[i];
+            // region_constraint_ptrs.emplace_back(std::make_unique<PolsbyConstraint>(
+            //     constr_inst, map_params));
+        }
+    }
+
+    if (constraints.containsElementNamed("edges_removed")) {
+        Rcpp::List constr = constraints["edges_removed"];
+        throw std::runtime_error("Edges Removed constraint not supported right now!\n");
+        for (int i = 0; i < constr.size(); i++) {
+            List constr_inst = constr[i];
+            // region_constraint_ptrs.emplace_back(std::make_unique<PolsbyConstraint>(
+            //     constr_inst, map_params));
+        }
+    }
+    
+    if (constraints.containsElementNamed("log_st")) {
+        Rcpp::List constr = constraints["log_st"];
+        throw std::runtime_error("Log Spanning tree constraint not supported right now!\n");
+        for (int i = 0; i < constr.size(); i++) {
+            List constr_inst = constr[i];
+            // region_constraint_ptrs.emplace_back(std::make_unique<PolsbyConstraint>(
+            //     constr_inst, map_params));
+        }
+    }
 
     if (constraints.containsElementNamed("custom")) {
         Rcpp::List constr = constraints["custom"];
@@ -1058,7 +1054,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
                 hard_constraint = as<bool>(constr_inst["hard_constraint"]);
             }
             region_constraint_ptrs.emplace_back(std::make_unique<CustomRegionConstraint>(
-                constr_inst, map_params.V, as<Rcpp::Function>(constr_inst["fn"])));
+                constr_inst, map_params));
             // mark custom R constraints as true
             any_soft_custom_constraints = true;
             // if hard custom constraint note that
@@ -1074,31 +1070,8 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
         Rcpp::List constr = constraints["plan_splits"];
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
-            double strength = constr_inst["strength"];
-            std::vector<bool> num_regions_to_score(map_params.ndists + 1, true);
-            if (constr_inst.containsElementNamed("nregions_to_score")) {
-                // The vector in R is one indexed but c++ is 0 indexed so need to pad an
-                // extra element
-                num_regions_to_score =
-                    Rcpp::as<std::vector<bool>>(constr_inst["nregions_to_score"]);
-                num_regions_to_score.insert(num_regions_to_score.begin(), false);
-            }
-            bool hard_constraint = false;
-            if (constr_inst.containsElementNamed("hard_constraint")) {
-                hard_constraint = as<bool>(constr_inst["hard_constraint"]);
-            }
-            double hard_threshold = 0.0;
-            if (constr_inst.containsElementNamed("hard_threshold")) {
-                hard_threshold = as<double>(constr_inst["hard_threshold"]);
-            }
-            if (strength != 0) {
-                // build the forest and get the roots
-                arma::uvec admin_units = as<arma::uvec>(constr_inst["admin"]);
-                auto admin_vertex_lists = build_admin_vertex_lists(map_params.g, admin_units);
-                plan_constraint_ptrs.emplace_back(std::make_unique<PlanSplitsConstraint>(
-                    strength, map_params.ndists, admin_units, admin_vertex_lists,
-                    num_regions_to_score, hard_constraint, hard_threshold));
-            }
+            plan_constraint_ptrs.emplace_back(std::make_unique<PlanSplitsConstraint>(
+                constr_inst, map_params));
         }
     }
     // total splits for whole plan
@@ -1106,31 +1079,8 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
         Rcpp::List constr = constraints["total_plan_splits"];
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
-            double strength = constr_inst["strength"];
-            std::vector<bool> num_regions_to_score(map_params.ndists + 1, true);
-            if (constr_inst.containsElementNamed("nregions_to_score")) {
-                // The vector in R is one indexed but c++ is 0 indexed so need to pad an
-                // extra element
-                num_regions_to_score =
-                    Rcpp::as<std::vector<bool>>(constr_inst["nregions_to_score"]);
-                num_regions_to_score.insert(num_regions_to_score.begin(), false);
-            }
-            bool hard_constraint = false;
-            if (constr_inst.containsElementNamed("hard_constraint")) {
-                hard_constraint = as<bool>(constr_inst["hard_constraint"]);
-            }
-            double hard_threshold = 0.0;
-            if (constr_inst.containsElementNamed("hard_threshold")) {
-                hard_threshold = as<double>(constr_inst["hard_threshold"]);
-            }
-            if (strength != 0) {
-                // build the forest and get the roots
-                arma::uvec admin_units = as<arma::uvec>(constr_inst["admin"]);
-                auto admin_vertex_lists = build_admin_vertex_lists(map_params.g, admin_units);
-                plan_constraint_ptrs.emplace_back(std::make_unique<TotalPlanSplitsConstraint>(
-                    strength, map_params.ndists, admin_units, admin_vertex_lists,
-                    num_regions_to_score, hard_constraint, hard_threshold));
-            }
+            plan_constraint_ptrs.emplace_back(std::make_unique<TotalPlanSplitsConstraint>(
+                constr_inst, map_params));
         }
     }
     // districts with more than one incumbent
@@ -1138,29 +1088,8 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
         Rcpp::List constr = constraints["plan_incumbency"];
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
-            double strength = constr_inst["strength"];
-            std::vector<bool> num_regions_to_score(map_params.ndists + 1, true);
-            if (constr_inst.containsElementNamed("nregions_to_score")) {
-                // The vector in R is one indexed but c++ is 0 indexed so need to pad an
-                // extra element
-                num_regions_to_score =
-                    Rcpp::as<std::vector<bool>>(constr_inst["nregions_to_score"]);
-                num_regions_to_score.insert(num_regions_to_score.begin(), false);
-            }
-            bool hard_constraint = false;
-            if (constr_inst.containsElementNamed("hard_constraint")) {
-                hard_constraint = as<bool>(constr_inst["hard_constraint"]);
-            }
-            double hard_threshold = 0.0;
-            if (constr_inst.containsElementNamed("hard_threshold")) {
-                hard_threshold = as<double>(constr_inst["hard_threshold"]);
-            }
-            if (strength != 0) {
-                plan_constraint_ptrs.emplace_back(std::make_unique<PlanIncumbentConstraint>(
-                    strength, map_params.ndists, map_params.is_district,
-                    as<arma::uvec>(constr_inst["incumbents"]), num_regions_to_score,
-                    hard_constraint, hard_threshold));
-            }
+            plan_constraint_ptrs.emplace_back(std::make_unique<PlanIncumbentConstraint>(
+                constr_inst, map_params));
         }
     }
     // counts the number of regions greater than or equal to a certain fraction
@@ -1168,32 +1097,8 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
         Rcpp::List constr = constraints["min_group_frac"];
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
-            double strength = constr_inst["strength"];
-            std::vector<bool> num_regions_to_score(map_params.ndists + 1, true);
-            if (constr_inst.containsElementNamed("nregions_to_score")) {
-                // The vector in R is one indexed but c++ is 0 indexed so need to pad an
-                // extra element
-                num_regions_to_score =
-                    Rcpp::as<std::vector<bool>>(constr_inst["nregions_to_score"]);
-                num_regions_to_score.insert(num_regions_to_score.begin(), false);
-            }
-            bool hard_constraint = false;
-            if (constr_inst.containsElementNamed("hard_constraint")) {
-                hard_constraint = as<bool>(constr_inst["hard_constraint"]);
-            }
-            double hard_threshold = 0.0;
-            if (constr_inst.containsElementNamed("hard_threshold")) {
-                hard_threshold = as<double>(constr_inst["hard_threshold"]);
-            }
-            if (strength != 0) {
-                plan_constraint_ptrs.emplace_back(std::make_unique<MinGroupFracConstraint>(
-                    strength, map_params.ndists, map_params.is_district,
-                    as<std::vector<arma::vec>>(constr_inst["group_pops"]),
-                    as<std::vector<arma::vec>>(constr_inst["total_pops"]),
-                    as<std::vector<double>>(constr_inst["min_fracs"]),
-                    as<double>(constr_inst["num_populations"]), num_regions_to_score,
-                    hard_constraint, hard_threshold));
-            }
+            plan_constraint_ptrs.emplace_back(std::make_unique<MinGroupFracConstraint>(
+                constr_inst, map_params));
         }
     }
 
@@ -1202,32 +1107,17 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
         Rcpp::List constr = constraints["custom_plan"];
         for (int i = 0; i < constr.size(); i++) {
             List constr_inst = constr[i];
-            double strength = constr_inst["strength"];
-            std::vector<bool> num_regions_to_score(map_params.ndists + 1, true);
-            if (constr_inst.containsElementNamed("nregions_to_score")) {
-                // The vector in R is one indexed but c++ is 0 indexed so need to pad an
-                // extra element
-                num_regions_to_score =
-                    Rcpp::as<std::vector<bool>>(constr_inst["nregions_to_score"]);
-                num_regions_to_score.insert(num_regions_to_score.begin(), false);
-            }
             bool hard_constraint = false;
             if (constr_inst.containsElementNamed("hard_constraint")) {
                 hard_constraint = as<bool>(constr_inst["hard_constraint"]);
             }
-            double hard_threshold = 0.0;
-            if (constr_inst.containsElementNamed("hard_threshold")) {
-                hard_threshold = as<double>(constr_inst["hard_threshold"]);
-            }
-            if (strength != 0) {
-                plan_constraint_ptrs.emplace_back(std::make_unique<CustomPlanConstraint>(
-                    strength, as<Rcpp::Function>(constr_inst["fn"]), num_regions_to_score,
-                    hard_constraint, hard_threshold));
-                any_soft_custom_constraints = true;
-                // if hard custom constraint note that
-                if (hard_constraint) {
-                    any_hard_custom_constraints = true;
-                }
+            plan_constraint_ptrs.emplace_back(std::make_unique<CustomPlanConstraint>(
+                constr_inst, map_params));
+            // mark custom R constraints as true
+            any_soft_custom_constraints = true;
+            // if hard custom constraint note that
+            if (hard_constraint) {
+                any_hard_custom_constraints = true;
             }
         }
     }
@@ -1243,14 +1133,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
         if (constraint_ptr->hard_constraint) {
             ++num_hard_region_constraints;
         } else {
-            ++all_rounds_soft_region_constraints;
-        }
-    }
-    for (auto const &constraint_ptr : non_final_region_constraint_ptrs) {
-        if (constraint_ptr->hard_constraint) {
-            ++num_hard_region_constraints;
-        } else {
-            ++num_non_final_soft_region_constraints;
+            ++total_soft_region_constraints;
         }
     }
 
@@ -1261,10 +1144,6 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
             ++total_soft_plan_constraints;
         }
     }
-
-    total_soft_region_constraints = num_non_final_soft_region_constraints +
-                                    num_final_soft_region_constraints +
-                                    all_rounds_soft_region_constraints;
 
     total_soft_constraints = total_soft_region_constraints + total_soft_plan_constraints;
 
@@ -1283,27 +1162,32 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
 }
 
 std::pair<bool, double> ScoringFunction::compute_region_full_score(const Plan &plan,
-                                                                   int const region_id,
-                                                                   bool const is_final) const {
+                                                                   int const region_id
+                                                                   ) const {
     // start out with score of zero
     double region_score = 0.0;
+    
 
-    // check if its a multidistrict
-    bool const is_multidistrict = !map_params.is_district[plan.region_sizes[region_id]];
+    // get the regions size
+    auto const region_size = plan.region_sizes[region_id];
 
     if constexpr (DEBUG_SCORING_VERBOSE) {
-        REprintf("Scoring region %d, size %u! %s DISTRICT, %s DISTRICT \n", region_id,
-                 plan.region_sizes[region_id], (is_multidistrict ? "NOT A" : "IS A"),
-                 (map_params.is_district[plan.region_sizes[region_id]] ? "IS A" : "NOT A"));
+        REprintf("Scoring region %d, size %u! \n", region_id,
+                 plan.region_sizes[region_id]);
     }
 
     // add the score from each constraint
-    for (auto const &constraint_ptr : region_constraint_ptrs) {
-        // skip if multidistrict and we only score districts
-        if (constraint_ptr->score_districts_only && is_multidistrict)
+    for (auto const &region_constraint_ptr : region_constraint_ptrs) {
+        // skip if not a number of regions we score
+        if (!region_constraint_ptr->num_regions_to_score[plan.num_regions])
             continue;
 
-        auto score_result = constraint_ptr->compute_region_score(plan, region_id);
+        // skip if not a region size we score 
+        if (!region_constraint_ptr->region_sizes_to_score[region_size]){
+            continue;
+        }
+
+        auto score_result = region_constraint_ptr->compute_region_score(plan, region_id);
         // immediately return if threshold triggered
         if (!score_result.first) {
             return std::make_pair(false, 0.0);
@@ -1314,70 +1198,39 @@ std::pair<bool, double> ScoringFunction::compute_region_full_score(const Plan &p
             region_score += score_result.second;
         }
     }
-    // if final then return
-    if (is_final)
-        return std::make_pair(true, region_score);
-
-    // if not final then add those constraints (for now just pop_temper)
-    for (auto const &constraint_ptr : non_final_region_constraint_ptrs) {
-        // skip if multidistrict and we only score districts
-        if (constraint_ptr->score_districts_only && is_multidistrict)
-            continue;
-
-        auto score_result = constraint_ptr->compute_region_score(plan, region_id);
-        // immediately return if threshold triggered
-        if (!score_result.first) {
-            return std::make_pair(false, 0.0);
-        } else {
-            region_score += score_result.second;
-        }
-    }
 
     return std::make_pair(true, region_score);
 }
 
-double ScoringFunction::compute_region_soft_score(const Plan &plan, int const region_id,
-                                                  bool const is_final) const {
+double ScoringFunction::compute_region_soft_score(const Plan &plan, int const region_id) const {
 
-    return compute_region_full_score(plan, region_id, is_final).second;
+    return compute_region_full_score(plan, region_id).second;
 }
 
 std::pair<bool, double> ScoringFunction::compute_merged_region_full_score(
-    const Plan &plan, int const region1_id, int const region2_id, bool const is_final) const {
+    const Plan &plan, int const region1_id, int const region2_id) const {
     // start out with log score of zero
     double region_score = 0.0;
 
     // check if its a multidistrict
-    bool const is_multidistrict =
-        !map_params.is_district[plan.region_sizes[region1_id] + plan.region_sizes[region2_id]];
+    auto const combined_region_size = plan.region_sizes[region1_id] + plan.region_sizes[region2_id];
+    auto const merged_num_regions = plan.num_regions - 1;
+
 
     // add the score from each constraint
-    for (auto const &constraint_ptr : region_constraint_ptrs) {
-        // skip if multidistrict and we only score districts
-        if (constraint_ptr->score_districts_only && is_multidistrict)
+    for (auto const &region_constraint_ptr : region_constraint_ptrs) {
+        // skip if not a number of regions we score
+        // subtract 1 for the merged region
+        if (!region_constraint_ptr->num_regions_to_score[merged_num_regions])
             continue;
 
-        auto score_result =
-            constraint_ptr->compute_merged_region_score(plan, region1_id, region2_id);
-        // immediately return if threshold triggered
-        if (!score_result.first) {
-            return std::make_pair(false, 0.0);
-        } else {
-            region_score += score_result.second;
+        // skip if not a region size we score 
+        if (!region_constraint_ptr->region_sizes_to_score[combined_region_size]){
+            continue;
         }
-    }
-    // if final then return
-    if (is_final)
-        return std::make_pair(true, region_score);
-
-    // if not final then add those constraints (for now just pop_temper)
-    for (auto const &constraint_ptr : non_final_region_constraint_ptrs) {
-        // skip if multidistrict and we only score districts
-        if (constraint_ptr->score_districts_only && is_multidistrict)
-            continue;
 
         auto score_result =
-            constraint_ptr->compute_merged_region_score(plan, region1_id, region2_id);
+            region_constraint_ptr->compute_merged_region_score(plan, region1_id, region2_id);
         // immediately return if threshold triggered
         if (!score_result.first) {
             return std::make_pair(false, 0.0);
@@ -1414,8 +1267,8 @@ std::pair<bool, double> ScoringFunction::compute_plan_score(const Plan &plan) co
 
 std::pair<bool, double> ScoringFunction::compute_merged_plan_score(const Plan &plan,
                                                                    int const region1_id,
-                                                                   int const region2_id,
-                                                                   bool const is_final) const {
+                                                                   int const region2_id
+                                                                   ) const {
     double plan_score = 0.0;
     auto const merged_num_regions = plan.num_regions - 1;
 
@@ -1438,39 +1291,33 @@ std::pair<bool, double> ScoringFunction::compute_merged_plan_score(const Plan &p
 }
 
 bool ScoringFunction::merged_region_ok(Plan const &plan, int const region1_id,
-                                       int const region2_id, bool const is_final_split) const {
+                                       int const region2_id) const {
     if (!any_hard_region_constraints)
         return true;
+
+    auto const merged_num_regions = plan.num_regions - 1;
+    auto const combined_region_size = plan.region_sizes[region1_id] + plan.region_sizes[region2_id];
 
     // check if its a multidistrict
     bool const is_multidistrict =
         !map_params.is_district[plan.region_sizes[region1_id] + plan.region_sizes[region2_id]];
 
     // add the score from each constraint
-    for (auto const &constraint_ptr : region_constraint_ptrs) {
-        // skip if multidistrict and we only score districts
-        if (constraint_ptr->score_districts_only && is_multidistrict)
+    for (auto const &region_constraint_ptr : region_constraint_ptrs) {
+        // skip if not a hard constraint
+        if (!region_constraint_ptr->hard_constraint)
+            continue;
+        // skip if not a number of regions we score
+        if (!region_constraint_ptr->num_regions_to_score[merged_num_regions])
             continue;
 
-        auto score_result =
-            constraint_ptr->compute_merged_region_score(plan, region1_id, region2_id);
-        // immediately return if threshold triggered
-        if (!score_result.first) {
-            return false;
+        // skip if not a number of regions we score
+        if (!region_constraint_ptr->region_sizes_to_score[merged_num_regions]){
+            continue;
         }
-    }
-    // if final then return
-    if (is_final_split)
-        return true;
-
-    // if not final then add those constraints (for now just pop_temper)
-    for (auto const &constraint_ptr : non_final_region_constraint_ptrs) {
-        // skip if multidistrict and we only score districts
-        if (constraint_ptr->score_districts_only && is_multidistrict)
-            continue;
 
         auto score_result =
-            constraint_ptr->compute_merged_region_score(plan, region1_id, region2_id);
+            region_constraint_ptr->compute_merged_region_score(plan, region1_id, region2_id);
         // immediately return if threshold triggered
         if (!score_result.first) {
             return false;
@@ -1482,8 +1329,7 @@ bool ScoringFunction::merged_region_ok(Plan const &plan, int const region1_id,
 
 bool ScoringFunction::entire_merged_plan_constraint_only_ok(Plan const &plan,
                                                             int const region1_id,
-                                                            int const region2_id,
-                                                            bool const is_final_split) const {
+                                                            int const region2_id) const {
     if (!any_hard_plan_constraints)
         return true;
 
@@ -1508,16 +1354,16 @@ bool ScoringFunction::entire_merged_plan_constraint_only_ok(Plan const &plan,
 }
 
 bool ScoringFunction::merged_plan_ok(Plan const &plan, int const region1_id,
-                                     int const region2_id, bool const is_final_split) const {
+                                     int const region2_id) const {
 
     if (!any_hard_constraints)
         return true;
 
-    if (!merged_region_ok(plan, region1_id, region2_id, is_final_split)) {
+    if (!merged_region_ok(plan, region1_id, region2_id)) {
         return false;
     }
 
-    if (!entire_merged_plan_constraint_only_ok(plan, region1_id, region2_id, is_final_split)) {
+    if (!entire_merged_plan_constraint_only_ok(plan, region1_id, region2_id)) {
         return false;
     }
 
@@ -1525,15 +1371,15 @@ bool ScoringFunction::merged_plan_ok(Plan const &plan, int const region1_id,
 }
 
 bool ScoringFunction::new_split_ok(Plan const &plan, int const region1_id, int const region2_id,
-                                   bool const is_final_split) const {
+                                   int const num_new_regions_added) const {
     if (!any_hard_constraints)
         return true;
 
-    auto const num_regions = plan.num_regions;
+    auto const num_new_regions = plan.num_regions + num_new_regions_added;
 
-    // check if new regions are multidistricts
-    bool const is_region1_district = map_params.is_district[plan.region_sizes[region1_id]];
-    bool const is_region2_district = map_params.is_district[plan.region_sizes[region2_id]];
+    auto region1_size = plan.region_sizes[region1_id];
+    auto region2_size = plan.region_sizes[region2_id];
+
 
     // check if any hard constraints false then immediately return false
     for (auto const &region_constraint_ptr : region_constraint_ptrs) {
@@ -1541,49 +1387,36 @@ bool ScoringFunction::new_split_ok(Plan const &plan, int const region1_id, int c
         if (!region_constraint_ptr->hard_constraint)
             continue;
 
-        // only check if its a district or we're scoring multidistricts
-        if (is_region1_district || !region_constraint_ptr->score_districts_only) {
+        // skip if not a number of regions we score
+        if (!region_constraint_ptr->num_regions_to_score[num_new_regions])
+            continue;
+
+        // only check region1 if its a size we score 
+        if (region_constraint_ptr->region_sizes_to_score[region1_size]){
+            // Now check if the region satisfies the constraint
             if (!region_constraint_ptr->region_constraint_ok(plan, region1_id))
                 return false;
         }
-        if (is_region2_district || !region_constraint_ptr->score_districts_only) {
+
+        // only check region2 if its a size we score 
+        if (region_constraint_ptr->region_sizes_to_score[region2_size]){
+            // Now check if the region satisfies the constraint
             if (!region_constraint_ptr->region_constraint_ok(plan, region2_id))
                 return false;
         }
+
     }
+
     for (auto const &plan_constraint_ptr : plan_constraint_ptrs) {
         // skip if not a hard constraint
         if (!plan_constraint_ptr->hard_constraint)
             continue;
         // skip if not final plan and only score final plans
-        if (!plan_constraint_ptr->num_regions_to_score[num_regions])
+        if (!plan_constraint_ptr->num_regions_to_score[num_new_regions])
             continue;
 
         if (!plan_constraint_ptr->plan_constraint_ok(plan))
             return false;
-    }
-
-    // if final then return
-    if (is_final_split)
-        return true;
-
-    // This is unneccesary right now as the only region constraint not
-    // applied on the final round is pop temper but that doesn't support
-    // thresholding right now but this might be useful in the future
-    for (auto const &region_constraint_ptr : non_final_region_constraint_ptrs) {
-        // skip if not a hard constraint
-        if (!region_constraint_ptr->hard_constraint)
-            continue;
-
-        // only check if its a district or we're scoring multidistricts
-        if (is_region1_district || !region_constraint_ptr->score_districts_only) {
-            if (!region_constraint_ptr->region_constraint_ok(plan, region1_id))
-                return false;
-        }
-        if (is_region2_district || !region_constraint_ptr->score_districts_only) {
-            if (!region_constraint_ptr->region_constraint_ok(plan, region2_id))
-                return false;
-        }
     }
 
     return true;
@@ -1597,16 +1430,20 @@ double ScoringFunction::compute_full_split_plan_soft_score(int const num_regions
                                                            int const split_region2) const {
     double score = 0.0;
     // check if new regions are multidistricts
-    bool const is_region1_district = map_params.is_district[region_sizes[split_region1]];
-    bool const is_region2_district = map_params.is_district[region_sizes[split_region2]];
+    auto const region1_size = region_sizes[split_region1];
+    auto const region2_size = region_sizes[split_region2];
 
     for (auto const &region_constraint_ptr : region_constraint_ptrs) {
-        // only check if its a district or we're scoring multidistricts
-        if (is_region1_district || !region_constraint_ptr->score_districts_only) {
+        // skip if not scoring this many regions
+        if (!region_constraint_ptr->num_regions_to_score[num_regions])
+            continue;
+
+        // only compute the score if we score this size
+        if (region_constraint_ptr->region_sizes_to_score[split_region1]){
             score += region_constraint_ptr->compute_soft_region_score(
                 num_regions, region_ids, region_sizes, region_pops, split_region1);
         }
-        if (is_region2_district || !region_constraint_ptr->score_districts_only) {
+        if (region_constraint_ptr->region_sizes_to_score[split_region2]){
             score += region_constraint_ptr->compute_soft_region_score(
                 num_regions, region_ids, region_sizes, region_pops, split_region2);
         }
@@ -1619,21 +1456,6 @@ double ScoringFunction::compute_full_split_plan_soft_score(int const num_regions
         score += plan_constraint_ptr
                      ->compute_plan_score(num_regions, region_ids, region_sizes, region_pops)
                      .second;
-    }
-
-    // This is unneccesary right now as the only region constraint not
-    // applied on the final round is pop temper but that doesn't support
-    // thresholding right now but this might be useful in the future
-    for (auto const &region_constraint_ptr : non_final_region_constraint_ptrs) {
-        // only check if its a district or we're scoring multidistricts
-        if (is_region1_district || !region_constraint_ptr->score_districts_only) {
-            score += region_constraint_ptr->compute_soft_region_score(
-                num_regions, region_ids, region_sizes, region_pops, split_region1);
-        }
-        if (is_region2_district || !region_constraint_ptr->score_districts_only) {
-            score += region_constraint_ptr->compute_soft_region_score(
-                num_regions, region_ids, region_sizes, region_pops, split_region2);
-        }
     }
 
     return score;

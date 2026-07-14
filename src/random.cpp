@@ -92,9 +92,15 @@ void RNGState::do_long_jumps(int num_jumps) {
  * Generate a uniform random integer in [0, max). Slightly biased.
  */
 int RNGState::r_int(uint32_t max) {
+    if constexpr(perf_config::supposedly_safe_input_checks){
+        if (max == 0) {
+            throw std::runtime_error("RNGState::r_int called with max=0.");
+        }
+    }
+
     uint32_t x = generator();
     uint64_t m = uint64_t(x) * uint64_t(max);
-    return (int)(m >> 32);
+    return static_cast<int>(m >> 32);
 }
 
 /*
@@ -164,7 +170,39 @@ int find_u(const double u, const int max, const vec &cum_wgts) {
 /*
  * Generate a random integer in [0, cum_wgts.size()) according to normalized cumulative weights.
  */
-int RNGState::r_int_wgt(const vec &cum_wgts) { return find_u(r_unif(), cum_wgts.size(), cum_wgts); }
+int RNGState::r_int_wgt(const vec &cum_wgts) { 
+    if constexpr(perf_config::supposedly_safe_input_checks){
+        if (cum_wgts.n_elem == 0) {
+            throw std::runtime_error(
+                "RNGState::r_int_wgt called with empty cumulative weights."
+            );
+        }
+
+        double const last = cum_wgts[cum_wgts.n_elem - 1];
+
+        if (!(last > 0.0) || !std::isfinite(last)) {
+            std::ostringstream oss;
+            oss << "RNGState::r_int_wgt called with invalid cumulative weights.\n";
+            oss << "last=" << last << "\n";
+            oss << "n_elem=" << cum_wgts.n_elem << "\n";
+            throw std::runtime_error(oss.str());
+        }
+        int const idx = find_u(r_unif(), static_cast<int>(cum_wgts.n_elem), cum_wgts);
+
+        if (idx < 0 || idx >= static_cast<int>(cum_wgts.n_elem)) {
+            std::ostringstream oss;
+            oss << "RNGState::r_int_wgt returned invalid index.\n";
+            oss << "idx=" << idx << "\n";
+            oss << "cum_wgts.n_elem=" << cum_wgts.n_elem << "\n";
+            throw std::runtime_error(oss.str());
+        }
+
+        return idx;
+    }else{
+        return find_u(r_unif(), cum_wgts.size(), cum_wgts); 
+    }
+
+}
 
 /*
  *  Generate a random index of `unnormalized_wgts` with probability proportional to its weight
@@ -185,15 +223,51 @@ int RNGState::r_int_wgt(const vec &cum_wgts) { return find_u(r_unif(), cum_wgts.
  *
  */
 int RNGState::r_int_unnormalized_wgt(const vec &unnormalized_wgts) {
-    // Get the unnormalized cumulative weights
-    arma::vec cum_wgts = arma::cumsum(unnormalized_wgts);
-    // now normalize them
-    cum_wgts = cum_wgts / cum_wgts(cum_wgts.size() - 1);
-    return r_int_wgt(cum_wgts);
+    if constexpr(perf_config::supposedly_safe_input_checks){
+        if (unnormalized_wgts.n_elem == 0) {
+            throw std::runtime_error(
+                "RNGState::r_int_unnormalized_wgt called with empty weights."
+            );
+        }
+
+        double weight_sum = 0.0;
+
+        for (arma::uword i = 0; i < unnormalized_wgts.n_elem; ++i) {
+            double const w = unnormalized_wgts[i];
+
+            if (w < 0.0 || !std::isfinite(w)) {
+                std::ostringstream oss;
+                oss << "RNGState::r_int_unnormalized_wgt found invalid weight.\n";
+                oss << "i=" << i << "\n";
+                oss << "w=" << w << "\n";
+                throw std::runtime_error(oss.str());
+            }
+
+            weight_sum += w;
+        }
+
+        if (!(weight_sum > 0.0) || !std::isfinite(weight_sum)) {
+            std::ostringstream oss;
+            oss << "RNGState::r_int_unnormalized_wgt got invalid weight sum.\n";
+            oss << "weight_sum=" << weight_sum << "\n";
+            oss << "n_elem=" << unnormalized_wgts.n_elem << "\n";
+            throw std::runtime_error(oss.str());
+        }
+
+        arma::vec cum_wgts = arma::cumsum(unnormalized_wgts) / weight_sum;
+        return r_int_wgt(cum_wgts);
+    }else{
+        // Get the unnormalized cumulative weights
+        arma::vec cum_wgts = arma::cumsum(unnormalized_wgts);
+        // now normalize them
+        cum_wgts = cum_wgts / cum_wgts(cum_wgts.size() - 1);
+        return r_int_wgt(cum_wgts);
+    }
 }
 
 /*
  * Generate a random integer within a stratum
+ * NOT THREAD SAFE
  */
 int r_int_mixstrat(int max, int stratum, double p, vec cum_wgts) {
     double u;
@@ -204,6 +278,59 @@ int r_int_mixstrat(int max, int stratum, double p, vec cum_wgts) {
     }
 
     return find_u(u, max, cum_wgts);
+}
+
+
+/*
+ * Partition `x` and its indices `idxs` between `right` and `left` by `pivot`
+ */
+// TESTED
+void partition_vec(std::vector<double> &x, std::vector<int> &idxs, int left, int right,
+                   int &pivot) {
+    double pivot_value = x[pivot];
+    std::swap(x[pivot], x[right]);
+    std::swap(idxs[pivot], idxs[right]);
+    pivot = left;
+    for (int i = left; i < right; i++) {
+        if (x[i] < pivot_value) {
+            std::swap(x[pivot], x[i]);
+            std::swap(idxs[pivot], idxs[i]);
+            pivot++;
+        }
+    }
+    std::swap(x[right], x[pivot]);
+    std::swap(idxs[right], idxs[pivot]);
+}
+
+/*
+ * Get the index of the k-th smallest element of x
+ */
+// TESTED
+int global_rng_select_k(std::vector<double> x, int k) {
+    if (k > x.size()) {
+        REprintf("k=%d bigger than number of edges=%d!\n", k, (int)x.size());
+        throw Rcpp::exception("k bigger than number of edges!\n");
+    }
+    int right = x.size() - 1;
+    int left = 0;
+    std::vector<int> idxs(right + 1);
+    for (int i = 0; i <= right; i++)
+        idxs[i] = i;
+
+    k--;
+    while (true) {
+        if (left == right)
+            return idxs[left];
+        int pivot = left + GLOBAL_RNG.r_int(right - left + 1);
+        partition_vec(x, idxs, left, right, pivot);
+        if (k == pivot) {
+            return idxs[k];
+        } else if (k < pivot) {
+            right = pivot - 1;
+        } else {
+            left = pivot + 1;
+        }
+    }
 }
 
 /*

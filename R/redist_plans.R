@@ -983,6 +983,8 @@ rbind.redist_plans <- function(..., deparse.level = 1) {
     attr(ret, "pop_bounds") <- pop_bounds
     attr(ret, "num_admin_units") <- num_admin_units
 
+    # TODO sum total runtime
+
     ret
 }
 

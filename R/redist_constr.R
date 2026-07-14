@@ -141,6 +141,131 @@ get_nregion_score_vec <- function(only_nregions, ndists) {
 }
 
 
+# validates the only_nseats input and returns a
+# vector of length `nseats` for whether or not to score a region
+# with that many seats
+get_nseats_score_vec <- function(only_nseats, nseats, ndists) {
+    # if nseats is NULL then assume its a pre-5.0 redist map and
+    # nseats == ndists
+    if (is.null(nseats)){
+        nseats <- ndists
+    }
+    # check nseats is an integer
+    if (!rlang::is_integerish(nseats)){
+        cli::cli_abort("{.arg nseats} was not an integer, it was {nseats}.")
+    }
+    # if false then means apply to any number of regions
+    if (isFALSE(only_nseats)) {
+        nseats_to_score <- rep(TRUE, nseats)
+    } else if (!rlang::is_integerish(only_nseats)) {
+        cli::cli_abort("{.arg only_nseats} must be integers")
+    } else if (any(only_nseats < 1) || any(only_nseats > nseats)) {
+        cli::cli_abort("{.arg only_nseats} must be between 1 and {.arg nseats}")
+    } else {
+        nseats_to_score <- rep(FALSE, nseats)
+        nseats_to_score[only_nseats] <- TRUE
+    }
+
+    nseats_to_score
+}
+
+# helper function
+# validates the common inputs to all region constraints
+# and returns the base list to add
+get_base_region_constraint_list <- function(
+    constr,
+    strength,
+    only_nregions,
+    only_nseats,
+    thresh
+){
+    # check a constraint was actually passed in
+    if (!inherits(constr, "redist_constr")) {
+        cli::cli_abort("Not a {.cls redist_constr} object")
+    }
+    # warn for negative strength
+    if (strength <= 0) {
+        cli::cli_warn("Nonpositive strength may lead to unexpected results")
+    }
+    # validate thresh input
+    if (is.null(thresh)) {
+        # no thresholding
+        hard_constraint <- FALSE
+        hard_threshold <- 0
+    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
+        cli::cli_abort("{.arg thresh} must be a finite scalar.")
+    } else {
+        hard_constraint <- TRUE
+        hard_threshold <- thresh
+    }
+    # validate nregions to score
+    nregions_to_score <- get_nregion_score_vec(
+        only_nregions,
+        attr(attr(constr, "data"), "ndists")
+    )
+    # validate nseats to score
+    nseats_to_score <- get_nseats_score_vec(
+        only_nseats,
+        attr(attr(constr, "data"), "nseats"),
+        attr(attr(constr, "data"), "ndists")
+    )
+
+    new_constr <- list(
+        strength = strength,
+        nregions_to_score = nregions_to_score,
+        nseats_to_score = nseats_to_score,
+        hard_constraint = hard_constraint,
+        hard_threshold = hard_threshold
+    )
+
+    return(new_constr)
+}
+
+
+# helper function
+# validates the common inputs to all plan constraints
+# and returns the base list to add
+get_base_plan_constraint_list <- function(
+        constr,
+        strength,
+        only_nregions,
+        thresh
+){
+    # check a constraint was actually passed in
+    if (!inherits(constr, "redist_constr")) {
+        cli::cli_abort("Not a {.cls redist_constr} object")
+    }
+    # warn for negative strength
+    if (strength <= 0) {
+        cli::cli_warn("Nonpositive strength may lead to unexpected results")
+    }
+    # validate thresh input
+    if (is.null(thresh)) {
+        # no thresholding
+        hard_constraint <- FALSE
+        hard_threshold <- 0
+    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
+        cli::cli_abort("{.arg thresh} must be a finite scalar.")
+    } else {
+        hard_constraint <- TRUE
+        hard_threshold <- thresh
+    }
+    # validate nregions to score
+    nregions_to_score <- get_nregion_score_vec(
+        only_nregions,
+        attr(attr(constr, "data"), "ndists")
+    )
+
+    new_constr <- list(
+        strength = strength,
+        nregions_to_score = nregions_to_score,
+        hard_constraint = hard_constraint,
+        hard_threshold = hard_threshold
+    )
+
+    return(new_constr)
+}
+
 # validates a population vector by ensuring
 # - the vector is length V and numeric
 # - There are no missing entries
@@ -182,6 +307,15 @@ validate_population_vector <- function(V, pop_vector) {
 #' scores at or above `thresh`. Lower `thresh` values will eventually cause the
 #' algorithms efficiency to suffer. Depending on how its used `thresh` can
 #' violate the theoretical guarantees of the algorithm so caution is advised.
+#' Please see the appendix of gSMC CITE HERE and the discussion on "splittable"
+#' score functions for more information.
+#'
+#' Optional vales of `only_nregions` and `only_nseats` can be set for all region-
+#' based constraints and values of `only_nregions` can be set for all plan-based
+#' constraints. Specifying values for `only_nregions` means that the constraint
+#' will only be applied to plans with regions in the range of values in `only_nregions.`
+#' Likewise for `only_nseats` then it will only be applied to regions with a number
+#' of seats in the `only_nseats` range.
 #'
 #'
 #' The `status_quo` constraint adds a term measuring the variation of
@@ -303,13 +437,16 @@ validate_population_vector <- function(V, pop_vector) {
 #' likely cause a drop in efficiency in the final round. If splitting plans all
 #' the way this does not affect the final target distribution. This is not relevant
 #' for constraints that penalize the entire plan instead of specific districts.
+#' @param only_nregions Whether or not to only apply entire-plan or region constraints
+#' when the plan has a particular number of regions. A value of `FALSE` means
+#' the constraint will applied to plans at every step.
+#' @param only_nseats Whether or not to only apply region constraints
+#' when the region has a particular number of seats. A value of `FALSE` means
+#' the constraint will applied to regions at every number of seats.
 #' @param thresh Thresholding value for constraints. If set then any plan where
 #' the constraints score is greater than or equal to `thresh` will be rejected
 #' at the splitting stage, ensuring that none of those plans will be in the final
 #' sample.
-#' @param only_nregions Whether or not to only apply entire-plan constraints
-#' when the plan has a particular number of regions. A value of `FALSE` means
-#' the constraint will applied to plans at every step.
 #'
 #' @examples
 #' data(iowa)
@@ -337,29 +474,16 @@ add_constr_status_quo <- function(
     constr,
     strength,
     current,
-    only_districts = TRUE,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
     thresh = NULL
 ) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results")
-    }
-    if (!rlang::is_bool(only_districts)) {
-        cli::cli_abort("{.arg only_districts} must be a boolean.")
-    }
 
-    if (is.null(thresh)) {
-        # no thresholding
-        hard_constraint <- FALSE
-        hard_threshold <- 0
-    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
-        cli::cli_abort("{.arg thresh} must be a finite scalar.")
-    } else {
-        hard_constraint <- TRUE
-        hard_threshold <- thresh
-    }
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
 
     data <- attr(constr, "data")
     # defuse `current` first; calling `missing()` before `enquo()` interferes
@@ -371,13 +495,13 @@ add_constr_status_quo <- function(
         current <- rlang::eval_tidy(current_q, data)
     }
 
-    new_constr <- list(
-    strength = strength,
-    current = current,
-    only_districts = only_districts,
-    hard_constraint = hard_constraint,
-    hard_threshold = hard_threshold
-  )
+    new_constr <- c(
+        new_constr,
+        list(
+            current = current,
+        )
+    )
+
     if (is.null(current) || length(new_constr$current) != nrow(data)) {
         cli::cli_abort(
       "{.arg current} must be provided, and must have as many
@@ -404,43 +528,27 @@ add_constr_grp_pow <- function(
     tgt_group = 0.5,
     tgt_other = 0.5,
     pow = 1.0,
-    only_districts = FALSE,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
     thresh = NULL
 ) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results")
-    }
-    if (!rlang::is_bool(only_districts)) {
-        cli::cli_abort("{.arg only_districts} must be a boolean.")
-    }
-
-    if (is.null(thresh)) {
-        # no thresholding
-        hard_constraint <- FALSE
-        hard_threshold <- 0
-    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
-        cli::cli_abort("{.arg thresh} must be a finite scalar.")
-    } else {
-        hard_constraint <- TRUE
-        hard_threshold <- thresh
-    }
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
 
     data <- attr(constr, "data")
 
-    new_constr <- list(
-    strength = strength,
-    only_districts = only_districts,
-    hard_constraint = hard_constraint,
-    hard_threshold = hard_threshold,
-    group_pop = rlang::eval_tidy(rlang::enquo(group_pop), data),
-    total_pop = rlang::eval_tidy(rlang::enquo(total_pop), data),
-    tgt_group = tgt_group,
-    tgt_other = tgt_other,
-    pow = pow
-  )
+    new_constr <- c(new_constr,
+        list(
+            group_pop = rlang::eval_tidy(rlang::enquo(group_pop), data),
+            total_pop = rlang::eval_tidy(rlang::enquo(total_pop), data),
+            tgt_group = tgt_group,
+            tgt_other = tgt_other,
+            pow = pow
+        ))
+
     if (is.null(new_constr$total_pop)) {
         if (!is.null(attr(data, "pop_col"))) {
             new_constr$total_pop <- data[[attr(data, "pop_col")]]
@@ -449,8 +557,8 @@ add_constr_grp_pow <- function(
         }
     }
 
-    stopifnot(length(new_constr$group_pop) == nrow(data))
-    stopifnot(length(new_constr$total_pop) == nrow(data))
+    validate_population_vector(nrow(data), new_constr$total_pop)
+    validate_population_vector(nrow(data), new_constr$group_pop)
 
     add_to_constr(constr, "grp_pow", new_constr)
 }
@@ -464,39 +572,24 @@ add_constr_grp_hinge <- function(
     group_pop,
     total_pop = NULL,
     tgts_group = c(0.55),
-    only_districts = FALSE,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
     thresh = NULL
 ) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-
-    if (!rlang::is_bool(only_districts)) {
-        cli::cli_abort("{.arg only_districts} must be a boolean.")
-    }
-
-    if (is.null(thresh)) {
-        # no thresholding
-        hard_constraint <- FALSE
-        hard_threshold <- 0
-    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
-        cli::cli_abort("{.arg thresh} must be a finite scalar.")
-    } else {
-        hard_constraint <- TRUE
-        hard_threshold <- thresh
-    }
-
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
     data <- attr(constr, "data")
+    new_constr <- c(new_constr,
+                    list(
+                        group_pop = rlang::eval_tidy(rlang::enquo(group_pop), data),
+                        total_pop = rlang::eval_tidy(rlang::enquo(total_pop), data),
+                        tgts_group = tgts_group
+                    ))
 
-    new_constr <- list(
-    strength = strength,
-    only_districts = only_districts,
-    hard_constraint = hard_constraint,
-    hard_threshold = hard_threshold,
-    group_pop = rlang::eval_tidy(rlang::enquo(group_pop), data),
-    total_pop = rlang::eval_tidy(rlang::enquo(total_pop), data),
-    tgts_group = tgts_group
-  )
+
     if (is.null(new_constr$total_pop)) {
         if (!is.null(attr(data, "pop_col"))) {
             new_constr$total_pop <- data[[attr(data, "pop_col")]]
@@ -505,8 +598,9 @@ add_constr_grp_hinge <- function(
         }
     }
 
-    stopifnot(length(new_constr$group_pop) == nrow(data))
-    stopifnot(length(new_constr$total_pop) == nrow(data))
+    validate_population_vector(nrow(data), new_constr$total_pop)
+    validate_population_vector(nrow(data), new_constr$group_pop)
+
 
     add_to_constr(constr, "grp_hinge", new_constr)
 }
@@ -521,39 +615,25 @@ add_constr_grp_inv_hinge <- function(
     group_pop,
     total_pop = NULL,
     tgts_group = c(0.55),
-    only_districts = FALSE,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
     thresh = NULL
 ) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (!rlang::is_bool(only_districts)) {
-        cli::cli_abort("{.arg only_districts} must be a boolean.")
-    }
-
-    if (is.null(thresh)) {
-        # no thresholding
-        hard_constraint <- FALSE
-        hard_threshold <- 0
-    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
-        cli::cli_abort("{.arg thresh} must be a finite scalar.")
-    } else {
-        hard_constraint <- TRUE
-        hard_threshold <- thresh
-    }
-
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
     data <- attr(constr, "data")
+    new_constr <- c(new_constr,
+                    list(
+                        group_pop = rlang::eval_tidy(rlang::enquo(total_pop), data) -
+                            rlang::eval_tidy(rlang::enquo(group_pop), data),
+                        total_pop = rlang::eval_tidy(rlang::enquo(total_pop), data),
+                        tgts_group = tgts_group
+                    ))
 
-    new_constr <- list(
-    strength = strength,
-    only_districts = only_districts,
-    hard_constraint = hard_constraint,
-    hard_threshold = hard_threshold,
-    group_pop = rlang::eval_tidy(rlang::enquo(total_pop), data) -
-      rlang::eval_tidy(rlang::enquo(group_pop), data),
-    total_pop = rlang::eval_tidy(rlang::enquo(total_pop), data),
-    tgts_group = tgts_group
-  )
+
     if (is.null(new_constr$total_pop)) {
         if (!is.null(attr(data, "pop_col"))) {
             new_constr$total_pop <- data[[attr(data, "pop_col")]]
@@ -562,8 +642,8 @@ add_constr_grp_inv_hinge <- function(
         }
     }
 
-    stopifnot(length(new_constr$group_pop) == nrow(data))
-    stopifnot(length(new_constr$total_pop) == nrow(data))
+    validate_population_vector(nrow(data), new_constr$total_pop)
+    validate_population_vector(nrow(data), new_constr$group_pop)
 
     add_to_constr(constr, "grp_inv_hinge", new_constr)
 }
@@ -576,42 +656,24 @@ add_constr_compet <- function(
     dvote,
     rvote,
     pow = 0.5,
-    only_districts = FALSE,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
     thresh = NULL
 ) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results")
-    }
-
-    if (!rlang::is_bool(only_districts)) {
-        cli::cli_abort("{.arg only_districts} must be a boolean.")
-    }
-
-    if (is.null(thresh)) {
-        # no thresholding
-        hard_constraint <- FALSE
-        hard_threshold <- 0
-    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
-        cli::cli_abort("{.arg thresh} must be a finite scalar.")
-    } else {
-        hard_constraint <- TRUE
-        hard_threshold <- thresh
-    }
-
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
     data <- attr(constr, "data")
+    new_constr <- c(new_constr,
+                    list(
+                        dvote = rlang::eval_tidy(rlang::enquo(dvote), data),
+                        rvote = rlang::eval_tidy(rlang::enquo(rvote), data),
+                        pow = pow
+                    ))
 
-    new_constr <- list(
-    strength = strength,
-    only_districts = only_districts,
-    hard_constraint = hard_constraint,
-    hard_threshold = hard_threshold,
-    dvote = rlang::eval_tidy(rlang::enquo(dvote), data),
-    rvote = rlang::eval_tidy(rlang::enquo(rvote), data),
-    pow = pow
-  )
+
     stopifnot(length(new_constr$dvote) == nrow(data))
     stopifnot(length(new_constr$rvote) == nrow(data))
 
@@ -628,39 +690,21 @@ add_constr_incumbency <- function(
     constr,
     strength,
     incumbents,
-    only_districts = FALSE,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
     thresh = NULL
 ) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results")
-    }
-    if (!rlang::is_bool(only_districts)) {
-        cli::cli_abort("{.arg only_districts} must be a boolean.")
-    }
-
-    if (is.null(thresh)) {
-        # no thresholding
-        hard_constraint <- FALSE
-        hard_threshold <- 0
-    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
-        cli::cli_abort("{.arg thresh} must be a finite scalar.")
-    } else {
-        hard_constraint <- TRUE
-        hard_threshold <- thresh
-    }
-
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
     data <- attr(constr, "data")
+    new_constr <- c(new_constr,
+                    list(
+                        incumbents = rlang::eval_tidy(rlang::enquo(incumbents), data)
+                    ))
 
-    new_constr <- list(
-    strength = strength,
-    only_districts = only_districts,
-    hard_constraint = hard_constraint,
-    hard_threshold = hard_threshold,
-    incumbents = rlang::eval_tidy(rlang::enquo(incumbents), data)
-  )
 
     add_to_constr(constr, "incumbency", new_constr)
 }
@@ -672,29 +716,15 @@ add_constr_splits <- function(
     constr,
     strength,
     admin,
-    only_districts = TRUE,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
     thresh = NULL
 ) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results")
-    }
-    if (!rlang::is_bool(only_districts)) {
-        cli::cli_abort("{.arg only_districts} must be a boolean.")
-    }
-
-    if (is.null(thresh)) {
-        # no thresholding
-        hard_constraint <- FALSE
-        hard_threshold <- 0
-    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
-        cli::cli_abort("{.arg thresh} must be a finite scalar.")
-    } else {
-        hard_constraint <- TRUE
-        hard_threshold <- thresh
-    }
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
 
     data <- attr(constr, "data")
 
@@ -707,14 +737,11 @@ add_constr_splits <- function(
     }
     admin <- vctrs::vec_group_id(admin)
 
-    new_constr <- list(
-    strength = strength,
-    only_districts = only_districts,
-    hard_constraint = hard_constraint,
-    hard_threshold = hard_threshold,
-    admin = admin,
-    n = length(unique(admin))
-  )
+    new_constr <- c(new_constr,
+                    list(
+                        admin = admin,
+                        n = length(unique(admin))
+                    ))
 
     add_to_constr(constr, "splits", new_constr)
 }
@@ -725,29 +752,15 @@ add_constr_multisplits <- function(
     constr,
     strength,
     admin,
-    only_districts = FALSE,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
     thresh = NULL
 ) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results")
-    }
-    if (!rlang::is_bool(only_districts)) {
-        cli::cli_abort("{.arg only_districts} must be a boolean.")
-    }
-
-    if (is.null(thresh)) {
-        # no thresholding
-        hard_constraint <- FALSE
-        hard_threshold <- 0
-    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
-        cli::cli_abort("{.arg thresh} must be a finite scalar.")
-    } else {
-        hard_constraint <- TRUE
-        hard_threshold <- thresh
-    }
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
 
     data <- attr(constr, "data")
 
@@ -761,14 +774,12 @@ add_constr_multisplits <- function(
 
     admin <- vctrs::vec_group_id(admin)
 
-    new_constr <- list(
-    strength = strength,
-    only_districts = only_districts,
-    hard_constraint = hard_constraint,
-    hard_threshold = hard_threshold,
-    admin = admin,
-    n = length(unique(admin))
-  )
+    new_constr <- c(new_constr,
+                    list(
+                        admin = admin,
+                        n = length(unique(admin))
+                    ))
+
     add_to_constr(constr, "multisplits", new_constr)
 }
 
@@ -778,29 +789,15 @@ add_constr_total_splits <- function(
     constr,
     strength,
     admin,
-    only_districts = FALSE,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
     thresh = NULL
 ) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results")
-    }
-    if (!rlang::is_bool(only_districts)) {
-        cli::cli_abort("{.arg only_districts} must be a boolean.")
-    }
-
-    if (is.null(thresh)) {
-        # no thresholding
-        hard_constraint <- FALSE
-        hard_threshold <- 0
-    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
-        cli::cli_abort("{.arg thresh} must be a finite scalar.")
-    } else {
-        hard_constraint <- TRUE
-        hard_threshold <- thresh
-    }
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
 
     data <- attr(constr, "data")
 
@@ -814,14 +811,12 @@ add_constr_total_splits <- function(
 
     admin <- vctrs::vec_group_id(admin)
 
-    new_constr <- list(
-    strength = strength,
-    only_districts = only_districts,
-    hard_constraint = hard_constraint,
-    hard_threshold = hard_threshold,
-    admin = admin,
-    n = length(unique(admin))
-  )
+    new_constr <- c(new_constr,
+                    list(
+                        admin = admin,
+                        n = length(unique(admin))
+                    ))
+
     add_to_constr(constr, "total_splits", new_constr)
 }
 
@@ -830,38 +825,15 @@ add_constr_total_splits <- function(
 add_constr_pop_dev <- function(
     constr,
     strength,
-    only_districts = FALSE,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
     thresh = NULL
 ) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results.")
-    }
-    if (!rlang::is_bool(only_districts)) {
-        cli::cli_abort("{.arg only_districts} must be a boolean.")
-    }
-
-    if (is.null(thresh)) {
-        # no thresholding
-        hard_constraint <- FALSE
-        hard_threshold <- 0
-    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
-        cli::cli_abort("{.arg thresh} must be a finite scalar.")
-    } else {
-        hard_constraint <- TRUE
-        hard_threshold <- thresh
-    }
-
-    data <- attr(constr, "data")
-
-    new_constr <- list(
-    strength = strength,
-    only_districts = only_districts,
-    hard_constraint = hard_constraint,
-    hard_threshold = hard_threshold
-  )
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
     add_to_constr(constr, "pop_dev", new_constr)
 }
 
@@ -872,43 +844,25 @@ add_constr_segregation <- function(
     strength,
     group_pop,
     total_pop = NULL,
-    only_districts = FALSE,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
     thresh = NULL
 ) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results.")
-    }
-    if (!rlang::is_bool(only_districts)) {
-        cli::cli_abort("{.arg only_districts} must be a boolean.")
-    }
-    if (missing(group_pop)) {
-        cli::cli_abort("{.arg group_pop} is required.")
-    }
-
-    if (is.null(thresh)) {
-        # no thresholding
-        hard_constraint <- FALSE
-        hard_threshold <- 0
-    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
-        cli::cli_abort("{.arg thresh} must be a finite scalar.")
-    } else {
-        hard_constraint <- TRUE
-        hard_threshold <- thresh
-    }
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
 
     data <- attr(constr, "data")
 
-    new_constr <- list(
-    strength = strength,
-    only_districts = only_districts,
-    hard_constraint = hard_constraint,
-    hard_threshold = hard_threshold,
-    group_pop = rlang::eval_tidy(rlang::enquo(group_pop), data),
-    total_pop = rlang::eval_tidy(rlang::enquo(total_pop), data)
-  )
+    new_constr <- c(new_constr,
+                    list(
+                        group_pop = rlang::eval_tidy(rlang::enquo(group_pop), data),
+                        total_pop = rlang::eval_tidy(rlang::enquo(total_pop), data)
+                    ))
+
+
     if (is.null(new_constr$total_pop)) {
         if (!is.null(attr(data, "pop_col"))) {
             new_constr$total_pop <- data[[attr(data, "pop_col")]]
@@ -917,8 +871,9 @@ add_constr_segregation <- function(
         }
     }
 
-    stopifnot(length(new_constr$group_pop) == nrow(data))
-    stopifnot(length(new_constr$total_pop) == nrow(data))
+    validate_population_vector(nrow(data), new_constr$total_pop)
+    validate_population_vector(nrow(data), new_constr$group_pop)
+
     add_to_constr(constr, "segregation", new_constr)
 }
 
@@ -929,30 +884,15 @@ add_constr_polsby <- function(
     constr,
     strength,
     perim_df = NULL,
-    only_districts = FALSE,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
     thresh = NULL
 ) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results.")
-    }
-
-    if (!rlang::is_bool(only_districts)) {
-        cli::cli_abort("{.arg only_districts} must be a boolean.")
-    }
-
-    if (is.null(thresh)) {
-        # no thresholding
-        hard_constraint <- FALSE
-        hard_threshold <- 0
-    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
-        cli::cli_abort("{.arg thresh} must be a finite scalar.")
-    } else {
-        hard_constraint <- TRUE
-        hard_threshold <- thresh
-    }
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
 
     data <- attr(constr, "data")
 
@@ -966,16 +906,13 @@ add_constr_polsby <- function(
         perim_df <- redistmetrics::prep_perims(data)
     }
 
-    new_constr <- list(
-    strength = strength,
-    only_districts = only_districts,
-    hard_constraint = hard_constraint,
-    hard_threshold = hard_threshold,
-    from = perim_df$origin,
-    to = perim_df$touching,
-    area = areas,
-    perimeter = perim_df$edge
-  )
+    new_constr <- c(new_constr,
+                    list(
+                        from = perim_df$origin,
+                        to = perim_df$touching,
+                        area = areas,
+                        perimeter = perim_df$edge
+                    ))
 
     add_to_constr(constr, "polsby", new_constr)
 }
@@ -990,29 +927,15 @@ add_constr_fry_hold <- function(
     total_pop = NULL,
     ssdmat = NULL,
     denominator = 1,
-    only_districts = FALSE,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
     thresh = NULL
 ) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results.")
-    }
-    if (!rlang::is_bool(only_districts)) {
-        cli::cli_abort("{.arg only_districts} must be a boolean.")
-    }
-
-    if (is.null(thresh)) {
-        # no thresholding
-        hard_constraint <- FALSE
-        hard_threshold <- 0
-    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
-        cli::cli_abort("{.arg thresh} must be a finite scalar.")
-    } else {
-        hard_constraint <- TRUE
-        hard_threshold <- thresh
-    }
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
 
     data <- attr(constr, "data")
 
@@ -1028,15 +951,12 @@ add_constr_fry_hold <- function(
         ssdmat <- calcPWDh(sf::st_coordinates(sf::st_centroid(data)))
     }
 
-    new_constr <- list(
-    strength = strength,
-    only_districts = only_districts,
-    hard_constraint = hard_constraint,
-    hard_threshold = hard_threshold,
-    total_pop = total_pop,
-    ssdmat = ssdmat,
-    denominator = denominator
-  )
+    new_constr <- c(new_constr,
+                    list(
+                        total_pop = total_pop,
+                        ssdmat = ssdmat,
+                        denominator = denominator
+                    ))
 
     add_to_constr(constr, "fry_hold", new_constr)
 }
@@ -1047,29 +967,15 @@ add_constr_log_st <- function(
     constr,
     strength,
     admin = NULL,
-    only_districts = FALSE,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
     thresh = NULL
 ) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results.")
-    }
-    if (!rlang::is_bool(only_districts)) {
-        cli::cli_abort("{.arg only_districts} must be a boolean.")
-    }
-
-    if (is.null(thresh)) {
-        # no thresholding
-        hard_constraint <- FALSE
-        hard_threshold <- 0
-    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
-        cli::cli_abort("{.arg thresh} must be a finite scalar.")
-    } else {
-        hard_constraint <- TRUE
-        hard_threshold <- thresh
-    }
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
 
     data <- attr(constr, "data")
 
@@ -1083,13 +989,10 @@ add_constr_log_st <- function(
 
     admin <- vctrs::vec_group_id(admin)
 
-    new_constr <- list(
-    strength = strength,
-    only_districts = only_districts,
-    hard_constraint = hard_constraint,
-    hard_threshold = hard_threshold,
-    admin = admin
-  )
+    new_constr <- c(new_constr,
+                    list(
+                        admin = admin
+                    ))
 
     add_to_constr(constr, "log_st", new_constr)
 }
@@ -1099,38 +1002,15 @@ add_constr_log_st <- function(
 add_constr_edges_rem <- function(
     constr,
     strength,
-    only_districts = FALSE,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
     thresh = NULL
 ) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results.")
-    }
-    if (!rlang::is_bool(only_districts)) {
-        cli::cli_abort("{.arg only_districts} must be a boolean.")
-    }
-
-    if (is.null(thresh)) {
-        # no thresholding
-        hard_constraint <- FALSE
-        hard_threshold <- 0
-    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
-        cli::cli_abort("{.arg thresh} must be a finite scalar.")
-    } else {
-        hard_constraint <- TRUE
-        hard_threshold <- thresh
-    }
-
-    data <- attr(constr, "data")
-
-    new_constr <- list(
-    strength = strength,
-    only_districts = FALSE,
-    hard_constraint = hard_constraint,
-    hard_threshold = hard_threshold
-  )
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
 
     add_to_constr(constr, "edges_removed", new_constr)
 }
@@ -1142,39 +1022,23 @@ add_constr_qps <- function(
     strength,
     cities,
     total_pop = NULL,
-    only_districts = FALSE,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
     thresh = NULL
 ) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results.")
-    }
-    if (!rlang::is_bool(only_districts)) {
-        cli::cli_abort("{.arg only_districts} must be a boolean.")
-    }
-
-    if (is.null(thresh)) {
-        # no thresholding
-        hard_constraint <- FALSE
-        hard_threshold <- 0
-    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
-        cli::cli_abort("{.arg thresh} must be a finite scalar.")
-    } else {
-        hard_constraint <- TRUE
-        hard_threshold <- thresh
-    }
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
 
     data <- attr(constr, "data")
 
-    new_constr <- list(
-    strength = strength,
-    only_districts = only_districts,
-    hard_constraint = hard_constraint,
-    hard_threshold = hard_threshold,
-    cities = rlang::eval_tidy(rlang::enquo(cities), data)
-  )
+    new_constr <- c(new_constr,
+                    list(
+                        cities = rlang::eval_tidy(rlang::enquo(cities), data)
+                    ))
+
     new_constr$n_cty <- max(new_constr$cities) + 1
 
     cli::cli_inform(
@@ -1183,6 +1047,78 @@ add_constr_qps <- function(
     .frequency_id = "redist_qps_unsupported"
   )
     add_to_constr(constr, "qps", new_constr)
+}
+
+#' @param fn A function
+#' @rdname constraints
+#' @export
+add_constr_custom <- function(
+    constr,
+    strength,
+    fn,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
+    thresh = NULL
+) {
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
+
+    data <- attr(constr, "data")
+
+    args <- rlang::fn_fmls(fn)
+    if (length(args) != 2) {
+        cli::cli_abort("Function must take exactly two arguments.")
+    }
+
+    constr_env <- rlang::fn_env(fn)
+    constr_env <- rlang::env(constr_env)
+    # every symbol used in the function (except the 2 arguments)
+    var_names <- setdiff(
+        all.names(rlang::fn_body(fn)),
+        names(args)
+    )
+
+    for (nm in var_names) {
+        found <- find_env(nm, constr_env)
+        if (
+            !is.null(found) &&
+            !identical(found, rlang::base_env()) &&
+            !identical(found, constr_env) &&
+            !identical(found, rlang::pkg_env("redist"))
+        ) {
+            constr_env[[nm]] <- get(nm, envir = found)
+        }
+    }
+
+    if (!is.null(plan <- get_existing(attr(constr, "data")))) {
+        out <- tryCatch(fn(plan, min(plan)), error = function(e) {
+            cli::cli_abort(c(
+                "Ran into an error testing custom constraint
+                        on the existing plan:",
+                "x" = e$message
+            ))
+        })
+        if (!is.numeric(out) || length(out) != 1 || !is.finite(out)) {
+            cli::cli_abort(c(
+                "Evaluting custom constraint on the existing plan failed.",
+                "*" = "The constraint function should return a single scalar value.",
+                "*" = "Make sure that your constraint function tests all edge cases
+                             and never returns {.val {NA}} or {.val {Inf}}."
+            ))
+        }
+    }
+
+    rlang::fn_env(fn) <- constr_env
+
+    new_constr <- c(new_constr,
+                    list(
+                        fn = fn
+                    ))
+
+    add_to_constr(constr, "custom", new_constr)
 }
 
 # utilty functions for parsing ASTs
@@ -1205,6 +1141,10 @@ extract_vars <- function(expr) {
     }
 }
 
+######
+# Whole Plan constraints
+######
+
 #' @param admin A vector indicating administrative unit membership
 #' @rdname constraints
 #' @export
@@ -1215,27 +1155,12 @@ add_constr_plan_splits <- function(
     only_nregions = FALSE,
     thresh = NULL
 ) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results")
-    }
-    nregions_to_score <- get_nregion_score_vec(
-        only_nregions,
-        attr(attr(constr, "data"), "ndists")
-    )
 
-    if (is.null(thresh)) {
-        # no thresholding
-        hard_constraint <- FALSE
-        hard_threshold <- 0
-    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
-        cli::cli_abort("{.arg thresh} must be a finite scalar.")
-    } else {
-        hard_constraint <- TRUE
-        hard_threshold <- thresh
-    }
+    new_constr <- get_base_plan_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        thresh = thresh
+    )
 
     data <- attr(constr, "data")
 
@@ -1248,14 +1173,11 @@ add_constr_plan_splits <- function(
     }
     admin <- vctrs::vec_group_id(admin)
 
-    new_constr <- list(
-        strength = strength,
-        nregions_to_score = nregions_to_score,
-        hard_constraint = hard_constraint,
-        hard_threshold = hard_threshold,
-        admin = admin,
-        n = length(unique(admin))
-    )
+    new_constr <- c(new_constr,
+                    list(
+                        admin = admin,
+                        n = length(unique(admin))
+                    ))
 
     add_to_constr(constr, "plan_splits", new_constr)
 }
@@ -1271,27 +1193,11 @@ add_constr_total_plan_splits <- function(
     only_nregions = FALSE,
     thresh = NULL
 ) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results")
-    }
-    nregions_to_score <- get_nregion_score_vec(
-        only_nregions,
-        attr(attr(constr, "data"), "ndists")
+    new_constr <- get_base_plan_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        thresh = thresh
     )
-
-    if (is.null(thresh)) {
-        # no thresholding
-        hard_constraint <- FALSE
-        hard_threshold <- 0
-    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
-        cli::cli_abort("{.arg thresh} must be a finite scalar.")
-    } else {
-        hard_constraint <- TRUE
-        hard_threshold <- thresh
-    }
 
     data <- attr(constr, "data")
 
@@ -1304,14 +1210,11 @@ add_constr_total_plan_splits <- function(
     }
     admin <- vctrs::vec_group_id(admin)
 
-    new_constr <- list(
-        strength = strength,
-        nregions_to_score = nregions_to_score,
-        hard_constraint = hard_constraint,
-        hard_threshold = hard_threshold,
-        admin = admin,
-        n = length(unique(admin))
-    )
+    new_constr <- c(new_constr,
+                    list(
+                        admin = admin,
+                        n = length(unique(admin))
+                    ))
 
     add_to_constr(constr, "total_plan_splits", new_constr)
 }
@@ -1330,37 +1233,18 @@ add_constr_plan_incumbency <- function(
     only_nregions = FALSE,
     thresh = NULL
 ) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results")
-    }
-    nregions_to_score <- get_nregion_score_vec(
-        only_nregions,
-        attr(attr(constr, "data"), "ndists")
+    new_constr <- get_base_plan_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        thresh = thresh
     )
-
-    if (is.null(thresh)) {
-        # no thresholding
-        hard_constraint <- FALSE
-        hard_threshold <- 0
-    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
-        cli::cli_abort("{.arg thresh} must be a finite scalar.")
-    } else {
-        hard_constraint <- TRUE
-        hard_threshold <- thresh
-    }
 
     data <- attr(constr, "data")
 
-    new_constr <- list(
-        strength = strength,
-        hard_constraint = hard_constraint,
-        hard_threshold = hard_threshold,
-        nregions_to_score = nregions_to_score,
-        incumbents = rlang::eval_tidy(rlang::enquo(incumbents), data)
-    )
+    new_constr <- c(new_constr,
+                    list(
+                        incumbents = rlang::eval_tidy(rlang::enquo(incumbents), data)
+                    ))
 
     add_to_constr(constr, "plan_incumbency", new_constr)
 }
@@ -1381,29 +1265,14 @@ add_constr_min_group_frac <- function(
     only_nregions = FALSE,
     thresh = NULL
 ) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results")
-    }
-    nregions_to_score <- get_nregion_score_vec(
-        only_nregions,
-        attr(attr(constr, "data"), "ndists")
+    new_constr <- get_base_plan_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        thresh = thresh
     )
 
-    if (is.null(thresh)) {
-        # no thresholding
-        hard_constraint <- FALSE
-        hard_threshold <- 0
-    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
-        cli::cli_abort("{.arg thresh} must be a finite scalar.")
-    } else {
-        hard_constraint <- TRUE
-        hard_threshold <- thresh
-    }
-
     data <- attr(constr, "data")
+
     V <- nrow(data)
 
     # check the fraction is between zero and 1
@@ -1451,104 +1320,15 @@ add_constr_min_group_frac <- function(
         }
     }
 
-    new_constr <- list(
-        strength = strength,
-        nregions_to_score = nregions_to_score,
-        hard_constraint = hard_constraint,
-        hard_threshold = hard_threshold,
-        group_pops = group_pops,
-        total_pops = total_pops,
-        min_fracs = min_fracs,
-        num_populations = num_populations
-    )
+    new_constr <- c(new_constr,
+                    list(
+                        group_pops = group_pops,
+                        total_pops = total_pops,
+                        min_fracs = min_fracs,
+                        num_populations = num_populations
+                    ))
 
     add_to_constr(constr, "min_group_frac", new_constr)
-}
-
-#' @param fn A function
-#' @rdname constraints
-#' @export
-add_constr_custom <- function(
-    constr,
-    strength,
-    fn,
-    only_districts = FALSE,
-    thresh = NULL
-) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results")
-    }
-    if (!rlang::is_bool(only_districts)) {
-        cli::cli_abort("{.arg only_districts} must be a boolean.")
-    }
-
-    if (is.null(thresh)) {
-        # no thresholding
-        hard_constraint <- FALSE
-        hard_threshold <- 0
-    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
-        cli::cli_abort("{.arg thresh} must be a finite scalar.")
-    } else {
-        hard_constraint <- TRUE
-        hard_threshold <- thresh
-    }
-
-    args <- rlang::fn_fmls(fn)
-    if (length(args) != 2) {
-        cli::cli_abort("Function must take exactly two arguments.")
-    }
-
-    constr_env <- rlang::fn_env(fn)
-    constr_env <- rlang::env(constr_env)
-    # every symbol used in the function (except the 2 arguments)
-    var_names <- setdiff(
-        all.names(rlang::fn_body(fn)),
-        names(args)
-    )
-
-    for (nm in var_names) {
-        found <- find_env(nm, constr_env)
-        if (
-            !is.null(found) &&
-                !identical(found, rlang::base_env()) &&
-                !identical(found, constr_env) &&
-                !identical(found, rlang::pkg_env("redist"))
-        ) {
-            constr_env[[nm]] <- get(nm, envir = found)
-        }
-    }
-
-    if (!is.null(plan <- get_existing(attr(constr, "data")))) {
-        out <- tryCatch(fn(plan, min(plan)), error = function(e) {
-            cli::cli_abort(c(
-        "Ran into an error testing custom constraint
-                        on the existing plan:",
-        "x" = e$message
-      ))
-        })
-        if (!is.numeric(out) || length(out) != 1 || !is.finite(out)) {
-            cli::cli_abort(c(
-        "Evaluting custom constraint on the existing plan failed.",
-        "*" = "The constraint function should return a single scalar value.",
-        "*" = "Make sure that your constraint function tests all edge cases
-                             and never returns {.val {NA}} or {.val {Inf}}."
-      ))
-        }
-    }
-
-    rlang::fn_env(fn) <- constr_env
-
-    new_constr <- list(
-    strength = strength,
-    only_districts = only_districts,
-    hard_constraint = hard_constraint,
-    hard_threshold = hard_threshold,
-    fn = fn
-  )
-    add_to_constr(constr, "custom", new_constr)
 }
 
 #' @param fn A function
@@ -1558,30 +1338,16 @@ add_constr_custom_plan <- function(
     constr,
     strength,
     fn,
-    thresh = NULL,
-    only_nregions = FALSE
+    only_nregions = FALSE,
+    thresh = NULL
 ) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results")
-    }
-    nregions_to_score <- get_nregion_score_vec(
-        only_nregions,
-        attr(attr(constr, "data"), "ndists")
+    new_constr <- get_base_plan_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        thresh = thresh
     )
 
-    if (is.null(thresh)) {
-        # no thresholding
-        hard_constraint <- FALSE
-        hard_threshold <- 0
-    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
-        cli::cli_abort("{.arg thresh} must be a finite scalar.")
-    } else {
-        hard_constraint <- TRUE
-        hard_threshold <- thresh
-    }
+    data <- attr(constr, "data")
 
     args <- rlang::fn_fmls(fn)
     if (length(args) != 3) {
@@ -1630,13 +1396,11 @@ add_constr_custom_plan <- function(
 
     rlang::fn_env(fn) <- constr_env
 
-    new_constr <- list(
-    strength = strength,
-    fn = fn,
-    nregions_to_score = nregions_to_score,
-    hard_constraint = hard_constraint,
-    hard_threshold = hard_threshold
-  )
+    new_constr <- c(new_constr,
+                    list(
+                        fn = fn
+                    ))
+
     add_to_constr(constr, "custom_plan", new_constr)
 }
 

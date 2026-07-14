@@ -103,7 +103,7 @@ double get_log_mh_ratio(MapParams const &map_params, ScoringFunction const &scor
                         const double log_new_pair_merge_prob,
                         double &new_region1_log_compactness,
                         double &new_region2_log_compactness, Plan const &current_plan,
-                        Plan const &proposed_plan, double const rho, bool const is_final,
+                        Plan const &proposed_plan, double const rho, 
                         bool const using_caching, WeightCache *weight_cache,
                         GranularMCMCTimes &granular_times) {
     double log_mh_ratio = 0.0;
@@ -112,13 +112,13 @@ double get_log_mh_ratio(MapParams const &map_params, ScoringFunction const &scor
     // first we'll start with the regions 
     auto region_score_time = maybe_now(); // optional timing 
     log_mh_ratio +=
-        scoring_function.compute_region_soft_score(current_plan, region1_id, is_final);
+        scoring_function.compute_region_soft_score(current_plan, region1_id);
     log_mh_ratio +=
-        scoring_function.compute_region_soft_score(current_plan, region2_id, is_final);
+        scoring_function.compute_region_soft_score(current_plan, region2_id);
     log_mh_ratio -=
-        scoring_function.compute_region_soft_score(proposed_plan, region1_id, is_final);
+        scoring_function.compute_region_soft_score(proposed_plan, region1_id);
     log_mh_ratio -=
-        scoring_function.compute_region_soft_score(proposed_plan, region2_id, is_final);
+        scoring_function.compute_region_soft_score(proposed_plan, region2_id);
     if constexpr (perf_config::track_granular_times){
         add_elapsed(granular_times.region_scores, region_score_time);
     }
@@ -208,7 +208,6 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     if constexpr (perf_config::track_granular_times){
         add_elapsed(granular_times.wilson_time, wilson_time); // optional timing
     }
- 
 
     if constexpr (DEBUG_MERGING_VERBOSE) {
         Rprintf("A Splitting Checkpoint 1.\n");
@@ -224,7 +223,6 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
 
     // IN THE FUTURE CAN AVOID THE COPYING BY JUST TRAVERSING THE TREE
     // Just traverse tree and check if not in merged region or something
-
     // copy the new plan to be the old one
     auto initial_copy_time = maybe_now(); // optional timing 
     new_plan.shallow_copy(plan);
@@ -241,8 +239,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     if constexpr (perf_config::track_granular_times){
         add_elapsed(granular_times.plan_copying, initial_copy_time); // optional timing 
     }
-    
-    
+
     // check new plan is hierarchically valid if needed
     auto new_pair_building_time = maybe_now(); // optional timing 
     auto build_attempt = new_plan.attempt_to_get_valid_mergesplit_pairs(
@@ -250,12 +247,12 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     if constexpr (perf_config::track_granular_times){
         add_elapsed(granular_times.get_valid_pairs, new_pair_building_time); // optional timing 
     }
-    
+
     // new plan is valid if build attempt successful and passes any hard constraints
     auto hard_constraint_time = maybe_now();
     bool new_plan_valid =
         build_attempt.first &&
-        scoring_function.new_split_ok(new_plan, region1_id, region2_id, is_final);
+        scoring_function.new_split_ok(new_plan, region1_id, region2_id, 0); // this split adds 0 new regions
     if constexpr (perf_config::track_granular_times){
         add_elapsed(granular_times.hard_constraint_time, hard_constraint_time); // optional timing 
     }
@@ -300,27 +297,47 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
             }
         }
         // means disconnected thing glitch. If encountered just print and ignore
-        if (region_pair_proposal_index == -1) {
-            REprintf("Merged and Split Regions %d and %d no longer adjacent!\n", region1_id,
-                     region2_id);
-            REprintf("Current adj pairs: ");
-            for (const auto &a_pair : adj_region_pairs) {
-                REprintf("(%d, %d), ", a_pair.first, a_pair.second);
+        if (region_pair_proposal_index == -1)
+        {
+            std::ostringstream oss;
+
+            oss << "Merged and split regions "
+                << region1_id << " and " << region2_id
+                << " no longer adjacent.\n";
+
+            oss << "Current adj pairs: ";
+            for (auto const &a_pair : adj_region_pairs) {
+                oss << "(" << static_cast<int>(a_pair.first)
+                    << ", " << static_cast<int>(a_pair.second) << "), ";
             }
-            REprintf("\nProposed adj pairs: ");
-            for (const auto &a_pair : new_valid_adj_region_pairs) {
-                REprintf("(%d, %d), ", a_pair.first, a_pair.second);
+            oss << "\n";
+
+            oss << "Proposed adj pairs: ";
+            for (auto const &a_pair : new_valid_adj_region_pairs) {
+                oss << "(" << static_cast<int>(a_pair.first)
+                    << ", " << static_cast<int>(a_pair.second) << "), ";
             }
-            REprintf("\nCurrent Plan is:\n");
-            for (const auto &id : plan.region_ids) {
-                REprintf("%d;", id);
+            oss << "\n";
+
+            oss << "Current Plan IDs:\n";
+            for (auto const id : plan.region_ids) {
+                oss << static_cast<int>(id) << ";";
             }
-            REprintf("\n\nProposed Plan is:\n");
-            for (const auto &id : new_plan.region_ids) {
-                REprintf("%d;", id);
+            oss << "\n";
+
+            oss << "Proposed Plan IDs:\n";
+            for (auto const id : new_plan.region_ids) {
+                oss << static_cast<int>(id) << ";";
             }
-            REprintf("\n\n");
-            throw Rcpp::exception("Error in merge split!\n");
+            oss << "\n";
+
+            oss << "Current plan debug:\n";
+            oss << plan.debug_string(true);
+
+            oss << "Proposed plan debug:\n";
+            oss << new_plan.debug_string(true);
+
+            throw std::runtime_error(oss.str());
         }
         if constexpr (DEBUG_MERGING_VERBOSE) {
             Rprintf("selected new pair index is %d!\n", region_pair_proposal_index);
@@ -372,11 +389,11 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
                              std::log(new_valid_pair_weights(region_pair_proposal_index)) -
                                  std::log(arma::sum(new_valid_pair_weights)),
                              new_region1_log_compactness, new_region2_log_compactness, plan,
-                             new_plan, rho, is_final, using_caching, weight_cache,
+                             new_plan, rho, using_caching, weight_cache,
                              granular_times);
         proposal_accepted = rng_state.r_unif() <= std::exp(log_mh_ratio);
         if constexpr (DEBUG_MERGING_VERBOSE)
-            Rprintf("Ratio is %f and it is", std::exp(log_mh_ratio));
+            Rprintf("Ratio is %f and it is ", std::exp(log_mh_ratio));
 
         // update the cached compactness if needed
         if (proposal_accepted && using_caching) {
@@ -399,12 +416,12 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
             Rprintf("ACCEPTED!! Now updating plans\n");
         // if successful then actually update
         auto final_copy_time = maybe_now(); // optional timing 
-        plan.update_from_successful_split(tree_splitter, ust_sampler,
-                                          std::get<1>(edge_search_result), region1_id,
-                                          region2_id, false);
+        plan.shallow_copy(new_plan);
         if constexpr (perf_config::track_granular_times){
             add_elapsed(granular_times.plan_copying, final_copy_time); // optional timing
         }
+        if constexpr (DEBUG_MERGING_VERBOSE)
+            Rprintf("Plan updated, now swapping multigraphs\n");
 
         // swap the plan multigraphs
         swap_plan_multigraphs(current_plan_multigraph, proposed_plan_multigraph);
@@ -438,14 +455,20 @@ int run_merge_split_steps(MapParams const &map_params,
 
     // Build the multigraph and get pairs of adj districts
     auto pair_building_time = maybe_now(); // optional timing 
-    auto current_plan_adj_region_pairs =
-        plan.attempt_to_get_valid_mergesplit_pairs(current_plan_multigraph, splitting_schedule,
-                                                   scoring_function, is_final)
-            .second;
+    auto pair_build_attempt = plan.attempt_to_get_valid_mergesplit_pairs(current_plan_multigraph, splitting_schedule,
+                                                   scoring_function, is_final);
+
+    auto current_plan_adj_region_pairs = pair_build_attempt.second;
     if constexpr (perf_config::track_granular_times){
         add_elapsed(granular_times.get_valid_pairs, pair_building_time); // optional timing
     }
- 
+    if (!pair_build_attempt.first) {
+        std::ostringstream oss;
+        oss << "Building plan multigraph failed but plan should be valid.\n";
+        oss << "pairs.size()=" << current_plan_adj_region_pairs.size() << "\n";
+        throw std::runtime_error(oss.str());
+        return 0;
+    }
 
     auto pair_weight_time = maybe_now();
     arma::vec current_plan_pair_unnoramalized_wgts =
@@ -453,16 +476,51 @@ int run_merge_split_steps(MapParams const &map_params,
     if constexpr (perf_config::track_granular_times){
         add_elapsed(granular_times.selecting_merge_pair, pair_weight_time); // optional timing 
     }
+    if (current_plan_pair_unnoramalized_wgts.n_elem <= 0) {
+        std::ostringstream oss;
+        oss << "Getting plan multigraph weights failed.\n";
+        oss << "weights.n_elem=" << current_plan_pair_unnoramalized_wgts.n_elem << "\n";
+        throw std::runtime_error(oss.str());
+    }
 
     // run the merge split steps and count success
     for (size_t i = 0; i < num_steps_to_run; i++) {
+
         std::tuple<bool, bool, double, int> mergesplit_result = attempt_mergesplit_step(
             map_params, splitting_schedule, scoring_function, rng_state, sampling_space, plan,
             dummy_plan, ust_sampler, tree_splitter, current_plan_multigraph,
             proposed_plan_multigraph, merge_prob_type, save_edge_selection_prob,
             current_plan_adj_region_pairs, current_plan_pair_unnoramalized_wgts, rho, is_final,
             true, using_caching, weight_cache, granular_times);
-        // count tree size
+
+        if constexpr(perf_config::supposedly_safe_input_checks){
+            // count tree size
+            std::ostringstream oss;
+            oss << "Calling on tree_sizes in `run_merge_split_steps`, ";
+            oss << "num_steps_to_run=" << num_steps_to_run << "\n";
+            oss << "merge-split inner iteration i=" << i << "\n";
+            oss << plan.debug_string(true);
+            tree_size_check(
+                map_params, 
+                std::get<3>(mergesplit_result) - 1, 
+                tree_sizes,
+                oss.str()
+            );
+
+            std::ostringstream poss;
+            poss << "Calling on successful_tree_sizes in `run_merge_split_steps`, ";
+            poss << "num_steps_to_run=" << num_steps_to_run << "\n";
+            poss << "merge-split inner iteration i=" << i << "\n";
+            poss << plan.debug_string(true);
+            tree_size_check(
+                map_params, 
+                std::get<3>(mergesplit_result) - 1, 
+                successful_tree_sizes,
+                oss.str()
+            );
+
+        }
+
         ++tree_sizes[std::get<3>(mergesplit_result) - 1];
         // increase count if successful
         if (std::get<1>(mergesplit_result)) {
@@ -474,5 +532,6 @@ int run_merge_split_steps(MapParams const &map_params,
     }
     if constexpr (DEBUG_MERGING_VERBOSE)
         Rprintf("Total success is %d\n", num_succesful_steps);
+
     return num_succesful_steps;
 }

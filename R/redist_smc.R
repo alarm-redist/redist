@@ -548,7 +548,8 @@ redist_smc <- function(
     t1 <- Sys.time()
     all_out <- foreach(
         chain = seq_len(runs),
-        .inorder = FALSE
+        .inorder = FALSE,
+        .errorhandling = "stop"
     ) %oper%
         {
             if (chain == 1) {

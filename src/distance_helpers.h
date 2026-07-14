@@ -1,4 +1,5 @@
-#include "smc_base.h"
+#include <Rcpp.h>
+using namespace Rcpp;
 
 #ifndef DISTANCE_H
 #define DISTANCE_H

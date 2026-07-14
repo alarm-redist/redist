@@ -18,15 +18,24 @@ class USTSampler {
   private:
   public:
     USTSampler(MapParams const &map_params, SplittingSchedule const &splitting_schedule)
-        : ust(init_tree(map_params.V)), pops_below_vertex(map_params.V, 0),
+        : ust(init_tree(map_params.V)),
+        pops_below_vertex(map_params.V, 0),
           visited(map_params.V), ignore(map_params.V), stack(map_params.V + 1),
           county_tree(init_tree(map_params.num_counties)),
           county_stack(map_params.num_counties + 1),
+          dummy_county_tree_queue(map_params.V),
           county_pop(map_params.num_counties, arma::fill::zeros),
           county_members(map_params.num_counties, std::vector<int>{}),
           c_visited(map_params.num_counties, true), cty_pop_below(map_params.num_counties, 0),
           vertex_queue(map_params.V), map_params(map_params),
-          splitting_schedule(splitting_schedule) {};
+          splitting_schedule(splitting_schedule) {
+            // reserve the max capacity now 
+            for (size_t v = 0; v < map_params.V; v++)
+            {
+              ust[v].reserve(map_params.g[v].size());
+            }
+             
+          };
 
     Tree ust;
     std::vector<int> pops_below_vertex;
@@ -35,6 +44,7 @@ class USTSampler {
     TreePopStack stack;
     Tree county_tree;
     TreePopStack county_stack;
+    DummyTreeQueue dummy_county_tree_queue;
     arma::uvec county_pop;
     std::vector<std::vector<int>> county_members;
     std::vector<bool> c_visited;
@@ -70,6 +80,16 @@ class USTSampler {
         RNGState &rng_state, ScoringFunction const &scoring_function,
         TreeSplitter &tree_splitter, Plan const &plan, int const merge_region1,
         int const merge_region2, bool const save_selection_prob);
+
+    // checks that all the vertices in the tree are valid and 
+    // its a directed tree 
+    void check_tree_integrity(
+      Tree const &a_ust,
+      std::string_view where,
+      int root,
+      int expected_tree_vertices,
+      bool check_vertex_count
+    );
 };
 
 #endif

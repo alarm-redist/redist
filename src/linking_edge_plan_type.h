@@ -11,20 +11,24 @@ class LinkingEdgePlan : public Plan {
     LinkingEdgePlan(int const total_seats, int const total_pop,
                     PlanVector &this_plan_region_ids, RegionSizes &this_plan_region_sizes,
                     IntPlanAttribute &this_plan_region_pops,
-                    IntPlanAttribute &this_plan_order_added);
+                    IntPlanAttribute &this_plan_order_added,
+                    PlanEdgeBits &this_plan_forest_edge_bits);
 
     // constructor for partial plan (more than 1 region)
     LinkingEdgePlan(int const ndists, int const num_regions, const arma::uvec &pop,
                     PlanVector &this_plan_region_ids, RegionSizes &this_plan_region_sizes,
                     IntPlanAttribute &this_plan_region_pops,
-                    IntPlanAttribute &this_plan_order_added, TreeSplitter const &tree_splitter,
+                    IntPlanAttribute &this_plan_order_added, PlanEdgeBits &this_plan_forest_edge_bits,
+                    TreeSplitter const &tree_splitter,
                     USTSampler &ust_sampler, PlanMultigraph &plan_multigraph,
                     Graph &region_graph, RNGState &rng_state,
                     const Rcpp::List &initial_forest_adj_list = {},
                     const std::vector<std::array<double, 3>> &input_initial_linking_edges = {});
 
-    VertexGraph get_forest_adj() override;
+    Tree get_forest_adj() override;
 
+    std::string linking_edges_to_string() const;
+    std::string debug_string(bool print_region_ids = true) const override;
     void Rprint(bool verbose = false) const override;
 
     void update_vertex_and_plan_specific_info_from_cut(

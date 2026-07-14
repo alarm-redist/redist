@@ -2,14 +2,10 @@
 #ifndef SMC_H
 #define SMC_H
 
-// [[Rcpp::depends(redistmetrics)]]
-
-#include "smc_base.h"
-
 #include <RcppThread.h>
 #include <atomic>
 #include <chrono>
-#include <cli/progress.h>
+
 #include <cmath>
 #include <functional>
 #include <iostream>
@@ -21,6 +17,8 @@
 #include "ust_sampler.h"
 #include "weight_caching.h"
 #include "weights.h"
+#include "utils.h"
+#include <cli/progress.h>
 
 // Run SMC (optionally with Merge Split steps too)
 //

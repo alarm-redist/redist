@@ -221,12 +221,12 @@ double compute_simple_log_incremental_weight(Plan const &plan, PlanMultigraph &p
     if (scoring_function.any_soft_region_constraints) {
         // compute scoring functions
         region1_score =
-            scoring_function.compute_region_soft_score(plan, region1_id, is_final_split);
+            scoring_function.compute_region_soft_score(plan, region1_id);
         region2_score =
-            scoring_function.compute_region_soft_score(plan, region2_id, is_final_split);
+            scoring_function.compute_region_soft_score(plan, region2_id);
         merged_region_score =
             scoring_function
-                .compute_merged_region_full_score(plan, region1_id, region2_id, is_final_split)
+                .compute_merged_region_full_score(plan, region1_id, region2_id)
                 .second;
         if constexpr (DEBUG_WEIGHTS_VERBOSE) {
             REprintf("Region (%d,%d) Scores (%f, %f) | Merged Score %f \n", region1_id,
@@ -241,7 +241,7 @@ double compute_simple_log_incremental_weight(Plan const &plan, PlanMultigraph &p
         plan_score = scoring_function.compute_plan_score(plan).second;
         prev_plan_score =
             scoring_function
-                .compute_merged_plan_score(plan, region1_id, region2_id, is_final_split)
+                .compute_merged_plan_score(plan, region1_id, region2_id)
                 .second;
         if constexpr (DEBUG_WEIGHTS_VERBOSE) {
             REprintf("Entire Plan Score %f | Previous Plan Score %f \n", plan_score,
@@ -325,11 +325,13 @@ void compute_all_plans_log_simple_incremental_weights(
     int const nsims = (int)plans_ptr_vec.size();
     const int check_int = 50; // check for interrupts every _ iterations
 
-    int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
+    int const num_threads = get_num_threads(pool);
     // thread safe id counter
     static std::atomic<int> global_generation_counter{0};
     int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
     std::atomic<int> thread_id_counter{0};
+    std::vector<std::atomic<int>> active_users(
+        perf_config::check_threadpool_integrity ? num_threads : 0);
     // now make the vectors of important variables to be used by threads
     std::vector<USTSampler> ust_samplers_vec;
     ust_samplers_vec.reserve(num_threads);
@@ -345,14 +347,24 @@ void compute_all_plans_log_simple_incremental_weights(
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, nsims, [&](int i) {
         static thread_local int thread_generation_counter = -1;
-        static thread_local int thread_id;
-
+        static thread_local int thread_id = -1;
         // check if the thread id was generated this function call
         if (thread_generation_counter != generation) {
             // if not then give it a new id
             thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
             thread_generation_counter = generation;
         }
+        if (thread_id < 0 || thread_id >= num_threads) {
+            std::ostringstream oss;
+            oss << "In `run_merge_split_step_on_all_plans` Thread id broke, thread id is " << thread_id
+                              << " but num threads is  " << num_threads << std::endl;
+            throw std::runtime_error(oss.str());
+        }
+        // UNCOMMENT FOR THREADPOOL CHECKING
+        // std::unique_ptr<ActiveUserGuard> active_guard;
+        // if constexpr (perf_config::check_threadpool_integrity) {
+        //     active_guard = std::make_unique<ActiveUserGuard>(active_users[thread_id]);
+        // }
 
         double log_incr_weight = compute_simple_log_incremental_weight(
             *plans_ptr_vec[i], plan_multigraphs_vec[thread_id], splitting_schedule,
@@ -486,13 +498,13 @@ double compute_log_optimal_incremental_weights(
             auto time_region_score = maybe_now(); // optional timing 
             // compute scoring functions
             const double region1_score =
-                scoring_function.compute_region_soft_score(plan, region1_id, is_final_split);
+                scoring_function.compute_region_soft_score(plan, region1_id);
             const double region2_score =
-                scoring_function.compute_region_soft_score(plan, region2_id, is_final_split);
+                scoring_function.compute_region_soft_score(plan, region2_id);
             const double merged_region_score =
                 scoring_function
-                    .compute_merged_region_full_score(plan, region1_id, region2_id,
-                                                      is_final_split)
+                    .compute_merged_region_full_score(plan, region1_id, region2_id
+                                                      )
                     .second;
              
             if constexpr (perf_config::track_granular_times){
@@ -512,7 +524,7 @@ double compute_log_optimal_incremental_weights(
             auto time_plan_score = maybe_now(); // optional timing 
             merged_plan_score =
                 scoring_function
-                    .compute_merged_plan_score(plan, region1_id, region2_id, is_final_split)
+                    .compute_merged_plan_score(plan, region1_id, region2_id)
                     .second; 
             if constexpr (perf_config::track_granular_times){
                 add_elapsed(granular_times.region_scores, time_plan_score); // optional timing
@@ -643,11 +655,13 @@ void compute_all_plans_log_optimal_incremental_weights(
     if constexpr (DEBUG_WEIGHTS_VERBOSE)
         Rprintf("About to start computing weights!\n");
 
-    int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
+    int const num_threads = get_num_threads(pool);
     // thread safe id counter
     static std::atomic<int> global_generation_counter{0};
     int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
     std::atomic<int> thread_id_counter{0};
+    std::vector<std::atomic<int>> active_users(
+        perf_config::check_threadpool_integrity ? num_threads : 0);
 
     // now make the vectors of important variables to be used by threads
     std::vector<USTSampler> ust_samplers_vec;
@@ -665,15 +679,27 @@ void compute_all_plans_log_optimal_incremental_weights(
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, nsims, [&](int i) {
         static thread_local int thread_generation_counter = -1;
-        static thread_local int thread_id;
-
-        auto total_weight_time = maybe_now(); // optional timing 
+        static thread_local int thread_id = -1;
         // check if the thread id was generated this function call
         if (thread_generation_counter != generation) {
             // if not then give it a new id
             thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
             thread_generation_counter = generation;
         }
+        if (thread_id < 0 || thread_id >= num_threads) {
+            std::ostringstream oss;
+            oss << "In `run_merge_split_step_on_all_plans` Thread id broke, thread id is " << thread_id
+                              << " but num threads is  " << num_threads << std::endl;
+            throw std::runtime_error(oss.str());
+        }
+        // UNCOMMENT FOR THREADPOOL CHECKING
+        // std::unique_ptr<ActiveUserGuard> active_guard;
+        // if constexpr (perf_config::check_threadpool_integrity) {
+        //     active_guard = std::make_unique<ActiveUserGuard>(active_users[thread_id]);
+        // }
+
+        auto total_weight_time = maybe_now(); // optional timing 
+
 
         if (cache_ensemble.using_caching) {
             log_incremental_weights[i] = compute_log_optimal_incremental_weights(

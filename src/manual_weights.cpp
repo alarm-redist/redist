@@ -217,7 +217,7 @@ Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
             bool region_prob_zero = false;
 
             auto region_score_result = scoring_functions[thread_id].compute_region_full_score(
-                *plan_ensemble.plan_ptr_vec[i], region_id, is_final);
+                *plan_ensemble.plan_ptr_vec[i], region_id);
             if (!region_score_result.first) {
                 if (just_single_density) {
                     log_unnormalized_component_densities(0, i) = R_NegInf;
@@ -310,7 +310,7 @@ arma::vec compute_plans_log_optimal_weights(
                                pool);
 
     // create the splitter
-    NaiveTopKSplitter tree_splitter(map_params.V, 1);
+    NaiveTopKSplitter tree_splitter(map_params.V, SamplingSpace::GraphSpace, 1);
 
     arma::vec log_weights(num_plans, arma::fill::none);
 
@@ -434,7 +434,7 @@ arma::vec compute_plans_log_simple_weights(
                                pool);
 
     // create the splitter
-    NaiveTopKSplitter tree_splitter(map_params.V, 1);
+    NaiveTopKSplitter tree_splitter(map_params.V, SamplingSpace::GraphSpace, 1);
 
     arma::vec log_weights(num_plans, arma::fill::none);
 

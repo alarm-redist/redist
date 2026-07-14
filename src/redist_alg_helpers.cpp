@@ -293,25 +293,29 @@ void set_merged_region_reindex_vec(int const num_regions, std::vector<int> &regi
     return;
 }
 
-RcppThread::ThreadPool get_thread_pool(int const num_threads) {
-    if (num_threads == 1) {
-        return RcppThread::ThreadPool(0);
-    } else if (num_threads > 1) {
-        return RcppThread::ThreadPool(num_threads);
-    } else {
-        return RcppThread::ThreadPool(std::thread::hardware_concurrency());
-    }
-}
+
 
 // creates plan ensemble of blank plans
 PlanEnsemble::PlanEnsemble(MapParams const &map_params, int const total_pop, int const nsims,
                            SamplingSpace const sampling_space, RcppThread::ThreadPool &pool,
                            int const verbosity)
     : nsims(nsims), V(map_params.V), ndists(map_params.ndists),
-      total_seats(map_params.total_seats), flattened_all_plans(V * nsims, 0),
+      total_seats(map_params.total_seats), sampling_space(sampling_space),
+      flattened_all_plans(V * nsims, 0),
       flattened_all_region_sizes(ndists * nsims, 0),
       flattened_all_region_pops(ndists * nsims, 0),
-      flattened_all_region_order_added(ndists * nsims, -1), plan_ptr_vec(nsims) {
+      flattened_all_region_order_added(ndists * nsims, -1), 
+      num_forest_edge_bit_words_per_plan(
+      sampling_space == SamplingSpace::ForestSpace ||
+      sampling_space == SamplingSpace::LinkingEdgeSpace
+          ? map_params.num_edge_bit_words
+          : 0
+    ),
+    flattened_all_forest_edge_bits(
+        nsims * num_forest_edge_bit_words_per_plan,
+        EdgeBitWord{0}
+    ),
+      plan_ptr_vec(nsims) {
     if (ndists < 2)
         throw Rcpp::exception("Tried to create a plan with fewer than 2 districts!");
 
@@ -332,23 +336,29 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params, int const total_pop, int
         IntPlanAttribute plan_pops(flattened_all_region_pops, ndists * i, ndists * (i + 1));
         IntPlanAttribute plan_region_order_added(flattened_all_region_order_added, ndists * i,
                                                  ndists * (i + 1));
+        PlanEdgeBits plan_forest_edge_bits(
+            flattened_all_forest_edge_bits,
+            i * num_forest_edge_bit_words_per_plan,
+            (i + 1) * num_forest_edge_bit_words_per_plan
+        );
+
         // create the plans
         if (use_graph_space) {
             plan_ptr_vec[i] =
                 std::make_unique<GraphPlan>(total_seats, total_pop, plan_region_ids, plan_sizes,
-                                            plan_pops, plan_region_order_added);
+                                            plan_pops, plan_region_order_added, plan_forest_edge_bits);
         } else if (use_lct_graph_space) {
             plan_ptr_vec[i] =
                 std::make_unique<LCTGraphPlan>(total_seats, total_pop, plan_region_ids,
-                                               plan_sizes, plan_pops, plan_region_order_added);
+                                               plan_sizes, plan_pops, plan_region_order_added, plan_forest_edge_bits);
         } else if (use_forest_space) {
             plan_ptr_vec[i] =
                 std::make_unique<ForestPlan>(total_seats, total_pop, plan_region_ids,
-                                             plan_sizes, plan_pops, plan_region_order_added);
+                                             plan_sizes, plan_pops, plan_region_order_added, plan_forest_edge_bits);
         } else if (use_linking_edge_space) {
             plan_ptr_vec[i] = std::make_unique<LinkingEdgePlan>(
                 total_seats, total_pop, plan_region_ids, plan_sizes, plan_pops,
-                plan_region_order_added);
+                plan_region_order_added, plan_forest_edge_bits);
         } else {
             throw Rcpp::exception("Input is invalid\n");
         }
@@ -358,6 +368,7 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params, int const total_pop, int
     });
 
     pool.wait();
+
 }
 
 // creates plan ensemble of partial plans
@@ -369,11 +380,22 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params,
                            std::vector<RNGState> &rng_states, RcppThread::ThreadPool &pool,
                            int const verbosity)
     : nsims(nsims), V(map_params.V), ndists(map_params.ndists),
-      total_seats(map_params.total_seats),
+      total_seats(map_params.total_seats), sampling_space(sampling_space),
       flattened_all_plans(plans_mat.begin(), plans_mat.end()),
       flattened_all_region_sizes(ndists * nsims, 0),
       flattened_all_region_pops(ndists * nsims, 0),
-      flattened_all_region_order_added(ndists * nsims, -1), plan_ptr_vec(nsims) {
+      flattened_all_region_order_added(ndists * nsims, -1), 
+      num_forest_edge_bit_words_per_plan(
+      sampling_space == SamplingSpace::ForestSpace ||
+      sampling_space == SamplingSpace::LinkingEdgeSpace
+          ? map_params.num_edge_bit_words
+          : 0
+    ),
+    flattened_all_forest_edge_bits(
+        nsims * num_forest_edge_bit_words_per_plan,
+        EdgeBitWord{0}
+    ),
+      plan_ptr_vec(nsims) {
     // make sure 0 indexed plans were not passed in
     if (*std::min_element(flattened_all_plans.begin(), flattened_all_plans.end()) <= 0) {
         throw Rcpp::exception(
@@ -443,9 +465,9 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params,
     int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
     std::atomic<int> thread_id_counter{0};
 
-    auto tree_ptr = std::make_unique<UniformValidSplitter>(map_params.V);
+    auto tree_ptr = std::make_unique<UniformValidSplitter>(map_params.V, sampling_space);
 
-    int const n_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
+    int const n_threads = get_num_threads(pool); 
     std::vector<Tree> ust_buffers(n_threads, Tree(V));
     std::vector<std::vector<bool>> visited_buffers(n_threads, std::vector<bool>(V));
     std::vector<std::vector<bool>> ignore_buffers(n_threads, std::vector<bool>(V));
@@ -478,6 +500,11 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params,
         IntPlanAttribute plan_pops(flattened_all_region_pops, ndists * i, ndists * (i + 1));
         IntPlanAttribute plan_region_order_added(flattened_all_region_order_added, ndists * i,
                                                  ndists * (i + 1));
+        PlanEdgeBits plan_forest_edge_bits(
+            flattened_all_forest_edge_bits,
+            i * num_forest_edge_bit_words_per_plan,
+            (i + 1) * num_forest_edge_bit_words_per_plan
+        );
 
         // copy the sizes from matrix into the vector
         std::copy(region_sizes_mat.begin() + i * num_regions,
@@ -487,20 +514,22 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params,
         if (use_graph_space) {
             plan_ptr_vec[i] =
                 std::make_unique<GraphPlan>(num_regions, map_params.pop, plan_region_ids,
-                                            plan_sizes, plan_pops, plan_region_order_added);
+                                            plan_sizes, plan_pops, plan_region_order_added, plan_forest_edge_bits);
         } else if (use_lct_graph_space) {
             plan_ptr_vec[i] =
                 std::make_unique<LCTGraphPlan>(num_regions, map_params.pop, plan_region_ids,
-                                               plan_sizes, plan_pops, plan_region_order_added);
+                                               plan_sizes, plan_pops, plan_region_order_added, plan_forest_edge_bits);
         } else if (use_forest_space) {
             plan_ptr_vec[i] = std::make_unique<ForestPlan>(
                 ndists, num_regions, map_params.pop, plan_region_ids, plan_sizes, plan_pops,
-                plan_region_order_added, map_params, ust, visited, ignore,
+                plan_region_order_added, plan_forest_edge_bits, 
+                map_params, ust, visited, ignore,
                 rng_states[thread_id]);
         } else if (use_linking_edge_space) {
             plan_ptr_vec[i] = std::make_unique<LinkingEdgePlan>(
                 ndists, num_regions, map_params.pop, plan_region_ids, plan_sizes, plan_pops,
-                plan_region_order_added, *tree_ptr, ust_sampler, plan_multigraph, region_graph,
+                plan_region_order_added, plan_forest_edge_bits, 
+                *tree_ptr, ust_sampler, plan_multigraph, region_graph,
                 rng_states[thread_id]);
         } else {
             throw Rcpp::exception("This plan type not supported!\n");
@@ -549,7 +578,7 @@ Rcpp::IntegerMatrix PlanEnsemble::get_R_sizes_matrix(RcppThread::ThreadPool &poo
 
 int PlanEnsemble::count_unique_plans(RcppThread::ThreadPool &pool) const {
     int const num_regions = plan_ptr_vec[0]->num_regions;
-    int const num_threads = pool.getNumThreads() == 0 ? 1 : pool.getNumThreads();
+    int const num_threads = get_num_threads(pool);
     std::vector<std::unordered_set<std::string>> plan_count_maps_vec(num_threads);
 
     // Trick to give each thread a unique id
@@ -726,18 +755,268 @@ std::unique_ptr<PlanEnsemble> get_plan_ensemble_ptr(
     }
 }
 
-void swap_plan_ensembles(PlanEnsemble &plan_ensemble1, PlanEnsemble &plan_ensemble2) {
-    // We only swap the pointers to the plans themselves
-    // Note this does not properly swap the underlying vectors
-    // so care is needed
-    std::swap(plan_ensemble1.plan_ptr_vec, plan_ensemble2.plan_ptr_vec);
-    std::swap(plan_ensemble1.flattened_all_plans, plan_ensemble2.flattened_all_plans);
-    std::swap(plan_ensemble1.flattened_all_region_sizes,
-              plan_ensemble2.flattened_all_region_sizes);
-    std::swap(plan_ensemble1.flattened_all_region_pops,
-              plan_ensemble2.flattened_all_region_pops);
-    std::swap(plan_ensemble1.flattened_all_region_order_added,
-              plan_ensemble2.flattened_all_region_order_added);
+
+void PlanEnsemble::check_all_plans_valid(
+    MapParams const &map_params,
+    std::string_view where
+) {
+    bool const check_forest = sampling_space != SamplingSpace::GraphSpace;
+    std::ostringstream oss;
+
+    auto fail = [&](std::string const &msg) {
+        std::ostringstream full;
+        full << "PlanEnsemble validity check failed.\n";
+        full << "Where: " << where << "\n";
+        full << msg << "\n";
+        throw std::runtime_error(full.str());
+    };
+
+    if (nsims < 0) {
+        fail("nsims is negative.");
+    }
+
+    if (V != map_params.V) {
+        std::ostringstream msg;
+        msg << "PlanEnsemble V does not match map_params.V. "
+            << "V=" << V << ", map_params.V=" << map_params.V;
+        fail(msg.str());
+    }
+
+    if (ndists != map_params.ndists) {
+        std::ostringstream msg;
+        msg << "PlanEnsemble ndists does not match map_params.ndists. "
+            << "ndists=" << ndists << ", map_params.ndists=" << map_params.ndists;
+        fail(msg.str());
+    }
+
+    if (static_cast<int>(plan_ptr_vec.size()) != nsims) {
+        std::ostringstream msg;
+        msg << "plan_ptr_vec.size() != nsims. "
+            << "plan_ptr_vec.size()=" << plan_ptr_vec.size()
+            << ", nsims=" << nsims;
+        fail(msg.str());
+    }
+
+    if (static_cast<int>(flattened_all_plans.size()) != nsims * V) {
+        std::ostringstream msg;
+        msg << "flattened_all_plans has wrong size. "
+            << "size=" << flattened_all_plans.size()
+            << ", expected=" << nsims * V;
+        fail(msg.str());
+    }
+
+    if (static_cast<int>(flattened_all_region_sizes.size()) != nsims * ndists) {
+        std::ostringstream msg;
+        msg << "flattened_all_region_sizes has wrong size. "
+            << "size=" << flattened_all_region_sizes.size()
+            << ", expected=" << nsims * ndists;
+        fail(msg.str());
+    }
+
+    if (static_cast<int>(flattened_all_region_pops.size()) != nsims * ndists) {
+        std::ostringstream msg;
+        msg << "flattened_all_region_pops has wrong size. "
+            << "size=" << flattened_all_region_pops.size()
+            << ", expected=" << nsims * ndists;
+        fail(msg.str());
+    }
+
+    if (static_cast<int>(flattened_all_region_order_added.size()) != nsims * ndists) {
+        std::ostringstream msg;
+        msg << "flattened_all_region_order_added has wrong size. "
+            << "size=" << flattened_all_region_order_added.size()
+            << ", expected=" << nsims * ndists;
+        fail(msg.str());
+    }
+
+    if (num_forest_edge_bit_words_per_plan < 0) {
+        fail("num_forest_edge_bit_words_per_plan is negative.");
+    }
+
+    if (num_forest_edge_bit_words_per_plan > 0) {
+        std::size_t const expected_forest_words =
+            static_cast<std::size_t>(nsims) *
+            static_cast<std::size_t>(num_forest_edge_bit_words_per_plan);
+
+        if (flattened_all_forest_edge_bits.size() != expected_forest_words) {
+            std::ostringstream msg;
+            msg << "flattened_all_forest_edge_bits has wrong size. "
+                << "size=" << flattened_all_forest_edge_bits.size()
+                << ", expected=" << expected_forest_words;
+            fail(msg.str());
+        }
+    }
+
+    if (static_cast<int>(map_params.pop.n_elem) != V) {
+        std::ostringstream msg;
+        msg << "map_params.pop has wrong size. "
+            << "pop.n_elem=" << map_params.pop.n_elem
+            << ", V=" << V;
+        fail(msg.str());
+    }
+
+    int map_total_pop = 0;
+    for (int v = 0; v < V; ++v) {
+        map_total_pop += static_cast<int>(map_params.pop[v]);
+    }
+
+    for (int i = 0; i < nsims; ++i) {
+        Plan *plan = plan_ptr_vec[i].get();
+
+        if (plan == nullptr) {
+            std::ostringstream msg;
+            msg << "plan_ptr_vec[" << i << "] is null.";
+            fail(msg.str());
+        }
+
+        auto fail_plan = [&](std::string const &msg) {
+            std::ostringstream full;
+            full << "Invalid plan in PlanEnsemble.\n";
+            full << "Where: " << where << "\n";
+            full << "Plan index: " << i << "\n";
+            full << msg << "\n";
+            full << plan->debug_string(true);
+            throw std::runtime_error(full.str());
+        };
+
+        if (static_cast<int>(plan->region_ids.size()) != V) {
+            std::ostringstream msg;
+            msg << "region_ids has wrong size. "
+                << "size=" << plan->region_ids.size()
+                << ", expected V=" << V;
+            fail_plan(msg.str());
+        }
+
+        if (static_cast<int>(plan->region_sizes.size()) != ndists) {
+            std::ostringstream msg;
+            msg << "region_sizes has wrong size. "
+                << "size=" << plan->region_sizes.size()
+                << ", expected ndists=" << ndists;
+            fail_plan(msg.str());
+        }
+
+        if (static_cast<int>(plan->region_pops.size()) != ndists) {
+            std::ostringstream msg;
+            msg << "region_pops has wrong size. "
+                << "size=" << plan->region_pops.size()
+                << ", expected ndists=" << ndists;
+            fail_plan(msg.str());
+        }
+
+        if (static_cast<int>(plan->region_added_order.size()) != ndists) {
+            std::ostringstream msg;
+            msg << "region_added_order has wrong size. "
+                << "size=" << plan->region_added_order.size()
+                << ", expected ndists=" << ndists;
+            fail_plan(msg.str());
+        }
+
+        if (plan->num_regions < 1 || plan->num_regions > ndists) {
+            std::ostringstream msg;
+            msg << "num_regions is invalid. "
+                << "num_regions=" << plan->num_regions
+                << ", ndists=" << ndists;
+            fail_plan(msg.str());
+        }
+
+        std::vector<int> counted_region_vertices(ndists, 0);
+        std::vector<int> counted_region_pops(ndists, 0);
+
+        for (int v = 0; v < V; ++v) {
+            int const region_id = static_cast<int>(plan->region_ids[v]);
+
+            if (region_id < 0 || region_id >= plan->num_regions) {
+                std::ostringstream msg;
+                msg << "Invalid region id. "
+                    << "vertex=" << v
+                    << ", region_id=" << region_id
+                    << ", num_regions=" << plan->num_regions;
+                fail_plan(msg.str());
+            }
+
+            ++counted_region_vertices[region_id];
+            counted_region_pops[region_id] += static_cast<int>(map_params.pop[v]);
+        }
+
+        int total_counted_vertices = 0;
+        int total_counted_pop = 0;
+
+        for (int region_id = 0; region_id < plan->num_regions; ++region_id) {
+            int const stored_size = static_cast<int>(plan->region_sizes[region_id]);
+            int const stored_pop = static_cast<int>(plan->region_pops[region_id]);
+
+            total_counted_vertices += counted_region_vertices[region_id];
+            total_counted_pop += counted_region_pops[region_id];
+
+            if (stored_pop != counted_region_pops[region_id]) {
+                std::ostringstream msg;
+                msg << "Stored region pop does not match counted pop. "
+                    << "region_id=" << region_id
+                    << ", stored_pop=" << stored_pop
+                    << ", counted_pop=" << counted_region_pops[region_id];
+                fail_plan(msg.str());
+            }
+
+            if (stored_size <= 0) {
+                std::ostringstream msg;
+                msg << "Active region has nonpositive size. "
+                    << "region_id=" << region_id
+                    << ", stored_size=" << stored_size;
+                fail_plan(msg.str());
+            }
+        }
+
+        if (total_counted_vertices != V) {
+            std::ostringstream msg;
+            msg << "Total counted vertices does not equal V. "
+                << "total_counted_vertices=" << total_counted_vertices
+                << ", V=" << V;
+            fail_plan(msg.str());
+        }
+
+        if (total_counted_pop != map_total_pop) {
+            std::ostringstream msg;
+            msg << "Total counted pop does not equal map total pop. "
+                << "total_counted_pop=" << total_counted_pop
+                << ", map_total_pop=" << map_total_pop;
+            fail_plan(msg.str());
+        }
+
+        for (int region_id = plan->num_regions; region_id < ndists; ++region_id) {
+            int const stored_size = static_cast<int>(plan->region_sizes[region_id]);
+            int const stored_pop = static_cast<int>(plan->region_pops[region_id]);
+
+            if (stored_size != 0) {
+                std::ostringstream msg;
+                msg << "Inactive region has nonzero size. "
+                    << "region_id=" << region_id
+                    << ", stored_size=" << stored_size
+                    << ", num_regions=" << plan->num_regions;
+                fail_plan(msg.str());
+            }
+
+            if (stored_pop != 0) {
+                std::ostringstream msg;
+                msg << "Inactive region has nonzero pop. "
+                    << "region_id=" << region_id
+                    << ", stored_pop=" << stored_pop
+                    << ", num_regions=" << plan->num_regions;
+                fail_plan(msg.str());
+            }
+        }
+
+        if (check_forest && num_forest_edge_bit_words_per_plan > 0) {
+            std::string const forest_msg =
+                std::string(where) +
+                ", PlanEnsemble::check_all_plans_valid, plan i = " +
+                std::to_string(i);
+
+            plan->check_forest_integrity(
+                map_params.graph_edge_index,
+                forest_msg
+            );
+        }
+    }
 }
 
 // Reorders all the plans in the vector by order a region was split
@@ -778,6 +1057,7 @@ void reorder_all_plans(RcppThread::ThreadPool &pool,
 
 std::vector<std::unique_ptr<TreeSplitter>>
 get_tree_splitter_ptrs(MapParams const &map_params, SplittingMethodType const splitting_method,
+                       SamplingSpace const sampling_space,
                        Rcpp::List const &control, int const nsims, int const num_threads) {
     int V = map_params.V;
     double target = map_params.target;
@@ -789,32 +1069,32 @@ get_tree_splitter_ptrs(MapParams const &map_params, SplittingMethodType const sp
     if (splitting_method == SplittingMethodType::NaiveTopK) {
         // set splitting k to -1
         std::generate_n(std::back_inserter(tree_splitters_ptr_vec), num_threads,
-                        [V] { return std::make_unique<NaiveTopKSplitter>(V, -1); });
+                        [V, sampling_space] { return std::make_unique<NaiveTopKSplitter>(V, sampling_space, -1); });
     } else if (splitting_method == SplittingMethodType::UnifValid) {
         std::generate_n(std::back_inserter(tree_splitters_ptr_vec), num_threads,
-                        [V] { return std::make_unique<UniformValidSplitter>(V); });
+                        [V, sampling_space] { return std::make_unique<UniformValidSplitter>(V, sampling_space); });
     } else if (splitting_method == SplittingMethodType::ExpBiggerAbsDev) {
         double alpha = as<double>(control["splitting_alpha"]);
         std::generate_n(std::back_inserter(tree_splitters_ptr_vec), num_threads,
-                        [V, alpha, target] {
-                            return std::make_unique<ExpoWeightedSplitter>(V, alpha, target);
+                        [V, sampling_space, alpha, target] {
+                            return std::make_unique<ExpoWeightedSplitter>(V, sampling_space, alpha, target);
                         });
     } else if (splitting_method == SplittingMethodType::ExpSmallerAbsDev) {
         double alpha = as<double>(control["splitting_alpha"]);
         std::generate_n(
-            std::back_inserter(tree_splitters_ptr_vec), num_threads, [V, alpha, target] {
-                return std::make_unique<ExpoWeightedSmallerDevSplitter>(V, alpha, target);
+            std::back_inserter(tree_splitters_ptr_vec), num_threads, [V, sampling_space, alpha, target] {
+                return std::make_unique<ExpoWeightedSmallerDevSplitter>(V,sampling_space, alpha, target);
             });
     } else if (splitting_method == SplittingMethodType::Constraint) {
         int const ndists = map_params.ndists;
-        std::generate_n(std::back_inserter(tree_splitters_ptr_vec), num_threads, [V, ndists] {
-            return std::make_unique<ConstraintSplitter>(V, ndists);
+        std::generate_n(std::back_inserter(tree_splitters_ptr_vec), num_threads, [V, sampling_space, ndists] {
+            return std::make_unique<ConstraintSplitter>(V,sampling_space, ndists);
         });
     } else if (splitting_method == SplittingMethodType::Experimental) {
         double epsilon = as<double>(control["splitting_epsilon"]);
         std::generate_n(std::back_inserter(tree_splitters_ptr_vec), num_threads,
-                        [V, epsilon, target] {
-                            return std::make_unique<ExperimentalSplitter>(V, epsilon, target);
+                        [V, sampling_space, epsilon, target] {
+                            return std::make_unique<ExperimentalSplitter>(V, sampling_space, epsilon, target);
                         });
     } else {
         throw Rcpp::exception("Invalid Splitting Method!");

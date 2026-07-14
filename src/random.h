@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <random>
 #include <vector>
+#include "redist_constants.h"
 
 using namespace arma;
 
@@ -49,6 +50,13 @@ void global_seed_rng(int seed, int num_jumps = 1);
  * Generate a random integer within a stratum with some probability p
  */
 int r_int_mixstrat(int max, int stratum, double p, vec cum_wgts);
+
+/*
+ * Get the index of the k-th smallest element of x using global state
+ * NOT THREAD SAFE
+ */
+// TESTED
+int global_rng_select_k(std::vector<double> x, int k);
 
 /*
  * Generate an integer vector of resampling indices with a low-variance resampler.

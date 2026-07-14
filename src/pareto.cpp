@@ -1,4 +1,6 @@
-#include "smc_base.h"
+#include <RcppArmadillo.h>
+#include <Rcpp.h>
+using namespace Rcpp;
 
 // [[Rcpp::export]]
 LogicalVector pareto_dominated(arma::mat x) {

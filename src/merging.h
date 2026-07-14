@@ -2,9 +2,6 @@
 #ifndef MERGING_H
 #define MERGING_H
 
-// [[Rcpp::depends(redistmetrics)]]
-
-#include "smc_base.h"
 
 #include <RcppThread.h>
 #include <cli/progress.h>
@@ -21,6 +18,7 @@
 #include "weight_caching.h"
 #include "weights.h"
 #include "wilson.h"
+#include "utils.h"
 
 
 // Simple struct for tracking granular time

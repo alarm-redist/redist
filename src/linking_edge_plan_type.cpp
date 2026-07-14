@@ -87,16 +87,16 @@ std::vector<std::pair<int, int>> get_intial_linking_edges(PlanMultigraph &plan_m
     return initial_edges;
 }
 
-VertexGraph LinkingEdgePlan::get_forest_adj() { return forest_graph; }
+Tree LinkingEdgePlan::get_forest_adj() { throw std::runtime_error("get_forest_adj not supported right now!\n"); }
 
 LinkingEdgePlan::LinkingEdgePlan(int const total_seats, int const total_pop,
                                  PlanVector &this_plan_region_ids,
                                  RegionSizes &this_plan_region_sizes,
                                  IntPlanAttribute &this_plan_region_pops,
-                                 IntPlanAttribute &this_plan_order_added)
+                                 IntPlanAttribute &this_plan_order_added,
+                                 PlanEdgeBits &this_plan_forest_edge_bits)
     : Plan(total_seats, total_pop, this_plan_region_ids, this_plan_region_sizes,
-           this_plan_region_pops, this_plan_order_added) {
-    forest_graph.resize(region_ids.size());
+           this_plan_region_pops, this_plan_order_added, this_plan_forest_edge_bits) {
     linking_edges.reserve(this_plan_region_sizes.size() - 1);
 };
 
@@ -104,13 +104,12 @@ LinkingEdgePlan::LinkingEdgePlan(
     int const ndists, int const num_regions, const arma::uvec &pop,
     PlanVector &this_plan_region_ids, RegionSizes &this_plan_region_sizes,
     IntPlanAttribute &this_plan_region_pops, IntPlanAttribute &this_plan_order_added,
+    PlanEdgeBits &this_plan_forest_edge_bits,
     TreeSplitter const &tree_splitter, USTSampler &ust_sampler, PlanMultigraph &plan_multigraph,
     Graph &region_graph, RNGState &rng_state, const Rcpp::List &initial_forest_adj_list,
     const std::vector<std::array<double, 3>> &input_initial_linking_edges)
     : Plan(num_regions, pop, this_plan_region_ids, this_plan_region_sizes,
-           this_plan_region_pops, this_plan_order_added) {
-    // resize the forest graph
-    forest_graph.resize(region_ids.size());
+           this_plan_region_pops, this_plan_order_added, this_plan_forest_edge_bits) {
 
     if (initial_forest_adj_list.size() > 1) {
         throw Rcpp::exception("Input Forest list not supported right now\n");
@@ -128,6 +127,16 @@ LinkingEdgePlan::LinkingEdgePlan(
             }
         }
     }
+
+    if constexpr (perf_config::object_integrity_checking){
+        check_forest_equality(
+            ust_sampler.ust,
+            forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
+            ust_sampler.map_params.graph_edge_index,
+            "IN Partial Linking Edge Plan Constructor, checking ust vs forest edges (through get_graph_tree)"
+        );
+    }
+
 
     auto initial_linking_edges =
         get_intial_linking_edges(plan_multigraph, region_ids, num_regions, region_graph);
@@ -159,9 +168,16 @@ double LinkingEdgePlan::get_regions_log_splitting_prob(ScoringFunction const &sc
     int min_possible_cut_size = cut_size_bounds.first;
     int max_possible_cut_size = cut_size_bounds.second;
 
+    if constexpr (perf_config::object_integrity_checking){
+        check_forest_integrity(
+            ust_sampler.map_params.graph_edge_index,
+            "IN get_regions_log_splitting_prob, checking forest_edges integrity"
+        );      
+    }
+
     // get the log probability
-    return tree_splitter.get_log_retroactive_splitting_prob_for_joined_tree(
-        ust_sampler.map_params, scoring_function, forest_graph, ust_sampler.stack,
+    return tree_splitter.get_log_retroactive_splitting_prob_for_joined_packed_tree(
+        ust_sampler.map_params, scoring_function, forest_edges, ust_sampler.stack,
         ust_sampler.visited, ust_sampler.pops_below_vertex, region1_root, region2_root, *this,
         min_possible_cut_size, max_possible_cut_size,
         ust_sampler.splitting_schedule
@@ -213,22 +229,13 @@ void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
         }
     }
 
-    // Get the root of the tree associated with region 1 and 2
-    int split_region1_tree_root, split_region2_tree_root;
-    int split_region1_size, split_region2_size;
-    int split_region1_pop, split_region2_pop;
-
-    cut_edge.get_split_regions_info(split_region1_tree_root, split_region1_size,
-                                    split_region1_pop, split_region2_tree_root,
-                                    split_region2_size, split_region2_pop);
-    // update the vertex labels and the tree
-    assign_region_id_and_forest_from_tree(ust_sampler.ust, region_ids, forest_graph,
-                                          split_region1_tree_root, split_region1_id,
-                                          ust_sampler.vertex_queue);
-
-    assign_region_id_and_forest_from_tree(ust_sampler.ust, region_ids, forest_graph,
-                                          split_region2_tree_root, split_region2_id,
-                                          ust_sampler.vertex_queue);
+    // NOTE This code is also called when updating forest plans
+    // it updates the plan ids and the forest but doesn't touch the linking edges 
+    update_plan_ids_and_forest_from_cut(tree_splitter, 
+        ust_sampler, cut_edge,
+        split_region1_id, split_region2_id, add_region
+    );
+            
 
     // TODO need to find the edge and update that stuff
     // Now update the linking edge stuff
@@ -516,20 +523,43 @@ LinkingEdgePlan::attempt_to_get_valid_mergesplit_pairs(
     return std::make_pair(true, valid_adj_region);
 };
 
-void LinkingEdgePlan::Rprint(bool verbose) const {
-    Plan::Rprint(verbose);
-    if (verbose) {
-        Rprintf("Current Linking Edges:\n");
-        for (auto const &a_edge : linking_edges) {
-            if (a_edge.valid_log_prob) {
-                Rprintf("\tEdge(%d, %d) - Region (%d, %d)- Prob %f \n", a_edge.vertex1,
-                        a_edge.vertex2, region_ids[a_edge.vertex1], region_ids[a_edge.vertex2],
-                        std::exp(a_edge.log_prob));
-            } else {
-                Rprintf("\tEdge(%d, %d) - Region (%d, %d)- No valid Prob\n", a_edge.vertex1,
-                        a_edge.vertex2, region_ids[a_edge.vertex1], region_ids[a_edge.vertex2]);
-            }
+std::string LinkingEdgePlan::linking_edges_to_string() const {
+    std::ostringstream oss;
+
+    oss << "Current Linking Edges:\n";
+
+    for (auto const &edge : linking_edges) {
+        int const v1 = static_cast<int>(edge.vertex1);
+        int const v2 = static_cast<int>(edge.vertex2);
+
+        oss << "\tEdge(" << v1 << ", " << v2 << ")";
+
+        if (v1 >= 0 && v1 < static_cast<int>(region_ids.size()) &&
+            v2 >= 0 && v2 < static_cast<int>(region_ids.size())) {
+            oss << " - Region ("
+                << static_cast<int>(region_ids[v1]) << ", "
+                << static_cast<int>(region_ids[v2]) << ")";
+        } else {
+            oss << " - Region (invalid endpoint)";
         }
-        Rprintf("\n");
+
+        if (std::isfinite(edge.log_prob)) {
+            oss << " - Prob " << edge.log_prob;
+        } else {
+            oss << " - No valid Prob";
+        }
+
+        oss << "\n";
     }
+
+    return oss.str();
+}
+
+std::string LinkingEdgePlan::debug_string(bool print_region_ids) const {
+    auto plan_str = Plan::debug_string(print_region_ids);
+    return plan_str + linking_edges_to_string();
+}
+
+void LinkingEdgePlan::Rprint(bool verbose) const {
+    Rcpp::Rcerr << debug_string(verbose);
 }

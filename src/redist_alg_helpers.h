@@ -2,9 +2,6 @@
 #ifndef SMC_ALG_HELPERS_H
 #define SMC_ALG_HELPERS_H
 
-// [[Rcpp::depends(redistmetrics)]]
-// [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::plugins("cpp11")]]
 
 #include <RcppThread.h>
 #include <limits>
@@ -16,6 +13,7 @@
 #include "lct_graph_plan_type.h"
 #include "linking_edge_plan_type.h"
 #include "redist_types.h"
+#include "utils.h"
 
 // [[Rcpp::export]]
 Rcpp::List maximum_input_sizes();
@@ -131,12 +129,7 @@ Rcpp::DataFrame get_plan_counts(Rcpp::IntegerMatrix const &input_plans_mat,
                                 int const num_regions, bool const use_canonical_ordering = true,
                                 int const num_threads = 0);
 
-/*
- * Creates a Rcpp Threadpool
- *
- *
- */
-RcppThread::ThreadPool get_thread_pool(int const num_threads);
+
 
 /*
  * Creates a reindexing vector for the plan with two regions merged
@@ -170,6 +163,7 @@ void reorder_all_plans(RcppThread::ThreadPool &pool,
 
 std::vector<std::unique_ptr<TreeSplitter>>
 get_tree_splitter_ptrs(MapParams const &map_params, SplittingMethodType const splitting_method,
+                       SamplingSpace const sampling_space,
                        Rcpp::List const &control, int const nsims, int const num_threads);
 
 // lightweight container for plans
@@ -191,10 +185,14 @@ class PlanEnsemble {
     int const V;
     int const ndists;
     int const total_seats;
+    SamplingSpace const sampling_space;
     std::vector<RegionID> flattened_all_plans;
     std::vector<RegionID> flattened_all_region_sizes;
     std::vector<int> flattened_all_region_pops;
     std::vector<int> flattened_all_region_order_added;
+    // Empty unless sampling space is ForestSpace or LinkingEdgeSpace.
+    int const num_forest_edge_bit_words_per_plan;
+    std::vector<EdgeBitWord> flattened_all_forest_edge_bits;
     std::vector<std::unique_ptr<Plan>> plan_ptr_vec;
 
     // exports current plans to 1-indexed Rcpp matrix
@@ -205,6 +203,13 @@ class PlanEnsemble {
     Rcpp::IntegerMatrix get_region_pops_matrix(RcppThread::ThreadPool &pool);
     // counts the number of unique plans in the ensemble
     int count_unique_plans(RcppThread::ThreadPool &pool) const;
+
+    // debugging methods
+    // checks all plans are valid. 
+    void check_all_plans_valid(
+        MapParams const &map_params,
+        std::string_view where
+    );
 };
 
 PlanEnsemble get_plan_ensemble(
@@ -219,8 +224,7 @@ std::unique_ptr<PlanEnsemble> get_plan_ensemble_ptr(
     Rcpp::IntegerMatrix const &plans_mat, Rcpp::IntegerMatrix const &region_sizes_mat,
     std::vector<RNGState> &rng_states, RcppThread::ThreadPool &pool, int const verbosity);
 
-// swaps the contents of two plan ensembles
-void swap_plan_ensembles(PlanEnsemble &plan_ensemble1, PlanEnsemble &plan_ensemble2);
+
 
 // Wrapper object for all non-essential SMC diagnostics
 class SMCDiagnostics {
@@ -278,7 +282,7 @@ class SMCDiagnostics {
 
     // level 3
     std::vector<Rcpp::IntegerMatrix> all_steps_plan_region_ids_list;
-    std::vector<std::vector<VertexGraph>> all_steps_forests_adj_list;
+    std::vector<std::vector<Tree>> all_steps_forests_adj_list;
     std::vector<std::vector<std::vector<std::array<double, 3>>>> all_steps_linking_edge_list;
     std::vector<std::vector<int>> all_steps_valid_region_sizes_to_split;
     std::vector<std::vector<int>> all_steps_valid_split_region_sizes;

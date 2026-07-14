@@ -12,6 +12,7 @@ using namespace arma;
 int sample_sub_ust(MapParams const &map_params, Tree &tree, int &root, double const lower,
                    double const upper, std::vector<bool> &visited,
                    const std::vector<bool> &ignore, Tree &cty_tree, TreePopStack &county_stack,
+                   DummyTreeQueue &dummy_county_tree_queue,
                    arma::uvec &county_pop, std::vector<std::vector<int>> &county_members,
                    std::vector<bool> &c_visited, std::vector<int> &cty_pop_below,
                    std::vector<std::array<int, 3>> &county_path, std::vector<int> &path,

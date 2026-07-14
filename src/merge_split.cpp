@@ -142,7 +142,8 @@ Rcpp::List ms_plans(
 
         // splitter
         std::vector<std::unique_ptr<TreeSplitter>> tree_splitter_ptr_vec =
-            get_tree_splitter_ptrs(map_params, splitting_method, control, nsims, 1);
+            get_tree_splitter_ptrs(map_params, splitting_method, sampling_space,
+                control, nsims, 1);
         if constexpr (DEBUG_PURE_MS_VERBOSE)
             Rprintf("Checkpoint 4!\n");
         // sanity check make sure the plan is ok
@@ -215,7 +216,7 @@ Rcpp::List ms_plans(
             Rprintf("Checkpoint 6!\n");
         // Loading Info
         if (verbosity >= 1) {
-            Rcout.imbue(std::locale::classic());
+            Rcout.imbue(std::locale(""));
             Rcout << std::fixed << std::setprecision(0);
             Rcout << "MERGE SPLIT MONTE CARLO" << std::endl;
             Rcout << "Using " << sampling_space_to_str(sampling_space);
@@ -254,7 +255,7 @@ Rcpp::List ms_plans(
             // Index 0 or less is warmup
             bool in_warmup = i <= 0;
             if constexpr (DEBUG_PURE_MS_VERBOSE) {
-                Rprintf("Iter %d and idx %d \n", i, current_plan_mat_col);
+                Rprintf("Iter %d and idx %d: Starting\n", i, current_plan_mat_col);
             }
 
             // attempt to mergesplit
@@ -266,6 +267,10 @@ Rcpp::List ms_plans(
                 save_edge_selection_prob, current_plan_adj_region_pairs,
                 current_plan_pair_unnoramalized_wgts, rho, true, do_mh, false, nullptr,
                 granular_times);
+
+            if constexpr (DEBUG_PURE_MS_VERBOSE) {
+                Rprintf("Iter %d and idx %d: Attempted Mergesplit \n", i, current_plan_mat_col);
+            }
             // count size
             ++tree_sizes[std::get<3>(mergesplit_result) - 1];
 
