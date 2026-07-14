@@ -6,13 +6,10 @@
 
 #include "mew_helpers.h"
 #include "wilson.h"  // For sample_sub_ust, init_tree, init_multigraph
-#include <queue>
 #include <algorithm>
 #include <cmath>
 
-/*
- * Tree edge operations
- */
+namespace {
 
 void add_tree_edge(Tree &tree, int u, int v) {
     // Add v to u's adjacency list
@@ -25,121 +22,138 @@ void add_tree_edge(Tree &tree, int u, int v) {
     }
 }
 
-void remove_tree_edge(Tree &tree, int u, int v) {
-    // Remove v from u's adjacency list
-    auto it_u = std::find(tree[u].begin(), tree[u].end(), v);
-    if (it_u != tree[u].end()) {
-        tree[u].erase(it_u);
-    }
-    // Remove u from v's adjacency list
-    auto it_v = std::find(tree[v].begin(), tree[v].end(), u);
-    if (it_v != tree[v].end()) {
-        tree[v].erase(it_v);
-    }
+bool incident(const Edge &edge, int vertex) {
+    return edge.first == vertex || edge.second == vertex;
 }
 
-bool has_tree_edge(const Tree &tree, int u, int v) {
-    // Tree is directed with edges pointing away from root
-    // Check both directions to see if edge exists
-    return std::find(tree[u].begin(), tree[u].end(), v) != tree[u].end() ||
-           std::find(tree[v].begin(), tree[v].end(), u) != tree[v].end();
-}
-
-std::vector<Edge> tree_to_edges(const Tree &tree) {
-    std::vector<Edge> edges;
-    for (size_t u = 0; u < tree.size(); u++) {
-        for (int v : tree[u]) {
-            // Only add each edge once (u < v)
-            if ((int)u < v) {
-                edges.push_back(make_edge(u, v));
-            }
-        }
+int old_degree(const MEWTree &tree_new, int vertex,
+               const Edge &edge_plus, const Edge &edge_minus) {
+    int degree = tree_new.degree(vertex);
+    if (edge_plus != edge_minus) {
+        degree -= incident(edge_plus, vertex);
+        degree += incident(edge_minus, vertex);
     }
-    return edges;
+    return degree;
 }
 
-/*
- * Cycle detection using BFS
- */
-
-std::vector<Edge> find_cycle(const Tree &tree, int u, int v) {
-    // Find path from u to v in tree using BFS, then add edge (u,v) to complete cycle
-    // Tree is directed with edges pointing away from root, so we need to traverse bidirectionally
-    int V = tree.size();
-    std::vector<int> parent(V, -1);
-    std::vector<bool> visited(V, false);
-    std::queue<int> q;
-
-    // Start BFS from u
-    q.push(u);
-    visited[u] = true;
-    parent[u] = u;  // Mark root
-
-    // BFS to find v (traverse tree bidirectionally)
-    while (!q.empty()) {
-        int curr = q.front();
-        q.pop();
-
-        if (curr == v) {
-            // Found target - reconstruct path
-            std::vector<int> path;
-            int node = v;
-            while (node != u) {
-                path.push_back(node);
-                node = parent[node];
-            }
-            path.push_back(u);
-
-            // Convert path to edges
-            std::vector<Edge> cycle_edges;
-            for (size_t i = 0; i < path.size() - 1; i++) {
-                cycle_edges.push_back(make_edge(path[i], path[i + 1]));
-            }
-            // Add closing edge (u, v)
-            cycle_edges.push_back(make_edge(u, v));
-
-            return cycle_edges;
-        }
-
-        // Explore neighbors (tree is stored bidirectionally)
-        for (int neighbor : tree[curr]) {
-            if (!visited[neighbor]) {
-                visited[neighbor] = true;
-                parent[neighbor] = curr;
-                q.push(neighbor);
-            }
-        }
-    }
-
-    // Should not reach here if tree is connected and edge is valid
-    std::ostringstream msg;
-    msg << "Could not find path from vertex " << u << " to vertex " << v << " in tree. ";
-    msg << "Tree has " << V << " vertices. ";
-    msg << "This suggests the tree is disconnected or the edge is invalid.";
-    Rcpp::stop(msg.str());
-    return std::vector<Edge>();
-}
-
-/*
- * Connected components via DFS
- */
-
-void dfs_component(const Tree &tree, int u, std::vector<bool> &visited,
-                  std::vector<int> &component, const MarkedEdgeSet &marked_edges) {
+void dfs_component(const MEWTree &tree, int u, std::vector<bool> &visited,
+                   std::vector<int> &component,
+                   const MarkedEdgeSet &marked_edges) {
     visited[u] = true;
     component.push_back(u);
 
-    // Tree is stored bidirectionally, so tree[u] contains all neighbors
-    for (int v : tree[u]) {
+    for (int v : tree.neighbors(u)) {
         Edge e = make_edge(u, v);
-        // Only traverse if edge is not marked and neighbor not visited
         if (marked_edges.find(e) == marked_edges.end() && !visited[v]) {
             dfs_component(tree, v, visited, component, marked_edges);
         }
     }
 }
 
-std::vector<std::vector<int>> tree_components_list(const Tree &tree,
+} // namespace
+
+MEWTree::MEWTree(Tree tree)
+    : lct_(tree.size()), adjacency_(std::move(tree)) {
+    for (int u = 0; u < size(); u++) {
+        for (int v : adjacency_[u]) {
+            if (u < v) {
+                edges_.insert(make_edge(u, v));
+                lct_.evert(u);
+                lct_.link(u, v);
+            }
+        }
+    }
+}
+
+int MEWTree::size() const {
+    return static_cast<int>(adjacency_.size());
+}
+
+const std::vector<int>& MEWTree::neighbors(int vertex) const {
+    return adjacency_[vertex];
+}
+
+int MEWTree::degree(int vertex) const {
+    return static_cast<int>(adjacency_[vertex].size());
+}
+
+bool MEWTree::has_edge(int u, int v) const {
+    return edges_.find(make_edge(u, v)) != edges_.end();
+}
+
+std::vector<Edge> MEWTree::find_cycle(int u, int v) {
+    lct_.evert(u);
+    std::vector<int> path = lct_.find_path(v);
+    if (path.empty() || path.front() != u || path.back() != v) {
+        Rcpp::stop("Could not find path between vertices in MEW tree");
+    }
+
+    std::vector<Edge> cycle_edges;
+    cycle_edges.reserve(path.size());
+    for (std::size_t i = path.size() - 1; i > 0; i--) {
+        cycle_edges.push_back(make_edge(path[i], path[i - 1]));
+    }
+    cycle_edges.push_back(make_edge(u, v));
+    return cycle_edges;
+}
+
+std::size_t MEWTree::remove_neighbor(std::vector<int>& neighbors, int vertex) {
+    auto it = std::find(neighbors.begin(), neighbors.end(), vertex);
+    if (it == neighbors.end()) {
+        Rcpp::stop("MEW tree edge not found");
+    }
+    std::size_t position = std::distance(neighbors.begin(), it);
+    neighbors.erase(it);
+    return position;
+}
+
+MEWTreeUpdate MEWTree::replace_edge(const Edge& edge_plus,
+                                    const Edge& edge_minus) {
+    MEWTreeUpdate update{edge_plus, edge_minus, 0, 0,
+                         edge_plus != edge_minus};
+    if (!update.changed) {
+        return update;
+    }
+
+    adjacency_[edge_plus.first].push_back(edge_plus.second);
+    adjacency_[edge_plus.second].push_back(edge_plus.first);
+    update.minus_pos_first = remove_neighbor(
+        adjacency_[edge_minus.first], edge_minus.second);
+    update.minus_pos_second = remove_neighbor(
+        adjacency_[edge_minus.second], edge_minus.first);
+    edges_.erase(edge_minus);
+    edges_.insert(edge_plus);
+
+    lct_.evert(edge_minus.first);
+    lct_.cut(edge_minus.second);
+    lct_.evert(edge_plus.first);
+    lct_.link(edge_plus.first, edge_plus.second);
+    return update;
+}
+
+void MEWTree::rollback(const MEWTreeUpdate& update) {
+    if (!update.changed) {
+        return;
+    }
+
+    remove_neighbor(adjacency_[update.edge_plus.first], update.edge_plus.second);
+    remove_neighbor(adjacency_[update.edge_plus.second], update.edge_plus.first);
+    adjacency_[update.edge_minus.first].insert(
+        adjacency_[update.edge_minus.first].begin() + update.minus_pos_first,
+        update.edge_minus.second);
+    adjacency_[update.edge_minus.second].insert(
+        adjacency_[update.edge_minus.second].begin() + update.minus_pos_second,
+        update.edge_minus.first);
+    edges_.erase(update.edge_plus);
+    edges_.insert(update.edge_minus);
+
+    lct_.evert(update.edge_plus.first);
+    lct_.cut(update.edge_plus.second);
+    lct_.evert(update.edge_minus.first);
+    lct_.link(update.edge_minus.first, update.edge_minus.second);
+}
+
+std::vector<std::vector<int>> tree_components_list(const MEWTree &tree,
                                                     const MarkedEdgeSet &marked_edges) {
     int V = tree.size();
     std::vector<bool> visited(V, false);
@@ -156,7 +170,7 @@ std::vector<std::vector<int>> tree_components_list(const Tree &tree,
     return components;
 }
 
-uvec tree_to_partition(const Tree &tree, const MarkedEdgeSet &marked_edges,
+uvec tree_to_partition(const MEWTree &tree, const MarkedEdgeSet &marked_edges,
                        int V, int n_distr) {
     auto components = tree_components_list(tree, marked_edges);
 
@@ -184,8 +198,8 @@ double transition_probability(const std::vector<Edge> &cycle_edges,
                              const Edge &marked_new,
                              const MarkedEdgeSet &marked_edges_old,
                              const MarkedEdgeSet &marked_edges_new,
-                             const Tree &tree_old,
-                             const Tree &tree_new) {
+                             const Edge &edge_minus,
+                             const MEWTree &tree_new) {
     // Check if new marked edge equals edge_plus (invalid proposal)
     if (marked_new == edge_plus) {
         return 0.0;
@@ -209,10 +223,10 @@ double transition_probability(const std::vector<Edge> &cycle_edges,
 
     if ((u == w && v == x) || (u == x && v == w)) {
         // Both endpoints same (identity move on marked edges)
-        int d_u = tree_old[u].size();
-        int d_u_p = tree_new[u].size();
-        int d_v = tree_old[v].size();
-        int d_v_p = tree_new[v].size();
+        int d_u = old_degree(tree_new, u, edge_plus, edge_minus);
+        int d_u_p = tree_new.degree(u);
+        int d_v = old_degree(tree_new, v, edge_plus, edge_minus);
+        int d_v_p = tree_new.degree(v);
 
         pm = ((double)d_u_p / d_u) *
              ((double)(d_u + d_v) / (d_u_p + d_v_p)) *
@@ -227,8 +241,8 @@ double transition_probability(const std::vector<Edge> &cycle_edges,
         }
 
         if (shared >= 0) {
-            int d_u = tree_old[shared].size();
-            int d_u_p = tree_new[shared].size();
+            int d_u = old_degree(tree_new, shared, edge_plus, edge_minus);
+            int d_u_p = tree_new.degree(shared);
             pm = (double)d_u_p / d_u;
         }
     }
@@ -294,7 +308,7 @@ double log_st_quotient_graph(const Graph &g, const arma::uvec &plan, int n_distr
  * Proposal mechanisms
  */
 
-CycleProposal cycle_basis_step(const Graph &g, const Tree &tree,
+CycleProposal cycle_basis_step(const Graph &g, MEWTree &tree,
                                const MarkedEdgeSet &marked_edges) {
     // Find edges in g but not in tree
     std::vector<Edge> non_tree_edges;
@@ -303,7 +317,7 @@ CycleProposal cycle_basis_step(const Graph &g, const Tree &tree,
         for (int v : g[u]) {
             if ((int)u < v) {  // Only consider each edge once
                 Edge e = make_edge(u, v);
-                if (!has_tree_edge(tree, u, v)) {
+                if (!tree.has_edge(u, v)) {
                     non_tree_edges.push_back(e);
                 }
             }
@@ -319,7 +333,8 @@ CycleProposal cycle_basis_step(const Graph &g, const Tree &tree,
     Edge edge_plus = non_tree_edges[idx];
 
     // Find cycle formed by adding this edge to tree
-    std::vector<Edge> cycle_edges = find_cycle(tree, edge_plus.first, edge_plus.second);
+    std::vector<Edge> cycle_edges = tree.find_cycle(
+        edge_plus.first, edge_plus.second);
 
     // Find edges in cycle that are not marked (including edge_plus).
     // Choosing edge_minus == edge_plus is a valid "identity" move on the tree.
@@ -337,7 +352,8 @@ CycleProposal cycle_basis_step(const Graph &g, const Tree &tree,
         proposal.cycle_edges = cycle_edges;
         proposal.edge_plus = edge_plus;
         proposal.edge_minus = make_edge(0, 0);  // Invalid edge
-        proposal.tree_new = tree;  // No change
+        proposal.update = MEWTreeUpdate{
+            edge_plus, proposal.edge_minus, 0, 0, false};
         proposal.valid = false;
         return proposal;
     }
@@ -346,22 +362,17 @@ CycleProposal cycle_basis_step(const Graph &g, const Tree &tree,
     int cut_idx = r_int(possible_cuts.size());
     Edge edge_minus = possible_cuts[cut_idx];
 
-    // Create new tree
-    Tree tree_new = tree;
-    add_tree_edge(tree_new, edge_plus.first, edge_plus.second);
-    remove_tree_edge(tree_new, edge_minus.first, edge_minus.second);
-
     CycleProposal proposal;
     proposal.cycle_edges = cycle_edges;
     proposal.edge_plus = edge_plus;
     proposal.edge_minus = edge_minus;
-    proposal.tree_new = tree_new;
+    proposal.update = tree.replace_edge(edge_plus, edge_minus);
     proposal.valid = true;
 
     return proposal;
 }
 
-MarkedEdgeProposal marked_edge_step(const Tree &tree,
+MarkedEdgeProposal marked_edge_step(const MEWTree &tree,
                                    const MarkedEdgeSet &marked_edges) {
     if (marked_edges.empty()) {
         Rcpp::stop("No marked edges to update");
@@ -379,7 +390,7 @@ MarkedEdgeProposal marked_edge_step(const Tree &tree,
 
     // Sample one neighbor uniformly at random.
     // If new_edge == old_edge, it's a valid identity move.
-    const std::vector<int>& neighbors = tree[chosen_vertex];
+    const std::vector<int>& neighbors = tree.neighbors(chosen_vertex);
     if (neighbors.empty()) {
         Rcpp::stop("Chosen vertex has no neighbors in tree");
     }
@@ -400,7 +411,7 @@ MarkedEdgeProposal marked_edge_step(const Tree &tree,
     return proposal;
 }
 
-MEWProposal mew_proposal(const Graph &g, const Tree &tree,
+MEWProposal mew_proposal(const Graph &g, MEWTree &tree,
                         const MarkedEdgeSet &marked_edges,
                         const uvec &pop, int n_distr,
                         double target, double lower, double upper) {
@@ -420,20 +431,20 @@ MEWProposal mew_proposal(const Graph &g, const Tree &tree,
         return proposal;
     }
 
-    MarkedEdgeProposal marked_prop = marked_edge_step(cycle_prop.tree_new, marked_edges);
+    MarkedEdgeProposal marked_prop = marked_edge_step(tree, marked_edges);
     proposal.marked = marked_prop;
 
     if (marked_prop.marked_new.size() != marked_edges.size()) {
         return proposal;
     }
 
-    auto components = tree_components_list(cycle_prop.tree_new, marked_prop.marked_new);
+    auto components = tree_components_list(tree, marked_prop.marked_new);
     if ((int)components.size() != n_distr) {
         return proposal;
     }
 
     uvec partition = tree_to_partition(
-        cycle_prop.tree_new, marked_prop.marked_new, V, n_distr);
+        tree, marked_prop.marked_new, V, n_distr);
     proposal.partition = partition;
 
     std::vector<double> dist_pop(n_distr, 0.0);

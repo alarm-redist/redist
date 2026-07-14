@@ -38,7 +38,7 @@ Rcpp::List mew_plans(int nsims, List adj, const arma::uvec &init,
     }
 
     auto init_result = partition_to_tree_marked_edges(g, init, n_distr);
-    Tree tree = init_result.first;
+    MEWTree tree(std::move(init_result.first));
     MarkedEdgeSet marked_edges = init_result.second;
 
     // Extract initial partition from tree + marked edges
@@ -100,9 +100,7 @@ Rcpp::List mew_plans(int nsims, List adj, const arma::uvec &init,
     // Main MCMC loop
     try {
         for (int iter = 0; iter < nsims; iter++) {
-            // Save current state for potential rejection
-            Tree tree_old = tree;
-            MarkedEdgeSet marked_old = marked_edges;
+            bool accept = false;
 
             // Make proposal
             MEWProposal proposal = mew_proposal(g, tree, marked_edges, pop, n_distr,
@@ -116,10 +114,10 @@ Rcpp::List mew_plans(int nsims, List adj, const arma::uvec &init,
                     proposal.cycle.edge_plus,
                     proposal.marked.old_edge,
                     proposal.marked.new_edge,
-                    marked_old,
+                    marked_edges,
                     proposal.marked.marked_new,
-                    tree_old,
-                    proposal.cycle.tree_new
+                    proposal.cycle.edge_minus,
+                    tree
                 );
                 // If trans_prob == 0, reverse transition is impossible (m' = e+); reject
                 if (trans_prob > 0.0) {
@@ -197,10 +195,9 @@ Rcpp::List mew_plans(int nsims, List adj, const arma::uvec &init,
                 double log_alpha = log_q_ratio + (1.0 - rho) * log_st + log_quotient + log_energy_ratio;
 
                 // Accept/reject
-                bool accept = (std::log(r_unif()) < log_alpha);
+                accept = (std::log(r_unif()) < log_alpha);
 
                 if (accept) {
-                    tree = proposal.cycle.tree_new;
                     marked_edges = proposal.marked.marked_new;
                     partition_current = partition_new;
                     n_accept++;
@@ -211,7 +208,10 @@ Rcpp::List mew_plans(int nsims, List adj, const arma::uvec &init,
                     }
                 }
                 } // end if (trans_prob > 0)
-                // If reject, tree and marked_edges stay as tree_old and marked_old
+            }
+
+            if (!accept) {
+                tree.rollback(proposal.cycle.update);
             }
 
             // Store plan
