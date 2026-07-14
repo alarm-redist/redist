@@ -5,12 +5,22 @@ using LevelEdge = std::array<int, 3>;
 using LevelPath = std::vector<LevelEdge>;
 using ActiveMultigraph = std::vector<std::vector<LevelEdge>>;
 
+static thread_local std::vector<int> vertex_path_pos;
+static thread_local std::vector<int> group_path_pos;
+
+static void ensure_path_positions(std::vector<int> &positions, int size) {
+    if ((int) positions.size() < size) {
+        positions.resize(size, -1);
+    }
+}
+
 /*
  * Random walk along `g` from `root` until something in `visited` is hit
  */
 // TESTED
 int walk_until(const Graph &g, int root,
                std::vector<int> &path, int MAX,
+               std::vector<int> &path_pos,
                const std::vector<bool> &visited,
                const std::vector<bool> &ignore,
                const uvec &counties);
@@ -26,15 +36,18 @@ void loop_erase(std::vector<int> &path, int proposal);
 // TESTED
 void walk_until_cty(Multigraph &mg, int root,
                     std::vector<std::vector<int>> &path,
+                    std::vector<int> &path_pos,
                     const std::vector<bool> &visited,
                     const std::vector<bool> &ignore);
 
 void walk_until_level(Multigraph &mg, int root,
                       std::vector<std::vector<int>> &path,
+                      std::vector<int> &path_pos,
                       const std::vector<bool> &visited);
 
 void walk_until_active_level(ActiveMultigraph &mg, int root,
                              LevelPath &path,
+                             std::vector<int> &path_pos,
                              const std::vector<bool> &visited);
 
 ActiveMultigraph active_level_graph(const Graph &g, const std::vector<int> &level,
@@ -43,7 +56,8 @@ ActiveMultigraph active_level_graph(const Graph &g, const std::vector<int> &leve
                                     int n_group,
                                     const std::vector<int> &parent);
 
-void loop_erase_level(LevelPath &path, int proposal, int root);
+void loop_erase_level(LevelPath &path, int proposal, int root,
+                      std::vector<int> &path_pos);
 
 int rvtx_subset(const std::vector<int> &vertices,
                 const std::vector<bool> &visited,
@@ -58,6 +72,7 @@ void split_active_components(const Graph &g,
 
 int walk_until_label(const Graph &g, int root,
                      std::vector<int> &path, int MAX,
+                     std::vector<int> &path_pos,
                      const std::vector<bool> &visited,
                      const std::vector<bool> &ignore,
                      const std::vector<int> &labels);
@@ -76,7 +91,8 @@ void prune_finest_groups(Tree &tree,
  * Erase loops in `path` that would be created by adding `proposal` to path
  */
 // TESTED
-void loop_erase_cty(std::vector<std::vector<int>> &path, int proposal, int root);
+void loop_erase_cty(std::vector<std::vector<int>> &path, int proposal, int root,
+                    std::vector<int> &path_pos);
 
 
 // [[Rcpp::export]]
@@ -142,10 +158,11 @@ int sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
     // Connect counties
     Tree cty_tree = init_tree(n_county);
     std::vector<std::vector<int>> path;
+    ensure_path_positions(group_path_pos, n_county);
     while (c_remaining > 0) {
         int add = rvtx(c_visited, n_county, c_remaining, lower_c);
         // random walk from `add` until we hit the path
-        walk_until_cty(mg, add, path, c_visited, ignore);
+        walk_until_cty(mg, add, path, group_path_pos, c_visited, ignore);
         // update visited list and constructed tree
         int added = path.size();
         if (added == 0) { // bail
@@ -213,11 +230,13 @@ int sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
     // Generate tree within each county
     if (remaining > 0) {
         std::vector<int> path(remaining + 2);
+        ensure_path_positions(vertex_path_pos, V);
         int max_try = std::max(50, 50 * remaining * ((int) std::log(remaining)));
         while (remaining > 0) {
             int add = rvtx(visited, V, remaining, lower_i);
             // random walk from `add` until we hit the path
-            int added = walk_until(g, add, path, max_try, visited, ignore, counties);
+            int added = walk_until(g, add, path, max_try, vertex_path_pos,
+                                   visited, ignore, counties);
             // update visited list and constructed tree
             if (added == 0) { // bail
                 return 1;
@@ -286,6 +305,7 @@ int sample_sub_ust_hier(const Graph &g, Tree &tree, int V, int &root,
         ActiveMultigraph active_mg = active_level_graph(g, active_levels[lev], ignore,
                                                         active_vertices, n_group,
                                                         group_parent);
+        ensure_path_positions(group_path_pos, n_group);
 
         if (lev == n_levels - 1) {
             std::vector<bool> group_visited(n_group, true);
@@ -299,7 +319,8 @@ int sample_sub_ust_hier(const Graph &g, Tree &tree, int V, int &root,
             while (group_remaining > 0) {
                 int add = rvtx(group_visited, n_group, group_remaining, lower_g);
 
-                walk_until_active_level(active_mg, add, path, group_visited);
+                walk_until_active_level(active_mg, add, path, group_path_pos,
+                                        group_visited);
                 int added = path.size();
                 if (added == 0) return 1;
 
@@ -341,7 +362,8 @@ int sample_sub_ust_hier(const Graph &g, Tree &tree, int V, int &root,
                 while (group_remaining > 0) {
                     int add = rvtx(group_visited, n_group, group_remaining, lower_g);
 
-                    walk_until_active_level(active_mg, add, path, group_visited);
+                    walk_until_active_level(active_mg, add, path, group_path_pos,
+                                            group_visited);
                     int added = path.size();
                     if (added == 0) return 1;
 
@@ -363,11 +385,13 @@ int sample_sub_ust_hier(const Graph &g, Tree &tree, int V, int &root,
 
     if (remaining > 0) {
         std::vector<int> walk_path(remaining + 2);
+        ensure_path_positions(vertex_path_pos, V);
         int max_try = std::max(50, 50 * remaining * ((int) std::log(remaining)));
         while (remaining > 0) {
             int add = rvtx_subset(active_vertices, visited, remaining, lower_i);
-            int added = walk_until_label(g, add, walk_path, max_try, visited,
-                                         ignore, active_levels[0]);
+            int added = walk_until_label(g, add, walk_path, max_try,
+                                         vertex_path_pos, visited, ignore,
+                                         active_levels[0]);
             if (added == 0) return 1;
             remaining -= added - 1;
             for (int i = 0; i < added - 1; i++) {
@@ -388,6 +412,7 @@ int sample_sub_ust_hier(const Graph &g, Tree &tree, int V, int &root,
 // TESTED
 int walk_until(const Graph &g, int root,
                std::vector<int> &path, int MAX,
+               std::vector<int> &path_pos,
                const std::vector<bool> &visited,
                const std::vector<bool> &ignore,
                const uvec &counties) {
@@ -396,19 +421,19 @@ int walk_until(const Graph &g, int root,
     int curr = root;
     int county = counties[root];
     int added = 1; // cursor
+    path_pos[root] = 0;
     int i;
     for (i = 0; i < MAX; i++) {
         int proposal = rnbor(g, curr);
         if (ignore[proposal] || counties[proposal] != county) {
             continue;
         } else if (!visited[proposal]) {
-            for (int j = added - 1; j >= 0; j--) {
-                if (path[j] == proposal) { // if yes, restart from there
-                    added = j;
-                    break;
-                }
+            int pos = path_pos[proposal];
+            if (pos >= 0 && pos < added && path[pos] == proposal) {
+                added = pos;
             }
-            path[added++] = proposal;
+            path[added] = proposal;
+            path_pos[proposal] = added++;
         } else { // reached something in `visited`
             path[added++] = proposal;
             break;
@@ -430,6 +455,7 @@ int walk_until(const Graph &g, int root,
 // TESTED
 void walk_until_cty(Multigraph &mg, int root,
                     std::vector<std::vector<int>> &path,
+                    std::vector<int> &path_pos,
                     const std::vector<bool> &visited,
                     const std::vector<bool> &ignore) {
     path.clear();
@@ -446,7 +472,7 @@ void walk_until_cty(Multigraph &mg, int root,
             continue;
         } else if (!visited.at(proposal)) {
             path.push_back(mg[curr][prop_idx]);
-            loop_erase_cty(path, proposal, root);
+            loop_erase_cty(path, proposal, root, path_pos);
         } else {
             path.push_back(mg[curr][prop_idx]);
             break;
@@ -460,6 +486,7 @@ void walk_until_cty(Multigraph &mg, int root,
 
 void walk_until_level(Multigraph &mg, int root,
                       std::vector<std::vector<int>> &path,
+                      std::vector<int> &path_pos,
                       const std::vector<bool> &visited) {
     path.clear();
 
@@ -475,7 +502,7 @@ void walk_until_level(Multigraph &mg, int root,
         int proposal = mg[curr][prop_idx][0];
         if (!visited.at(proposal)) {
             path.push_back(mg[curr][prop_idx]);
-            loop_erase_cty(path, proposal, root);
+            loop_erase_cty(path, proposal, root, path_pos);
         } else {
             path.push_back(mg[curr][prop_idx]);
             break;
@@ -489,6 +516,7 @@ void walk_until_level(Multigraph &mg, int root,
 
 void walk_until_active_level(ActiveMultigraph &mg, int root,
                              LevelPath &path,
+                             std::vector<int> &path_pos,
                              const std::vector<bool> &visited) {
     path.clear();
 
@@ -504,7 +532,7 @@ void walk_until_active_level(ActiveMultigraph &mg, int root,
         int proposal = mg[curr][prop_idx][0];
         if (!visited.at(proposal)) {
             path.push_back(mg[curr][prop_idx]);
-            loop_erase_level(path, proposal, root);
+            loop_erase_level(path, proposal, root, path_pos);
         } else {
             path.push_back(mg[curr][prop_idx]);
             break;
@@ -536,20 +564,19 @@ ActiveMultigraph active_level_graph(const Graph &g, const std::vector<int> &leve
     return mg;
 }
 
-void loop_erase_level(LevelPath &path, int proposal, int root) {
+void loop_erase_level(LevelPath &path, int proposal, int root,
+                      std::vector<int> &path_pos) {
     int length = path.size();
     if (proposal == root) {
-        path.erase(path.begin(), path.begin() + length);
+        path.clear();
         return;
     }
 
-    int idx;
-    for (idx = 0; idx < length - 1; idx++) {
-        if (path[idx][0] == proposal) break;
-    }
-
-    if (idx != length - 1) {
-        path.erase(path.begin() + idx + 1, path.begin() + length);
+    int idx = path_pos[proposal];
+    if (idx >= 0 && idx < length - 1 && path[idx][0] == proposal) {
+        path.resize(idx + 1);
+    } else {
+        path_pos[proposal] = length - 1;
     }
 }
 
@@ -627,6 +654,7 @@ void split_active_components(const Graph &g,
 
 int walk_until_label(const Graph &g, int root,
                      std::vector<int> &path, int MAX,
+                     std::vector<int> &path_pos,
                      const std::vector<bool> &visited,
                      const std::vector<bool> &ignore,
                      const std::vector<int> &labels) {
@@ -634,19 +662,19 @@ int walk_until_label(const Graph &g, int root,
     int curr = root;
     int label = labels[root];
     int added = 1;
+    path_pos[root] = 0;
     int i;
     for (i = 0; i < MAX; i++) {
         int proposal = rnbor(g, curr);
         if (ignore[proposal] || labels[proposal] != label) {
             continue;
         } else if (!visited[proposal]) {
-            for (int j = added - 1; j >= 0; j--) {
-                if (path[j] == proposal) {
-                    added = j;
-                    break;
-                }
+            int pos = path_pos[proposal];
+            if (pos >= 0 && pos < added && path[pos] == proposal) {
+                added = pos;
             }
-            path[added++] = proposal;
+            path[added] = proposal;
+            path_pos[proposal] = added++;
         } else {
             path[added++] = proposal;
             break;
@@ -745,19 +773,18 @@ void prune_finest_groups(Tree &tree,
  * Erase loops in `path` that would be created by adding `proposal` to path
  */
 // TESTED
-void loop_erase_cty(std::vector<std::vector<int>> &path, int proposal, int root) {
+void loop_erase_cty(std::vector<std::vector<int>> &path, int proposal, int root,
+                    std::vector<int> &path_pos) {
     int length = path.size();
     if (proposal == root) {
-        path.erase(path.begin(), path.begin() + length);
+        path.clear();
         return;
     }
 
-    int idx;
-    for (idx = 0; idx < length - 1; idx++) {
-        if (path[idx][0] == proposal) break;
-    }
-
-    if (idx != length - 1) { // a loop
-        path.erase(path.begin() + idx + 1, path.begin() + length);
+    int idx = path_pos[proposal];
+    if (idx >= 0 && idx < length - 1 && path[idx][0] == proposal) {
+        path.resize(idx + 1);
+    } else {
+        path_pos[proposal] = length - 1;
     }
 }

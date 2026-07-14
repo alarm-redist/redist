@@ -289,8 +289,10 @@ static int walk_until_nc(const std::vector<int> &flat_adj,
                          const std::vector<int> &flat_off,
                          int root,
                          std::vector<int> &path, int MAX,
-                         std::vector<int8_t> &status) {
+                         std::vector<int8_t> &status,
+                         std::vector<int> &path_pos) {
     path[0] = root;
+    path_pos[root] = 0;
     int curr = root;
     int added = 1;
     int i;
@@ -302,13 +304,12 @@ static int walk_until_nc(const std::vector<int> &flat_adj,
         if (s == 2) {
             continue;
         } else if (s == 0) {
-            for (int j = added - 1; j >= 0; j--) {
-                if (path[j] == proposal) {
-                    added = j;
-                    break;
-                }
+            int pos = path_pos[proposal];
+            if (pos >= 0 && pos < added && path[pos] == proposal) {
+                added = pos;
             }
-            path[added++] = proposal;
+            path[added] = proposal;
+            path_pos[proposal] = added++;
         } else {
             path[added++] = proposal;
             break;
@@ -332,6 +333,7 @@ static int sample_sub_ust_nc(const std::vector<int> &flat_adj,
                              std::vector<int8_t> &status,
                              const std::vector<bool> &ignore,
                              std::vector<int> &walk_buf,
+                             std::vector<int> &walk_pos,
                              std::vector<int> &unvisited,
                              std::vector<int> &unvis_pos) {
     // Build status and unvisited list from ignore array
@@ -368,7 +370,7 @@ static int sample_sub_ust_nc(const std::vector<int> &flat_adj,
             pick = r_int(remaining);
             int add = unvisited[pick];
             int added = walk_until_nc(flat_adj, flat_off, add, walk_buf,
-                                       max_try, status);
+                                       max_try, status, walk_pos);
             if (added == 0) return 1;
             // Mark in-tree and remove from unvisited list
             for (int i = 0; i < added - 1; i++) {
@@ -535,6 +537,7 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
 
     // Pre-allocated walk buffer for UST sampling (avoids allocation per retry)
     std::vector<int> walk_buf(V + 2);
+    std::vector<int> walk_pos(V, -1);
 
     // Detect single-county case for fast-path UST sampling
     bool use_fast_ust = (n_cty == 1 && !use_multi_hierarchy);
@@ -675,7 +678,7 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                 if (use_fast_ust) {
                     result = sample_sub_ust_nc(flat_adj, flat_off,
                                                ust, V, root, ust_status,
-                                               ignore, walk_buf,
+                                               ignore, walk_buf, walk_pos,
                                                unvisited_buf, unvis_pos);
                 } else if (use_multi_hierarchy) {
                     result = sample_sub_ust_hier(g, ust, V, root, visited,
