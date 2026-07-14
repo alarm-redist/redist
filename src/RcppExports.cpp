@@ -347,8 +347,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // draw_trees_on_a_region
-List draw_trees_on_a_region(List const& adj_list, const arma::uvec& counties, const arma::uvec& pop, int const ndists, int const region_id_to_draw_tree_on, int const region_size, double const lower, double const target, double const upper, arma::uvec const& region_ids, int const num_tree, int num_threads, bool const verbose);
-RcppExport SEXP _redist_draw_trees_on_a_region(SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP ndistsSEXP, SEXP region_id_to_draw_tree_onSEXP, SEXP region_sizeSEXP, SEXP lowerSEXP, SEXP targetSEXP, SEXP upperSEXP, SEXP region_idsSEXP, SEXP num_treeSEXP, SEXP num_threadsSEXP, SEXP verboseSEXP) {
+List draw_trees_on_a_region(List const& adj_list, const arma::uvec& counties, const arma::uvec& pop, int const ndists, int num_regions, int const region_id_to_draw_tree_on, int const region_size, double const lower, double const target, double const upper, Rcpp::IntegerMatrix const& region_ids, Rcpp::IntegerMatrix const& region_sizes, int const num_tree, int num_threads, bool const verbose);
+RcppExport SEXP _redist_draw_trees_on_a_region(SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP ndistsSEXP, SEXP num_regionsSEXP, SEXP region_id_to_draw_tree_onSEXP, SEXP region_sizeSEXP, SEXP lowerSEXP, SEXP targetSEXP, SEXP upperSEXP, SEXP region_idsSEXP, SEXP region_sizesSEXP, SEXP num_treeSEXP, SEXP num_threadsSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -356,16 +356,18 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
     Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
     Rcpp::traits::input_parameter< int const >::type ndists(ndistsSEXP);
+    Rcpp::traits::input_parameter< int >::type num_regions(num_regionsSEXP);
     Rcpp::traits::input_parameter< int const >::type region_id_to_draw_tree_on(region_id_to_draw_tree_onSEXP);
     Rcpp::traits::input_parameter< int const >::type region_size(region_sizeSEXP);
     Rcpp::traits::input_parameter< double const >::type lower(lowerSEXP);
     Rcpp::traits::input_parameter< double const >::type target(targetSEXP);
     Rcpp::traits::input_parameter< double const >::type upper(upperSEXP);
-    Rcpp::traits::input_parameter< arma::uvec const& >::type region_ids(region_idsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix const& >::type region_ids(region_idsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix const& >::type region_sizes(region_sizesSEXP);
     Rcpp::traits::input_parameter< int const >::type num_tree(num_treeSEXP);
     Rcpp::traits::input_parameter< int >::type num_threads(num_threadsSEXP);
     Rcpp::traits::input_parameter< bool const >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(draw_trees_on_a_region(adj_list, counties, pop, ndists, region_id_to_draw_tree_on, region_size, lower, target, upper, region_ids, num_tree, num_threads, verbose));
+    rcpp_result_gen = Rcpp::wrap(draw_trees_on_a_region(adj_list, counties, pop, ndists, num_regions, region_id_to_draw_tree_on, region_size, lower, target, upper, region_ids, region_sizes, num_tree, num_threads, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -1056,7 +1058,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_calcPWDh", (DL_FUNC) &_redist_calcPWDh, 1},
     {"_redist_draw_a_tree_on_a_region", (DL_FUNC) &_redist_draw_a_tree_on_a_region, 12},
     {"_redist_perform_a_valid_multidistrict_split", (DL_FUNC) &_redist_perform_a_valid_multidistrict_split, 17},
-    {"_redist_draw_trees_on_a_region", (DL_FUNC) &_redist_draw_trees_on_a_region, 13},
+    {"_redist_draw_trees_on_a_region", (DL_FUNC) &_redist_draw_trees_on_a_region, 15},
     {"_redist_attempt_splits_on_a_region", (DL_FUNC) &_redist_attempt_splits_on_a_region, 16},
     {"_redist_compute_log_unnormalized_target_density_components", (DL_FUNC) &_redist_compute_log_unnormalized_target_density_components, 19},
     {"_redist_compute_plans_log_optimal_weights", (DL_FUNC) &_redist_compute_plans_log_optimal_weights, 17},

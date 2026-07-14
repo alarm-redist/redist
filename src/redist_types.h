@@ -402,14 +402,61 @@ class GraphEdgeIndex {
 
 };
 
+
+// enum for sampling spaces
+enum class SamplingSpace : unsigned char {
+    GraphSpace,       // Sampling on the space of graph partitions
+    ForestSpace,      // Sample on the space of spanning forests
+    LinkingEdgeSpace, // Sample on space of forests and linking edges
+    LCTGraphSpace     // Graph partition with a link-cut-tree spanning forest (cyclewalk)
+};
+
+// loads a sampling spaces type enum from a control string
+SamplingSpace get_sampling_space(std::string const &sampling_space_str);
+
+// Get convinient string representation
+std::string sampling_space_to_str(SamplingSpace sampling_space);
+
+// enum for various methods of splitting a plan
+enum class SplittingMethodType : unsigned char {
+    NaiveTopK,        // picks 1 of top k edges even if invalid
+    UnifValid,        // picks uniform valid edge at random
+    ExpBiggerAbsDev,  // propto exp(-alpha*bigger abs dev of pair)
+    ExpSmallerAbsDev, // propto exp(-alpha*smaller abs dev of pair)
+    Constraint,       // propto constraint score (unif if no constraints)
+    Experimental      // Just for testing
+};
+
+// loads a splitting type enum from a control string
+SplittingMethodType get_splitting_type(std::string const &splitting_type_str);
+
+// Get convinient string representation
+std::string splitting_method_to_str(SplittingMethodType splitting_method);
+
+enum class SplittingSizeScheduleType : unsigned char {
+    DistrictOnlySMD,
+    AnyValidSizeSMD,
+    DistrictOnlyMMD,
+    AnyValidSizeMMD,
+    OneCustomSize,
+    PureMergeSplitSize,
+    CustomSizes
+};
+
+// load from control spring
+SplittingSizeScheduleType
+get_splitting_size_regime(std::string const &splitting_size_regime_str);
+
 // Essentially just a useful container for map and some algorithm parameters
 class MapParams {
   public:
     // Constructor
     MapParams(Rcpp::List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
               int const ndists, int const total_seats,
-              std::vector<int> const &district_seat_sizes, double const lower,
-              double const target, double const upper)
+              std::vector<int> const &district_seat_sizes, 
+              double const lower,
+              double const target, double const upper,
+              SamplingSpace const sampling_space)
         : g(list_to_graph(adj_list)), num_edges(count_undirected_edges(g)),
         graph_edge_index(g, num_edges), num_edge_bit_words(compute_num_edge_bit_words(num_edges)),
           counties(counties), num_counties(max(counties)), cg(county_graph(g, counties)),
@@ -448,7 +495,8 @@ class MapParams {
               }
               return is_district_vec;
           }()),
-          is_mmd(ndists != total_seats) {
+          is_mmd(ndists != total_seats),
+          sampling_space(sampling_space) {
         // check the sizes are ok
         if (ndists - 1 > MAX_SUPPORTED_NUM_DISTRICTS ||
             total_seats - 1 > MAX_SUPPORTED_NUM_DISTRICTS) {
@@ -492,6 +540,7 @@ class MapParams {
     std::vector<bool> const
         is_district;   // of length total_seats that says whether or not that size is a district
     bool const is_mmd; // Whether or not multimember districting
+    SamplingSpace const sampling_space;
 };
 
 // Designed to allow for different tree splitting methods
@@ -684,48 +733,6 @@ template <typename T> class CircularQueue {
 
 typedef CircularQueue<int> DummyTreeQueue;
 
-// enum for sampling spaces
-enum class SamplingSpace : unsigned char {
-    GraphSpace,       // Sampling on the space of graph partitions
-    ForestSpace,      // Sample on the space of spanning forests
-    LinkingEdgeSpace, // Sample on space of forests and linking edges
-    LCTGraphSpace     // Graph partition with a link-cut-tree spanning forest (cyclewalk)
-};
 
-// loads a sampling spaces type enum from a control string
-SamplingSpace get_sampling_space(std::string const &sampling_space_str);
-
-// Get convinient string representation
-std::string sampling_space_to_str(SamplingSpace sampling_space);
-
-// enum for various methods of splitting a plan
-enum class SplittingMethodType : unsigned char {
-    NaiveTopK,        // picks 1 of top k edges even if invalid
-    UnifValid,        // picks uniform valid edge at random
-    ExpBiggerAbsDev,  // propto exp(-alpha*bigger abs dev of pair)
-    ExpSmallerAbsDev, // propto exp(-alpha*smaller abs dev of pair)
-    Constraint,       // propto constraint score (unif if no constraints)
-    Experimental      // Just for testing
-};
-
-// loads a splitting type enum from a control string
-SplittingMethodType get_splitting_type(std::string const &splitting_type_str);
-
-// Get convinient string representation
-std::string splitting_method_to_str(SplittingMethodType splitting_method);
-
-enum class SplittingSizeScheduleType : unsigned char {
-    DistrictOnlySMD,
-    AnyValidSizeSMD,
-    DistrictOnlyMMD,
-    AnyValidSizeMMD,
-    OneCustomSize,
-    PureMergeSplitSize,
-    CustomSizes
-};
-
-// load from control spring
-SplittingSizeScheduleType
-get_splitting_size_regime(std::string const &splitting_size_regime_str);
 
 #endif

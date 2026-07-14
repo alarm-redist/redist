@@ -31,13 +31,16 @@ Rcpp::List cyclewalk_plans(int N, int warmup, int thin, int ndists, int total_se
         throw Rcpp::exception("init_plan and init_seats must each be one-column matrices.");
     }
 
+    SamplingSpace const sampling_space = SamplingSpace::LCTGraphSpace;
+
     // MapParams: graph, counties, pop, sizes, MMD config.
     MapParams const map_params(adj_list, counties, pop, ndists, total_seats,
-                               as<std::vector<int>>(district_seat_sizes), lower, target, upper);
+                               as<std::vector<int>>(district_seat_sizes), lower, target, upper,
+                            sampling_space);
     int const V = map_params.V;
     bool const mmd_plans = map_params.is_mmd;
 
-    SamplingSpace const sampling_space = SamplingSpace::LCTGraphSpace;
+    
 
     // Splitting schedule (cyclewalk doesn't split in its inner loop, but the
     // schedule is required by USTSampler for the initial tree draws and to

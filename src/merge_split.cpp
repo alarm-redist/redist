@@ -52,7 +52,8 @@ Rcpp::List ms_plans(
 
     // Create map level graph and county level multigraph
     MapParams const map_params(adj_list, counties, pop, ndists, total_seats,
-                               as<std::vector<int>>(district_seat_sizes), lower, target, upper);
+                               as<std::vector<int>>(district_seat_sizes), lower, target, upper,
+                            sampling_space);
     int V = map_params.g.size();
 
     int initial_num_regions = static_cast<int>(ndists);

@@ -754,9 +754,14 @@ List run_redist_smc(
     if (num_threads <= 0)
         num_threads = std::thread::hardware_concurrency();
 
+
+    // Set the sampling space
+    SamplingSpace sampling_space = get_sampling_space(sampling_space_str);
+
     // Create map level graph and county level multigraph
     MapParams const map_params(adj_list, counties, pop, ndists, total_seats,
-                               as<std::vector<int>>(district_seat_sizes), lower, target, upper);
+                               as<std::vector<int>>(district_seat_sizes), lower, target, upper,
+                            sampling_space);
     int V = map_params.g.size();
 
     if constexpr (DEBUG_GSMC_PLANS_VERBOSE) {
@@ -795,9 +800,6 @@ List run_redist_smc(
         // same seed with i*3 long_jumps for state
         rng_states.emplace_back(global_rng_seed, i * 3);
     }
-
-    // Set the sampling space
-    SamplingSpace sampling_space = get_sampling_space(sampling_space_str);
 
     // Do not support hard plan constraints with linking edge
     if (sampling_space == SamplingSpace::LinkingEdgeSpace &&

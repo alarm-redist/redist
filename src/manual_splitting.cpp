@@ -73,7 +73,7 @@ List draw_a_tree_on_a_region(List adj_list, const arma::uvec &counties, const ar
     double target = total_pop / ndists;
 
     MapParams map_params(adj_list, counties, pop, ndists, ndists, std::vector<int>{}, lower,
-                         target, upper);
+                         target, upper, SamplingSpace::GraphSpace);
 
     int global_rng_seed2 = (int)Rcpp::sample(INT_MAX, 1)[0];
     std::vector<RNGState> rng_states;
@@ -99,21 +99,7 @@ List draw_a_tree_on_a_region(List adj_list, const arma::uvec &counties, const ar
     }
 
     // Create tree related stuff
-    int root;
-    Tree ust = init_tree(V);
-    std::vector<bool> visited(V);
-    std::vector<bool> ignore(V, false);
-    std::vector<int> pop_below(V, 0);
-    std::vector<int> tree_vertex_parents(V, -2);
-    Tree county_tree = init_tree(map_params.num_counties);
-    TreePopStack county_stack(map_params.num_counties);
-    DummyTreeQueue dummy_county_tree_queue(map_params.V);
-    arma::uvec county_pop(map_params.num_counties, arma::fill::zeros);
-    std::vector<std::vector<int>> county_members(map_params.num_counties, std::vector<int>{});
-    std::vector<bool> c_visited(map_params.num_counties, true);
-    std::vector<int> cty_pop_below(map_params.num_counties, 0);
-    std::vector<std::array<int, 3>> county_path;
-    std::vector<int> path;
+    USTSampler ust_sampler(map_params, *splitting_schedule_ptr);
 
     // RNGState rng_state();
     RNGState rng_state;
@@ -125,32 +111,20 @@ List draw_a_tree_on_a_region(List adj_list, const arma::uvec &counties, const ar
     // Keep running until a tree is successfully drawn
     while (!successful_split_made) {
         // try to draw a tree
-
-        // Mark it as ignore if its not in the region to split
-        for (int i = 0; i < V; i++) {
-            ignore[i] =
-                plan_ensemble.plan_ptr_vec[0]->region_ids[i] != region_id_to_draw_tree_on;
-        }
-
-        // clear the tree
-        clear_tree(ust);
-        // Get a uniform spanning tree drawn on that region
-        int result = sample_sub_ust(map_params, ust, root, lower, upper, visited, ignore,
-                                    county_tree, county_stack, dummy_county_tree_queue,
-                                    county_pop, county_members,
-                                    c_visited, cty_pop_below, county_path, path, rng_state);
-
-        // result == 0 means it was successful
-        successful_split_made = result == 0;
+        successful_split_made = ust_sampler.attempt_to_draw_tree_on_region(rng_state,
+            *plan_ensemble.plan_ptr_vec[0], region_id_to_draw_tree_on);
 
         num_attempts++;
     }
 
-    // computes population below each vtx and parent of each vertex
-    tree_vertex_parents.at(root) = -1;
-    tree_pop(ust, root, pop, pop_below, tree_vertex_parents);
 
-    List out = List::create(_["uncut_tree"] = ust, _["root"] = root,
+    std::vector<int> tree_vertex_parents(V, -2);
+    std::vector<int> pop_below(V);
+    // computes population below each vtx and parent of each vertex
+    tree_vertex_parents.at(ust_sampler.root) = -1;
+    // tree_pop(ust_sampler.ust, ust_sampler.root, pop, pop_below, tree_vertex_parents);
+
+    List out = List::create(_["uncut_tree"] = ust_sampler.ust, _["root"] = ust_sampler.root,
                             _["num_attempts"] = num_attempts, _["pop_below"] = pop_below,
                             _["uncut_tree_vertex_parents"] = tree_vertex_parents);
 
@@ -188,7 +162,7 @@ List perform_a_valid_multidistrict_split(List adj_list, const arma::uvec &counti
     if (split_dval_min > split_dval_max)
         throw Rcpp::exception("Split min must be less than split max!\n");
     MapParams map_params(adj_list, counties, pop, ndists, ndists, std::vector<int>{}, lower,
-                         target, upper);
+                         target, upper, SamplingSpace::GraphSpace);
     // unpack control params
     int V = map_params.V;
 
@@ -441,28 +415,17 @@ List perform_a_valid_multidistrict_split(List adj_list, const arma::uvec &counti
 // TODO: Add support for multimember districts
 // Draws num_trees number of trees on a region
 List draw_trees_on_a_region(List const &adj_list, const arma::uvec &counties,
-                            const arma::uvec &pop, int const ndists,
+                            const arma::uvec &pop, int const ndists, int num_regions,
                             int const region_id_to_draw_tree_on, int const region_size,
                             double const lower, double const target, double const upper,
-                            arma::uvec const &region_ids, int const num_tree, int num_threads,
+                             Rcpp::IntegerMatrix const &region_ids,
+                             Rcpp::IntegerMatrix const &region_sizes,
+                            int const num_tree, int num_threads,
                             bool const verbose) {
-    // Create adj params
-    MapParams map_params(adj_list, counties, pop, ndists, ndists, std::vector<int>{1}, lower,
-                         target, upper);
-    // count how many times we had to call sample_sub_ust
-
     // create thread pool
     if (num_threads <= 0)
         num_threads = std::thread::hardware_concurrency();
     RcppThread::ThreadPool pool(num_threads);
-
-    // create list of trees to return
-    std::vector<std::vector<Graph>> thread_undirected_trees(num_threads == 0 ? 1 : num_threads);
-    std::vector<int> thread_attempts(num_threads == 0 ? 1 : num_threads, 0);
-
-    static std::atomic<int> global_generation_counter{0};
-    int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
-    std::atomic<int> thread_id_counter{0};
 
     int global_rng_seed = (int)Rcpp::sample(INT_MAX, 1)[0];
     int num_rng_states = num_threads > 0 ? num_threads : 1;
@@ -473,9 +436,37 @@ List draw_trees_on_a_region(List const &adj_list, const arma::uvec &counties,
         rng_states.emplace_back(global_rng_seed, i * 3);
     }
 
+    // Create adj params
+    MapParams map_params(adj_list, counties, pop, ndists, ndists, std::vector<int>{1}, lower,
+                         target, upper, SamplingSpace::GraphSpace);
+
+    auto splitting_schedule_ptr =
+        std::make_unique<AnyRegionSMDSplittingSchedule>(ndists-1, ndists);
+
+    PlanEnsemble plan_ensemble(map_params, *splitting_schedule_ptr, num_regions, 1,
+                               SamplingSpace::GraphSpace, region_ids, region_sizes, rng_states,
+                               pool);
+
+    // count how many times we had to call sample_sub_ust
+
+
+    // create list of trees to return
+    std::vector<std::vector<Graph>> thread_undirected_trees(num_threads == 0 ? 1 : num_threads);
+    std::vector<int> thread_attempts(num_threads == 0 ? 1 : num_threads, 0);
+
+    static std::atomic<int> global_generation_counter{0};
+    int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
+    std::atomic<int> thread_id_counter{0};
+
+
+
     int check_int = 200;
 
     int const n_threads = get_num_threads(pool);
+    std::vector<USTSampler> ust_samplers(
+        n_threads, USTSampler(map_params, *splitting_schedule_ptr)
+    );
+
     std::vector<Tree> ust_buffers(n_threads, init_tree(map_params.V));
     std::vector<std::vector<bool>> visited_buffers(n_threads, std::vector<bool>(map_params.V));
     std::vector<std::vector<bool>> ignore_buffers(n_threads,
@@ -509,37 +500,15 @@ List draw_trees_on_a_region(List const &adj_list, const arma::uvec &counties,
             thread_generation_counter = generation;
         }
 
-        // Stuff for drawing tree
-        int root;
-        Tree &ust = ust_buffers[thread_id];
-        std::vector<bool> &visited = visited_buffers[thread_id];
-        std::vector<bool> &ignore = ignore_buffers[thread_id];
-        Tree &county_tree = county_tree_buffers[thread_id];
-        TreePopStack &county_stack = county_stack_buffers[thread_id];
-        DummyTreeQueue dummy_county_tree_queue = dummy_county_tree_stack_buffers[thread_id];
-        arma::uvec &county_pop = county_pop_buffers[thread_id];
-        std::vector<std::vector<int>> &county_members = county_members_buffers[thread_id];
-        std::vector<bool> &c_visited = c_visited_buffers[thread_id];
-        std::vector<int> &cty_pop_below = cty_pop_below_buffers[thread_id];
-        std::vector<std::array<int, 3>> &county_path = county_path_buffers[thread_id];
-        std::vector<int> &path = path_buffers[thread_id];
 
         // reset result
         int result = 1;
-        while (result != 0) {
-            // clear tree
-            clear_tree(ust);
-            for (size_t i = 0; i < map_params.V; i++) {
-                ignore[i] = region_ids(i) != region_id_to_draw_tree_on;
-            }
-
-            // sample until successful
-            result =
-                sample_sub_ust(map_params, ust, root, lower, upper, visited, ignore,
-                               county_tree, county_stack, dummy_county_tree_queue,
-                               county_pop, county_members, c_visited,
-                               cty_pop_below, county_path, path, rng_states[thread_id]);
-
+        bool tree_drawn = false;
+        while (!tree_drawn) {
+            // sample until successful 
+            tree_drawn = ust_samplers[thread_id].attempt_to_draw_tree_on_region(
+                rng_states[thread_id], *plan_ensemble.plan_ptr_vec[0], region_id_to_draw_tree_on
+            );
             ++thread_attempts[thread_id];
             RcppThread::checkUserInterrupt(++thread_attempts[thread_id] % check_int == 0);
         }
@@ -547,11 +516,12 @@ List draw_trees_on_a_region(List const &adj_list, const arma::uvec &counties,
         // go through the tree from the root and add the backwards edge and sort
         std::queue<std::pair<int, int>> vertex_queue;
         // add roots children to queue
-        for (auto const &child_vertex : ust[root]) {
-            vertex_queue.push({child_vertex, root});
+        for (auto const &child_vertex : ust_samplers[thread_id].ust[ust_samplers[thread_id].root]) {
+            vertex_queue.push({child_vertex, ust_samplers[thread_id].root});
         }
         // sort the children
-        std::sort(ust[root].begin(), ust[root].end());
+        std::sort(ust_samplers[thread_id].ust[ust_samplers[thread_id].root].begin(), 
+        ust_samplers[thread_id].ust[ust_samplers[thread_id].root].end());
 
         // update all the children
         while (!vertex_queue.empty()) {
@@ -561,17 +531,17 @@ List draw_trees_on_a_region(List const &adj_list, const arma::uvec &counties,
             int parent_vertex = queue_pair.second;
             vertex_queue.pop();
             // add children to the queue
-            for (auto const &child_vertex : ust[vertex]) {
+            for (auto const &child_vertex : ust_samplers[thread_id].ust[vertex]) {
                 // add children to queue
                 vertex_queue.push({child_vertex, vertex});
             }
             // add the edge from vertex to parent
-            ust[vertex].push_back(parent_vertex);
+            ust_samplers[thread_id].ust[vertex].push_back(parent_vertex);
             // now sort edges
-            std::sort(ust[vertex].begin(), ust[vertex].end());
+            std::sort(ust_samplers[thread_id].ust[vertex].begin(), ust_samplers[thread_id].ust[vertex].end());
         }
         // REprintf("about to copy! %d\n", thread_id);
-        thread_undirected_trees[thread_id].push_back(ust);
+        thread_undirected_trees[thread_id].push_back(ust_samplers[thread_id].ust);
         // REprintf("Copied! %d\n", thread_id);
         ++bar;
     });
@@ -610,7 +580,7 @@ List attempt_splits_on_a_region(List const &adj_list, const arma::uvec &counties
 
     // Create adj params
     MapParams map_params(adj_list, counties, pop, ndists, ndists, std::vector<int>{}, lower,
-                         target, upper);
+                         target, upper, SamplingSpace::GraphSpace);
     // count how many times we had to call sample_sub_ust
     Rcpp::List control;
 

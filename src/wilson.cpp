@@ -194,7 +194,7 @@ Tree sample_ust(List l, const arma::uvec &pop, double lower, double upper,
     double FAKE_TARGET = 6.6;
 
     MapParams map_params(l, counties, pop, FAKE_NDISTS, FAKE_NDISTS, std::vector<int>{}, lower,
-                         FAKE_TARGET, upper);
+                         FAKE_TARGET, upper, SamplingSpace::GraphSpace);
 
     Tree tree = init_tree(V);
     int root;
@@ -227,7 +227,7 @@ int sample_sub_ust(MapParams const &map_params, Tree &tree, int &root, double co
                    arma::uvec &county_pop, std::vector<std::vector<int>> &county_members,
                    std::vector<bool> &c_visited, std::vector<int> &cty_pop_below,
                    std::vector<std::array<int, 3>> &county_path, std::vector<int> &path,
-                   RNGState &rng_state) {
+                   RNGState &rng_state, bool const draw_fake_dummy_trees) {
     // auto t1_start = std::chrono::steady_clock::now();
     int const n_county = map_params.num_counties;
     std::fill(c_visited.begin(), c_visited.end(), true);
@@ -334,16 +334,41 @@ int sample_sub_ust(MapParams const &map_params, Tree &tree, int &root, double co
             // impossible for this county to need to be split
             // so we fill in a dummy tree 
             if (cty_pop_below[i] >= 0 && (miss_first && miss_second)) {
-                add_county_to_tree_dfs(
-                    map_params.county_restricted_graph,
-                    map_params.counties[county_members[i][0]], // pass in the county CAREFUL COUNTIES ARE 1-indexed
-                    county_members[i],
-                    visited,
-                    dummy_county_tree_queue,
-                    tree
-                );
+                // check if we need the dummy tree to actually be a subset of g
+                if(!draw_fake_dummy_trees){
+                    add_county_to_tree_dfs(
+                        map_params.county_restricted_graph,
+                        map_params.counties[county_members[i][0]], // pass in the county CAREFUL COUNTIES ARE 1-indexed
+                        county_members[i],
+                        visited,
+                        dummy_county_tree_queue,
+                        tree
+                    );
+                    remaining -= n_vtx - 1; // already visited county root
+                }else{
+                    // fill in with a fake dummy tree
+                    remaining -= n_vtx - 1; // already visited county root
+                    int cty_root = -1;
+                    for (int j = 0; j < n_vtx; j++) {
+                        int vtx_idx = county_members[i][j];
+                        if (visited.at(vtx_idx)) { // county root
+                            cty_root = j;
+                        }
+                        if (j > 0 && j != cty_root + 1) {
+                            tree.at(vtx_idx).push_back(county_members[i][j - 1]);
+                        }
+                        visited.at(vtx_idx) = true;
+                    }
 
-                remaining -= n_vtx - 1; // already visited county root
+                    if (cty_root < n_vtx - 1) {
+                        tree.at(county_members[i][cty_root])
+                            .push_back(county_members[i][n_vtx - 1]);
+                    }
+                }
+
+
+
+                
             }
         }
     }

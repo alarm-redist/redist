@@ -25,7 +25,8 @@ Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
     int const num_threads, int const verbosity) {
     // create the map param object
     MapParams map_params(adj_list, counties, pop, ndists, total_seats,
-                         as<std::vector<int>>(district_seat_sizes), lower, target, upper);
+                         as<std::vector<int>>(district_seat_sizes), lower, target, upper,
+                        SamplingSpace::GraphSpace);
 
     // Add hard constraints to scoring function
     constraints["plan_valid_district_sizes"] = true;
@@ -286,7 +287,8 @@ arma::vec compute_plans_log_optimal_weights(
 
     // create the map param object
     MapParams map_params(adj_list, counties, pop, ndists, total_seats,
-                         as<std::vector<int>>(district_seat_sizes), lower, target, upper);
+                         as<std::vector<int>>(district_seat_sizes), lower, target, upper,
+                        sampling_space);
     // Create the scoring function
     ScoringFunction scoring_function(map_params, constraints, pop_temper, true);
 
@@ -410,7 +412,7 @@ arma::vec compute_plans_log_simple_weights(
 
     // create the map param object
     MapParams map_params(adj_list, counties, pop, ndists, total_seats,
-                         as<std::vector<int>>(district_seat_sizes), lower, target, upper);
+                         as<std::vector<int>>(district_seat_sizes), lower, target, upper, sampling_space);
     // Create the scoring function
     ScoringFunction scoring_function(map_params, constraints, pop_temper, true);
 

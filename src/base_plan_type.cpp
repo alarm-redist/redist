@@ -707,7 +707,8 @@ Plan::draw_tree_on_region(const MapParams &map_params, const int region_to_draw_
         int result = sample_sub_ust(map_params, ust, root, map_params.lower * the_region_size,
                                     map_params.upper * the_region_size, visited, ignore,
                                     county_tree, county_stack, dummy_county_tree_queue, county_pop, county_members,
-                                    c_visited, cty_pop_below, county_path, path, rng_state);
+                                    c_visited, cty_pop_below, county_path, path, rng_state,
+                                    false);
                                     
         tree_drawn = result == 0;
 

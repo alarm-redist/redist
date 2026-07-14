@@ -16,6 +16,6 @@ int sample_sub_ust(MapParams const &map_params, Tree &tree, int &root, double co
                    arma::uvec &county_pop, std::vector<std::vector<int>> &county_members,
                    std::vector<bool> &c_visited, std::vector<int> &cty_pop_below,
                    std::vector<std::array<int, 3>> &county_path, std::vector<int> &path,
-                   RNGState &rng_state);
+                   RNGState &rng_state, bool const draw_fake_dummy_trees = true);
 
 #endif

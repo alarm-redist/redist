@@ -1420,7 +1420,7 @@ double get_log_number_linking_edges(Rcpp::List const &adj_list, arma::uvec const
                                     int const nseats, int const num_regions,
                                     arma::uvec const &region_ids) {
     MapParams const map_params(adj_list, counties, {}, ndists, nseats, std::vector<int>{1}, 0,
-                               0, 0);
+                               0, 0, SamplingSpace::LinkingEdgeSpace);
 
     PlanMultigraph plan_multigraph(map_params, true);
 
@@ -1442,7 +1442,7 @@ double get_merged_log_number_linking_edges(Rcpp::List const &adj_list,
                                            arma::uvec const &region_ids, int const region1_id,
                                            int const region2_id) {
     MapParams const map_params(adj_list, counties, {}, ndists, nseats, std::vector<int>{1}, 0,
-                               0, 0);
+                               0, 0, SamplingSpace::LinkingEdgeSpace);
 
     PlanMultigraph plan_multigraph(map_params, true);
 

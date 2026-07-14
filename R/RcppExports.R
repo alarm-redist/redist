@@ -89,8 +89,8 @@ perform_a_valid_multidistrict_split <- function(adj_list, counties, pop, ndists,
     .Call(`_redist_perform_a_valid_multidistrict_split`, adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_split, target, lower, upper, region_ids, region_sizes, split_dval_min, split_dval_max, split_district_only, verbose, k_param)
 }
 
-draw_trees_on_a_region <- function(adj_list, counties, pop, ndists, region_id_to_draw_tree_on, region_size, lower, target, upper, region_ids, num_tree, num_threads, verbose) {
-    .Call(`_redist_draw_trees_on_a_region`, adj_list, counties, pop, ndists, region_id_to_draw_tree_on, region_size, lower, target, upper, region_ids, num_tree, num_threads, verbose)
+draw_trees_on_a_region <- function(adj_list, counties, pop, ndists, num_regions, region_id_to_draw_tree_on, region_size, lower, target, upper, region_ids, region_sizes, num_tree, num_threads, verbose) {
+    .Call(`_redist_draw_trees_on_a_region`, adj_list, counties, pop, ndists, num_regions, region_id_to_draw_tree_on, region_size, lower, target, upper, region_ids, region_sizes, num_tree, num_threads, verbose)
 }
 
 attempt_splits_on_a_region <- function(adj_list, counties, pop, ndists, init_num_regions, region_id_to_split, lower, target, upper, region_ids, region_sizes, splitting_schedule_str, k_param, num_plans, num_threads, verbose) {

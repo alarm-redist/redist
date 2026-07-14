@@ -86,10 +86,12 @@ List perform_a_valid_multidistrict_split(
 
 // [[Rcpp::export]]
 List draw_trees_on_a_region(List const &adj_list, const arma::uvec &counties,
-                            const arma::uvec &pop, int const ndists,
+                            const arma::uvec &pop, int const ndists, int num_regions,
                             int const region_id_to_draw_tree_on, int const region_size,
                             double const lower, double const target, double const upper,
-                            arma::uvec const &region_ids, int const num_tree, int num_threads,
+                             Rcpp::IntegerMatrix const &region_ids,
+                             Rcpp::IntegerMatrix const &region_sizes,
+                            int const num_tree, int num_threads,
                             bool const verbose);
 
 // [[Rcpp::export]]

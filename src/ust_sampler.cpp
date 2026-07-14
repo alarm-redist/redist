@@ -7,6 +7,24 @@
 
 #include "ust_sampler.h"
 
+
+bool USTSampler::draw_ust(
+      int &root, double const lower, double const upper,
+        RNGState &rng_state) {
+    // We assume that ignore has already been properly set 
+    // Now get a uniform spanning tree drawn on the subgraph denoted by the ignore
+    // vertices 
+    int result = sample_sub_ust(map_params, ust, root, lower, upper, visited, ignore,
+                                county_tree, county_stack, dummy_county_tree_queue,
+                                county_pop, county_members,
+                                c_visited, cty_pop_below, county_path, path, rng_state,
+                                fake_dummy_trees_ok);
+
+    // result == 0 means it was successful
+    return (result == 0);
+}
+
+
 bool USTSampler::attempt_to_draw_tree_on_region(RNGState &rng_state, Plan const &plan,
                                                 const int region_to_draw_tree_on) {
     int V = map_params.V;
@@ -28,15 +46,16 @@ bool USTSampler::attempt_to_draw_tree_on_region(RNGState &rng_state, Plan const 
 
     // clear the tree
     clear_tree(ust);
-    // Get a uniform spanning tree drawn on that region
-    int result = sample_sub_ust(map_params, ust, root, min_max_pair.first * map_params.lower,
-                                min_max_pair.second * map_params.upper, visited, ignore,
-                                county_tree, county_stack, dummy_county_tree_queue,
-                                county_pop, county_members,
-                                c_visited, cty_pop_below, county_path, path, rng_state);
+
+    // Now sample a uniform spanning tree drawn on that region
+    bool const valid_tree = draw_ust(root, 
+        min_max_pair.first * map_params.lower, // lower, 
+        min_max_pair.second * map_params.upper, // upper
+        rng_state
+        );
 
     if constexpr(perf_config::object_integrity_checking){
-        if (result == 0){
+        if (valid_tree){
             check_tree_integrity(
                 ust,
                 "Just called `sample_sub_ust` in attempt_to_draw_tree_on_region\n",
@@ -47,8 +66,7 @@ bool USTSampler::attempt_to_draw_tree_on_region(RNGState &rng_state, Plan const 
         }
     }
 
-    // result == 0 means it was successful
-    return (result == 0);
+    return valid_tree;
 }
 
 bool USTSampler::attempt_to_draw_tree_on_merged_region(RNGState &rng_state, Plan const &plan,
@@ -76,15 +94,16 @@ bool USTSampler::attempt_to_draw_tree_on_merged_region(RNGState &rng_state, Plan
 
     // clear the tree
     clear_tree(ust);
-    // Get a uniform spanning tree drawn on that region
-    int result = sample_sub_ust(map_params, ust, root, min_max_pair.first * map_params.lower,
-                                min_max_pair.second * map_params.upper, visited, ignore,
-                                county_tree, county_stack, dummy_county_tree_queue,
-                                county_pop, county_members,
-                                c_visited, cty_pop_below, county_path, path, rng_state);
+
+    // Now sample a uniform spanning tree drawn on that region
+    bool const valid_tree = draw_ust(root, 
+        min_max_pair.first * map_params.lower, // lower, 
+        min_max_pair.second * map_params.upper, // upper
+        rng_state
+        );
 
     if constexpr(perf_config::object_integrity_checking){
-        if (result == 0){
+        if (valid_tree){
             check_tree_integrity(
                 ust,
                 "Just called `sample_sub_ust` in attempt_to_draw_tree_on_merged_region\n",
@@ -95,8 +114,7 @@ bool USTSampler::attempt_to_draw_tree_on_merged_region(RNGState &rng_state, Plan
         }
     }
 
-    // result == 0 means it was successful
-    return (result == 0);
+    return valid_tree;
 }
 
 std::pair<bool, EdgeCut> USTSampler::try_to_sample_splittable_tree(
