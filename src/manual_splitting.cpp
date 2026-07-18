@@ -112,7 +112,7 @@ List draw_a_tree_on_a_region(List adj_list, const arma::uvec &counties, const ar
     while (!successful_split_made) {
         // try to draw a tree
         successful_split_made = ust_sampler.attempt_to_draw_tree_on_region(rng_state,
-            *plan_ensemble.plan_ptr_vec[0], region_id_to_draw_tree_on);
+            *plan_ensemble.plan_ptr_vec[0], region_id_to_draw_tree_on).first;
 
         num_attempts++;
     }
@@ -508,7 +508,7 @@ List draw_trees_on_a_region(List const &adj_list, const arma::uvec &counties,
             // sample until successful 
             tree_drawn = ust_samplers[thread_id].attempt_to_draw_tree_on_region(
                 rng_states[thread_id], *plan_ensemble.plan_ptr_vec[0], region_id_to_draw_tree_on
-            );
+            ).first;
             ++thread_attempts[thread_id];
             RcppThread::checkUserInterrupt(++thread_attempts[thread_id] % check_int == 0);
         }
@@ -664,13 +664,13 @@ List attempt_splits_on_a_region(List const &adj_list, const arma::uvec &counties
         // ie ignore cases where algorithm fails bc of randomness
         bool tree_successfully_drawn = ust_sampler.attempt_to_draw_tree_on_region(
             rng_states[thread_id], *thread_plan_ensemble.plan_ptr_vec[thread_id],
-            region_id_to_split);
+            region_id_to_split).first;
         ++thread_attempts[thread_id];
 
         while (!tree_successfully_drawn) {
             tree_successfully_drawn = ust_sampler.attempt_to_draw_tree_on_region(
                 rng_states[thread_id], *thread_plan_ensemble.plan_ptr_vec[thread_id],
-                region_id_to_split);
+                region_id_to_split).first;
             ++thread_attempts[thread_id];
         }
 

@@ -403,6 +403,104 @@ class GraphEdgeIndex {
 };
 
 
+// Flat representation of graphs where its 
+// fixed at runtime 
+class FlatGraph {
+  private:
+    std::vector<int> offsets;
+    std::vector<int> sizes;
+    std::vector<int> caps;
+    std::vector<int> data;
+
+  public:
+    FlatGraph() = default;
+
+    explicit FlatGraph(Graph const &g, bool const store_capacity) {
+        int const V = static_cast<int>(g.size());
+
+        offsets.resize(V + 1);
+        sizes.assign(V, 0);
+
+        // We only store the capacity for the map graph G
+        // We don't care for trees
+        if (store_capacity){
+            caps.resize(V);
+        }
+        
+
+        int total_cap = 0;
+        for (int v = 0; v < V; ++v) {
+            offsets[v] = total_cap;
+            caps[v] = static_cast<int>(g[v].size());
+            total_cap += caps[v];
+        }
+        offsets[V] = total_cap;
+
+        data.resize(total_cap);
+    }
+
+    explicit FlatGraph(FlatGraph const &other, bool const store_capacity) :
+        offsets(other.offsets),
+        sizes(other.sizes),
+        caps(store_capacity ? other.caps : std::vector<int>{}),
+        data(other.data)
+    {};
+
+    int size() const {
+        return static_cast<int>(sizes.size());
+    }
+
+    void clear_vertex(int v) {
+        sizes[v] = 0;
+    }
+
+    void clear() {
+        std::fill(sizes.begin(), sizes.end(), 0);
+    }
+
+    void push_back(int v, int u) {
+        int const pos = sizes[v];
+
+        if constexpr (perf_config::bounds_checking) {
+            if (v < 0 || v >= size()) {
+                throw std::runtime_error("FlatTree::push_back invalid v");
+            }
+            if (pos >= caps[v]) {
+                std::ostringstream oss;
+                oss << "FlatTree::push_back exceeded capacity. "
+                    << "v=" << v
+                    << ", size=" << pos
+                    << ", cap=" << caps[v]
+                    << ", u=" << u;
+                throw std::runtime_error(oss.str());
+            }
+        }
+
+        data[offsets[v] + pos] = u;
+        sizes[v] = pos + 1;
+    }
+
+    int degree(int v) const {
+        return sizes[v];
+    }
+
+    int const *begin(int v) const {
+        return data.data() + offsets[v];
+    }
+
+    int const *end(int v) const {
+        return data.data() + offsets[v] + sizes[v];
+    }
+
+    int *begin(int v) {
+        return data.data() + offsets[v];
+    }
+
+    int *end(int v) {
+        return data.data() + offsets[v] + sizes[v];
+    }
+};
+
 // enum for sampling spaces
 enum class SamplingSpace : unsigned char {
     GraphSpace,       // Sampling on the space of graph partitions

@@ -184,7 +184,7 @@ Rcpp::List ms_plans(
                 double thresh = (double)control["adapt_k_thresh"];
                 double tol = std::max(target - lower, upper - target) / target;
 
-                cut_k = estimate_mergesplit_cut_k(
+                cut_k = estimate_mergesplit_cut_k(map_params,
                     *plan_ensemble.plan_ptr_vec[0], current_plan_multigraph,
                     *splitting_schedule_ptr, thresh, tol, rng_state);
 

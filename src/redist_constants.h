@@ -13,7 +13,7 @@ constexpr double SELECTION_ALPHA = 0.6321206;
 // and to help with debugging by performing potentially onerous extra checks
 // Useful for anyone forking the code or doing in depth performance analysis
 namespace perf_config {
-    inline constexpr bool track_granular_times = false; 
+    inline constexpr bool track_granular_times = true; 
     // Turns on granular tracking of each part of SMC algorithm
     // No solid estimates of performance hit but could cause anywhere from 
     // .1 to 5% slowdown depending on how expensive a call to CPU clock is versus
@@ -40,16 +40,29 @@ namespace perf_config {
     // doing what its supposed to. e.g., imagine a function should walk through every
     // vertex in a county and we know the size of the county. Then this would turn on
     // a check that all county vertices were indeed visitied
+    inline constexpr bool special_timing = false;
+    // For performance profiling of specific code. This uses a global SpecialTimes
+    // struct and can be dropped into any function. It assumes you are single threading.
+    // Simple struct for tracking granular time
+    struct SpecialTimes {
+        double sample_sub_ust_time = 0.0;
+        int sub_ust_num_calls = 0;
+        double other_stuff_time = 0.0;
+    };
+
+    inline SpecialTimes SPECIAL_TIMES;
+
 }
 
 
 using Clock = std::chrono::steady_clock;
 
 
-
 // Debugging constants
 constexpr bool TREE_SPLITTING_DEBUG_VERBOSE =
     false;                                    //  Turns on verbose debugging for tree stuff
 constexpr bool WEIGHTS_DEBUG_VERBOSE = false; //  Turns on verbose debugging for weight stuff
+
+
 
 #endif

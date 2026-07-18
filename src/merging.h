@@ -14,7 +14,7 @@
 #include "map_calc.h"
 #include "redist_types.h"
 #include "tree_op.h"
-#include "ust_sampler.h"
+#include "wilson.h"
 #include "weight_caching.h"
 #include "weights.h"
 #include "wilson.h"

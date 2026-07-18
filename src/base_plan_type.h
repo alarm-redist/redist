@@ -19,7 +19,6 @@
 #include "splitting_schedule_types.h"
 #include "tree_op.h"
 #include "tree_splitting.h"
-#include "ust_sampler.h"
 #include "wilson.h"
 #include "utils.h"
 
@@ -187,11 +186,8 @@ class Plan {
                                       RNGState &rng_state,
                                       double const selection_alpha = SELECTION_ALPHA) const;
 
-    std::pair<bool, int> draw_tree_on_region(const MapParams &map_params,
-                                             const int region_to_draw_tree_on, Tree &ust,
-                                             std::vector<bool> &visited,
-                                             std::vector<bool> &ignore, int &root,
-                                             RNGState &rng_state, int const attempts_to_make);
+    std::pair<bool, int> draw_tree_on_region(USTSampler &ust_sampler, const int region_to_draw_tree_on,
+                          int &root, RNGState &rng_state, int const attempts_to_make);
 
     void update_region_info_from_cut(EdgeCut cut_edge, const int split_region1_id,
                                      const int split_region2_id, bool const add_region);

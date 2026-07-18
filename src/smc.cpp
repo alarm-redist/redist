@@ -1095,21 +1095,23 @@ List run_redist_smc(
                                            est_cut_k, last_k, unnormalized_sampling_weights,
                                            thresh, tol, plan_ensemble_ptr->plan_ptr_vec,
                                            split_district_only, verbosity);
+                            // end timing 
+                            auto smc_param_estimation_time = std::chrono::steady_clock::now();
+                            // add the time 
+                            std::chrono::duration<double, std::ratio<1>> smc_param_diff = smc_param_estimation_time - smc_param_estimation_start_time;
+                            smc_diagnostics.smc_step_parameter_estimation_times[smc_step_num] = smc_param_diff.count();
                             if constexpr (DEBUG_GSMC_PLANS_VERBOSE)
                                 Rprintf("Estimated cut k!\n");
                             k_params.at(smc_step_num) = est_cut_k;
 
                             if (verbosity >= 3) {
                                 Rcout << " (using estimated k = " << k_params.at(smc_step_num)
-                                      << ")\n";
+                                      << ")" << std::endl;
+                                Rcout << " Estimation took " 
+                                      << smc_diagnostics.smc_step_parameter_estimation_times[smc_step_num]
+                                      << " seconds."
+                                      << std::endl;
                             }
-
-                            // end timing 
-                            auto smc_param_estimation_time = std::chrono::steady_clock::now();
-                            // add the time 
-                            std::chrono::duration<double, std::ratio<1>> smc_param_diff = smc_param_estimation_time - smc_param_estimation_start_time;
-                            smc_diagnostics.smc_step_parameter_estimation_times[smc_step_num] = smc_param_diff.count();
-
                         } else {
                             if (verbosity >= 3) {
                                 Rcout << " (using input k = " << k_params.at(smc_step_num)
@@ -1154,6 +1156,13 @@ List run_redist_smc(
                     // add the time 
                     std::chrono::duration<double, std::ratio<1>> smc_split_diff = smc_splitting_end_time - smc_splitting_start_time;
                     smc_diagnostics.smc_split_times[smc_step_num] = smc_split_diff.count();
+
+                    if (verbosity >= 3) {
+                        Rcout << "  Performing SMC splits took " 
+                              << smc_diagnostics.smc_split_times[smc_step_num]
+                              << " seconds."
+                              << std::endl;
+                    }
 
                     if constexpr (perf_config::object_integrity_checking){
                         std::ostringstream oss;
@@ -1248,11 +1257,6 @@ List run_redist_smc(
                         pool.setNumThreads(num_threads);
                     }
 
-                    if constexpr (DEBUG_GSMC_PLANS_VERBOSE) {
-                        Rcout << "Calculating log weights took" << smc_weight_diff.count() << " ms, "
-                              << std::endl;
-                    }
-
                     // do seq_alpha if needed
                     if (apply_weights_alpha) {
                         // reindex first by making the log weight at index i the index of the
@@ -1302,6 +1306,10 @@ List run_redist_smc(
                               << "% efficiency." << std::setprecision(4)
                               << " Log Weight Standard Deviation: "
                               << smc_diagnostics.log_wgt_stddevs.at(smc_step_num) << std::endl;
+                        Rcout << "  Calculating log weights took " 
+                              << smc_diagnostics.smc_weight_times[smc_step_num]
+                              << " seconds."
+                              << std::endl;
                     }
 
                     // only increase if we have smc steps left else it will cause index issues
@@ -1410,6 +1418,10 @@ List run_redist_smc(
                               << 100.0 * smc_diagnostics.acceptance_rates.at(step_num)
                               << "% acceptance rate. " << "There are now "
                               << smc_diagnostics.nunique_plans[step_num] << " unique plans."
+                              << std::endl;
+                        Rcout << "  Performing MCMC round took " 
+                              << smc_diagnostics.ms_step_times[merge_split_step_num] 
+                              << " seconds."
                               << std::endl;
                     }
 

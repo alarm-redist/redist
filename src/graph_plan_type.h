@@ -43,7 +43,8 @@ void estimate_cut_k(const MapParams &map_params, const SplittingSchedule &splitt
 /*
  * Choose k and multiplier for efficient, accurate sampling
  */
-int estimate_mergesplit_cut_k(Plan const &plan, PlanMultigraph const &plan_multigraph,
+int estimate_mergesplit_cut_k(const MapParams &map_params,
+  Plan const &plan, PlanMultigraph const &plan_multigraph,
                               SplittingSchedule const &splitting_schedule, double const thresh,
                               double const tol, RNGState &rng_state);
 

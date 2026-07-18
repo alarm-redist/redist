@@ -6,7 +6,7 @@
 #include "redist_alg_helpers.h"
 #include "scoring.h"
 #include "splitting_schedule_types.h"
-#include "ust_sampler.h"
+#include "wilson.h"
 
 #include <RcppThread.h>
 #include <climits>

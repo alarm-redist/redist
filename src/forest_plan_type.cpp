@@ -6,8 +6,7 @@ ForestPlan::ForestPlan(int const ndists, int const num_regions, const arma::uvec
                        IntPlanAttribute &this_plan_region_pops,
                        IntPlanAttribute &this_plan_order_added, 
                        PlanEdgeBits &this_plan_forest_edge_bits,
-                       MapParams const &map_params,
-                       Tree &ust, std::vector<bool> &visited, std::vector<bool> &ignore,
+                       USTSampler &ust_sampler,
                        RNGState &rng_state, const Rcpp::List &initial_forest_adj_list)
     : Plan(num_regions, pop, this_plan_region_ids, this_plan_region_sizes,
            this_plan_region_pops, this_plan_order_added, this_plan_forest_edge_bits) {
@@ -18,7 +17,7 @@ ForestPlan::ForestPlan(int const ndists, int const num_regions, const arma::uvec
         // else just build a forest at random
         for (size_t region_id = 0; region_id < num_regions; region_id++) {
             int root;
-            auto result = draw_tree_on_region(map_params, region_id, ust, visited, ignore, root,
+            auto result = draw_tree_on_region(ust_sampler, region_id, root,
                                               rng_state, 1000000);
 
             if (!result.first) {
@@ -35,9 +34,9 @@ ForestPlan::ForestPlan(int const ndists, int const num_regions, const arma::uvec
 
     if constexpr(perf_config::object_integrity_checking){
         check_forest_equality(
-            ust,
-            forest_edges.get_graph_tree(map_params.graph_edge_index),
-            map_params.graph_edge_index,
+            ust_sampler.ust,
+            forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
+            ust_sampler.map_params.graph_edge_index,
             "IN Partial Forest Plan Constructor, checking forest_graph vs forest edges (through get_graph_tree)"
         );
     }

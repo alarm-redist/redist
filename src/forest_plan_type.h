@@ -17,11 +17,12 @@ class ForestPlan : public Plan {
 
     // constructor for partial plan (more than 1 region)
     ForestPlan(int const ndists, int const num_regions, const arma::uvec &pop,
-               PlanVector &this_plan_region_ids, RegionSizes &this_plan_region_sizes,
-               IntPlanAttribute &this_plan_region_pops, IntPlanAttribute &this_plan_order_added,
-               PlanEdgeBits &this_plan_forest_edge_bits,
-               MapParams const &map_params, Tree &ust, std::vector<bool> &visited,
-               std::vector<bool> &ignore, RNGState &rng_state,
+                       PlanVector &this_plan_region_ids, RegionSizes &this_plan_region_sizes,
+                       IntPlanAttribute &this_plan_region_pops,
+                       IntPlanAttribute &this_plan_order_added, 
+                       PlanEdgeBits &this_plan_forest_edge_bits,
+                       USTSampler &ust_sampler,
+                       RNGState &rng_state, 
                const Rcpp::List &initial_forest_adj_list = {});
 
     // We now need to keep track of trees as undirected graphs

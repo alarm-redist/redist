@@ -117,9 +117,8 @@ LinkingEdgePlan::LinkingEdgePlan(
         // else just build a forest at random
         for (size_t region_id = 0; region_id < num_regions; region_id++) {
             int root;
-            auto result = draw_tree_on_region(ust_sampler.map_params, region_id,
-                                              ust_sampler.ust, ust_sampler.visited,
-                                              ust_sampler.ignore, root, rng_state, 1000000);
+            auto result = draw_tree_on_region(ust_sampler, region_id,
+                                            root, rng_state, 1000000);
 
             if (!result.first) {
                 throw Rcpp::exception(

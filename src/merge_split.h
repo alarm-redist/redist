@@ -17,7 +17,6 @@
 #include "scoring.h"
 #include "splitting_schedule_types.h"
 #include "tree_op.h"
-#include "ust_sampler.h"
 #include "wilson.h"
 #include "utils.h"
 #include <kirchhoff_inline.h>

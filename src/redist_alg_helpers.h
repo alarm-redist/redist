@@ -18,7 +18,6 @@
 // [[Rcpp::export]]
 Rcpp::List maximum_input_sizes();
 
-
 // gets current time if tracking granular times
 inline Clock::time_point maybe_now() {
     if constexpr (perf_config::track_granular_times) {
@@ -41,7 +40,6 @@ inline void add_elapsed(
         throw Rcpp::exception("Time elapsed is being called when TRACK_GRANULAR_PERFORMANCE_TIMES = false");
     }
 }
-
 
 // Checks a matrix of seat counts is valid
 //

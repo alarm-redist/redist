@@ -1,5 +1,6 @@
 #include "wilson.h"
 
+namespace{
 
 /*
  * Builds a deterministic spanning tree on a county using depth first search
@@ -182,40 +183,6 @@ void walk_until_cty(const Multigraph &mg, int root, std::vector<std::array<int, 
 // TESTED
 void loop_erase_cty(std::vector<std::array<int, 3>> &path, int proposal, int root);
 
-// [[Rcpp::export]]
-Tree sample_ust(List l, const arma::uvec &pop, double lower, double upper,
-                const arma::uvec &counties, const std::vector<bool> ignore) {
-    RNGState rng_state((int)Rcpp::sample(INT_MAX, 1)[0]);
-    Graph g = list_to_graph(l);
-    Multigraph cg = county_graph(g, counties);
-    int V = g.size();
-
-    int FAKE_NDISTS = 6;
-    double FAKE_TARGET = 6.6;
-
-    MapParams map_params(l, counties, pop, FAKE_NDISTS, FAKE_NDISTS, std::vector<int>{}, lower,
-                         FAKE_TARGET, upper, SamplingSpace::GraphSpace);
-
-    Tree tree = init_tree(V);
-    int root;
-    std::vector<bool> visited(V);
-    Tree county_tree = init_tree(map_params.num_counties);
-    TreePopStack county_stack(map_params.num_counties + 1);
-    DummyTreeQueue dummy_county_tree_queue(map_params.V);
-    arma::uvec county_pop(map_params.num_counties, arma::fill::zeros);
-    std::vector<std::vector<int>> county_members(map_params.num_counties, std::vector<int>{});
-    std::vector<bool> c_visited(map_params.num_counties, true);
-    std::vector<int> cty_pop_below(map_params.num_counties, 0);
-    std::vector<std::array<int, 3>> county_path;
-    std::vector<int> path;
-
-    sample_sub_ust(map_params, tree, root, lower, upper, visited, ignore, county_tree,
-                   county_stack, dummy_county_tree_queue, 
-                   county_pop, county_members, c_visited, cty_pop_below,
-                   county_path, path, rng_state);
-    return tree;
-}
-
 /*
  * Sample a uniform spanning subtree of unvisited nodes using Wilson's algorithm
  */
@@ -351,24 +318,20 @@ int sample_sub_ust(MapParams const &map_params, Tree &tree, int &root, double co
                     int cty_root = -1;
                     for (int j = 0; j < n_vtx; j++) {
                         int vtx_idx = county_members[i][j];
-                        if (visited.at(vtx_idx)) { // county root
+                        if (visited[vtx_idx]) { // county root
                             cty_root = j;
                         }
                         if (j > 0 && j != cty_root + 1) {
-                            tree.at(vtx_idx).push_back(county_members[i][j - 1]);
+                            tree[vtx_idx].push_back(county_members[i][j - 1]);
                         }
-                        visited.at(vtx_idx) = true;
+                        visited[vtx_idx] = true;
                     }
 
                     if (cty_root < n_vtx - 1) {
-                        tree.at(county_members[i][cty_root])
+                        tree[county_members[i][cty_root]]
                             .push_back(county_members[i][n_vtx - 1]);
                     }
                 }
-
-
-
-                
             }
         }
     }
@@ -490,4 +453,258 @@ void loop_erase_cty(std::vector<std::array<int, 3>> &path, int proposal, int roo
     if (idx != length - 1) { // a loop
         path.erase(path.begin() + idx + 1, path.begin() + length);
     }
+}
+
+}
+
+// [[Rcpp::export]]
+Tree sample_ust(List l, const arma::uvec &pop, double lower, double upper,
+                const arma::uvec &counties, const std::vector<bool> ignore) {
+    RNGState rng_state((int)Rcpp::sample(INT_MAX, 1)[0]);
+    Graph g = list_to_graph(l);
+    Multigraph cg = county_graph(g, counties);
+    int V = g.size();
+
+    int FAKE_NDISTS = 6;
+    double FAKE_TARGET = 6.6;
+
+    MapParams map_params(l, counties, pop, FAKE_NDISTS, FAKE_NDISTS, std::vector<int>{}, lower,
+                         FAKE_TARGET, upper, SamplingSpace::GraphSpace);
+
+    Tree tree = init_tree(V);
+    int root;
+    std::vector<bool> visited(V);
+    Tree county_tree = init_tree(map_params.num_counties);
+    TreePopStack county_stack(map_params.num_counties + 1);
+    DummyTreeQueue dummy_county_tree_queue(map_params.V);
+    arma::uvec county_pop(map_params.num_counties, arma::fill::zeros);
+    std::vector<std::vector<int>> county_members(map_params.num_counties, std::vector<int>{});
+    std::vector<bool> c_visited(map_params.num_counties, true);
+    std::vector<int> cty_pop_below(map_params.num_counties, 0);
+    std::vector<std::array<int, 3>> county_path;
+    std::vector<int> path;
+
+    sample_sub_ust(map_params, tree, root, lower, upper, visited, ignore, county_tree,
+                   county_stack, dummy_county_tree_queue, 
+                   county_pop, county_members, c_visited, cty_pop_below,
+                   county_path, path, rng_state, false);
+    return tree;
+}
+
+
+
+
+
+/********************************************************
+ * Author: Philip O'Sullivan'
+ * Institution: Harvard University
+ * Date Created: 2025/3
+ * Purpose: Encapsulation of uniform spanning tree sampler functions
+ ********************************************************/
+
+
+bool USTSampler::draw_ust(
+      int &root, double const lower, double const upper,
+        RNGState &rng_state) {
+    // We assume that ignore has already been properly set 
+    // Now get a uniform spanning tree drawn on the subgraph denoted by the ignore
+    // vertices 
+    int result = sample_sub_ust(map_params, ust, root, lower, upper, visited, ignore,
+                                county_tree, county_stack, dummy_county_tree_queue,
+                                county_pop, county_members,
+                                c_visited, cty_pop_below, county_path, path, rng_state,
+                                fake_dummy_trees_ok);
+    // result == 0 means it was successful
+    return (result == 0);
+}
+
+
+std::pair<bool, int> USTSampler::attempt_to_draw_tree_on_region(RNGState &rng_state, Plan const &plan,
+                                                const int region_to_draw_tree_on) {
+    int V = map_params.V;
+    // optional for checking 
+    int num_region_vertices = 0;
+
+    // Mark it as ignore if its not in the region to split
+    for (int i = 0; i < V; i++) {
+        ignore[i] = plan.region_ids[i] != region_to_draw_tree_on;
+        // count vertices we're not ignoring 
+        num_region_vertices += !ignore[i];
+    }
+
+    // get upper and lower bounds on region pops
+    auto min_max_pair = splitting_schedule.all_regions_min_and_max_possible_cut_sizes
+                            [plan.region_sizes[region_to_draw_tree_on]];
+
+    // clear the tree
+    clear_tree(ust);
+
+    // Now sample a uniform spanning tree drawn on that region
+    bool const valid_tree = draw_ust(root, 
+        min_max_pair.first * map_params.lower, // lower, 
+        min_max_pair.second * map_params.upper, // upper
+        rng_state
+        );
+
+    if constexpr(perf_config::object_integrity_checking){
+        if (valid_tree){
+            check_tree_integrity(
+                ust,
+                "Just called `sample_sub_ust` in attempt_to_draw_tree_on_region\n",
+                root,
+                num_region_vertices,
+                true
+            );
+        }
+    }
+
+    return std::make_pair(valid_tree, num_region_vertices);
+}
+
+std::pair<bool, int> USTSampler::attempt_to_draw_tree_on_merged_region(RNGState &rng_state, Plan const &plan,
+                                                       const int region1_to_draw_tree_on,
+                                                       const int region2_to_draw_tree_on) {
+    int V = map_params.V;
+    // optional for checking 
+    int num_merged_region_vertices = 0;
+
+    // Mark it as ignore if its not in either of the two regions
+    for (int i = 0; i < V; i++) {
+        ignore[i] = plan.region_ids[i] != region1_to_draw_tree_on &&
+                    plan.region_ids[i] != region2_to_draw_tree_on;
+        num_merged_region_vertices += !ignore[i];
+    }
+
+    int merged_region_size =
+        plan.region_sizes[region1_to_draw_tree_on] + plan.region_sizes[region2_to_draw_tree_on];
+    // get upper and lower bounds on region pops
+    auto min_max_pair =
+        splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size];
+
+    // clear the tree
+    clear_tree(ust);
+
+    // Now sample a uniform spanning tree drawn on that region
+    bool const valid_tree = draw_ust(root, 
+        min_max_pair.first * map_params.lower, // lower, 
+        min_max_pair.second * map_params.upper, // upper
+        rng_state
+        );
+
+    if constexpr(perf_config::object_integrity_checking){
+        if (valid_tree){
+            check_tree_integrity(
+                ust,
+                "Just called `sample_sub_ust` in attempt_to_draw_tree_on_merged_region\n",
+                root,
+                num_merged_region_vertices,
+                true
+            );
+        }
+    }
+
+    return std::make_pair(valid_tree, num_merged_region_vertices);
+}
+
+std::pair<bool, EdgeCut> USTSampler::try_to_sample_splittable_tree(
+    Plan const &plan, int const split_region1, int const split_region2,
+    ScoringFunction const &scoring_function, RNGState &rng_state, TreeSplitter &tree_splitter,
+    int const region_populations, int const region_size, bool const save_selection_prob) {
+    // We assume a tree has already been successfully drawn so
+    // try to find a valid cut
+    auto cut_size_bounds =
+        splitting_schedule.all_regions_min_and_max_possible_cut_sizes[region_size];
+    int min_possible_cut_size = cut_size_bounds.first;
+    int max_possible_cut_size = cut_size_bounds.second;
+
+    // REprintf("Remainder Size: %d Cut sizes:", region_size);
+    // for(auto const &v: splitting_schedule.all_regions_smaller_cut_sizes_to_try[region_size]){
+    //     REprintf("%d, ", v);
+    // }
+    // REprintf("\n");
+
+    std::pair<bool, EdgeCut> edge_search_result = tree_splitter.attempt_to_find_edge_to_cut(
+        map_params, scoring_function, rng_state, plan, split_region1, split_region2, ust, root,
+        stack, pops_below_vertex, ignore, region_populations, region_size,
+        min_possible_cut_size, max_possible_cut_size,
+        splitting_schedule.all_regions_smaller_cut_sizes_to_try[region_size],
+        save_selection_prob);
+
+    bool search_successful = std::get<0>(edge_search_result);
+    // return false if unsuccessful
+    if (!search_successful)
+        return std::make_pair(false, EdgeCut());
+
+    // If successful extract the edge cut info
+    EdgeCut cut_edge = std::get<1>(edge_search_result);
+    // Now erase the cut edge in the tree
+    erase_tree_edge(ust, cut_edge);
+
+    return edge_search_result;
+}
+
+std::pair<bool, EdgeCut> USTSampler::attempt_to_find_valid_tree_split(
+    RNGState &rng_state, ScoringFunction const &scoring_function, TreeSplitter &tree_splitter,
+    Plan const &plan, int const region_to_split, int const new_region_id,
+    bool const save_selection_prob) {
+    // Try to draw a tree
+    bool tree_drawn = attempt_to_draw_tree_on_region(rng_state, plan, region_to_split).first;
+    // return false if unsuccessful
+    if (!tree_drawn)
+        return std::make_pair(false, EdgeCut());
+
+    // Else try to find a valid cut
+    int region_to_split_size = plan.region_sizes[region_to_split];
+    int region_to_split_population = plan.region_pops[region_to_split];
+
+    return try_to_sample_splittable_tree(plan, region_to_split, new_region_id, scoring_function,
+                                         rng_state, tree_splitter, region_to_split_population,
+                                         region_to_split_size, save_selection_prob);
+}
+
+std::pair<bool, EdgeCut> USTSampler::attempt_to_find_valid_tree_mergesplit(
+    RNGState &rng_state, ScoringFunction const &scoring_function, TreeSplitter &tree_splitter,
+    Plan const &plan, int const merge_region1, int const merge_region2,
+    bool const save_selection_prob) {
+    // Try to draw a tree
+    bool tree_drawn =
+        attempt_to_draw_tree_on_merged_region(rng_state, plan, merge_region1, merge_region2).first;
+    // return false if unsuccessful
+    if (!tree_drawn)
+        return std::make_pair(false, EdgeCut());
+
+    // Else try to find a valid cut
+    int region_to_split_size =
+        plan.region_sizes[merge_region1] + plan.region_sizes[merge_region2];
+    int region_to_split_population =
+        plan.region_pops[merge_region1] + plan.region_pops[merge_region2];
+
+    return try_to_sample_splittable_tree(plan, merge_region1, merge_region2, scoring_function,
+                                         rng_state, tree_splitter, region_to_split_population,
+                                         region_to_split_size, save_selection_prob);
+}
+
+
+void USTSampler::check_tree_integrity(
+      Tree const &a_ust,
+      std::string_view where,
+      int root,
+      int expected_tree_vertices,
+      bool check_vertex_count
+    ){
+    // check no garbage vertices in the tree 
+    check_directed_tree_edges_are_graph_edges(
+        a_ust, map_params.graph_edge_index,
+        where
+    );
+    // now check the tree returned is actually a directed tree
+    check_is_directed_tree(
+        a_ust,
+        where,
+        root,
+        expected_tree_vertices,
+        check_vertex_count,
+        visited,
+        stack
+    );
 }

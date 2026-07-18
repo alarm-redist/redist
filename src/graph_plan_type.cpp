@@ -183,7 +183,8 @@ std::vector<double> get_ordered_tree_cut_devs(
  * Choose k and multiplier for efficient, accurate sampling
  * Assumes plan multigraph is already built
  */
-int estimate_mergesplit_cut_k(Plan const &plan, PlanMultigraph const &plan_multigraph,
+int estimate_mergesplit_cut_k(const MapParams &map_params,
+    Plan const &plan, PlanMultigraph const &plan_multigraph,
                               SplittingSchedule const &splitting_schedule, double const thresh,
                               double const tol, RNGState &rng_state) {
 
@@ -202,20 +203,8 @@ int estimate_mergesplit_cut_k(Plan const &plan, PlanMultigraph const &plan_multi
     vec distr_ok(k_max + 1, fill::zeros);
     int root;
     int max_ok = 0;
-    std::vector<bool> ignore(V);
-    std::vector<bool> visited(V);
-    std::vector<int> cut_below_pop(V, 0);
-    TreePopStack pop_stack(V + 1);
-    DummyTreeQueue dummy_county_tree_queue(V+1);
-    Tree county_tree = init_tree(plan_multigraph.map_params.num_counties);
-    TreePopStack county_stack(plan_multigraph.map_params.num_counties);
-    arma::uvec county_pop(plan_multigraph.map_params.num_counties, arma::fill::zeros);
-    std::vector<std::vector<int>> county_members(plan_multigraph.map_params.num_counties,
-                                                 std::vector<int>{});
-    std::vector<bool> c_visited(plan_multigraph.map_params.num_counties, true);
-    std::vector<int> cty_pop_below(plan_multigraph.map_params.num_counties, 0);
-    std::vector<std::array<int, 3>> county_path;
-    std::vector<int> path;
+
+    USTSampler ust_sampler(map_params, splitting_schedule);
 
     int max_V = 0;
     Tree ust = init_tree(V);
@@ -225,33 +214,25 @@ int estimate_mergesplit_cut_k(Plan const &plan, PlanMultigraph const &plan_multi
         auto merged_size = plan.region_sizes[a_pair.first] + plan.region_sizes[a_pair.second];
         auto merged_pop = plan.region_pops[a_pair.first] + plan.region_pops[a_pair.second];
 
-        int n_vtx = 0;
-        for (int j = 0; j < V; j++) {
-            if (plan.region_ids[j] == a_pair.first || plan.region_ids[j] == a_pair.second) {
-                ignore[j] = false;
-                n_vtx++;
-            } else {
-                ignore[j] = true;
-            }
-        }
+        // now attempt to sample the tree on the biggest region
+        auto const result = ust_sampler.attempt_to_draw_tree_on_merged_region(rng_state, plan, a_pair.first, a_pair.second);
+        bool const successful = result.first;
+        int const n_vtx = result.second;
+
         if (n_vtx > max_V)
             max_V = n_vtx;
 
-        clear_tree(ust);
-        int result = sample_sub_ust(plan_multigraph.map_params, ust, root, lower * merged_size,
-                                    upper * merged_size, visited, ignore, county_tree,
-                                    county_stack, dummy_county_tree_queue,
-                                    county_pop, county_members, c_visited,
-                                    cty_pop_below, county_path, path, rng_state);
-        if (result != 0) {
+        if (!successful) {
             i--;
             continue;
         }
 
         // reset the cut below pop to zero
-        std::fill(cut_below_pop.begin(), cut_below_pop.end(), 0);
-        get_tree_pops_below(ust, root, pop_stack, plan_multigraph.map_params.pop,
-                            cut_below_pop);
+        std::fill(
+            ust_sampler.pops_below_vertex.begin(), 
+            ust_sampler.pops_below_vertex.end(), 0);
+        get_tree_pops_below(ust, root, ust_sampler.stack, plan_multigraph.map_params.pop,
+                            ust_sampler.pops_below_vertex);
 
         std::pair<int, int> min_and_max_possible_cut_sizes =
             splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_size];
@@ -259,7 +240,7 @@ int estimate_mergesplit_cut_k(Plan const &plan, PlanMultigraph const &plan_multi
         int max_possible_cut_size = min_and_max_possible_cut_sizes.second;
 
         devs.push_back(get_ordered_tree_cut_devs(
-            ust, root, cut_below_pop, plan_multigraph.map_params.target, plan.region_ids,
+            ust, root, ust_sampler.pops_below_vertex, plan_multigraph.map_params.target, plan.region_ids,
             a_pair.first, a_pair.second, merged_size, merged_pop, min_possible_cut_size,
             max_possible_cut_size,
             splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_size]));
@@ -331,23 +312,12 @@ void estimate_cut_k(const MapParams &map_params, const SplittingSchedule &splitt
     vec distr_ok(k_max + 1, fill::zeros);
     int root;
     int max_ok = 0;
-    std::vector<bool> ignore(V);
-    std::vector<bool> visited(V);
-    std::vector<int> cut_below_pop(V, 0);
-    TreePopStack pop_stack(V + 1);
-    DummyTreeQueue dummy_county_tree_queue(V + 1);
-    Tree county_tree = init_tree(map_params.num_counties);
-    TreePopStack county_stack(map_params.num_counties);
-    arma::uvec county_pop(map_params.num_counties, arma::fill::zeros);
-    std::vector<std::vector<int>> county_members(map_params.num_counties, std::vector<int>{});
-    std::vector<bool> c_visited(map_params.num_counties, true);
-    std::vector<int> cty_pop_below(map_params.num_counties, 0);
-    std::vector<std::array<int, 3>> county_path;
-    std::vector<int> path;
+
+    USTSampler ust_sampler(map_params, splitting_schedule);
 
     int idx = 0;
     int max_V = 0;
-    Tree ust = init_tree(V);
+
 
     bool any_size_split =
         splitting_schedule.schedule_type == SplittingSizeScheduleType::AnyValidSizeSMD;
@@ -358,7 +328,6 @@ void estimate_cut_k(const MapParams &map_params, const SplittingSchedule &splitt
             continue;
         }
 
-        int n_vtx = V;
 
         // Get the index of the region with the largest dval
         int biggest_region_id;
@@ -396,45 +365,27 @@ void estimate_cut_k(const MapParams &map_params, const SplittingSchedule &splitt
         int min_possible_cut_size = min_and_max_possible_cut_sizes.first;
         int max_possible_cut_size = min_and_max_possible_cut_sizes.second;
 
-        for (int j = 0; j < V; j++) {
-            // if not the biggest region mark as ignore
-            if (plan_ptrs_vec.at(i)->region_ids[j] != biggest_region_id) {
-                ignore[j] = true;
-                n_vtx--;
-            }else{
-                ignore[j] = false;
-            }
-        }
-
-        // Rprintf("Tree on region %d of size %d has %d vertices and pop %d!\n",
-        // biggest_region_id,
-        //     biggest_region_size, n_vtx,
-        //     plan_ptrs_vec.at(i)->region_pops.at(biggest_region_id));
-
-        // plan_ptrs_vec.at(i)->Rprint();
-        // Rprintf("\n\n");
+        // now attempt to sample the tree on the biggest region
+        auto const result = ust_sampler.attempt_to_draw_tree_on_region(rng_state, *plan_ptrs_vec[i], biggest_region_id);
+        bool const successful = result.first;
+        int const n_vtx = result.second;
 
         if (n_vtx > max_V)
             max_V = n_vtx;
 
-        clear_tree(ust);
-        int result = sample_sub_ust(map_params, ust, root, lower * min_possible_cut_size,
-                                    upper * min_possible_cut_size, visited, ignore, county_tree,
-                                    county_stack, dummy_county_tree_queue, county_pop,
-                                    county_members, c_visited,
-                                    cty_pop_below, county_path, path, rng_state);
-
-        if (result != 0) {
+        if (!successful) {
             idx--;
             continue;
         }
 
         // reset the cut below pop to zero
-        std::fill(cut_below_pop.begin(), cut_below_pop.end(), 0);
-        get_tree_pops_below(ust, root, pop_stack, map_params.pop, cut_below_pop);
+        std::fill(ust_sampler.pops_below_vertex.begin(), ust_sampler.pops_below_vertex.end(), 0);
+        get_tree_pops_below(ust_sampler.ust, root, 
+            ust_sampler.stack, map_params.pop, ust_sampler.pops_below_vertex);
 
         devs.push_back(get_ordered_tree_cut_devs(
-            ust, root, cut_below_pop, target, plan_ptrs_vec.at(i)->region_ids,
+            ust_sampler.ust, root, ust_sampler.pops_below_vertex, 
+            target, plan_ptrs_vec[i]->region_ids,
             biggest_region_id, biggest_region_id, biggest_region_size, biggest_size_region_pop,
             min_possible_cut_size, max_possible_cut_size,
             splitting_schedule.all_regions_smaller_cut_sizes_to_try[biggest_region_size]));

@@ -14,7 +14,7 @@
 #include "merging.h"
 #include "redist_alg_helpers.h"
 #include "scoring.h"
-#include "ust_sampler.h"
+#include "wilson.h"
 #include "weight_caching.h"
 #include "weights.h"
 #include "utils.h"

@@ -523,7 +523,7 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params,
             plan_ptr_vec[i] = std::make_unique<ForestPlan>(
                 ndists, num_regions, map_params.pop, plan_region_ids, plan_sizes, plan_pops,
                 plan_region_order_added, plan_forest_edge_bits, 
-                map_params, ust, visited, ignore,
+                ust_sampler_buffers[thread_id],
                 rng_states[thread_id]);
         } else if (use_linking_edge_space) {
             plan_ptr_vec[i] = std::make_unique<LinkingEdgePlan>(
@@ -1305,6 +1305,14 @@ void SMCDiagnostics::add_diagnostics_to_out_list(Rcpp::List &out) {
             _["granular_time_tracked"] = false
         );
     }
+
+    // optional add special timing 
+    if constexpr (perf_config::special_timing){
+        Rcpp::List special_timing_list = List::create(
+        );
+
+        granular_timing["special_timing_list"] = special_timing_list;
+    }
     
     out["acceptance_rates"] = acceptance_rates;
     out["draw_tries_mat"] = draw_tries_mat;
@@ -1333,6 +1341,7 @@ void SMCDiagnostics::add_diagnostics_to_out_list(Rcpp::List &out) {
     out["linking_edges_list"] = all_steps_linking_edge_list;
     out["valid_split_region_sizes_list"] = all_steps_valid_split_region_sizes;
     out["valid_region_sizes_to_split_list"] = all_steps_valid_region_sizes_to_split;
+
 
     return;
 }

@@ -1,6 +1,6 @@
 #include "lct_graph_plan_type.h"
 
-#include "ust_sampler.h"
+#include "wilson.h"
 
 #include <algorithm>
 #include <queue>
@@ -29,7 +29,7 @@ bool LCTGraphPlan::init_lct_from_regions(MapParams const &map_params, USTSampler
     for (int d = 0; d < num_regions; ++d) {
         bool ok = false;
         for (int attempt = 0; attempt < max_attempts_per_region && !ok; ++attempt) {
-            ok = ust_sampler.attempt_to_draw_tree_on_region(rng_state, *this, d);
+            ok = ust_sampler.attempt_to_draw_tree_on_region(rng_state, *this, d).first;
         }
         if (!ok) {
             return false;
