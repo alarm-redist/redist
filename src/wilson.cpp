@@ -194,7 +194,7 @@ int sample_sub_ust(MapParams const &map_params, Tree &tree, int &root, double co
                    arma::uvec &county_pop, std::vector<std::vector<int>> &county_members,
                    std::vector<bool> &c_visited, std::vector<int> &cty_pop_below,
                    std::vector<std::array<int, 3>> &county_path, std::vector<int> &path,
-                   RNGState &rng_state, bool const draw_fake_dummy_trees) {
+                   RNGState &rng_state) {
     // auto t1_start = std::chrono::steady_clock::now();
     int const n_county = map_params.num_counties;
     std::fill(c_visited.begin(), c_visited.end(), true);
@@ -302,36 +302,15 @@ int sample_sub_ust(MapParams const &map_params, Tree &tree, int &root, double co
             // so we fill in a dummy tree 
             if (cty_pop_below[i] >= 0 && (miss_first && miss_second)) {
                 // check if we need the dummy tree to actually be a subset of g
-                if(!draw_fake_dummy_trees){
-                    add_county_to_tree_dfs(
-                        map_params.county_restricted_graph,
-                        map_params.counties[county_members[i][0]], // pass in the county CAREFUL COUNTIES ARE 1-indexed
-                        county_members[i],
-                        visited,
-                        dummy_county_tree_queue,
-                        tree
-                    );
-                    remaining -= n_vtx - 1; // already visited county root
-                }else{
-                    // fill in with a fake dummy tree
-                    remaining -= n_vtx - 1; // already visited county root
-                    int cty_root = -1;
-                    for (int j = 0; j < n_vtx; j++) {
-                        int vtx_idx = county_members[i][j];
-                        if (visited[vtx_idx]) { // county root
-                            cty_root = j;
-                        }
-                        if (j > 0 && j != cty_root + 1) {
-                            tree[vtx_idx].push_back(county_members[i][j - 1]);
-                        }
-                        visited[vtx_idx] = true;
-                    }
-
-                    if (cty_root < n_vtx - 1) {
-                        tree[county_members[i][cty_root]]
-                            .push_back(county_members[i][n_vtx - 1]);
-                    }
-                }
+                add_county_to_tree_dfs(
+                    map_params.county_restricted_graph,
+                    map_params.counties[county_members[i][0]], // pass in the county CAREFUL COUNTIES ARE 1-indexed
+                    county_members[i],
+                    visited,
+                    dummy_county_tree_queue,
+                    tree
+                );
+                remaining -= n_vtx - 1; // already visited county root
             }
         }
     }
@@ -487,7 +466,7 @@ Tree sample_ust(List l, const arma::uvec &pop, double lower, double upper,
     sample_sub_ust(map_params, tree, root, lower, upper, visited, ignore, county_tree,
                    county_stack, dummy_county_tree_queue, 
                    county_pop, county_members, c_visited, cty_pop_below,
-                   county_path, path, rng_state, false);
+                   county_path, path, rng_state);
     return tree;
 }
 
@@ -512,8 +491,8 @@ bool USTSampler::draw_ust(
     int result = sample_sub_ust(map_params, ust, root, lower, upper, visited, ignore,
                                 county_tree, county_stack, dummy_county_tree_queue,
                                 county_pop, county_members,
-                                c_visited, cty_pop_below, county_path, path, rng_state,
-                                fake_dummy_trees_ok);
+                                c_visited, cty_pop_below, county_path, path, rng_state
+                                );
     // result == 0 means it was successful
     return (result == 0);
 }

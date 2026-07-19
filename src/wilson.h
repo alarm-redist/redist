@@ -21,9 +21,6 @@ class TreeSplitter;
 class USTSampler {
 
   private:
-    // Whether or not its ok to draw fake dummy trees
-    // Only ok for graph space sampling 
-    bool const fake_dummy_trees_ok;
 
     // private method which calls `sample_sub_ust` and assumes that visited and ignore have been properly set up
     bool draw_ust(int &root, double const lower, double const upper,
@@ -31,7 +28,7 @@ class USTSampler {
 
   public:
     USTSampler(MapParams const &map_params, SplittingSchedule const &splitting_schedule)
-        : fake_dummy_trees_ok(map_params.sampling_space == SamplingSpace::GraphSpace),
+        :
         ust(init_tree(map_params.V)),
         pops_below_vertex(map_params.V, 0),
           visited(map_params.V), ignore(map_params.V), stack(map_params.V + 1),
