@@ -1,9 +1,21 @@
-#include "tree_op.h"
+#include <RcppArmadillo.h>
+#include "redist_types.h"
+
+// anonymous namespace used here so we no longer need to link to Tree_ops
+namespace {
+    Tree init_tree(int V) {
+    Tree tree;
+    for (int i = 0; i < V; i++) {
+        tree.push_back(std::vector<int>());
+    }
+    return tree;
+}
+}
 
 // [[Rcpp::export]]
-List reduce_adj(List adj_list, IntegerVector prec_map, int n_keep) {
-    List adj(n_keep);
-    IntegerVector nbors, sub;
+Rcpp::List reduce_adj(Rcpp::List adj_list, Rcpp::IntegerVector prec_map, int n_keep) {
+    Rcpp::List adj(n_keep);
+    Rcpp::IntegerVector nbors, sub;
 
     int V = adj_list.size();
     for (int i = 0; i < V; i++) {
@@ -11,7 +23,7 @@ List reduce_adj(List adj_list, IntegerVector prec_map, int n_keep) {
         if (new_i == -1)
             continue;
 
-        sub = IntegerVector::create();
+        sub = Rcpp::IntegerVector::create();
 
         nbors = adj_list[i];
         int n_nbors = nbors.size();
@@ -31,7 +43,7 @@ List reduce_adj(List adj_list, IntegerVector prec_map, int n_keep) {
 // with multiple edges and self-loops removed.
 // idxs should run continuously from 0 to n_groups-1
 // [[Rcpp::export]]
-Graph collapse_adj(List graph, const arma::uvec &idxs) {
+Graph collapse_adj(Rcpp::List graph, const arma::uvec &idxs) {
     int V = graph.size();
     int V_new = max(idxs) + 1;
     Graph collapsed = init_tree(V_new);
@@ -39,9 +51,9 @@ Graph collapse_adj(List graph, const arma::uvec &idxs) {
     for (int i = 0; i < V; i++) {
         int from = idxs(i);
         std::vector<int> *nbors = &collapsed[from];
-        int length = ((IntegerVector)graph[i]).size();
+        int length = ((Rcpp::IntegerVector)graph[i]).size();
         for (int j = 0; j < length; j++) {
-            int to = idxs(((IntegerVector)graph[i])[j]);
+            int to = idxs(((Rcpp::IntegerVector)graph[i])[j]);
 
             if (from != to && std::find(nbors->begin(), nbors->end(), to) == nbors->end()) {
                 nbors->push_back(to);

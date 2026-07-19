@@ -12,10 +12,10 @@
 #include "graph_plan_type.h"
 #include "lct_graph_plan_type.h"
 #include "linking_edge_plan_type.h"
-#include "redist_types.h"
+#include "advanced_types.h"
 #include "utils.h"
 
-// [[Rcpp::export]]
+
 Rcpp::List maximum_input_sizes();
 
 // gets current time if tracking granular times

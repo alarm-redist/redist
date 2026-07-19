@@ -10,13 +10,12 @@
 #include "constraint_calc_helper.h"
 #include <RcppArmadillo.h>
 
-using namespace Rcpp;
 
 /* Function to check adjacency of a randomly selected connected component
    against connected components already selected. Also gets candidate
    congressional district swaps if valid */
-List adjcheck_propcd(List aList, NumericVector prop_partitions,
-                     NumericVector accepted_partitions, NumericVector cds) {
+Rcpp::List adjcheck_propcd(Rcpp::List aList, Rcpp::NumericVector prop_partitions,
+                     Rcpp::NumericVector accepted_partitions, Rcpp::NumericVector cds) {
     /* Inputs to function:
        aList: Full adjacency list
 
@@ -32,7 +31,7 @@ List adjcheck_propcd(List aList, NumericVector prop_partitions,
     int adj_check = 0;
 
     // Initialize vector of proposed congressional cds
-    NumericVector prop_cds;
+    Rcpp::NumericVector prop_cds;
 
     // Get current cd of the proposed partition
     int current_cd = cds(prop_partitions(0));
@@ -42,13 +41,13 @@ List adjcheck_propcd(List aList, NumericVector prop_partitions,
     for (int i = 0; i < prop_partitions.size(); i++) {
 
         // For i'th unit in prop_partitions, get the adjacency list
-        NumericVector adj_units = aList(prop_partitions(i));
+        Rcpp::NumericVector adj_units = aList(prop_partitions(i));
 
         // Loop to see if any of the indices in adj_units are in accepted_partitions
         for (int j = 0; j < adj_units.size(); j++) {
 
             // See if element j of adj_units is in accepted_partitions
-            bool test_adj = is_true(any(accepted_partitions == adj_units(j)));
+            bool test_adj = Rcpp::is_true(any(accepted_partitions == adj_units(j)));
 
             /* If true, iterate adj_check to 1 and break the loop to throw out
            the partition */
@@ -76,7 +75,7 @@ List adjcheck_propcd(List aList, NumericVector prop_partitions,
     }
 
     // Create output from function
-    List out;
+    Rcpp::List out;
     out["adjacency_check"] = adj_check;
     out["proposed_cds"] = prop_cds;
 
@@ -84,7 +83,7 @@ List adjcheck_propcd(List aList, NumericVector prop_partitions,
 }
 
 // Function to do the elimination check
-int elim_check(NumericVector prop_partition, NumericVector cds) {
+int elim_check(Rcpp::NumericVector prop_partition, Rcpp::NumericVector cds) {
 
     /* Inputs to function:
        prop_partition: Proposed partition
@@ -100,7 +99,7 @@ int elim_check(NumericVector prop_partition, NumericVector cds) {
     int current_cd = cds(prop_partition(0));
 
     // Get length of cds that is of that cd
-    NumericVector subcd = cds[cds == current_cd];
+    Rcpp::NumericVector subcd = cds[cds == current_cd];
     int current_cd_size = subcd.size();
 
     // If prop_partition size is equal to number of units of that cd, then elim.
@@ -113,7 +112,7 @@ int elim_check(NumericVector prop_partition, NumericVector cds) {
 
 // Function to generate adjacency graph and count clusters
 // [[Rcpp::export]]
-int countpartitions(List aList) {
+int countpartitions(Rcpp::List aList) {
 
     // Takes an adjacency list,
     // The vector of subset nodes
@@ -121,11 +120,11 @@ int countpartitions(List aList) {
 
     // initialize connCompVec
     // Initialize visited indices
-    IntegerVector visitedInd(aList.size());
+    Rcpp::IntegerVector visitedInd(aList.size());
     int indexVisit = 0;
 
     // Initialize connected components
-    IntegerVector currConnComp(aList.size());
+    Rcpp::IntegerVector currConnComp(aList.size());
 
     // Initialize the number of connected components
     int numConnComp = 0;
@@ -158,7 +157,7 @@ int countpartitions(List aList) {
             while (toStop == 0) {
 
                 // get the neighbors of the next current comp
-                IntegerVector listNeighs = aList[currConnComp[nodeCount]];
+                Rcpp::IntegerVector listNeighs = aList[currConnComp[nodeCount]];
 
                 // If listNeighs does not have length zero...
                 int listLength = listNeighs.size();
@@ -195,8 +194,8 @@ int countpartitions(List aList) {
 }
 
 // Function to update district populations
-NumericVector update_distpop(NumericVector prop_partition, NumericVector unitpop_vec,
-                             int prop_cd, int curr_cd, NumericVector distpop_vec) {
+Rcpp::NumericVector update_distpop(Rcpp::NumericVector prop_partition, Rcpp::NumericVector unitpop_vec,
+                             int prop_cd, int curr_cd, Rcpp::NumericVector distpop_vec) {
 
     /* Inputs to function:
        prop_partition: Proposed partition to be swapped
@@ -211,7 +210,7 @@ NumericVector update_distpop(NumericVector prop_partition, NumericVector unitpop
      */
 
     // Clone distpop_vec
-    NumericVector distpop_vec_clone = clone(distpop_vec);
+    Rcpp::NumericVector distpop_vec_clone = Rcpp::clone(distpop_vec);
 
     // Current population, proposed district population
     int currpop = distpop_vec_clone(curr_cd);
@@ -231,7 +230,7 @@ NumericVector update_distpop(NumericVector prop_partition, NumericVector unitpop
 }
 
 // Function to update the metropolis-hastings probability for a swap
-double update_mhprob(NumericVector prop_partition, List aList, arma::vec cds, int prop_cd,
+double update_mhprob(Rcpp::NumericVector prop_partition, Rcpp::List aList, arma::vec cds, int prop_cd,
                      double eprob, double mh_prob) {
 
     /* Inputs to function:
@@ -256,7 +255,7 @@ double update_mhprob(NumericVector prop_partition, List aList, arma::vec cds, in
     for (int i = 0; i < prop_partition.size(); i++) {
 
         // Get adjacency vector
-        NumericVector adj_vec = aList(prop_partition(i));
+        Rcpp::NumericVector adj_vec = aList(prop_partition(i));
 
         // Loop throgh elements of adj_vec
         for (int j = 0; j < adj_vec.size(); j++) {
@@ -285,11 +284,11 @@ double update_mhprob(NumericVector prop_partition, List aList, arma::vec cds, in
 
 // Function to calculate squared distance matrix (written by Jonathan Olmsted, NPD Group)
 // [[Rcpp::export]]
-NumericMatrix calcPWDh(NumericMatrix x) {
+Rcpp::NumericMatrix calcPWDh(Rcpp::NumericMatrix x) {
 
     int nrows = x.nrow();
     int ncols = x.nrow();
-    NumericMatrix out(nrows, ncols);
+    Rcpp::NumericMatrix out(nrows, ncols);
     double rad = 3963.1676;
     double pi = 3.141592653589793238463;
     for (int arow = 0; arow < nrows; arow++) {
@@ -310,7 +309,7 @@ NumericMatrix calcPWDh(NumericMatrix x) {
 }
 
 // Function to calculate deviation from original cd vector
-NumericVector diff_origcds(NumericMatrix mat, NumericVector cds) {
+Rcpp::NumericVector diff_origcds(Rcpp::NumericMatrix mat, Rcpp::NumericVector cds) {
 
     /* Inputs to function:
        mat: Matrix of congressional district assignments
@@ -322,20 +321,20 @@ NumericVector diff_origcds(NumericMatrix mat, NumericVector cds) {
     unsigned int len_cds = cds.size();
 
     // Convert cds to arma
-    arma::uvec cds_arma = as<arma::uvec>(cds);
+    arma::uvec cds_arma = Rcpp::as<arma::uvec>(cds);
 
     // Initialize objects
     unsigned int i;
     unsigned int k = mat.ncol();
     arma::vec plan;
     arma::uvec compare;
-    NumericVector store_compare(k);
+    Rcpp::NumericVector store_compare(k);
 
     // Start loop over mat columns
     for (i = 0; i < k; i++) {
 
         // Get the plan
-        plan = mat(_, i);
+        plan = mat(Rcpp::_, i);
 
         // Compare matrices
         compare = (plan == cds_arma);
@@ -348,7 +347,7 @@ NumericVector diff_origcds(NumericMatrix mat, NumericVector cds) {
 }
 
 // Function to calculate deviation from parity from cd matrix
-NumericVector distParity(NumericMatrix mat, NumericVector popvec) {
+Rcpp::NumericVector distParity(Rcpp::NumericMatrix mat, Rcpp::NumericVector popvec) {
 
     /* Inputs to function:
        mat: Matrix of congressional district assignments
@@ -358,19 +357,19 @@ NumericVector distParity(NumericMatrix mat, NumericVector popvec) {
      */
 
     // Get the unique cd labels
-    NumericVector labs = unique(mat(_, 0));
+    Rcpp::NumericVector labs = Rcpp::unique(mat(Rcpp::_, 0));
 
     // Calculate parity
     double parity = (double)sum(popvec) / labs.size();
 
     // Container vector of plan deviations
-    NumericVector plandevs(mat.ncol());
+    Rcpp::NumericVector plandevs(mat.ncol());
 
     // Loop through plans
     for (int i = 0; i < mat.ncol(); i++) {
 
         // Get plan
-        arma::vec plan = mat(_, i);
+        arma::vec plan = mat(Rcpp::_, i);
 
         // Loop through assignments
         double maxdev = 0.0;

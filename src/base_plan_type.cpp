@@ -415,7 +415,7 @@ std::string Plan::debug_string(bool print_region_ids) const {
 // Prints our object using Rcout. Should be used in Rcpp call
 void Plan::Rprint(bool verbose) const {
     auto print_str = debug_string(verbose);
-    Rcerr << print_str;
+    Rcpp::Rcerr << print_str;
     return;
 
     auto region_counts = get_num_district_and_multidistricts();

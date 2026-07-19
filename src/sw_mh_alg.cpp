@@ -12,7 +12,6 @@
 #include "redist_types.h"
 #include "sw_mh_helper.h"
 #include "tree_op.h"
-#include "utils.h"
 #include <R.h>
 #include <RcppArmadillo.h>
 #include <RcppArmadilloExtensions/sample.h>
@@ -20,6 +19,22 @@
 #include <time.h>
 
 using namespace Rcpp;
+
+namespace{
+
+/*
+ * Convert zero-indxed R adjacency list to Graph object (vector of vectors of ints).
+ */
+Graph list_to_graph(const Rcpp::List &l) {
+    int V = l.size();
+    Graph g;
+    for (int i = 0; i < V; i++) {
+        g.push_back(Rcpp::as<std::vector<int>>((Rcpp::IntegerVector)l[i]));
+    }
+    return g;
+}
+
+}
 
 List vector_to_list(arma::uvec vecname) {
 

@@ -6,7 +6,24 @@
  *   to R to allow for manual splitting of plans.
  ********************************************************/
 
-#include "manual_splitting.h"
+
+#pragma once
+#ifndef MANUAL_SPLITTING_H
+#define MANUAL_SPLITTING_H
+
+#include <RcppThread.h>
+#include <cli/progress.h>
+#include <cmath>
+#include <functional>
+#include <memory>
+#include <string>
+
+#include "map_calc.h"
+#include "merging.h"
+#include "redist_alg_helpers.h"
+#include "splitting_schedule_types.h"
+#include "tree_op.h"
+#include "wilson.h"
 
 std::pair<int, int>
 TEMP_get_potential_region_size_for_loop_bounds(const int total_region_size,
@@ -30,50 +47,49 @@ TEMP_get_potential_region_size_for_loop_bounds(const int total_region_size,
     }
 }
 
-// @title Draw a uniformly random spanning tree on a region of a plan
-//
-// Draws a spanning tree uniformly at random on a region of a plan using
-// Wilson's algorithm.
-//
-// @param adj_list A 0-indexed adjacency list representing the undirected graph
-// which represents the underlying map the plans are to be drawn on
-// @param counties Vector of county labels of each vertex in `g`
-// @param pop A vector of the population associated with each vertex in `g`
-// @param ndists The number of districts the final plans will have
-// @param num_regions The number of regions in the inputted plan
-// @param num_districts The number of districts in the inputted plan
-// @param region_id_to_draw_tree_on The id of the region in the plan to draw the tree on.
-// @param lower Acceptable lower bounds on a valid district's population
-// @param upper Acceptable upper bounds on a valid district's population
-// @param region_ids A V by 1 matrix with the region ids of each vertex
-// @param region_sizes A ndists by 1 matrix with the sizes of each regions
-// @param verbose Whether or not to print out the inputted plan before attemping to draw a tree.
+// ' Draws a spanning tree uniformly at random on a region and returns it
+// '
+// ' Draws a spanning tree uniformly at random on a region of a plan using
+// ' Wilson's algorithm.
+// '
+// ' @title Draw a uniformly random spanning tree on a region of a plan
+// '
+// '
+// ' @param adj_list A 0-indexed adjacency list representing the undirected graph
+// ' which represents the underlying map the plans are to be drawn on
+// ' @param counties Vector of county labels of each vertex in `g`
+// ' @param pop A vector of the population associated with each vertex in `g`
+// ' @param ndists The number of districts the final plans will have
+// ' @param num_regions The number of regions in the inputted plan
+// ' @param num_districts The number of districts in the inputted plan
+// ' @param region_id_to_draw_tree_on The id of the region in the plan to draw
+// ' the tree on.
+// ' @param lower Acceptable lower bounds on a valid district's population
+// ' @param upper Acceptable upper bounds on a valid district's population
+// ' @param region_ids A V by 1 matrix with the region ids of each vertex
+// ' @param region_sizes A ndists by 1 matrix with the sizes of each regions
+// ' @param verbose Whether or not to print out the inputted plan before
+// ' attemping to draw a tree.
 //
 // @returns A list with the following
 //     - `uncut_tree`: The spanning tree drawn on the region stored as a
 //     0-indexed directed edge adjacency graph.
 //     - `num_attempts`: The number of attempts it took to draw the tree.
-//     - `root`: The root vertex of the tree (0-indexed)
-//     - `pop_below`: The population below each vertex in `uncut_tree` ie
-//     the population induced by removing the edge terminating in that vertex
-//     - `uncut_tree_vertex_parents`: The parents of each vertex in the tree
-// @export
-List draw_a_tree_on_a_region(List adj_list, const arma::uvec &counties, const arma::uvec &pop,
+//
+// @keywords internal
+// @noRd
+// [[Rcpp::export]]
+Rcpp::List draw_a_tree_on_a_region(Rcpp::List adj_list, const arma::uvec &counties, const arma::uvec &pop,
                              int ndists, int num_regions, int num_districts,
                              int region_id_to_draw_tree_on, double lower, double upper,
                              Rcpp::IntegerMatrix const &region_ids,
                              Rcpp::IntegerMatrix const &region_sizes, bool verbose) {
-
-    // unpack control params
-    Graph g = list_to_graph(adj_list);
-    Multigraph cg = county_graph(g, counties);
-    int V = g.size();
-
     double total_pop = sum(pop);
     double target = total_pop / ndists;
 
     MapParams map_params(adj_list, counties, pop, ndists, ndists, std::vector<int>{}, lower,
                          target, upper, SamplingSpace::GraphSpace);
+    int V = map_params.V;
 
     int global_rng_seed2 = (int)Rcpp::sample(INT_MAX, 1)[0];
     std::vector<RNGState> rng_states;
@@ -127,9 +143,12 @@ List draw_a_tree_on_a_region(List adj_list, const arma::uvec &counties, const ar
     tree_vertex_parents.at(ust_draw_result.root) = -1;
     // tree_pop(ust_sampler.ust, ust_sampler.root, pop, pop_below, tree_vertex_parents);
 
-    List out = List::create(_["uncut_tree"] = ust_sampler.ust, _["root"] = ust_draw_result.root,
-                            _["num_attempts"] = num_attempts, _["pop_below"] = pop_below,
-                            _["uncut_tree_vertex_parents"] = tree_vertex_parents);
+    Rcpp::List out = Rcpp::List::create(
+        Rcpp::_["uncut_tree"] = ust_sampler.ust, 
+        Rcpp::_["root"] = ust_draw_result.root,
+        Rcpp::_["num_attempts"] = num_attempts, 
+        Rcpp::_["pop_below"] = pop_below,
+        Rcpp::_["uncut_tree_vertex_parents"] = tree_vertex_parents);
 
     return out;
 }
@@ -153,7 +172,9 @@ List draw_a_tree_on_a_region(List adj_list, const arma::uvec &counties, const ar
 //   \item{root}{ - The 0-indexed root of the tree.}
 //   \item{num_attempts}{ - The number of attempts it took to draw the tree.}
 // }
-List perform_a_valid_multidistrict_split(List adj_list, const arma::uvec &counties,
+// @noRd
+// [[Rcpp::export]]
+Rcpp::List perform_a_valid_multidistrict_split(Rcpp::List adj_list, const arma::uvec &counties,
                                          const arma::uvec &pop, int ndists, int num_regions,
                                          int num_districts, int region_id_to_split,
                                          double target, double lower, double upper,
@@ -237,7 +258,7 @@ List perform_a_valid_multidistrict_split(List adj_list, const arma::uvec &counti
     // Keep running until done
     while (!successful_split_made) {
         if (verbose) {
-            Rcout << "Attempt " << try_counter << "\n";
+            Rcpp::Rcout << "Attempt " << try_counter << "\n";
         }
         clear_tree(ust_sampler.ust);
 
@@ -305,23 +326,23 @@ List perform_a_valid_multidistrict_split(List adj_list, const arma::uvec &counti
     cut_edge.get_split_regions_info(new_region1_tree_root, new_region1_dval, new_region1_pop,
                                     new_region2_tree_root, new_region2_dval, new_region2_pop);
 
-    List out = List::create(
-        _["num_attempts"] = try_counter, _["region_id_that_was_split"] = region_id_to_split,
-        _["region_sizes"] = plan_ensemble.flattened_all_region_sizes,
-        _["partial_plan_labels"] = plan_ensemble.flattened_all_plans,
-        _["region_pops"] = plan_ensemble.flattened_all_region_pops,
-        _["num_regions"] = plan_ensemble.plan_ptr_vec[0]->num_regions,
-        _["num_districts"] =
+    Rcpp::List out = Rcpp::List::create(
+        Rcpp::_["num_attempts"] = try_counter, Rcpp::_["region_id_that_was_split"] = region_id_to_split,
+        Rcpp::_["region_sizes"] = plan_ensemble.flattened_all_region_sizes,
+        Rcpp::_["partial_plan_labels"] = plan_ensemble.flattened_all_plans,
+        Rcpp::_["region_pops"] = plan_ensemble.flattened_all_region_pops,
+        Rcpp::_["num_regions"] = plan_ensemble.plan_ptr_vec[0]->num_regions,
+        Rcpp::_["num_districts"] =
             plan_ensemble.plan_ptr_vec[0]->get_num_district_and_multidistricts().first,
-        _["uncut_tree"] = pre_split_ust, _["uncut_tree_root"] = uncut_tree_root,
-        _["cut_tree"] = ust_sampler.ust, _["pop_below"] = pop_below,
-        _["uncut_tree_vertex_parents"] = tree_vertex_parents,
-        _["new_region1_id"] = new_region1_id,
-        _["new_region1_tree_root"] = new_region1_tree_root,
-        _["new_region1_size"] = new_region1_dval, _["new_region1_pop"] = new_region1_pop,
-        _["new_region2_id"] = new_region2_id,
-        _["new_region2_tree_root"] = new_region2_tree_root,
-        _["new_region2_size"] = new_region2_dval, _["new_region2_pop"] = new_region2_pop);
+        Rcpp::_["uncut_tree"] = pre_split_ust, Rcpp::_["uncut_tree_root"] = uncut_tree_root,
+        Rcpp::_["cut_tree"] = ust_sampler.ust, Rcpp::_["pop_below"] = pop_below,
+        Rcpp::_["uncut_tree_vertex_parents"] = tree_vertex_parents,
+        Rcpp::_["new_region1_id"] = new_region1_id,
+        Rcpp::_["new_region1_tree_root"] = new_region1_tree_root,
+        Rcpp::_["new_region1_size"] = new_region1_dval, Rcpp::_["new_region1_pop"] = new_region1_pop,
+        Rcpp::_["new_region2_id"] = new_region2_id,
+        Rcpp::_["new_region2_tree_root"] = new_region2_tree_root,
+        Rcpp::_["new_region2_size"] = new_region2_dval, Rcpp::_["new_region2_pop"] = new_region2_pop);
 
     return out;
 }
@@ -417,7 +438,8 @@ List perform_a_valid_multidistrict_split(List adj_list, const arma::uvec &counti
 
 // TODO: Add support for multimember districts
 // Draws num_trees number of trees on a region
-List draw_trees_on_a_region(List const &adj_list, const arma::uvec &counties,
+// [[Rcpp::export]]
+Rcpp::List draw_trees_on_a_region(Rcpp::List const &adj_list, const arma::uvec &counties,
                             const arma::uvec &pop, int const ndists, int num_regions,
                             int const region_id_to_draw_tree_on, int const region_size,
                             double const lower, double const target, double const upper,
@@ -566,15 +588,16 @@ List draw_trees_on_a_region(List const &adj_list, const arma::uvec &counties,
         num_attempts += thread_attempts[i];
     }
 
-    List out =
-        List::create(_["trees_list"] = undirected_trees, _["num_attempts"] = num_attempts);
+    Rcpp::List out =
+        Rcpp::List::create(Rcpp::_["trees_list"] = undirected_trees, Rcpp::_["num_attempts"] = num_attempts);
 
     return out;
 }
 
 // Draws num_plans number of plans on a region
 // if unsuccessful then just returns the unsplit plan
-List attempt_splits_on_a_region(List const &adj_list, const arma::uvec &counties,
+// [[Rcpp::export]]
+Rcpp::List attempt_splits_on_a_region(Rcpp::List const &adj_list, const arma::uvec &counties,
                                 const arma::uvec &pop, int const ndists,
                                 int const init_num_regions, int const region_id_to_split,
                                 double const lower, double const target, double const upper,
@@ -729,9 +752,11 @@ List attempt_splits_on_a_region(List const &adj_list, const arma::uvec &counties
         num_attempts += thread_attempts[i];
     }
 
-    List out = List::create(
-        _["plans_mat"] = saved_plans_mat, _["sizes_mat"] = saved_region_sizes_mat,
-        _["successful_search"] = successful_update, _["num_attempts"] = num_attempts);
+    Rcpp::List out = Rcpp::List::create(
+        Rcpp::_["plans_mat"] = saved_plans_mat, Rcpp::_["sizes_mat"] = saved_region_sizes_mat,
+        Rcpp::_["successful_search"] = successful_update, Rcpp::_["num_attempts"] = num_attempts);
 
     return out;
 }
+
+#endif

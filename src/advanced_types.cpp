@@ -1,11 +1,17 @@
 /********************************************************
  * Author: Philip O'Sullivan
  * Institution: Harvard University
- * Date Created: 2024/08
- * Purpose: Sequential Monte Carlo redistricting sampler
+ * Date Created: 2026/07
+ * Purpose: Contains classes and types used in the new (Redist 5.0)
+ * code. Seperated out from RedistTypes to reduce compile time since a 
+ * lot of legacy code must link to redist_types
  ********************************************************/
 
-#include "redist_types.h"
+
+#include "advanced_types.h"
+
+
+namespace{
 
 /*
  * Convert zero-indxed R adjacency list to Graph object (vector of vectors of ints).
@@ -80,6 +86,8 @@ Graph build_restricted_county_graph(Graph const &g, arma::uvec const &counties) 
 }
 
 
+// Counts the number of undirected edges in a graph. 
+// It also checks the graph is actually symmetric 
 int count_undirected_edges(Graph const &g) {
     int edge_count = 0;
     int total_edge_count = 0;
@@ -110,6 +118,8 @@ int count_undirected_edges(Graph const &g) {
     }
 
     return edge_count;
+}
+
 }
 
 void EdgeCut::get_split_regions_info(int &split_region1_tree_root, int &split_region1_dval,
@@ -255,5 +265,165 @@ get_splitting_size_regime(std::string const &splitting_size_regime_str) {
         REprintf("Splitting Size Regime %s is not a valid regime!\n",
                  splitting_size_regime_str.c_str());
         throw Rcpp::exception("Invalid splitting size regime passed");
+    }
+};
+
+
+GraphEdgeIndex::GraphEdgeIndex(Graph const &g, int const num_edges)
+    : incident_edges(g.size()), num_edges(num_edges), V(g.size()) {
+
+    if (g.size() > MAX_SUPPORTED_NUM_VERTICES) {
+        throw Rcpp::exception("Too many vertices for VertexID in GraphEdgeIndex!");
+    }
+
+    std::unordered_set<std::uint64_t> seen_edges;
+    seen_edges.reserve(static_cast<std::size_t>(num_edges) * 2);
+
+    int const V = static_cast<int>(g.size());
+    max_num_edges = 1;
+
+    for (int v = 0; v < V; ++v) {
+        auto num_v_edges = g[v].size();
+        incident_edges[v].reserve(num_v_edges);
+
+        // update the max number of edges if this is larger
+        if (num_v_edges > max_num_edges){
+            max_num_edges = num_v_edges;
+        }
+        
+
+        std::unordered_set<int> seen_neighbors_for_v;
+        seen_neighbors_for_v.reserve(g[v].size());
+
+        for (int u : g[v]) {
+            if (u < 0 || u >= V) {
+                throw Rcpp::exception("GraphEdgeIndex found invalid neighbor index!");
+            }
+
+            if (!seen_neighbors_for_v.insert(u).second) {
+                std::ostringstream oss;
+                Rcpp::Rcerr << "Duplicate neighbor in graph adjacency list: "
+                    << "vertex " << v << " has neighbor " << u << " more than once.";
+                
+                throw Rcpp::exception("GraphEdgeIndex Constructor\n");
+                throw std::runtime_error(oss.str());
+            }
+
+            if (v < u) {
+                std::uint64_t const key =
+                    (static_cast<std::uint64_t>(v) << 32) |
+                    static_cast<std::uint32_t>(u);
+
+                if (!seen_edges.insert(key).second) {
+                    std::ostringstream oss;
+                    Rcpp::Rcerr << "Duplicate undirected edge in GraphEdgeIndex: ("
+                        << v << ", " << u << ")";
+                    
+                    throw Rcpp::exception("GraphEdgeIndex Constructor\n");
+                    throw std::runtime_error(oss.str());
+                }
+
+                if (edges.size() > std::numeric_limits<EdgeID>::max()) {
+                    throw Rcpp::exception("Too many graph edges for EdgeID!");
+                }
+
+                EdgeID const eid = static_cast<EdgeID>(edges.size());
+
+                edges.push_back({
+                    static_cast<VertexID>(v),
+                    static_cast<VertexID>(u)
+                });
+
+                incident_edges[v].push_back({
+                    static_cast<VertexID>(u),
+                    eid
+                });
+
+                incident_edges[u].push_back({
+                    static_cast<VertexID>(v),
+                    eid
+                });
+            }
+        }
+    }
+
+    if (static_cast<int>(edges.size()) != num_edges) {
+        std::ostringstream oss;
+        Rcpp::Rcerr << "GraphEdgeIndex edge count mismatch. "
+            << "expected " << num_edges
+            << ", built " << edges.size();
+        
+        throw Rcpp::exception("GraphEdgeIndex Constructor\n");
+        throw std::runtime_error(oss.str());
+    }
+}
+
+
+// Constructor
+MapParams::MapParams(Rcpp::List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
+            int const ndists, int const total_seats,
+            std::vector<int> const &district_seat_sizes, 
+            double const lower,
+            double const target, double const upper,
+            SamplingSpace const sampling_space)
+    : g(list_to_graph(adj_list)), num_edges(count_undirected_edges(g)),
+    graph_edge_index(g, num_edges), num_edge_bit_words(compute_num_edge_bit_words(num_edges)),
+        counties(counties), num_counties(max(counties)), cg(county_graph(g, counties)),
+        county_restricted_graph(num_counties > 1 ? build_restricted_county_graph(g, counties)
+                                                : Graph(0)),
+        pop(pop), V(static_cast<int>(g.size())), ndists(ndists), total_seats(total_seats),
+        lower(lower), target(target), upper(upper),
+        smallest_district_size(
+            *min_element(district_seat_sizes.begin(), district_seat_sizes.end())),
+        largest_district_size(
+            *max_element(district_seat_sizes.begin(), district_seat_sizes.end())),
+        district_seat_sizes(district_seat_sizes),
+        is_district([ndists, total_seats, &district_seat_sizes]() {
+            if (district_seat_sizes.size() == 0) {
+                throw Rcpp::exception("District Seat Sizes vector must be non-empty!\n");
+            }
+            // vector where index i is true iff i seats is a district
+            std::vector<bool> is_district_vec(total_seats + 1, false);
+            if (ndists > total_seats) {
+                throw Rcpp::exception("The number of distrcts must be less than or equal to "
+                                    "the total number of seats!\n");
+            } else if (ndists != total_seats) {
+                for (auto const &a_size : district_seat_sizes) {
+                    if (a_size < 0)
+                        throw Rcpp::exception(
+                            "District Seat Sizes must be strictly positive!\n");
+                    if (a_size >= total_seats)
+                        throw Rcpp::exception(
+                            "District Seat Sizes must be less than total seats!\n");
+                    // mark this as a district size
+                    is_district_vec[a_size] = true;
+                }
+
+            } else {
+                is_district_vec[1] = true;
+            }
+            return is_district_vec;
+        }()),
+        is_mmd(ndists != total_seats),
+        sampling_space(sampling_space) {
+    // check the sizes are ok
+    if (ndists - 1 > MAX_SUPPORTED_NUM_DISTRICTS ||
+        total_seats - 1 > MAX_SUPPORTED_NUM_DISTRICTS) {
+        REprintf("The maximum number of districts supported right now is %u!\n",
+                    MAX_SUPPORTED_NUM_DISTRICTS);
+        throw Rcpp::exception(
+            "Too many districts! This number of districts isn't supported!\n");
+    }
+    if (num_counties - 1 > MAX_SUPPORTED_NUM_COUNTIES) {
+        REprintf("The maximum number of counties supported right now is %u!\n",
+                    MAX_SUPPORTED_NUM_COUNTIES);
+        throw Rcpp::exception(
+            "Too many counties! This number of counties isn't supported!\n");
+    }
+    if (V - 1 > MAX_SUPPORTED_NUM_VERTICES) {
+        REprintf("The maximum number of vertices supported right now is %u!\n",
+                    MAX_SUPPORTED_NUM_VERTICES);
+        throw Rcpp::exception(
+            "Too many vertices in the map! This number of vertices isn't supported!\n");
     }
 };

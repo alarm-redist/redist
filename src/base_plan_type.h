@@ -13,8 +13,7 @@
 
 #include "graph_ops.h"
 #include "map_calc.h"
-#include "redist_constants.h"
-#include "redist_types.h"
+#include "advanced_types.h"
 #include "scoring.h"
 #include "splitting_schedule_types.h"
 #include "tree_op.h"

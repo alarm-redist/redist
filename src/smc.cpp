@@ -97,7 +97,7 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
                   std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters,
                   const arma::vec &normalized_cumulative_weights,
                   SMCDiagnostics &smc_diagnostics, int const smc_step_num, int const step_num,
-                  bool const is_final_split, umat &ancestors, const std::vector<int> &lags,
+                  bool const is_final_split, arma::umat &ancestors, const std::vector<int> &lags,
                   bool const estimated_unbiased_normalizing_constant,
                   RcppThread::ThreadPool &pool, int verbosity, int diagnostic_level,
                   int const max_split_tries) {
@@ -110,7 +110,7 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
     // PREVIOUS SMC CODE I DONT KNOW WHAT IT DOES
     const int dist_ctr = old_plan_ensemble->plan_ptr_vec.at(0)->num_regions;
     const int n_lags = lags.size();
-    umat ancestors_new(M, n_lags); // lags/ancestor thing
+    arma::umat ancestors_new(M, n_lags); // lags/ancestor thing
 
     // Because of multithreading we have to add specific checks for if the user
     // wants to quit the program
@@ -533,7 +533,7 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
     smc_diagnostics.nunique_plans[step_num] = old_plan_ensemble->count_unique_plans(pool);
 
     if (verbosity >= 3) {
-        Rcout << "  " << std::setprecision(2) << 100.0 * accept_rate << "% acceptance rate. "
+        Rcpp::Rcout << "  " << std::setprecision(2) << 100.0 * accept_rate << "% acceptance rate. "
               << 100.0 * smc_diagnostics.nunique_parents.at(smc_step_num) / M
               << "% of previous step's plans survived," << " and there are now "
               << smc_diagnostics.nunique_plans[step_num] << " unique plans." << std::endl;
@@ -733,17 +733,17 @@ void run_merge_split_step_on_all_plans(
 // @param verbosity What level of detail to print out while the algorithm is
 // running <ADD OPTIONS>
 // @export
-List run_redist_smc(
+Rcpp::List run_redist_smc(
     int const nsims, int const total_seats, int const ndists,
     Rcpp::IntegerVector const district_seat_sizes, int const initial_num_regions,
-    List const &adj_list, arma::uvec const &counties, const arma::uvec &pop,
+    Rcpp::List const &adj_list, arma::uvec const &counties, const arma::uvec &pop,
     Rcpp::CharacterVector const &step_types, double const target, double const lower,
     double const upper,
     double const rho,                      // compactness
     std::string const &sampling_space_str, // sampling space (graphs, forest, etc)
-    List const &control, // control has pop temper, and k parameter value, and splitting method
+    Rcpp::List const &control, // control has pop temper, and k parameter value, and splitting method
                          // are allowed
-    List const &constraints, // constraints
+    Rcpp::List const &constraints, // constraints
     int const verbosity, int const diagnostic_level, Rcpp::IntegerMatrix const &region_id_mat,
     Rcpp::IntegerMatrix const &region_sizes_mat, arma::vec &log_weights) {
     if constexpr (DEBUG_GSMC_PLANS_VERBOSE)
@@ -760,7 +760,7 @@ List run_redist_smc(
 
     // Create map level graph and county level multigraph
     MapParams const map_params(adj_list, counties, pop, ndists, total_seats,
-                               as<std::vector<int>>(district_seat_sizes), lower, target, upper,
+                               Rcpp::as<std::vector<int>>(district_seat_sizes), lower, target, upper,
                             sampling_space);
     int V = map_params.g.size();
 
@@ -779,7 +779,7 @@ List run_redist_smc(
     scoring_functions.reserve(num_threads);
     for (size_t thread_id = 0; thread_id < num_threads; thread_id++) {
         scoring_functions.emplace_back(map_params, constraints,
-                                       as<double>(control["pop_temper"]), true, thread_id);
+                                       Rcpp::as<double>(control["pop_temper"]), true, thread_id);
     }
 
     // if we have any custom hard constraints then we have to single thread everything
@@ -788,7 +788,7 @@ List run_redist_smc(
     };
 
     // get seq_alpha
-    double weights_alpha = as<double>(control["seq_alpha"]);
+    double weights_alpha = Rcpp::as<double>(control["seq_alpha"]);
     bool const apply_weights_alpha = weights_alpha != 1;
 
     // re-seed MT so that `set.seed()` works in R
@@ -821,16 +821,16 @@ List run_redist_smc(
 
     // unpack control params
     // lags thing (copied from original smc code, don't understand what its doing)
-    std::vector<int> lags = as<std::vector<int>>(control["lags"]);
-    arma::umat ancestors(nsims, lags.size(), fill::zeros);
+    std::vector<int> lags = Rcpp::as<std::vector<int>>(control["lags"]);
+    arma::umat ancestors(nsims, lags.size(), arma::fill::zeros);
     // weight type
-    std::string wgt_type = as<std::string>(control["weight_type"]);
+    std::string wgt_type = Rcpp::as<std::string>(control["weight_type"]);
     // whether or not to cache the weights
-    bool const using_caching = as<bool>(control["cache_weights"]);
+    bool const using_caching = Rcpp::as<bool>(control["cache_weights"]);
     // max tries value
-    int const max_split_tries = as<int>(control["max_split_tries"]);
+    int const max_split_tries = Rcpp::as<int>(control["max_split_tries"]);
     // unbiased normalizing estimate
-    bool const estimated_unbiased_normalizing_constant = as<bool>(control["est_norm_unbiased"]); 
+    bool const estimated_unbiased_normalizing_constant = Rcpp::as<bool>(control["est_norm_unbiased"]); 
 
     if(estimated_unbiased_normalizing_constant && scoring_functions[0].any_hard_constraints){
         Rcpp::warning("Unbiased normalizing constant estimation si not support right now for hard constraints!");
@@ -872,8 +872,8 @@ List run_redist_smc(
     double ms_steps_multiplier;
     std::string merge_prob_type;
     if (total_ms_steps > 0) {
-        ms_steps_multiplier = as<double>(control["mh_accept_per_smc"]);
-        merge_prob_type = as<std::string>(control["pair_rule"]);
+        ms_steps_multiplier = Rcpp::as<double>(control["mh_accept_per_smc"]);
+        merge_prob_type = Rcpp::as<std::string>(control["pair_rule"]);
     }
 
     double tol = std::max(target - lower, upper - target) / target;
@@ -886,7 +886,7 @@ List run_redist_smc(
     SplittingSizeScheduleType splitting_size_regime =
         get_splitting_size_regime(static_cast<std::string>(control["splitting_size_regime"]));
     auto splitting_schedule_ptr = get_splitting_schedule(
-        total_smc_steps, ndists, total_seats, as<std::vector<int>>(district_seat_sizes),
+        total_smc_steps, ndists, total_seats, Rcpp::as<std::vector<int>>(district_seat_sizes),
         splitting_size_regime, control);
     // it wants presplit number of regions so make initial regions - 1
     // Needed for initializing linking edge plans
@@ -952,12 +952,12 @@ List run_redist_smc(
         // k param values to potentially use. If set to 0 or lower then estimate
         std::vector<int> k_params;
         if (use_naive_k_splitter) {
-            try_to_estimate_cut_k = as<bool>(control["estimate_cut_k"]);
+            try_to_estimate_cut_k = Rcpp::as<bool>(control["estimate_cut_k"]);
             if (try_to_estimate_cut_k) {
                 thresh = (double)control["adapt_k_thresh"];
                 k_params.resize(total_smc_steps);
             } else {
-                k_params = as<std::vector<int>>(control["manual_k_params"]);
+                k_params = Rcpp::as<std::vector<int>>(control["manual_k_params"]);
             }
         }
 
@@ -996,45 +996,45 @@ List run_redist_smc(
 
         // Loading Info
         if (verbosity >= 1) {
-            Rcout.imbue(std::locale(""));
-            Rcout << std::fixed << std::setprecision(0);
+            Rcpp::Rcout.imbue(std::locale(""));
+            Rcpp::Rcout << std::fixed << std::setprecision(0);
             if (!split_district_only) {
-                Rcout << "GENERALIZED SEQUENTIAL MONTE CARLO";
+                Rcpp::Rcout << "GENERALIZED SEQUENTIAL MONTE CARLO";
             } else {
-                Rcout << "SEQUENTIAL MONTE CARLO";
+                Rcpp::Rcout << "SEQUENTIAL MONTE CARLO";
             }
             if (total_ms_steps > 0) {
-                Rcout << " WITH MERGE SPLIT";
+                Rcpp::Rcout << " WITH MERGE SPLIT";
             }
-            Rcout << std::endl;
-            Rcout << "Using " << sampling_space_to_str(sampling_space);
-            Rcout << " Sampling space to sample " << nsims << " " << V << "-unit ";
-            Rcout << "maps with " << ndists << " districts and population between " << lower
+            Rcpp::Rcout << std::endl;
+            Rcpp::Rcout << "Using " << sampling_space_to_str(sampling_space);
+            Rcpp::Rcout << " Sampling space to sample " << nsims << " " << V << "-unit ";
+            Rcpp::Rcout << "maps with " << ndists << " districts and population between " << lower
                   << " and " << upper << "." << std::endl;
             if (verbosity >= 3) {
-                Rcout << "Using " << (pool.getNumThreads() == 0 ? 1 : pool.getNumThreads())
+                Rcpp::Rcout << "Using " << (pool.getNumThreads() == 0 ? 1 : pool.getNumThreads())
                       << " threads, " << total_ms_steps << " merge split steps, ";
                 if (splitting_size_regime == SplittingSizeScheduleType::DistrictOnlySMD ||
                     splitting_size_regime == SplittingSizeScheduleType::DistrictOnlyMMD) {
-                    Rcout << "and only performing 1-district splits.";
+                    Rcpp::Rcout << "and only performing 1-district splits.";
                 } else if (splitting_size_regime ==
                            SplittingSizeScheduleType::AnyValidSizeSMD) {
-                    Rcout << "and generalized region splits.";
+                    Rcpp::Rcout << "and generalized region splits.";
                 } else if (splitting_size_regime == SplittingSizeScheduleType::OneCustomSize) {
-                    Rcout << "and custom size region splits.";
+                    Rcpp::Rcout << "and custom size region splits.";
                 }
-                Rcout << " Using " << splitting_method_to_str(splitting_method) << " with "
+                Rcpp::Rcout << " Using " << splitting_method_to_str(splitting_method) << " with "
                       << (wgt_type == "optimal" ? "Optimal" : "Simple") << " Weights!\n";
                 if (map_params.cg.size() > 1) {
-                    Rcout << "Ensuring no more than " << ndists - 1 << " splits of the "
+                    Rcpp::Rcout << "Ensuring no more than " << ndists - 1 << " splits of the "
                           << map_params.cg.size() << " administrative units.\n";
                 }
                 if (scoring_functions[0].total_soft_constraints > 0) {
-                    Rcout << "Applying " << scoring_functions[0].total_soft_constraints
+                    Rcpp::Rcout << "Applying " << scoring_functions[0].total_soft_constraints
                           << " soft constraints.\n";
                 }
                 if (scoring_functions[0].num_hard_plan_constraints > 0) {
-                    Rcout << "Applying " << scoring_functions[0].num_hard_plan_constraints
+                    Rcpp::Rcout << "Applying " << scoring_functions[0].num_hard_plan_constraints
                           << " hard constraints.\n";
                 }
             }
@@ -1047,7 +1047,7 @@ List run_redist_smc(
 
         std::string bar_fmt =
             "Split [{cli::pb_current}/{cli::pb_total}] {cli::pb_bar} | ETA{cli::pb_eta}";
-        RObject bar = cli_progress_bar(total_steps, cli_config(false, bar_fmt.c_str()));
+        Rcpp::RObject bar = cli_progress_bar(total_steps, cli_config(false, bar_fmt.c_str()));
         // Now for each run through split the map
         try {
             for (int step_num = 0; step_num < total_steps; step_num++) {
@@ -1105,16 +1105,16 @@ List run_redist_smc(
                             k_params.at(smc_step_num) = est_cut_k;
 
                             if (verbosity >= 3) {
-                                Rcout << " (using estimated k = " << k_params.at(smc_step_num)
+                                Rcpp::Rcout << " (using estimated k = " << k_params.at(smc_step_num)
                                       << ")" << std::endl;
-                                Rcout << " Estimation took " 
+                                Rcpp::Rcout << " Estimation took " 
                                       << smc_diagnostics.smc_step_parameter_estimation_times[smc_step_num]
                                       << " seconds."
                                       << std::endl;
                             }
                         } else {
                             if (verbosity >= 3) {
-                                Rcout << " (using input k = " << k_params.at(smc_step_num)
+                                Rcpp::Rcout << " (using input k = " << k_params.at(smc_step_num)
                                       << ")\n";
                             }
                         }
@@ -1158,7 +1158,7 @@ List run_redist_smc(
                     smc_diagnostics.smc_split_times[smc_step_num] = smc_split_diff.count();
 
                     if (verbosity >= 3) {
-                        Rcout << "  Performing SMC splits took " 
+                        Rcpp::Rcout << "  Performing SMC splits took " 
                               << smc_diagnostics.smc_split_times[smc_step_num]
                               << " seconds."
                               << std::endl;
@@ -1301,12 +1301,12 @@ List run_redist_smc(
                                                     normalized_cumulative_weights[nsims - 1];
 
                     if (verbosity >= 3) {
-                        Rcout << "  " << std::setprecision(2)
+                        Rcpp::Rcout << "  " << std::setprecision(2)
                               << 100 * smc_diagnostics.n_eff.at(smc_step_num) / nsims
                               << "% efficiency." << std::setprecision(4)
                               << " Log Weight Standard Deviation: "
                               << smc_diagnostics.log_wgt_stddevs.at(smc_step_num) << std::endl;
-                        Rcout << "  Calculating log weights took " 
+                        Rcpp::Rcout << "  Calculating log weights took " 
                               << smc_diagnostics.smc_weight_times[smc_step_num]
                               << " seconds."
                               << std::endl;
@@ -1414,19 +1414,19 @@ List run_redist_smc(
                         plan_ensemble_ptr->count_unique_plans(pool);
 
                     if (verbosity >= 3) {
-                        Rcout << "  " << std::setprecision(2)
+                        Rcpp::Rcout << "  " << std::setprecision(2)
                               << 100.0 * smc_diagnostics.acceptance_rates.at(step_num)
                               << "% acceptance rate. " << "There are now "
                               << smc_diagnostics.nunique_plans[step_num] << " unique plans."
                               << std::endl;
-                        Rcout << "  Performing MCMC round took " 
+                        Rcpp::Rcout << "  Performing MCMC round took " 
                               << smc_diagnostics.ms_step_times[merge_split_step_num] 
                               << " seconds."
                               << std::endl;
                     }
 
                     // Access the column
-                    IntegerMatrix::Column col = smc_diagnostics.draw_tries_mat(_, step_num);
+                    Rcpp::IntegerMatrix::Column col = smc_diagnostics.draw_tries_mat(Rcpp::_, step_num);
                     // Set all elements in the column to the value nsteps_to_run
                     std::fill(col.begin(), col.end(), nsteps_to_run);
 
@@ -1501,18 +1501,18 @@ List run_redist_smc(
         Rprintf("Plan matrix (and sizes potentially) saved!\n");
 
     // Return results
-    List out = List::create(
-        _["plans_mat"] =
+    Rcpp::List out = Rcpp::List::create(
+        Rcpp::_["plans_mat"] =
             plan_ensemble_ptr->get_R_plans_matrix(), // integer matrix to store final plans
-        _["seats"] = plan_sizes_saved
+        Rcpp::_["seats"] = plan_sizes_saved
                          ? plan_ensemble_ptr->get_R_sizes_matrix(pool)
                          : Rcpp::IntegerMatrix(1, 1), // saves sizes matrix if needed
-        _["region_pops"] = plan_ensemble_ptr->get_region_pops_matrix(pool),
-        _["plan_seats_saved"] = plan_sizes_saved, _["log_weights"] = log_weights,
-        _["ancestors"] = ancestors, _["step_types"] = step_types,
-        _["merge_split_steps"] = merge_split_step_vec,
-        _["log_blank_map_target_density"] = log_blank_map_target_density,
-        _["multidistrict_selection_alpha"] = SELECTION_ALPHA 
+        Rcpp::_["region_pops"] = plan_ensemble_ptr->get_region_pops_matrix(pool),
+        Rcpp::_["plan_seats_saved"] = plan_sizes_saved, Rcpp::_["log_weights"] = log_weights,
+        Rcpp::_["ancestors"] = ancestors, Rcpp::_["step_types"] = step_types,
+        Rcpp::_["merge_split_steps"] = merge_split_step_vec,
+        Rcpp::_["log_blank_map_target_density"] = log_blank_map_target_density,
+        Rcpp::_["multidistrict_selection_alpha"] = SELECTION_ALPHA 
     );
 
     // to try to save memory kill the plan vector

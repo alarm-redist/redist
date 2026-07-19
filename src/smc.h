@@ -2,7 +2,7 @@
 #ifndef SMC_H
 #define SMC_H
 
-#include <RcppThread.h>
+
 #include <atomic>
 #include <chrono>
 
@@ -18,6 +18,7 @@
 #include "weight_caching.h"
 #include "weights.h"
 #include "utils.h"
+#include <RcppThread.h>
 #include <cli/progress.h>
 
 // Run SMC (optionally with Merge Split steps too)
@@ -45,16 +46,16 @@
 // of threads the threadpool should use ' @param verbosity What level of detail to print out
 // while the algorithm is ' running <ADD OPTIONS> ' @keywords internal ' @noRd
 // [[Rcpp::export]]
-List run_redist_smc(
+Rcpp::List run_redist_smc(
     int const nsims, int const total_seats, int const ndists,
     Rcpp::IntegerVector const district_seat_sizes, int const initial_num_regions,
-    List const &adj_list, arma::uvec const &counties, const arma::uvec &pop,
+    Rcpp::List const &adj_list, arma::uvec const &counties, const arma::uvec &pop,
     Rcpp::CharacterVector const &step_types, double const target, double const lower,
     double const upper,
     double const rho,                      // compactness
     std::string const &sampling_space_str, // sampling space (graphs, forest, etc)
-    List const &control,                   // control has pop temper, k, and splitting method
-    List const &constraints,               // constraints
+    Rcpp::List const &control,                   // control has pop temper, k, and splitting method
+    Rcpp::List const &constraints,               // constraints
     int const verbosity, int const diagnostic_level, Rcpp::IntegerMatrix const &region_id_mat,
     Rcpp::IntegerMatrix const &region_sizes_mat, arma::vec &log_weights);
 

@@ -150,7 +150,7 @@ Rcpp::NumericVector runif1(int n, int max) {
 }
 
 // helper
-int find_u(const double u, const int max, const vec &cum_wgts) {
+int find_u(const double u, const int max, const arma::vec &cum_wgts) {
     int low = 0, high = max - 1;
 
     if (cum_wgts[0] > u)
@@ -170,7 +170,7 @@ int find_u(const double u, const int max, const vec &cum_wgts) {
 /*
  * Generate a random integer in [0, cum_wgts.size()) according to normalized cumulative weights.
  */
-int RNGState::r_int_wgt(const vec &cum_wgts) { 
+int RNGState::r_int_wgt(const arma::vec &cum_wgts) { 
     if constexpr(perf_config::supposedly_safe_input_checks){
         if (cum_wgts.n_elem == 0) {
             throw std::runtime_error(
@@ -222,7 +222,7 @@ int RNGState::r_int_wgt(const vec &cum_wgts) {
  *  @returns An integer in [0, `unnormalized_wgts.size()`)
  *
  */
-int RNGState::r_int_unnormalized_wgt(const vec &unnormalized_wgts) {
+int RNGState::r_int_unnormalized_wgt(const arma::vec &unnormalized_wgts) {
     if constexpr(perf_config::supposedly_safe_input_checks){
         if (unnormalized_wgts.n_elem == 0) {
             throw std::runtime_error(
@@ -269,7 +269,7 @@ int RNGState::r_int_unnormalized_wgt(const vec &unnormalized_wgts) {
  * Generate a random integer within a stratum
  * NOT THREAD SAFE
  */
-int r_int_mixstrat(int max, int stratum, double p, vec cum_wgts) {
+int r_int_mixstrat(int max, int stratum, double p, arma::vec cum_wgts) {
     double u;
     if (GLOBAL_RNG.r_unif() > p) {
         u = (stratum + GLOBAL_RNG.r_unif()) / max;
@@ -336,12 +336,12 @@ int global_rng_select_k(std::vector<double> x, int k) {
 /*
  * Generate an integer vector of resampling indices with a low-variance resampler.
  */
-ivec resample_lowvar(vec wgts) {
+arma::ivec resample_lowvar(arma::vec wgts) {
     int N = wgts.n_elem;
 
     double r = GLOBAL_RNG.r_unif() / N;
     double cuml = wgts[0];
-    ivec out(N);
+    arma::ivec out(N);
 
     int i = 0;
     for (int n = 0; n < N; n++) {

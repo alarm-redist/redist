@@ -13,25 +13,25 @@
 /*
  * Compute the Fryer-Holden penalty for district `distr`
  */
-double eval_fry_hold(const subview_col<uword> &districts, int distr, const uvec &total_pop,
-                     mat ssdmat, double denominator);
+double eval_fry_hold(const arma::subview_col<arma::uword> &districts, int distr, const arma::uvec &total_pop,
+                     arma::mat ssdmat, double denominator);
 
 /*
  * Compute the qps penalty for district `distr`
  */
-double eval_qps(const subview_col<uword> &districts, int distr, const uvec &total_pop,
-                const uvec &cities, int n_city, int nd);
+double eval_qps(const arma::subview_col<arma::uword> &districts, int distr, const arma::uvec &total_pop,
+                const arma::uvec &cities, int n_city, int nd);
 
 /*
  * Compute the log spanning tree penalty for district `distr`
  */
-double eval_log_st(const subview_col<uword> &districts, const Graph g, arma::uvec counties,
+double eval_log_st(const arma::subview_col<arma::uword> &districts, const Graph g, arma::uvec counties,
                    int ndists);
 
 /*
  * Compute the log spanning tree penalty for district `distr`
  */
-double eval_er(const subview_col<uword> &districts, const Graph g, int ndists);
+double eval_er(const arma::subview_col<arma::uword> &districts, const Graph g, int ndists);
 
 /*
  * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,
@@ -44,14 +44,14 @@ arma::mat prec_cooccur(arma::umat m, arma::uvec idxs, int ncores = 0);
  * Compute the percentage of `group` in each district. Asummes `m` is 1-indexed.
  */
 // [[Rcpp::export]]
-NumericMatrix group_pct(IntegerMatrix const &plans_mat, arma::vec const &group_pop,
+Rcpp::NumericMatrix group_pct(Rcpp::IntegerMatrix const &plans_mat, arma::vec const &group_pop,
                         arma::vec const &total_pop, int const n_distr, int const ncores = 0);
 
 /*
  * Tally a variable by district.
  */
 // [[Rcpp::export]]
-NumericMatrix pop_tally(IntegerMatrix const &districts, arma::vec const &pop, int const n_distr,
+Rcpp::NumericMatrix pop_tally(Rcpp::IntegerMatrix const &districts, arma::vec const &pop, int const n_distr,
                         int const ncores = 0);
 
 /*
@@ -84,7 +84,7 @@ double compute_log_region_and_county_spanning_tree(
 /*
  * Compute the log number of spanning trees for the contracted (ie county level) graph
  */
-double compute_log_county_level_spanning_tree(Graph const &g, const uvec &counties,
+double compute_log_county_level_spanning_tree(Graph const &g, const arma::uvec &counties,
                                                     int const n_cty,
                                                     PlanVector const &region_ids,
                                                     int const region1_id, int const region2_id);

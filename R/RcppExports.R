@@ -85,7 +85,7 @@ draw_a_tree_on_a_region <- function(adj_list, counties, pop, ndists, num_regions
     .Call(`_redist_draw_a_tree_on_a_region`, adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_draw_tree_on, lower, upper, region_ids, region_sizes, verbose)
 }
 
-perform_a_valid_multidistrict_split <- function(adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_split, target, lower, upper, region_ids, region_sizes, split_dval_min, split_dval_max, split_district_only, verbose = FALSE, k_param = 1L) {
+perform_a_valid_multidistrict_split <- function(adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_split, target, lower, upper, region_ids, region_sizes, split_dval_min, split_dval_max, split_district_only, verbose, k_param) {
     .Call(`_redist_perform_a_valid_multidistrict_split`, adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_split, target, lower, upper, region_ids, region_sizes, split_dval_min, split_dval_max, split_district_only, verbose, k_param)
 }
 

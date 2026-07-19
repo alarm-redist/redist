@@ -2,9 +2,6 @@
 #ifndef MERGING_H
 #define MERGING_H
 
-
-#include <RcppThread.h>
-#include <cli/progress.h>
 #include <cmath>
 #include <functional>
 #include <iostream>
@@ -12,7 +9,7 @@
 #include <string>
 
 #include "map_calc.h"
-#include "redist_types.h"
+#include "advanced_types.h"
 #include "tree_op.h"
 #include "wilson.h"
 #include "weight_caching.h"

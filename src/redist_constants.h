@@ -3,8 +3,6 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-#include <chrono>
-
 // Important Constants
 constexpr bool DEBUG_VERBOSE = false; // Compile-time constant
 constexpr double SELECTION_ALPHA = 0.6321206;
@@ -54,8 +52,6 @@ namespace perf_config {
 
 }
 
-
-using Clock = std::chrono::steady_clock;
 
 
 // Debugging constants

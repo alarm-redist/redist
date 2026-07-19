@@ -7,13 +7,8 @@
 #include <queue>
 #include <stack>
 #include <vector>
-#include "redist_types.h"
+#include "advanced_types.h"
 #include "random.h"
-
-// [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::plugins("cpp11")]]
-
-using namespace Rcpp;
 
 // for error checking
 static inline void check_vertex_in_range(int v, int V, char const *where) {

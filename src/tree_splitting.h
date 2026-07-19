@@ -7,8 +7,7 @@
 #include <utility>
 #include <vector>
 
-#include "redist_constants.h"
-#include "redist_types.h"
+#include "advanced_types.h"
 #include "tree_op.h"
 
 class ScoringFunction;

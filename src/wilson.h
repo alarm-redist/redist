@@ -3,9 +3,8 @@
 
 #include "tree_op.h"
 #include "base_plan_type.h"
-#include "redist_types.h"
+#include "advanced_types.h"
 #include "tree_op.h"
-#include "redist_constants.h"
 #include <RcppArmadillo.h>
 
 

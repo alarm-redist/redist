@@ -609,13 +609,13 @@ List make_swaps(List boundary_cc, List aList, NumericVector cds_old, NumericVect
 
     std::vector<int> swaps_v = as<std::vector<int>>(swaps);
 
-    mat districts(cds_prop.size(), 2, fill::zeros);
+    arma::mat districts(cds_prop.size(), 2, arma::fill::zeros);
     for (int r = 0; r < nprec; r++) {
         districts(r, 0) = cds_prop(r) + 1;
         districts(r, 1) = cds_old(r) + 1;
     }
-    arma::umat udistricts = conv_to<umat>::from(districts);
-    arma::uvec pops = conv_to<arma::uvec>::from(as<arma::vec>(pop_vec));
+    arma::umat udistricts = arma::conv_to<arma::umat>::from(districts);
+    arma::uvec pops = arma::conv_to<arma::uvec>::from(Rcpp::as<arma::vec>(pop_vec));
 
     // Multiply mh_prob by constraint values
     double energy_new = calc_gibbs_tgt(udistricts.col(0), ndists, nprec, swaps_v, new_psi, pops,

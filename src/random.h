@@ -7,8 +7,6 @@
 #include <vector>
 #include "redist_constants.h"
 
-using namespace arma;
-
 // random number generator class
 class RNGState {
   private:
@@ -26,10 +24,10 @@ class RNGState {
 
     int r_int(uint32_t max); // Generate a uniform random integer in [0, max). Slightly biased.
     double r_unif();         // Generate a uniform random double in [0, 1). Slightly biased.
-    int r_int_wgt(const vec &cum_wgts); // Generate a random integer in [0, cum_wgts.size()) according
+    int r_int_wgt(const arma::vec &cum_wgts); // Generate a random integer in [0, cum_wgts.size()) according
                                  // to cumulative normalized weights.
     int r_int_unnormalized_wgt(
-        const vec &unnormalized_wgts); // Generate random integer with probability proporitional
+        const arma::vec &unnormalized_wgts); // Generate random integer with probability proporitional
                                        // to weights
 
     // Delete copy operator
@@ -49,7 +47,7 @@ void global_seed_rng(int seed, int num_jumps = 1);
 /*
  * Generate a random integer within a stratum with some probability p
  */
-int r_int_mixstrat(int max, int stratum, double p, vec cum_wgts);
+int r_int_mixstrat(int max, int stratum, double p, arma::vec cum_wgts);
 
 /*
  * Get the index of the k-th smallest element of x using global state

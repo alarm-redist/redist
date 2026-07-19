@@ -2,7 +2,7 @@
 #ifndef SPLITTING_SCHEDULE_TYPES_H
 #define SPLITTING_SCHEDULE_TYPES_H
 
-#include "redist_types.h"
+#include "advanced_types.h"
 
 /*
  * Abstract class for object used to manage what sizes are allowed to be split

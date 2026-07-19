@@ -5,9 +5,26 @@
  * Purpose: Exposes weight calculation functions to R code
  ********************************************************/
 
+#pragma once
+#ifndef MANUAL_SPLITTING_H
+#define MANUAL_SPLITTING_H
+
+
+#include <RcppThread.h>
+#include <cli/progress.h>
+#include <cmath>
+#include <functional>
+#include <string>
+
+#include "map_calc.h"
+#include "merging.h"
+#include "redist_alg_helpers.h"
+#include "tree_op.h"
+#include "weights.h"
+#include "wilson.h"
+
 bool DEBUG_MANUAL_WEIGHTS_VERBOSE = false;
 
-#include "manual_weights.h"
 
 /*
  *
@@ -15,17 +32,18 @@ bool DEBUG_MANUAL_WEIGHTS_VERBOSE = false;
  * and anything that depends on the entire plan.
  * Has the option
  */
+// [[Rcpp::export]]
 Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
-    List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
-    List const &constraints, double const pop_temper, bool const compute_pop_temper,
+    Rcpp::List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
+    Rcpp::List const &constraints, double const pop_temper, bool const compute_pop_temper,
     double const rho, int const ndists, int const total_seats, int const num_regions,
     Rcpp::IntegerVector const &district_seat_sizes, double const lower, double const target,
     double const upper, Rcpp::IntegerMatrix const &region_ids,
     Rcpp::IntegerMatrix const &region_sizes, std::string const &output_type,
-    int const num_threads, int const verbosity) {
+    int const num_threads, int const verbosity = 3) {
     // create the map param object
     MapParams map_params(adj_list, counties, pop, ndists, total_seats,
-                         as<std::vector<int>>(district_seat_sizes), lower, target, upper,
+                         Rcpp::as<std::vector<int>>(district_seat_sizes), lower, target, upper,
                         SamplingSpace::GraphSpace);
 
     // Add hard constraints to scoring function
@@ -51,7 +69,7 @@ Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
     // fake splitting schedule, don't actually use
     // Just need for constructor
     auto splitting_schedule_ptr = std::make_unique<PureMSSplittingSchedule>(
-        ndists, total_seats, as<std::vector<int>>(district_seat_sizes));
+        ndists, total_seats, Rcpp::as<std::vector<int>>(district_seat_sizes));
 
     PlanEnsemble plan_ensemble(map_params, *splitting_schedule_ptr, num_regions, num_plans,
                                SamplingSpace::GraphSpace, region_ids, region_sizes, rng_states,
@@ -267,9 +285,10 @@ Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
     return log_unnormalized_component_densities;
 }
 
+// [[Rcpp::export]]
 arma::vec compute_plans_log_optimal_weights(
-    List const &adj_list, arma::uvec const &counties, arma::uvec const &pop,
-    List const &constraints, double const pop_temper, double const rho,
+    Rcpp::List const &adj_list, arma::uvec const &counties, arma::uvec const &pop,
+    Rcpp::List const &constraints, double const pop_temper, double const rho,
     std::string const &splitting_schedule_str, int const ndists, int const total_seats,
     Rcpp::IntegerVector const &district_seat_sizes, int const num_regions, double const lower,
     double const target, double const upper, Rcpp::IntegerMatrix const &region_ids,
@@ -287,7 +306,7 @@ arma::vec compute_plans_log_optimal_weights(
 
     // create the map param object
     MapParams map_params(adj_list, counties, pop, ndists, total_seats,
-                         as<std::vector<int>>(district_seat_sizes), lower, target, upper,
+                         Rcpp::as<std::vector<int>>(district_seat_sizes), lower, target, upper,
                         sampling_space);
     // Create the scoring function
     ScoringFunction scoring_function(map_params, constraints, pop_temper, true);
@@ -302,7 +321,7 @@ arma::vec compute_plans_log_optimal_weights(
     SplittingSizeScheduleType splitting_schedule_type =
         get_splitting_size_regime(splitting_schedule_str);
     auto splitting_schedule_ptr = get_splitting_schedule(
-        1, ndists, total_seats, as<std::vector<int>>(district_seat_sizes),
+        1, ndists, total_seats, Rcpp::as<std::vector<int>>(district_seat_sizes),
         splitting_schedule_type, control);
     splitting_schedule_ptr->set_potential_cut_sizes_for_each_valid_size(0, num_regions - 1);
     splitting_schedule_ptr->print_current_step_splitting_info();
@@ -392,9 +411,11 @@ arma::vec compute_plans_log_optimal_weights(
     return log_weights;
 }
 
+
+// [[Rcpp::export]]
 arma::vec compute_plans_log_simple_weights(
-    List const &adj_list, arma::uvec const &counties, arma::uvec const &pop,
-    List const &constraints, double const pop_temper, double const rho,
+    Rcpp::List const &adj_list, arma::uvec const &counties, arma::uvec const &pop,
+    Rcpp::List const &constraints, double const pop_temper, double const rho,
     std::string const &splitting_schedule_str, int const ndists, int const total_seats,
     Rcpp::IntegerVector const &district_seat_sizes, int const num_regions, double const lower,
     double const target, double const upper, Rcpp::IntegerMatrix const &region_ids,
@@ -412,7 +433,7 @@ arma::vec compute_plans_log_simple_weights(
 
     // create the map param object
     MapParams map_params(adj_list, counties, pop, ndists, total_seats,
-                         as<std::vector<int>>(district_seat_sizes), lower, target, upper, sampling_space);
+                         Rcpp::as<std::vector<int>>(district_seat_sizes), lower, target, upper, sampling_space);
     // Create the scoring function
     ScoringFunction scoring_function(map_params, constraints, pop_temper, true);
 
@@ -426,7 +447,7 @@ arma::vec compute_plans_log_simple_weights(
     SplittingSizeScheduleType splitting_schedule_type =
         get_splitting_size_regime(splitting_schedule_str);
     auto splitting_schedule_ptr = get_splitting_schedule(
-        1, ndists, total_seats, as<std::vector<int>>(district_seat_sizes),
+        1, ndists, total_seats, Rcpp::as<std::vector<int>>(district_seat_sizes),
         splitting_schedule_type, control);
     splitting_schedule_ptr->set_potential_cut_sizes_for_each_valid_size(0, num_regions - 1);
     splitting_schedule_ptr->print_current_step_splitting_info();
@@ -515,3 +536,5 @@ arma::vec compute_plans_log_simple_weights(
     pool.wait();
     return log_weights;
 }
+
+#endif

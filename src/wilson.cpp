@@ -162,7 +162,7 @@ static void add_county_to_tree_dfs(
 // TESTED
 int walk_until(const Graph &g, int root, std::vector<int> &path, int MAX,
                const std::vector<bool> &visited, const std::vector<bool> &ignore,
-               const uvec &counties, RNGState &rng_state);
+               const arma::uvec &counties, RNGState &rng_state);
 
 /*
  * Erase loops in `path` that would be created by adding `proposal` to path
@@ -355,7 +355,7 @@ SampleSubUSTResult sample_sub_ust(MapParams const &map_params, Tree &tree, doubl
 // TESTED
 int walk_until(const Graph &g, int root, std::vector<int> &path, int MAX,
                const std::vector<bool> &visited, const std::vector<bool> &ignore,
-               const uvec &counties, RNGState &rng_state) {
+               const arma::uvec &counties, RNGState &rng_state) {
     path[0] = root;
     // walk until we hit something in `visited`
     int curr = root;
@@ -445,12 +445,14 @@ void loop_erase_cty(std::vector<std::array<int, 3>> &path, int proposal, int roo
 }
 
 // [[Rcpp::export]]
-Tree sample_ust(List l, const arma::uvec &pop, double lower, double upper,
+Tree sample_ust(Rcpp::List l, const arma::uvec &pop, double lower, double upper,
                 const arma::uvec &counties, const std::vector<bool> ignore) {
     RNGState rng_state((int)Rcpp::sample(INT_MAX, 1)[0]);
-    Graph g = list_to_graph(l);
-    Multigraph cg = county_graph(g, counties);
-    int V = g.size();
+    int V = l.size();
+    Graph g;
+    for (int i = 0; i < V; i++) {
+        g.push_back(Rcpp::as<std::vector<int>>((Rcpp::IntegerVector)l[i]));
+    }
 
     int FAKE_NDISTS = 6;
     double FAKE_TARGET = 6.6;
@@ -459,7 +461,6 @@ Tree sample_ust(List l, const arma::uvec &pop, double lower, double upper,
                          FAKE_TARGET, upper, SamplingSpace::GraphSpace);
 
     Tree tree = init_tree(V);
-    int root;
     std::vector<bool> visited(V);
     Tree county_tree = init_tree(map_params.num_counties);
     TreePopStack county_stack(map_params.num_counties + 1);

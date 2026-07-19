@@ -7,11 +7,12 @@
 
 #include "redist_alg_helpers.h"
 
+// [[Rcpp::export]]
 Rcpp::List maximum_input_sizes() {
     // Return results
-    List out = List::create(_["max_V"] = MAX_SUPPORTED_NUM_VERTICES,
-                            _["max_districts"] = MAX_SUPPORTED_NUM_DISTRICTS,
-                            _["max_counties"] = MAX_SUPPORTED_NUM_COUNTIES);
+    Rcpp::List out = Rcpp::List::create(Rcpp::_["max_V"] = MAX_SUPPORTED_NUM_VERTICES,
+                            Rcpp::_["max_districts"] = MAX_SUPPORTED_NUM_DISTRICTS,
+                            Rcpp::_["max_counties"] = MAX_SUPPORTED_NUM_COUNTIES);
 
     return out;
 }
@@ -1074,13 +1075,13 @@ get_tree_splitter_ptrs(MapParams const &map_params, SplittingMethodType const sp
         std::generate_n(std::back_inserter(tree_splitters_ptr_vec), num_threads,
                         [V, sampling_space] { return std::make_unique<UniformValidSplitter>(V, sampling_space); });
     } else if (splitting_method == SplittingMethodType::ExpBiggerAbsDev) {
-        double alpha = as<double>(control["splitting_alpha"]);
+        double alpha = Rcpp::as<double>(control["splitting_alpha"]);
         std::generate_n(std::back_inserter(tree_splitters_ptr_vec), num_threads,
                         [V, sampling_space, alpha, target] {
                             return std::make_unique<ExpoWeightedSplitter>(V, sampling_space, alpha, target);
                         });
     } else if (splitting_method == SplittingMethodType::ExpSmallerAbsDev) {
-        double alpha = as<double>(control["splitting_alpha"]);
+        double alpha = Rcpp::as<double>(control["splitting_alpha"]);
         std::generate_n(
             std::back_inserter(tree_splitters_ptr_vec), num_threads, [V, sampling_space, alpha, target] {
                 return std::make_unique<ExpoWeightedSmallerDevSplitter>(V,sampling_space, alpha, target);
@@ -1091,7 +1092,7 @@ get_tree_splitter_ptrs(MapParams const &map_params, SplittingMethodType const sp
             return std::make_unique<ConstraintSplitter>(V,sampling_space, ndists);
         });
     } else if (splitting_method == SplittingMethodType::Experimental) {
-        double epsilon = as<double>(control["splitting_epsilon"]);
+        double epsilon = Rcpp::as<double>(control["splitting_epsilon"]);
         std::generate_n(std::back_inserter(tree_splitters_ptr_vec), num_threads,
                         [V, sampling_space, epsilon, target] {
                             return std::make_unique<ExperimentalSplitter>(V, sampling_space, epsilon, target);
@@ -1282,33 +1283,33 @@ void SMCDiagnostics::add_diagnostics_to_out_list(Rcpp::List &out) {
     // add granular time info 
     Rcpp::List granular_timing;
     if constexpr (perf_config::track_granular_times){
-        granular_timing = List::create(
-            _["granular_time_tracked"] = true,
-            _["wilson_call_times"] = wilson_call_times,
-            _["multidistrict_selection_times"] = md_selection_times,
-            _["plan_updating_times"] = plan_updating_times,
-            _["hard_constraint_split_times"] = hard_constraint_split_times,
-            _["total_plan_smc_split_times"] = total_plan_smc_split_times,
-            _["getting_valid_pairs_times"] = get_valid_pairs_times,
-            _["computing_plan_scores_times"] = plan_scores_times,
-            _["computing_region_scores_times"] = region_scores_times,
-            _["computing_spanning_tree_count_times"] = log_tau_times,   
-            _["computing_retro_splitting_prob_times"] = retro_splitting_prob_times,     
-            _["total_plan_smc_weight_times"] = total_plan_smc_weight_times,
-            _["selecting_merge_pair"] = selecting_merge_pair_times,
-            _["eff_boundary_times"] = eff_boundary_times,
-            _["total_plan_mcmc_times"] = total_plan_mcmc_times
+        granular_timing = Rcpp::List::create(
+            Rcpp::_["granular_time_tracked"] = true,
+            Rcpp::_["wilson_call_times"] = wilson_call_times,
+            Rcpp::_["multidistrict_selection_times"] = md_selection_times,
+            Rcpp::_["plan_updating_times"] = plan_updating_times,
+            Rcpp::_["hard_constraint_split_times"] = hard_constraint_split_times,
+            Rcpp::_["total_plan_smc_split_times"] = total_plan_smc_split_times,
+            Rcpp::_["getting_valid_pairs_times"] = get_valid_pairs_times,
+            Rcpp::_["computing_plan_scores_times"] = plan_scores_times,
+            Rcpp::_["computing_region_scores_times"] = region_scores_times,
+            Rcpp::_["computing_spanning_tree_count_times"] = log_tau_times,   
+            Rcpp::_["computing_retro_splitting_prob_times"] = retro_splitting_prob_times,     
+            Rcpp::_["total_plan_smc_weight_times"] = total_plan_smc_weight_times,
+            Rcpp::_["selecting_merge_pair"] = selecting_merge_pair_times,
+            Rcpp::_["eff_boundary_times"] = eff_boundary_times,
+            Rcpp::_["total_plan_mcmc_times"] = total_plan_mcmc_times
         );
 
     }else{
-        granular_timing = List::create(
-            _["granular_time_tracked"] = false
+        granular_timing = Rcpp::List::create(
+            Rcpp::_["granular_time_tracked"] = false
         );
     }
 
     // optional add special timing 
     if constexpr (perf_config::special_timing){
-        Rcpp::List special_timing_list = List::create(
+        Rcpp::List special_timing_list = Rcpp::List::create(
         );
 
         granular_timing["special_timing_list"] = special_timing_list;

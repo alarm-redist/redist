@@ -3,7 +3,7 @@
 #define WEIGHTS_CACHING_H
 
 #include "base_plan_type.h"
-#include "redist_types.h"
+#include "advanced_types.h"
 
 // Class used to save expensive computations like compactness for specific plans
 class WeightCache {

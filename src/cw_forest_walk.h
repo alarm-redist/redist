@@ -3,7 +3,7 @@
 
 #include "lct_graph_plan_type.h"
 #include "random.h"
-#include "redist_types.h"
+#include "advanced_types.h"
 
 /*
  * One internal forest-walk step. Reshuffles the spanning tree within a

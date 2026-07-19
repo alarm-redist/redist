@@ -7,6 +7,22 @@
 
 #include "graph_ops.h"
 
+namespace{
+
+/*
+ * Convert zero-indxed R adjacency list to Graph object (vector of vectors of ints).
+ */
+Graph list_to_graph(const Rcpp::List &l) {
+    int V = l.size();
+    Graph g;
+    for (int i = 0; i < V; i++) {
+        g.push_back(Rcpp::as<std::vector<int>>((Rcpp::IntegerVector)l[i]));
+    }
+    return g;
+}
+
+}
+
 RegionMultigraphCount build_region_multigraph(Graph const &g, PlanVector const &region_ids,
                                               int const num_regions) {
     RegionMultigraphCount region_multigraph(num_regions);

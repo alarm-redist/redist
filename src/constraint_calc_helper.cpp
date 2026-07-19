@@ -9,15 +9,12 @@
 // Header files
 
 #include "redist_types.h"
-#include "tree_op.h"
 #include <RcppArmadillo.h>
-
-using namespace Rcpp;
 
 /* Function to modify adjacency list to reflect adjacency only within
    a particular congressional district */
 // [[Rcpp::export]]
-List genAlConn(List aList, NumericVector cds) {
+Rcpp::List genAlConn(Rcpp::List aList, Rcpp::NumericVector cds) {
 
     /* Inputs to function:
        aList: adjacency list of geographic units
@@ -26,11 +23,11 @@ List genAlConn(List aList, NumericVector cds) {
     */
 
     // Initialize container list
-    List alConnected(cds.size());
+    Rcpp::List alConnected(cds.size());
 
     // Initialize
     int i;
-    NumericVector avec;
+    Rcpp::NumericVector avec;
     int cd_i;
     int j;
 
@@ -44,7 +41,7 @@ List genAlConn(List aList, NumericVector cds) {
         cd_i = cds(i);
 
         // Initialize empty vector
-        NumericVector avec_cd;
+        Rcpp::NumericVector avec_cd;
 
         // Loop through avec to identify which are in same cd
         for (j = 0; j < avec.size(); j++) {
@@ -65,7 +62,7 @@ List genAlConn(List aList, NumericVector cds) {
 /* Function to identify which precincts lie on the boundary of a congressional
    district */
 // [[Rcpp::export]]
-NumericVector findBoundary(List fullList, List conList) {
+Rcpp::NumericVector findBoundary(Rcpp::List fullList, Rcpp::List conList) {
 
     /* Inputs to function:
        fullList: Full adjacency list of geographic units
@@ -74,11 +71,11 @@ NumericVector findBoundary(List fullList, List conList) {
     */
 
     // Initialize container vector of 0's (not boundary) and 1's (boundary)
-    NumericVector isBoundary(fullList.size());
+    Rcpp::NumericVector isBoundary(fullList.size());
 
     // Initialize inside loop
-    NumericVector full;
-    NumericVector conn;
+    Rcpp::NumericVector full;
+    Rcpp::NumericVector conn;
     int i;
 
     // Loop through aList

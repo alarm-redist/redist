@@ -4,7 +4,7 @@
 
 #include "base_plan_type.h"
 #include "map_calc.h"
-#include "redist_types.h"
+#include "advanced_types.h"
 
 class Plan;
 
@@ -499,7 +499,7 @@ class CustomRegionConstraint : public RegionConstraint {
   public:
     CustomRegionConstraint(Rcpp::List const &constr_inst, MapParams const &map_params)
         : RegionConstraint(constr_inst,  map_params.ndists, map_params.total_seats),
-         fn(Rcpp::clone(as<Rcpp::Function>(constr_inst["fn"]))), 
+         fn(Rcpp::clone(Rcpp::as<Rcpp::Function>(constr_inst["fn"]))), 
          rcpp_plan_wrap(map_params.V) {}
 
     double compute_raw_region_constraint_score(int const num_regions,
@@ -525,7 +525,7 @@ class PlanConstraint {
   public:
     PlanConstraint(Rcpp::List const &constr_inst, int const ndists)
         : strength(constr_inst.containsElementNamed("strength")
-                       ? as<double>(constr_inst["strength"])
+                       ? Rcpp::as<double>(constr_inst["strength"])
                        : 1.0),
           num_regions_to_score([ndists, &constr_inst]() {
               // vector where index i is true iff i seats is a district
@@ -540,10 +540,10 @@ class PlanConstraint {
               return num_regions_to_score;
           }()),
           hard_constraint(constr_inst.containsElementNamed("hard_constraint")
-                              ? as<bool>(constr_inst["hard_constraint"])
+                              ? Rcpp::as<bool>(constr_inst["hard_constraint"])
                               : false),
           hard_threshold(constr_inst.containsElementNamed("hard_threshold")
-                             ? as<double>(constr_inst["hard_threshold"])
+                             ? Rcpp::as<double>(constr_inst["hard_threshold"])
                              : 0.0) {};
 
     virtual ~PlanConstraint() = default;

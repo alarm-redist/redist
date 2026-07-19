@@ -200,7 +200,7 @@ int estimate_mergesplit_cut_k(const MapParams &map_params,
     double upper = plan_multigraph.map_params.target * (1 + tol);
 
     std::vector<std::vector<double>> devs;
-    vec distr_ok(k_max + 1, fill::zeros);
+    std::vector<double> distr_ok(k_max + 1, 0.0);
     int max_ok = 0;
 
     USTSampler ust_sampler(map_params, splitting_schedule);
@@ -255,7 +255,7 @@ int estimate_mergesplit_cut_k(const MapParams &map_params,
         }
 
         if (n_ok <= k_max)
-            distr_ok(n_ok) += 1.0 / N_adapt;
+            distr_ok[n_ok] += 1.0 / N_adapt;
         if (n_ok > max_ok && n_ok < k_max)
             max_ok = n_ok;
     }
@@ -282,7 +282,7 @@ int estimate_mergesplit_cut_k(const MapParams &map_params,
     }
 
     if (k == k_max + 1) {
-        Rcerr << "Warning: maximum hit; falling back to naive k estimator.\n";
+        Rcpp::Rcerr << "Warning: maximum hit; falling back to naive k estimator.\n";
         k = max_ok + 1;
     }
 
@@ -311,7 +311,7 @@ void estimate_cut_k(const MapParams &map_params, const SplittingSchedule &splitt
 
     std::vector<std::vector<double>> devs;
     devs.reserve(N_adapt);
-    vec distr_ok(k_max + 1, fill::zeros);
+    std::vector<double> distr_ok(k_max + 1, 0.0);
     int max_ok = 0;
 
     USTSampler ust_sampler(map_params, splitting_schedule);
@@ -403,7 +403,7 @@ void estimate_cut_k(const MapParams &map_params, const SplittingSchedule &splitt
         }
 
         if (n_ok <= k_max)
-            distr_ok(n_ok) += 1.0 / N_adapt;
+            distr_ok[n_ok] += 1.0 / N_adapt;
         if (n_ok > max_ok && n_ok < k_max) {
             max_ok = n_ok;
         }
@@ -435,7 +435,7 @@ void estimate_cut_k(const MapParams &map_params, const SplittingSchedule &splitt
 
     if (k >= k_max) {
         if (verbosity >= 3) {
-            Rcout << " [maximum hit; falling back to naive k estimator]";
+            Rcpp::Rcout << " [maximum hit; falling back to naive k estimator]";
         }
         k = max_ok;
     }
@@ -443,5 +443,5 @@ void estimate_cut_k(const MapParams &map_params, const SplittingSchedule &splitt
     if (last_k < k_max && k < last_k * 0.6)
         k = (int)(0.5 * k + 0.5 * last_k);
 
-    k = std::min(std::max(max_ok + 1, k) + 1 - (distr_ok(k) > 0.99) + (thresh == 1), max_V - 1);
+    k = std::min(std::max(max_ok + 1, k) + 1 - (distr_ok[k] > 0.99) + (thresh == 1), max_V - 1);
 }

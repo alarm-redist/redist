@@ -537,7 +537,7 @@ double CustomRegionConstraint::compute_raw_region_constraint_score(
     // Need to copy into Rcpp vector since no SEXP for current region ids
     std::copy(region_ids.begin(), region_ids.end(), rcpp_plan_wrap.begin());
 
-    double raw_score = static_cast<double>(as<NumericVector>(fn(rcpp_plan_wrap, region_id))[0]);
+    double raw_score = static_cast<double>(Rcpp::as<Rcpp::NumericVector>(fn(rcpp_plan_wrap, region_id))[0]);
 
     return raw_score;
 }
@@ -556,7 +556,7 @@ double CustomRegionConstraint::compute_raw_merged_region_constraint_score(
     }
 
     double raw_score =
-        static_cast<double>(as<NumericVector>(fn(rcpp_plan_wrap, region1_id))[0]);
+        static_cast<double>(Rcpp::as<Rcpp::NumericVector>(fn(rcpp_plan_wrap, region1_id))[0]);
 
     return raw_score;
 }
@@ -629,7 +629,7 @@ double CustomPlanConstraint::compute_raw_plan_constraint_score(
     Rcpp::IntegerVector rcpp_sizes_wrap(region_sizes.begin(), region_sizes.end());
 
     double raw_score = static_cast<double>(
-        as<NumericVector>(fn(rcpp_plan_wrap, rcpp_sizes_wrap, num_regions))[0]);
+        Rcpp::as<Rcpp::NumericVector>(fn(rcpp_plan_wrap, rcpp_sizes_wrap, num_regions))[0]);
 
     return raw_score;
 }
@@ -653,7 +653,7 @@ double CustomPlanConstraint::compute_raw_merged_plan_constraint_score(
     rcpp_sizes_wrap[region2_id] = 0;
 
     double raw_score = static_cast<double>(
-        as<NumericVector>(fn(rcpp_plan_wrap, rcpp_sizes_wrap, plan.num_regions - 1))[0]);
+        Rcpp::as<Rcpp::NumericVector>(fn(rcpp_plan_wrap, rcpp_sizes_wrap, plan.num_regions - 1))[0]);
 
     return raw_score;
 }
@@ -903,7 +903,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
     if (constraints.containsElementNamed("pop_dev")) {
         Rcpp::List constr = constraints["pop_dev"];
         for (int i = 0; i < constr.size(); i++) {
-            List constr_inst = constr[i];
+            Rcpp::List constr_inst = constr[i];
             region_constraint_ptrs.emplace_back(std::make_unique<PopDevConstraint>(
                 constr_inst, map_params));
         }
@@ -911,7 +911,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
     if (constraints.containsElementNamed("status_quo")) {
         Rcpp::List constr = constraints["status_quo"];
         for (int i = 0; i < constr.size(); i++) {
-            List constr_inst = constr[i];
+            Rcpp::List constr_inst = constr[i];
             region_constraint_ptrs.emplace_back(std::make_unique<StatusQuoConstraint>(
                 constr_inst, map_params));
         }
@@ -919,7 +919,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
     if (constraints.containsElementNamed("segregation")) {
         Rcpp::List constr = constraints["segregation"];
         for (int i = 0; i < constr.size(); i++) {
-            List constr_inst = constr[i];
+            Rcpp::List constr_inst = constr[i];
             region_constraint_ptrs.emplace_back(std::make_unique<SegregationConstraint>(
                 constr_inst, map_params));
         }
@@ -949,7 +949,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
         // create constraint objects
         Rcpp::List constr = constraints["grp_hinge"];
         for (int i = 0; i < constr.size(); i++) {
-            List constr_inst = constr[i];
+            Rcpp::List constr_inst = constr[i];
             region_constraint_ptrs.emplace_back(std::make_unique<GroupHingeConstraint>(
                 constr_inst, map_params));
         }
@@ -959,7 +959,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
         // create constraint objects
         Rcpp::List constr = constraints["grp_inv_hinge"];
         for (int i = 0; i < constr.size(); i++) {
-            List constr_inst = constr[i];
+            Rcpp::List constr_inst = constr[i];
             region_constraint_ptrs.emplace_back(std::make_unique<GroupHingeConstraint>(
                 constr_inst, map_params));
         }
@@ -967,7 +967,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
     if (constraints.containsElementNamed("incumbency")) {
         Rcpp::List constr = constraints["incumbency"];
         for (int i = 0; i < constr.size(); i++) {
-            List constr_inst = constr[i];
+            Rcpp::List constr_inst = constr[i];
             region_constraint_ptrs.emplace_back(std::make_unique<IncumbentConstraint>(
                 constr_inst, map_params));
         }
@@ -975,7 +975,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
     if (constraints.containsElementNamed("splits")) {
         Rcpp::List constr = constraints["splits"];
         for (int i = 0; i < constr.size(); i++) {
-            List constr_inst = constr[i];
+            Rcpp::List constr_inst = constr[i];
             region_constraint_ptrs.emplace_back(std::make_unique<SplitsConstraint>(
                 constr_inst, map_params, smc));
         }
@@ -983,7 +983,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
     if (constraints.containsElementNamed("multisplits")) {
         Rcpp::List constr = constraints["multisplits"];
         for (int i = 0; i < constr.size(); i++) {
-            List constr_inst = constr[i];
+            Rcpp::List constr_inst = constr[i];
             region_constraint_ptrs.emplace_back(std::make_unique<MultisplitsConstraint>(
                 constr_inst, map_params, smc));
         }
@@ -991,7 +991,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
     if (constraints.containsElementNamed("total_splits")) {
         Rcpp::List constr = constraints["total_splits"];
         for (int i = 0; i < constr.size(); i++) {
-            List constr_inst = constr[i];
+            Rcpp::List constr_inst = constr[i];
             region_constraint_ptrs.emplace_back(std::make_unique<TotalSplitsConstraint>(
                 constr_inst, map_params, smc));
         }
@@ -999,7 +999,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
     if (constraints.containsElementNamed("polsby")) {
         Rcpp::List constr = constraints["polsby"];
         for (int i = 0; i < constr.size(); i++) {
-            List constr_inst = constr[i];
+            Rcpp::List constr_inst = constr[i];
             region_constraint_ptrs.emplace_back(std::make_unique<PolsbyConstraint>(
                 constr_inst, map_params));
         }
@@ -1009,7 +1009,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
         Rcpp::List constr = constraints["fry_hold"];
         throw std::runtime_error("Fry hold constraint not supported right now!\n");
         for (int i = 0; i < constr.size(); i++) {
-            List constr_inst = constr[i];
+            Rcpp::List constr_inst = constr[i];
             // region_constraint_ptrs.emplace_back(std::make_unique<PolsbyConstraint>(
             //     constr_inst, map_params));
         }
@@ -1019,7 +1019,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
         Rcpp::List constr = constraints["qps"];
         throw std::runtime_error("QPS constraint not supported right now!\n");
         for (int i = 0; i < constr.size(); i++) {
-            List constr_inst = constr[i];
+            Rcpp::List constr_inst = constr[i];
             // region_constraint_ptrs.emplace_back(std::make_unique<PolsbyConstraint>(
             //     constr_inst, map_params));
         }
@@ -1029,7 +1029,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
         Rcpp::List constr = constraints["edges_removed"];
         throw std::runtime_error("Edges Removed constraint not supported right now!\n");
         for (int i = 0; i < constr.size(); i++) {
-            List constr_inst = constr[i];
+            Rcpp::List constr_inst = constr[i];
             // region_constraint_ptrs.emplace_back(std::make_unique<PolsbyConstraint>(
             //     constr_inst, map_params));
         }
@@ -1039,7 +1039,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
         Rcpp::List constr = constraints["log_st"];
         throw std::runtime_error("Log Spanning tree constraint not supported right now!\n");
         for (int i = 0; i < constr.size(); i++) {
-            List constr_inst = constr[i];
+            Rcpp::List constr_inst = constr[i];
             // region_constraint_ptrs.emplace_back(std::make_unique<PolsbyConstraint>(
             //     constr_inst, map_params));
         }
@@ -1048,10 +1048,10 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
     if (constraints.containsElementNamed("custom")) {
         Rcpp::List constr = constraints["custom"];
         for (int i = 0; i < constr.size(); i++) {
-            List constr_inst = constr[i];
+            Rcpp::List constr_inst = constr[i];
             bool hard_constraint = false;
             if (constr_inst.containsElementNamed("hard_constraint")) {
-                hard_constraint = as<bool>(constr_inst["hard_constraint"]);
+                hard_constraint = Rcpp::as<bool>(constr_inst["hard_constraint"]);
             }
             region_constraint_ptrs.emplace_back(std::make_unique<CustomRegionConstraint>(
                 constr_inst, map_params));
@@ -1069,7 +1069,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
     if (constraints.containsElementNamed("plan_splits")) {
         Rcpp::List constr = constraints["plan_splits"];
         for (int i = 0; i < constr.size(); i++) {
-            List constr_inst = constr[i];
+            Rcpp::List constr_inst = constr[i];
             plan_constraint_ptrs.emplace_back(std::make_unique<PlanSplitsConstraint>(
                 constr_inst, map_params));
         }
@@ -1078,7 +1078,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
     if (constraints.containsElementNamed("total_plan_splits")) {
         Rcpp::List constr = constraints["total_plan_splits"];
         for (int i = 0; i < constr.size(); i++) {
-            List constr_inst = constr[i];
+            Rcpp::List constr_inst = constr[i];
             plan_constraint_ptrs.emplace_back(std::make_unique<TotalPlanSplitsConstraint>(
                 constr_inst, map_params));
         }
@@ -1087,7 +1087,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
     if (constraints.containsElementNamed("plan_incumbency")) {
         Rcpp::List constr = constraints["plan_incumbency"];
         for (int i = 0; i < constr.size(); i++) {
-            List constr_inst = constr[i];
+            Rcpp::List constr_inst = constr[i];
             plan_constraint_ptrs.emplace_back(std::make_unique<PlanIncumbentConstraint>(
                 constr_inst, map_params));
         }
@@ -1096,7 +1096,7 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
     if (constraints.containsElementNamed("min_group_frac")) {
         Rcpp::List constr = constraints["min_group_frac"];
         for (int i = 0; i < constr.size(); i++) {
-            List constr_inst = constr[i];
+            Rcpp::List constr_inst = constr[i];
             plan_constraint_ptrs.emplace_back(std::make_unique<MinGroupFracConstraint>(
                 constr_inst, map_params));
         }
@@ -1106,10 +1106,10 @@ ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &
     if (constraints.containsElementNamed("custom_plan")) {
         Rcpp::List constr = constraints["custom_plan"];
         for (int i = 0; i < constr.size(); i++) {
-            List constr_inst = constr[i];
+            Rcpp::List constr_inst = constr[i];
             bool hard_constraint = false;
             if (constr_inst.containsElementNamed("hard_constraint")) {
-                hard_constraint = as<bool>(constr_inst["hard_constraint"]);
+                hard_constraint = Rcpp::as<bool>(constr_inst["hard_constraint"]);
             }
             plan_constraint_ptrs.emplace_back(std::make_unique<CustomPlanConstraint>(
                 constr_inst, map_params));

@@ -1,18 +1,13 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#ifndef ARMA_NO_DEBUG
-#define ARMA_NO_DEBUG
-#endif
 
-#include "redist_types.h"
+
+#include "advanced_types.h"
 #include <RcppArmadillo.h>
 #include <RcppThread.h>
 #include <limits>
 #include <vector>
-
-// [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::plugins("cpp11")]]
 
 
 #include "random.h"

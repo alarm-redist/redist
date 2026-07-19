@@ -8,9 +8,9 @@ using SparseMat = Eigen::SparseMatrix<double, Eigen::ColMajor, int>;
 /*
  * Compute the Fryer-Holden penalty for district `distr`
  */
-double eval_fry_hold(const subview_col<uword> &districts, int distr, const uvec &total_pop,
-                     mat ssdmat, double denominator = 1.0) {
-    uvec idxs = find(districts == distr);
+double eval_fry_hold(const arma::subview_col<arma::uword> &districts, int distr, const arma::uvec &total_pop,
+                     arma::mat ssdmat, double denominator = 1.0) {
+    arma::uvec idxs = find(districts == distr);
     double ssd = 0.0;
 
     for (int i = 0; i < idxs.size() - 1; i++) {
@@ -25,19 +25,19 @@ double eval_fry_hold(const subview_col<uword> &districts, int distr, const uvec 
 /*
  * Compute the qps penalty for district `distr`
  */
-double eval_qps(const subview_col<uword> &districts, int distr, const uvec &total_pop,
-                const uvec &cities, int n_city, int nd) {
+double eval_qps(const arma::subview_col<arma::uword> &districts, int distr, const arma::uvec &total_pop,
+                const arma::uvec &cities, int n_city, int nd) {
 
-    vec tally(n_city);
-    vec pj(n_city);
-    vec j(n_city);
-    vec sumpj(n_city);
+    arma::vec tally(n_city);
+    arma::vec pj(n_city);
+    arma::vec j(n_city);
+    arma::vec sumpj(n_city);
 
-    uvec idxs_d = find(districts == distr);
-    double pop = sum(total_pop(idxs_d));
+    arma::uvec idxs_d = find(districts == distr);
+    double pop = arma::sum(total_pop(idxs_d));
 
     for (int i = 0; i < n_city; i++) {
-        uvec idxs = find(cities == (i + 1));
+        arma::uvec idxs = find(cities == (i + 1));
         idxs = arma::intersect(idxs_d, idxs);
         tally(i) = sum(total_pop(idxs));
         if (tally(i) > 0) {
@@ -55,7 +55,7 @@ double eval_qps(const subview_col<uword> &districts, int distr, const uvec &tota
 /*
  * Compute the log spanning tree penalty for district `distr`
  */
-double eval_log_st(const subview_col<uword> &districts, const Graph g, arma::uvec counties,
+double eval_log_st(const arma::subview_col<arma::uword> &districts, const Graph g, arma::uvec counties,
                    int ndists) {
     return (double)redistmetrics::log_st_map(g, districts, counties, ndists)[0];
 }
@@ -63,7 +63,7 @@ double eval_log_st(const subview_col<uword> &districts, const Graph g, arma::uve
 /*
  * Compute the edges removed penalty for district `distr`
  */
-double eval_er(const subview_col<uword> &districts, const Graph g, int ndists) {
+double eval_er(const arma::subview_col<arma::uword> &districts, const Graph g, int ndists) {
     return (double)redistmetrics::n_removed(g, districts, ndists)[0];
 }
 
@@ -71,10 +71,10 @@ double eval_er(const subview_col<uword> &districts, const Graph g, int ndists) {
  * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,
  * given a collection of plans
  */
-mat prec_cooccur(umat m, uvec idxs, int ncores) {
+arma::mat prec_cooccur(arma::umat m, arma::uvec idxs, int ncores) {
     int v = m.n_rows;
     int n = idxs.n_elem;
-    mat out(v, v);
+    arma::mat out(v, v);
 
     RcppThread::parallelFor(
         0, v,
@@ -98,13 +98,13 @@ mat prec_cooccur(umat m, uvec idxs, int ncores) {
 /*
  * Compute the percentage of `group` in each district. Asummes `m` is 1-indexed.
  */
-NumericMatrix group_pct(IntegerMatrix const &plans_mat, vec const &group_pop,
-                        vec const &total_pop, int const n_distr, int const ncores) {
+Rcpp::NumericMatrix group_pct(Rcpp::IntegerMatrix const &plans_mat, arma::vec const &group_pop,
+                        arma::vec const &total_pop, int const n_distr, int const ncores) {
     int V = plans_mat.nrow();
     int num_plans = plans_mat.ncol();
 
-    NumericMatrix grp_distr(n_distr, num_plans);
-    NumericMatrix tot_distr(n_distr, num_plans);
+    Rcpp::NumericMatrix grp_distr(n_distr, num_plans);
+    Rcpp::NumericMatrix tot_distr(n_distr, num_plans);
 
     // 0 or 1 ncores means no threading
     RcppThread::ThreadPool pool(ncores > 1 ? ncores : 0);
@@ -136,11 +136,11 @@ NumericMatrix group_pct(IntegerMatrix const &plans_mat, vec const &group_pop,
  * largest such value. Asummes `m` is 1-indexed.
  */
 // [[Rcpp::export]]
-NumericVector group_pct_top_k(const IntegerMatrix m, const NumericVector group_pop,
-                              const NumericVector total_pop, int k, int n_distr) {
+Rcpp::NumericVector group_pct_top_k(const Rcpp::IntegerMatrix m, const Rcpp::NumericVector group_pop,
+                              const Rcpp::NumericVector total_pop, int k, int n_distr) {
     int v = m.nrow();
     int n = m.ncol();
-    NumericVector out(n);
+    Rcpp::NumericVector out(n);
 
     for (int i = 0; i < n; i++) {
         std::vector<double> grp_distr(n_distr, 0.0);
@@ -170,12 +170,12 @@ NumericVector group_pct_top_k(const IntegerMatrix m, const NumericVector group_p
  */
 // TESTED
 // NOTE: Maybe can make parallel version of this? Not sure
-NumericMatrix pop_tally(IntegerMatrix const &districts, vec const &pop, int const n_distr,
+Rcpp::NumericMatrix pop_tally(Rcpp::IntegerMatrix const &districts, arma::vec const &pop, int const n_distr,
                         int const ncores) {
     int const num_plans = districts.ncol();
     int const V = districts.nrow();
 
-    NumericMatrix tally(n_distr, num_plans);
+    Rcpp::NumericMatrix tally(n_distr, num_plans);
 
     // parallel for loop over each plan
     RcppThread::parallelFor(
@@ -255,12 +255,12 @@ Rcpp::IntegerMatrix infer_region_seats(Rcpp::IntegerMatrix const &region_pops,
  * Create the projective distribution of a variable `x`
  */
 // [[Rcpp::export]]
-NumericMatrix proj_distr_m(IntegerMatrix districts, const arma::vec x, IntegerVector draw_idx,
+Rcpp::NumericMatrix proj_distr_m(Rcpp::IntegerMatrix districts, const arma::vec x, Rcpp::IntegerVector draw_idx,
                            int n_distr) {
     int n = draw_idx.size();
     int V = districts.nrow();
 
-    NumericMatrix out(V, n);
+    Rcpp::NumericMatrix out(V, n);
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < V; j++) {
             int idx = draw_idx[i] - 1;
@@ -274,13 +274,13 @@ NumericMatrix proj_distr_m(IntegerMatrix districts, const arma::vec x, IntegerVe
 /*
  * Compute the maximum deviation from the equal population constraint.
  */
-NumericVector max_dev(const IntegerMatrix &districts, const arma::vec &pop, int const n_distr,
+Rcpp::NumericVector max_dev(const Rcpp::IntegerMatrix &districts, const arma::vec &pop, int const n_distr,
                       bool const multimember_districts, int const nseats,
                       Rcpp::IntegerMatrix const &seats_matrix, int const num_threads) {
     int const num_plans = districts.ncol();
 
-    NumericVector res(num_plans);
-    NumericMatrix district_pops = pop_tally(districts, pop, n_distr, num_threads);
+    Rcpp::NumericVector res(num_plans);
+    Rcpp::NumericMatrix district_pops = pop_tally(districts, pop, n_distr, num_threads);
 
     if (multimember_districts) {
         double const target_pop = arma::sum(pop) / nseats;
@@ -320,10 +320,10 @@ NumericVector max_dev(const IntegerMatrix &districts, const arma::vec &pop, int 
  * Column-wise maximum
  */
 // [[Rcpp::export]]
-NumericVector colmax(const NumericMatrix x) {
+Rcpp::NumericVector colmax(const Rcpp::NumericMatrix x) {
     int nrow = x.nrow();
     int ncol = x.ncol();
-    NumericVector out(ncol);
+    Rcpp::NumericVector out(ncol);
     for (int j = 0; j < ncol; j++) {
         double best = x(0, j);
         for (int i = 1; i < nrow; i++) {
@@ -340,10 +340,10 @@ NumericVector colmax(const NumericMatrix x) {
  * Column-wise minimum
  */
 // [[Rcpp::export]]
-NumericVector colmin(const NumericMatrix x) {
+Rcpp::NumericVector colmin(const Rcpp::NumericMatrix x) {
     int nrow = x.nrow();
     int ncol = x.ncol();
-    NumericVector out(ncol);
+    Rcpp::NumericVector out(ncol);
     for (int j = 0; j < ncol; j++) {
         double best = x(0, j);
         for (int i = 1; i < nrow; i++) {
@@ -423,7 +423,7 @@ double compute_log_det_from_triplets(std::vector<Eigen::Triplet<double, int>> co
 // computes log number of spanning trees on region intersect county
 // In either a region or a merged region
 double compute_log_region_and_county_spanning_tree(
-    Graph const &g, const uvec &counties, int const county, PlanVector const &region_ids,
+    Graph const &g, const arma::uvec &counties, int const county, PlanVector const &region_ids,
     int const region1_id, int const region2_id) {
 
     int const V = g.size();
@@ -497,7 +497,7 @@ double compute_log_region_and_county_spanning_tree(
  * Compute the log number of spanning trees for the contracted (ie county level) graph
  */
 // TESTED
-double compute_log_county_level_spanning_tree(Graph const &g, const uvec &counties,
+double compute_log_county_level_spanning_tree(Graph const &g, const arma::uvec &counties,
                                                     int const n_cty,
                                                     PlanVector const &region_ids,
                                                     int const region1_id,
@@ -590,7 +590,7 @@ Rcpp::NumericVector order_district_stats(Rcpp::NumericVector const &district_sta
 
     int num_plans = district_stats.size() / ndists;
 
-    NumericVector ordered_district_stats = clone(district_stats);
+    Rcpp::NumericVector ordered_district_stats = Rcpp::clone(district_stats);
 
     RcppThread::parallelFor(
         0, num_plans,

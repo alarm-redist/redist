@@ -2,7 +2,7 @@
 #ifndef GRAPH_OP_H
 #define GRAPH_OP_H
 
-#include "redist_types.h"
+#include "advanced_types.h"
 #include <Rcpp.h>
 #include <RcppArmadillo.h>
 #include <vector>
