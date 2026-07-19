@@ -201,23 +201,28 @@ int estimate_mergesplit_cut_k(const MapParams &map_params,
 
     std::vector<std::vector<double>> devs;
     vec distr_ok(k_max + 1, fill::zeros);
-    int root;
     int max_ok = 0;
 
     USTSampler ust_sampler(map_params, splitting_schedule);
 
     int max_V = 0;
-    Tree ust = init_tree(V);
     for (int i = 0; i < N_adapt; i++) {
         auto random_pair_index = rng_state.r_int(plan_multigraph.pair_map.hashed_pairs.size());
         auto a_pair = plan_multigraph.pair_map.hashed_pairs[random_pair_index];
         auto merged_size = plan.region_sizes[a_pair.first] + plan.region_sizes[a_pair.second];
         auto merged_pop = plan.region_pops[a_pair.first] + plan.region_pops[a_pair.second];
+        std::pair<int, int> min_and_max_possible_cut_sizes =
+            splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_size];
+        int min_possible_cut_size = min_and_max_possible_cut_sizes.first;
+        int max_possible_cut_size = min_and_max_possible_cut_sizes.second;
 
         // now attempt to sample the tree on the biggest region
-        auto const result = ust_sampler.attempt_to_draw_tree_on_merged_region(rng_state, plan, a_pair.first, a_pair.second);
-        bool const successful = result.first;
-        int const n_vtx = result.second;
+        auto const result = ust_sampler.attempt_to_draw_tree_on_merged_region(
+            rng_state, plan, a_pair.first, a_pair.second,
+            true, lower * min_possible_cut_size, upper * max_possible_cut_size
+        );
+        bool const successful = result.successful;
+        int const n_vtx = result.num_vertices;
 
         if (n_vtx > max_V)
             max_V = n_vtx;
@@ -231,16 +236,13 @@ int estimate_mergesplit_cut_k(const MapParams &map_params,
         std::fill(
             ust_sampler.pops_below_vertex.begin(), 
             ust_sampler.pops_below_vertex.end(), 0);
-        get_tree_pops_below(ust, root, ust_sampler.stack, plan_multigraph.map_params.pop,
+        get_tree_pops_below(ust_sampler.ust, result.root, ust_sampler.stack, plan_multigraph.map_params.pop,
                             ust_sampler.pops_below_vertex);
 
-        std::pair<int, int> min_and_max_possible_cut_sizes =
-            splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_size];
-        int min_possible_cut_size = min_and_max_possible_cut_sizes.first;
-        int max_possible_cut_size = min_and_max_possible_cut_sizes.second;
+
 
         devs.push_back(get_ordered_tree_cut_devs(
-            ust, root, ust_sampler.pops_below_vertex, plan_multigraph.map_params.target, plan.region_ids,
+            ust_sampler.ust, result.root, ust_sampler.pops_below_vertex, plan_multigraph.map_params.target, plan.region_ids,
             a_pair.first, a_pair.second, merged_size, merged_pop, min_possible_cut_size,
             max_possible_cut_size,
             splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_size]));
@@ -310,7 +312,6 @@ void estimate_cut_k(const MapParams &map_params, const SplittingSchedule &splitt
     std::vector<std::vector<double>> devs;
     devs.reserve(N_adapt);
     vec distr_ok(k_max + 1, fill::zeros);
-    int root;
     int max_ok = 0;
 
     USTSampler ust_sampler(map_params, splitting_schedule);
@@ -366,9 +367,11 @@ void estimate_cut_k(const MapParams &map_params, const SplittingSchedule &splitt
         int max_possible_cut_size = min_and_max_possible_cut_sizes.second;
 
         // now attempt to sample the tree on the biggest region
-        auto const result = ust_sampler.attempt_to_draw_tree_on_region(rng_state, *plan_ptrs_vec[i], biggest_region_id);
-        bool const successful = result.first;
-        int const n_vtx = result.second;
+        auto const result = ust_sampler.attempt_to_draw_tree_on_region(
+            rng_state, *plan_ptrs_vec[i], biggest_region_id,
+            true, lower * min_possible_cut_size, upper * max_possible_cut_size);
+        bool const successful = result.successful;
+        int const n_vtx = result.num_vertices;
 
         if (n_vtx > max_V)
             max_V = n_vtx;
@@ -380,11 +383,11 @@ void estimate_cut_k(const MapParams &map_params, const SplittingSchedule &splitt
 
         // reset the cut below pop to zero
         std::fill(ust_sampler.pops_below_vertex.begin(), ust_sampler.pops_below_vertex.end(), 0);
-        get_tree_pops_below(ust_sampler.ust, root, 
+        get_tree_pops_below(ust_sampler.ust, result.root, 
             ust_sampler.stack, map_params.pop, ust_sampler.pops_below_vertex);
 
         devs.push_back(get_ordered_tree_cut_devs(
-            ust_sampler.ust, root, ust_sampler.pops_below_vertex, 
+            ust_sampler.ust, result.root, ust_sampler.pops_below_vertex, 
             target, plan_ptrs_vec[i]->region_ids,
             biggest_region_id, biggest_region_id, biggest_region_size, biggest_size_region_pop,
             min_possible_cut_size, max_possible_cut_size,

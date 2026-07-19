@@ -407,12 +407,25 @@ class GraphEdgeIndex {
 // fixed at runtime 
 class FlatGraph {
   private:
-    std::vector<int> offsets;
-    std::vector<int> sizes;
-    std::vector<int> caps;
-    std::vector<int> data;
+    std::vector<VertexID> offsets;
+    std::vector<VertexID> sizes;
+    std::vector<VertexID> caps;
+    std::vector<VertexID> data;
 
   public:
+    struct NeighborRange {
+            VertexID const *ptr;
+            size_t len;
+
+            VertexID const *begin() const { return ptr; }
+            VertexID const *end() const { return ptr + len; }
+
+            VertexID size() const { return len; }
+            bool empty() const { return len == 0; }
+
+            VertexID operator[](int i) const { return ptr[i]; }
+    };
+
     FlatGraph() = default;
 
     explicit FlatGraph(Graph const &g, bool const store_capacity) {
@@ -442,7 +455,7 @@ class FlatGraph {
     explicit FlatGraph(FlatGraph const &other, bool const store_capacity) :
         offsets(other.offsets),
         sizes(other.sizes),
-        caps(store_capacity ? other.caps : std::vector<int>{}),
+        caps(store_capacity ? other.caps : std::vector<VertexID>{}),
         data(other.data)
     {};
 
@@ -480,24 +493,13 @@ class FlatGraph {
         sizes[v] = pos + 1;
     }
 
-    int degree(int v) const {
+    VertexID degree(int v) const {
         return sizes[v];
     }
 
-    int const *begin(int v) const {
-        return data.data() + offsets[v];
-    }
-
-    int const *end(int v) const {
-        return data.data() + offsets[v] + sizes[v];
-    }
-
-    int *begin(int v) {
-        return data.data() + offsets[v];
-    }
-
-    int *end(int v) {
-        return data.data() + offsets[v] + sizes[v];
+    NeighborRange neighbors(int const v) const {
+        int const start = offsets[v];
+        return NeighborRange{data.data() + start, sizes[v]};
     }
 };
 

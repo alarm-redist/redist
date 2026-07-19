@@ -28,16 +28,18 @@ bool LCTGraphPlan::init_lct_from_regions(MapParams const &map_params, USTSampler
 
     for (int d = 0; d < num_regions; ++d) {
         bool ok = false;
+        USTDrawResult ust_draw_result;
         for (int attempt = 0; attempt < max_attempts_per_region && !ok; ++attempt) {
-            ok = ust_sampler.attempt_to_draw_tree_on_region(rng_state, *this, d).first;
+            ust_draw_result = ust_sampler.attempt_to_draw_tree_on_region(rng_state, *this, d);
+            ok = ust_draw_result.successful;
         }
         if (!ok) {
             return false;
         }
 
         // ust_sampler.ust is rooted at ust_sampler.root after the draw.
-        district_roots[d] = ust_sampler.root;
-        load_tree_into_lct(ust_sampler.ust, ust_sampler.root, d);
+        district_roots[d] = ust_draw_result.root;
+        load_tree_into_lct(ust_sampler.ust, ust_draw_result.root, d);
     }
 
     rebuild_cross_edges(map_params.g);

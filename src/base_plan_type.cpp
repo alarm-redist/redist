@@ -677,16 +677,17 @@ int Plan::choose_multidistrict_to_split(std::vector<bool> const &valid_region_si
 // @noRd
 std::pair<bool, int>
 Plan::draw_tree_on_region(USTSampler &ust_sampler, const int region_to_draw_tree_on,
-                          int &root, RNGState &rng_state, int const attempts_to_make) {
+                          RNGState &rng_state, int const attempts_to_make) {
 
     int num_attempts = 0;
     bool tree_drawn = false;
     auto the_region_size = region_sizes[region_to_draw_tree_on];
+    USTDrawResult ust_draw_result;
     for (size_t attempt_num = 0; attempt_num < attempts_to_make; attempt_num++) {
         ++num_attempts;
         // attempt to draw a tree
-        auto const result = ust_sampler.attempt_to_draw_tree_on_region(rng_state, *this, region_to_draw_tree_on);
-        tree_drawn = result.first;
+        ust_draw_result = ust_sampler.attempt_to_draw_tree_on_region(rng_state, *this, region_to_draw_tree_on);
+        tree_drawn = ust_draw_result.successful;
         // if successful return
         if (tree_drawn)
             break;
@@ -698,8 +699,6 @@ Plan::draw_tree_on_region(USTSampler &ust_sampler, const int region_to_draw_tree
 
     // update root region id
     // and its forest vertices
-    int n_desc = ust_sampler.ust[root].size();
-
     // clear the tree in the packed forest  
     forest_edges.clear_region_tree(
         region_ids, region_to_draw_tree_on,
@@ -709,10 +708,10 @@ Plan::draw_tree_on_region(USTSampler &ust_sampler, const int region_to_draw_tree
     // make a queue of vertex, parent
     std::queue<std::pair<int, int>> vertex_queue;
     // add roots children to queue
-    for (auto const &child_vertex : ust_sampler.ust[root]) {
-        vertex_queue.push({child_vertex, root});
+    for (auto const &child_vertex : ust_sampler.ust[ust_draw_result.root]) {
+        vertex_queue.push({child_vertex, ust_draw_result.root});
         // Add this edge to the packed forest 
-        forest_edges.set_edge(root, child_vertex, ust_sampler.map_params.graph_edge_index);
+        forest_edges.set_edge(ust_draw_result.root, child_vertex, ust_sampler.map_params.graph_edge_index);
     }
 
     // update all the children

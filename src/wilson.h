@@ -4,18 +4,21 @@
 #include "tree_op.h"
 #include "base_plan_type.h"
 #include "redist_types.h"
-#include "scoring.h"
 #include "tree_op.h"
 #include "redist_constants.h"
 #include <RcppArmadillo.h>
-
-using namespace Rcpp;
-using namespace arma;
 
 
 class Plan;
 class ScoringFunction;
 class TreeSplitter;
+
+
+struct USTDrawResult {
+    bool successful;
+    int num_vertices;
+    int root;
+};
 
 // Class for wrapping wilson code in 
 class USTSampler {
@@ -23,8 +26,17 @@ class USTSampler {
   private:
 
     // private method which calls `sample_sub_ust` and assumes that visited and ignore have been properly set up
-    bool draw_ust(int &root, double const lower, double const upper,
+    // first entry is whether tree was successfully drawn
+    // second is the root of the tree 
+    std::pair<bool, int> draw_ust(double const lower, double const upper,
       RNGState &rng_state);
+
+    std::pair<bool, EdgeCut>
+    try_to_sample_splittable_tree(Plan const &plan, int const split_region1,
+                                  int const split_region2, int const root,
+                                  ScoringFunction const &scoring_function, RNGState &rng_state,
+                                  TreeSplitter &tree_splitter, int const region_populations,
+                                  int const region_size, bool const save_selection_prob);
 
   public:
     USTSampler(MapParams const &map_params, SplittingSchedule const &splitting_schedule)
@@ -51,7 +63,6 @@ class USTSampler {
     Tree ust;
     std::vector<int> pops_below_vertex;
     std::vector<bool> visited, ignore;
-    int root;
     TreePopStack stack;
     Tree county_tree;
     TreePopStack county_stack;
@@ -70,25 +81,28 @@ class USTSampler {
     bool draw_tree_on_subgraph(RNGState &rng_state, bool membership_vector);
 
     // Attempts to draw a tree on a region
-    std::pair<bool, int> attempt_to_draw_tree_on_region(RNGState &rng_state, Plan const &plan,
-                                        const int region_to_draw_tree_on);
+    // defaults to map_params.lower * min_possible_cut_size and
+    // map_params.upper * max_possible_cut_size as the bounds if 
+    // use_custom_bounds = false
+    USTDrawResult attempt_to_draw_tree_on_region(RNGState &rng_state, Plan const &plan,
+                                        const int region_to_draw_tree_on, 
+                                        bool const use_custom_bounds = false,
+                                        double const custom_sample_sub_ust_lower = 0,
+                                        double const custom_sample_sub_ust_upper = 0);
 
     // Attempts to draw a tree on a region formed by merging the two regions
-    std::pair<bool, int> attempt_to_draw_tree_on_merged_region(RNGState &rng_state, Plan const &plan,
+    USTDrawResult attempt_to_draw_tree_on_merged_region(RNGState &rng_state, Plan const &plan,
                                                const int region1_to_draw_tree_on,
-                                               const int region2_to_draw_tree_on);
+                                               const int region2_to_draw_tree_on, 
+                                                bool const use_custom_bounds = false,
+                                                double const custom_sample_sub_ust_lower = 0,
+                                                double const custom_sample_sub_ust_upper = 0);
 
     std::pair<bool, EdgeCut> attempt_to_find_valid_tree_split(
         RNGState &rng_state, ScoringFunction const &scoring_function,
         TreeSplitter &tree_splitter, Plan const &plan, int const region_to_split,
         int const new_region_id, bool const save_selection_prob);
 
-    std::pair<bool, EdgeCut>
-    try_to_sample_splittable_tree(Plan const &plan, int const split_region1,
-                                  int const split_region2,
-                                  ScoringFunction const &scoring_function, RNGState &rng_state,
-                                  TreeSplitter &tree_splitter, int const region_populations,
-                                  int const region_size, bool const save_selection_prob);
 
     std::pair<bool, EdgeCut> attempt_to_find_valid_tree_mergesplit(
         RNGState &rng_state, ScoringFunction const &scoring_function,
