@@ -605,6 +605,8 @@ void adapt_parameters(const Graph &g, int &k, int last_k, const vec &lp, double 
             if (districts(j, i) != 0) {
                 ignore[j] = true;
                 n_vtx--;
+            } else {
+                ignore[j] = false;
             }
         }
         if (n_vtx > max_V) max_V = n_vtx;
