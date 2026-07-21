@@ -1,7 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-
+#include <atomic>
 #include <limits>
 #include <vector>
 #include <Rcpp.h>

@@ -3,6 +3,7 @@
 #define WEIGHTS_CACHING_H
 
 #include "advanced_types.h"
+#include <memory>
 
 class Plan;
 
