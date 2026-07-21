@@ -52,7 +52,7 @@ bool get_cycle_paths(LCTGraphPlan &plan, CWEdge const &e1, CWEdge const &e2,
 
 std::vector<int> get_collapsed_cycle_weights(LCTGraphPlan &plan, std::vector<int> const &path1,
                                              std::vector<int> const &path2,
-                                             arma::uvec const &pop);
+                                             std::vector<unsigned int> const &pop);
 
 // Finds valid (cut1, cut2) pairs. For MMD, the two new regions inherit the
 // seat counts of d1 and d2 in some order, so a pair is accepted if EITHER

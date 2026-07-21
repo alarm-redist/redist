@@ -2,21 +2,22 @@
 #ifndef MERGING_H
 #define MERGING_H
 
-#include <cmath>
-#include <functional>
-#include <iostream>
-#include <set>
-#include <string>
-
-#include "map_calc.h"
 #include "advanced_types.h"
-#include "tree_op.h"
-#include "wilson.h"
-#include "weight_caching.h"
-#include "weights.h"
-#include "wilson.h"
-#include "utils.h"
 
+#include <RcppArmadillo.h>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
+
+class Plan;
+class PlanMultigraph;
+class ScoringFunction;
+class SplittingSchedule;
+class RNGState;
+class USTSampler;
+class TreeSplitter;
+class WeightCache;
 
 // Simple struct for tracking granular time
 struct GranularMCMCTimes {

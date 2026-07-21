@@ -2,15 +2,12 @@
 #define WILSON_H
 
 #include "tree_op.h"
-#include "base_plan_type.h"
 #include "advanced_types.h"
-#include "tree_op.h"
-#include <RcppArmadillo.h>
-
 
 class Plan;
 class ScoringFunction;
 class TreeSplitter;
+class SplittingSchedule;
 
 
 struct USTDrawResult {
@@ -30,8 +27,9 @@ class USTSampler {
     std::pair<bool, int> draw_ust(double const lower, double const upper,
       RNGState &rng_state);
 
+    // Finds and 
     std::pair<bool, EdgeCut>
-    try_to_sample_splittable_tree(Plan const &plan, int const split_region1,
+    try_to_find_and_erase_splittable_edge(Plan const &plan, int const split_region1,
                                   int const split_region2, int const root,
                                   ScoringFunction const &scoring_function, RNGState &rng_state,
                                   TreeSplitter &tree_splitter, int const region_populations,
@@ -40,33 +38,26 @@ class USTSampler {
   public:
     USTSampler(MapParams const &map_params, SplittingSchedule const &splitting_schedule)
         :
-        ust(init_tree(map_params.V)),
+        ust(map_params.map_graph.get_flat_empty_tree()),
         pops_below_vertex(map_params.V, 0),
           visited(map_params.V), ignore(map_params.V), stack(map_params.V + 1),
           county_tree(init_tree(map_params.num_counties)),
           county_stack(map_params.num_counties + 1),
           dummy_county_tree_queue(map_params.V),
-          county_pop(map_params.num_counties, arma::fill::zeros),
+          county_pop(map_params.num_counties, 0.0),
           county_members(map_params.num_counties, std::vector<int>{}),
           c_visited(map_params.num_counties, true), cty_pop_below(map_params.num_counties, 0),
           vertex_queue(map_params.V), map_params(map_params),
-          splitting_schedule(splitting_schedule) {
-            // reserve the max capacity now 
-            for (size_t v = 0; v < map_params.V; v++)
-            {
-              ust[v].reserve(map_params.g[v].size());
-            }
-             
-          };
+          splitting_schedule(splitting_schedule) {};
 
-    Tree ust;
+    FlatGraph ust;
     std::vector<int> pops_below_vertex;
     std::vector<bool> visited, ignore;
     TreePopStack stack;
     Tree county_tree;
     TreePopStack county_stack;
     DummyTreeQueue dummy_county_tree_queue;
-    arma::uvec county_pop;
+    std::vector<unsigned int> county_pop;
     std::vector<std::vector<int>> county_members;
     std::vector<bool> c_visited;
     std::vector<int> cty_pop_below;

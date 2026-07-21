@@ -1,5 +1,11 @@
 #include "graph_plan_type.h"
 
+#include "scoring.h"
+#include "splitting_schedule_types.h"
+#include "tree_splitting.h"
+#include "random.h"
+#include "wilson.h"
+
 void GraphPlan::update_vertex_and_plan_specific_info_from_cut(
     TreeSplitter const &tree_splitter, USTSampler &ust_sampler, EdgeCut const cut_edge,
     const int split_region1_id, const int split_region2_id, bool const add_region) {
@@ -118,7 +124,7 @@ double GraphPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
 // the best region sizes assignment
  */
 std::vector<double> get_ordered_tree_cut_devs(
-    Tree &ust, int root, std::vector<int> const &cut_below_pop, double const target,
+    FlatGraph &ust, int root, std::vector<int> const &cut_below_pop, double const target,
     PlanVector const &region_ids, RegionID const region_id1, RegionID const region_id2,
     int const region_size, int const region_pop, int const min_potential_cut_size,
     int const max_potential_cut_size, std::vector<int> const &smaller_cut_sizes_to_try) {

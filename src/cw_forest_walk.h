@@ -1,6 +1,7 @@
 #ifndef CW_FOREST_WALK_H
 #define CW_FOREST_WALK_H
 
+#include <RcppArmadillo.h>
 #include "lct_graph_plan_type.h"
 #include "random.h"
 #include "advanced_types.h"

@@ -7,23 +7,14 @@
  * lot of legacy code must link to redist_types
  ********************************************************/
 
-
 #include "advanced_types.h"
 
+#include <cmath>
+#include <unordered_set>
 
 namespace{
 
-/*
- * Convert zero-indxed R adjacency list to Graph object (vector of vectors of ints).
- */
-Graph list_to_graph(const Rcpp::List &l) {
-    int V = l.size();
-    Graph g;
-    for (int i = 0; i < V; i++) {
-        g.push_back(Rcpp::as<std::vector<int>>((Rcpp::IntegerVector)l[i]));
-    }
-    return g;
-}
+
 
 /*
  * Initialize empty multigraph structure on graph with `V` vertices
@@ -43,8 +34,8 @@ Multigraph init_multigraph(int V) {
  * County graph is list of list of 3: <cty of nbor, index of vtx, index of nbor>
  */
 // TESTED
-Multigraph county_graph(const Graph &g, const arma::uvec &counties) {
-    int n_county = arma::max(counties);
+Multigraph county_graph(const Graph &g, const std::vector<unsigned int> &counties) {
+    int n_county = *std::max_element(counties.begin(), counties.end());
     Multigraph cg = init_multigraph(n_county);
 
     int V = g.size();
@@ -70,14 +61,14 @@ Multigraph county_graph(const Graph &g, const arma::uvec &counties) {
  * search started from a vertex in one county will never leave that county
  *
  */
-Graph build_restricted_county_graph(Graph const &g, arma::uvec const &counties) {
+Graph build_restricted_county_graph(Graph const &g, std::vector<unsigned int> const &counties) {
     Graph county_graph(g.size());
     // iterate through g and only add edges in the same county
     for (int v = 0; v < g.size(); v++) {
         // iterate over v's neighbors
         for (const auto u : g[v]) {
             // if same county add the edge
-            if (counties(v) == counties(u)) {
+            if (counties[v] == counties[u]) {
                 county_graph[v].push_back(u);
             }
         }
@@ -106,15 +97,15 @@ int count_undirected_edges(Graph const &g) {
     }
 
     if (edge_count > static_cast<std::size_t>(std::numeric_limits<EdgeID>::max())) {
-        throw Rcpp::exception("Too many graph edges for EdgeID!\n");
+        throw std::runtime_error("Too many graph edges for EdgeID!\n");
     }
 
     if (edge_count > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
-        throw Rcpp::exception("Too many graph edges for int!\n");
+        throw std::runtime_error("Too many graph edges for int!\n");
     }
 
     if (total_edge_count != edge_count * 2){
-        throw Rcpp::exception("The inputted adjacency list is not symmetric!\n");
+        throw std::runtime_error("The inputted adjacency list is not symmetric!\n");
     }
 
     return edge_count;
@@ -183,9 +174,11 @@ SamplingSpace get_sampling_space(std::string const &sampling_space_str) {
     } else if (sampling_space_str == "lct_graph") {
         return SamplingSpace::LCTGraphSpace;
     } else {
-        REprintf("Splitting Type %s is not a valid sampling space!\n",
-                 sampling_space_str.c_str());
-        throw Rcpp::exception("Invalid sampling space passed");
+        throw std::invalid_argument(
+            "Invalid sampling space '" + sampling_space_str +
+            "'. Expected one of: graph_plan, spanning_forest, "
+            "linking_edge, or lct_graph."
+        );
     }
 }
 
@@ -200,8 +193,10 @@ std::string sampling_space_to_str(SamplingSpace sampling_space) {
     } else if (sampling_space == SamplingSpace::LCTGraphSpace) {
         return "LCT Graph";
     } else {
-        REprintf("Sampling Space Type ?? has no to str form!\n");
-        throw Rcpp::exception("Invalid splitting type passed to_str");
+        throw std::logic_error(
+            "sampling_space_to_str received an unknown SamplingSpace value: " +
+            std::to_string(static_cast<unsigned int>(sampling_space))
+        );
     }
 }
 
@@ -220,8 +215,7 @@ SplittingMethodType get_splitting_type(std::string const &splitting_type_str) {
     } else if (splitting_type_str == "constraint") {
         return SplittingMethodType::Constraint;
     } else {
-        REprintf("Splitting Type %s is not a valid type!\n", splitting_type_str.c_str());
-        throw Rcpp::exception("Invalid splitting type passed");
+        throw std::invalid_argument("Invalid splitting_type_str");
     }
 }
 
@@ -239,8 +233,10 @@ std::string splitting_method_to_str(SplittingMethodType splitting_method) {
     } else if (splitting_method == SplittingMethodType::Constraint) {
         return "Constraint Splitter";
     } else {
-        REprintf("Splitting Type ?? has no to str form!\n");
-        throw Rcpp::exception("Invalid splitting type passed to_str");
+        throw std::logic_error(
+            "splitting_method_to_str received an unknown SplittingMethodType value: " +
+            std::to_string(static_cast<unsigned int>(splitting_method))
+        );
     }
 }
 
@@ -262,18 +258,19 @@ get_splitting_size_regime(std::string const &splitting_size_regime_str) {
     } else if (splitting_size_regime_str == "custom") {
         return SplittingSizeScheduleType::CustomSizes;
     } else {
-        REprintf("Splitting Size Regime %s is not a valid regime!\n",
-                 splitting_size_regime_str.c_str());
-        throw Rcpp::exception("Invalid splitting size regime passed");
+        throw std::invalid_argument(
+            "Invalid splitting size regime: '" +
+            splitting_size_regime_str + "'"
+        );
     }
 };
 
 
 GraphEdgeIndex::GraphEdgeIndex(Graph const &g, int const num_edges)
-    : incident_edges(g.size()), num_edges(num_edges), V(g.size()) {
+    :  num_edges(num_edges), V(g.size()), incident_edges(g.size()) {
 
     if (g.size() > MAX_SUPPORTED_NUM_VERTICES) {
-        throw Rcpp::exception("Too many vertices for VertexID in GraphEdgeIndex!");
+        throw std::invalid_argument("Too many vertices for VertexID in GraphEdgeIndex!");
     }
 
     std::unordered_set<std::uint64_t> seen_edges;
@@ -297,15 +294,14 @@ GraphEdgeIndex::GraphEdgeIndex(Graph const &g, int const num_edges)
 
         for (int u : g[v]) {
             if (u < 0 || u >= V) {
-                throw Rcpp::exception("GraphEdgeIndex found invalid neighbor index!");
+                throw std::runtime_error("GraphEdgeIndex found invalid neighbor index!");
             }
 
             if (!seen_neighbors_for_v.insert(u).second) {
                 std::ostringstream oss;
-                Rcpp::Rcerr << "Duplicate neighbor in graph adjacency list: "
+                oss << "Duplicate neighbor in graph adjacency list: "
                     << "vertex " << v << " has neighbor " << u << " more than once.";
                 
-                throw Rcpp::exception("GraphEdgeIndex Constructor\n");
                 throw std::runtime_error(oss.str());
             }
 
@@ -316,15 +312,14 @@ GraphEdgeIndex::GraphEdgeIndex(Graph const &g, int const num_edges)
 
                 if (!seen_edges.insert(key).second) {
                     std::ostringstream oss;
-                    Rcpp::Rcerr << "Duplicate undirected edge in GraphEdgeIndex: ("
+                    oss << "Duplicate undirected edge in GraphEdgeIndex: ("
                         << v << ", " << u << ")";
                     
-                    throw Rcpp::exception("GraphEdgeIndex Constructor\n");
                     throw std::runtime_error(oss.str());
                 }
 
                 if (edges.size() > std::numeric_limits<EdgeID>::max()) {
-                    throw Rcpp::exception("Too many graph edges for EdgeID!");
+                    throw std::runtime_error("Too many graph edges for EdgeID!");
                 }
 
                 EdgeID const eid = static_cast<EdgeID>(edges.size());
@@ -349,51 +344,151 @@ GraphEdgeIndex::GraphEdgeIndex(Graph const &g, int const num_edges)
 
     if (static_cast<int>(edges.size()) != num_edges) {
         std::ostringstream oss;
-        Rcpp::Rcerr << "GraphEdgeIndex edge count mismatch. "
+        oss << "GraphEdgeIndex edge count mismatch. "
             << "expected " << num_edges
             << ", built " << edges.size();
         
-        throw Rcpp::exception("GraphEdgeIndex Constructor\n");
         throw std::runtime_error(oss.str());
     }
 }
 
+void FlatGraph::push_back(int v, int v_nbor_to_add) {
+        if constexpr (perf_config::bounds_checking) {
+            if (v < 0 || v >= size()) {
+                throw std::runtime_error("FlatGraph::push_back invalid v");
+            }
+        }
+
+        auto const pos = sizes[v];
+
+        if constexpr (perf_config::bounds_checking) {
+            VertexID const cap = offsets[v + 1] - offsets[v];
+
+            if (pos >= cap) {
+                std::ostringstream oss;
+                oss << "FlatGraph::push_back exceeded capacity. "
+                    << "v=" << v
+                    << ", size=" << pos
+                    << ", cap=" << cap
+                    << ", u=" << v_nbor_to_add;
+                throw std::runtime_error(oss.str());
+            }
+        }
+
+        data[offsets[v] + pos] = static_cast<VertexID>(v_nbor_to_add);
+        sizes[v] = pos + 1;
+}
+
+// adds a directed edge 
+void FlatGraph::add_directed_edge(int const parent, int const child){
+    push_back(parent, child);
+}
+
+// adds an undirected edge to the graph 
+void FlatGraph::add_undirected_edge(int const v, int const u) {
+    push_back(v, u);
+    push_back(u, v);
+}
+
+void FlatGraph::erase_directed_edge(EdgeCut const &cut_edge) {
+    int const parent = cut_edge.cut_vertex_parent;
+    int const child = cut_edge.cut_vertex;
+
+    if constexpr (perf_config::supposedly_safe_input_checks) {
+        int const V = size();
+
+        if (parent < 0 || parent >= V) {
+            std::ostringstream oss;
+            oss << "FlatGraph::erase_tree_edge invalid cut_vertex_parent.\n";
+            oss << "cut_vertex_parent=" << parent << "\n";
+            oss << "cut_vertex=" << child << "\n";
+            oss << "tree_root=" << cut_edge.tree_root << "\n";
+            oss << "FlatGraph size=" << V << "\n";
+            throw std::runtime_error(oss.str());
+        }
+
+        if (child < 0 || child >= V) {
+            std::ostringstream oss;
+            oss << "FlatGraph::erase_tree_edge invalid cut_vertex.\n";
+            oss << "cut_vertex_parent=" << parent << "\n";
+            oss << "cut_vertex=" << child << "\n";
+            oss << "tree_root=" << cut_edge.tree_root << "\n";
+            oss << "FlatGraph size=" << V << "\n";
+            throw std::runtime_error(oss.str());
+        }
+    }
+
+    VertexID const start = offsets[parent];
+    VertexID const stop = start + sizes[parent];
+
+    VertexID pos = stop;
+
+    for (VertexID idx = start; idx < stop; ++idx) {
+        if (data[idx] == static_cast<VertexID>(child)) {
+            pos = idx;
+            break;
+        }
+    }
+
+    if constexpr (perf_config::supposedly_safe_input_checks) {
+        if (pos == stop) {
+            std::ostringstream oss;
+            oss << "FlatGraph::erase_tree_edge could not find cut edge.\n";
+            oss << "cut_vertex_parent=" << parent << "\n";
+            oss << "cut_vertex=" << child << "\n";
+            oss << "tree_root=" << cut_edge.tree_root << "\n";
+            throw std::runtime_error(oss.str());
+        }
+    }
+
+    // Shift later children left by one, preserving order.
+    for (VertexID idx = pos + 1; idx < stop; ++idx) {
+        data[idx - 1] = data[idx];
+    }
+
+    --sizes[parent];
+}
 
 // Constructor
-MapParams::MapParams(Rcpp::List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
+MapParams::MapParams(Graph const &g, 
+    const std::vector<unsigned int> &counties, 
+    const std::vector<unsigned int> &pop,
             int const ndists, int const total_seats,
             std::vector<int> const &district_seat_sizes, 
             double const lower,
             double const target, double const upper,
             SamplingSpace const sampling_space)
-    : g(list_to_graph(adj_list)), num_edges(count_undirected_edges(g)),
+    : g(g), map_graph(g),
+    num_edges(count_undirected_edges(g)),
     graph_edge_index(g, num_edges), num_edge_bit_words(compute_num_edge_bit_words(num_edges)),
-        counties(counties), num_counties(max(counties)), cg(county_graph(g, counties)),
+        counties(counties.begin(), counties.end()), 
+        num_counties(*std::max_element(counties.begin(), counties.end())), 
+        cg(county_graph(g, counties)),
         county_restricted_graph(num_counties > 1 ? build_restricted_county_graph(g, counties)
                                                 : Graph(0)),
         pop(pop), V(static_cast<int>(g.size())), ndists(ndists), total_seats(total_seats),
         lower(lower), target(target), upper(upper),
         smallest_district_size(
-            *min_element(district_seat_sizes.begin(), district_seat_sizes.end())),
+            *std::min_element(district_seat_sizes.begin(), district_seat_sizes.end())),
         largest_district_size(
-            *max_element(district_seat_sizes.begin(), district_seat_sizes.end())),
+            *std::max_element(district_seat_sizes.begin(), district_seat_sizes.end())),
         district_seat_sizes(district_seat_sizes),
         is_district([ndists, total_seats, &district_seat_sizes]() {
             if (district_seat_sizes.size() == 0) {
-                throw Rcpp::exception("District Seat Sizes vector must be non-empty!\n");
+                throw std::runtime_error("District Seat Sizes vector must be non-empty!\n");
             }
             // vector where index i is true iff i seats is a district
             std::vector<bool> is_district_vec(total_seats + 1, false);
             if (ndists > total_seats) {
-                throw Rcpp::exception("The number of distrcts must be less than or equal to "
+                throw std::runtime_error("The number of distrcts must be less than or equal to "
                                     "the total number of seats!\n");
             } else if (ndists != total_seats) {
                 for (auto const &a_size : district_seat_sizes) {
                     if (a_size < 0)
-                        throw Rcpp::exception(
+                        throw std::runtime_error(
                             "District Seat Sizes must be strictly positive!\n");
                     if (a_size >= total_seats)
-                        throw Rcpp::exception(
+                        throw std::runtime_error(
                             "District Seat Sizes must be less than total seats!\n");
                     // mark this as a district size
                     is_district_vec[a_size] = true;
@@ -409,21 +504,26 @@ MapParams::MapParams(Rcpp::List const &adj_list, const arma::uvec &counties, con
     // check the sizes are ok
     if (ndists - 1 > MAX_SUPPORTED_NUM_DISTRICTS ||
         total_seats - 1 > MAX_SUPPORTED_NUM_DISTRICTS) {
-        REprintf("The maximum number of districts supported right now is %u!\n",
-                    MAX_SUPPORTED_NUM_DISTRICTS);
-        throw Rcpp::exception(
-            "Too many districts! This number of districts isn't supported!\n");
+        throw std::overflow_error(
+            "Too many districts. The maximum supported number of districts is " +
+            std::to_string(MAX_SUPPORTED_NUM_DISTRICTS) + "."
+        );
     }
     if (num_counties - 1 > MAX_SUPPORTED_NUM_COUNTIES) {
-        REprintf("The maximum number of counties supported right now is %u!\n",
-                    MAX_SUPPORTED_NUM_COUNTIES);
-        throw Rcpp::exception(
-            "Too many counties! This number of counties isn't supported!\n");
+        throw std::overflow_error(
+            "Too many counties. The maximum supported number of counties is " +
+            std::to_string(MAX_SUPPORTED_NUM_COUNTIES) + "."
+        );
     }
     if (V - 1 > MAX_SUPPORTED_NUM_VERTICES) {
-        REprintf("The maximum number of vertices supported right now is %u!\n",
-                    MAX_SUPPORTED_NUM_VERTICES);
-        throw Rcpp::exception(
-            "Too many vertices in the map! This number of vertices isn't supported!\n");
+        throw std::overflow_error(
+            "Too many vertices. The maximum supported number of vertices is " +
+            std::to_string(MAX_SUPPORTED_NUM_VERTICES) + "."
+        );
+    }
+    if (V <= 1) {
+        throw std::underflow_error(
+            "Too few vertices. There must be at least 2 vertices."
+        );
     }
 };

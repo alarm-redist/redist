@@ -8,6 +8,10 @@
 
 // Header files
 #include "sw_mh_helper.h"
+#include "constraint_calc_helper.h"
+#include "make_swaps_helper.h"
+#include "map_calc.h"
+#include "mcmc_gibbs.h"
 
 // Function to generate initial vector of populations
 NumericVector init_pop(NumericVector popvec, arma::vec cds) {
@@ -615,7 +619,7 @@ List make_swaps(List boundary_cc, List aList, NumericVector cds_old, NumericVect
         districts(r, 1) = cds_old(r) + 1;
     }
     arma::umat udistricts = arma::conv_to<arma::umat>::from(districts);
-    arma::uvec pops = arma::conv_to<arma::uvec>::from(Rcpp::as<arma::vec>(pop_vec));
+    std::vector<unsigned int> pops = Rcpp::as<std::vector<unsigned int>>(pop_vec);
 
     // Multiply mh_prob by constraint values
     double energy_new = calc_gibbs_tgt(udistricts.col(0), ndists, nprec, swaps_v, new_psi, pops,

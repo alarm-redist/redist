@@ -1,7 +1,13 @@
+#include <RcppArmadillo.h>
 #include "forest_plan_type.h"
 
+#include "scoring.h"
+#include "splitting_schedule_types.h"
+#include "tree_splitting.h"
+#include "wilson.h"
+
 // constructor for partial plan (more than 1 region)
-ForestPlan::ForestPlan(int const ndists, int const num_regions, const arma::uvec &pop,
+ForestPlan::ForestPlan(int const ndists, int const num_regions, const std::vector<unsigned int> &pop,
                        PlanVector &this_plan_region_ids, RegionSizes &this_plan_region_sizes,
                        IntPlanAttribute &this_plan_region_pops,
                        IntPlanAttribute &this_plan_order_added, 
@@ -33,7 +39,7 @@ ForestPlan::ForestPlan(int const ndists, int const num_regions, const arma::uvec
 
     if constexpr(perf_config::object_integrity_checking){
         check_forest_equality(
-            ust_sampler.ust,
+            ust_sampler.ust.to_vertex_graph(),
             forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
             ust_sampler.map_params.graph_edge_index,
             "IN Partial Forest Plan Constructor, checking forest_graph vs forest edges (through get_graph_tree)"

@@ -1,5 +1,8 @@
 #include "random.h"
 
+std::random_device GLOBAL_RD;
+RNGState GLOBAL_RNG(GLOBAL_RD());
+
 /* This is a fixed-increment version of Java 8's SplittableRandom generator
  See http://dx.doi.org/10.1145/2714064.2660195 and
  http://docs.oracle.com/javase/8/docs/api/java/util/SplittableRandom.html

@@ -5,13 +5,7 @@
  * Purpose: Exposes weight calculation functions to R code
  ********************************************************/
 
-#pragma once
-#ifndef MANUAL_SPLITTING_H
-#define MANUAL_SPLITTING_H
 
-
-#include <RcppThread.h>
-#include <cli/progress.h>
 #include <cmath>
 #include <functional>
 #include <string>
@@ -20,7 +14,12 @@
 #include "merging.h"
 #include "redist_alg_helpers.h"
 #include "tree_op.h"
+#include "tree_splitting.h"
 #include "weights.h"
+#include "threading_helpers.h"
+#include "splitting_schedule_types.h"
+#include "scoring.h"
+#include "random.h"
 #include "wilson.h"
 
 bool DEBUG_MANUAL_WEIGHTS_VERBOSE = false;
@@ -34,7 +33,7 @@ bool DEBUG_MANUAL_WEIGHTS_VERBOSE = false;
  */
 // [[Rcpp::export]]
 Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
-    Rcpp::List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
+    Rcpp::List const &adj_list, const Rcpp::IntegerVector &counties, const Rcpp::IntegerVector &pop,
     Rcpp::List const &constraints, double const pop_temper, bool const compute_pop_temper,
     double const rho, int const ndists, int const total_seats, int const num_regions,
     Rcpp::IntegerVector const &district_seat_sizes, double const lower, double const target,
@@ -42,7 +41,10 @@ Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
     Rcpp::IntegerMatrix const &region_sizes, std::string const &output_type,
     int const num_threads, int const verbosity = 3) {
     // create the map param object
-    MapParams map_params(adj_list, counties, pop, ndists, total_seats,
+    MapParams map_params(list_to_graph(adj_list), 
+        Rcpp::as<std::vector<unsigned int>>(counties), 
+        Rcpp::as<std::vector<unsigned int>>(pop),
+        ndists, total_seats,
                          Rcpp::as<std::vector<int>>(district_seat_sizes), lower, target, upper,
                         SamplingSpace::GraphSpace);
 
@@ -74,9 +76,6 @@ Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
     PlanEnsemble plan_ensemble(map_params, *splitting_schedule_ptr, num_regions, num_plans,
                                SamplingSpace::GraphSpace, region_ids, region_sizes, rng_states,
                                pool, verbosity);
-
-    // we say its final if we don't want to compute pop temper
-    bool is_final = !compute_pop_temper;
 
     // if its single density that means we only care about the
     // whole thing, not the components
@@ -287,7 +286,7 @@ Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
 
 // [[Rcpp::export]]
 arma::vec compute_plans_log_optimal_weights(
-    Rcpp::List const &adj_list, arma::uvec const &counties, arma::uvec const &pop,
+    Rcpp::List const &adj_list, Rcpp::IntegerVector const &counties, Rcpp::IntegerVector const &pop,
     Rcpp::List const &constraints, double const pop_temper, double const rho,
     std::string const &splitting_schedule_str, int const ndists, int const total_seats,
     Rcpp::IntegerVector const &district_seat_sizes, int const num_regions, double const lower,
@@ -305,7 +304,10 @@ arma::vec compute_plans_log_optimal_weights(
     RcppThread::ThreadPool pool(num_threads);
 
     // create the map param object
-    MapParams map_params(adj_list, counties, pop, ndists, total_seats,
+    MapParams map_params(list_to_graph(adj_list), 
+        Rcpp::as<std::vector<unsigned int>>(counties), 
+        Rcpp::as<std::vector<unsigned int>>(pop),
+        ndists, total_seats,
                          Rcpp::as<std::vector<int>>(district_seat_sizes), lower, target, upper,
                         sampling_space);
     // Create the scoring function
@@ -414,7 +416,7 @@ arma::vec compute_plans_log_optimal_weights(
 
 // [[Rcpp::export]]
 arma::vec compute_plans_log_simple_weights(
-    Rcpp::List const &adj_list, arma::uvec const &counties, arma::uvec const &pop,
+    Rcpp::List const &adj_list, Rcpp::IntegerVector const &counties, Rcpp::IntegerVector const &pop,
     Rcpp::List const &constraints, double const pop_temper, double const rho,
     std::string const &splitting_schedule_str, int const ndists, int const total_seats,
     Rcpp::IntegerVector const &district_seat_sizes, int const num_regions, double const lower,
@@ -432,7 +434,10 @@ arma::vec compute_plans_log_simple_weights(
     RcppThread::ThreadPool pool(num_threads);
 
     // create the map param object
-    MapParams map_params(adj_list, counties, pop, ndists, total_seats,
+    MapParams map_params(list_to_graph(adj_list), 
+        Rcpp::as<std::vector<unsigned int>>(counties), 
+        Rcpp::as<std::vector<unsigned int>>(pop),
+        ndists, total_seats,
                          Rcpp::as<std::vector<int>>(district_seat_sizes), lower, target, upper, sampling_space);
     // Create the scoring function
     ScoringFunction scoring_function(map_params, constraints, pop_temper, true);
@@ -536,5 +541,3 @@ arma::vec compute_plans_log_simple_weights(
     pool.wait();
     return log_weights;
 }
-
-#endif

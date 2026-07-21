@@ -1,4 +1,6 @@
 #include "mcmc_gibbs.h"
+#include "make_swaps_helper.h"
+#include "map_calc.h"
 
 /*
  * Helper function to iterate over constraints and apply them
@@ -29,7 +31,7 @@ double add_constraint(const std::string &name, Rcpp::List constraints, std::vect
  * Add specific constraint weights & return the cumulative weight vector
  */
 double calc_gibbs_tgt(const arma::subview_col<arma::uword> &plan, int n_distr, int V,
-                      std::vector<int> districts, Rcpp::NumericVector &psi_vec, const arma::uvec &pop,
+                      std::vector<int> districts, Rcpp::NumericVector &psi_vec, const std::vector<unsigned int> &pop,
                       double parity, const Graph &g, Rcpp::List constraints) {
     if (constraints.size() == 0)
         return 0.0;
@@ -90,7 +92,7 @@ double calc_gibbs_tgt(const arma::subview_col<arma::uword> &plan, int n_distr, i
 
     log_tgt += add_constraint(
         "status_quo", constraints, districts, psi_vec, [&](Rcpp::List l, int distr) -> double {
-            return eval_sq_entropy(plan, Rcpp::as<arma::uvec>(l["current"]), distr, distr, pop, n_distr,
+            return eval_sq_entropy(plan, Rcpp::as<std::vector<unsigned int>>(l["current"]), distr, distr, pop, n_distr,
                                    Rcpp::as<int>(l["n_current"]), V);
         });
 

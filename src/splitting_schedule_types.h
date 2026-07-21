@@ -3,6 +3,7 @@
 #define SPLITTING_SCHEDULE_TYPES_H
 
 #include "advanced_types.h"
+#include <Rcpp.h>
 
 /*
  * Abstract class for object used to manage what sizes are allowed to be split

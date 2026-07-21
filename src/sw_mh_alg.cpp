@@ -7,16 +7,18 @@
 /////////////////////////////////////
 
 // Header files
-#include "constraint_calc_helper.h"
-#include "make_swaps_helper.h"
-#include "redist_types.h"
-#include "sw_mh_helper.h"
-#include "tree_op.h"
 #include <R.h>
 #include <RcppArmadillo.h>
 #include <RcppArmadilloExtensions/sample.h>
 #include <cli/progress.h>
 #include <time.h>
+
+#include "constraint_calc_helper.h"
+#include "make_swaps_helper.h"
+#include "redist_types.h"
+#include "sw_mh_helper.h"
+#include "tree_op.h"
+#include "utils.h"
 
 using namespace Rcpp;
 
@@ -253,6 +255,7 @@ List swMH(List aList, NumericVector cdvec, NumericVector popvec, int nsims, List
     }
 
     RObject bar = cli_progress_bar(nsims, cli_config(false));
+    
     Graph g = list_to_graph(aList);
     // Open the simulations
     while (k < nsims) {

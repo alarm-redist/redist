@@ -6,7 +6,26 @@
  * (like Carter et al. 2019 but using the SMC proposal)
  ********************************************************/
 
-#include "merge_split.h"
+
+#include <cmath>
+#include <string>
+#include <RcppArmadillo.h>
+
+#include "base_plan_type.h"
+#include "graph_plan_type.h"
+#include "merging.h"
+#include "redist_alg_helpers.h"
+#include "scoring.h"
+#include "tree_splitting.h"
+#include "splitting_schedule_types.h"
+#include "random.h"
+#include "wilson.h"
+#include "utils.h"
+
+
+#include <RcppThread.h>
+#include <cli/progress.h>
+
 
 constexpr bool DEBUG_PURE_MS_VERBOSE = false; // Compile-time constant
 
@@ -17,19 +36,19 @@ constexpr bool DEBUG_PURE_MS_VERBOSE = false; // Compile-time constant
  * Sample `N` redistricting plans on map `g`, ensuring that the maximum
  * population deviation is between `lower` and `upper` (and ideally `target`)
  */
+// [[Rcpp::export]]
 Rcpp::List ms_plans(
     int const nsims, int const warmup, int const thin, int const ndists, int const total_seats,
-    Rcpp::IntegerVector const &district_seat_sizes, List const &adj_list,
-    const arma::uvec &counties, const arma::uvec &pop, double const target, double const lower,
+    Rcpp::IntegerVector const &district_seat_sizes, Rcpp::List const &adj_list,
+    const Rcpp::IntegerVector &counties, const Rcpp::IntegerVector &pop, double const target, double const lower,
     double const upper,
     double const rho, // compactness
     Rcpp::IntegerMatrix const &init_plan, Rcpp::IntegerMatrix const &init_seats,
     std::string const &sampling_space_str, // sampling space (graphs, forest, etc)
     std::string const &pair_rule, // method for setting probability of picking a pair to merge
-    List const &control,     // control has pop temper, and k parameter value, and whether only
-                             // district splits are allowed
-    List const &constraints, // constraints
-    int const verbosity, bool const diagnostic_mode) {
+    Rcpp::List const &control,     // control has pop temper, and k parameter value, and splitting schedule
+    Rcpp::List const &constraints, // constraints
+    int const verbosity = 3, bool const diagnostic_mode = false) {
     // whether or not to perform MH step
     bool do_mh = (bool)control["do_mh"];
 
@@ -51,8 +70,11 @@ Rcpp::List ms_plans(
     }
 
     // Create map level graph and county level multigraph
-    MapParams const map_params(adj_list, counties, pop, ndists, total_seats,
-                               as<std::vector<int>>(district_seat_sizes), lower, target, upper,
+    MapParams const map_params(list_to_graph(adj_list), 
+        Rcpp::as<std::vector<unsigned int>>(counties), 
+        Rcpp::as<std::vector<unsigned int>>(pop), 
+        ndists, total_seats,
+                               Rcpp::as<std::vector<int>>(district_seat_sizes), lower, target, upper,
                             sampling_space);
     int V = map_params.g.size();
 
@@ -70,7 +92,7 @@ Rcpp::List ms_plans(
         get_splitting_type(static_cast<std::string>(control["splitting_method"]));
 
     auto splitting_schedule_ptr = std::make_unique<PureMSSplittingSchedule>(
-        ndists, total_seats, as<std::vector<int>>(district_seat_sizes));
+        ndists, total_seats, Rcpp::as<std::vector<int>>(district_seat_sizes));
     // splitting_schedule_ptr->print_current_step_splitting_info();
     bool const mmd_plans = map_params.is_mmd;
 
@@ -179,7 +201,7 @@ Rcpp::List ms_plans(
         // Set or estimate k if doing graph space sampling
         if (sampling_space == SamplingSpace::GraphSpace) {
             int cut_k;
-            bool try_to_estimate_cut_k = as<bool>(control["estimate_cut_k"]);
+            bool try_to_estimate_cut_k = Rcpp::as<bool>(control["estimate_cut_k"]);
             if (try_to_estimate_cut_k) {
                 double thresh = (double)control["adapt_k_thresh"];
                 double tol = std::max(target - lower, upper - target) / target;
@@ -189,12 +211,12 @@ Rcpp::List ms_plans(
                     *splitting_schedule_ptr, thresh, tol, rng_state);
 
                 if (verbosity >= 3) {
-                    Rcout << " Using estimated k = " << cut_k << "\n";
+                    Rcpp::Rcout << " Using estimated k = " << cut_k << "\n";
                 }
             } else {
-                cut_k = as<int>(control["manual_k"]);
+                cut_k = Rcpp::as<int>(control["manual_k"]);
                 if (verbosity >= 3) {
-                    Rcout << "Using k = " << cut_k << "\n";
+                    Rcpp::Rcout << "Using k = " << cut_k << "\n";
                 }
             }
             // update the tree splitter
@@ -217,20 +239,20 @@ Rcpp::List ms_plans(
             Rprintf("Checkpoint 6!\n");
         // Loading Info
         if (verbosity >= 1) {
-            Rcout.imbue(std::locale(""));
-            Rcout << std::fixed << std::setprecision(0);
-            Rcout << "MERGE SPLIT MONTE CARLO" << std::endl;
-            Rcout << "Using " << sampling_space_to_str(sampling_space);
-            Rcout << " Sampling space to sample " << nsims << " " << V << "-unit ";
-            Rcout << "maps with " << ndists << " districts and population between " << lower
+            Rcpp::Rcout.imbue(std::locale(""));
+            Rcpp::Rcout << std::fixed << std::setprecision(0);
+            Rcpp::Rcout << "MERGE SPLIT MONTE CARLO" << std::endl;
+            Rcpp::Rcout << "Using " << sampling_space_to_str(sampling_space);
+            Rcpp::Rcout << " Sampling space to sample " << nsims << " " << V << "-unit ";
+            Rcpp::Rcout << "maps with " << ndists << " districts and population between " << lower
                   << " and " << upper;
-            Rcout << " Using " << splitting_method_to_str(splitting_method) << "!" << std::endl;
+            Rcpp::Rcout << " Using " << splitting_method_to_str(splitting_method) << "!" << std::endl;
             if (map_params.cg.size() > 1) {
-                Rcout << "Sampling hierarchically with respect to the " << map_params.cg.size()
+                Rcpp::Rcout << "Sampling hierarchically with respect to the " << map_params.cg.size()
                       << " administrative units." << std::endl;
             }
             if (scoring_function.total_soft_constraints > 0) {
-                Rcout << "Applying " << scoring_function.total_soft_constraints
+                Rcpp::Rcout << "Applying " << scoring_function.total_soft_constraints
                       << " constraints" << std::endl;
             }
         }
@@ -241,7 +263,7 @@ Rcpp::List ms_plans(
         // start timing the warmup 
         auto warmup_start_time = std::chrono::steady_clock::now();
 
-        RObject bar = cli_progress_bar(total_steps, cli_config(false));
+        Rcpp::RObject bar = cli_progress_bar(total_steps, cli_config(false));
         for (int i = start, step_num = 0; i <= total_post_warmup_steps; i++, step_num++) {
             if (i == 1){
                 // stop timing warmup and switch to timing runs 
@@ -349,7 +371,7 @@ Rcpp::List ms_plans(
     }
 
     if (verbosity >= 1) {
-        Rcout << "Acceptance rate: " << std::setprecision(2)
+        Rcpp::Rcout << "Acceptance rate: " << std::setprecision(2)
               << (100.0 * (warmup_acceptances + post_warump_acceptances)) / (total_steps) << "%"
               << std::endl;
     }
@@ -385,22 +407,22 @@ Rcpp::List ms_plans(
     // add granular time info 
     Rcpp::List granular_timing;
     if constexpr (perf_config::track_granular_times){
-        granular_timing = List::create(
-            _["granular_time_tracked"] = true,
-            _["wilson_call_times"] = granular_times.wilson_time,
-            _["selecting_merge_pair"] = granular_times.selecting_merge_pair,
-            _["hard_constraint_split_times"] = granular_times.hard_constraint_time,
-            _["eff_boundary_times"] = granular_times.eff_boundary_length,
-            _["computing_plan_scores_times"] = granular_times.plan_scores,
-            _["computing_region_scores_times"] = granular_times.region_scores,
-            _["getting_valid_pairs_times"] = granular_times.get_valid_pairs,
-            _["computing_spanning_tree_count_times"] = granular_times.tau_terms,   
-            _["plan_updating_times"] = granular_times.plan_copying
+        granular_timing = Rcpp::List::create(
+            Rcpp::_["granular_time_tracked"] = true,
+            Rcpp::_["wilson_call_times"] = granular_times.wilson_time,
+            Rcpp::_["selecting_merge_pair"] = granular_times.selecting_merge_pair,
+            Rcpp::_["hard_constraint_split_times"] = granular_times.hard_constraint_time,
+            Rcpp::_["eff_boundary_times"] = granular_times.eff_boundary_length,
+            Rcpp::_["computing_plan_scores_times"] = granular_times.plan_scores,
+            Rcpp::_["computing_region_scores_times"] = granular_times.region_scores,
+            Rcpp::_["getting_valid_pairs_times"] = granular_times.get_valid_pairs,
+            Rcpp::_["computing_spanning_tree_count_times"] = granular_times.tau_terms,   
+            Rcpp::_["plan_updating_times"] = granular_times.plan_copying
         );
 
     }else{
-        granular_timing = List::create(
-            _["granular_time_tracked"] = false
+        granular_timing = Rcpp::List::create(
+            Rcpp::_["granular_time_tracked"] = false
         );
     }
 
@@ -411,3 +433,4 @@ Rcpp::List ms_plans(
 
     return out;
 }
+

@@ -1,4 +1,10 @@
+#include <RcppArmadillo.h>
 #include "wilson.h"
+
+#include "splitting_schedule_types.h"
+#include "random.h"
+#include "base_plan_type.h"
+#include "tree_splitting.h"
 
 namespace{
 
@@ -11,7 +17,7 @@ static void add_county_to_tree_dfs(
     std::vector<int> const &county_vertices, // vector of vertices in the county 
     std::vector<bool> &visited,
     DummyTreeQueue &queue,
-    Tree &ust
+    FlatGraph &ust
 ) {
     int const V = static_cast<int>(county_restricted_g.size());
     int const n_vtx = static_cast<int>(county_vertices.size());
@@ -122,7 +128,7 @@ static void add_county_to_tree_dfs(
             }
 
             // This is a real graph edge v--u, oriented away from the county root.
-            ust[v].push_back(u);
+            ust.add_directed_edge(v, u);
             // mark as visited and add this to stack
             visited[u] = true;
             queue.push(u);
@@ -162,7 +168,7 @@ static void add_county_to_tree_dfs(
 // TESTED
 int walk_until(const Graph &g, int root, std::vector<int> &path, int MAX,
                const std::vector<bool> &visited, const std::vector<bool> &ignore,
-               const arma::uvec &counties, RNGState &rng_state);
+               const std::vector<unsigned int> &counties, RNGState &rng_state);
 
 /*
  * Erase loops in `path` that would be created by adding `proposal` to path
@@ -191,28 +197,59 @@ struct SampleSubUSTResult {
 };
 
 
+void OLD_TO_UPDATE_get_tree_pops_below(const Tree &ust, const int root, TreePopStack &stack,
+                         const std::vector<unsigned int> &pop, std::vector<int> &pop_below) {
+    stack.clear();
+    // add the root
+    // we don't care about parent here
+    stack.push({root, 0, false});
+
+    while (!stack.empty()) {
+        auto [vtx, parent, is_revisiting] = stack.pop();
+
+        // if visiting again then that means we've seen all the children
+        if (is_revisiting) {
+            int total_pop = pop[vtx];
+            for (int child : ust[vtx]) {
+                total_pop += pop_below[child];
+            }
+            pop_below[vtx] = total_pop;
+        } else {
+            // else push again and push the children
+            stack.push({vtx, 0, true});
+            for (const auto &child : ust[vtx]) {
+                stack.push({child, 0, false});
+            }
+        }
+    }
+
+    return;
+}
+
 /*
  * Sample a uniform spanning subtree of unvisited nodes using Wilson's algorithm
  */
 // TESTED
-SampleSubUSTResult sample_sub_ust(MapParams const &map_params, Tree &tree, double const lower,
+SampleSubUSTResult sample_sub_ust(MapParams const &map_params, FlatGraph &tree, double const lower,
                    double const upper, std::vector<bool> &visited,
-                   const std::vector<bool> &ignore, Tree &cty_tree, TreePopStack &county_stack,
+                   const std::vector<bool> &ignore, Tree &county_tree, TreePopStack &county_stack,
                    DummyTreeQueue &dummy_county_tree_queue,
-                   arma::uvec &county_pop, std::vector<std::vector<int>> &county_members,
+                   std::vector<unsigned int> &county_pop, std::vector<std::vector<int>> &county_members,
                    std::vector<bool> &c_visited, std::vector<int> &cty_pop_below,
                    std::vector<std::array<int, 3>> &county_path, std::vector<int> &path,
                    RNGState &rng_state) {
     // auto t1_start = std::chrono::steady_clock::now();
     int const n_county = map_params.num_counties;
-    std::fill(c_visited.begin(), c_visited.end(), true);
-    // reset county pops to zero
-    county_pop.zeros();
     int tot_pop = 0;
     // reset the county members inner vectors
+    // and zero out the county pops
+    // and mark all counties as zero
     for (size_t i = 0; i < map_params.num_counties; i++) {
         county_members[i].clear();
+        c_visited[i] = true;
+        county_pop[i] = 0.0;
     }
+
 
     int remaining = 0;
     int const V = map_params.V;
@@ -224,7 +261,7 @@ SampleSubUSTResult sample_sub_ust(MapParams const &map_params, Tree &tree, doubl
             remaining++;
             int county = map_params.counties[i] - 1;
             tot_pop += map_params.pop[i];
-            county_pop(county) += map_params.pop[i];
+            county_pop[county] += map_params.pop[i];
             if (c_visited[county]) {
                 c_visited[county] = false;
             }
@@ -248,7 +285,7 @@ SampleSubUSTResult sample_sub_ust(MapParams const &map_params, Tree &tree, doubl
 
     // Connect counties
     // clear the tree
-    clear_tree(cty_tree);
+    clear_tree(county_tree);
     county_path.clear();
     while (c_remaining > 0) {
         int add = rvtx(c_visited, n_county, c_remaining, lower_c, rng_state);
@@ -264,9 +301,9 @@ SampleSubUSTResult sample_sub_ust(MapParams const &map_params, Tree &tree, doubl
         for (int i = 0; i < added; i++) {
             c_visited[county_path[i][0]] = true;
             // reverse path so that arrows point away from root
-            tree[county_path[i][2]].push_back(county_path[i][1]);
-            cty_tree[county_path[i][0]]
-                .push_back(map_params.counties(county_path[i][1]) - 1);
+            tree.add_directed_edge(county_path[i][2], county_path[i][1]);
+            county_tree[county_path[i][0]]
+                .push_back(map_params.counties[county_path[i][1]] - 1);
 
             visited[county_path[i][1]] = true; // root for next district
             remaining--;
@@ -276,20 +313,20 @@ SampleSubUSTResult sample_sub_ust(MapParams const &map_params, Tree &tree, doubl
     // figure out which counties will not need to be split
     if (n_county > 1) {
         // don't need to fill pop below since it gets reset
-        get_tree_pops_below(cty_tree, map_params.counties[root] - 1, county_stack, county_pop,
+        OLD_TO_UPDATE_get_tree_pops_below(county_tree, map_params.counties[root] - 1, county_stack, county_pop,
                             cty_pop_below);
         for (int i = 0; i < n_county; i++) {
             int n_vtx = county_members[i].size();
             if (n_vtx <= 1)
                 continue;
             // check child counties
-            int children = cty_tree[i].size();
+            int children = county_tree[i].size();
             int split_ub = cty_pop_below[i];
             int split_lb = split_ub - county_pop[i];
             if (lower - 1 < county_pop[i])
                 split_lb = (int)lower;
             for (int j = 0; j < children; j++) {
-                int pop_child = cty_pop_below[cty_tree[i][j]];
+                int pop_child = cty_pop_below[county_tree[i][j]];
                 if (pop_child >= 0 && pop_child < split_lb) {
                     split_lb = pop_child;
                 }
@@ -341,7 +378,7 @@ SampleSubUSTResult sample_sub_ust(MapParams const &map_params, Tree &tree, doubl
             for (int i = 0; i < added - 1; i++) {
                 visited[path[i]] = true;
                 // reverse path so that arrows point away from root
-                tree[path[i + 1]].push_back(path[i]);
+                tree.add_directed_edge(path[i + 1], path[i]);
             }
         }
     }
@@ -355,7 +392,7 @@ SampleSubUSTResult sample_sub_ust(MapParams const &map_params, Tree &tree, doubl
 // TESTED
 int walk_until(const Graph &g, int root, std::vector<int> &path, int MAX,
                const std::vector<bool> &visited, const std::vector<bool> &ignore,
-               const arma::uvec &counties, RNGState &rng_state) {
+               const std::vector<unsigned int> &counties, RNGState &rng_state) {
     path[0] = root;
     // walk until we hit something in `visited`
     int curr = root;
@@ -442,11 +479,46 @@ void loop_erase_cty(std::vector<std::array<int, 3>> &path, int proposal, int roo
     }
 }
 
+std::vector<unsigned int>
+integer_vector_to_uint_vec(Rcpp::IntegerVector const& x) {
+    std::vector<unsigned int> out;
+    out.reserve(x.size());
+
+    for (R_xlen_t i = 0; i < x.size(); ++i) {
+        int const value = x[i];
+
+        if (value == NA_INTEGER) {
+            throw std::runtime_error(
+                "Cannot convert Rcpp::IntegerVector to std::vector<unsigned int>: found NA"
+            );
+        }
+
+        if (value < 0) {
+            throw std::runtime_error(
+                "Cannot convert Rcpp::IntegerVector to std::vector<unsigned int>: found negative value"
+            );
+        }
+
+        out.push_back(static_cast<unsigned int>(value));
+    }
+
+    return out;
+}
+
+Graph list_to_graph(const Rcpp::List &l) {
+    int V = l.size();
+    Graph g;
+    for (int i = 0; i < V; i++) {
+        g.push_back(Rcpp::as<std::vector<int>>((Rcpp::IntegerVector)l[i]));
+    }
+    return g;
+}
+
 }
 
 // [[Rcpp::export]]
-Tree sample_ust(Rcpp::List l, const arma::uvec &pop, double lower, double upper,
-                const arma::uvec &counties, const std::vector<bool> ignore) {
+Tree sample_ust(Rcpp::List l, const Rcpp::IntegerVector &pop, double lower, double upper,
+                const Rcpp::IntegerVector &counties, const std::vector<bool> ignore) {
     RNGState rng_state((int)Rcpp::sample(INT_MAX, 1)[0]);
     int V = l.size();
     Graph g;
@@ -457,15 +529,18 @@ Tree sample_ust(Rcpp::List l, const arma::uvec &pop, double lower, double upper,
     int FAKE_NDISTS = 6;
     double FAKE_TARGET = 6.6;
 
-    MapParams map_params(l, counties, pop, FAKE_NDISTS, FAKE_NDISTS, std::vector<int>{}, lower,
+    MapParams map_params(list_to_graph(l), 
+        integer_vector_to_uint_vec(counties), 
+        integer_vector_to_uint_vec(pop),
+        FAKE_NDISTS, FAKE_NDISTS, std::vector<int>{}, lower,
                          FAKE_TARGET, upper, SamplingSpace::GraphSpace);
 
-    Tree tree = init_tree(V);
+    FlatGraph tree = map_params.map_graph.get_flat_empty_tree();
     std::vector<bool> visited(V);
     Tree county_tree = init_tree(map_params.num_counties);
     TreePopStack county_stack(map_params.num_counties + 1);
     DummyTreeQueue dummy_county_tree_queue(map_params.V);
-    arma::uvec county_pop(map_params.num_counties, arma::fill::zeros);
+    std::vector<unsigned int> county_pop(map_params.num_counties, 0.0);
     std::vector<std::vector<int>> county_members(map_params.num_counties, std::vector<int>{});
     std::vector<bool> c_visited(map_params.num_counties, true);
     std::vector<int> cty_pop_below(map_params.num_counties, 0);
@@ -476,7 +551,7 @@ Tree sample_ust(Rcpp::List l, const arma::uvec &pop, double lower, double upper,
                    county_stack, dummy_county_tree_queue, 
                    county_pop, county_members, c_visited, cty_pop_below,
                    county_path, path, rng_state);
-    return tree;
+    return tree.to_vertex_graph();
 }
 
 
@@ -495,6 +570,7 @@ std::pair<bool, int> USTSampler::draw_ust(
       double const lower, double const upper,
         RNGState &rng_state) {
     // We assume that ignore has already been properly set 
+    // We also assume the tree has been properly cleared
     // Now get a uniform spanning tree drawn on the subgraph denoted by the ignore
     // vertices 
     auto const result = sample_sub_ust(map_params, ust, lower, upper, visited, ignore,
@@ -512,16 +588,19 @@ USTDrawResult USTSampler::attempt_to_draw_tree_on_region(
     bool const use_custom_bounds, double const custom_sample_sub_ust_lower,
     double const custom_sample_sub_ust_upper) {
     int V = map_params.V;
-    // clear the tree
-    clear_tree(ust);
-
 
     int num_region_vertices = 0;
-    // Mark it as ignore if its not in the region to split
-    for (int i = 0; i < V; i++) {
-        ignore[i] = plan.region_ids[i] != region_to_draw_tree_on;
-        // count vertices we're not ignoring 
-        num_region_vertices += !ignore[i];
+    // Mark it as ignore if its not in the region to split and clear those vertices in 
+    // the region
+    for (int i = 0; i < V; ++i) {
+        // check if in the region
+        bool const in_region = plan.region_ids[i] == region_to_draw_tree_on;
+        ignore[i] = !in_region;
+        // clear if in the region
+        if (in_region) {
+            ust.clear_vertex(i);
+            ++num_region_vertices;
+        }
     }
 
     double sample_sub_ust_lower, sample_sub_ust_upper;
@@ -551,7 +630,7 @@ USTDrawResult USTSampler::attempt_to_draw_tree_on_region(
     if constexpr(perf_config::object_integrity_checking){
         if (valid_tree){
             check_tree_integrity(
-                ust,
+                ust.to_vertex_graph(),
                 "Just called `sample_sub_ust` in attempt_to_draw_tree_on_region\n",
                 result.second,
                 num_region_vertices,
@@ -569,18 +648,23 @@ USTDrawResult USTSampler::attempt_to_draw_tree_on_merged_region(RNGState &rng_st
     bool const use_custom_bounds, double const custom_sample_sub_ust_lower,
     double const custom_sample_sub_ust_upper) {
     int V = map_params.V;
-    // clear the tree
-    clear_tree(ust);
+
     // optional for checking 
     int num_merged_region_vertices = 0;
 
-    // Mark it as ignore if its not in either of the two regions
-    for (int i = 0; i < V; i++) {
-        ignore[i] = plan.region_ids[i] != region1_to_draw_tree_on &&
-                    plan.region_ids[i] != region2_to_draw_tree_on;
-        num_merged_region_vertices += !ignore[i];
-    }
+    // mark the ignore values and clear vertices in either region
+    for (int i = 0; i < V; ++i) {
+        // check if in the region
+        bool const in_region = plan.region_ids[i] == region1_to_draw_tree_on ||
+                    plan.region_ids[i] == region2_to_draw_tree_on;
 
+        ignore[i] = !in_region;
+        // clear if in the region
+        if (in_region) {
+            ust.clear_vertex(i);
+            ++num_merged_region_vertices;
+        }
+    }
 
     double sample_sub_ust_lower, sample_sub_ust_upper;
 
@@ -613,7 +697,7 @@ USTDrawResult USTSampler::attempt_to_draw_tree_on_merged_region(RNGState &rng_st
     if constexpr(perf_config::object_integrity_checking){
         if (valid_tree){
             check_tree_integrity(
-                ust,
+                ust.to_vertex_graph(),
                 "Just called `sample_sub_ust` in attempt_to_draw_tree_on_merged_region\n",
                 result.second,
                 num_merged_region_vertices,
@@ -625,7 +709,7 @@ USTDrawResult USTSampler::attempt_to_draw_tree_on_merged_region(RNGState &rng_st
     return USTDrawResult{valid_tree, num_merged_region_vertices, result.second};
 }
 
-std::pair<bool, EdgeCut> USTSampler::try_to_sample_splittable_tree(
+std::pair<bool, EdgeCut> USTSampler::try_to_find_and_erase_splittable_edge(
     Plan const &plan, int const split_region1, int const split_region2, int const root,
     ScoringFunction const &scoring_function, RNGState &rng_state, TreeSplitter &tree_splitter,
     int const region_populations, int const region_size, bool const save_selection_prob) {
@@ -657,7 +741,7 @@ std::pair<bool, EdgeCut> USTSampler::try_to_sample_splittable_tree(
     // If successful extract the edge cut info
     EdgeCut cut_edge = std::get<1>(edge_search_result);
     // Now erase the cut edge in the tree
-    erase_tree_edge(ust, cut_edge);
+    ust.erase_directed_edge(cut_edge);
 
     return edge_search_result;
 }
@@ -676,7 +760,7 @@ std::pair<bool, EdgeCut> USTSampler::attempt_to_find_valid_tree_split(
     int region_to_split_size = plan.region_sizes[region_to_split];
     int region_to_split_population = plan.region_pops[region_to_split];
 
-    return try_to_sample_splittable_tree(plan, region_to_split, new_region_id, result.root,
+    return try_to_find_and_erase_splittable_edge(plan, region_to_split, new_region_id, result.root,
         scoring_function,
                                          rng_state, tree_splitter, region_to_split_population,
                                          region_to_split_size, save_selection_prob);
@@ -698,7 +782,7 @@ std::pair<bool, EdgeCut> USTSampler::attempt_to_find_valid_tree_mergesplit(
     int region_to_split_population =
         plan.region_pops[merge_region1] + plan.region_pops[merge_region2];
 
-    return try_to_sample_splittable_tree(plan, merge_region1, merge_region2, result.root, scoring_function,
+    return try_to_find_and_erase_splittable_edge(plan, merge_region1, merge_region2, result.root, scoring_function,
                                          rng_state, tree_splitter, region_to_split_population,
                                          region_to_split_size, save_selection_prob);
 }

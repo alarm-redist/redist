@@ -9,9 +9,9 @@
 // ---------------------------------------------------------------------
 
 static int topological_sort_helper(std::map<int, int> &cut_pop, LCTNode *node, LCTNode *source,
-                                   arma::uvec const &pop, bool reversed, int mass);
+                                   std::vector<unsigned int> const &pop, bool reversed, int mass);
 
-static std::map<int, int> compute_subtree_pops(LCTGraphPlan &plan, arma::uvec const &pop,
+static std::map<int, int> compute_subtree_pops(LCTGraphPlan &plan, std::vector<unsigned int> const &pop,
                                                int root_vertex) {
     std::map<int, int> cut_pop;
     LinkCutTree &lct = *plan.lct;
@@ -31,13 +31,13 @@ static std::map<int, int> compute_subtree_pops(LCTGraphPlan &plan, arma::uvec co
         total += topological_sort_helper(cut_pop, child, root, pop, false, 0);
     }
 
-    int root_pop = pop(root_vertex);
+    int root_pop = pop[root_vertex];
     cut_pop[root_vertex] = root_pop + total;
     return cut_pop;
 }
 
 static int topological_sort_helper(std::map<int, int> &cut_pop, LCTNode *node, LCTNode *source,
-                                   arma::uvec const &pop, bool reversed, int mass) {
+                                   std::vector<unsigned int> const &pop, bool reversed, int mass) {
     if (node == nullptr)
         return 0;
 
@@ -54,7 +54,7 @@ static int topological_sort_helper(std::map<int, int> &cut_pop, LCTNode *node, L
         remainder += topological_sort_helper(cut_pop, child, node, pop, false, 0);
     }
 
-    int node_pop = pop(node->vertex);
+    int node_pop = pop[node->vertex];
     cut_pop[node->vertex] = remainder + node_pop + mass;
 
     if (node->children[lc] != nullptr && node->children[lc] != source) {
@@ -139,7 +139,7 @@ bool get_cycle_paths(LCTGraphPlan &plan, CWEdge const &e1, CWEdge const &e2,
 
 std::vector<int> get_collapsed_cycle_weights(LCTGraphPlan &plan, std::vector<int> const &path1,
                                              std::vector<int> const &path2,
-                                             arma::uvec const &pop) {
+                                             std::vector<unsigned int> const &pop) {
     int cycle_len = static_cast<int>(path1.size() + path2.size());
     std::vector<int> collapsed_weights(cycle_len);
 
@@ -312,9 +312,9 @@ void apply_update(LCTGraphPlan &plan, MapParams const &map_params,
     for (int v = 0; v < V; v++) {
         int d = plan.region_ids[v];
         if (d == d1)
-            plan.region_pops[d1] += map_params.pop(v);
+            plan.region_pops[d1] += map_params.pop[v];
         else if (d == d2)
-            plan.region_pops[d2] += map_params.pop(v);
+            plan.region_pops[d2] += map_params.pop[v];
     }
 
     plan.rebuild_cross_edges(map_params.g);
@@ -435,7 +435,6 @@ int cycle_walk(LCTGraphPlan &plan, MapParams const &map_params,
     CrossEdgeMap old_cross_edges = plan.cross_edges;
 
     // ---- scoring on the OLD state ----
-    bool const is_final = true; // cyclewalk plans are always fully districted
     double old_soft_score_d1 = scoring_function.compute_region_soft_score(plan, d1);
     double old_soft_score_d2 = scoring_function.compute_region_soft_score(plan, d2);
     auto old_plan_score = scoring_function.compute_plan_score(plan);

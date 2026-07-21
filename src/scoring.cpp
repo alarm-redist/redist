@@ -6,6 +6,7 @@
  ********************************************************/
 
 #include "scoring.h"
+#include "base_plan_type.h"
 
 constexpr bool DEBUG_SCORING_VERBOSE = false;
 
@@ -887,9 +888,9 @@ double ValidDistrictsConstraint::compute_raw_plan_constraint_score(
 ScoringFunction::ScoringFunction(MapParams const &map_params, Rcpp::List const &constraints,
                                  double const pop_temper, bool const smc, int const thread_id)
     : map_params(map_params),
-      num_hard_region_constraints(0), total_soft_region_constraints(0),
-      total_soft_plan_constraints(0), 
-      num_hard_plan_constraints(0), total_soft_constraints(0),
+      total_soft_region_constraints(0), total_soft_plan_constraints(0), 
+      total_soft_constraints(0),
+      num_hard_region_constraints(0),  num_hard_plan_constraints(0), 
       any_soft_custom_constraints(false), any_hard_custom_constraints(false) {
     // First add region constraints
     // add pop temper if doing that

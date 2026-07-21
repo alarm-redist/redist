@@ -6,6 +6,7 @@
  ********************************************************/
 
 #include "weight_caching.h"
+#include "base_plan_type.h"
 
 WeightCacheEnsemble::WeightCacheEnsemble(bool const using_caching, MapParams const &map_params,
                                          int const nsims, double const rho,

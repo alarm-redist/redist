@@ -2,27 +2,10 @@
 #define UTILS_H
 
 
-
-#include "advanced_types.h"
-#include <RcppArmadillo.h>
-#include <RcppThread.h>
 #include <limits>
 #include <vector>
-
-
-#include "random.h"
-
-
-/*
- * Creates a Rcpp Threadpool
- *
- *
- */
-RcppThread::ThreadPool get_thread_pool(int const num_threads);
-
-// Returns the number of threads being used. 
-// When single threading it returns as one thread
-int get_num_threads(const RcppThread::ThreadPool &pool);
+#include <Rcpp.h>
+#include "advanced_types.h"
 
 /*
  * Make a progress bar configuration with format string `fmt`
@@ -30,8 +13,34 @@ int get_num_threads(const RcppThread::ThreadPool &pool);
 Rcpp::List cli_config(bool clear = false,
                 const char *fmt = "{cli::pb_bar} {cli::pb_percent} | ETA:{cli::pb_eta}");
 
-
 // Only relevant for debugging 
+
+
+
+// gets current time if tracking granular times
+inline Clock::time_point maybe_now() {
+    if constexpr (perf_config::track_granular_times) {
+        return Clock::now();
+    } else {
+        return {};
+    }
+}
+
+// Adds the time elapsed to slot 
+inline void add_elapsed(
+    double &slot,
+    Clock::time_point const start
+) {
+    if constexpr (perf_config::track_granular_times) {
+        slot += std::chrono::duration<double, std::ratio<1>>(
+            Clock::now() - start
+        ).count();
+    }else{
+        throw Rcpp::exception("Time elapsed is being called when TRACK_GRANULAR_PERFORMANCE_TIMES = false");
+    }
+}
+
+
 struct ActiveUserGuard {
     std::atomic<int> &counter;
 

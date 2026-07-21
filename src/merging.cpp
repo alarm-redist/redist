@@ -6,6 +6,14 @@
  ********************************************************/
 
 #include "merging.h"
+#include "tree_op.h"
+#include "wilson.h"
+#include "weight_caching.h"
+#include "utils.h"
+#include "scoring.h"
+#include "random.h"
+#include "base_plan_type.h"
+#include "splitting_schedule_types.h"
 
 constexpr bool DEBUG_MERGING_VERBOSE = false; // Compile-time constant
 

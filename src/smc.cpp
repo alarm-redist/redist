@@ -7,9 +7,29 @@
 
 constexpr bool DEBUG_GSMC_PLANS_VERBOSE = false; // Compile-time constant
 
-#include "smc.h"
 
+#include <atomic>
+#include <chrono>
 
+#include <cmath>
+#include <functional>
+#include <iostream>
+#include <string>
+
+#include "redist_alg_helpers.h"
+#include "splitting_schedule_types.h"
+#include "graph_plan_type.h"
+#include "merging.h"
+#include "scoring.h"
+#include "wilson.h"
+#include "weight_caching.h"
+#include "weights.h"
+#include "threading_helpers.h"
+#include "tree_splitting.h"
+#include "utils.h"
+#include "random.h"
+#include <RcppThread.h>
+#include <cli/progress.h>
 
 /*
  *  Use SMC Sampler method to split a multidistrict in all of the plans
@@ -712,12 +732,15 @@ void run_merge_split_step_on_all_plans(
 //      - level 2 - Captures the parent tries mat
 //      - level 3 - Saves intermediate region dvals and plan ids
 
-// Uses gsmc method to generate a sample of `M` plans in `c++`
+// Run SMC (optionally with Merge Split steps too)
+//
+// Uses smc method with optimal weights and merge split steps to generate a sample of `nsims`
+// plans in `c++`
+//
 //
 // Using the procedure outlined in <PAPER HERE> this function uses Sequential
 // Monte Carlo (SMC) methods to generate a sample of `M` plans
 //
-// @title Run redist gsmc
 //
 // @param ndists The number of districts the final plans will have
 // @param adj_list A 0-indexed adjacency list representing the undirected graph
@@ -728,21 +751,21 @@ void run_merge_split_step_on_all_plans(
 // relative to
 // @param lower Acceptable lower bounds on a valid district's population
 // @param upper Acceptable upper bounds on a valid district's population
-// @param control Named list of additional parameters.
-// @param num_threads The number of threads the threadpool should use
-// @param verbosity What level of detail to print out while the algorithm is
-// running <ADD OPTIONS>
-// @export
+// @param nsims The number of plans (samples) to draw
+// @param k_param The k parameter from the SMC algorithm, you choose among the top k_param
+// edges ' @param control Named list of additional parameters. ' @param num_threads The number
+// of threads the threadpool should use ' @param verbosity What level of detail to print out
+// while the algorithm is ' running <ADD OPTIONS> ' @keywords internal ' @noRd
+// [[Rcpp::export]]
 Rcpp::List run_redist_smc(
     int const nsims, int const total_seats, int const ndists,
     Rcpp::IntegerVector const district_seat_sizes, int const initial_num_regions,
-    Rcpp::List const &adj_list, arma::uvec const &counties, const arma::uvec &pop,
+    Rcpp::List const &adj_list, Rcpp::IntegerVector const &counties, const Rcpp::IntegerVector &pop,
     Rcpp::CharacterVector const &step_types, double const target, double const lower,
     double const upper,
     double const rho,                      // compactness
     std::string const &sampling_space_str, // sampling space (graphs, forest, etc)
-    Rcpp::List const &control, // control has pop temper, and k parameter value, and splitting method
-                         // are allowed
+    Rcpp::List const &control, // control has pop temper, and k parameter value, and splitting method are allowed
     Rcpp::List const &constraints, // constraints
     int const verbosity, int const diagnostic_level, Rcpp::IntegerMatrix const &region_id_mat,
     Rcpp::IntegerMatrix const &region_sizes_mat, arma::vec &log_weights) {
@@ -758,8 +781,12 @@ Rcpp::List run_redist_smc(
     // Set the sampling space
     SamplingSpace sampling_space = get_sampling_space(sampling_space_str);
 
+    
     // Create map level graph and county level multigraph
-    MapParams const map_params(adj_list, counties, pop, ndists, total_seats,
+    MapParams const map_params(list_to_graph(adj_list), 
+        Rcpp::as<std::vector<unsigned int>>(counties), 
+        Rcpp::as<std::vector<unsigned int>>(pop),
+         ndists, total_seats,
                                Rcpp::as<std::vector<int>>(district_seat_sizes), lower, target, upper,
                             sampling_space);
     int V = map_params.g.size();

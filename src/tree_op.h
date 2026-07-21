@@ -1,14 +1,14 @@
 #ifndef TREE_OP_H
 #define TREE_OP_H
 
-
-#include <RcppArmadillo.h>
+#include <iostream> 
 #include <limits>
 #include <queue>
 #include <stack>
 #include <vector>
 #include "advanced_types.h"
-#include "random.h"
+
+class RNGState;
 
 // for error checking
 static inline void check_vertex_in_range(int v, int V, char const *where) {
@@ -51,15 +51,15 @@ void print_tree(Tree const &ust);
  * Count population below each node in tree and get parent
  */
 // TESTED
-int tree_pop(Tree &ust, int vtx, const arma::uvec &pop, std::vector<int> &pop_below,
+int tree_pop(Tree &ust, int vtx, const std::vector<unsigned int> &pop, std::vector<int> &pop_below,
              std::vector<int> &parent);
 
 /*
  * Just Count population below each node in tree
  */
 // TESTED
-void get_tree_pops_below(const Tree &ust, const int root, TreePopStack &stack,
-                         const arma::uvec &pop, std::vector<int> &pop_below);
+void get_tree_pops_below(const FlatGraph &ust, const int root, TreePopStack &stack,
+                         const std::vector<unsigned int> &pop, std::vector<int> &pop_below);
 
 
 // Essentially a packed forest, aka a spanning forest stored as a list of edges
@@ -310,7 +310,7 @@ class EdgeBitset {
     }
 
     void print(GraphEdgeIndex const &edge_index) const {
-        Rcpp::Rcerr << debug_string(edge_index);
+        std::cerr << debug_string(edge_index);
     }
 
     void print_full_tree(GraphEdgeIndex const &edge_index) const {
@@ -384,7 +384,7 @@ class EdgeBitset {
 /*
  * Assign `new_region_num_id` to all descendants of `root` in `ust`
  */
-void assign_region_id_from_tree(const Tree &ust, PlanVector &region_ids, int root,
+void assign_region_id_from_tree(const FlatGraph &ust, PlanVector &region_ids, int root,
                                 const int new_region_num_id,
                                 CircularQueue<std::pair<int, int>> &vertex_queue);
 
@@ -392,7 +392,7 @@ void assign_region_id_from_tree(const Tree &ust, PlanVector &region_ids, int roo
  * Assign `new_region_num_id` to all descendants of `root` in `ust` where
  * `ust` is a directed spanning tree 
  */
-void assign_region_id_and_forest_from_tree(const Tree &ust, PlanVector &region_ids,
+void assign_region_id_and_forest_from_tree(const FlatGraph &ust, PlanVector &region_ids,
                                            EdgeBitset &forest_edges,
                                            int root,
                                            const int new_region_id,

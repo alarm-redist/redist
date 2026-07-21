@@ -8,6 +8,23 @@
 constexpr bool DEBUG_WEIGHTS_VERBOSE = false; // Compile-time constant
 #include "weights.h"
 
+#include "base_plan_type.h"
+#include "map_calc.h"
+#include "scoring.h"
+#include "splitting_schedule_types.h"
+#include "redist_alg_helpers.h"
+#include "tree_op.h"
+#include "weight_caching.h"
+#include "utils.h"
+#include "wilson.h"
+#include <RcppThread.h>
+#include <cmath>
+#include <random>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include "threading_helpers.h"
 
 
 

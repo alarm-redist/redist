@@ -5,7 +5,13 @@
  * Purpose: Implementation of Plan type for Linking Edge space
  ********************************************************/
 
+#include <RcppArmadillo.h>
 #include "linking_edge_plan_type.h"
+
+#include "scoring.h"
+#include "splitting_schedule_types.h"
+#include "tree_splitting.h"
+#include "wilson.h"
 
 constexpr bool DEBUG_L_EDGE_PLANS_VERBOSE = false; // Compile-time constant
 
@@ -101,7 +107,7 @@ LinkingEdgePlan::LinkingEdgePlan(int const total_seats, int const total_pop,
 };
 
 LinkingEdgePlan::LinkingEdgePlan(
-    int const ndists, int const num_regions, const arma::uvec &pop,
+    int const ndists, int const num_regions, const std::vector<unsigned int> &pop,
     PlanVector &this_plan_region_ids, RegionSizes &this_plan_region_sizes,
     IntPlanAttribute &this_plan_region_pops, IntPlanAttribute &this_plan_order_added,
     PlanEdgeBits &this_plan_forest_edge_bits,
@@ -128,7 +134,7 @@ LinkingEdgePlan::LinkingEdgePlan(
 
     if constexpr (perf_config::object_integrity_checking){
         check_forest_equality(
-            ust_sampler.ust,
+            ust_sampler.ust.to_vertex_graph(),
             forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
             ust_sampler.map_params.graph_edge_index,
             "IN Partial Linking Edge Plan Constructor, checking ust vs forest edges (through get_graph_tree)"
@@ -141,9 +147,6 @@ LinkingEdgePlan::LinkingEdgePlan(
 
     // reserve space for ndists - 1 linking edges
     linking_edges.reserve(ndists - 1);
-
-    // dummy scoring Function
-    ScoringFunction scoring_function(ust_sampler.map_params, Rcpp::List(), 0, false, 0);
 
     for (auto const a_pair : initial_linking_edges) {
         // REprintf("(%d, %d)\n", a_pair.first, a_pair.second);

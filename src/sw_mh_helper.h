@@ -9,10 +9,6 @@
 #ifndef SW_MH_HELPER_H
 #define SW_MH_HELPER_H
 
-#include "constraint_calc_helper.h"
-#include "make_swaps_helper.h"
-#include "map_calc.h"
-#include "mcmc_gibbs.h"
 #include "redist_types.h"
 #include <RcppArmadillo.h>
 

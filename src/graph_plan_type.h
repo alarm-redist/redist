@@ -2,8 +2,16 @@
 #ifndef GRAPH_PLAN_TYPE_H
 #define GRAPH_PLAN_TYPE_H
 
+#include <RcppArmadillo.h>
 #include "base_plan_type.h"
-#include "tree_op.h"
+
+
+class USTSampler;
+class PlanMultigraph;
+class ScoringFunction;
+class TreeSplitter;
+class SplittingSchedule;
+class RNGState;
 
 class GraphPlan : public Plan {
     // private member variable

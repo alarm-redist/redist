@@ -2,9 +2,10 @@
 #ifndef SCORING_H
 #define SCORING_H
 
-#include "base_plan_type.h"
+
 #include "map_calc.h"
 #include "advanced_types.h"
+
 
 class Plan;
 
@@ -173,7 +174,7 @@ class PopTemperConstraint : public RegionConstraint {
 class PopDevConstraint : public RegionConstraint {
   private:
     double const parity;
-    arma::uvec const total_pop;
+    std::vector<unsigned int> const total_pop;
 
   public:
     PopDevConstraint(Rcpp::List const &constr_inst, MapParams const &map_params)
@@ -196,8 +197,8 @@ class PopDevConstraint : public RegionConstraint {
 
 class StatusQuoConstraint : public RegionConstraint {
   private:
-    arma::uvec const current;
-    arma::uvec const pop;
+    std::vector<unsigned int> const current;
+    std::vector<unsigned int> const pop;
     int const ndists;
     int const n_current;
     int const V;
@@ -205,7 +206,7 @@ class StatusQuoConstraint : public RegionConstraint {
   public:
     StatusQuoConstraint(Rcpp::List const &constr_inst, MapParams const &map_params)
         : RegionConstraint(constr_inst, map_params.ndists, map_params.total_seats),
-        current(Rcpp::as<arma::uvec>(constr_inst["current"])), 
+        current(Rcpp::as<std::vector<unsigned int>>(constr_inst["current"])), 
         pop(map_params.pop), ndists(map_params.ndists),
           n_current(Rcpp::as<int>(constr_inst["n_current"])), V(map_params.V) {}
 
@@ -763,19 +764,17 @@ class ScoringFunction {
                     double const pop_temper, bool const smc, int const thread_id = 0);
 
     const MapParams &map_params;
-    
-    // double const excess_rho;
-    // bool const any_excess_rho;
-    // bool const district_rho_only;
 
     // counts region constraints
     int total_soft_region_constraints;
+    int total_soft_plan_constraints;
+    int total_soft_constraints; // total constraints
     int num_hard_region_constraints;
     // counts plan constraints
-    int total_soft_plan_constraints;
+    
     int num_hard_plan_constraints; //
 
-    int total_soft_constraints; // total constraints
+    
     bool any_soft_region_constraints;
     bool any_soft_plan_constraints;
     bool any_hard_plan_constraints;

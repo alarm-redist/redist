@@ -2,8 +2,9 @@
 #ifndef WEIGHTS_CACHING_H
 #define WEIGHTS_CACHING_H
 
-#include "base_plan_type.h"
 #include "advanced_types.h"
+
+class Plan;
 
 // Class used to save expensive computations like compactness for specific plans
 class WeightCache {

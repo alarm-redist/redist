@@ -64,7 +64,7 @@ arma::ivec resample_lowvar(arma::vec wgts);
 
 // legacy code. Global RNG state
 // NOT THREAD SAFE
-static std::random_device GLOBAL_RD;
-static RNGState GLOBAL_RNG(GLOBAL_RD());
+extern std::random_device GLOBAL_RD;
+extern RNGState GLOBAL_RNG;
 
 #endif

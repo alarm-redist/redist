@@ -17,11 +17,11 @@
 \alias{add_constr_fry_hold}
 \alias{add_constr_log_st}
 \alias{add_constr_edges_rem}
+\alias{add_constr_custom}
 \alias{add_constr_plan_splits}
 \alias{add_constr_total_plan_splits}
 \alias{add_constr_plan_incumbency}
 \alias{add_constr_min_group_frac}
-\alias{add_constr_custom}
 \alias{add_constr_custom_plan}
 \title{Sampling constraints}
 \usage{
@@ -29,7 +29,8 @@ add_constr_status_quo(
   constr,
   strength,
   current,
-  only_districts = TRUE,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
   thresh = NULL
 )
 
@@ -41,7 +42,8 @@ add_constr_grp_pow(
   tgt_group = 0.5,
   tgt_other = 0.5,
   pow = 1,
-  only_districts = FALSE,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
   thresh = NULL
 )
 
@@ -51,7 +53,8 @@ add_constr_grp_hinge(
   group_pop,
   total_pop = NULL,
   tgts_group = c(0.55),
-  only_districts = FALSE,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
   thresh = NULL
 )
 
@@ -61,7 +64,8 @@ add_constr_grp_inv_hinge(
   group_pop,
   total_pop = NULL,
   tgts_group = c(0.55),
-  only_districts = FALSE,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
   thresh = NULL
 )
 
@@ -71,7 +75,8 @@ add_constr_compet(
   dvote,
   rvote,
   pow = 0.5,
-  only_districts = FALSE,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
   thresh = NULL
 )
 
@@ -79,7 +84,8 @@ add_constr_incumbency(
   constr,
   strength,
   incumbents,
-  only_districts = FALSE,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
   thresh = NULL
 )
 
@@ -87,7 +93,8 @@ add_constr_splits(
   constr,
   strength,
   admin,
-  only_districts = TRUE,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
   thresh = NULL
 )
 
@@ -95,7 +102,8 @@ add_constr_multisplits(
   constr,
   strength,
   admin,
-  only_districts = FALSE,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
   thresh = NULL
 )
 
@@ -103,18 +111,26 @@ add_constr_total_splits(
   constr,
   strength,
   admin,
-  only_districts = FALSE,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
   thresh = NULL
 )
 
-add_constr_pop_dev(constr, strength, only_districts = FALSE, thresh = NULL)
+add_constr_pop_dev(
+  constr,
+  strength,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
+  thresh = NULL
+)
 
 add_constr_segregation(
   constr,
   strength,
   group_pop,
   total_pop = NULL,
-  only_districts = FALSE,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
   thresh = NULL
 )
 
@@ -122,7 +138,8 @@ add_constr_polsby(
   constr,
   strength,
   perim_df = NULL,
-  only_districts = FALSE,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
   thresh = NULL
 )
 
@@ -132,7 +149,8 @@ add_constr_fry_hold(
   total_pop = NULL,
   ssdmat = NULL,
   denominator = 1,
-  only_districts = FALSE,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
   thresh = NULL
 )
 
@@ -140,11 +158,27 @@ add_constr_log_st(
   constr,
   strength,
   admin = NULL,
-  only_districts = FALSE,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
   thresh = NULL
 )
 
-add_constr_edges_rem(constr, strength, only_districts = FALSE, thresh = NULL)
+add_constr_edges_rem(
+  constr,
+  strength,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
+  thresh = NULL
+)
+
+add_constr_custom(
+  constr,
+  strength,
+  fn,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
+  thresh = NULL
+)
 
 add_constr_plan_splits(
   constr,
@@ -180,14 +214,12 @@ add_constr_min_group_frac(
   thresh = NULL
 )
 
-add_constr_custom(constr, strength, fn, only_districts = FALSE, thresh = NULL)
-
 add_constr_custom_plan(
   constr,
   strength,
   fn,
-  thresh = NULL,
-  only_nregions = FALSE
+  only_nregions = FALSE,
+  thresh = NULL
 )
 }
 \arguments{
@@ -197,11 +229,13 @@ add_constr_custom_plan(
 
 \item{current}{The reference map for the status quo constraint.}
 
-\item{only_districts}{Whether or not to apply the constraints to
-districts only. If constraints are only applied to districts then it will
-likely cause a drop in efficiency in the final round. If splitting plans all
-the way this does not affect the final target distribution. This is not relevant
-for constraints that penalize the entire plan instead of specific districts.}
+\item{only_nregions}{Whether or not to only apply entire-plan or region constraints
+when the plan has a particular number of regions. A value of \code{FALSE} means
+the constraint will applied to plans at every step.}
+
+\item{only_nseats}{Whether or not to only apply region constraints
+when the region has a particular number of seats. A value of \code{FALSE} means
+the constraint will applied to regions at every number of seats.}
 
 \item{thresh}{Thresholding value for constraints. If set then any plan where
 the constraints score is greater than or equal to \code{thresh} will be rejected
@@ -233,9 +267,7 @@ having two or more incumbents be in the same district.}
 
 \item{denominator}{Fryer Holden minimum value to normalize by. Default is 1 (no normalization).}
 
-\item{only_nregions}{Whether or not to only apply entire-plan constraints
-when the plan has a particular number of regions. A value of \code{FALSE} means
-the constraint will applied to plans at every step.}
+\item{fn}{A function}
 
 \item{group_pops}{A list of vectors of target group populations}
 
@@ -244,7 +276,11 @@ the constraint will applied to plans at every step.}
 \item{min_fracs}{A vector of minimum fraction thresholds for each of the
 different population sets}
 
-\item{fn}{A function}
+\item{only_districts}{Whether or not to apply the constraints to
+districts only. If constraints are only applied to districts then it will
+likely cause a drop in efficiency in the final round. If splitting plans all
+the way this does not affect the final target distribution. This is not relevant
+for constraints that penalize the entire plan instead of specific districts.}
 }
 \description{
 The \code{\link[=redist_smc]{redist_smc()}} and \code{\link[=redist_mergesplit]{redist_mergesplit()}} algorithms in this package allow
@@ -271,6 +307,15 @@ at all. This ensures that in the final sample there will be no plans with
 scores at or above \code{thresh}. Lower \code{thresh} values will eventually cause the
 algorithms efficiency to suffer. Depending on how its used \code{thresh} can
 violate the theoretical guarantees of the algorithm so caution is advised.
+Please see the appendix of gSMC CITE HERE and the discussion on "splittable"
+score functions for more information.
+
+Optional vales of \code{only_nregions} and \code{only_nseats} can be set for all region-
+based constraints and values of \code{only_nregions} can be set for all plan-based
+constraints. Specifying values for \code{only_nregions} means that the constraint
+will only be applied to plans with regions in the range of values in \code{only_nregions.}
+Likewise for \code{only_nseats} then it will only be applied to regions with a number
+of seats in the \code{only_nseats} range.
 
 The \code{status_quo} constraint adds a term measuring the variation of
 information distance between the plan and the reference, rescaled to [0, 1].

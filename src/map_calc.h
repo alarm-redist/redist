@@ -1,14 +1,17 @@
-#include "tree_op.h" //rcpp armadillo must be loaded first for some reason
-#include <Eigen/Sparse>
-#include <RcppEigen.h>
-#include <RcppThread.h>
-#include <algorithm>
-#include <set>
-
-
-
+#pragma once
 #ifndef MAP_CALC_H
 #define MAP_CALC_H
+
+
+#include <RcppArmadillo.h>
+#include <algorithm>
+#include <cmath>
+#include <set>
+#include <vector>
+#include "redist_types.h"
+
+
+
 
 /*
  * Compute the Fryer-Holden penalty for district `distr`
@@ -33,70 +36,10 @@ double eval_log_st(const arma::subview_col<arma::uword> &districts, const Graph 
  */
 double eval_er(const arma::subview_col<arma::uword> &districts, const Graph g, int ndists);
 
-/*
- * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,
- * given a collection of plans
- */
-// [[Rcpp::export]]
-arma::mat prec_cooccur(arma::umat m, arma::uvec idxs, int ncores = 0);
 
-/*
- * Compute the percentage of `group` in each district. Asummes `m` is 1-indexed.
- */
-// [[Rcpp::export]]
-Rcpp::NumericMatrix group_pct(Rcpp::IntegerMatrix const &plans_mat, arma::vec const &group_pop,
-                        arma::vec const &total_pop, int const n_distr, int const ncores = 0);
 
-/*
- * Tally a variable by district.
- */
-// [[Rcpp::export]]
-Rcpp::NumericMatrix pop_tally(Rcpp::IntegerMatrix const &districts, arma::vec const &pop, int const n_distr,
-                        int const ncores = 0);
 
-/*
- * Infer the number of seats of the regions
- */
-// [[Rcpp::export]]
-Rcpp::IntegerMatrix infer_region_seats(Rcpp::IntegerMatrix const &region_pops,
-                                       double const lower, double const upper,
-                                       int const total_seats, int const num_threads = 0);
 
-/*
- * Compute the maximum deviation from the equal population constraint.
- */
-// [[Rcpp::export]]
-Rcpp::NumericVector max_dev(const Rcpp::IntegerMatrix &districts, const arma::vec &pop,
-                            int const n_distr, bool const multimember_districts = false,
-                            int const nseats = -1,
-                            Rcpp::IntegerMatrix const &seats_matrix = Rcpp::IntegerMatrix(1, 1),
-                            int const num_threads = 1);
-
-double compute_log_det_from_triplets(std::vector<Eigen::Triplet<double, int>> const &trips,
-                                     int const num_rows);
-
-// computes log number of spanning trees on region intersect county
-// In either a region or a merged region
-double compute_log_region_and_county_spanning_tree(
-    Graph const &g, const arma::uvec &counties, int const county, PlanVector const &region_ids,
-    int const region1_id, int const region2_id);
-
-/*
- * Compute the log number of spanning trees for the contracted (ie county level) graph
- */
-double compute_log_county_level_spanning_tree(Graph const &g, const arma::uvec &counties,
-                                                    int const n_cty,
-                                                    PlanVector const &region_ids,
-                                                    int const region1_id, int const region2_id);
-
-// [[Rcpp::export]]
-Rcpp::NumericVector order_district_stats(Rcpp::NumericVector const &district_stats,
-                                         int const ndists, int const num_threads);
-
-// [[Rcpp::export]]
-Rcpp::DataFrame order_columns_by_district(Rcpp::DataFrame const &df,
-                                          Rcpp::CharacterVector const &columns,
-                                          int const ndists, int const num_threads = 0);
 
 /*
  * Non-templated constraint functions
@@ -114,7 +57,7 @@ double compute_log_pop_temper(double const target, double const pop_temper, int 
  */
 template <typename PlanID>
 double eval_pop_dev(const PlanID &region_ids, int const region1, int const region2,
-                    arma::uvec const &total_pop, double const parity) {
+                    std::vector<unsigned int> const &total_pop, double const parity) {
     double pop = 0.0;
 
     for (size_t i = 0; i < total_pop.size(); ++i) {
@@ -215,8 +158,8 @@ double eval_inc(PlanID const &region_ids, int const region1_id, int const region
  * Compute the status quo penalty for district `distr`, maybe needs to be revised ...
  */
 template <typename PlanID>
-double eval_sq_entropy(PlanID const &region_ids, arma::uvec const &current,
-                       int const region1_id, int const region2_id, arma::uvec const &pop,
+double eval_sq_entropy(PlanID const &region_ids, std::vector<unsigned int> const &current,
+                       int const region1_id, int const region2_id, std::vector<unsigned int> const &pop,
                        int const ndists, int const n_current, int const V) {
     double accuml = 0;
     for (int j = 0; j < n_current; j++) { // 0-indexed districts, last one is remainder

@@ -7,12 +7,6 @@
  ********************************************************/
 
 
-#pragma once
-#ifndef MANUAL_SPLITTING_H
-#define MANUAL_SPLITTING_H
-
-#include <RcppThread.h>
-#include <cli/progress.h>
 #include <cmath>
 #include <functional>
 #include <memory>
@@ -20,10 +14,15 @@
 
 #include "map_calc.h"
 #include "merging.h"
+#include "random.h"
 #include "redist_alg_helpers.h"
+#include "threading_helpers.h"
 #include "splitting_schedule_types.h"
 #include "tree_op.h"
+#include "tree_splitting.h"
 #include "wilson.h"
+#include "utils.h"
+#include "scoring.h"
 
 std::pair<int, int>
 TEMP_get_potential_region_size_for_loop_bounds(const int total_region_size,
@@ -79,7 +78,7 @@ TEMP_get_potential_region_size_for_loop_bounds(const int total_region_size,
 // @keywords internal
 // @noRd
 // [[Rcpp::export]]
-Rcpp::List draw_a_tree_on_a_region(Rcpp::List adj_list, const arma::uvec &counties, const arma::uvec &pop,
+Rcpp::List draw_a_tree_on_a_region(Rcpp::List adj_list, const Rcpp::IntegerVector &counties, const Rcpp::IntegerVector &pop,
                              int ndists, int num_regions, int num_districts,
                              int region_id_to_draw_tree_on, double lower, double upper,
                              Rcpp::IntegerMatrix const &region_ids,
@@ -87,7 +86,9 @@ Rcpp::List draw_a_tree_on_a_region(Rcpp::List adj_list, const arma::uvec &counti
     double total_pop = sum(pop);
     double target = total_pop / ndists;
 
-    MapParams map_params(adj_list, counties, pop, ndists, ndists, std::vector<int>{}, lower,
+    MapParams map_params(list_to_graph(adj_list), 
+        Rcpp::as<std::vector<unsigned int>>(counties), 
+        Rcpp::as<std::vector<unsigned int>>(pop), ndists, ndists, std::vector<int>{}, lower,
                          target, upper, SamplingSpace::GraphSpace);
     int V = map_params.V;
 
@@ -144,7 +145,7 @@ Rcpp::List draw_a_tree_on_a_region(Rcpp::List adj_list, const arma::uvec &counti
     // tree_pop(ust_sampler.ust, ust_sampler.root, pop, pop_below, tree_vertex_parents);
 
     Rcpp::List out = Rcpp::List::create(
-        Rcpp::_["uncut_tree"] = ust_sampler.ust, 
+        Rcpp::_["uncut_tree"] = ust_sampler.ust.to_vertex_graph(), 
         Rcpp::_["root"] = ust_draw_result.root,
         Rcpp::_["num_attempts"] = num_attempts, 
         Rcpp::_["pop_below"] = pop_below,
@@ -174,8 +175,8 @@ Rcpp::List draw_a_tree_on_a_region(Rcpp::List adj_list, const arma::uvec &counti
 // }
 // @noRd
 // [[Rcpp::export]]
-Rcpp::List perform_a_valid_multidistrict_split(Rcpp::List adj_list, const arma::uvec &counties,
-                                         const arma::uvec &pop, int ndists, int num_regions,
+Rcpp::List perform_a_valid_multidistrict_split(Rcpp::List adj_list, const Rcpp::IntegerVector &counties,
+                                         const Rcpp::IntegerVector &pop, int ndists, int num_regions,
                                          int num_districts, int region_id_to_split,
                                          double target, double lower, double upper,
                                          Rcpp::IntegerMatrix const &region_ids,
@@ -185,7 +186,9 @@ Rcpp::List perform_a_valid_multidistrict_split(Rcpp::List adj_list, const arma::
     throw Rcpp::exception("Not working right now!");
     if (split_dval_min > split_dval_max)
         throw Rcpp::exception("Split min must be less than split max!\n");
-    MapParams map_params(adj_list, counties, pop, ndists, ndists, std::vector<int>{}, lower,
+
+    MapParams map_params(list_to_graph(adj_list), Rcpp::as<std::vector<unsigned int>>(counties), 
+        Rcpp::as<std::vector<unsigned int>>(pop), ndists, ndists, std::vector<int>{}, lower,
                          target, upper, SamplingSpace::GraphSpace);
     // unpack control params
     int V = map_params.V;
@@ -223,30 +226,14 @@ Rcpp::List perform_a_valid_multidistrict_split(Rcpp::List adj_list, const arma::
     int uncut_tree_root;
     USTSampler ust_sampler(map_params, *splitting_schedule_ptr);
     Tree pre_split_ust = init_tree(V);
-    std::vector<bool> visited(V);
-    std::vector<bool> ignore(V, false);
-    std::vector<int> pop_below(V, 0);
-    std::vector<int> tree_vertex_parents(V, -2);
 
-    // Mark it as ignore if its not in the region to split
-    for (int i = 0; i < V; i++) {
-        ignore[i] = plan_ensemble.plan_ptr_vec[0]->region_ids[i] != region_id_to_split;
-    }
 
     // Counts the number of split attempts
     bool successful_split_made = false;
     int try_counter = 1;
 
-    int region_to_split_size =
-        static_cast<int>(plan_ensemble.plan_ptr_vec[0]->region_ids[region_id_to_split]);
-
-    std::pair<int, int> loop_bounds = TEMP_get_potential_region_size_for_loop_bounds(
-        region_to_split_size, split_dval_min, split_dval_max);
-
+    // TODO: Update this 
     std::vector<int> smaller_cut_sizes_to_try;
-    for (int i = loop_bounds.first; i <= loop_bounds.second; i++) {
-        smaller_cut_sizes_to_try.push_back(i);
-    }
 
     RNGState rng_state;
 
@@ -260,58 +247,74 @@ Rcpp::List perform_a_valid_multidistrict_split(Rcpp::List adj_list, const arma::
         if (verbose) {
             Rcpp::Rcout << "Attempt " << try_counter << "\n";
         }
-        clear_tree(ust_sampler.ust);
 
-        // Try to draw a tree on region
-        // bool tree_drawn = plan_ensemble.plan_ptr_vec[0]->draw_tree_on_region(map_params,
-        // region_id_to_split,
-        //     ust_sampler.ust, visited, ignore, uncut_tree_root, rng_state);
-        bool tree_drawn = false;
-
-        // Try again and increase counter if tree not drawn
-        if (!tree_drawn) {
+        // attempt to split a plan
+        // Try to draw a tree
+        auto const result = ust_sampler.attempt_to_draw_tree_on_region(
+            rng_state, *plan_ensemble.plan_ptr_vec[0], region_id_to_split);
+        // return false if unsuccessful
+        if (!result.successful){
             try_counter++;
             continue;
         }
 
-        split_dval_max =
-            std::min(split_dval_max,
-                     (int)plan_ensemble.plan_ptr_vec[0]->region_sizes[region_id_to_split] - 1);
+        auto region_size = plan_ensemble.plan_ptr_vec[0]->region_sizes[region_id_to_split];
+        auto region_population = plan_ensemble.plan_ptr_vec[0]->region_pops[region_id_to_split];
 
-        // Now try to select an edge to cut
-        std::pair<bool, EdgeCut> edge_search_result =
-            tree_splitter->attempt_to_find_edge_to_cut(
-                map_params, scoring_function, rng_state, *plan_ensemble.plan_ptr_vec[0],
-                region_id_to_split, plan_ensemble.plan_ptr_vec[0]->num_regions, ust_sampler.ust,
-                uncut_tree_root, ust_sampler.stack, pop_below, visited,
-                plan_ensemble.plan_ptr_vec[0]->region_pops[region_id_to_split],
-                plan_ensemble.plan_ptr_vec[0]->region_sizes[region_id_to_split], split_dval_min,
-                split_dval_max,
-                smaller_cut_sizes_to_try //,
-                // bool save_selection_prob = false
-            );
+        auto cut_size_bounds =
+            splitting_schedule_ptr->all_regions_min_and_max_possible_cut_sizes[region_size];
+        int min_possible_cut_size = cut_size_bounds.first;
+        int max_possible_cut_size = cut_size_bounds.second;
 
-        // Try again and increase counter if no good edge found
-        if (!std::get<0>(edge_search_result)) {
+        auto edge_search_result = tree_splitter->attempt_to_find_edge_to_cut(
+            map_params, scoring_function, rng_state, 
+            *plan_ensemble.plan_ptr_vec[0], region_id_to_split, plan_ensemble.plan_ptr_vec[0]->num_regions,
+            ust_sampler.ust, result.root,
+            ust_sampler.stack, ust_sampler.pops_below_vertex, 
+            ust_sampler.ignore, region_population, region_size,
+            min_possible_cut_size, max_possible_cut_size,
+            splitting_schedule_ptr->all_regions_smaller_cut_sizes_to_try[region_size],
+            true);
+
+        bool search_successful = std::get<0>(edge_search_result);
+
+        bool ok = std::get<0>(edge_search_result);
+
+        // if a balanced cut was found then update 
+        if (ok) {
+            // copy uncut tree before splitting in case update was successful 
+            pre_split_ust = ust_sampler.ust.to_vertex_graph();
+            // Now erase the cut edge in the tree
+            ust_sampler.ust.erase_directed_edge(cut_edge);
+            // now split that region we found on the old one
+            plan_ensemble.plan_ptr_vec[0]->update_from_successful_split(
+                *tree_splitter, ust_sampler, std::get<1>(edge_search_result), region_id_to_split,
+                plan_ensemble.plan_ptr_vec[0]->num_regions, true);
+        }else{
+            // Try again and increase counter if tree not drawn
             try_counter++;
             continue;
         }
 
-        // copy uncut tree before splitting
-        pre_split_ust = ust_sampler.ust;
 
-        // If successful extract the edge cut info
-        cut_edge = std::get<1>(edge_search_result);
-        // Now erase the cut edge in the tree
-        erase_tree_edge(ust_sampler.ust, cut_edge);
+        // check if there are any additional hard constraints
+        if (!scoring_function.any_hard_constraints) {
+            ok = true;
+        } else {
+            // If custom hard constraints are used then
+            // the thread pool can only have a single thread or else everything will
+            // break
+            auto split_hard_constraint_time = maybe_now();
+            ok = scoring_function.new_split_ok(
+                *plan_ensemble.plan_ptr_vec[0], region_id_to_split, plan_ensemble.plan_ptr_vec[0]->num_regions,
+                1); // this split adds 1 new region
+        }
 
-        // now update the region level information from the edge cut
-        plan_ensemble.plan_ptr_vec[0]->update_region_info_from_cut(cut_edge, region_id_to_split,
-                                                                   new_region2_id, true);
-
-        // Now update the vertex level information
-        plan_ensemble.plan_ptr_vec[0]->update_vertex_and_plan_specific_info_from_cut(
-            *tree_splitter, ust_sampler, cut_edge, region_id_to_split, new_region2_id, true);
+        if(!ok){
+            // Try again and increase counter if hard constraints don't work
+            try_counter++;
+            continue;
+        }
     }
 
     if (verbose) {
@@ -335,8 +338,7 @@ Rcpp::List perform_a_valid_multidistrict_split(Rcpp::List adj_list, const arma::
         Rcpp::_["num_districts"] =
             plan_ensemble.plan_ptr_vec[0]->get_num_district_and_multidistricts().first,
         Rcpp::_["uncut_tree"] = pre_split_ust, Rcpp::_["uncut_tree_root"] = uncut_tree_root,
-        Rcpp::_["cut_tree"] = ust_sampler.ust, Rcpp::_["pop_below"] = pop_below,
-        Rcpp::_["uncut_tree_vertex_parents"] = tree_vertex_parents,
+        Rcpp::_["cut_tree"] = ust_sampler.ust.to_vertex_graph(), Rcpp::_["pop_below"] = ust_sampler.pops_below_vertex,
         Rcpp::_["new_region1_id"] = new_region1_id,
         Rcpp::_["new_region1_tree_root"] = new_region1_tree_root,
         Rcpp::_["new_region1_size"] = new_region1_dval, Rcpp::_["new_region1_pop"] = new_region1_pop,
@@ -349,7 +351,7 @@ Rcpp::List perform_a_valid_multidistrict_split(Rcpp::List adj_list, const arma::
 
 // // Does a preset number of merge split steps
 // List perform_merge_split_steps(
-//         List adj_list, const arma::uvec &counties, const arma::uvec &pop,
+//         List adj_list, const Rcpp::IntegerVector &counties, const Rcpp::IntegerVector &pop,
 //         int k_param,
 //         double target, double lower, double upper,
 //         int ndists, int num_regions, int num_districts,
@@ -439,8 +441,8 @@ Rcpp::List perform_a_valid_multidistrict_split(Rcpp::List adj_list, const arma::
 // TODO: Add support for multimember districts
 // Draws num_trees number of trees on a region
 // [[Rcpp::export]]
-Rcpp::List draw_trees_on_a_region(Rcpp::List const &adj_list, const arma::uvec &counties,
-                            const arma::uvec &pop, int const ndists, int num_regions,
+Rcpp::List draw_trees_on_a_region(Rcpp::List const &adj_list, const Rcpp::IntegerVector &counties,
+                            const Rcpp::IntegerVector &pop, int const ndists, int num_regions,
                             int const region_id_to_draw_tree_on, int const region_size,
                             double const lower, double const target, double const upper,
                              Rcpp::IntegerMatrix const &region_ids,
@@ -462,7 +464,10 @@ Rcpp::List draw_trees_on_a_region(Rcpp::List const &adj_list, const arma::uvec &
     }
 
     // Create adj params
-    MapParams map_params(adj_list, counties, pop, ndists, ndists, std::vector<int>{1}, lower,
+    MapParams map_params(list_to_graph(adj_list), 
+        Rcpp::as<std::vector<unsigned int>>(counties), 
+        Rcpp::as<std::vector<unsigned int>>(pop),
+         ndists, ndists, std::vector<int>{1}, lower,
                          target, upper, SamplingSpace::GraphSpace);
 
     auto splitting_schedule_ptr =
@@ -492,25 +497,7 @@ Rcpp::List draw_trees_on_a_region(Rcpp::List const &adj_list, const arma::uvec &
         n_threads, USTSampler(map_params, *splitting_schedule_ptr)
     );
 
-    std::vector<Tree> ust_buffers(n_threads, init_tree(map_params.V));
-    std::vector<std::vector<bool>> visited_buffers(n_threads, std::vector<bool>(map_params.V));
-    std::vector<std::vector<bool>> ignore_buffers(n_threads,
-                                                  std::vector<bool>(map_params.V, false));
-    std::vector<Tree> county_tree_buffers(n_threads, init_tree(map_params.num_counties));
-    std::vector<TreePopStack> county_stack_buffers(n_threads,
-                                                   TreePopStack(map_params.num_counties));
-    std::vector<DummyTreeQueue> dummy_county_tree_stack_buffers(n_threads,
-                                                   DummyTreeQueue(map_params.V));
-    std::vector<arma::uvec> county_pop_buffers(
-        n_threads, arma::uvec(map_params.num_counties, arma::fill::zeros));
-    std::vector<std::vector<std::vector<int>>> county_members_buffers(
-        n_threads, std::vector<std::vector<int>>(map_params.num_counties, std::vector<int>{}));
-    std::vector<std::vector<bool>> c_visited_buffers(
-        n_threads, std::vector<bool>(map_params.num_counties, true));
-    std::vector<std::vector<int>> cty_pop_below_buffers(
-        n_threads, std::vector<int>(map_params.num_counties, 0));
-    std::vector<std::vector<std::array<int, 3>>> county_path_buffers(n_threads);
-    std::vector<std::vector<int>> path_buffers(n_threads);
+    std::vector<Tree> vertex_ust_buffers(n_threads, init_tree(map_params.V));
 
     RcppThread::ProgressBar bar(num_tree, 1);
     // Parallel thread pool where all objects in memory shared by default
@@ -543,12 +530,14 @@ Rcpp::List draw_trees_on_a_region(Rcpp::List const &adj_list, const arma::uvec &
         // go through the tree from the root and add the backwards edge and sort
         std::queue<std::pair<int, int>> vertex_queue;
         // add roots children to queue
-        for (auto const &child_vertex : ust_samplers[thread_id].ust[ust_draw_result.root]) {
+        for (auto const &child_vertex : ust_samplers[thread_id].ust.neighbors(ust_draw_result.root)) {
             vertex_queue.push({child_vertex, ust_draw_result.root});
         }
+        // now save a vertex tree 
+        vertex_ust_buffers[thread_id] = ust_samplers[thread_id].ust.to_vertex_graph();
         // sort the children
-        std::sort(ust_samplers[thread_id].ust[ust_draw_result.root].begin(), 
-        ust_samplers[thread_id].ust[ust_draw_result.root].end());
+        std::sort(vertex_ust_buffers[thread_id][ust_draw_result.root].begin(), 
+        vertex_ust_buffers[thread_id][ust_draw_result.root].end());
 
         // update all the children
         while (!vertex_queue.empty()) {
@@ -558,17 +547,17 @@ Rcpp::List draw_trees_on_a_region(Rcpp::List const &adj_list, const arma::uvec &
             int parent_vertex = queue_pair.second;
             vertex_queue.pop();
             // add children to the queue
-            for (auto const &child_vertex : ust_samplers[thread_id].ust[vertex]) {
+            for (auto const &child_vertex : vertex_ust_buffers[thread_id][vertex]) {
                 // add children to queue
                 vertex_queue.push({child_vertex, vertex});
             }
             // add the edge from vertex to parent
-            ust_samplers[thread_id].ust[vertex].push_back(parent_vertex);
+            vertex_ust_buffers[thread_id][vertex].push_back(parent_vertex);
             // now sort edges
-            std::sort(ust_samplers[thread_id].ust[vertex].begin(), ust_samplers[thread_id].ust[vertex].end());
+            std::sort(vertex_ust_buffers[thread_id][vertex].begin(), vertex_ust_buffers[thread_id][vertex].end());
         }
         // REprintf("about to copy! %d\n", thread_id);
-        thread_undirected_trees[thread_id].push_back(ust_samplers[thread_id].ust);
+        thread_undirected_trees[thread_id].push_back(ust_samplers[thread_id].ust.to_vertex_graph());
         // REprintf("Copied! %d\n", thread_id);
         ++bar;
     });
@@ -597,8 +586,8 @@ Rcpp::List draw_trees_on_a_region(Rcpp::List const &adj_list, const arma::uvec &
 // Draws num_plans number of plans on a region
 // if unsuccessful then just returns the unsplit plan
 // [[Rcpp::export]]
-Rcpp::List attempt_splits_on_a_region(Rcpp::List const &adj_list, const arma::uvec &counties,
-                                const arma::uvec &pop, int const ndists,
+Rcpp::List attempt_splits_on_a_region(Rcpp::List const &adj_list, const Rcpp::IntegerVector &counties,
+                                const Rcpp::IntegerVector &pop, int const ndists,
                                 int const init_num_regions, int const region_id_to_split,
                                 double const lower, double const target, double const upper,
                                 Rcpp::IntegerMatrix const &region_ids,
@@ -607,7 +596,10 @@ Rcpp::List attempt_splits_on_a_region(Rcpp::List const &adj_list, const arma::uv
                                 int const num_plans, int num_threads, bool const verbose) {
 
     // Create adj params
-    MapParams map_params(adj_list, counties, pop, ndists, ndists, std::vector<int>{}, lower,
+    MapParams map_params(list_to_graph(adj_list), 
+        Rcpp::as<std::vector<unsigned int>>(counties), 
+        Rcpp::as<std::vector<unsigned int>>(pop),
+         ndists, ndists, std::vector<int>{}, lower,
                          target, upper, SamplingSpace::GraphSpace);
     // count how many times we had to call sample_sub_ust
     Rcpp::List control;
@@ -644,7 +636,7 @@ Rcpp::List attempt_splits_on_a_region(Rcpp::List const &adj_list, const arma::uv
     splitting_schedule->set_potential_cut_sizes_for_each_valid_size(
         0, plan_ensemble.plan_ptr_vec[0]->num_regions - 1);
 
-    PlanEnsemble thread_plan_ensemble(map_params, arma::sum(pop), num_threads,
+    PlanEnsemble thread_plan_ensemble(map_params, Rcpp::sum(pop), num_threads,
                                       SamplingSpace::GraphSpace, pool);
 
     // create the splitter
@@ -730,8 +722,7 @@ Rcpp::List attempt_splits_on_a_region(Rcpp::List const &adj_list, const arma::uv
                 1); // this split adds 1 new region
         }
 
-
-        successful_update[i] = std::get<0>(edge_search_result);
+        successful_update[i] = ok;
         // Copy the plan into the matrix
         std::copy(thread_plan_ensemble.plan_ptr_vec[thread_id]->region_ids.begin(),
                   thread_plan_ensemble.plan_ptr_vec[thread_id]->region_ids.end(),
@@ -758,5 +749,3 @@ Rcpp::List attempt_splits_on_a_region(Rcpp::List const &adj_list, const arma::uv
 
     return out;
 }
-
-#endif

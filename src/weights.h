@@ -3,22 +3,27 @@
 #define WEIGHTS_H
 
 
-#include "base_plan_type.h"
-#include "graph_ops.h"
-#include "map_calc.h"
-#include "redist_types.h"
-#include "scoring.h"
-#include "splitting_schedule_types.h"
-#include "redist_alg_helpers.h"
-#include "tree_op.h"
-#include "weight_caching.h"
-#include "utils.h"
-#include <cmath>
-#include <random>
-#include <set>
-#include <string>
-#include <unordered_map>
-#include <utility> // for std::pair
+
+
+#include <memory>
+#include <vector>
+#include <RcppArmadillo.h>
+
+#include "advanced_types.h"
+
+class Plan;
+class PlanMultigraph;
+class SplittingSchedule;
+class ScoringFunction;
+class USTSampler;
+class TreeSplitter;
+class WeightCache;
+class WeightCacheEnsemble;
+class SMCDiagnostics;
+
+namespace RcppThread {
+    class ThreadPool;
+}
 
 class SMCDiagnostics;
 

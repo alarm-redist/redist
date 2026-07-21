@@ -2,14 +2,20 @@
 #ifndef ADVANCED_REDIST_TYPES_H
 #define ADVANCED_REDIST_TYPES_H
 
-#include <RcppArmadillo.h>
+#include <algorithm>
 #include <array>
-#include <cstdint>
-#include <memory>
-#include <stdint.h>
-#include "redist_constants.h"
-#include <queue>
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <limits>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
+
+#include "redist_constants.h"
 #include "redist_types.h"
 
 using Clock = std::chrono::steady_clock;
@@ -196,7 +202,7 @@ class GraphEdgeIndex {
     int const V;
     int max_num_edges; // TODO make constant and initialized lated 
 
-    GraphEdgeIndex() = default;
+    GraphEdgeIndex() = delete;
 
     explicit GraphEdgeIndex(Graph const &g, int const num_edges);
 
@@ -253,7 +259,7 @@ class GraphEdgeIndex {
     std::pair<VertexID, VertexID> get_edge_endpoints(EdgeID edge_id) const {
         if constexpr (perf_config::bounds_checking){
             if (static_cast<std::size_t>(edge_id) >= edges.size()) {
-                throw Rcpp::exception("GraphEdgeIndex::get_edge_endpoints received invalid edge_id!");
+                throw std::runtime_error("GraphEdgeIndex::get_edge_endpoints received invalid edge_id!");
             }
         }
 
@@ -270,188 +276,12 @@ class GraphEdgeIndex {
 
     void check_vertex(int v, char const *message) const {
         if (!is_valid_vertex(v)) {
-            throw Rcpp::exception(message);
+            throw std::runtime_error(message);
         }
     }
 
 };
 
-
-// Flat representation of graphs where its 
-// fixed at runtime 
-class FlatGraph {
-  private:
-    std::vector<VertexID> offsets;
-    std::vector<VertexID> sizes;
-    std::vector<VertexID> caps;
-    std::vector<VertexID> data;
-
-  public:
-    struct NeighborRange {
-            VertexID const *ptr;
-            size_t len;
-
-            VertexID const *begin() const { return ptr; }
-            VertexID const *end() const { return ptr + len; }
-
-            VertexID size() const { return len; }
-            bool empty() const { return len == 0; }
-
-            VertexID operator[](int i) const { return ptr[i]; }
-    };
-
-    FlatGraph() = default;
-
-    explicit FlatGraph(Graph const &g) {
-        int const V = static_cast<int>(g.size());
-
-        offsets.resize(V + 1);
-        sizes.assign(V, 0);
-
-        // If we're constructing from g we assume we care about the capacity and so 
-        // we keep that
-        caps.resize(V);
-        
-        int total_cap = 0;
-        for (int v = 0; v < V; ++v) {
-            offsets[v] = total_cap;
-            caps[v] = static_cast<int>(g[v].size());
-            total_cap += caps[v];
-        }
-        offsets[V] = total_cap;
-
-        data.resize(total_cap);
-    }
-
-    explicit FlatGraph(FlatGraph const &other, bool const store_capacity) :
-        offsets(other.offsets),
-        sizes(other.sizes),
-        caps(store_capacity ? other.caps : std::vector<VertexID>{}),
-        data(other.data)
-    {};
-
-    int size() const {
-        return static_cast<int>(sizes.size());
-    }
-
-    void clear_vertex(int v) {
-        sizes[v] = 0;
-    }
-
-    void clear() {
-        std::fill(sizes.begin(), sizes.end(), 0);
-    }
-
-    void push_back(int v, int u) {
-        int const pos = sizes[v];
-
-        if constexpr (perf_config::bounds_checking) {
-            if (v < 0 || v >= size()) {
-                throw std::runtime_error("FlatTree::push_back invalid v");
-            }
-            if (pos >= caps[v]) {
-                std::ostringstream oss;
-                oss << "FlatTree::push_back exceeded capacity. "
-                    << "v=" << v
-                    << ", size=" << pos
-                    << ", cap=" << caps[v]
-                    << ", u=" << u;
-                throw std::runtime_error(oss.str());
-            }
-        }
-
-        data[offsets[v] + pos] = u;
-        sizes[v] = pos + 1;
-    }
-
-    VertexID degree(int v) const {
-        return sizes[v];
-    }
-
-    NeighborRange neighbors(int const v) const {
-        int const start = offsets[v];
-        return NeighborRange{data.data() + start, sizes[v]};
-    }
-};
-
-// enum for sampling spaces
-enum class SamplingSpace : unsigned char {
-    GraphSpace,       // Sampling on the space of graph partitions
-    ForestSpace,      // Sample on the space of spanning forests
-    LinkingEdgeSpace, // Sample on space of forests and linking edges
-    LCTGraphSpace     // Graph partition with a link-cut-tree spanning forest (cyclewalk)
-};
-
-// loads a sampling spaces type enum from a control string
-SamplingSpace get_sampling_space(std::string const &sampling_space_str);
-
-// Get convinient string representation
-std::string sampling_space_to_str(SamplingSpace sampling_space);
-
-// enum for various methods of splitting a plan
-enum class SplittingMethodType : unsigned char {
-    NaiveTopK,        // picks 1 of top k edges even if invalid
-    UnifValid,        // picks uniform valid edge at random
-    ExpBiggerAbsDev,  // propto exp(-alpha*bigger abs dev of pair)
-    ExpSmallerAbsDev, // propto exp(-alpha*smaller abs dev of pair)
-    Constraint,       // propto constraint score (unif if no constraints)
-    Experimental      // Just for testing
-};
-
-// loads a splitting type enum from a control string
-SplittingMethodType get_splitting_type(std::string const &splitting_type_str);
-
-// Get convinient string representation
-std::string splitting_method_to_str(SplittingMethodType splitting_method);
-
-enum class SplittingSizeScheduleType : unsigned char {
-    DistrictOnlySMD,
-    AnyValidSizeSMD,
-    DistrictOnlyMMD,
-    AnyValidSizeMMD,
-    OneCustomSize,
-    PureMergeSplitSize,
-    CustomSizes
-};
-
-// load from control spring
-SplittingSizeScheduleType
-get_splitting_size_regime(std::string const &splitting_size_regime_str);
-
-// Essentially just a useful container for map and some algorithm parameters
-class MapParams {
-  public:
-    // Constructor
-    MapParams(Rcpp::List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
-              int const ndists, int const total_seats,
-              std::vector<int> const &district_seat_sizes, 
-              double const lower,
-              double const target, double const upper,
-              SamplingSpace const sampling_space);
-
-    Graph const g;                       // The graph as undirected adjacency list
-    int const num_edges;                 // number of undirected edges in g
-    GraphEdgeIndex const graph_edge_index; // bitpacked boolean storage of graph
-    int const num_edge_bit_words; // used for bitpacked stuff
-    arma::uvec const counties;           // county labels
-    int const num_counties;              // The number of distinct counties
-    Multigraph const cg;                 // county multigraph
-    Graph const county_restricted_graph; // g but with all edges crossing counties removed
-    arma::uvec const pop;                // population of each vertex
-    int const V;                         // Number of vertices in the graph
-    int const ndists;                    // The number of districts a final plan should have
-    int const total_seats;               // the total number of seats
-    double const lower;                  // lower bound on district population
-    double const target;                 // target district population
-    double const upper;                  // upper bound on district population
-    int const smallest_district_size;    // smallest district size
-    int const largest_district_size;     // largest district size
-    std::vector<int> const district_seat_sizes; // vector of all district seat sizes
-    std::vector<bool> const
-        is_district;   // of length total_seats that says whether or not that size is a district
-    bool const is_mmd; // Whether or not multimember districting
-    SamplingSpace const sampling_space;
-};
 
 // Designed to allow for different tree splitting methods
 // This allows us to seperate cutting the tree from finding the edge to cut
@@ -512,6 +342,203 @@ class EdgeCut {
     bool operator<(const EdgeCut &other) const { return cut_vertex < other.cut_vertex; }
 };
 
+// Flat representation of graphs where its 
+// fixed at runtime 
+class FlatGraph {
+  private:
+    std::vector<VertexID> offsets;
+    std::vector<VertexID> sizes;
+    std::vector<VertexID> data;
+
+    void push_back(int v, int v_nbor_to_add);
+
+  public:
+    struct NeighborRange {
+            VertexID const *ptr;
+            size_t len;
+
+            VertexID const *begin() const { return ptr; }
+            VertexID const *end() const { return ptr + len; }
+
+            VertexID size() const { return len; }
+            bool empty() const { return len == 0; }
+
+            VertexID operator[](int i) const { return ptr[i]; }
+    };
+
+    FlatGraph() = default;
+
+    explicit FlatGraph(Graph const &g) {
+        int const V = static_cast<int>(g.size());
+
+        offsets.resize(V + 1);
+        sizes.assign(V, 0);
+        
+        int total_cap = 0;
+        for (int v = 0; v < V; ++v) {
+            // We set the start of v's possible neighbors at the current
+            // total cap
+            offsets[v] = total_cap;
+            // see the degree of this vertex
+            auto const v_capacity = g[v].size();
+            // add this to the total capacity
+            total_cap += v_capacity;
+            // also store the size in g
+            sizes[v] = v_capacity;
+        }
+        offsets[V] = total_cap;
+
+        data.resize(total_cap);
+        // Fill flat storage with the original graph neighbors.
+        for (VertexID v = 0; v < V; v++)
+        {
+            VertexID const start = offsets[v];
+
+            for (VertexID j = 0; j < sizes[v]; ++j) {
+                data[start + j] = static_cast<VertexID>(g[v][j]);
+            }
+        }
+    }
+
+    // Returns a flat empty tree on the current flat 
+    FlatGraph get_flat_empty_tree() const {
+        FlatGraph out(*this);
+        out.clear();
+        return out;
+    }
+
+    int size() const {
+        return static_cast<int>(sizes.size());
+    }
+
+    void clear_vertex(int v) {
+        sizes[v] = 0;
+    }
+
+    void clear() {
+        std::fill(sizes.begin(), sizes.end(), 0);
+    }
+
+    
+    void add_directed_edge(int const parent, int const child);
+    void add_undirected_edge(int const v, int const u);
+
+    VertexID degree(int v) const {
+        return sizes[v];
+    }
+
+    NeighborRange neighbors(int const v) const {
+        int const start = offsets[v];
+        return NeighborRange{data.data() + start, sizes[v]};
+    }
+
+    // converts to a vertex graph. Useful for exporting to R
+    Graph to_vertex_graph() const {
+        Graph out(static_cast<size_t>(size()));
+
+        for (VertexID v = 0; v < static_cast<VertexID>(size()); ++v) {
+            out[v].reserve(static_cast<size_t>(sizes[v]));
+
+            VertexID const start = offsets[v];
+            VertexID const stop = start + sizes[v];
+
+            for (VertexID idx = start; idx < stop; ++idx) {
+                out[v].push_back(static_cast<int>(data[idx]));
+            }
+        }
+
+        return out;
+    }
+
+    // erases the DIRECTED edge, meaning it only 
+    // erases the directed edge (parent, child)
+    void erase_directed_edge(EdgeCut const &cut_edge);
+};
+
+// enum for sampling spaces
+enum class SamplingSpace : unsigned char {
+    GraphSpace,       // Sampling on the space of graph partitions
+    ForestSpace,      // Sample on the space of spanning forests
+    LinkingEdgeSpace, // Sample on space of forests and linking edges
+    LCTGraphSpace     // Graph partition with a link-cut-tree spanning forest (cyclewalk)
+};
+
+// loads a sampling spaces type enum from a control string
+SamplingSpace get_sampling_space(std::string const &sampling_space_str);
+
+// Get convinient string representation
+std::string sampling_space_to_str(SamplingSpace sampling_space);
+
+// enum for various methods of splitting a plan
+enum class SplittingMethodType : unsigned char {
+    NaiveTopK,        // picks 1 of top k edges even if invalid
+    UnifValid,        // picks uniform valid edge at random
+    ExpBiggerAbsDev,  // propto exp(-alpha*bigger abs dev of pair)
+    ExpSmallerAbsDev, // propto exp(-alpha*smaller abs dev of pair)
+    Constraint,       // propto constraint score (unif if no constraints)
+    Experimental      // Just for testing
+};
+
+// loads a splitting type enum from a control string
+SplittingMethodType get_splitting_type(std::string const &splitting_type_str);
+
+// Get convinient string representation
+std::string splitting_method_to_str(SplittingMethodType splitting_method);
+
+enum class SplittingSizeScheduleType : unsigned char {
+    DistrictOnlySMD,
+    AnyValidSizeSMD,
+    DistrictOnlyMMD,
+    AnyValidSizeMMD,
+    OneCustomSize,
+    PureMergeSplitSize,
+    CustomSizes
+};
+
+// load from control spring
+SplittingSizeScheduleType
+get_splitting_size_regime(std::string const &splitting_size_regime_str);
+
+// Essentially just a useful container for map and some algorithm parameters
+class MapParams {
+  public:
+    // Constructor
+    MapParams(Graph const &g, 
+              const std::vector<unsigned int> &counties, 
+              const std::vector<unsigned int> &pop,
+              int const ndists, int const total_seats,
+              std::vector<int> const &district_seat_sizes, 
+              double const lower,
+              double const target, double const upper,
+              SamplingSpace const sampling_space);
+
+    Graph const g;                       // The graph as undirected adjacency list
+    FlatGraph map_graph;                 // The graph stored as a FlatGraph type
+    int const num_edges;                 // number of undirected edges in g
+    GraphEdgeIndex const graph_edge_index; // bitpacked boolean storage of graph
+    int const num_edge_bit_words; // used for bitpacked stuff
+    std::vector<unsigned int> const counties;           // county labels
+    int const num_counties;              // The number of distinct counties
+    Multigraph const cg;                 // county multigraph
+    Graph const county_restricted_graph; // g but with all edges crossing counties removed
+    std::vector<unsigned int> const pop; // population of each vertex
+    int const V;                         // Number of vertices in the graph
+    int const ndists;                    // The number of districts a final plan should have
+    int const total_seats;               // the total number of seats
+    double const lower;                  // lower bound on district population
+    double const target;                 // target district population
+    double const upper;                  // upper bound on district population
+    int const smallest_district_size;    // smallest district size
+    int const largest_district_size;     // largest district size
+    std::vector<int> const district_seat_sizes; // vector of all district seat sizes
+    std::vector<bool> const
+        is_district;   // of length total_seats that says whether or not that size is a district
+    bool const is_mmd; // Whether or not multimember districting
+    SamplingSpace const sampling_space;
+};
+
+
+
 // Stack where maximum size is known at runtime
 
 template <typename T> class FixedStack {
@@ -531,7 +558,7 @@ template <typename T> class FixedStack {
     void push(const T &value) {
         if constexpr (perf_config::bounds_checking){
             if (count >= capacity) {
-                throw Rcpp::exception("FixedStack overflow.");
+                throw std::runtime_error("FixedStack overflow.");
             }
         }
         buffer[count++] = value; // copy
@@ -540,7 +567,7 @@ template <typename T> class FixedStack {
     void push(T &&value) {
         if constexpr (perf_config::bounds_checking){
             if (count >= capacity) {
-                throw Rcpp::exception("FixedStack overflow.");
+                throw std::runtime_error("FixedStack overflow.");
             }
         }
         buffer[count++] = std::move(value); // move
@@ -549,7 +576,7 @@ template <typename T> class FixedStack {
     T &top() { 
         if constexpr (perf_config::bounds_checking){
             if (count == 0) {
-                throw Rcpp::exception("FixedStack underflow.");
+                throw std::runtime_error("FixedStack underflow.");
             }
         }
         return buffer[count - 1]; 
@@ -558,7 +585,7 @@ template <typename T> class FixedStack {
     const T &top() const { 
         if constexpr (perf_config::bounds_checking){
             if (count == 0) {
-                throw Rcpp::exception("FixedStack underflow.");
+                throw std::runtime_error("FixedStack underflow.");
             }
         }
         return buffer[count - 1]; }
@@ -566,7 +593,7 @@ template <typename T> class FixedStack {
     T pop() { 
         if constexpr (perf_config::bounds_checking){
             if (count == 0) {
-                throw Rcpp::exception("FixedStack underflow.");
+                throw std::runtime_error("FixedStack underflow.");
             }
         }
         return std::move(buffer[--count]); 
@@ -597,7 +624,7 @@ template <typename T> class CircularQueue {
     void push(const T &value) {
         if constexpr (perf_config::bounds_checking){
             if (size >= capacity) {
-                throw Rcpp::exception("CircularQueue overflow.");
+                throw std::runtime_error("CircularQueue overflow.");
             }
         }
 
@@ -609,7 +636,7 @@ template <typename T> class CircularQueue {
     void push(T &&value) {
         if constexpr (perf_config::bounds_checking){
             if (size >= capacity) {
-                throw Rcpp::exception("CircularQueue overflow.");
+                throw std::runtime_error("CircularQueue overflow.");
             }
         }
         buffer[tail] = std::move(value);
@@ -620,7 +647,7 @@ template <typename T> class CircularQueue {
     T pop() {
         if constexpr (perf_config::bounds_checking){
             if (size == 0) {
-                throw Rcpp::exception("CircularQueue underlow.");
+                throw std::runtime_error("CircularQueue underlow.");
             }
         }
 
