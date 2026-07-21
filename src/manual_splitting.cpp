@@ -213,7 +213,7 @@ Rcpp::List perform_a_valid_multidistrict_split(Rcpp::List adj_list, const Rcpp::
 
     // Create tree splitter
     TreeSplitter *tree_splitter =
-        new ExperimentalSplitter(map_params.V, SamplingSpace::GraphSpace, .0001, map_params.target);
+        new ExperimentalSplitter(map_params.map_graph, .0001, map_params.target);
 
     if (verbose) {
         Rprintf("Splitting Plan: ");

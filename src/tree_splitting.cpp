@@ -746,7 +746,7 @@ std::vector<EdgeCut> get_valid_edges_in_joined_packed_tree(
  */
 void get_all_valid_edges_in_undirected_vertex_tree(
     std::vector<EdgeCut> &existing_cuts,
-    Tree const &forest_graph, 
+    FlatGraph const &forest_graph, 
     const int root, const std::vector<unsigned int> &pop, TreePopStack &stack,
     std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
     const int min_potential_cut_size, const int max_potential_cut_size,
@@ -769,7 +769,7 @@ void get_all_valid_edges_in_undirected_vertex_tree(
 
 
     // Start by adding all the roots children to the stack
-    for (auto const &root_children : forest_graph[root]) {
+    for (auto const &root_children : forest_graph.neighbors(root)) {
         stack.push({root_children, root, false});
     }
 
@@ -789,7 +789,7 @@ void get_all_valid_edges_in_undirected_vertex_tree(
 
 
             // Push unvisited child vertices onto the stack to get pop below
-            for (const auto &child_vtx : forest_graph[vtx]) {
+            for (const auto &child_vtx : forest_graph.neighbors(vtx)) {
                 // if its the parent then skip it
                 if (child_vtx == parent)
                     continue;
@@ -810,7 +810,7 @@ void get_all_valid_edges_in_undirected_vertex_tree(
             
 
             // Add population below from each child
-            for (const auto &child : forest_graph[vtx]) {
+            for (const auto &child : forest_graph.neighbors(vtx)) {
                 // ignore the parent
                 if (child == parent)
                     continue;
@@ -848,7 +848,7 @@ void get_all_valid_edges_in_undirected_vertex_tree(
 // with the edge (region1_root, region2_root)
 // THIS INCLUDES (region1_root, region2_root) as an edge!!
 std::vector<EdgeCut> get_valid_edges_in_joined_vertex_tree(
-    MapParams const &map_params, Tree const &forest_graph, TreePopStack &stack,
+    MapParams const &map_params, FlatGraph const &forest_graph, TreePopStack &stack,
     std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
     const int region1_root, const int region1_pop, const int region2_root,
     const int region2_pop, const int min_potential_cut_size, const int max_potential_cut_size,
@@ -1109,7 +1109,7 @@ double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_packed_tree(
 
 double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_vertex_tree(
     MapParams const &map_params, ScoringFunction const &scoring_function,
-    Tree const &forest_graph, TreePopStack &stack, std::vector<bool> &visited,
+    FlatGraph const &forest_graph, TreePopStack &stack, std::vector<bool> &visited,
     std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
     Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
     std::vector<int> const &smaller_cut_sizes_to_try) {

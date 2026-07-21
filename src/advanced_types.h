@@ -346,26 +346,24 @@ class EdgeCut {
 // fixed at runtime 
 class FlatGraph {
   private:
-    std::vector<std::size_t> offsets;
-    std::vector<std::size_t> sizes;
-    std::vector<VertexID> data;
-
-    void push_back(int v, int v_nbor_to_add);
+    std::vector<int> offsets;
+    std::vector<int> sizes;
+    std::vector<int> data;
 
   public:
     struct NeighborRange {
-            VertexID const *ptr;
-            size_t len;
+            int const *ptr;
+            int len;
 
-            VertexID const *begin() const { return ptr; }
-            VertexID const *end() const { return ptr + len; }
+            int const *begin() const { return ptr; }
+            int const *end() const { return ptr + len; }
 
-            std::size_t size() const { return len; }
+            int size() const { return len; }
             bool empty() const { return len == 0; }
 
-            VertexID operator[](int i) const { 
+            int operator[](int i) const { 
                 if constexpr (perf_config::bounds_checking) {
-                    if (i >= len) {
+                    if (i >= len || i < 0) {
                         throw std::out_of_range(
                             "FlatGraph::NeighborRange index out of range."
                         );
@@ -403,21 +401,25 @@ class FlatGraph {
         {
             auto const start = offsets[v];
 
-            for (std::size_t j = 0; j < sizes[v]; ++j) {
-                data[start + j] = static_cast<VertexID>(g[v][j]);
+            for (int j = 0; j < sizes[v]; ++j) {
+                data[start + j] = g[v][j];
             }
         }
     }
 
     // Returns a flat empty tree on the current flat 
     FlatGraph get_flat_empty_tree() const {
-        FlatGraph out(*this);
-        out.clear();
+        FlatGraph out;
+
+        out.offsets = offsets;
+        out.sizes.assign(sizes.size(), 0);
+        out.data.resize(data.size());
+
         return out;
     }
 
-    std::size_t size() const {
-        return sizes.size();
+    int size() const {
+        return static_cast<int>(sizes.size());
     }
 
     void clear_vertex(int v) {
@@ -429,10 +431,56 @@ class FlatGraph {
     }
 
     
-    void add_directed_edge(int const parent, int const child);
-    void add_undirected_edge(int const v, int const u);
+    void add_directed_edge(int const parent, int const child) {
+        if constexpr (perf_config::bounds_checking) {
+            if (parent < 0 || parent >= size()) {
+                std::ostringstream oss;
+                oss << "FlatGraph::add_directed_edge invalid parent.\n";
+                oss << "parent=" << parent << "\n";
+                oss << "child=" << child << "\n";
+                oss << "size=" << size() << "\n";
+                throw std::runtime_error(oss.str());
+            }
 
-    std::size_t degree(int v) const {
+            if (child < 0 || child >= size()) {
+                std::ostringstream oss;
+                oss << "FlatGraph::add_directed_edge invalid child.\n";
+                oss << "parent=" << parent << "\n";
+                oss << "child=" << child << "\n";
+                oss << "size=" << size() << "\n";
+                throw std::runtime_error(oss.str());
+            }
+        }
+
+        
+        auto const pos = sizes[parent];
+
+        if constexpr (perf_config::bounds_checking) {
+            auto const v = parent;
+            std::size_t const cap = offsets[v + 1] - offsets[v];
+
+            if (pos >= cap) {
+                std::ostringstream oss;
+                oss << "FlatGraph::add_directed_edge exceeded capacity.\n";
+                oss << "parent=" << parent << "\n";
+                oss << "child=" << child << "\n";
+                oss << "size=" << pos << "\n";
+                oss << "cap=" << cap << "\n";
+                throw std::runtime_error(oss.str());
+            }
+        }
+
+        data[offsets[parent] + pos] = child;
+        sizes[parent] = pos + 1;
+    }
+
+    // adds an undirected edge to the graph 
+    void add_undirected_edge(int const v, int const u) {
+        add_directed_edge(v, u);
+        add_directed_edge(u, v);
+    }
+
+    int degree(int v) const {
         return sizes[v];
     }
 
@@ -448,11 +496,11 @@ class FlatGraph {
         for (std::size_t v = 0; v < size(); ++v) {
             out[v].reserve(sizes[v]);
 
-            std::size_t const start = offsets[v];
-            std::size_t const stop = start + sizes[v];
+            auto const start = offsets[v];
+            auto const stop = start + sizes[v];
 
             for (std::size_t idx = start; idx < stop; ++idx) {
-                out[v].push_back(static_cast<int>(data[idx]));
+                out[v].push_back(data[idx]);
             }
         }
 

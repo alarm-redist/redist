@@ -109,12 +109,12 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
         );
     }
     // copy the packed forest into the vector tree
-    forest_edges.fill_vector_tree(ust_sampler.map_params.graph_edge_index, edge_splitter.forest_graph);
+    forest_edges.fill_flat_tree(ust_sampler.map_params.graph_edge_index, edge_splitter.forest_graph);
 
     if constexpr (perf_config::object_integrity_checking){
         plan.check_forest_equality(
             forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
-            edge_splitter.forest_graph,
+            edge_splitter.forest_graph.to_vertex_graph(),
             ust_sampler.map_params.graph_edge_index,
             "IN compute_log_tree_eff_boundary_lens, checking forest_edges vs forest scratch tree"
         );

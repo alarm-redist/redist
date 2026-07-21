@@ -352,43 +352,9 @@ GraphEdgeIndex::GraphEdgeIndex(Graph const &g, int const num_edges)
     }
 }
 
-void FlatGraph::push_back(int v, int v_nbor_to_add) {
-        if constexpr (perf_config::bounds_checking) {
-            if (v < 0 || v >= size()) {
-                throw std::runtime_error("FlatGraph::push_back invalid v");
-            }
-        }
 
-        auto const pos = sizes[v];
 
-        if constexpr (perf_config::bounds_checking) {
-            auto const cap = offsets[v + 1] - offsets[v];
 
-            if (pos >= cap) {
-                std::ostringstream oss;
-                oss << "FlatGraph::push_back exceeded capacity. "
-                    << "v=" << v
-                    << ", size=" << pos
-                    << ", cap=" << cap
-                    << ", u=" << v_nbor_to_add;
-                throw std::runtime_error(oss.str());
-            }
-        }
-
-        data[offsets[v] + pos] = static_cast<VertexID>(v_nbor_to_add);
-        sizes[v] = pos + 1;
-}
-
-// adds a directed edge 
-void FlatGraph::add_directed_edge(int const parent, int const child){
-    push_back(parent, child);
-}
-
-// adds an undirected edge to the graph 
-void FlatGraph::add_undirected_edge(int const v, int const u) {
-    push_back(v, u);
-    push_back(u, v);
-}
 
 void FlatGraph::erase_directed_edge(EdgeCut const &cut_edge) {
     int const parent = cut_edge.cut_vertex_parent;
@@ -418,14 +384,14 @@ void FlatGraph::erase_directed_edge(EdgeCut const &cut_edge) {
         }
     }
 
-    std::size_t const start = offsets[parent];
-    std::size_t const stop = start + sizes[parent];
+    int const start = offsets[parent];
+    int const stop = start + sizes[parent];
 
-    std::size_t pos = stop;
+    int pos = stop;
 
 
     for (std::size_t idx = start; idx < stop; ++idx) {
-        if (data[idx] == static_cast<VertexID>(child)) {
+        if (data[idx] == child) {
             pos = idx;
             break;
         }
@@ -442,11 +408,10 @@ void FlatGraph::erase_directed_edge(EdgeCut const &cut_edge) {
         }
     }
 
-    // Shift later children left by one, preserving order.
-    for (std::size_t idx = pos + 1; idx < stop; ++idx) {
-        data[idx - 1] = data[idx];
-    }
-
+    // replaces the value at the position to remove 
+    // with the value in the tail, no shift needed 
+    // then the value at stop - 1
+    data[pos] = data[stop - 1];
     --sizes[parent];
 }
 

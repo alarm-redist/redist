@@ -200,7 +200,7 @@ void assign_region_id_and_forest_from_tree(const FlatGraph &ust, PlanVector &reg
     region_ids[root] = new_region_id;
 
     // Clear all stale packed forest edges incident to the root.
-    for (auto const &incident_edge : graph_edge_index.incident_edges[root]) {
+    for (auto const incident_edge : graph_edge_index.incident_edges[root]) {
         int const u = static_cast<int>(incident_edge.neighbor);
 
         if constexpr (perf_config::bounds_checking) {
@@ -274,7 +274,7 @@ void assign_region_id_and_forest_from_tree(const FlatGraph &ust, PlanVector &reg
         //
         // Do NOT clear the edge to parent, because that is the new tree edge
         // connecting v to the already-processed part of this tree.
-        for (auto const &incident_edge : graph_edge_index.incident_edges[v]) {
+        for (auto const incident_edge : graph_edge_index.incident_edges[v]) {
             int const u = static_cast<int>(incident_edge.neighbor);
 
             if constexpr (perf_config::bounds_checking) {
@@ -731,9 +731,9 @@ void EdgeBitset::clear_region_trees(
 }
 
 
-void EdgeBitset::fill_vector_tree(
-    GraphEdgeIndex const &edge_index,
-    Tree &ust
+void EdgeBitset::fill_flat_tree(
+        GraphEdgeIndex const &edge_index,
+        FlatGraph &ust
 ) const {
     if constexpr(perf_config::supposedly_safe_input_checks){
         if (static_cast<int>(ust.size()) != edge_index.V) {
@@ -748,7 +748,7 @@ void EdgeBitset::fill_vector_tree(
     }
 
     for (int v = 0; v < edge_index.V; ++v) {
-        ust[v].clear();
+        ust.clear_vertex(v);
 
         for (auto const &incident_edge : edge_index.incident_edges[v]) {
             int const u = static_cast<int>(incident_edge.neighbor);
@@ -766,7 +766,7 @@ void EdgeBitset::fill_vector_tree(
             }
 
             if (test_edge_id(incident_edge.edge_id)) {
-                ust[v].push_back(u);
+                ust.add_directed_edge(v, u);
             }
         }
     }
@@ -824,7 +824,7 @@ void EdgeBitset::fill_vector_tree_regions(
 void EdgeBitset::fill_vector_tree_component_from_root(
     GraphEdgeIndex const &edge_index,
     int const root,
-    Tree &ust,
+    FlatGraph &ust,
     TreePopStack &stack
 ) const {
     int const V = edge_index.V;
@@ -873,7 +873,7 @@ void EdgeBitset::fill_vector_tree_component_from_root(
             }
         }
         // clear this vertex 
-        ust[v].clear();
+        ust.clear_vertex(v);
         
         // Now visit every neighbor to add to the tree
         for (auto const &incident_edge : edge_index.incident_edges[v]) {
@@ -896,7 +896,7 @@ void EdgeBitset::fill_vector_tree_component_from_root(
 
             // Fill the vector adjacency for v.
             // This includes the parent edge, so ust is undirected.
-            ust[v].push_back(u);
+            ust.add_directed_edge(v, u);
 
             // But do not walk back to the parent.
             if (u == parent) {

@@ -225,7 +225,7 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params,
     int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
     std::atomic<int> thread_id_counter{0};
 
-    auto tree_ptr = std::make_unique<UniformValidSplitter>(map_params.V, sampling_space);
+    auto tree_ptr = std::make_unique<UniformValidSplitter>(map_params.map_graph);
 
     int const n_threads = get_num_threads(pool); 
     std::vector<USTSampler> ust_sampler_buffers(n_threads,
@@ -827,32 +827,32 @@ get_tree_splitter_ptrs(MapParams const &map_params, SplittingMethodType const sp
     if (splitting_method == SplittingMethodType::NaiveTopK) {
         // set splitting k to -1
         std::generate_n(std::back_inserter(tree_splitters_ptr_vec), num_threads,
-                        [V, sampling_space] { return std::make_unique<NaiveTopKSplitter>(V, sampling_space, -1); });
+                        [] { return std::make_unique<NaiveTopKSplitter>(1); });
     } else if (splitting_method == SplittingMethodType::UnifValid) {
         std::generate_n(std::back_inserter(tree_splitters_ptr_vec), num_threads,
-                        [V, sampling_space] { return std::make_unique<UniformValidSplitter>(V, sampling_space); });
+                        [&map_graph = map_params.map_graph] { return std::make_unique<UniformValidSplitter>(map_graph); });
     } else if (splitting_method == SplittingMethodType::ExpBiggerAbsDev) {
         double alpha = Rcpp::as<double>(control["splitting_alpha"]);
         std::generate_n(std::back_inserter(tree_splitters_ptr_vec), num_threads,
-                        [V, sampling_space, alpha, target] {
-                            return std::make_unique<ExpoWeightedSplitter>(V, sampling_space, alpha, target);
+                        [&map_graph = map_params.map_graph, alpha, target] {
+                            return std::make_unique<ExpoWeightedSplitter>(map_graph, alpha, target);
                         });
     } else if (splitting_method == SplittingMethodType::ExpSmallerAbsDev) {
         double alpha = Rcpp::as<double>(control["splitting_alpha"]);
         std::generate_n(
-            std::back_inserter(tree_splitters_ptr_vec), num_threads, [V, sampling_space, alpha, target] {
-                return std::make_unique<ExpoWeightedSmallerDevSplitter>(V,sampling_space, alpha, target);
+            std::back_inserter(tree_splitters_ptr_vec), num_threads, [&map_graph = map_params.map_graph, alpha, target] {
+                return std::make_unique<ExpoWeightedSmallerDevSplitter>(map_graph, alpha, target);
             });
     } else if (splitting_method == SplittingMethodType::Constraint) {
         int const ndists = map_params.ndists;
-        std::generate_n(std::back_inserter(tree_splitters_ptr_vec), num_threads, [V, sampling_space, ndists] {
-            return std::make_unique<ConstraintSplitter>(V,sampling_space, ndists);
+        std::generate_n(std::back_inserter(tree_splitters_ptr_vec), num_threads, [&map_graph = map_params.map_graph, V, ndists] {
+            return std::make_unique<ConstraintSplitter>(map_graph, V, ndists);
         });
     } else if (splitting_method == SplittingMethodType::Experimental) {
         double epsilon = Rcpp::as<double>(control["splitting_epsilon"]);
         std::generate_n(std::back_inserter(tree_splitters_ptr_vec), num_threads,
-                        [V, sampling_space, epsilon, target] {
-                            return std::make_unique<ExperimentalSplitter>(V, sampling_space, epsilon, target);
+                        [&map_graph = map_params.map_graph, epsilon, target] {
+                            return std::make_unique<ExperimentalSplitter>(map_graph, epsilon, target);
                         });
     } else {
         throw Rcpp::exception("Invalid Splitting Method!");

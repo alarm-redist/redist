@@ -357,9 +357,9 @@ class EdgeBitset {
 
     // Takes a vector tree ust, clears it and replace it with the current 
     // packed forest in the plan 
-    void fill_vector_tree(
+    void fill_flat_tree(
         GraphEdgeIndex const &edge_index,
-        Tree &ust
+        FlatGraph &ust
     ) const;
 
     void fill_vector_tree_regions(
@@ -372,7 +372,7 @@ class EdgeBitset {
     void fill_vector_tree_component_from_root(
         GraphEdgeIndex const &edge_index,
         int const root,
-        Tree &ust,
+        FlatGraph &ust,
         TreePopStack &stack
     ) const;
 
