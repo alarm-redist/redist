@@ -346,8 +346,8 @@ class EdgeCut {
 // fixed at runtime 
 class FlatGraph {
   private:
-    std::vector<VertexID> offsets;
-    std::vector<VertexID> sizes;
+    std::vector<std::size_t> offsets;
+    std::vector<std::size_t> sizes;
     std::vector<VertexID> data;
 
     void push_back(int v, int v_nbor_to_add);
@@ -360,22 +360,31 @@ class FlatGraph {
             VertexID const *begin() const { return ptr; }
             VertexID const *end() const { return ptr + len; }
 
-            VertexID size() const { return len; }
+            std::size_t size() const { return len; }
             bool empty() const { return len == 0; }
 
-            VertexID operator[](int i) const { return ptr[i]; }
+            VertexID operator[](int i) const { 
+                if constexpr (perf_config::bounds_checking) {
+                    if (i >= len) {
+                        throw std::out_of_range(
+                            "FlatGraph::NeighborRange index out of range."
+                        );
+                    }
+                }
+                return ptr[i]; 
+            }
     };
 
     FlatGraph() = default;
 
     explicit FlatGraph(Graph const &g) {
-        int const V = static_cast<int>(g.size());
+        std::size_t const V = g.size();
 
         offsets.resize(V + 1);
         sizes.assign(V, 0);
         
-        int total_cap = 0;
-        for (int v = 0; v < V; ++v) {
+        std::size_t total_cap = 0;
+        for (std::size_t v = 0; v < V; ++v) {
             // We set the start of v's possible neighbors at the current
             // total cap
             offsets[v] = total_cap;
@@ -390,11 +399,11 @@ class FlatGraph {
 
         data.resize(total_cap);
         // Fill flat storage with the original graph neighbors.
-        for (VertexID v = 0; v < V; v++)
+        for (std::size_t v = 0; v < V; v++)
         {
-            VertexID const start = offsets[v];
+            auto const start = offsets[v];
 
-            for (VertexID j = 0; j < sizes[v]; ++j) {
+            for (std::size_t j = 0; j < sizes[v]; ++j) {
                 data[start + j] = static_cast<VertexID>(g[v][j]);
             }
         }
@@ -407,8 +416,8 @@ class FlatGraph {
         return out;
     }
 
-    int size() const {
-        return static_cast<int>(sizes.size());
+    std::size_t size() const {
+        return sizes.size();
     }
 
     void clear_vertex(int v) {
@@ -423,26 +432,26 @@ class FlatGraph {
     void add_directed_edge(int const parent, int const child);
     void add_undirected_edge(int const v, int const u);
 
-    VertexID degree(int v) const {
+    std::size_t degree(int v) const {
         return sizes[v];
     }
 
     NeighborRange neighbors(int const v) const {
-        int const start = offsets[v];
+        auto const start = offsets[v];
         return NeighborRange{data.data() + start, sizes[v]};
     }
 
     // converts to a vertex graph. Useful for exporting to R
     Graph to_vertex_graph() const {
-        Graph out(static_cast<size_t>(size()));
+        Graph out(size());
 
-        for (VertexID v = 0; v < static_cast<VertexID>(size()); ++v) {
-            out[v].reserve(static_cast<size_t>(sizes[v]));
+        for (std::size_t v = 0; v < size(); ++v) {
+            out[v].reserve(sizes[v]);
 
-            VertexID const start = offsets[v];
-            VertexID const stop = start + sizes[v];
+            std::size_t const start = offsets[v];
+            std::size_t const stop = start + sizes[v];
 
-            for (VertexID idx = start; idx < stop; ++idx) {
+            for (std::size_t idx = start; idx < stop; ++idx) {
                 out[v].push_back(static_cast<int>(data[idx]));
             }
         }

@@ -362,7 +362,7 @@ void FlatGraph::push_back(int v, int v_nbor_to_add) {
         auto const pos = sizes[v];
 
         if constexpr (perf_config::bounds_checking) {
-            VertexID const cap = offsets[v + 1] - offsets[v];
+            auto const cap = offsets[v + 1] - offsets[v];
 
             if (pos >= cap) {
                 std::ostringstream oss;
@@ -418,12 +418,13 @@ void FlatGraph::erase_directed_edge(EdgeCut const &cut_edge) {
         }
     }
 
-    VertexID const start = offsets[parent];
-    VertexID const stop = start + sizes[parent];
+    std::size_t const start = offsets[parent];
+    std::size_t const stop = start + sizes[parent];
 
-    VertexID pos = stop;
+    std::size_t pos = stop;
 
-    for (VertexID idx = start; idx < stop; ++idx) {
+
+    for (std::size_t idx = start; idx < stop; ++idx) {
         if (data[idx] == static_cast<VertexID>(child)) {
             pos = idx;
             break;
@@ -442,7 +443,7 @@ void FlatGraph::erase_directed_edge(EdgeCut const &cut_edge) {
     }
 
     // Shift later children left by one, preserving order.
-    for (VertexID idx = pos + 1; idx < stop; ++idx) {
+    for (std::size_t idx = pos + 1; idx < stop; ++idx) {
         data[idx - 1] = data[idx];
     }
 
