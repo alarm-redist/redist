@@ -19,6 +19,12 @@ inline int rnbor(Graph const &g, int const vtx, RNGState &rng_state) {
     return nbors[rng_state.r_int(n_nbors)];
 }
 
+// flat graph version
+inline int rnbor(FlatGraph const &g, int const vtx, RNGState &rng_state) {
+    uint32_t const deg = static_cast<uint32_t>(g.degree(vtx));
+    return g.neighbor(vtx, rng_state.r_int(deg));
+}
+
 /*
  * Builds a deterministic spanning tree on a county using depth first search
  */
@@ -174,13 +180,6 @@ static void add_county_to_tree_dfs(
 }
 
 
-/*
- * Random walk along `g` from `root` until something in `visited` is hit
- */
-// TESTED
-int walk_until(const Graph &g, int root, std::vector<int> &path, int MAX,
-               const std::vector<bool> &visited, const std::vector<bool> &ignore,
-               const std::vector<unsigned int> &counties, RNGState &rng_state);
 
 /*
  * Erase loops in `path` that would be created by adding `proposal` to path
@@ -188,18 +187,102 @@ int walk_until(const Graph &g, int root, std::vector<int> &path, int MAX,
 void loop_erase(std::vector<int> &path, int proposal);
 
 /*
- * Random walk along `g` from `root` until something in `visited` is hit
+ * Random walk along `county_restricted_graph` from `root` until something in `visited` is hit
+ * county_restricted_graph is a graph with all edges going across administrative boundaries removed
+ * so we don't need to worry about sampling an edge across counties 
  */
 // TESTED
-void walk_until_cty(const Multigraph &mg, int root, std::vector<std::array<int, 3>> &path,
-                    const std::vector<bool> &visited, const std::vector<bool> &ignore,
-                    RNGState &rng_state);
+int walk_until(const FlatGraph &county_restricted_graph, 
+    int root, std::vector<int> &path, int MAX,
+               const std::vector<bool> &visited, const std::vector<bool> &ignore,
+               RNGState &rng_state) {
+    path[0] = root;
+    // walk until we hit something in `visited`
+    int curr = root;
+    int added = 1; // cursor
+    int i;
+    for (i = 0; i < MAX; i++) {
+        int proposal = rnbor(county_restricted_graph, curr, rng_state);
+        if (ignore[proposal]) {
+            continue;
+        } else if (!visited[proposal]) {
+            for (int j = added - 1; j >= 0; j--) {
+                if (path[j] == proposal) { // if yes, restart from there
+                    added = j;
+                    break;
+                }
+            }
+            path[added++] = proposal;
+        } else { // reached something in `visited`
+            path[added++] = proposal;
+            break;
+        }
+        curr = proposal;
+    }
+    if (i == MAX) {
+        added = 0;
+    }
+
+    return added;
+}
 
 /*
  * Erase loops in `path` that would be created by adding `proposal` to path
  */
 // TESTED
-void loop_erase_cty(std::vector<std::array<int, 3>> &path, int proposal, int root);
+void loop_erase_cty(std::vector<std::array<int, 3>> &path, int proposal, int root) {
+    int length = path.size();
+    if (proposal == root) {
+        path.erase(path.begin(), path.begin() + length);
+        return;
+    }
+
+    int idx;
+    for (idx = 0; idx < length - 1; idx++) {
+        if (path[idx][0] == proposal)
+            break;
+    }
+
+    if (idx != length - 1) { // a loop
+        path.erase(path.begin() + idx + 1, path.begin() + length);
+    }
+}
+
+
+/*
+ * Random walk along `g` from `root` until something in `visited` is hit
+ */
+// TESTED
+void walk_until_cty(const Multigraph &mg, int root, std::vector<std::array<int, 3>> &path,
+                    const std::vector<bool> &visited, const std::vector<bool> &ignore,
+                    RNGState &rng_state) {
+    path.clear();
+
+    // walk until we hit something in `visited`
+    int curr = root;
+    // while (true) {
+    int i;
+    int max = visited.size() * 500;
+    for (i = 0; i < max; i++) {
+        int prop_idx = rng_state.r_int((int)mg[curr].size());
+        int proposal = mg[curr][prop_idx][0];
+        if (ignore[mg[curr][prop_idx][2]] || ignore[mg[curr][prop_idx][1]]) {
+            continue;
+        } else if (!visited[proposal]) {
+            path.push_back(mg[curr][prop_idx]);
+            loop_erase_cty(path, proposal, root);
+        } else {
+            path.push_back(mg[curr][prop_idx]);
+            break;
+        }
+        curr = proposal;
+    }
+    if (i == max) {
+        path.clear();
+    }
+}
+
+
 
 // simple struct for returning sample UST information without doing 
 // pass by reference for stuff like root
@@ -382,8 +465,8 @@ SampleSubUSTResult sample_sub_ust(MapParams const &map_params, Tree &tree, // Fl
         while (remaining > 0) {
             int add = rvtx(visited, V, remaining, lower_i, rng_state);
             // random walk from `add` until we hit the path
-            int added = walk_until(map_params.g, add, path, max_try, visited, ignore,
-                                   map_params.counties, rng_state);
+            int added = walk_until(map_params.county_restricted_flat_graph, add, path, max_try, visited, ignore,
+                                   rng_state);
             // update visited list and constructed tree
             if (added == 0) { // bail
                 return SampleSubUSTResult{1, root};
@@ -401,98 +484,10 @@ SampleSubUSTResult sample_sub_ust(MapParams const &map_params, Tree &tree, // Fl
     return SampleSubUSTResult{0, root};
 }
 
-/*
- * Random walk along `g` from `root` until something in `visited` is hit
- */
-// TESTED
-int walk_until(const Graph &g, int root, std::vector<int> &path, int MAX,
-               const std::vector<bool> &visited, const std::vector<bool> &ignore,
-               const std::vector<unsigned int> &counties, RNGState &rng_state) {
-    path[0] = root;
-    // walk until we hit something in `visited`
-    int curr = root;
-    int county = counties[root];
-    int added = 1; // cursor
-    int i;
-    for (i = 0; i < MAX; i++) {
-        int proposal = rnbor(g, curr, rng_state);
-        if (ignore[proposal] || counties[proposal] != county) {
-            continue;
-        } else if (!visited[proposal]) {
-            for (int j = added - 1; j >= 0; j--) {
-                if (path[j] == proposal) { // if yes, restart from there
-                    added = j;
-                    break;
-                }
-            }
-            path[added++] = proposal;
-        } else { // reached something in `visited`
-            path[added++] = proposal;
-            break;
-        }
-        curr = proposal;
-    }
-    if (i == MAX) {
-        added = 0;
-    }
 
-    return added;
-}
 
-/*
- * Random walk along `g` from `root` until something in `visited` is hit
- */
-// TESTED
-void walk_until_cty(const Multigraph &mg, int root, std::vector<std::array<int, 3>> &path,
-                    const std::vector<bool> &visited, const std::vector<bool> &ignore,
-                    RNGState &rng_state) {
-    path.clear();
 
-    // walk until we hit something in `visited`
-    int curr = root;
-    // while (true) {
-    int i;
-    int max = visited.size() * 500;
-    for (i = 0; i < max; i++) {
-        int prop_idx = rng_state.r_int((int)mg[curr].size());
-        int proposal = mg[curr][prop_idx][0];
-        if (ignore[mg[curr][prop_idx][2]] || ignore[mg[curr][prop_idx][1]]) {
-            continue;
-        } else if (!visited[proposal]) {
-            path.push_back(mg[curr][prop_idx]);
-            loop_erase_cty(path, proposal, root);
-        } else {
-            path.push_back(mg[curr][prop_idx]);
-            break;
-        }
-        curr = proposal;
-    }
-    if (i == max) {
-        path.clear();
-    }
-}
 
-/*
- * Erase loops in `path` that would be created by adding `proposal` to path
- */
-// TESTED
-void loop_erase_cty(std::vector<std::array<int, 3>> &path, int proposal, int root) {
-    int length = path.size();
-    if (proposal == root) {
-        path.erase(path.begin(), path.begin() + length);
-        return;
-    }
-
-    int idx;
-    for (idx = 0; idx < length - 1; idx++) {
-        if (path[idx][0] == proposal)
-            break;
-    }
-
-    if (idx != length - 1) { // a loop
-        path.erase(path.begin() + idx + 1, path.begin() + length);
-    }
-}
 
 std::vector<unsigned int>
 integer_vector_to_uint_vec(Rcpp::IntegerVector const& x) {

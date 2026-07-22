@@ -177,7 +177,7 @@ get_canonical_plan_labelling <- function(plans_mat, num_regions, ncores) {
     .Call(`_redist_get_canonical_plan_labelling`, plans_mat, num_regions, ncores)
 }
 
-get_plan_counts <- function(input_plans_mat, num_regions, use_canonical_ordering, num_threads) {
+get_plan_counts <- function(input_plans_mat, num_regions, use_canonical_ordering = TRUE, num_threads = 1L) {
     .Call(`_redist_get_plan_counts`, input_plans_mat, num_regions, use_canonical_ordering, num_threads)
 }
 

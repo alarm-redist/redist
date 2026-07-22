@@ -334,10 +334,10 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
                     // If custom hard constraints are used then
                     // the thread pool can only have a single thread or else everything will
                     // break
+                    // Now we check if the new plan satisfies all hard constraints 
                     auto split_hard_constraint_time = maybe_now();
-                    ok = scoring_functions[thread_id].new_split_ok(
-                        *new_plan_ensemble->plan_ptr_vec[i], region_id_to_split, new_region_id,
-                        1); // this split adds 1 new region
+                    ok = scoring_functions[thread_id].satisfies_hard_constraints(
+                        *new_plan_ensemble->plan_ptr_vec[i], region_id_to_split, new_region_id); 
                     if constexpr (perf_config::track_granular_times){
                         add_elapsed(hard_constraint_split_times[thread_id], split_hard_constraint_time); // optional timing
                     }
@@ -485,7 +485,7 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
                 //     *tree_splitters[thread_id], ust_samplers_vec[thread_id],
                 //     std::get<1>(edge_search_result), region_id_to_split, new_region_id, true);
 
-                // ok = scoring_functions[thread_id].new_split_ok(
+                // ok = scoring_functions[thread_id].satisfies_hard_constraints(
                 //     *new_plan_ensemble->plan_ptr_vec[i], region_id_to_split, new_region_id,
                 //     is_final_split);
             }

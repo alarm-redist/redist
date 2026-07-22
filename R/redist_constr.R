@@ -498,7 +498,7 @@ add_constr_status_quo <- function(
     new_constr <- c(
         new_constr,
         list(
-            current = current,
+            current = current
         )
     )
 
@@ -862,13 +862,15 @@ add_constr_segregation <- function(
                         total_pop = rlang::eval_tidy(rlang::enquo(total_pop), data)
                     ))
 
-
     if (is.null(new_constr$total_pop)) {
         if (!is.null(attr(data, "pop_col"))) {
             new_constr$total_pop <- data[[attr(data, "pop_col")]]
         } else {
             cli::cli_abort("{.arg total_pop} missing.")
         }
+    }
+    if (is.null(new_constr$group_pop)) {
+        cli::cli_abort("{.arg group_pop} missing.")
     }
 
     validate_population_vector(nrow(data), new_constr$total_pop)

@@ -431,7 +431,8 @@ MapParams::MapParams(Graph const &g,
         num_counties(*std::max_element(counties.begin(), counties.end())), 
         cg(county_graph(g, counties)),
         county_restricted_graph(num_counties > 1 ? build_restricted_county_graph(g, counties)
-                                                : Graph(0)),
+                                                : g),
+        county_restricted_flat_graph(county_restricted_graph),
         pop(pop), V(static_cast<int>(g.size())), ndists(ndists), total_seats(total_seats),
         lower(lower), target(target), upper(upper),
         smallest_district_size(

@@ -872,7 +872,7 @@ redist_smc <- function(
         run_information = run_information,
         internal_diagnostics = internal_diagnostics,
         num_admin_units = num_admin_units,
-        total_runtime = t2 - t1
+        total_runtime = as.numeric(t2 - t1, units = "secs")
     )
 
     if (runs > 1) {

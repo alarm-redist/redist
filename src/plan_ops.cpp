@@ -671,8 +671,8 @@ Rcpp::IntegerMatrix get_canonical_plan_labelling(Rcpp::IntegerMatrix const &plan
 // @keywords internal
 // [[Rcpp::export]]
 Rcpp::DataFrame get_plan_counts(Rcpp::IntegerMatrix const &input_plans_mat,
-                                int const num_regions, bool const use_canonical_ordering,
-                                int const num_threads) {
+                                int const num_regions, bool const use_canonical_ordering = true,
+                                int const num_threads = 1) {
 
     Rcpp::IntegerMatrix plans_mat =
         use_canonical_ordering

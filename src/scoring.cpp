@@ -1371,12 +1371,11 @@ bool ScoringFunction::merged_plan_ok(Plan const &plan, int const region1_id,
     return true;
 }
 
-bool ScoringFunction::new_split_ok(Plan const &plan, int const region1_id, int const region2_id,
-                                   int const num_new_regions_added) const {
+bool ScoringFunction::satisfies_hard_constraints(Plan const &plan, int const region1_id, int const region2_id) const {
     if (!any_hard_constraints)
         return true;
 
-    auto const num_new_regions = plan.num_regions + num_new_regions_added;
+    auto const num_regions = plan.num_regions;
 
     auto region1_size = plan.region_sizes[region1_id];
     auto region2_size = plan.region_sizes[region2_id];
@@ -1389,7 +1388,7 @@ bool ScoringFunction::new_split_ok(Plan const &plan, int const region1_id, int c
             continue;
 
         // skip if not a number of regions we score
-        if (!region_constraint_ptr->num_regions_to_score[num_new_regions])
+        if (!region_constraint_ptr->num_regions_to_score[num_regions])
             continue;
 
         // only check region1 if its a size we score 
@@ -1413,7 +1412,7 @@ bool ScoringFunction::new_split_ok(Plan const &plan, int const region1_id, int c
         if (!plan_constraint_ptr->hard_constraint)
             continue;
         // skip if not final plan and only score final plans
-        if (!plan_constraint_ptr->num_regions_to_score[num_new_regions])
+        if (!plan_constraint_ptr->num_regions_to_score[num_regions])
             continue;
 
         if (!plan_constraint_ptr->plan_constraint_ok(plan))

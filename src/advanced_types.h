@@ -484,6 +484,20 @@ class FlatGraph {
         return sizes[v];
     }
 
+    int neighbor(int const v, int const j) const {
+        if constexpr (perf_config::bounds_checking) {
+            if (v < 0 || v >= size()) {
+                throw std::runtime_error("FlatGraph::neighbor invalid v.");
+            }
+
+            if (j < 0 || j >= sizes[v]) {
+                throw std::runtime_error("FlatGraph::neighbor invalid j.");
+            }
+        }
+
+        return data[offsets[v] + j];
+    }
+
     NeighborRange neighbors(int const v) const {
         auto const start = offsets[v];
         return NeighborRange{data.data() + start, sizes[v]};
@@ -578,6 +592,7 @@ class MapParams {
     int const num_counties;              // The number of distinct counties
     Multigraph const cg;                 // county multigraph
     Graph const county_restricted_graph; // g but with all edges crossing counties removed
+    FlatGraph county_restricted_flat_graph; // flat version
     std::vector<unsigned int> const pop; // population of each vertex
     int const V;                         // Number of vertices in the graph
     int const ndists;                    // The number of districts a final plan should have

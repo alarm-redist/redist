@@ -260,7 +260,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     auto hard_constraint_time = maybe_now();
     bool new_plan_valid =
         build_attempt.first &&
-        scoring_function.new_split_ok(new_plan, region1_id, region2_id, 0); // this split adds 0 new regions
+        scoring_function.satisfies_hard_constraints(new_plan, region1_id, region2_id); // this split adds 0 new regions
     if constexpr (perf_config::track_granular_times){
         add_elapsed(granular_times.hard_constraint_time, hard_constraint_time); // optional timing 
     }

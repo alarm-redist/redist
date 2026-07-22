@@ -4,8 +4,9 @@
 #include <atomic>
 #include <limits>
 #include <vector>
-#include <Rcpp.h>
+
 #include "advanced_types.h"
+#include <Rcpp.h>
 
 /*
  * Make a progress bar configuration with format string `fmt`

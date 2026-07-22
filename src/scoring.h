@@ -817,9 +817,8 @@ class ScoringFunction {
                                                int const region2_id) const;
     // check if the entire merged plan is ok
     bool merged_plan_ok(Plan const &plan, int const region1_id, int const region2_id) const;
-    // check if the two new regions or the plan trigger any hard constraints
-    bool new_split_ok(Plan const &plan, int const region1_id, int const region2_id,
-                      int const num_new_regions_added) const;
+    // check if the plan satisfies all hard constraints 
+    bool satisfies_hard_constraints(Plan const &plan, int const region1_id, int const region2_id) const;
 };
 
 #endif

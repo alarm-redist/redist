@@ -306,9 +306,9 @@ Rcpp::List perform_a_valid_multidistrict_split(Rcpp::List adj_list, const Rcpp::
             // the thread pool can only have a single thread or else everything will
             // break
             auto split_hard_constraint_time = maybe_now();
-            ok = scoring_function.new_split_ok(
-                *plan_ensemble.plan_ptr_vec[0], region_id_to_split, plan_ensemble.plan_ptr_vec[0]->num_regions,
-                1); // this split adds 1 new region
+            ok = scoring_function.satisfies_hard_constraints(
+                *plan_ensemble.plan_ptr_vec[0], region_id_to_split, plan_ensemble.plan_ptr_vec[0]->num_regions
+                ); // this split adds 1 new region
         }
 
         if(!ok){
@@ -719,9 +719,9 @@ Rcpp::List attempt_splits_on_a_region(Rcpp::List const &adj_list, const Rcpp::In
             // the thread pool can only have a single thread or else everything will
             // break
             auto split_hard_constraint_time = maybe_now();
-            ok = scoring_functions[thread_id].new_split_ok(
-                *thread_plan_ensemble.plan_ptr_vec[i], region_id_to_split, thread_plan_ensemble.plan_ptr_vec[thread_id]->num_regions,
-                1); // this split adds 1 new region
+            ok = scoring_functions[thread_id].satisfies_hard_constraints(
+                *thread_plan_ensemble.plan_ptr_vec[i], region_id_to_split, thread_plan_ensemble.plan_ptr_vec[thread_id]->num_regions
+                ); // this split adds 1 new region
         }
 
         successful_update[i] = ok;
