@@ -8,6 +8,17 @@
 
 namespace{
 
+
+/*
+ * Generate a random neighbor to a vertex, except for the `last` vertex.
+ */
+// TESTED
+inline int rnbor(Graph const &g, int const vtx, RNGState &rng_state) {
+    auto const &nbors = g[vtx];
+    uint32_t const n_nbors = static_cast<uint32_t>(nbors.size());
+    return nbors[rng_state.r_int(n_nbors)];
+}
+
 /*
  * Builds a deterministic spanning tree on a county using depth first search
  */
@@ -17,7 +28,7 @@ static void add_county_to_tree_dfs(
     std::vector<int> const &county_vertices, // vector of vertices in the county 
     std::vector<bool> &visited,
     DummyTreeQueue &queue,
-    FlatGraph &ust
+    Tree &ust // FlatGraph &ust
 ) {
     int const V = static_cast<int>(county_restricted_g.size());
     int const n_vtx = static_cast<int>(county_vertices.size());
@@ -128,7 +139,8 @@ static void add_county_to_tree_dfs(
             }
 
             // This is a real graph edge v--u, oriented away from the county root.
-            ust.add_directed_edge(v, u);
+            // ust.add_directed_edge(v, u);
+            ust[v].push_back(u);
             // mark as visited and add this to stack
             visited[u] = true;
             queue.push(u);
@@ -230,7 +242,8 @@ void OLD_TO_UPDATE_get_tree_pops_below(const Tree &ust, const int root, TreePopS
  * Sample a uniform spanning subtree of unvisited nodes using Wilson's algorithm
  */
 // TESTED
-SampleSubUSTResult sample_sub_ust(MapParams const &map_params, FlatGraph &tree, double const lower,
+SampleSubUSTResult sample_sub_ust(MapParams const &map_params, Tree &tree, // FlatGraph &tree, 
+                   double const lower,
                    double const upper, std::vector<bool> &visited,
                    const std::vector<bool> &ignore, Tree &county_tree, TreePopStack &county_stack,
                    DummyTreeQueue &dummy_county_tree_queue,
@@ -301,7 +314,8 @@ SampleSubUSTResult sample_sub_ust(MapParams const &map_params, FlatGraph &tree, 
         for (int i = 0; i < added; i++) {
             c_visited[county_path[i][0]] = true;
             // reverse path so that arrows point away from root
-            tree.add_directed_edge(county_path[i][2], county_path[i][1]);
+            // tree.add_directed_edge(county_path[i][2], county_path[i][1]);
+            tree[county_path[i][2]].push_back(county_path[i][1]);
             county_tree[county_path[i][0]]
                 .push_back(map_params.counties[county_path[i][1]] - 1);
 
@@ -378,7 +392,8 @@ SampleSubUSTResult sample_sub_ust(MapParams const &map_params, FlatGraph &tree, 
             for (int i = 0; i < added - 1; i++) {
                 visited[path[i]] = true;
                 // reverse path so that arrows point away from root
-                tree.add_directed_edge(path[i + 1], path[i]);
+                // tree.add_directed_edge(path[i + 1], path[i]);
+                tree[path[i + 1]].push_back(path[i]);
             }
         }
     }
@@ -535,7 +550,8 @@ Tree sample_ust(Rcpp::List l, const Rcpp::IntegerVector &pop, double lower, doub
         FAKE_NDISTS, FAKE_NDISTS, std::vector<int>{}, lower,
                          FAKE_TARGET, upper, SamplingSpace::GraphSpace);
 
-    FlatGraph tree = map_params.map_graph.get_flat_empty_tree();
+    // FlatGraph tree = map_params.map_graph.get_flat_empty_tree();
+    Tree tree = init_tree(V);
     std::vector<bool> visited(V);
     Tree county_tree = init_tree(map_params.num_counties);
     TreePopStack county_stack(map_params.num_counties + 1);
@@ -551,7 +567,8 @@ Tree sample_ust(Rcpp::List l, const Rcpp::IntegerVector &pop, double lower, doub
                    county_stack, dummy_county_tree_queue, 
                    county_pop, county_members, c_visited, cty_pop_below,
                    county_path, path, rng_state);
-    return tree.to_vertex_graph();
+    // return tree.to_vertex_graph();
+    return tree;
 }
 
 
@@ -598,7 +615,8 @@ USTDrawResult USTSampler::attempt_to_draw_tree_on_region(
         ignore[i] = !in_region;
         // clear if in the region
         if (in_region) {
-            ust.clear_vertex(i);
+            // ust.clear_vertex(i);
+            ust[i].clear();
             ++num_region_vertices;
         }
     }
@@ -630,7 +648,7 @@ USTDrawResult USTSampler::attempt_to_draw_tree_on_region(
     if constexpr(perf_config::object_integrity_checking){
         if (valid_tree){
             check_tree_integrity(
-                ust.to_vertex_graph(),
+                get_vertex_tree(),
                 "Just called `sample_sub_ust` in attempt_to_draw_tree_on_region\n",
                 result.second,
                 num_region_vertices,
@@ -661,7 +679,8 @@ USTDrawResult USTSampler::attempt_to_draw_tree_on_merged_region(RNGState &rng_st
         ignore[i] = !in_region;
         // clear if in the region
         if (in_region) {
-            ust.clear_vertex(i);
+            // ust.clear_vertex(i);
+            ust[i].clear();
             ++num_merged_region_vertices;
         }
     }
@@ -697,7 +716,7 @@ USTDrawResult USTSampler::attempt_to_draw_tree_on_merged_region(RNGState &rng_st
     if constexpr(perf_config::object_integrity_checking){
         if (valid_tree){
             check_tree_integrity(
-                ust.to_vertex_graph(),
+                get_vertex_tree(),
                 "Just called `sample_sub_ust` in attempt_to_draw_tree_on_merged_region\n",
                 result.second,
                 num_merged_region_vertices,
@@ -741,7 +760,8 @@ std::pair<bool, EdgeCut> USTSampler::try_to_find_and_erase_splittable_edge(
     // If successful extract the edge cut info
     EdgeCut cut_edge = std::get<1>(edge_search_result);
     // Now erase the cut edge in the tree
-    ust.erase_directed_edge(cut_edge);
+    // ust.erase_directed_edge(cut_edge);
+    erase_tree_edge(ust, cut_edge);
 
     return edge_search_result;
 }

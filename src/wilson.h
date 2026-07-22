@@ -38,7 +38,8 @@ class USTSampler {
   public:
     USTSampler(MapParams const &map_params, SplittingSchedule const &splitting_schedule)
         :
-        ust(map_params.map_graph.get_flat_empty_tree()),
+        // ust(map_params.map_graph.get_flat_empty_tree()),
+        ust(init_tree(map_params.V)),
         pops_below_vertex(map_params.V, 0),
           visited(map_params.V), ignore(map_params.V), stack(map_params.V + 1),
           county_tree(init_tree(map_params.num_counties)),
@@ -48,9 +49,17 @@ class USTSampler {
           county_members(map_params.num_counties, std::vector<int>{}),
           c_visited(map_params.num_counties, true), cty_pop_below(map_params.num_counties, 0),
           vertex_queue(map_params.V), map_params(map_params),
-          splitting_schedule(splitting_schedule) {};
+          splitting_schedule(splitting_schedule) {
+            // reserve the max capacity now 
+            for (size_t v = 0; v < map_params.V; v++)
+            {
+              ust[v].reserve(map_params.g[v].size());
+            }
+             
+          };
 
-    FlatGraph ust;
+    // FlatGraph ust;
+    Tree ust;
     std::vector<int> pops_below_vertex;
     std::vector<bool> visited, ignore;
     TreePopStack stack;
@@ -98,6 +107,9 @@ class USTSampler {
         RNGState &rng_state, ScoringFunction const &scoring_function,
         TreeSplitter &tree_splitter, Plan const &plan, int const merge_region1,
         int const merge_region2, bool const save_selection_prob);
+
+    // Tree get_vertex_tree ()const {return ust.to_vertex_graph();}
+    Tree get_vertex_tree ()const {return ust;}
 
     // checks that all the vertices in the tree are valid and 
     // its a directed tree 

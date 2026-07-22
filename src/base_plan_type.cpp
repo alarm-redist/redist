@@ -874,7 +874,8 @@ Plan::draw_tree_on_region(USTSampler &ust_sampler, const int region_to_draw_tree
     // make a queue of vertex, parent
     std::queue<std::pair<int, int>> vertex_queue;
     // add roots children to queue
-    for (auto const &child_vertex : ust_sampler.ust.neighbors(ust_draw_result.root)) {
+    // for (auto const &child_vertex : ust_sampler.ust.neighbors(ust_draw_result.root)) {
+    for (auto const &child_vertex : ust_sampler.ust[ust_draw_result.root]) {
         vertex_queue.push({child_vertex, ust_draw_result.root});
         // Add this edge to the packed forest 
         forest_edges.set_edge(ust_draw_result.root, child_vertex, ust_sampler.map_params.graph_edge_index);
@@ -890,7 +891,8 @@ Plan::draw_tree_on_region(USTSampler &ust_sampler, const int region_to_draw_tree
         // Add this edge to the packed forest 
         forest_edges.set_edge(vertex, parent_vertex, ust_sampler.map_params.graph_edge_index);
 
-        for (auto const &child_vertex : ust_sampler.ust.neighbors(vertex)) {
+        // for (auto const &child_vertex : ust_sampler.ust.neighbors(vertex)) {
+        for (auto const &child_vertex : ust_sampler.ust[vertex]) {
             // add children to queue
             vertex_queue.push({child_vertex, vertex});
             // add this edge from vertex to its children
@@ -998,7 +1000,7 @@ void Plan::update_plan_ids_and_forest_from_cut(TreeSplitter const &tree_splitter
     if constexpr(perf_config::object_integrity_checking){
         // Checks the tree starting at `split_region1_tree_root` is actually a directed tree
         ust_sampler.check_tree_integrity(
-            ust_sampler.ust.to_vertex_graph(),
+            ust_sampler.get_vertex_tree(),
             "Before calling `assign_region_id_and_forest_from_tree` on split_region1_id\n",
             split_region1_tree_root,
             0,
@@ -1014,7 +1016,7 @@ void Plan::update_plan_ids_and_forest_from_cut(TreeSplitter const &tree_splitter
 
     if constexpr(perf_config::object_integrity_checking){
         ust_sampler.check_tree_integrity(
-            ust_sampler.ust.to_vertex_graph(),
+            ust_sampler.get_vertex_tree(),
             "Before calling `assign_region_id_and_forest_from_tree` on split_region2_id\n",
             split_region2_tree_root,
             0,

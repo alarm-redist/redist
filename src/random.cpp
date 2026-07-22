@@ -14,7 +14,6 @@ RNGState GLOBAL_RNG(GLOBAL_RD());
  Written in 2019 by David Blackman and Sebastiano Vigna (vigna@acm.org)
  [Public domain]
  */
-static inline uint32_t rotl(const uint32_t x, int k) { return (x << k) | (x >> (32 - k)); }
 
 // Set the state for RNG state object
 void RNGState::seed_rng(int seed, int num_jumps) {
@@ -40,23 +39,7 @@ uint64_t RNGState::next_sr() {
     return z ^ (z >> 31);
 }
 
-// https://prng.di.unimi.it/xoshiro128plusplus.c
-uint32_t RNGState::generator(void) {
-    const uint32_t result = rotl(state_xo[0] + state_xo[3], 7) + state_xo[0];
 
-    const uint32_t t = state_xo[1] << 9;
-
-    state_xo[2] ^= state_xo[0];
-    state_xo[3] ^= state_xo[1];
-    state_xo[1] ^= state_xo[2];
-    state_xo[0] ^= state_xo[3];
-
-    state_xo[2] ^= t;
-
-    state_xo[3] = rotl(state_xo[3], 11);
-
-    return result;
-}
 
 // https://prng.di.unimi.it/xoshiro128plusplus.c
 void RNGState::long_jump() {
@@ -90,26 +73,6 @@ void RNGState::do_long_jumps(int num_jumps) {
 }
 
 // Rest of file is original code --------------------------------
-
-/*
- * Generate a uniform random integer in [0, max). Slightly biased.
- */
-int RNGState::r_int(uint32_t max) {
-    if constexpr(perf_config::supposedly_safe_input_checks){
-        if (max == 0) {
-            throw std::runtime_error("RNGState::r_int called with max=0.");
-        }
-    }
-
-    uint32_t x = generator();
-    uint64_t m = uint64_t(x) * uint64_t(max);
-    return static_cast<int>(m >> 32);
-}
-
-/*
- * Generate a uniform random double in [0, 1). Slightly biased.
- */
-double RNGState::r_unif() { return 0x1.0p-32 * generator(); }
 
 /*
  * Generate a uniform random integer in [0, max).

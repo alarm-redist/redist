@@ -24,14 +24,7 @@ int rvtx(const std::vector<bool> &visited, int size, int remaining, int &lower,
     return size - 1;
 }
 
-/*
- * Generate a random neighbor to a vertex, except for the `last` vertex.
- */
-// TESTED
-int rnbor(const Graph &g, int vtx, RNGState &rng_state) {
-    int n_nbors = g[vtx].size();
-    return g[vtx][rng_state.r_int(n_nbors)];
-}
+
 
 /*
  * Initialize empty tree structure on graph with `V` vertices
@@ -87,7 +80,8 @@ int tree_pop(Tree &ust, int vtx, const std::vector<unsigned int> &pop, std::vect
     return pop_at;
 }
 
-void get_tree_pops_below(const FlatGraph &ust, const int root, TreePopStack &stack,
+void get_tree_pops_below(const Tree &ust, // const FlatGraph &ust, 
+    const int root, TreePopStack &stack,
                          const std::vector<unsigned int> &pop, std::vector<int> &pop_below) {
     stack.clear();
     // add the root
@@ -100,14 +94,16 @@ void get_tree_pops_below(const FlatGraph &ust, const int root, TreePopStack &sta
         // if visiting again then that means we've seen all the children
         if (is_revisiting) {
             int total_pop = pop[vtx];
-            for (int child : ust.neighbors(vtx)) {
+            // for (int child : ust.neighbors(vtx)) {
+            for (int child : ust[vtx]) {
                 total_pop += pop_below[child];
             }
             pop_below[vtx] = total_pop;
         } else {
             // else push again and push the children
             stack.push({vtx, 0, true});
-            for (const auto &child : ust.neighbors(vtx)) {
+            // for (const auto &child : ust.neighbors(vtx)) {
+            for (const auto &child : ust[vtx]) {
                 stack.push({child, 0, false});
             }
         }
@@ -131,35 +127,10 @@ int get_tree_pops_below(const Tree &ust, const int vtx, const arma::uvec &pop,
     return pop_at;
 }
 
-void assign_region_id_from_tree(FlatGraph const &ust, PlanVector &region_ids, int const root,
-                                const int new_region_id,
-                                CircularQueue<std::pair<int, int>> &vertex_queue) {
-    // clear the queue
-    vertex_queue.clear();
-
-    // update root and add its children to queue
-    region_ids[root] = new_region_id;
-    for (auto const &child_vertex : ust.neighbors(root)) {
-        vertex_queue.push({child_vertex, 0});
-    }
-
-    // update all the children
-    while (!vertex_queue.empty()) {
-        // get and remove head of queue
-        auto [vertex, dont_care] = vertex_queue.pop();
-        // update region ids
-        region_ids[vertex] = new_region_id;
-        // add children
-        for (auto const &child_vertex : ust.neighbors(vertex)) {
-            vertex_queue.push({child_vertex, 0});
-        }
-    }
-
-    return;
-}
 
 // updates both the vertex labels and the forest adjacency from a directed tree
-void assign_region_id_and_forest_from_tree(const FlatGraph &ust, PlanVector &region_ids,
+void assign_region_id_and_forest_from_tree(const Tree &ust,  // const FlatGraph &ust, 
+    PlanVector &region_ids,
                                            EdgeBitset &forest_edges,
                                            int root,
                                            const int new_region_id,
@@ -219,7 +190,8 @@ void assign_region_id_and_forest_from_tree(const FlatGraph &ust, PlanVector &reg
 
 
     // Push root's children. Every queued vertex now has a real parent.
-    for (int const child : ust.neighbors(root)) {
+    // for (int const child : ust.neighbors(root)) {
+    for (int const child : ust[root]) {
         if constexpr (perf_config::bounds_checking) {
             if (child < 0 || child >= V) {
                 std::ostringstream oss;
@@ -314,7 +286,8 @@ void assign_region_id_and_forest_from_tree(const FlatGraph &ust, PlanVector &reg
             }
         }
 
-        for (int const child : ust.neighbors(v)) {
+        // for (int const child : ust.neighbors(v)) {
+        for (int const child : ust[v]) {
             if constexpr (perf_config::bounds_checking) {
                 if (child < 0 || child >= V) {
                     std::ostringstream oss;

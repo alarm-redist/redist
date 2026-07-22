@@ -145,7 +145,7 @@ Rcpp::List draw_a_tree_on_a_region(Rcpp::List adj_list, const Rcpp::IntegerVecto
     // tree_pop(ust_sampler.ust, ust_sampler.root, pop, pop_below, tree_vertex_parents);
 
     Rcpp::List out = Rcpp::List::create(
-        Rcpp::_["uncut_tree"] = ust_sampler.ust.to_vertex_graph(), 
+        Rcpp::_["uncut_tree"] = ust_sampler.get_vertex_tree(), 
         Rcpp::_["root"] = ust_draw_result.root,
         Rcpp::_["num_attempts"] = num_attempts, 
         Rcpp::_["pop_below"] = pop_below,
@@ -283,9 +283,10 @@ Rcpp::List perform_a_valid_multidistrict_split(Rcpp::List adj_list, const Rcpp::
         // if a balanced cut was found then update 
         if (ok) {
             // copy uncut tree before splitting in case update was successful 
-            pre_split_ust = ust_sampler.ust.to_vertex_graph();
+            pre_split_ust = ust_sampler.get_vertex_tree();
             // Now erase the cut edge in the tree
-            ust_sampler.ust.erase_directed_edge(cut_edge);
+            // ust_sampler.ust.erase_directed_edge(cut_edge);
+            erase_tree_edge(ust_sampler.ust, cut_edge);
             // now split that region we found on the old one
             plan_ensemble.plan_ptr_vec[0]->update_from_successful_split(
                 *tree_splitter, ust_sampler, std::get<1>(edge_search_result), region_id_to_split,
@@ -338,7 +339,7 @@ Rcpp::List perform_a_valid_multidistrict_split(Rcpp::List adj_list, const Rcpp::
         Rcpp::_["num_districts"] =
             plan_ensemble.plan_ptr_vec[0]->get_num_district_and_multidistricts().first,
         Rcpp::_["uncut_tree"] = pre_split_ust, Rcpp::_["uncut_tree_root"] = uncut_tree_root,
-        Rcpp::_["cut_tree"] = ust_sampler.ust.to_vertex_graph(), Rcpp::_["pop_below"] = ust_sampler.pops_below_vertex,
+        Rcpp::_["cut_tree"] = ust_sampler.get_vertex_tree(), Rcpp::_["pop_below"] = ust_sampler.pops_below_vertex,
         Rcpp::_["new_region1_id"] = new_region1_id,
         Rcpp::_["new_region1_tree_root"] = new_region1_tree_root,
         Rcpp::_["new_region1_size"] = new_region1_dval, Rcpp::_["new_region1_pop"] = new_region1_pop,
@@ -530,11 +531,12 @@ Rcpp::List draw_trees_on_a_region(Rcpp::List const &adj_list, const Rcpp::Intege
         // go through the tree from the root and add the backwards edge and sort
         std::queue<std::pair<int, int>> vertex_queue;
         // add roots children to queue
-        for (auto const &child_vertex : ust_samplers[thread_id].ust.neighbors(ust_draw_result.root)) {
+        // for (auto const &child_vertex : ust_samplers[thread_id].ust.neighbors(ust_draw_result.root)) {
+        for (auto const &child_vertex : ust_samplers[thread_id].ust[ust_draw_result.root]) {
             vertex_queue.push({child_vertex, ust_draw_result.root});
         }
         // now save a vertex tree 
-        vertex_ust_buffers[thread_id] = ust_samplers[thread_id].ust.to_vertex_graph();
+        vertex_ust_buffers[thread_id] = ust_samplers[thread_id].get_vertex_tree();
         // sort the children
         std::sort(vertex_ust_buffers[thread_id][ust_draw_result.root].begin(), 
         vertex_ust_buffers[thread_id][ust_draw_result.root].end());
@@ -557,7 +559,7 @@ Rcpp::List draw_trees_on_a_region(Rcpp::List const &adj_list, const Rcpp::Intege
             std::sort(vertex_ust_buffers[thread_id][vertex].begin(), vertex_ust_buffers[thread_id][vertex].end());
         }
         // REprintf("about to copy! %d\n", thread_id);
-        thread_undirected_trees[thread_id].push_back(ust_samplers[thread_id].ust.to_vertex_graph());
+        thread_undirected_trees[thread_id].push_back(vertex_ust_buffers[thread_id]);
         // REprintf("Copied! %d\n", thread_id);
         ++bar;
     });

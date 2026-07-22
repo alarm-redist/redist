@@ -6,6 +6,41 @@
 #include "random.h"
 #include "wilson.h"
 
+/*
+ * Assign `new_region_num_id` to all descendants of `root` in `ust`
+ * When Wilson is switched to undirected trees this should probably be moved
+ * back to tree ops as it can also be used by the constraint splitter
+ */
+void assign_region_id_from_tree(Tree const &ust, // FlatGraph const &ust, 
+    PlanVector &region_ids, int const root,
+                                const int new_region_id,
+                                CircularQueue<std::pair<int, int>> &vertex_queue) {
+    // clear the queue
+    vertex_queue.clear();
+
+    // update root and add its children to queue
+    region_ids[root] = new_region_id;
+    // for (auto const &child_vertex : ust.neighbors(root)) {
+    for (auto const &child_vertex : ust[root]) {
+        vertex_queue.push({child_vertex, 0});
+    }
+
+    // update all the children
+    while (!vertex_queue.empty()) {
+        // get and remove head of queue
+        auto [vertex, dont_care] = vertex_queue.pop();
+        // update region ids
+        region_ids[vertex] = new_region_id;
+        // add children
+        // for (auto const &child_vertex : ust.neighbors(vertex)) {
+        for (auto const &child_vertex : ust[vertex]) {
+            vertex_queue.push({child_vertex, 0});
+        }
+    }
+
+    return;
+}
+
 void GraphPlan::update_vertex_and_plan_specific_info_from_cut(
     TreeSplitter const &tree_splitter, USTSampler &ust_sampler, EdgeCut const cut_edge,
     const int split_region1_id, const int split_region2_id, bool const add_region) {
@@ -124,7 +159,7 @@ double GraphPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
 // the best region sizes assignment
  */
 std::vector<double> get_ordered_tree_cut_devs(
-    FlatGraph &ust, int root, std::vector<int> const &cut_below_pop, double const target,
+    int root, std::vector<int> const &cut_below_pop, double const target,
     PlanVector const &region_ids, RegionID const region_id1, RegionID const region_id2,
     int const region_size, int const region_pop, int const min_potential_cut_size,
     int const max_potential_cut_size, std::vector<int> const &smaller_cut_sizes_to_try) {
@@ -143,7 +178,7 @@ std::vector<double> get_ordered_tree_cut_devs(
         // start at total pop since deviance will never be more than total_pop/2
         double smallest_dev = static_cast<double>(region_pop) * 2.0;
 
-        int below_pop = cut_below_pop.at(i);
+        int below_pop = cut_below_pop[i];
         int above_pop = region_pop - below_pop;
 
         // if one of the populations is zero just skip
@@ -248,7 +283,7 @@ int estimate_mergesplit_cut_k(const MapParams &map_params,
 
 
         devs.push_back(get_ordered_tree_cut_devs(
-            ust_sampler.ust, result.root, ust_sampler.pops_below_vertex, plan_multigraph.map_params.target, plan.region_ids,
+            result.root, ust_sampler.pops_below_vertex, plan_multigraph.map_params.target, plan.region_ids,
             a_pair.first, a_pair.second, merged_size, merged_pop, min_possible_cut_size,
             max_possible_cut_size,
             splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_size]));
@@ -393,7 +428,7 @@ void estimate_cut_k(const MapParams &map_params, const SplittingSchedule &splitt
             ust_sampler.stack, map_params.pop, ust_sampler.pops_below_vertex);
 
         devs.push_back(get_ordered_tree_cut_devs(
-            ust_sampler.ust, result.root, ust_sampler.pops_below_vertex, 
+            result.root, ust_sampler.pops_below_vertex, 
             target, plan_ptrs_vec[i]->region_ids,
             biggest_region_id, biggest_region_id, biggest_region_size, biggest_size_region_pop,
             min_possible_cut_size, max_possible_cut_size,

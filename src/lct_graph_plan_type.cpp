@@ -39,7 +39,7 @@ bool LCTGraphPlan::init_lct_from_regions(MapParams const &map_params, USTSampler
 
         // ust_sampler.ust is rooted at ust_sampler.root after the draw.
         district_roots[d] = ust_draw_result.root;
-        load_tree_into_lct(ust_sampler.ust.to_vertex_graph(), ust_draw_result.root, d);
+        load_tree_into_lct(ust_sampler.get_vertex_tree(), ust_draw_result.root, d);
     }
 
     rebuild_cross_edges(map_params.g);

@@ -39,7 +39,7 @@ ForestPlan::ForestPlan(int const ndists, int const num_regions, const std::vecto
 
     if constexpr(perf_config::object_integrity_checking){
         check_forest_equality(
-            ust_sampler.ust.to_vertex_graph(),
+            ust_sampler.get_vertex_tree(),
             forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
             ust_sampler.map_params.graph_edge_index,
             "IN Partial Forest Plan Constructor, checking forest_graph vs forest edges (through get_graph_tree)"

@@ -27,11 +27,6 @@ static inline void check_vertex_in_range(int v, int V, char const *where) {
 int rvtx(const std::vector<bool> &visited, int size, int remaining, int &lower,
          RNGState &rng_state);
 
-/*
- * Generate a random neighbor to a vertex, except for the `last` vertex.
- */
-// TESTED
-int rnbor(const Graph &g, int vtx, RNGState &rng_state);
 
 /*
  * Initialize empty tree structure on graph with `V` vertices
@@ -58,7 +53,8 @@ int tree_pop(Tree &ust, int vtx, const std::vector<unsigned int> &pop, std::vect
  * Just Count population below each node in tree
  */
 // TESTED
-void get_tree_pops_below(const FlatGraph &ust, const int root, TreePopStack &stack,
+void get_tree_pops_below(const Tree &ust, // const FlatGraph &ust, 
+    const int root, TreePopStack &stack,
                          const std::vector<unsigned int> &pop, std::vector<int> &pop_below);
 
 
@@ -381,18 +377,13 @@ class EdgeBitset {
 
 
 
-/*
- * Assign `new_region_num_id` to all descendants of `root` in `ust`
- */
-void assign_region_id_from_tree(const FlatGraph &ust, PlanVector &region_ids, int root,
-                                const int new_region_num_id,
-                                CircularQueue<std::pair<int, int>> &vertex_queue);
 
 /*
  * Assign `new_region_num_id` to all descendants of `root` in `ust` where
  * `ust` is a directed spanning tree 
  */
-void assign_region_id_and_forest_from_tree(const FlatGraph &ust, PlanVector &region_ids,
+void assign_region_id_and_forest_from_tree(const Tree &ust,  // const FlatGraph &ust,
+    PlanVector &region_ids,
                                            EdgeBitset &forest_edges,
                                            int root,
                                            const int new_region_id,

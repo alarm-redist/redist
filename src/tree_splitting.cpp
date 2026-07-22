@@ -332,7 +332,8 @@ arma::vec compute_almost_best_weights_on_smaller_dev_edges(std::vector<EdgeCut> 
 
 // takes an uncut tree and an edge in the tree
 // and updates the region ids as if the cut edge was really removed
-void assign_region_ids_from_uncut_tree(FlatGraph const &ust, PlanVector &region_ids, int const root,
+void assign_region_ids_from_uncut_tree(Tree const &ust, // FlatGraph const &ust, 
+    PlanVector &region_ids, int const root,
                                        int const root_region_id, int const cut_vertex_root,
                                        int const cut_vertex_parent, int const cut_region_id,
                                        CircularQueue<std::pair<int, int>> &vertex_queue) {
@@ -341,7 +342,8 @@ void assign_region_ids_from_uncut_tree(FlatGraph const &ust, PlanVector &region_
 
     // update root and add its children to queue
     region_ids[root] = root_region_id;
-    for (auto const &child_vertex : ust.neighbors(root)) {
+    // for (auto const &child_vertex : ust.neighbors(root)) {
+    for (auto const &child_vertex : ust[root]) {
         // check if this edge is one to remove in which case we ignore
         if (root == cut_vertex_parent && child_vertex == cut_vertex_root)
             continue;
@@ -356,7 +358,8 @@ void assign_region_ids_from_uncut_tree(FlatGraph const &ust, PlanVector &region_
         // update region ids
         region_ids[vertex] = root_region_id;
         // add children
-        for (auto const &child_vertex : ust.neighbors(vertex)) {
+        // for (auto const &child_vertex : ust.neighbors(vertex)) {
+        for (auto const &child_vertex : ust[vertex]) {
             // check if this edge is one to remove in which case we ignore
             if (vertex == cut_vertex_parent && child_vertex == cut_vertex_root)
                 continue;
@@ -368,7 +371,8 @@ void assign_region_ids_from_uncut_tree(FlatGraph const &ust, PlanVector &region_
     // now we update starting at the cut root vertex
     // update root and add its children to queue
     region_ids[cut_vertex_root] = cut_region_id;
-    for (auto const &child_vertex : ust.neighbors(cut_vertex_root)) {
+    // for (auto const &child_vertex : ust.neighbors(cut_vertex_root)) {
+    for (auto const &child_vertex : ust[cut_vertex_root]) {
         // since tree is directed we don't need to check anything
         vertex_queue.push({child_vertex, 0});
     }
@@ -380,7 +384,8 @@ void assign_region_ids_from_uncut_tree(FlatGraph const &ust, PlanVector &region_
         // update region ids
         region_ids[vertex] = cut_region_id;
         // add children
-        for (auto const &child_vertex : ust.neighbors(vertex)) {
+        // for (auto const &child_vertex : ust.neighbors(vertex)) {
+        for (auto const &child_vertex : ust[vertex]) {
             // since tree is directed we don't need to check anything
             vertex_queue.push({child_vertex, 0});
         }
@@ -390,7 +395,7 @@ void assign_region_ids_from_uncut_tree(FlatGraph const &ust, PlanVector &region_
 }
 
 arma::vec compute_soft_constraint_edge_cut_weights(
-    std::vector<EdgeCut> &valid_edges, ScoringFunction const &scoring_function, FlatGraph const &ust,
+    std::vector<EdgeCut> &valid_edges, ScoringFunction const &scoring_function, Tree const &ust, // FlatGraph const &ust,
     int const num_regions, PlanVector &region_ids, RegionSizes &region_sizes,
     IntPlanAttribute &region_pops, int const split_region_id1, int const split_region_id2,
     CircularQueue<std::pair<int, int>> &vertex_queue) {
@@ -424,7 +429,8 @@ arma::vec compute_soft_constraint_edge_cut_weights(
 }
 
 std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
-    const FlatGraph &a_ust, const int root, const std::vector<unsigned int> &pop, TreePopStack &stack,
+    Tree const &a_ust, // FlatGraph const &a_ust, 
+    const int root, const std::vector<unsigned int> &pop, TreePopStack &stack,
     std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
     const int min_potential_cut_size, const int max_potential_cut_size,
     std::vector<int> const &smaller_cut_sizes_to_try, const int total_region_pop,
@@ -448,7 +454,8 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
     stack.clear();
 
     // Start by adding all the roots children to the stack
-    for (auto const &root_children : a_ust.neighbors(root)) {
+    // for (auto const &root_children : a_ust.neighbors(root)) {
+    for (auto const &root_children : a_ust[root]) {
         stack.push({root_children, root, false});
     }
 
@@ -467,7 +474,8 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
             stack.push({vtx, parent, true});
 
             // Push unvisited child vertices onto the stack to get pop below
-            for (const auto &child_vtx : a_ust.neighbors(vtx)) {
+            // for (const auto &child_vtx : a_ust.neighbors(vtx)) {
+            for (const auto &child_vtx : a_ust[vtx]) {
                 // else add to the stack
                 stack.push({child_vtx, vtx, false});
             }
@@ -483,7 +491,8 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
             // All children of this vertex are processed; calculate its population below
             int pop_below_vtx = pop[vtx]; // Start with the vertex's own population
             // Add population below from each child
-            for (const auto &child : a_ust.neighbors(vtx)) {
+            // for (const auto &child : a_ust.neighbors(vtx)) {
+            for (const auto &child : a_ust[vtx]) {
                 pop_below_vtx += pops_below_vertex[child]; // Add population from child vertices
             }
             pops_below_vertex[vtx] = pop_below_vtx;
@@ -904,7 +913,8 @@ std::vector<EdgeCut> get_valid_edges_in_joined_vertex_tree(
 constexpr bool MERGED_TREE_SPLITTING_VERBOSE = false; // Compile-time constant
 
 std::vector<EdgeCut> TreeSplitter::get_all_valid_pop_edge_cuts_in_directed_tree(
-    const MapParams &map_params, FlatGraph const &ust, const int root, TreePopStack &stack,
+    const MapParams &map_params, Tree const &ust, // FlatGraph const &ust, 
+    const int root, TreePopStack &stack,
     std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
     int const region_population, int const region_size, const int min_potential_cut_size,
     const int max_potential_cut_size, std::vector<int> const &smaller_cut_sizes_to_try) const {
@@ -922,7 +932,7 @@ std::vector<EdgeCut> TreeSplitter::get_all_valid_pop_edge_cuts_in_directed_tree(
 
 std::pair<bool, EdgeCut> TreeSplitter::attempt_to_find_edge_to_cut(
     const MapParams &map_params, ScoringFunction const &scoring_function, RNGState &rng_state,
-    Plan const &plan, int const split_region1, int const split_region2, FlatGraph const &ust,
+    Plan const &plan, int const split_region1, int const split_region2, Tree const &ust, // FlatGraph const &ust,
     const int root, TreePopStack &stack, std::vector<int> &pops_below_vertex,
     std::vector<bool> &no_valid_edges_vertices, int const region_population,
     int const region_size, const int min_potential_cut_size, const int max_potential_cut_size,
@@ -938,14 +948,14 @@ std::pair<bool, EdgeCut> TreeSplitter::attempt_to_find_edge_to_cut(
     if (num_valid_edges == 0) {
         return std::make_pair(false, EdgeCut());
     } else { // else have derived class choose according to its rule
-        return select_edge_to_cut(scoring_function, ust, rng_state, valid_edges,
+        return select_edge_to_cut(rng_state, valid_edges,
                                   save_selection_prob);
     }
 }
 
 // returns edge cut and log probability it was chosen
 std::pair<bool, EdgeCut>
-TreeSplitter::select_edge_to_cut(ScoringFunction const &scoring_function, FlatGraph const &ust,
+TreeSplitter::select_edge_to_cut(
                                  RNGState &rng_state, std::vector<EdgeCut> &valid_edges,
                                  bool save_selection_prob) const {
     auto num_valid_edges = valid_edges.size();
@@ -1223,8 +1233,7 @@ void NaiveTopKSplitter::update_single_int_param(int int_param) {
 }
 
 std::pair<bool, EdgeCut>
-NaiveTopKSplitter::select_edge_to_cut(ScoringFunction const &scoring_function, FlatGraph const &ust,
-                                      RNGState &rng_state, std::vector<EdgeCut> &valid_edges,
+NaiveTopKSplitter::select_edge_to_cut(RNGState &rng_state, std::vector<EdgeCut> &valid_edges,
                                       bool save_selection_prob) const {
 
     int num_valid_edges = static_cast<int>(valid_edges.size());
@@ -1246,9 +1255,9 @@ NaiveTopKSplitter::select_edge_to_cut(ScoringFunction const &scoring_function, F
 }
 
 std::pair<bool, EdgeCut> UniformValidSplitter::select_edge_to_cut(
-    ScoringFunction const &scoring_function, FlatGraph const &ust, RNGState &rng_state,
+    RNGState &rng_state,
     std::vector<EdgeCut> &valid_edges, bool save_selection_prob) const {
-    int num_valid_edges = static_cast<int>(valid_edges.size());
+    std::uint32_t num_valid_edges = static_cast<std::uint32_t>(valid_edges.size());
     // if only 1 edge just return that
     if (num_valid_edges == 1)
         return std::make_pair(true, valid_edges[0]);
@@ -1287,7 +1296,7 @@ double PopTemperSplitter::compute_unnormalized_edge_cut_weight(EdgeCut const &ed
 }
 
 std::pair<bool, EdgeCut> ExperimentalSplitter::select_edge_to_cut(
-    ScoringFunction const &scoring_function, FlatGraph const &ust, RNGState &rng_state,
+    RNGState &rng_state,
     std::vector<EdgeCut> &valid_edges, bool save_selection_prob) const {
     auto num_valid_edges = valid_edges.size();
 
@@ -1355,7 +1364,7 @@ double ExperimentalSplitter::get_log_selection_prob(std::vector<EdgeCut> &valid_
 
 std::pair<bool, EdgeCut> ConstraintSplitter::attempt_to_find_edge_to_cut(
     const MapParams &map_params, ScoringFunction const &scoring_function, RNGState &rng_state,
-    Plan const &plan, int const split_region1, int const split_region2, FlatGraph const &ust,
+    Plan const &plan, int const split_region1, int const split_region2, Tree const &ust, // FlatGraph const &ust,
     const int root, TreePopStack &stack, std::vector<int> &pops_below_vertex,
     std::vector<bool> &no_valid_edges_vertices, int const region_population,
     int const region_size, const int min_potential_cut_size, const int max_potential_cut_size,
