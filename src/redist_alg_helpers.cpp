@@ -827,7 +827,7 @@ get_tree_splitter_ptrs(MapParams const &map_params, SplittingMethodType const sp
     if (splitting_method == SplittingMethodType::NaiveTopK) {
         // set splitting k to -1
         std::generate_n(std::back_inserter(tree_splitters_ptr_vec), num_threads,
-                        [] { return std::make_unique<NaiveTopKSplitter>(1); });
+                        [V] { return std::make_unique<NaiveTopKSplitter>(V, 1); });
     } else if (splitting_method == SplittingMethodType::UnifValid) {
         std::generate_n(std::back_inserter(tree_splitters_ptr_vec), num_threads,
                         [&map_graph = map_params.map_graph] { return std::make_unique<UniformValidSplitter>(map_graph); });

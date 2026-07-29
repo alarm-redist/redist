@@ -22,6 +22,47 @@ struct WilsonTimes {
   double sub_ust_call_time = 0.0;
 };
 
+
+// Simple struct to hold sratch objects 
+// used by Wilson code on  graphs 
+class WilsonGraphScratch {
+
+  public:
+    WilsonGraphScratch(int const V) : 
+    dummy_county_tree_queue(V + 1),
+      path(V),
+      path_pos(V), walk_epochs(V, 1),
+          current_walk_epoch(1) {}
+
+
+    DummyTreeQueue dummy_county_tree_queue;
+    std::vector<int> path;
+    std::vector<int> path_pos;
+    std::vector<std::uint32_t> walk_epochs;
+    std::uint32_t current_walk_epoch;
+
+};
+
+class WilsonMultiGraphScratch {
+
+  public:
+    WilsonMultiGraphScratch(int const num_admin_units) : 
+    county_stack(num_admin_units + 1),
+    county_pop(num_admin_units, 0),
+    county_members(num_admin_units, std::vector<int>{}),
+    c_visited(num_admin_units, true), cty_pop_below(num_admin_units, 0)
+    {}
+
+
+  TreePopStack county_stack; // county 
+  std::vector<unsigned int> county_pop; // county
+  std::vector<std::vector<int>> county_members; // county
+  std::vector<bool> c_visited; // county
+  std::vector<int> cty_pop_below; // county
+  std::vector<std::array<int, 3>> county_path; //county 
+
+};
+
 // Class for wrapping wilson code in 
 class USTSampler {
 
@@ -31,6 +72,9 @@ class USTSampler {
     // first entry is whether tree was successfully drawn
     // second is the root of the tree 
     std::pair<bool, int> draw_ust(double const lower, double const upper,
+      RNGState &rng_state);
+
+    std::pair<bool, int> NEW_draw_ust(double const lower, double const upper,
       RNGState &rng_state);
 
     // Finds and 
@@ -46,14 +90,12 @@ class USTSampler {
         :
         // ust(map_params.map_graph.get_flat_empty_tree()),
         ust(init_tree(map_params.V)),
+        wilson_submap(map_params.map_graph),
         pops_below_vertex(map_params.V, 0),
           visited(map_params.V), ignore(map_params.V), stack(map_params.V + 1),
           county_tree(init_tree(map_params.num_counties)),
-          county_stack(map_params.num_counties + 1),
-          dummy_county_tree_queue(map_params.V),
-          county_pop(map_params.num_counties, 0.0),
-          county_members(map_params.num_counties, std::vector<int>{}),
-          c_visited(map_params.num_counties, true), cty_pop_below(map_params.num_counties, 0),
+          g_scratch(map_params.V),
+          mg_scratch(map_params.num_counties),
           vertex_queue(map_params.V), map_params(map_params),
           splitting_schedule(splitting_schedule) {
             // reserve the max capacity now 
@@ -66,19 +108,14 @@ class USTSampler {
 
     // FlatGraph ust;
     Tree ust;
+    FlatGraph wilson_submap; // subgraph of g restricted to only the vertices we care about 
     std::vector<int> pops_below_vertex;
-    std::vector<bool> visited, ignore;
-    TreePopStack stack;
-    Tree county_tree;
-    TreePopStack county_stack;
-    DummyTreeQueue dummy_county_tree_queue;
-    std::vector<unsigned int> county_pop;
-    std::vector<std::vector<int>> county_members;
-    std::vector<bool> c_visited;
-    std::vector<int> cty_pop_below;
-    std::vector<std::array<int, 3>> county_path;
-    std::vector<int> path;
-    CircularQueue<std::pair<int, int>> vertex_queue;
+    std::vector<bool> visited, ignore; // TODO make visited private and create one for tree splitter
+    TreePopStack stack; // graph
+    Tree county_tree; // county 
+    WilsonGraphScratch g_scratch;
+    WilsonMultiGraphScratch mg_scratch;
+    CircularQueue<std::pair<int, int>> vertex_queue; // not used in sample ust
     MapParams const &map_params;
     SplittingSchedule const &splitting_schedule;
 
@@ -111,6 +148,13 @@ class USTSampler {
                                                 bool const use_custom_bounds = false,
                                                 double const custom_sample_sub_ust_lower = 0,
                                                 double const custom_sample_sub_ust_upper = 0);
+
+
+    USTDrawResult NEW_attempt_to_draw_tree_on_region(RNGState &rng_state, Plan const &plan,
+                                        const int region_to_draw_tree_on, 
+                                        bool const use_custom_bounds = false,
+                                        double const custom_sample_sub_ust_lower = 0,
+                                        double const custom_sample_sub_ust_upper = 0);
 
     std::pair<bool, EdgeCut> attempt_to_find_valid_tree_split(
         RNGState &rng_state, ScoringFunction const &scoring_function,

@@ -313,7 +313,7 @@ Rcpp::List perform_a_valid_multidistrict_split(Rcpp::List adj_list, const Rcpp::
             map_params, scoring_function, rng_state, 
             *plan_ensemble.plan_ptr_vec[0], region_id_to_split, plan_ensemble.plan_ptr_vec[0]->num_regions,
             ust_sampler.ust, result.root,
-            ust_sampler.stack, ust_sampler.pops_below_vertex, 
+            ust_sampler.pops_below_vertex, 
             ust_sampler.ignore, region_population, region_size,
             min_possible_cut_size, max_possible_cut_size,
             splitting_schedule_ptr->all_regions_smaller_cut_sizes_to_try[region_size],

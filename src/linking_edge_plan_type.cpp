@@ -178,8 +178,8 @@ double LinkingEdgePlan::get_regions_log_splitting_prob(ScoringFunction const &sc
 
     // get the log probability
     return tree_splitter.get_log_retroactive_splitting_prob_for_joined_packed_tree(
-        ust_sampler.map_params, scoring_function, forest_edges, ust_sampler.stack,
-        ust_sampler.visited, ust_sampler.pops_below_vertex, region1_root, region2_root, *this,
+        ust_sampler.map_params, scoring_function, forest_edges,
+        ust_sampler.pops_below_vertex, region1_root, region2_root, *this,
         min_possible_cut_size, max_possible_cut_size,
         ust_sampler.splitting_schedule
             .all_regions_smaller_cut_sizes_to_try[merged_region_size]);

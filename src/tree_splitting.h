@@ -22,19 +22,23 @@ class TreeSplitter {
   public:
     // Default Constructor
     TreeSplitter(FlatGraph const &map_graph) :
-    forest_graph(map_graph.get_flat_empty_tree())
+    forest_graph(map_graph.get_flat_empty_tree()), 
+    visited(map_graph.size()),
+    stack(map_graph.size()+1)
     {};
-    TreeSplitter() : forest_graph() {};
+    TreeSplitter(int const V) : forest_graph(), visited(0), stack(V + 1) {};
 
 
     virtual ~TreeSplitter() = default;
 
     FlatGraph forest_graph; // used for computing get_log_retroactive_splitting_prob_for_joined_flattree
+    std::vector<bool> visited; // used in retroactive prob so not needed for naive k
+    mutable TreePopStack stack; // used in splitting so needed for all 
 
     // Returns a vector of all the valid edges in the tree
     std::vector<EdgeCut> get_all_valid_pop_edge_cuts_in_directed_tree(
         MapParams const &map_params, Tree const &ust, // FlatGraph const &ust, 
-        const int root, TreePopStack &stack,
+        const int root, 
         std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
         int const region_population, int const region_size, const int min_potential_cut_size,
         const int max_potential_cut_size,
@@ -45,7 +49,7 @@ class TreeSplitter {
         const MapParams &map_params, ScoringFunction const &scoring_function,
         RNGState &rng_state, Plan const &plan, int const split_region1, int const split_region2,
         Tree const &ust, // FlatGraph const &ust, 
-        const int root, TreePopStack &stack,
+        const int root, 
         std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
         int const region_population, int const region_size, const int min_potential_cut_size,
         const int max_potential_cut_size, std::vector<int> const &smaller_cut_sizes_to_try,
@@ -57,7 +61,7 @@ class TreeSplitter {
     // over to a vertex forest 
     virtual double get_log_retroactive_splitting_prob_for_joined_packed_tree(
         MapParams const &map_params, ScoringFunction const &scoring_function,
-        EdgeBitset const &forest_edges, TreePopStack &stack, std::vector<bool> &visited,
+        EdgeBitset const &forest_edges, 
         std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
         Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
         std::vector<int> const &smaller_cut_sizes_to_try);
@@ -68,7 +72,7 @@ class TreeSplitter {
     // forest once for the indexing gains 
     virtual double get_log_retroactive_splitting_prob_for_joined_flattree(
         MapParams const &map_params, ScoringFunction const &scoring_function,
-        FlatGraph const &forest_graph, TreePopStack &stack, std::vector<bool> &visited,
+        FlatGraph const &forest_graph, 
         std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
         Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
         std::vector<int> const &smaller_cut_sizes_to_try);
@@ -113,8 +117,8 @@ class NaiveTopKSplitter : public TreeSplitter {
 
   public:
     // Constructor for NaiveTopKSplitter
-    NaiveTopKSplitter(int k_param) 
-    : TreeSplitter(), k_param(k_param) {}
+    NaiveTopKSplitter(int const V, int k_param) 
+    : TreeSplitter(V), k_param(k_param) {}
 
     // Attributes specific to NaiveTopKSplitter
     int k_param; // Top k valuex
@@ -251,7 +255,7 @@ class ConstraintSplitter : public TreeSplitter {
         const MapParams &map_params, ScoringFunction const &scoring_function,
         RNGState &rng_state, Plan const &plan, int const split_region1, int const split_region2,
         Tree const &ust, // FlatGraph const &ust, 
-        const int root, TreePopStack &stack,
+        const int root, 
         std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
         int const region_population, int const region_size, const int min_potential_cut_size,
         const int max_potential_cut_size, std::vector<int> const &smaller_cut_sizes_to_try,
@@ -259,7 +263,7 @@ class ConstraintSplitter : public TreeSplitter {
 
     double get_log_retroactive_splitting_prob_for_joined_packed_tree(
         MapParams const &map_params, ScoringFunction const &scoring_function,
-        EdgeBitset const &forest_edges, TreePopStack &stack, std::vector<bool> &visited,
+        EdgeBitset const &forest_edges,
         std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
         Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
         std::vector<int> const &smaller_cut_sizes_to_try) override;
@@ -267,7 +271,7 @@ class ConstraintSplitter : public TreeSplitter {
 
     double get_log_retroactive_splitting_prob_for_joined_flattree(
         MapParams const &map_params, ScoringFunction const &scoring_function,
-        FlatGraph const &forest_graph, TreePopStack &stack, std::vector<bool> &visited,
+        FlatGraph const &forest_graph, 
         std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
         Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
         std::vector<int> const &smaller_cut_sizes_to_try) override;
