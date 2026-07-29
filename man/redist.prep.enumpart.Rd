@@ -17,11 +17,11 @@ redist.prep.enumpart(
 
 \item{ordered_path}{Valid path to output the ordered adjacency map to.}
 
-\item{weight_path}{A path (not including \code{".dat"}) to store vertex weights.
-Only supply with \code{total_pop}.}
+\item{weight_path}{A path (not including `".dat"`) to store vertex weights.
+Only supply with `total_pop`.}
 
 \item{total_pop}{The vector of precinct populations. Only supply with
-\code{weight_path}.}
+`weight_path`.}
 
 \item{unordered_path}{Deprecated, ignored.}
 }
@@ -29,13 +29,13 @@ Only supply with \code{total_pop}.}
 0 on success.
 }
 \description{
-\strong{Deprecated}: Use \code{\link[=redist_enumpart]{redist_enumpart()}} instead, which handles preparation
+**Deprecated**: Use [redist_enumpart()] instead, which handles preparation
 automatically.
 }
 \references{
 Fifield, B., Imai, K., Kawahara, J., & Kenny, C. T. (2020).
 The essential role of empirical validation in legislative redistricting
-simulation. \emph{Statistics and Public Policy}, 7(1), 52-68.
+simulation. *Statistics and Public Policy*, 7(1), 52-68.
 }
 \concept{enumerate}
 \keyword{internal}

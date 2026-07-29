@@ -5,6 +5,13 @@
 #' a spanning forest representation of districts and proposes changes by finding
 #' cycles between adjacent districts.
 #'
+#' Each iteration uses either an internal forest walk, which changes the spanning
+#' tree representation without changing the plan, or a cycle walk, which cuts a
+#' cycle across two adjacent districts to produce new population-balanced
+#' districts. The cycle moves range from local boundary changes to larger
+#' district-scale changes and are Metropolis-Hastings corrected. The rate of these
+#' is controlled by `cycle_walk_frac`.
+#'
 #' This function draws samples from a specific target measure, controlled by the
 #' `map`, `compactness`, and `constraints` parameters.
 #'
@@ -33,7 +40,9 @@
 #'   higher values preferring more compact districts. Must be nonnegative. A
 #'   value of 0 samples uniformly over partitions. Default is `0`.
 #' @param constraints A [redist_constr] object or list of constraints.
-#' @param edge_weights Edge weights for the graph. Can be:
+#' @param edge_weights Edge weights for the graph. Higher weights favor spanning
+#'   forests containing those edges, which tends to keep their endpoints in the
+#'   same district. Can be:
 #'   - A single number: used as the intra-county weight multiplier (requires
 #'     `counties`). For example, `edge_weights = 5` with `counties` upweights
 #'     intra-county edges by 5x.
@@ -43,8 +52,8 @@
 #'     intra-county edges; otherwise no weighting.
 #' @param ncores The number of parallel processes to run. Defaults to the
 #'   number of available cores, capped at the number of chains.
-#' @param cl_type The cluster type (see [parallel::makeCluster()]). Safest is `"PSOCK"`,
-#'   but `"FORK"` may be appropriate in some settings.
+#' @param cl_type The cluster type (see [parallel::makeCluster()]). Safest is
+#'   `"PSOCK"`, but `"FORK"` may be appropriate in some settings.
 #' @param return_all If `TRUE` return all sampled plans; otherwise, just return
 #'   the final plan from each chain.
 #' @param init_name A name for the initial plan, or `FALSE` to not include
@@ -56,6 +65,15 @@
 #' @returns A [redist_plans] object containing the simulated plans. If `chains > 1`,
 #'   the output will include a `chain` column indicating which chain each plan
 #'   came from.
+#' @export
+#'
+#' @concept simulate
+#' @md
+#'
+#' @references
+#' DeFord, D. R., Herschlag, G., & Mattingly, J. C. (2025). A Cycle Walk for
+#' Sampling Measures on Spanning Forests for Redistricting. *arXiv preprint
+#' arXiv:2509.08629*. \doi{10.48550/arXiv.2509.08629}.
 #'
 #' @examples
 #' data(fl25)
@@ -64,10 +82,6 @@
 #'
 #' # Multiple chains for convergence diagnostics
 #' sampled_chains <- redist_cyclewalk(fl_map, 200, chains = 2, ncores = 2)
-#'
-#' @concept simulate
-#' @md
-#' @export
 redist_cyclewalk <- function(
     map,
     nsims,

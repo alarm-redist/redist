@@ -75,3 +75,4 @@ Config/build/compilation-database: true
 Config/roxygen2/version: 8.0.0
 Config/roxygen2/markdown: TRUE
 Config/testthat/edition: 3
+RoxygenNote: 7.3.3

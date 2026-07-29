@@ -14,53 +14,53 @@ proj_avg(plans, x, draws = NA)
 proj_contr(plans, x, compare = NA, draws = NA, norm = FALSE, pfdr = FALSE)
 }
 \arguments{
-\item{plans}{A \link{redist_plans} object.}
+\item{plans}{A [redist_plans] object.}
 
-\item{x}{A district-level summary statistic calculated from the \code{plans}
-object. Tidy-evaluated in \code{plans}.}
+\item{x}{A district-level summary statistic calculated from the `plans`
+object. Tidy-evaluated in `plans`.}
 
 \item{draws}{which draws/samples to include in the projective distribution.
-\code{NULL} will include all draws, including reference plans. The special value
-\code{NA} will include all sampled (non-reference) draws. An integer, logical,
+`NULL` will include all draws, including reference plans. The special value
+`NA` will include all sampled (non-reference) draws. An integer, logical,
 or character vector indicating specific draws may also be provided.}
 
 \item{compare}{The plan to compare to the rest of the ensemble (which is
-controlled by \code{draws}). Defaults to the first reference plan, if any exists}
+controlled by `draws`). Defaults to the first reference plan, if any exists}
 
-\item{norm}{If \code{TRUE}, normalize the contrast by the standard deviation of
+\item{norm}{If `TRUE`, normalize the contrast by the standard deviation of
 the projective distribution, precinct-wise. This will make the projective
 contrast in terms of z-scores.}
 
-\item{pfdr}{If \code{TRUE}, calculate q-values for each precinct that can be
+\item{pfdr}{If `TRUE`, calculate q-values for each precinct that can be
 used to control the positive false discovery rate (pFDR) at a given level
 by thresholding the q-values at that level. Q-values are stored as the
-\code{"q"} attribute on the returned vector. Requires the \code{matrixStats} package
+`"q"` attribute on the returned vector. Requires the `matrixStats` package
 be installed.}
 }
 \value{
-\code{proj_distr}: A matrix with a row for each precinct (row in the map
-object) and a column for every draw described by \code{draws}.
+`proj_distr`: A matrix with a row for each precinct (row in the map
+  object) and a column for every draw described by `draws`.
 
-\code{proj_avg}: A numeric vector of length matching the number of
-precincts.
+`proj_avg`: A numeric vector of length matching the number of
+  precincts.
 
-\code{proj_contr}: A numeric vector of length matching the number of
-precincts, optionally with a \code{"q"} attribute containing q-values.
+`proj_contr`: A numeric vector of length matching the number of
+  precincts, optionally with a `"q"` attribute containing q-values.
 }
 \description{
-The \emph{projective distribution} of a district-level summary statistic (McCartan
+The *projective distribution* of a district-level summary statistic (McCartan
 2024) is the distribution of values of that statistic across a set of plans
-for the district each precinct belongs to. The \emph{projective average} of a
+for the district each precinct belongs to. The *projective average* of a
 statistic is the average value of the projective distribution in each
-precinct. A \emph{projective contrast} is the difference between the projective
+precinct. A *projective contrast* is the difference between the projective
 average for a single plan and the projective average for an ensemble of
 sampled plans.
 
 It is very important to properly account for variation in the projective
-distribution when looking at projective contrasts. The \code{pfdr} argument to
-\code{proj_contr()} will calculate q-values for each precinct that can be used to
+distribution when looking at projective contrasts. The `pfdr` argument to
+`proj_contr()` will calculate q-values for each precinct that can be used to
 control the positive false discovery rate (pFDR) to avoid being misled by
-this variation. See \code{\link[=redist.plot.contr_pfdr]{redist.plot.contr_pfdr()}} for a way to automatically
+this variation. See [redist.plot.contr_pfdr()] for a way to automatically
 plot projective contrasts with this false discovery rate control.
 }
 \examples{
@@ -77,6 +77,6 @@ plot(map, proj_contr(plans, dem, compare="cd_2010"))
 }
 \references{
 McCartan, C. (2024). Projective Averages for Summarizing Redistricting
-Ensembles. \emph{arXiv preprint}. Available at \url{https://arxiv.org/pdf/2401.06381}.
+Ensembles. *arXiv preprint*. Available at <https://arxiv.org/pdf/2401.06381>.
 }
 \concept{analyze}

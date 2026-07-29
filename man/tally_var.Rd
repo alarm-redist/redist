@@ -7,11 +7,11 @@
 tally_var(map, x, .data = pl())
 }
 \arguments{
-\item{map}{a \code{redist_map} object}
+\item{map}{a `redist_map` object}
 
 \item{x}{a variable to tally. Tidy-evaluated.}
 
-\item{.data}{a \code{redist_plans} object or matrix of plans}
+\item{.data}{a `redist_plans` object or matrix of plans}
 }
 \value{
 a vector containing the tallied values by district and plan (column-major)

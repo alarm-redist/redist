@@ -45,14 +45,13 @@ iterations may be advised. Default is 5000.}
 \value{
 list, containing three objects containing the completed redistricting
 plan.
-\itemize{
-\item \code{plan}:  A vector of length N, indicating the
+
+- `plan`:  A vector of length N, indicating the
 district membership of each precinct.
-\item \code{district_list}  A list of length Ndistrict.  Each list contains a
+- `district_list`  A list of length Ndistrict.  Each list contains a
 vector of the precincts in the respective district.
-\item \code{district_pop}  A vector of length Ndistrict, containing the
+- `district_pop`  A vector of length Ndistrict, containing the
 population totals of the respective districts.
-}
 }
 \description{
 \code{redist.crsg} generates redistricting plans using a random seed a grow

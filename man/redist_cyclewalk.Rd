@@ -60,7 +60,9 @@ value of 0 samples uniformly over partitions. Default is \code{0}.}
 
 \item{constraints}{A \link{redist_constr} object or list of constraints.}
 
-\item{edge_weights}{Edge weights for the graph. Can be:
+\item{edge_weights}{Edge weights for the graph. Higher weights favor spanning
+forests containing those edges, which tends to keep their endpoints in the
+same district. Can be:
 \itemize{
 \item A single number: used as the intra-county weight multiplier (requires
 \code{counties}). For example, \code{edge_weights = 5} with \code{counties} upweights
@@ -74,8 +76,8 @@ intra-county edges; otherwise no weighting.
 \item{ncores}{The number of parallel processes to run. Defaults to the
 number of available cores, capped at the number of chains.}
 
-\item{cl_type}{The cluster type (see \code{\link[parallel:makeCluster]{parallel::makeCluster()}}). Safest is \code{"PSOCK"},
-but \code{"FORK"} may be appropriate in some settings.}
+\item{cl_type}{The cluster type (see \code{\link[parallel:makeCluster]{parallel::makeCluster()}}). Safest is
+\code{"PSOCK"}, but \code{"FORK"} may be appropriate in some settings.}
 
 \item{return_all}{If \code{TRUE} return all sampled plans; otherwise, just return
 the final plan from each chain.}
@@ -100,6 +102,13 @@ a spanning forest representation of districts and proposes changes by finding
 cycles between adjacent districts.
 }
 \details{
+Each iteration uses either an internal forest walk, which changes the spanning
+tree representation without changing the plan, or a cycle walk, which cuts a
+cycle across two adjacent districts to produce new population-balanced
+districts. The cycle moves range from local boundary changes to larger
+district-scale changes and are Metropolis-Hastings corrected. The rate of these
+is controlled by \code{cycle_walk_frac}.
+
 This function draws samples from a specific target measure, controlled by the
 \code{map}, \code{compactness}, and \code{constraints} parameters.
 }
@@ -110,6 +119,10 @@ sampled <- redist_cyclewalk(fl_map, 100)
 
 # Multiple chains for convergence diagnostics
 sampled_chains <- redist_cyclewalk(fl_map, 200, chains = 2, ncores = 2)
-
+}
+\references{
+DeFord, D. R., Herschlag, G., & Mattingly, J. C. (2025). A Cycle Walk for
+Sampling Measures on Spanning Forests for Redistricting. \emph{arXiv preprint
+arXiv:2509.08629}. \doi{10.48550/arXiv.2509.08629}.
 }
 \concept{simulate}

@@ -11,9 +11,9 @@ combine_scorers(...)
 \method{cbind}{redist_scorer}(..., deparse.level = 1)
 }
 \arguments{
-\item{...}{a numeric or a \code{redist_scorer} function, from \code{\link{scorers}}}
+\item{...}{a numeric or a `redist_scorer` function, from [`scorers`]}
 
-\item{deparse.level}{As in \code{\link[=cbind]{cbind()}}.}
+\item{deparse.level}{As in [cbind()].}
 }
 \value{
 function of class redist_scorer. Will return a matrix with each

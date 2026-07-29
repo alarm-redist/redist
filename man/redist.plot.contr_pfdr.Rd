@@ -13,10 +13,10 @@ redist.plot.contr_pfdr(
 )
 }
 \arguments{
-\item{map}{A \link{redist_map} object}
+\item{map}{A [redist_map] object}
 
-\item{contr}{The output of \code{\link[=proj_contr]{proj_contr()}} with \code{pfdr=TRUE}: A vector containing
-the contrast and an attribute \code{"q"} containing the q-values.}
+\item{contr}{The output of [proj_contr()] with `pfdr=TRUE`: A vector containing
+the contrast and an attribute `"q"` containing the q-values.}
 
 \item{level}{The positive false discovery rate level to control.}
 
