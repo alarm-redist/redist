@@ -583,6 +583,16 @@ class MapParams {
               double const target, double const upper,
               SamplingSpace const sampling_space);
 
+    // Constructor for when we only need map information
+    // so fake district info is ued 
+    MapParams(Graph const &g, 
+              const std::vector<unsigned int> &counties, 
+              const std::vector<unsigned int> &pop,
+              double const lower, double const upper
+             );
+
+
+
     Graph const g;                       // The graph as undirected adjacency list
     FlatGraph map_graph;                 // The graph stored as a FlatGraph type
     int const num_edges;                 // number of undirected edges in g

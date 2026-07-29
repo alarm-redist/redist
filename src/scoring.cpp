@@ -246,11 +246,16 @@ int count_min_threshold_regions(int const num_populations,
 
 //
 
-std::pair<bool, double> RegionConstraint::compute_region_score(const Plan &plan,
-                                                               int region_id) const {
+std::pair<bool, double> RegionConstraint::compute_region_score(
+    int const num_regions,
+    PlanVector const &region_ids,
+    RegionSizes const &region_sizes,
+    IntPlanAttribute const &region_pops,
+    int region_id
+) const {
     double region_score = strength * compute_raw_region_constraint_score(
-                                         plan.num_regions, plan.region_ids, plan.region_sizes,
-                                         plan.region_pops, region_id);
+                                         num_regions, region_ids, region_sizes,
+                                         region_pops, region_id);
 
     if (hard_constraint) {
         if (region_score >= hard_threshold) {
@@ -261,6 +266,13 @@ std::pair<bool, double> RegionConstraint::compute_region_score(const Plan &plan,
     } else {
         return std::make_pair(true, region_score);
     }
+}
+
+
+std::pair<bool, double> RegionConstraint::compute_region_score(const Plan &plan,
+                                                               int region_id) const {
+    return compute_region_score(plan.num_regions, plan.region_ids, 
+        plan.region_sizes, plan.region_pops, region_id);
 }
 
 double RegionConstraint::compute_soft_region_score(int const num_regions,
@@ -1422,13 +1434,14 @@ bool ScoringFunction::satisfies_hard_constraints(Plan const &plan, int const reg
     return true;
 }
 
-double ScoringFunction::compute_full_split_plan_soft_score(int const num_regions,
+std::pair<bool, double> ScoringFunction::compute_full_split_plan_score(int const num_regions,
                                                            PlanVector const &region_ids,
                                                            RegionSizes const &region_sizes,
                                                            IntPlanAttribute const &region_pops,
                                                            int const split_region1,
                                                            int const split_region2) const {
     double score = 0.0;
+    bool zero_prob = false;
     // check if new regions are multidistricts
     auto const region1_size = region_sizes[split_region1];
     auto const region2_size = region_sizes[split_region2];
@@ -1440,12 +1453,32 @@ double ScoringFunction::compute_full_split_plan_soft_score(int const num_regions
 
         // only compute the score if we score this size
         if (region_constraint_ptr->region_sizes_to_score[split_region1]){
-            score += region_constraint_ptr->compute_soft_region_score(
-                num_regions, region_ids, region_sizes, region_pops, split_region1);
+            auto score_result = region_constraint_ptr->compute_region_score(
+                num_regions, region_ids, region_sizes, region_pops, split_region1
+            );
+            // immediately return if threshold triggered
+            if (!score_result.first) {
+                return std::make_pair(false, 0.0);
+            } else {
+                if constexpr (DEBUG_SCORING_VERBOSE) {
+                    REprintf("Adding %f!\n", score_result.second);
+                }
+                score += score_result.second;
+            }
         }
         if (region_constraint_ptr->region_sizes_to_score[split_region2]){
-            score += region_constraint_ptr->compute_soft_region_score(
-                num_regions, region_ids, region_sizes, region_pops, split_region2);
+            auto score_result = region_constraint_ptr->compute_region_score(
+                num_regions, region_ids, region_sizes, region_pops, split_region2
+            );
+            // immediately return if threshold triggered
+            if (!score_result.first) {
+                return std::make_pair(false, 0.0);
+            } else {
+                if constexpr (DEBUG_SCORING_VERBOSE) {
+                    REprintf("Adding %f!\n", score_result.second);
+                }
+                score += score_result.second;
+            }
         }
     }
     for (auto const &plan_constraint_ptr : plan_constraint_ptrs) {
@@ -1453,10 +1486,19 @@ double ScoringFunction::compute_full_split_plan_soft_score(int const num_regions
         if (!plan_constraint_ptr->num_regions_to_score[num_regions])
             continue;
 
-        score += plan_constraint_ptr
-                     ->compute_plan_score(num_regions, region_ids, region_sizes, region_pops)
-                     .second;
+        auto score_result = plan_constraint_ptr
+            ->compute_plan_score(num_regions, region_ids, region_sizes, region_pops
+        );
+        // immediately return if threshold triggered
+        if (!score_result.first) {
+            return std::make_pair(false, 0.0);
+        } else {
+            if constexpr (DEBUG_SCORING_VERBOSE) {
+                REprintf("Adding %f!\n", score_result.second);
+            }
+            score += score_result.second;
+        }
     }
 
-    return score;
+    return std::make_pair(true, score);
 }

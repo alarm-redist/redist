@@ -494,3 +494,12 @@ MapParams::MapParams(Graph const &g,
         );
     }
 };
+
+
+MapParams::MapParams(Graph const &g, 
+    const std::vector<unsigned int> &counties, 
+    const std::vector<unsigned int> &pop,
+    double const lower, double const upper
+): MapParams(g, counties, pop,
+        6, 6, std::vector<int>{1}, lower,
+                         42.0, upper, SamplingSpace::GraphSpace) {};

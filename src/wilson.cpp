@@ -179,7 +179,27 @@ static void add_county_to_tree_dfs(
 
 }
 
-
+/*
+ * Generate a random vertex (integer) among unvisited vertices
+ * `lower` is a lower bound (inclusive) on the index of the first unvisited element
+ */
+// TESTED
+int rvtx(const std::vector<bool> &visited, int size, int remaining, int &lower,
+         RNGState &rng_state) {
+    int idx = rng_state.r_int(remaining);
+    int accuml = 0;
+    bool seen_one = false;
+    for (int i = lower; i < size - 1; i++) {
+        accuml += 1 - visited[i];
+        if (!seen_one && !visited[i]) {
+            seen_one = true;
+            lower = i;
+        }
+        if (accuml - 1 == idx)
+            return i;
+    }
+    return size - 1;
+}
 
 /*
  * Erase loops in `path` that would be created by adding `proposal` to path
@@ -321,10 +341,14 @@ void OLD_TO_UPDATE_get_tree_pops_below(const Tree &ust, const int root, TreePopS
     return;
 }
 
+
+// NOTE: in the future add this template option to make it 
+// easy to turn off fake tree generation
 /*
  * Sample a uniform spanning subtree of unvisited nodes using Wilson's algorithm
  */
 // TESTED
+template <bool SkipUnsplittableTrees>
 SampleSubUSTResult sample_sub_ust(MapParams const &map_params, Tree &tree, // FlatGraph &tree, 
                    double const lower,
                    double const upper, std::vector<bool> &visited,
@@ -407,6 +431,8 @@ SampleSubUSTResult sample_sub_ust(MapParams const &map_params, Tree &tree, // Fl
         }
     }
 
+    // optional toggle of skipping unsplittable trees 
+    if constexpr (SkipUnsplittableTrees) {
     // figure out which counties will not need to be split
     if (n_county > 1) {
         // don't need to fill pop below since it gets reset
@@ -456,6 +482,7 @@ SampleSubUSTResult sample_sub_ust(MapParams const &map_params, Tree &tree, // Fl
             }
         }
     }
+    }
 
     // Generate tree within each county
     if (remaining > 0) {
@@ -486,85 +513,9 @@ SampleSubUSTResult sample_sub_ust(MapParams const &map_params, Tree &tree, // Fl
 
 
 
-
-
-
-std::vector<unsigned int>
-integer_vector_to_uint_vec(Rcpp::IntegerVector const& x) {
-    std::vector<unsigned int> out;
-    out.reserve(x.size());
-
-    for (R_xlen_t i = 0; i < x.size(); ++i) {
-        int const value = x[i];
-
-        if (value == NA_INTEGER) {
-            throw std::runtime_error(
-                "Cannot convert Rcpp::IntegerVector to std::vector<unsigned int>: found NA"
-            );
-        }
-
-        if (value < 0) {
-            throw std::runtime_error(
-                "Cannot convert Rcpp::IntegerVector to std::vector<unsigned int>: found negative value"
-            );
-        }
-
-        out.push_back(static_cast<unsigned int>(value));
-    }
-
-    return out;
 }
 
-Graph list_to_graph(const Rcpp::List &l) {
-    int V = l.size();
-    Graph g;
-    for (int i = 0; i < V; i++) {
-        g.push_back(Rcpp::as<std::vector<int>>((Rcpp::IntegerVector)l[i]));
-    }
-    return g;
-}
 
-}
-
-// [[Rcpp::export]]
-Tree sample_ust(Rcpp::List l, const Rcpp::IntegerVector &pop, double lower, double upper,
-                const Rcpp::IntegerVector &counties, const std::vector<bool> ignore) {
-    RNGState rng_state((int)Rcpp::sample(INT_MAX, 1)[0]);
-    int V = l.size();
-    Graph g;
-    for (int i = 0; i < V; i++) {
-        g.push_back(Rcpp::as<std::vector<int>>((Rcpp::IntegerVector)l[i]));
-    }
-
-    int FAKE_NDISTS = 6;
-    double FAKE_TARGET = 6.6;
-
-    MapParams map_params(list_to_graph(l), 
-        integer_vector_to_uint_vec(counties), 
-        integer_vector_to_uint_vec(pop),
-        FAKE_NDISTS, FAKE_NDISTS, std::vector<int>{}, lower,
-                         FAKE_TARGET, upper, SamplingSpace::GraphSpace);
-
-    // FlatGraph tree = map_params.map_graph.get_flat_empty_tree();
-    Tree tree = init_tree(V);
-    std::vector<bool> visited(V);
-    Tree county_tree = init_tree(map_params.num_counties);
-    TreePopStack county_stack(map_params.num_counties + 1);
-    DummyTreeQueue dummy_county_tree_queue(map_params.V);
-    std::vector<unsigned int> county_pop(map_params.num_counties, 0.0);
-    std::vector<std::vector<int>> county_members(map_params.num_counties, std::vector<int>{});
-    std::vector<bool> c_visited(map_params.num_counties, true);
-    std::vector<int> cty_pop_below(map_params.num_counties, 0);
-    std::vector<std::array<int, 3>> county_path;
-    std::vector<int> path;
-
-    sample_sub_ust(map_params, tree, lower, upper, visited, ignore, county_tree,
-                   county_stack, dummy_county_tree_queue, 
-                   county_pop, county_members, c_visited, cty_pop_below,
-                   county_path, path, rng_state);
-    // return tree.to_vertex_graph();
-    return tree;
-}
 
 
 
@@ -585,7 +536,7 @@ std::pair<bool, int> USTSampler::draw_ust(
     // We also assume the tree has been properly cleared
     // Now get a uniform spanning tree drawn on the subgraph denoted by the ignore
     // vertices 
-    auto const result = sample_sub_ust(map_params, ust, lower, upper, visited, ignore,
+    auto const result = sample_sub_ust<true>(map_params, ust, lower, upper, visited, ignore,
                                 county_tree, county_stack, dummy_county_tree_queue,
                                 county_pop, county_members,
                                 c_visited, cty_pop_below, county_path, path, rng_state
@@ -825,4 +776,73 @@ void USTSampler::check_tree_integrity(
         visited,
         stack
     );
+}
+
+std::pair<bool, int>  USTSampler::draw_tree_on_subgraph(
+      RNGState &rng_state, std::vector<bool> const &vertices_to_ignore,
+      bool const skip_unsplittable_subtrees, 
+      const double lower, const double upper,
+      WilsonTimes &wilson_times
+){
+    auto prep_start_time = std::chrono::steady_clock::now();
+
+    int V = map_params.V;
+    int num_vertices = 0;
+
+    // Mark it as ignore if its not in the region to split and clear those vertices in 
+    // the region
+    for (int i = 0; i < V; ++i) {
+        ignore[i] = vertices_to_ignore[i];
+        // check if we're ignoring it
+        if (!ignore[i]) {
+            // ust.clear_vertex(i);
+            ust[i].clear();
+            num_vertices++;
+        }
+    }
+
+    auto prep_end_time = std::chrono::steady_clock::now();
+
+    std::chrono::duration<double, std::ratio<1>> prep_time_diff = prep_end_time - prep_start_time;
+    wilson_times.input_prep_time += prep_time_diff.count();
+
+    std::pair<bool, int> result;
+
+    auto sample_ust_start_time = std::chrono::steady_clock::now();
+    // Now sample a uniform spanning tree drawn on that region
+    if (skip_unsplittable_subtrees){
+        auto const ust_result = sample_sub_ust<true>(map_params, ust, lower, upper, visited, ignore,
+                                    county_tree, county_stack, dummy_county_tree_queue,
+                                    county_pop, county_members,
+                                    c_visited, cty_pop_below, county_path, path, rng_state
+                                    );
+        result = std::make_pair(ust_result.code == 0, ust_result.root);
+    }else{
+        auto const ust_result = sample_sub_ust<false>(map_params, ust, lower, upper, visited, ignore,
+                                    county_tree, county_stack, dummy_county_tree_queue,
+                                    county_pop, county_members,
+                                    c_visited, cty_pop_below, county_path, path, rng_state
+                                    );
+        result = std::make_pair(ust_result.code == 0, ust_result.root);
+    }
+    auto sample_ust_end_time = std::chrono::steady_clock::now();
+
+    std::chrono::duration<double, std::ratio<1>> ust_time_diff = sample_ust_end_time - sample_ust_start_time;
+    wilson_times.sub_ust_call_time += ust_time_diff.count();
+    
+    bool const valid_tree = result.first;
+
+    if constexpr(perf_config::object_integrity_checking){
+        if (valid_tree){
+            check_tree_integrity(
+                get_vertex_tree(),
+                "Just called `sample_sub_ust` in attempt_to_draw_tree_on_region\n",
+                result.second,
+                num_vertices,
+                true
+            );
+        }
+    }
+
+    return result;
 }

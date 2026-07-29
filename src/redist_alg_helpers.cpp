@@ -861,6 +861,44 @@ get_tree_splitter_ptrs(MapParams const &map_params, SplittingMethodType const sp
     return tree_splitters_ptr_vec;
 }
 
+std::vector<bool> vector_tree_to_edge_vector(
+    GraphEdgeIndex const &edge_index,
+    Tree const &tree
+){
+    // make a boolean vector of length edge_vec
+    std::vector<bool> edge_vec(edge_index.num_edges, false);
+    // Now we walk through the tree and mark edges in edge_vec as true
+    for (int v = 0; v < edge_index.V; v++)
+    {
+        for (int const u: tree[v])
+        {
+            // make this edge as true 
+            edge_vec[edge_index.get_edge_id(v, u)] = true;
+        }
+    }
+
+    return edge_vec;
+}
+
+Rcpp::List graph_edge_index_to_list(
+    GraphEdgeIndex const &edge_index
+) {
+    Rcpp::List edge_list(edge_index.num_edges);
+
+    for (int edge_id = 0; edge_id < edge_index.num_edges; ++edge_id) {
+        auto const [u, v] = edge_index.get_edge_endpoints(
+            static_cast<EdgeID>(edge_id)
+        );
+
+        edge_list[edge_id] = Rcpp::IntegerVector::create(
+            static_cast<int>(u) + 1,
+            static_cast<int>(v) + 1
+        );
+    }
+
+    return edge_list;
+}
+
 SMCDiagnostics::SMCDiagnostics(SamplingSpace const sampling_space,
                                SplittingMethodType const splitting_method_type,
                                SplittingSizeScheduleType const splitting_schedule_type,

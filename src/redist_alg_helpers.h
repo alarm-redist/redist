@@ -123,7 +123,22 @@ std::unique_ptr<PlanEnsemble> get_plan_ensemble_ptr(
     std::vector<RNGState> &rng_states, RcppThread::ThreadPool &pool, int const verbosity);
 
 
+// converts trees to compact edge list form 
+// This only supports undirected trees 
+std::vector<bool> vector_tree_to_edge_vector(
+    GraphEdgeIndex const &edge_index,
+    Tree const &tree
+);
 
+// Converts a graph edge index to an R deciperable list
+// where its a list of length edge_index.num_edges
+// and each element is the pair (u,v) of the vertices in the 
+// edge it represents 
+Rcpp::List graph_edge_index_to_list(
+    GraphEdgeIndex const &edge_index
+);
+
+// TODO: This should be moved to smc.cpp
 // Wrapper object for all non-essential SMC diagnostics
 class SMCDiagnostics {
 

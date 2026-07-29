@@ -113,6 +113,11 @@ class RegionConstraint {
     // Returns whether region is valid and score
     // - value of true means satisfies hard constraint, false means probability zero
     // - double is the constraint score
+    std::pair<bool, double> compute_region_score(int const num_regions,
+                                                       PlanVector const &region_ids,
+                                                       RegionSizes const &region_sizes,
+                                                       IntPlanAttribute const &region_pops,
+                                                       int region_id) const;
     std::pair<bool, double> compute_region_score(const Plan &plan, int region_id) const;
     std::pair<bool, double> compute_merged_region_score(const Plan &plan, int region1_id,
                                                         int region2_id) const;
@@ -787,7 +792,7 @@ class ScoringFunction {
     bool any_hard_custom_constraints;
 
     // used for constraint splitter
-    double compute_full_split_plan_soft_score(int const num_regions,
+    std::pair<bool, double> compute_full_split_plan_score(int const num_regions,
                                               PlanVector const &region_ids,
                                               RegionSizes const &region_sizes,
                                               IntPlanAttribute const &region_pops,

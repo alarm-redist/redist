@@ -16,6 +16,12 @@ struct USTDrawResult {
     int root;
 };
 
+// used for timing manual code 
+struct WilsonTimes {
+  double input_prep_time = 0.0;
+  double sub_ust_call_time = 0.0;
+};
+
 // Class for wrapping wilson code in 
 class USTSampler {
 
@@ -77,7 +83,16 @@ class USTSampler {
     SplittingSchedule const &splitting_schedule;
 
     // just used to draw a tree on a generic subgraph.
-    bool draw_tree_on_subgraph(RNGState &rng_state, bool membership_vector);
+    // has toggable option to turn on or off skipping drawing 
+    // a tree when an admin unit can't be split
+    // Skipping is usually much faster but makes it impossible to test the
+    // code as now not all trees have an equal probability of being sampled
+    std::pair<bool, int> draw_tree_on_subgraph(
+      RNGState &rng_state, std::vector<bool> const &vertices_to_ignore,
+      bool const skip_unsplittable_subtrees, 
+      const double lower, const double upper,
+      WilsonTimes &wilson_times
+    );
 
     // Attempts to draw a tree on a region
     // defaults to map_params.lower * min_possible_cut_size and

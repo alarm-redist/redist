@@ -73,6 +73,10 @@ calcPWDh <- function(x) {
     .Call(`_redist_calcPWDh`, x)
 }
 
+sample_ust <- function(l, pop, lower, upper, counties, ignore, skip_unsplittable_subtrees = TRUE) {
+    .Call(`_redist_sample_ust`, l, pop, lower, upper, counties, ignore, skip_unsplittable_subtrees)
+}
+
 draw_a_tree_on_a_region <- function(adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_draw_tree_on, lower, upper, region_ids, region_sizes, verbose) {
     .Call(`_redist_draw_a_tree_on_a_region`, adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_draw_tree_on, lower, upper, region_ids, region_sizes, verbose)
 }
@@ -81,8 +85,8 @@ perform_a_valid_multidistrict_split <- function(adj_list, counties, pop, ndists,
     .Call(`_redist_perform_a_valid_multidistrict_split`, adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_split, target, lower, upper, region_ids, region_sizes, split_dval_min, split_dval_max, split_district_only, verbose, k_param)
 }
 
-draw_trees_on_a_region <- function(adj_list, counties, pop, ndists, num_regions, region_id_to_draw_tree_on, region_size, lower, target, upper, region_ids, region_sizes, num_tree, num_threads, verbose) {
-    .Call(`_redist_draw_trees_on_a_region`, adj_list, counties, pop, ndists, num_regions, region_id_to_draw_tree_on, region_size, lower, target, upper, region_ids, region_sizes, num_tree, num_threads, verbose)
+sample_uniform_trees <- function(adj_list, counties, pop, vertices_to_ignore, lower, upper, num_tree, num_threads, skip_unsplittable_units, verbose) {
+    .Call(`_redist_sample_uniform_trees`, adj_list, counties, pop, vertices_to_ignore, lower, upper, num_tree, num_threads, skip_unsplittable_units, verbose)
 }
 
 attempt_splits_on_a_region <- function(adj_list, counties, pop, ndists, init_num_regions, region_id_to_split, lower, target, upper, region_ids, region_sizes, splitting_schedule_str, k_param, num_plans, num_threads, verbose) {
@@ -165,6 +169,10 @@ resample_plans_lowvar <- function(normalized_weights, plans_mat, region_pops_mat
     .Call(`_redist_resample_plans_lowvar`, normalized_weights, plans_mat, region_pops_mat, region_sizes_mat, reorder_sizes_mat)
 }
 
+resample_lowvar <- function(wgts) {
+    .Call(`_redist_resample_lowvar`, wgts)
+}
+
 get_log_number_linking_edges <- function(adj_list, counties, constraints, ndists, nseats, num_regions, region_ids) {
     .Call(`_redist_get_log_number_linking_edges`, adj_list, counties, constraints, ndists, nseats, num_regions, region_ids)
 }
@@ -195,10 +203,6 @@ rint1 <- function(n, max) {
 
 runif1 <- function(n, max) {
     .Call(`_redist_runif1`, n, max)
-}
-
-resample_lowvar <- function(wgts) {
-    .Call(`_redist_resample_lowvar`, wgts)
 }
 
 maximum_input_sizes <- function() {
@@ -251,9 +255,5 @@ tree_pop <- function(ust, vtx, pop, pop_below, parent) {
 
 var_info_vec <- function(m, ref, pop) {
     .Call(`_redist_var_info_vec`, m, ref, pop)
-}
-
-sample_ust <- function(l, pop, lower, upper, counties, ignore) {
-    .Call(`_redist_sample_ust`, l, pop, lower, upper, counties, ignore)
 }
 

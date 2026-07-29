@@ -496,6 +496,29 @@ Rcpp::IntegerVector resample_plans_lowvar(Rcpp::NumericVector const &normalized_
 }
 
 
+/*
+ * Generate an integer vector of resampling indices with a low-variance resampler.
+ */
+// [[Rcpp::export]]
+arma::ivec resample_lowvar(arma::vec wgts) {
+    int N = wgts.n_elem;
+
+    double r = GLOBAL_RNG.r_unif() / N;
+    double cuml = wgts[0];
+    arma::ivec out(N);
+
+    int i = 0;
+    for (int n = 0; n < N; n++) {
+        double u = r + n / (double)N;
+        while (u > cuml) {
+            cuml += wgts[++i]; // increment then access
+        }
+        out[n] = i + 1;
+    }
+
+    return out;
+}
+
 
 // [[Rcpp::export]]
 double get_log_number_linking_edges(Rcpp::List const &adj_list, Rcpp::IntegerVector const &counties,

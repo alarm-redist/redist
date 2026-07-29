@@ -179,7 +179,7 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
             auto max_possible_cut_size = cut_size_bounds.second;
 
             double log_edge_selection_prob =
-                edge_splitter.get_log_retroactive_splitting_prob_for_joined_vertex_tree(
+                edge_splitter.get_log_retroactive_splitting_prob_for_joined_flattree(
                     plan_multigraph.map_params, scoring_function, edge_splitter.forest_graph,
                     ust_sampler.stack, ust_sampler.visited, ust_sampler.pops_below_vertex, v,
                     v_nbor, plan, min_possible_cut_size, max_possible_cut_size,
@@ -295,7 +295,7 @@ double ForestPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
             }
 
             double log_edge_selection_prob =
-                tree_splitter.get_log_retroactive_splitting_prob_for_joined_vertex_tree(
+                tree_splitter.get_log_retroactive_splitting_prob_for_joined_flattree(
                     plan_multigraph.map_params, scoring_function, tree_splitter.forest_graph,
                     ust_sampler.stack, ust_sampler.visited, ust_sampler.pops_below_vertex, v,
                     nbor, *this, min_possible_cut_size, max_possible_cut_size,

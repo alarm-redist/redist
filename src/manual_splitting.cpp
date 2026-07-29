@@ -11,6 +11,11 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <cstddef>
+#include <cstdint>
+#include <unordered_map>
+#include <utility>
+
 
 #include "map_calc.h"
 #include "merging.h"
@@ -44,6 +49,44 @@ TEMP_get_potential_region_size_for_loop_bounds(const int total_region_size,
             std::min(min_potential_cut_size, total_region_size - max_potential_cut_size),
             total_region_size / 2);
     }
+}
+
+// [[Rcpp::export]]
+Tree sample_ust(Rcpp::List l, const Rcpp::IntegerVector &pop, double lower, double upper,
+                const Rcpp::IntegerVector &counties, const std::vector<bool> &ignore,
+            bool const skip_unsplittable_subtrees = true) {
+    RNGState rng_state((int)Rcpp::sample(INT_MAX, 1)[0]);
+    int V = l.size();
+
+    int FAKE_NDISTS = 6;
+    double FAKE_TARGET = 6.6;
+
+    MapParams map_params(list_to_graph(l), 
+        Rcpp::as<std::vector<unsigned int>>(counties), 
+        Rcpp::as<std::vector<unsigned int>>(pop),
+        lower, upper);
+
+
+    AnyRegionSMDSplittingSchedule dummy_schedule(1, 2);
+    USTSampler ust_sampler(map_params, dummy_schedule);
+
+    WilsonTimes wilson_times;
+
+
+
+    bool tree_drawn = false;
+    int count = 0;
+    // keep sampling until successful 
+    while(!tree_drawn){
+        tree_drawn = ust_sampler.draw_tree_on_subgraph(
+            rng_state, ignore,
+            skip_unsplittable_subtrees, 
+            lower, upper, wilson_times
+        ).first;
+        // Rcpp::Rcout << ++count << std::endl;
+    }
+
+    return ust_sampler.get_vertex_tree();
 }
 
 // ' Draws a spanning tree uniformly at random on a region and returns it
@@ -439,152 +482,319 @@ Rcpp::List perform_a_valid_multidistrict_split(Rcpp::List adj_list, const Rcpp::
 //     return out;
 // }
 
-// TODO: Add support for multimember districts
-// Draws num_trees number of trees on a region
-// [[Rcpp::export]]
-Rcpp::List draw_trees_on_a_region(Rcpp::List const &adj_list, const Rcpp::IntegerVector &counties,
-                            const Rcpp::IntegerVector &pop, int const ndists, int num_regions,
-                            int const region_id_to_draw_tree_on, int const region_size,
-                            double const lower, double const target, double const upper,
-                             Rcpp::IntegerMatrix const &region_ids,
-                             Rcpp::IntegerMatrix const &region_sizes,
-                            int const num_tree, int num_threads,
-                            bool const verbose) {
-    // create thread pool
-    if (num_threads <= 0)
-        num_threads = std::thread::hardware_concurrency();
-    RcppThread::ThreadPool pool(num_threads);
 
-    int global_rng_seed = (int)Rcpp::sample(INT_MAX, 1)[0];
-    int num_rng_states = num_threads > 0 ? num_threads : 1;
+namespace {
+
+struct BoolVectorHash {
+    std::size_t operator()(
+        std::vector<bool> const &bits
+    ) const noexcept {
+        std::size_t seed = std::hash<std::size_t>{}(bits.size());
+
+        std::uint64_t word = 0;
+        unsigned int bit_index = 0;
+
+        for (bool const bit : bits) {
+            word |= static_cast<std::uint64_t>(bit) << bit_index;
+            ++bit_index;
+
+            if (bit_index == 64) {
+                hash_combine(seed, word);
+                word = 0;
+                bit_index = 0;
+            }
+        }
+
+        if (bit_index != 0) {
+            hash_combine(seed, word);
+        }
+
+        return seed;
+    }
+
+private:
+    static void hash_combine(
+        std::size_t &seed,
+        std::uint64_t const value
+    ) noexcept {
+        std::size_t const value_hash =
+            std::hash<std::uint64_t>{}(value);
+
+        seed ^=
+            value_hash +
+            static_cast<std::size_t>(0x9e3779b97f4a7c15ULL) +
+            (seed << 6) +
+            (seed >> 2);
+    }
+};
+
+
+/*
+ * The Boolean edge vector is the unordered_map key.
+ *
+ * The mapped value retains:
+ *   1. One representative Tree with that edge vector.
+ *   2. The number of times that tree was sampled.
+ */
+struct SampledTreeCount {
+    Tree tree;
+    int count;
+
+    SampledTreeCount(
+        Tree &&tree_,
+        int const count_
+    )
+        : tree(std::move(tree_)),
+          count(count_) {}
+};
+
+
+using TreeCountMap = std::unordered_map<
+    std::vector<bool>,
+    SampledTreeCount,
+    BoolVectorHash
+>;
+
+} // anonymous namespace
+
+// [[Rcpp::export]]
+Rcpp::List sample_uniform_trees(
+    Rcpp::List const &adj_list,
+    Rcpp::IntegerVector const &counties,
+    Rcpp::IntegerVector const &pop,
+    std::vector<bool> const &vertices_to_ignore,
+    double const lower,
+    double const upper,
+    int const num_tree,
+    int num_threads,
+    bool const skip_unsplittable_units,
+    bool const verbose
+) {
+    // Create thread pool.
+    RcppThread::ThreadPool pool = get_thread_pool(num_threads);
+    num_threads = get_num_threads(pool);
+
+    int const global_rng_seed =
+        static_cast<int>(Rcpp::sample(INT_MAX, 1)[0]);
+
     std::vector<RNGState> rng_states;
-    rng_states.reserve(num_rng_states);
-    for (size_t i = 1; i <= num_rng_states; i++) {
-        // same seed with i*3 long_jumps for state
+    rng_states.reserve(num_threads);
+
+    for (int i = 1; i <= num_threads; ++i) {
+        // Same seed with i * 3 long jumps for each state.
         rng_states.emplace_back(global_rng_seed, i * 3);
     }
 
-    // Create adj params
+    int const FAKE_NDISTS = 6;
+    double const FAKE_TARGET = 6.0;
+
     MapParams map_params(list_to_graph(adj_list), 
         Rcpp::as<std::vector<unsigned int>>(counties), 
         Rcpp::as<std::vector<unsigned int>>(pop),
-         ndists, ndists, std::vector<int>{1}, lower,
-                         target, upper, SamplingSpace::GraphSpace);
+        lower, upper);
 
-    auto splitting_schedule_ptr =
-        std::make_unique<AnyRegionSMDSplittingSchedule>(ndists-1, ndists);
-
-    PlanEnsemble plan_ensemble(map_params, *splitting_schedule_ptr, num_regions, 1,
-                               SamplingSpace::GraphSpace, region_ids, region_sizes, rng_states,
-                               pool);
-
-    // count how many times we had to call sample_sub_ust
-
-
-    // create list of trees to return
-    std::vector<std::vector<Graph>> thread_undirected_trees(num_threads == 0 ? 1 : num_threads);
-    std::vector<int> thread_attempts(num_threads == 0 ? 1 : num_threads, 0);
-
-    static std::atomic<int> global_generation_counter{0};
-    int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
-    std::atomic<int> thread_id_counter{0};
-
-
-
-    int check_int = 200;
-
-    int const n_threads = get_num_threads(pool);
-    std::vector<USTSampler> ust_samplers(
-        n_threads, USTSampler(map_params, *splitting_schedule_ptr)
+    AnyRegionSMDSplittingSchedule dummy_schedule(
+        FAKE_NDISTS - 1,
+        FAKE_NDISTS
     );
 
-    std::vector<Tree> vertex_ust_buffers(n_threads, init_tree(map_params.V));
+    /*
+     * Each worker writes only to its own unordered_map. This avoids
+     * needing a mutex every time a tree is sampled.
+     */
+    std::vector<TreeCountMap> thread_tree_counts(num_threads);
+    // timing 
+    std::vector<WilsonTimes> wilson_times_vec(num_threads);
+
+
+
+    std::vector<int> thread_attempts(num_threads, 0);
+
+    static std::atomic<int> global_generation_counter{0};
+
+    int const generation =
+        global_generation_counter.fetch_add(
+            1,
+            std::memory_order_relaxed
+        );
+
+    std::atomic<int> thread_id_counter{0};
+
+    int const check_int = 200;
+
+    std::vector<USTSampler> ust_samplers(
+        num_threads,
+        USTSampler(map_params, dummy_schedule)
+    );
+
+    if(verbose){
+        Rcpp::Rcout << "Drawing " << num_tree << " Trees!" << std::endl;
+    }
 
     RcppThread::ProgressBar bar(num_tree, 1);
-    // Parallel thread pool where all objects in memory shared by default
-    pool.parallelFor(0, num_tree, [&](int ree) {
-        static thread_local int thread_generation_counter = -1;
-        static thread_local int thread_id;
 
-        // check if the thread id was generated this function call
+    pool.parallelFor(0, num_tree, [&](int) {
+        static thread_local int thread_generation_counter = -1;
+        static thread_local int thread_id = -1;
+
+        /*
+         * Assign each actual worker thread an index for this invocation
+         * of sample_uniform_trees().
+         */
         if (thread_generation_counter != generation) {
-            // if not then give it a new id
-            thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+            thread_id = thread_id_counter.fetch_add(
+                1,
+                std::memory_order_relaxed
+            );
+
             thread_generation_counter = generation;
         }
 
-
-        // reset result
-        int result = 1;
         bool tree_drawn = false;
-        USTDrawResult ust_draw_result;
+
         while (!tree_drawn) {
-            // sample until successful 
-            ust_draw_result = ust_samplers[thread_id].attempt_to_draw_tree_on_region(
-                rng_states[thread_id], *plan_ensemble.plan_ptr_vec[0], region_id_to_draw_tree_on
-            );
-            tree_drawn = ust_draw_result.successful;
+            tree_drawn =
+                ust_samplers[thread_id]
+                    .draw_tree_on_subgraph(
+                        rng_states[thread_id],
+                        vertices_to_ignore,
+                        skip_unsplittable_units,
+                        lower,
+                        upper,
+                        wilson_times_vec[thread_id]
+                    )
+                    .first;
+
             ++thread_attempts[thread_id];
-            RcppThread::checkUserInterrupt(++thread_attempts[thread_id] % check_int == 0);
+
+            RcppThread::checkUserInterrupt(
+                thread_attempts[thread_id] % check_int == 0
+            );
         }
 
-        // go through the tree from the root and add the backwards edge and sort
-        std::queue<std::pair<int, int>> vertex_queue;
-        // add roots children to queue
-        // for (auto const &child_vertex : ust_samplers[thread_id].ust.neighbors(ust_draw_result.root)) {
-        for (auto const &child_vertex : ust_samplers[thread_id].ust[ust_draw_result.root]) {
-            vertex_queue.push({child_vertex, ust_draw_result.root});
-        }
-        // now save a vertex tree 
-        vertex_ust_buffers[thread_id] = ust_samplers[thread_id].get_vertex_tree();
-        // sort the children
-        std::sort(vertex_ust_buffers[thread_id][ust_draw_result.root].begin(), 
-        vertex_ust_buffers[thread_id][ust_draw_result.root].end());
+        /*
+         * get_vertex_tree() returns the sampled Tree:
+         *
+         *     using Tree = std::vector<std::vector<int>>;
+         */
+        Tree sampled_tree =
+            ust_samplers[thread_id].get_vertex_tree();
 
-        // update all the children
-        while (!vertex_queue.empty()) {
-            // get and remove head of queue
-            auto queue_pair = vertex_queue.front();
-            int vertex = queue_pair.first;
-            int parent_vertex = queue_pair.second;
-            vertex_queue.pop();
-            // add children to the queue
-            for (auto const &child_vertex : vertex_ust_buffers[thread_id][vertex]) {
-                // add children to queue
-                vertex_queue.push({child_vertex, vertex});
-            }
-            // add the edge from vertex to parent
-            vertex_ust_buffers[thread_id][vertex].push_back(parent_vertex);
-            // now sort edges
-            std::sort(vertex_ust_buffers[thread_id][vertex].begin(), vertex_ust_buffers[thread_id][vertex].end());
+        /*
+         * Convert the tree to a canonical Boolean edge vector solely
+         * for hashing and equality comparisons.
+         */
+        std::vector<bool> edge_key =
+            vector_tree_to_edge_vector(
+                map_params.graph_edge_index,
+                sampled_tree
+            );
+
+        TreeCountMap &tree_counts =
+            thread_tree_counts[thread_id];
+
+        auto const existing_tree = tree_counts.find(edge_key);
+
+        if (existing_tree == tree_counts.end()) {
+            /*
+             * This is the first occurrence of the tree on this worker.
+             * Store both its Boolean key and its vertex-tree form.
+             */
+            tree_counts.try_emplace(
+                std::move(edge_key),
+                std::move(sampled_tree),
+                1
+            );
+        } else {
+            ++existing_tree->second.count;
         }
-        // REprintf("about to copy! %d\n", thread_id);
-        thread_undirected_trees[thread_id].push_back(vertex_ust_buffers[thread_id]);
-        // REprintf("Copied! %d\n", thread_id);
-        ++bar;
+
+        if (verbose) ++bar;
     });
 
     pool.wait();
 
-    std::vector<Graph> undirected_trees;
-    undirected_trees.reserve(num_tree);
     int num_attempts = 0;
+    std::size_t upper_bound_num_unique_trees = 0;
 
-    for (size_t i = 0; i < num_threads; i++) {
-        // move don't copy
-        // https://stackoverflow.com/questions/201718/concatenating-two-stdvectors
-        undirected_trees.insert(undirected_trees.end(),
-                                std::make_move_iterator(thread_undirected_trees[i].begin()),
-                                std::make_move_iterator(thread_undirected_trees[i].end()));
-        num_attempts += thread_attempts[i];
+    for (int thread_id = 0;
+         thread_id < num_threads;
+         ++thread_id) {
+        num_attempts += thread_attempts[thread_id];
+
+        upper_bound_num_unique_trees +=
+            thread_tree_counts[thread_id].size();
     }
 
-    Rcpp::List out =
-        Rcpp::List::create(Rcpp::_["trees_list"] = undirected_trees, Rcpp::_["num_attempts"] = num_attempts);
+    /*
+     * Merge the per-worker hash tables into one global table.
+     */
+    TreeCountMap unique_tree_counts;
+    unique_tree_counts.reserve(upper_bound_num_unique_trees);
 
-    return out;
+    for (TreeCountMap &thread_counts : thread_tree_counts) {
+        /*
+         * Move every entry whose key is not yet present into the global
+         * map. Duplicate keys remain in thread_counts.
+         */
+        unique_tree_counts.merge(thread_counts);
+
+        /*
+         * Add counts for entries that were duplicated across workers.
+         */
+        for (auto const &[edge_key, sampled_tree_count] :
+             thread_counts) {
+            auto const global_entry =
+                unique_tree_counts.find(edge_key);
+
+            global_entry->second.count +=
+                sampled_tree_count.count;
+        }
+    }
+
+    std::vector<Tree> unique_trees;
+    std::vector<int> tree_counts;
+
+    unique_trees.reserve(unique_tree_counts.size());
+    tree_counts.reserve(unique_tree_counts.size());
+
+    /*
+     * Move the stored Tree values into the returned vector. Extracting
+     * nodes allows the Tree to be moved rather than copied.
+     */
+    while (!unique_tree_counts.empty()) {
+        auto node =
+            unique_tree_counts.extract(
+                unique_tree_counts.begin()
+            );
+
+        tree_counts.push_back(node.mapped().count);
+
+        unique_trees.push_back(
+            std::move(node.mapped().tree)
+        );
+    }
+
+    // get the time 
+    double total_sample_ust_time = 0.0;
+    double total_prep_time = 0.0;
+    
+
+    for (size_t thread_id = 0; thread_id < num_threads; thread_id++)
+    {
+        total_sample_ust_time += wilson_times_vec[thread_id].sub_ust_call_time;
+        total_prep_time += wilson_times_vec[thread_id].input_prep_time;
+    }
+    
+
+    return Rcpp::List::create(
+        Rcpp::_["unique_trees"] = unique_trees,
+        Rcpp::_["tree_counts"] = tree_counts,
+        Rcpp::_["num_attempts"] = num_attempts,
+        Rcpp::_["total_prep_time"] = total_prep_time,
+        Rcpp::_["total_sample_ust_time"] = total_sample_ust_time
+    );
 }
-
 // Draws num_plans number of plans on a region
 // if unsuccessful then just returns the unsplit plan
 // [[Rcpp::export]]

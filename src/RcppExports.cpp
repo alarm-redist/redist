@@ -273,6 +273,23 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// sample_ust
+Tree sample_ust(Rcpp::List l, const Rcpp::IntegerVector& pop, double lower, double upper, const Rcpp::IntegerVector& counties, const std::vector<bool>& ignore, bool const skip_unsplittable_subtrees);
+RcppExport SEXP _redist_sample_ust(SEXP lSEXP, SEXP popSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP countiesSEXP, SEXP ignoreSEXP, SEXP skip_unsplittable_subtreesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type l(lSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::IntegerVector& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::IntegerVector& >::type counties(countiesSEXP);
+    Rcpp::traits::input_parameter< const std::vector<bool>& >::type ignore(ignoreSEXP);
+    Rcpp::traits::input_parameter< bool const >::type skip_unsplittable_subtrees(skip_unsplittable_subtreesSEXP);
+    rcpp_result_gen = Rcpp::wrap(sample_ust(l, pop, lower, upper, counties, ignore, skip_unsplittable_subtrees));
+    return rcpp_result_gen;
+END_RCPP
+}
 // draw_a_tree_on_a_region
 Rcpp::List draw_a_tree_on_a_region(Rcpp::List adj_list, const Rcpp::IntegerVector& counties, const Rcpp::IntegerVector& pop, int ndists, int num_regions, int num_districts, int region_id_to_draw_tree_on, double lower, double upper, Rcpp::IntegerMatrix const& region_ids, Rcpp::IntegerMatrix const& region_sizes, bool verbose);
 RcppExport SEXP _redist_draw_a_tree_on_a_region(SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP ndistsSEXP, SEXP num_regionsSEXP, SEXP num_districtsSEXP, SEXP region_id_to_draw_tree_onSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP region_idsSEXP, SEXP region_sizesSEXP, SEXP verboseSEXP) {
@@ -322,28 +339,23 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// draw_trees_on_a_region
-Rcpp::List draw_trees_on_a_region(Rcpp::List const& adj_list, const Rcpp::IntegerVector& counties, const Rcpp::IntegerVector& pop, int const ndists, int num_regions, int const region_id_to_draw_tree_on, int const region_size, double const lower, double const target, double const upper, Rcpp::IntegerMatrix const& region_ids, Rcpp::IntegerMatrix const& region_sizes, int const num_tree, int num_threads, bool const verbose);
-RcppExport SEXP _redist_draw_trees_on_a_region(SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP ndistsSEXP, SEXP num_regionsSEXP, SEXP region_id_to_draw_tree_onSEXP, SEXP region_sizeSEXP, SEXP lowerSEXP, SEXP targetSEXP, SEXP upperSEXP, SEXP region_idsSEXP, SEXP region_sizesSEXP, SEXP num_treeSEXP, SEXP num_threadsSEXP, SEXP verboseSEXP) {
+// sample_uniform_trees
+Rcpp::List sample_uniform_trees(Rcpp::List const& adj_list, Rcpp::IntegerVector const& counties, Rcpp::IntegerVector const& pop, std::vector<bool> const& vertices_to_ignore, double const lower, double const upper, int const num_tree, int num_threads, bool const skip_unsplittable_units, bool const verbose);
+RcppExport SEXP _redist_sample_uniform_trees(SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP vertices_to_ignoreSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP num_treeSEXP, SEXP num_threadsSEXP, SEXP skip_unsplittable_unitsSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::List const& >::type adj_list(adj_listSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::IntegerVector& >::type counties(countiesSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::IntegerVector& >::type pop(popSEXP);
-    Rcpp::traits::input_parameter< int const >::type ndists(ndistsSEXP);
-    Rcpp::traits::input_parameter< int >::type num_regions(num_regionsSEXP);
-    Rcpp::traits::input_parameter< int const >::type region_id_to_draw_tree_on(region_id_to_draw_tree_onSEXP);
-    Rcpp::traits::input_parameter< int const >::type region_size(region_sizeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector const& >::type counties(countiesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector const& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< std::vector<bool> const& >::type vertices_to_ignore(vertices_to_ignoreSEXP);
     Rcpp::traits::input_parameter< double const >::type lower(lowerSEXP);
-    Rcpp::traits::input_parameter< double const >::type target(targetSEXP);
     Rcpp::traits::input_parameter< double const >::type upper(upperSEXP);
-    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix const& >::type region_ids(region_idsSEXP);
-    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix const& >::type region_sizes(region_sizesSEXP);
     Rcpp::traits::input_parameter< int const >::type num_tree(num_treeSEXP);
     Rcpp::traits::input_parameter< int >::type num_threads(num_threadsSEXP);
+    Rcpp::traits::input_parameter< bool const >::type skip_unsplittable_units(skip_unsplittable_unitsSEXP);
     Rcpp::traits::input_parameter< bool const >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(draw_trees_on_a_region(adj_list, counties, pop, ndists, num_regions, region_id_to_draw_tree_on, region_size, lower, target, upper, region_ids, region_sizes, num_tree, num_threads, verbose));
+    rcpp_result_gen = Rcpp::wrap(sample_uniform_trees(adj_list, counties, pop, vertices_to_ignore, lower, upper, num_tree, num_threads, skip_unsplittable_units, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -689,6 +701,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// resample_lowvar
+arma::ivec resample_lowvar(arma::vec wgts);
+RcppExport SEXP _redist_resample_lowvar(SEXP wgtsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type wgts(wgtsSEXP);
+    rcpp_result_gen = Rcpp::wrap(resample_lowvar(wgts));
+    return rcpp_result_gen;
+END_RCPP
+}
 // get_log_number_linking_edges
 double get_log_number_linking_edges(Rcpp::List const& adj_list, Rcpp::IntegerVector const& counties, Rcpp::List const& constraints, int const ndists, int const nseats, int const num_regions, arma::uvec const& region_ids);
 RcppExport SEXP _redist_get_log_number_linking_edges(SEXP adj_listSEXP, SEXP countiesSEXP, SEXP constraintsSEXP, SEXP ndistsSEXP, SEXP nseatsSEXP, SEXP num_regionsSEXP, SEXP region_idsSEXP) {
@@ -801,17 +824,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type n(nSEXP);
     Rcpp::traits::input_parameter< int >::type max(maxSEXP);
     rcpp_result_gen = Rcpp::wrap(runif1(n, max));
-    return rcpp_result_gen;
-END_RCPP
-}
-// resample_lowvar
-arma::ivec resample_lowvar(arma::vec wgts);
-RcppExport SEXP _redist_resample_lowvar(SEXP wgtsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type wgts(wgtsSEXP);
-    rcpp_result_gen = Rcpp::wrap(resample_lowvar(wgts));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -1018,22 +1030,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// sample_ust
-Tree sample_ust(Rcpp::List l, const Rcpp::IntegerVector& pop, double lower, double upper, const Rcpp::IntegerVector& counties, const std::vector<bool> ignore);
-RcppExport SEXP _redist_sample_ust(SEXP lSEXP, SEXP popSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP countiesSEXP, SEXP ignoreSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::List >::type l(lSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::IntegerVector& >::type pop(popSEXP);
-    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
-    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::IntegerVector& >::type counties(countiesSEXP);
-    Rcpp::traits::input_parameter< const std::vector<bool> >::type ignore(ignoreSEXP);
-    rcpp_result_gen = Rcpp::wrap(sample_ust(l, pop, lower, upper, counties, ignore));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_redist_reduce_adj", (DL_FUNC) &_redist_reduce_adj, 3},
@@ -1054,9 +1050,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_n_removed", (DL_FUNC) &_redist_n_removed, 3},
     {"_redist_countpartitions", (DL_FUNC) &_redist_countpartitions, 1},
     {"_redist_calcPWDh", (DL_FUNC) &_redist_calcPWDh, 1},
+    {"_redist_sample_ust", (DL_FUNC) &_redist_sample_ust, 7},
     {"_redist_draw_a_tree_on_a_region", (DL_FUNC) &_redist_draw_a_tree_on_a_region, 12},
     {"_redist_perform_a_valid_multidistrict_split", (DL_FUNC) &_redist_perform_a_valid_multidistrict_split, 17},
-    {"_redist_draw_trees_on_a_region", (DL_FUNC) &_redist_draw_trees_on_a_region, 15},
+    {"_redist_sample_uniform_trees", (DL_FUNC) &_redist_sample_uniform_trees, 10},
     {"_redist_attempt_splits_on_a_region", (DL_FUNC) &_redist_attempt_splits_on_a_region, 16},
     {"_redist_compute_log_unnormalized_target_density_components", (DL_FUNC) &_redist_compute_log_unnormalized_target_density_components, 19},
     {"_redist_compute_plans_log_optimal_weights", (DL_FUNC) &_redist_compute_plans_log_optimal_weights, 17},
@@ -1077,6 +1074,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_get_region_multigraph", (DL_FUNC) &_redist_get_region_multigraph, 2},
     {"_redist_get_region_laplacian", (DL_FUNC) &_redist_get_region_laplacian, 2},
     {"_redist_resample_plans_lowvar", (DL_FUNC) &_redist_resample_plans_lowvar, 5},
+    {"_redist_resample_lowvar", (DL_FUNC) &_redist_resample_lowvar, 1},
     {"_redist_get_log_number_linking_edges", (DL_FUNC) &_redist_get_log_number_linking_edges, 7},
     {"_redist_get_merged_log_number_linking_edges", (DL_FUNC) &_redist_get_merged_log_number_linking_edges, 9},
     {"_redist_get_canonical_plan_labelling", (DL_FUNC) &_redist_get_canonical_plan_labelling, 3},
@@ -1085,7 +1083,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_closest_adj_pop", (DL_FUNC) &_redist_closest_adj_pop, 3},
     {"_redist_rint1", (DL_FUNC) &_redist_rint1, 2},
     {"_redist_runif1", (DL_FUNC) &_redist_runif1, 2},
-    {"_redist_resample_lowvar", (DL_FUNC) &_redist_resample_lowvar, 1},
     {"_redist_maximum_input_sizes", (DL_FUNC) &_redist_maximum_input_sizes, 0},
     {"_redist_plan_joint", (DL_FUNC) &_redist_plan_joint, 3},
     {"_redist_renumber_matrix", (DL_FUNC) &_redist_renumber_matrix, 2},
@@ -1099,7 +1096,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_swMH", (DL_FUNC) &_redist_swMH, 21},
     {"_redist_tree_pop", (DL_FUNC) &_redist_tree_pop, 5},
     {"_redist_var_info_vec", (DL_FUNC) &_redist_var_info_vec, 3},
-    {"_redist_sample_ust", (DL_FUNC) &_redist_sample_ust, 6},
     {NULL, NULL, 0}
 };
 
