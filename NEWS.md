@@ -1,5 +1,6 @@
 # redist (development)
 
+* Speeds up spanning-tree sampling by starting Wilson walks near the existing tree and using successor-based loop erasure.
 * Old `enumpart` functions are deprecated in favor of `redist_enumpart()` which provides a more consistent syntax.
 
 # redist 4.3.2

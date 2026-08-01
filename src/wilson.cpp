@@ -1,30 +1,78 @@
 #include "wilson.h"
 
+namespace {
+
+class Frontier {
+  public:
+    explicit Frontier(int size) : queued_(size, false) {}
+
+    void add(int vertex, const std::vector<bool> &visited) {
+        if (!visited[vertex] && !queued_[vertex]) {
+            vertices_.push_back(vertex);
+            queued_[vertex] = true;
+        }
+    }
+
+    int next(const std::vector<bool> &visited, int size, int &lower) {
+        while (next_vertex_ < static_cast<int>(vertices_.size()) &&
+               visited[vertices_[next_vertex_]]) {
+            next_vertex_++;
+        }
+
+        if (next_vertex_ < static_cast<int>(vertices_.size())) {
+            return vertices_[next_vertex_++];
+        }
+
+        return rvtx(visited, size, lower);
+    }
+
+  private:
+    std::vector<int> vertices_;
+    std::vector<bool> queued_;
+    int next_vertex_ = 0;
+};
+
+void add_precinct_frontier(const Graph &g, int vertex, const std::vector<bool> &visited,
+                           const std::vector<bool> &ignore, const uvec &counties,
+                           Frontier &frontier) {
+    if (ignore[vertex]) {
+        return;
+    }
+
+    for (int neighbor : g[vertex]) {
+        if (!ignore[neighbor] && counties[neighbor] == counties[vertex]) {
+            frontier.add(neighbor, visited);
+        }
+    }
+}
+
+void add_county_frontier(const Multigraph &mg, int county,
+                         const std::vector<bool> &visited,
+                         const std::vector<bool> &ignore, Frontier &frontier) {
+    for (const std::vector<int> &edge : mg[county]) {
+        if (!ignore[edge[1]] && !ignore[edge[2]]) {
+            frontier.add(edge[0], visited);
+        }
+    }
+}
+
 /*
  * Random walk along `g` from `root` until something in `visited` is hit
  */
 // TESTED
 int walk_until(const Graph &g, int root, std::vector<int> &path, int MAX,
                const std::vector<bool> &visited, const std::vector<bool> &ignore,
-               const uvec &counties);
-
-/*
- * Erase loops in `path` that would be created by adding `proposal` to path
- */
-void loop_erase(std::vector<int> &path, int proposal);
+               const uvec &counties, std::vector<int> &next_vertex);
 
 /*
  * Random walk along `g` from `root` until something in `visited` is hit
  */
 // TESTED
 void walk_until_cty(Multigraph &mg, int root, std::vector<std::vector<int>> &path,
-                    const std::vector<bool> &visited, const std::vector<bool> &ignore);
+                    const std::vector<bool> &visited, const std::vector<bool> &ignore,
+                    std::vector<int> &next_vertex, std::vector<int> &next_edge);
 
-/*
- * Erase loops in `path` that would be created by adding `proposal` to path
- */
-// TESTED
-void loop_erase_cty(std::vector<std::vector<int>> &path, int proposal, int root);
+} // namespace
 
 // [[Rcpp::export]]
 Tree sample_ust(List l, const arma::uvec &pop, double lower, double upper,
@@ -78,7 +126,7 @@ int sample_sub_ust(const Graph &g, Tree &tree, int V, int &root, std::vector<boo
     // pick root
     int lower_i = 0;
     int lower_c = 0;
-    root = rvtx(visited, V, remaining, lower_i);
+    root = rvtx(visited, V, lower_i);
     visited[root] = true;
     remaining--;
     c_visited.at(counties[root] - 1) = true;
@@ -87,10 +135,14 @@ int sample_sub_ust(const Graph &g, Tree &tree, int V, int &root, std::vector<boo
     // Connect counties
     Tree cty_tree = init_tree(n_county);
     std::vector<std::vector<int>> path;
+    std::vector<int> cty_next_vertex(n_county, -1);
+    std::vector<int> cty_next_edge(n_county, -1);
+    Frontier cty_frontier(n_county);
+    add_county_frontier(mg, counties[root] - 1, c_visited, ignore, cty_frontier);
     while (c_remaining > 0) {
-        int add = rvtx(c_visited, n_county, c_remaining, lower_c);
+        int add = cty_frontier.next(c_visited, n_county, lower_c);
         // random walk from `add` until we hit the path
-        walk_until_cty(mg, add, path, c_visited, ignore);
+        walk_until_cty(mg, add, path, c_visited, ignore, cty_next_vertex, cty_next_edge);
         // update visited list and constructed tree
         int added = path.size();
         if (added == 0) { // bail
@@ -98,8 +150,10 @@ int sample_sub_ust(const Graph &g, Tree &tree, int V, int &root, std::vector<boo
         }
         c_remaining -= added;
         c_visited.at(add) = true;
+        add_county_frontier(mg, add, c_visited, ignore, cty_frontier);
         for (int i = 0; i < added; i++) {
             c_visited.at(path[i][0]) = true;
+            add_county_frontier(mg, path[i][0], c_visited, ignore, cty_frontier);
             // reverse path so that arrows point away from root
             tree.at(path[i][2]).push_back(path[i][1]);
             cty_tree.at(path[i][0]).push_back(counties(path[i][1]) - 1);
@@ -162,10 +216,18 @@ int sample_sub_ust(const Graph &g, Tree &tree, int V, int &root, std::vector<boo
     if (remaining > 0) {
         std::vector<int> path(remaining + 2);
         int max_try = std::max(50, 50 * remaining * ((int)std::log(remaining)));
+        std::vector<int> next_vertex(V, -1);
+        Frontier precinct_frontier(V);
+        for (int i = 0; i < V; i++) {
+            if (visited[i]) {
+                add_precinct_frontier(g, i, visited, ignore, counties, precinct_frontier);
+            }
+        }
         while (remaining > 0) {
-            int add = rvtx(visited, V, remaining, lower_i);
+            int add = precinct_frontier.next(visited, V, lower_i);
             // random walk from `add` until we hit the path
-            int added = walk_until(g, add, path, max_try, visited, ignore, counties);
+            int added =
+                walk_until(g, add, path, max_try, visited, ignore, counties, next_vertex);
             // update visited list and constructed tree
             if (added == 0) { // bail
                 return 1;
@@ -173,6 +235,7 @@ int sample_sub_ust(const Graph &g, Tree &tree, int V, int &root, std::vector<boo
             remaining -= added - 1; // minus 1 because ending vertex already in tree
             for (int i = 0; i < added - 1; i++) {
                 visited.at(path[i]) = true;
+                add_precinct_frontier(g, path[i], visited, ignore, counties, precinct_frontier);
                 // reverse path so that arrows point away from root
                 tree.at(path[i + 1]).push_back(path[i]);
             }
@@ -186,36 +249,41 @@ int sample_sub_ust(const Graph &g, Tree &tree, int V, int &root, std::vector<boo
  * Random walk along `g` from `root` until something in `visited` is hit
  */
 // TESTED
+namespace {
+
 int walk_until(const Graph &g, int root, std::vector<int> &path, int MAX,
                const std::vector<bool> &visited, const std::vector<bool> &ignore,
-               const uvec &counties) {
-    path[0] = root;
-    // walk until we hit something in `visited`
+               const uvec &counties, std::vector<int> &next_vertex) {
     int curr = root;
-    int county = counties[root];
-    int added = 1; // cursor
-    int i;
-    for (i = 0; i < MAX; i++) {
+    bool hit_tree = false;
+    int county = static_cast<int>(counties[root]);
+    for (int tries = 0; tries < MAX; tries++) {
         int proposal = rnbor(g, curr);
-        if (ignore[proposal] || counties[proposal] != county) {
+        if (ignore[proposal] || static_cast<int>(counties[proposal]) != county) {
             continue;
-        } else if (!visited[proposal]) {
-            for (int j = added - 1; j >= 0; j--) {
-                if (path[j] == proposal) { // if yes, restart from there
-                    added = j;
-                    break;
-                }
-            }
-            path[added++] = proposal;
-        } else { // reached something in `visited`
-            path[added++] = proposal;
+        }
+
+        // Recording the latest exit from each vertex erases loops implicitly.
+        next_vertex[curr] = proposal;
+        if (visited[proposal]) {
+            hit_tree = true;
             break;
         }
+
         curr = proposal;
     }
-    if (i == MAX) {
-        added = 0;
+
+    if (!hit_tree) {
+        return 0;
     }
+
+    int added = 0;
+    curr = root;
+    while (!visited[curr]) {
+        path[added++] = curr;
+        curr = next_vertex[curr];
+    }
+    path[added++] = curr;
 
     return added;
 }
@@ -225,51 +293,44 @@ int walk_until(const Graph &g, int root, std::vector<int> &path, int MAX,
  */
 // TESTED
 void walk_until_cty(Multigraph &mg, int root, std::vector<std::vector<int>> &path,
-                    const std::vector<bool> &visited, const std::vector<bool> &ignore) {
+                    const std::vector<bool> &visited, const std::vector<bool> &ignore,
+                    std::vector<int> &next_vertex, std::vector<int> &next_edge) {
     path.clear();
 
-    // walk until we hit something in `visited`
     int curr = root;
-    // while (true) {
-    int i;
-    int max = visited.size() * 500;
-    for (i = 0; i < max; i++) {
-        int prop_idx = r_int((int)mg.at(curr).size());
-        int proposal = mg[curr][prop_idx][0];
-        if (ignore[mg[curr][prop_idx][2]] || ignore[mg[curr][prop_idx][1]]) {
-            continue;
-        } else if (!visited.at(proposal)) {
-            path.push_back(mg[curr][prop_idx]);
-            loop_erase_cty(path, proposal, root);
-        } else {
-            path.push_back(mg[curr][prop_idx]);
+    bool hit_tree = false;
+    int max_tries = visited.size() * 500;
+    for (int tries = 0; tries < max_tries; tries++) {
+        if (mg[curr].empty()) {
             break;
         }
+
+        int edge = r_int((int)mg[curr].size());
+        int proposal = mg[curr][edge][0];
+        if (ignore[mg[curr][edge][2]] || ignore[mg[curr][edge][1]]) {
+            continue;
+        }
+
+        // Recording the latest exit from each county erases loops implicitly.
+        next_vertex[curr] = proposal;
+        next_edge[curr] = edge;
+        if (visited.at(proposal)) {
+            hit_tree = true;
+            break;
+        }
+
         curr = proposal;
     }
-    if (i == max) {
-        path.clear();
-    }
-}
 
-/*
- * Erase loops in `path` that would be created by adding `proposal` to path
- */
-// TESTED
-void loop_erase_cty(std::vector<std::vector<int>> &path, int proposal, int root) {
-    int length = path.size();
-    if (proposal == root) {
-        path.erase(path.begin(), path.begin() + length);
+    if (!hit_tree) {
         return;
     }
 
-    int idx;
-    for (idx = 0; idx < length - 1; idx++) {
-        if (path[idx][0] == proposal)
-            break;
-    }
-
-    if (idx != length - 1) { // a loop
-        path.erase(path.begin() + idx + 1, path.begin() + length);
+    curr = root;
+    while (!visited[curr]) {
+        path.push_back(mg[curr][next_edge[curr]]);
+        curr = next_vertex[curr];
     }
 }
+
+} // namespace
