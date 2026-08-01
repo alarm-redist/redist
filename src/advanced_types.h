@@ -342,6 +342,13 @@ class EdgeCut {
     bool operator<(const EdgeCut &other) const { return cut_vertex < other.cut_vertex; }
 };
 
+struct AdminEdge {
+    int neighbor_admin;
+    int current_map_vertex;
+    int neighbor_map_vertex;
+};
+typedef std::vector<std::vector<AdminEdge>> Multigraph;
+
 // Flat representation of graphs where its 
 // fixed at runtime 
 class FlatGraph {

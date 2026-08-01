@@ -79,7 +79,7 @@ Tree sample_ust(Rcpp::List l, const Rcpp::IntegerVector &pop, double lower, doub
     // keep sampling until successful 
     while(!tree_drawn){
         // tree_drawn = ust_sampler.draw_tree_on_subgraph(
-        tree_drawn = ust_sampler.OLD_draw_tree_on_subgraph(
+        tree_drawn = ust_sampler.draw_tree_on_subgraph(
             rng_state, ignore,
             skip_unsplittable_subtrees, 
             lower, upper, wilson_times
