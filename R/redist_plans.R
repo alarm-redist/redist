@@ -637,6 +637,7 @@ print.redist_plans <- function(x, ...) {
         smc = "Sequential Monte Carlo",
         mergesplit = "Merge-split Markov chain Monte Carlo",
         cyclewalk = "Cycle Walk Markov chain Monte Carlo",
+        hier_dimer = "Hierarchical Split-Dimer Markov chain Monte Carlo",
         rsg = "random seed-and-grow",
         crsg = "compact random seed-and-grow",
         enumpart = "Enumpart",

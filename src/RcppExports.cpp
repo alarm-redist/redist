@@ -218,6 +218,46 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// hier_dimer_plans
+Rcpp::List hier_dimer_plans(int N, Rcpp::List adj, const arma::uvec& init, const arma::vec& pop, const arma::umat& hierarchy, const arma::vec& split_penalty, const arma::vec& cut_bias, double boundary_penalty, double target, double lower, double upper, Rcpp::List constraints, int thin, int refresh, int ell, int verbosity);
+RcppExport SEXP _redist_hier_dimer_plans(SEXP NSEXP, SEXP adjSEXP, SEXP initSEXP, SEXP popSEXP, SEXP hierarchySEXP, SEXP split_penaltySEXP, SEXP cut_biasSEXP, SEXP boundary_penaltySEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP constraintsSEXP, SEXP thinSEXP, SEXP refreshSEXP, SEXP ellSEXP, SEXP verbositySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type adj(adjSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type init(initSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< const arma::umat& >::type hierarchy(hierarchySEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type split_penalty(split_penaltySEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type cut_bias(cut_biasSEXP);
+    Rcpp::traits::input_parameter< double >::type boundary_penalty(boundary_penaltySEXP);
+    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type constraints(constraintsSEXP);
+    Rcpp::traits::input_parameter< int >::type thin(thinSEXP);
+    Rcpp::traits::input_parameter< int >::type refresh(refreshSEXP);
+    Rcpp::traits::input_parameter< int >::type ell(ellSEXP);
+    Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
+    rcpp_result_gen = Rcpp::wrap(hier_dimer_plans(N, adj, init, pop, hierarchy, split_penalty, cut_bias, boundary_penalty, target, lower, upper, constraints, thin, refresh, ell, verbosity));
+    return rcpp_result_gen;
+END_RCPP
+}
+// hdimer_matching_diagnostic
+Rcpp::List hdimer_matching_diagnostic(int n_vertices, Rcpp::IntegerVector edge_u, Rcpp::IntegerVector edge_v, Rcpp::NumericVector weights);
+RcppExport SEXP _redist_hdimer_matching_diagnostic(SEXP n_verticesSEXP, SEXP edge_uSEXP, SEXP edge_vSEXP, SEXP weightsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type n_vertices(n_verticesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type edge_u(edge_uSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type edge_v(edge_vSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type weights(weightsSEXP);
+    rcpp_result_gen = Rcpp::wrap(hdimer_matching_diagnostic(n_vertices, edge_u, edge_v, weights));
+    return rcpp_result_gen;
+END_RCPP
+}
 // log_st_map
 NumericVector log_st_map(const Graph& g, const arma::umat& districts, const arma::uvec& counties, int n_distr);
 RcppExport SEXP _redist_log_st_map(SEXP gSEXP, SEXP districtsSEXP, SEXP countiesSEXP, SEXP n_distrSEXP) {
@@ -674,6 +714,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_crsg", (DL_FUNC) &_redist_crsg, 9},
     {"_redist_cyclewalk_plans", (DL_FUNC) &_redist_cyclewalk_plans, 17},
     {"_redist_dist_dist_diff", (DL_FUNC) &_redist_dist_dist_diff, 7},
+    {"_redist_hier_dimer_plans", (DL_FUNC) &_redist_hier_dimer_plans, 16},
+    {"_redist_hdimer_matching_diagnostic", (DL_FUNC) &_redist_hdimer_matching_diagnostic, 4},
     {"_redist_log_st_map", (DL_FUNC) &_redist_log_st_map, 4},
     {"_redist_n_removed", (DL_FUNC) &_redist_n_removed, 3},
     {"_redist_countpartitions", (DL_FUNC) &_redist_countpartitions, 1},

@@ -1,6 +1,8 @@
 # redist (development)
 
 * Old `enumpart` functions are deprecated in favor of `redist_enumpart()` which provides a more consistent syntax.
+* `redist_hier_dimer()` provides an experimental, bounded multi-district split-dimer MCMC sampler with multilevel hierarchical spanning trees, exact weighted matching, and an explicit hierarchy-compatible target distribution.
+* `redist_hier_dimer()` accepts `redist_constr` objects and applies their Gibbs penalties with a Metropolis correction.
 
 # redist 4.3.2
 

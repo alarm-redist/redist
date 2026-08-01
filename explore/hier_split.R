@@ -1,4 +1,4 @@
-devtools::load_all(".")
+devtools::load_all()
 library(purrr)
 
 ld_ia()
@@ -64,16 +64,23 @@ bounds <- rbind(
 mean(map$pop < 0.01 * get_target(map))
 
 tgt_1 <- sum(map$pop) / 2
-ust <- sample_ust(map$adj, map$pop, tgt_1, tgt_1, vctrs::vec_group_id(map$county), rep(F, V))
+ust <- sample_ust(
+    map$adj,
+    map$pop,
+    tgt_1,
+    tgt_1,
+    vctrs::vec_group_id(map$county),
+    rep(FALSE, V)
+)
 ust <- sample_ust(
     map$adj,
     map$pop,
     tgt_1 * 0.1,
     tgt_1 * 1.9,
     vctrs::vec_group_id(map$county),
-    rep(F, V)
+    rep(FALSE, V)
 )
-# ust = sample_ust(map$adj, map$pop, tgt_1, tgt_1, rep(1, V), rep(F, V))
+# ust = sample_ust(map$adj, map$pop, tgt_1, tgt_1, rep(1, V), rep(FALSE, V))
 pop_below <- map_dbl(seq_along(ust), ~ tree_pop(ust, . - 1, map$pop, rep(0, V), rep(0, V)))
 plot(sort(pop_below), cex = 0.3)
 abline(h = bounds, col = "red")

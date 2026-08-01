@@ -57,6 +57,14 @@ dist_dist_diff <- function(p, i_dist, j_dist, x_center, y_center, x, y) {
     .Call(`_redist_dist_dist_diff`, p, i_dist, j_dist, x_center, y_center, x, y)
 }
 
+hier_dimer_plans <- function(N, adj, init, pop, hierarchy, split_penalty, cut_bias, boundary_penalty, target, lower, upper, constraints, thin, refresh, ell, verbosity) {
+    .Call(`_redist_hier_dimer_plans`, N, adj, init, pop, hierarchy, split_penalty, cut_bias, boundary_penalty, target, lower, upper, constraints, thin, refresh, ell, verbosity)
+}
+
+hdimer_matching_diagnostic <- function(n_vertices, edge_u, edge_v, weights) {
+    .Call(`_redist_hdimer_matching_diagnostic`, n_vertices, edge_u, edge_v, weights)
+}
+
 log_st_map <- function(g, districts, counties, n_distr) {
     .Call(`_redist_log_st_map`, g, districts, counties, n_distr)
 }

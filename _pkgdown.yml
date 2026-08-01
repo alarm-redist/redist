@@ -29,6 +29,7 @@ reference:
   - redist_mergesplit_parallel
   - redist_flip
   - redist_shortburst
+  - redist_hier_dimer
   - redist_constr
   - constraints
   - has_concept("simulate")
