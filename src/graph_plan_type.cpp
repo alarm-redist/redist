@@ -413,6 +413,7 @@ void estimate_cut_k(const MapParams &map_params, const SplittingSchedule &splitt
             true, lower * min_possible_cut_size, upper * max_possible_cut_size);
         bool const successful = result.successful;
         int const n_vtx = result.num_vertices;
+        // REprintf("\tGRAPH NOW: Its %d!\n", n_vtx);
 
         if (n_vtx > max_V)
             max_V = n_vtx;

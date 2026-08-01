@@ -1,3 +1,4 @@
+#include <cstdio>
 #include <RcppArmadillo.h>
 #include "wilson.h"
 
@@ -6,8 +7,28 @@
 #include "base_plan_type.h"
 #include "tree_splitting.h"
 
+constexpr bool DEBUG_WILSON_VERBOSE = false; // Compile-time constant
+
 namespace{
 
+
+
+// debug function 
+template <typename T>
+std::string vec_to_string(std::vector<T> const &x, std::string_view name, int const len) {
+    std::ostringstream oss;
+
+    oss << name << " = c(";
+    for (std::size_t i = 0; i < len; ++i) {
+        oss << x[i];
+        if (i + 1 < len) {
+            oss << ", ";
+        }
+    }
+    oss << ")\n";
+
+    return oss.str();
+};
 
 /*
  * Generate a random neighbor to a vertex, except for the `last` vertex.
@@ -24,6 +45,22 @@ inline int rnbor(FlatGraph const &g, int const vtx, RNGState &rng_state) {
     uint32_t const deg = static_cast<uint32_t>(g.degree(vtx));
     return g.neighbor(vtx, rng_state.r_int(deg));
 }
+
+// finds a vertex not visited yet by starting from
+// lower until one not visited is hit 
+int find_unvisited_vertex(
+    int const V,
+    const std::vector<bool> &visited, 
+    int &lower) {
+    for (int i = lower; i < V; i++) {
+        if (!visited[i]){
+            lower = i;
+            return i;
+        }
+    }
+    return lower;
+}
+
 
 /*
  * Builds a deterministic spanning tree on a county using depth first search
@@ -397,7 +434,8 @@ SampleSubUSTResult sample_sub_ust(MapParams const &map_params, Tree &tree, // Fl
     // pick root
     int lower_i = 0;
     int lower_c = 0;
-    int const root = rvtx(visited, V, remaining, lower_i, rng_state);
+    // int const root = rvtx(visited, V, remaining, lower_i, rng_state);
+    int const root = find_unvisited_vertex(V, visited, lower_i);
     visited[root] = true;
     remaining--;
     c_visited[map_params.counties[root] - 1] = true;
@@ -490,7 +528,8 @@ SampleSubUSTResult sample_sub_ust(MapParams const &map_params, Tree &tree, // Fl
         path.resize(remaining + 2);
         int max_try = 50 * remaining * (static_cast<int>(std::log(remaining)) + 1);
         while (remaining > 0) {
-            int add = rvtx(visited, V, remaining, lower_i, rng_state);
+            // int add = rvtx(visited, V, remaining, lower_i, rng_state);
+            int add = find_unvisited_vertex(V, visited, lower_i);
             // random walk from `add` until we hit the path
             int added = walk_until(map_params.county_restricted_flat_graph, add, path, max_try, visited, ignore,
                                    rng_state);
@@ -514,174 +553,19 @@ SampleSubUSTResult sample_sub_ust(MapParams const &map_params, Tree &tree, // Fl
 
 
 /*
- * Advance the epoch stamp used for identifying vertices touched during the
- * current loop-erased random walk.
- *
- * The idea:
- *
- *   walk_epochs[v] == current_walk_epoch
- *
- * means that vertex v has been touched during the current walk. This lets us
- * avoid clearing a length-V array at the beginning of every walk.
- *
- * However, uint32_t can eventually overflow. If we simply wrapped from
- * UINT32_MAX back to 1 without clearing `walk_epochs`, old vertices with stamp
- * 1 could be incorrectly interpreted as belonging to the new walk.
- *
- * So on overflow we clear all stamps back to zero and restart at epoch 1.
- * In practice, overflow is extremely unlikely, but this makes the logic
- * formally safe.
- */
-inline void advance_walk_epoch(
-    std::vector<std::uint32_t> &walk_epochs,
-    std::uint32_t &current_walk_epoch
-) {
-    if (current_walk_epoch == std::numeric_limits<std::uint32_t>::max()) {
-        std::fill(walk_epochs.begin(), walk_epochs.end(), 0);
-        current_walk_epoch = 1;
-    } else {
-        ++current_walk_epoch;
-    }
-}
-
-/*
- * Return true if vertex `v` is currently on the active loop-erased walk path.
- *
- * This function is the heart of the no-explicit-erase logic.
- *
- * We maintain a reusable path buffer:
- *
- *   path[0], path[1], ..., path[active_len - 1]
- *
- * These entries are the current loop-erased path.
- *
- * Entries path[active_len], path[active_len + 1], ... may contain stale
- * vertices from earlier loops. We do not physically erase them.
- *
- * For each vertex v, path_pos[v] stores the last slot where v was placed.
- * But because we do not clear stale positions, path_pos[v] alone is not enough.
- *
- * A vertex v is truly on the current path iff all three conditions hold:
- *
- *   1. walk_epochs[v] == current_walk_epoch
- *      v has been touched during this walk.
- *
- *   2. path_pos[v] < active_len
- *      v's recorded slot is inside the currently active prefix.
- *
- *   3. path[path_pos[v]] == v
- *      the slot still actually contains v. This rules out stale vertices whose
- *      old slot has since been overwritten by another vertex.
- *
- * The third condition is important.
- *
- * Example:
- *
- *   current path: 1 -> 2 -> 3 -> 4
- *   loop to 2
- *
- * Then active_len becomes 2, so the active path is:
- *
- *   1 -> 2
- *
- * The entries 3 and 4 are stale. Later the walk may add vertex 5 at slot 2,
- * overwriting path[2]. Without checking path[path_pos[3]] == 3, vertex 3
- * might falsely look active once active_len grows beyond 2 again.
- */
-inline bool is_on_current_walk_path(
-    int const v,
-    std::vector<std::uint32_t> const &walk_epochs,
-    std::uint32_t const current_walk_epoch,
-    std::vector<int> const &path,
-    std::vector<int> const &path_pos,
-    int const active_len
-) {
-    if (walk_epochs[v] != current_walk_epoch) {
-        return false;
-    }
-
-    int const pos = path_pos[v];
-
-    return pos >= 0 &&
-           pos < active_len &&
-           path[pos] == v;
-}
-
-/*
  * Perform one Wilson loop-erased random walk and add the resulting path to
  * an undirected tree.
  *
- * High-level purpose:
- *
- *   Starting from `start_vertex`, which is not yet in the tree, perform a
- *   random walk until the walk hits a vertex that is already in the tree.
- *   Erase loops chronologically as they appear. Once the walk hits the
- *   existing tree, add the loop-erased path to `tree`.
- *
- * Important assumptions:
- *
- *   1. `tree` is an undirected adjacency-list tree with size graph.size().
- *
- *   2. `visited[v] != 0` means vertex v is already in the current tree.
- *
- *   3. `start_vertex` must not already be visited.
- *
- *   4. `graph` must be the graph on which the random walk is supposed to run.
- *
- *      If `graph` is the induced subgraph for the current district/region,
- *      then no extra active/ignore check is needed.
- *
- *      If `graph` is only county-restricted, but still includes vertices from
- *      other regions, then this function is not enough as written. In that
- *      case you must add an active-region check after sampling `curr_nbor`.
- *
- * Scratch vectors:
- *
- *   walk_epochs:
- *      length V. Stamp array used to identify vertices touched in the current
- *      walk without clearing all V entries each time.
- *
- *   current_walk_epoch:
- *      shared epoch counter. This function advances it once at the beginning
- *      of each walk.
- *
- *   path:
- *      reusable buffer storing the current loop-erased path in forward order:
- *
- *          path[0]                  = start_vertex
- *          path[active_len - 1]     = current endpoint of walk
- *
- *      Only the prefix path[0:active_len) is active. Entries beyond active_len
- *      are stale and ignored.
- *
- *   path_pos:
- *      length V. path_pos[v] is the last slot where v was written into `path`.
- *      This is only meaningful when combined with walk_epochs and the slot
- *      verification path[path_pos[v]] == v.
- *
- *   visited:
- *      length V. Byte-valued flag array. The function marks all newly-added
- *      path vertices as visited after successfully hitting the tree.
- *
- * Return value:
- *
- *   true:
- *      The walk hit the existing tree and the loop-erased path was added.
- *
- *   false:
- *      The walk did not hit the existing tree within max_tries proposals.
- *      In this case, `tree` and `visited` are not modified.
  */
-bool add_walk_from(
+int add_walk_from(
     FlatGraph const &graph,
+    // Graph const &graph,
     Tree &tree,
     int const start_vertex,
-    std::vector<std::uint32_t> &walk_epochs,
-    std::uint32_t &current_walk_epoch,
     int const max_tries,
-    std::vector<int> &path,
-    std::vector<int> &path_pos,
+    std::vector<int> &next_vertex,
     std::vector<bool> &visited,
+    std::vector<bool> const &ignore,
     RNGState &rng_state
 ) {
     int const V = graph.size();
@@ -701,18 +585,9 @@ bool add_walk_from(
             throw std::runtime_error("add_walk_from: tree has wrong size.");
         }
 
-        if (static_cast<int>(walk_epochs.size()) != V) {
-            throw std::runtime_error("add_walk_from: walk_epochs has wrong size.");
-        }
-
-        if (static_cast<int>(path_pos.size()) != V) {
-            throw std::runtime_error("add_walk_from: path_pos has wrong size.");
-        }
-
         if (static_cast<int>(visited.size()) != V) {
             throw std::runtime_error("add_walk_from: visited has wrong size.");
         }
-
         if (visited[start_vertex]) {
             throw std::runtime_error(
                 "add_walk_from: start_vertex is already in the tree."
@@ -724,448 +599,227 @@ bool add_walk_from(
         }
     }
 
-    /*
-     * Start a new walk epoch.
-     *
-     * This lets us distinguish vertices touched during this walk from vertices
-     * touched during previous calls to add_walk_from, without clearing the
-     * entire `walk_epochs` vector.
-     */
-    advance_walk_epoch(walk_epochs, current_walk_epoch);
 
-    /*
-     * Initialize the current loop-erased path.
-     *
-     * We reuse `path` as a buffer. If it already has storage, overwrite slot 0.
-     * Otherwise push the start vertex.
-     *
-     * active_len is the logical length of the current loop-erased path.
-     * Only path[0], ..., path[active_len - 1] are part of the current path.
-     */
-    int active_len = 1;
-
-    if (path.empty()) {
-        path.push_back(start_vertex);
-    } else {
-        path[0] = start_vertex;
-    }
-
-    /*
-     * Record that start_vertex is on the current walk path at position 0.
-     */
-    path_pos[start_vertex] = 0;
-    walk_epochs[start_vertex] = current_walk_epoch;
-
-    /*
-     * curr_vertex is always the last vertex in the active path:
-     *
-     *   curr_vertex == path[active_len - 1]
-     *
-     * We maintain this invariant throughout the random walk.
-     */
     int curr_vertex = start_vertex;
+    bool hit_tree = false;
 
-    /*
-     * hit_vertex will become the first already-visited tree vertex hit by the
-     * random walk.
-     *
-     * We do not include hit_vertex inside `path`, because it is already in the
-     * tree. At the end, the last path vertex is connected to hit_vertex.
-     */
-    int hit_vertex = -1;
-
-    /*
-     * Main random-walk loop.
-     *
-     * Each iteration proposes one random neighbor of curr_vertex.
-     *
-     * There are three possible cases:
-     *
-     *   Case 1: proposed neighbor is already in the tree.
-     *           The walk is complete.
-     *
-     *   Case 2: proposed neighbor is already on the current walk path.
-     *           A loop has formed. Shorten active_len to erase the loop.
-     *
-     *   Case 3: proposed neighbor is new to the current active path.
-     *           Append it to the path.
-     */
     for (int tries = 0; tries < max_tries; ++tries) {
-        /*
-         * Draw a random neighbor from the graph.
-         *
-         * This assumes rnbor(graph, curr_vertex, rng_state) returns a uniformly
-         * random neighbor of curr_vertex in the graph.
-         *
-         * If graph is not already induced to the active region, insert an
-         * active/ignore rejection check immediately after this line.
-         */
-        int const curr_nbor = rnbor(graph, curr_vertex, rng_state);
+        int const curr_nbor =
+            rnbor(graph, curr_vertex, rng_state);
 
-        /*
-         * Case 1: the random walk has hit the existing tree.
-         *
-         * We stop immediately. The current active path connects to hit_vertex.
-         */
-        if (visited[curr_nbor]) {
-            hit_vertex = curr_nbor;
-            break;
-        }
-
-        /*
-         * Case 2: curr_nbor is already on the current loop-erased path.
-         *
-         * This means the random walk has formed a loop:
-         *
-         *   curr_nbor -> ... -> curr_vertex -> curr_nbor
-         *
-         * Chronological loop erasure removes everything after the first
-         * occurrence of curr_nbor. Because curr_nbor is already in `path`, and
-         * path_pos[curr_nbor] gives its location, this is just:
-         *
-         *   active_len = path_pos[curr_nbor] + 1
-         *
-         * We do not clear stale path entries. We simply shrink the active prefix.
-         *
-         * Example:
-         *
-         *   path:       1 2 3 4
-         *   active_len: 4
-         *   proposal:   2
-         *
-         * New active path:
-         *
-         *   path:       1 2 [3 4 are stale]
-         *   active_len: 2
-         */
-        if (is_on_current_walk_path(
-                curr_nbor,
-                walk_epochs,
-                current_walk_epoch,
-                path,
-                path_pos,
-                active_len
-            )) {
-            active_len = path_pos[curr_nbor] + 1;
-            curr_vertex = curr_nbor;
+        if (ignore[curr_nbor]) {
             continue;
         }
 
         /*
-         * Case 3: curr_nbor is not currently on the active path.
-         *
-         * It may be either:
-         *
-         *   - a vertex never touched in this walk, or
-         *   - a stale vertex from an erased loop, or
-         *   - a vertex from a previous walk epoch.
-         *
-         * In all cases, we append it to the current active path.
-         *
-         * Because `path` is alawys guaranteed to be of length V
-         * we just overrite path[active_len]
-         *
-        path[active_len] = curr_nbor;
-        
-
-        /*
-         * Record curr_nbor's current position and stamp.
-         *
-         * The slot verification path[path_pos[v]] == v is what makes stale
-         * entries safe, even if old path_pos values remain.
+         * Record the latest exit from curr_vertex.
+         * Revisiting curr_vertex overwrites its previous exit,
+         * automatically removing loops from the final chain.
          */
-        path_pos[curr_nbor] = active_len;
-        walk_epochs[curr_nbor] = current_walk_epoch;
+        next_vertex[curr_vertex] = curr_nbor;
 
-        /*
-         * The active path is now one vertex longer, and curr_nbor is the new
-         * endpoint.
-         */
-        ++active_len;
+        if (visited[curr_nbor]) {
+            hit_tree = true;
+            break;
+        }
+
         curr_vertex = curr_nbor;
     }
 
-    /*
-     * If we did not hit the existing tree within max_tries, report failure.
-     *
-     * Notice that up to this point, we have only modified scratch arrays:
-     *
-     *   path
-     *   path_pos
-     *   walk_epochs
-     *
-     * We have not modified:
-     *
-     *   tree
-     *   visited
-     *
-     * So returning false does not leave a partially-added tree path.
-     */
-    if (hit_vertex == -1) {
-        return false;
+    if (!hit_tree) {
+        return 0;
     }
 
+    int added = 0;
+    curr_vertex = start_vertex;
+
+    if constexpr (DEBUG_WILSON_VERBOSE){
+        std::cerr << "Adding following path to tree:";
+    }
     /*
-     * Add the loop-erased path to the tree.
-     *
-     * The active path is stored in forward random-walk order:
-     *
-     *   path[0]              = start_vertex
-     *   path[active_len - 1] = last unvisited vertex before hitting the tree
-     *
-     * and we know:
-     *
-     *   path[active_len - 1] is adjacent to hit_vertex
-     *
-     * Since hit_vertex is already in the tree, the easiest way to attach the
-     * path is to walk backward:
-     *
-     *   hit_vertex
-     *      ^
-     *      |
-     *   path[active_len - 1]
-     *      ^
-     *      |
-     *   path[active_len - 2]
-     *      ^
-     *      |
-     *   ...
-     *      ^
-     *      |
-     *   path[0]
-     *
-     * For each child-parent pair, add both directions because `tree` is
-     * undirected.
+     * Follow the final successor chain to the existing tree.
      */
-    int parent = hit_vertex;
+    while (!visited[curr_vertex]) {
+        int const parent =
+            next_vertex[curr_vertex];
 
-    for (int i = active_len - 1; i >= 0; --i) {
-        int const child = path[i];
-
-        /*
-         * Defensive checks.
-         *
-         * The child should not already be in the tree. If it were, then the walk
-         * should have stopped when it first proposed that vertex.
-         */
         if constexpr (perf_config::supposedly_safe_input_checks) {
-            if (visited[child]) {
+            if (visited[parent]) {
                 throw std::runtime_error(
                     "add_walk_from: active path contains an already visited vertex."
                 );
             }
         }
-
         /*
-         * Add the undirected tree edge child -- parent.
+         * Directed away from the existing root.
          */
-        tree[child].push_back(parent);
-        tree[parent].push_back(child);
+        tree[parent].push_back(curr_vertex);
+        if constexpr (DEBUG_WILSON_VERBOSE){
+            std::cerr << "(" << parent << ","  << curr_vertex << "), ";
+        }
 
-        /*
-         * Mark child as now belonging to the tree.
-         *
-         * This is essential. Future Wilson walks must treat this vertex as a
-         * valid stopping point.
-         */
-        visited[child] = true;
-
-        /*
-         * Move backward along the path. On the next iteration, this child will
-         * be the parent of the previous path vertex.
-         */
-        parent = child;
+        visited[curr_vertex] = true;
+        curr_vertex = parent;
+        ++added;
     }
 
-    return true;
+    if constexpr (DEBUG_WILSON_VERBOSE){
+        std::cerr << std::endl;
+    }
+
+    return added;
 }
 
 
 // We assume that ignore has been properly set and nothing else
 // has been cleared 
-// template <bool SkipUnsplittableTrees>
-// SampleSubUSTResult sample_ust(
-//     MapParams const &map_params, 
-//     FlatGraph &wilson_submap, 
-//     Tree &tree, // FlatGraph &tree, 
-//     double const lower, double const upper, 
-//     std::vector<bool> &visited, const std::vector<bool> &ignore, 
-//     Tree &county_tree, 
-//     WilsonGraphScratch &g_scratch,
-//     WilsonMultiGraphScratch &mg_scratch,
-//     RNGState &rng_state
-//     ) {
-//     // auto t1_start = std::chrono::steady_clock::now();
-//     int const n_county = map_params.num_counties;
-//     int tot_pop = 0;
-//     // reset the county members inner vectors
-//     // and zero out the county pops
-//     // and mark all counties as zero
-//     for (size_t i = 0; i < map_params.num_counties; i++) {
-//         county_members[i].clear();
-//         c_visited[i] = true;
-//         county_pop[i] = 0.0;
-//     }
+template <bool SkipUnsplittableTrees>
+SampleSubUSTResult sample_ust(
+    MapParams const &map_params, 
+    Tree &tree, // FlatGraph &tree, 
+    double const lower, double const upper, 
+    std::vector<bool> &visited, const std::vector<bool> &ignore, 
+    Tree &county_tree, 
+    WilsonGraphScratch &g_scratch,
+    WilsonMultiGraphScratch &mg_scratch,
+    RNGState &rng_state
+    ) {
+    // auto t1_start = std::chrono::steady_clock::now();
+    int const V = map_params.V;
+    int const n_county = map_params.num_counties;
 
-//     int c_remaining = 0;
-//     int remaining = 0;
-//     int const V = map_params.V;
-//     for (int v = 0; v < V; v++)
-//     {
-//         if (ignore[v]) {
-//             // if we're ignoring we just continue as 
-//             // there's nothing more to do 
-//             continue;
-//         } 
-//         // Else it means v is part of the subgraph we care about 
-//         visited[v] = false;
-//         remaining++;
-//         auto county = map_params.counties[v] - 1;
-//         tot_pop += map_params.pop[v];
-//         county_pop[county] += map_params.pop[v];
-//         if (c_visited[county]) {
-//             c_visited[county] = false;
-//             c_remaining++;
-//         }
-//         county_members[county].push_back(v);
-//         // Now we clear the ust at this vertex
-//         // ust.clear_vertex(i);
-//         tree[v].clear();
-//         // Now we clear the subgraph 
-//         wilson_submap.clear_vertex(v);
-//         // now we add all the neighbors not ignored 
-//         for (auto const v_nbor: map_params.g[v])
-//         {
-//             if (!ignore[v_nbor]){
-//                 wilson_submap.add_directed_edge(v, v_nbor);
-//             }
-//         }
-        
-//     }
+    // pick root
+    int const root = find_unvisited_vertex(V, visited, g_scratch.smallest_v_seen);
+    if constexpr(DEBUG_WILSON_VERBOSE){
+        std::cerr << "Starting with root of " << root << std::endl;
+    }
+    visited[root] = true;
+    g_scratch.remaining--;
 
+    int lower_c = 0;
+    mg_scratch.c_visited[map_params.counties[root] - 1] = true;
+    mg_scratch.c_remaining--;
 
+    // Connect counties
+    // clear the tree
+    clear_tree(county_tree);
+    mg_scratch.county_path.clear();
+    while (mg_scratch.c_remaining > 0) {
+        int add = rvtx(mg_scratch.c_visited, n_county, mg_scratch.c_remaining, lower_c, rng_state);
+        // random walk from `add` until we hit the path
+        walk_until_cty(map_params.cg, add, mg_scratch.county_path, mg_scratch.c_visited, ignore, rng_state);
+        // update visited list and constructed tree
+        int added = mg_scratch.county_path.size();
+        if (added == 0) { // bail
+            return SampleSubUSTResult{1, root};
+        }
+        mg_scratch.c_remaining -= added;
+        mg_scratch.c_visited[add] = true;
+        for (int i = 0; i < added; i++) {
+            mg_scratch.c_visited[mg_scratch.county_path[i][0]] = true;
+            // reverse path so that arrows point away from root
+            // tree.add_directed_edge(county_path[i][2], county_path[i][1]);
+            tree[mg_scratch.county_path[i][2]].push_back(mg_scratch.county_path[i][1]);
+            county_tree[mg_scratch.county_path[i][0]]
+                .push_back(map_params.counties[mg_scratch.county_path[i][1]] - 1);
 
-//     // pick root
-//     int lower_i = 0;
-//     int lower_c = 0;
-//     int const root = rvtx(visited, V, remaining, lower_i, rng_state);
-//     visited[root] = true;
-//     remaining--;
-//     c_visited[map_params.counties[root] - 1] = true;
-//     c_remaining--;
+            visited[mg_scratch.county_path[i][1]] = true; // root for next district
+            g_scratch.remaining--;
+        }
+    }
 
-//     // Connect counties
-//     // clear the tree
-//     clear_tree(county_tree);
-//     county_path.clear();
-//     while (c_remaining > 0) {
-//         int add = rvtx(c_visited, n_county, c_remaining, lower_c, rng_state);
-//         // random walk from `add` until we hit the path
-//         walk_until_cty(map_params.cg, add, county_path, c_visited, ignore, rng_state);
-//         // update visited list and constructed tree
-//         int added = county_path.size();
-//         if (added == 0) { // bail
-//             return SampleSubUSTResult{1, root};
-//         }
-//         c_remaining -= added;
-//         c_visited[add] = true;
-//         for (int i = 0; i < added; i++) {
-//             c_visited[county_path[i][0]] = true;
-//             // reverse path so that arrows point away from root
-//             // tree.add_directed_edge(county_path[i][2], county_path[i][1]);
-//             tree[county_path[i][2]].push_back(county_path[i][1]);
-//             county_tree[county_path[i][0]]
-//                 .push_back(map_params.counties[county_path[i][1]] - 1);
+    // optional toggle of skipping unsplittable trees 
+    if constexpr (SkipUnsplittableTrees) {
+    // figure out which counties will not need to be split
+    if (n_county > 1) {
+        // don't need to fill pop below since it gets reset
+        OLD_TO_UPDATE_get_tree_pops_below(
+            county_tree, map_params.counties[root] - 1, 
+            mg_scratch.county_stack, mg_scratch.county_pop,
+            mg_scratch.cty_pop_below);
+        for (int i = 0; i < n_county; i++) {
+            int n_vtx = mg_scratch.county_members[i].size();
+            if (n_vtx <= 1)
+                continue;
+            // check child counties
+            int children = county_tree[i].size();
+            int split_ub = mg_scratch.cty_pop_below[i];
+            int split_lb = split_ub - mg_scratch.county_pop[i];
+            if (lower - 1 < mg_scratch.county_pop[i])
+                split_lb = (int)lower;
+            for (int j = 0; j < children; j++) {
+                int pop_child = mg_scratch.cty_pop_below[county_tree[i][j]];
+                if (pop_child >= 0 && pop_child < split_lb) {
+                    split_lb = pop_child;
+                }
+            }
 
-//             visited[county_path[i][1]] = true; // root for next district
-//             remaining--;
-//         }
-//     }
+            // split_lb < split_ub so the smallest possible population is
+            // min(split_lb, tot_pop - split_ub)
+            // its impossible to split if smallest possible size is bigger than largest ub
+            // bool miss_first = std::min(split_lb, tot_pop - split_ub) > upper;
+            // // biggest possible population is max(split_ub, total_pop - split_lb)
+            // // its impossible to split if largest possible size is smaller than smallest lb
+            // bool miss_second = std::max(split_ub, tot_pop - split_lb) < lower;
 
-//     // optional toggle of skipping unsplittable trees 
-//     // if constexpr (SkipUnsplittableTrees) {
-//     // figure out which counties will not need to be split
-//     if (n_county > 1) {
-//         // don't need to fill pop below since it gets reset
-//         OLD_TO_UPDATE_get_tree_pops_below(county_tree, map_params.counties[root] - 1, county_stack, county_pop,
-//                             cty_pop_below);
-//         for (int i = 0; i < n_county; i++) {
-//             int n_vtx = county_members[i].size();
-//             if (n_vtx <= 1)
-//                 continue;
-//             // check child counties
-//             int children = county_tree[i].size();
-//             int split_ub = cty_pop_below[i];
-//             int split_lb = split_ub - county_pop[i];
-//             if (lower - 1 < county_pop[i])
-//                 split_lb = (int)lower;
-//             for (int j = 0; j < children; j++) {
-//                 int pop_child = cty_pop_below[county_tree[i][j]];
-//                 if (pop_child >= 0 && pop_child < split_lb) {
-//                     split_lb = pop_child;
-//                 }
-//             }
+            bool miss_first = split_ub < lower || split_lb > upper;
+            bool miss_second = (mg_scratch.total_pop - split_lb) < lower || (mg_scratch.total_pop - split_ub) > upper;
 
-//             // split_lb < split_ub so the smallest possible population is
-//             // min(split_lb, tot_pop - split_ub)
-//             // its impossible to split if smallest possible size is bigger than largest ub
-//             // bool miss_first = std::min(split_lb, tot_pop - split_ub) > upper;
-//             // // biggest possible population is max(split_ub, total_pop - split_lb)
-//             // // its impossible to split if largest possible size is smaller than smallest lb
-//             // bool miss_second = std::max(split_ub, tot_pop - split_lb) < lower;
+            // impossible for this county to need to be split
+            // so we fill in a dummy tree 
+            if (mg_scratch.cty_pop_below[i] >= 0 && (miss_first && miss_second)) {
+                // check if we need the dummy tree to actually be a subset of g
+                add_county_to_tree_dfs(
+                    map_params.county_restricted_graph,
+                    map_params.counties[mg_scratch.county_members[i][0]], // pass in the county CAREFUL COUNTIES ARE 1-indexed
+                    mg_scratch.county_members[i],
+                    visited,
+                    g_scratch.dummy_county_tree_queue,
+                    tree
+                );
+                g_scratch.remaining -= n_vtx - 1; // already visited county root
+            }
+        }
+    }
+    }
 
-//             bool miss_first = split_ub < lower || split_lb > upper;
-//             bool miss_second = (tot_pop - split_lb) < lower || (tot_pop - split_ub) > upper;
+    if constexpr(DEBUG_WILSON_VERBOSE){
+        std::cerr << "Starting to draw within county trees!\n";
+    }
+    
+    // Generate tree within each county
+    if (g_scratch.remaining > 0) {
+        g_scratch.path.clear();
+        g_scratch.path.resize(g_scratch.remaining + 2);
+        int max_try = 50 * g_scratch.remaining * (static_cast<int>(std::log(g_scratch.remaining)) + 1);
+        while (g_scratch.remaining > 0) {
+            int unvisited_vertex = find_unvisited_vertex(V, visited, g_scratch.smallest_v_seen);
+            // int unvisited_vertex = rvtx(visited, V, g_scratch.remaining, g_scratch.smallest_v_seen, rng_state);
+            // random walk from `unvisited_vertex` until we hit the path
+            int vertices_added = add_walk_from(
+                map_params.county_restricted_flat_graph,
+                tree,
+                unvisited_vertex,
+                max_try,
+                g_scratch.path,
+                visited, ignore, rng_state
+            );
+            // update visited list and constructed tree
+            if (vertices_added == 0) { // bail
+                return SampleSubUSTResult{1, root};
+            }
+            g_scratch.remaining -= vertices_added; // no correction needed because walk until doesn't count the hit
+            // vertex already in the tree 
+        }
+    }
 
-//             // impossible for this county to need to be split
-//             // so we fill in a dummy tree 
-//             if (cty_pop_below[i] >= 0 && (miss_first && miss_second)) {
-//                 // check if we need the dummy tree to actually be a subset of g
-//                 add_county_to_tree_dfs(
-//                     map_params.county_restricted_graph,
-//                     map_params.counties[county_members[i][0]], // pass in the county CAREFUL COUNTIES ARE 1-indexed
-//                     county_members[i],
-//                     visited,
-//                     dummy_county_tree_queue,
-//                     tree
-//                 );
-//                 remaining -= n_vtx - 1; // already visited county root
-//             }
-//         }
-//     }
-//     // }
-
-//     // Generate tree within each county
-//     if (remaining > 0) {
-//         path.clear();
-//         path.resize(remaining + 2);
-//         int max_try = 50 * remaining * (static_cast<int>(std::log(remaining)) + 1);
-//         while (remaining > 0) {
-//             int add = rvtx(visited, V, remaining, lower_i, rng_state);
-//             // random walk from `add` until we hit the path
-//             int added = walk_until(map_params.county_restricted_flat_graph, add, path, max_try, visited, ignore,
-//                                    rng_state);
-//             // update visited list and constructed tree
-//             if (added == 0) { // bail
-//                 return SampleSubUSTResult{1, root};
-//             }
-//             remaining -= added - 1; // minus 1 because ending vertex already in tree
-//             for (int i = 0; i < added - 1; i++) {
-//                 visited[path[i]] = true;
-//                 // reverse path so that arrows point away from root
-//                 // tree.add_directed_edge(path[i + 1], path[i]);
-//                 tree[path[i + 1]].push_back(path[i]);
-//             }
-//         }
-//     }
-
-//     return SampleSubUSTResult{0, root};
-// }
+    return SampleSubUSTResult{0, root};
+}
 
 }
 
 
-
+// sample_non_hierarchical_ust
 
 
 /********************************************************
@@ -1178,83 +832,122 @@ bool add_walk_from(
 
  // The idea is to move all this outside of sample sub ust
 
+// Bigger picture refactor 
+// - Pick the root in the USTSampler call, not wilson
+// - Since we prep the graph anyways just make the root the smallest non ignore variable seen 
+// - Non hierarchical wilson
+// - Add draw_fresh_ust and fill_in_ust 
 
 
-
+// TODO
+// - Make a helper `sample_subgraph_ust` function 
+// - Make a helper `sample_submultigraph_ust` function 
+// - `sample_ust` should involve calls to these functions 
+// - Add something tracking counties skipped and a vertex in the county
 
 
 // We assume that ignore has been correctly set, nothing else
 // INCLUDING THE TREE HAS NOT BEEN CLEARED!
-// std::pair<bool, int> USTSampler::NEW_draw_ust(
-//       double const lower, double const upper,
-//         RNGState &rng_state) {
-//     // We assume that ignore has already been properly set 
-//     // AND NOTHING ELSE. No trees have been cleared or graphs touched
 
-//     // We will now 
-//     // - properly set the visited vector 
-//     // - Set the wilson_submap so its the subgraph restricted to vertices and 
-//     //   edges solely contained in the `ignore[v] == false`
-//     // - TODO: set up county multigraph stuff 
+int USTSampler::prep_fresh_ust_call(){
+    // We assume that ignore has already been properly set 
+    // AND NOTHING ELSE. No trees have been cleared or graphs touched
+    // We will now 
+    // - properly set the visited vector 
+    // - Set the wilson_submap so its the subgraph restricted to vertices and 
+    //   edges solely contained in the `ignore[v] == false`
+    // - TODO: set up county multigraph stuff 
 
-//     int const n_county = map_params.num_counties;
-//     int tot_pop = 0;
-//     // reset the county members inner vectors
-//     // and zero out the county pops
-//     // and mark all counties as zero
-//     for (size_t i = 0; i < map_params.num_counties; i++) {
-//         county_members[i].clear();
-//         c_visited[i] = true;
-//         county_pop[i] = 0.0;
-//     }
+    mg_scratch.c_remaining = 0;
+    mg_scratch.total_pop = 0;
+    // reset the county members inner vectors
+    // and zero out the county pops
+    // and mark all counties as zero
+    for (size_t i = 0; i < map_params.num_counties; i++) {
+        mg_scratch.county_members[i].clear();
+        mg_scratch.c_visited[i] = true;
+        mg_scratch.county_pop[i] = 0.0;
+    }
 
-//     int remaining = 0;
-//     int const V = map_params.V;
-//     for (int v = 0; v < V; v++)
-//     {
-//         if (ignore[v]) {
-//             // if we're ignoring we just continue as 
-//             // there's nothing more to do 
-//             continue;
-//         } 
-//         // Else it means v is part of the subgraph we care about 
-//         visited[v] = false;
-//         remaining++;
-//         auto county = map_params.counties[v] - 1;
-//         tot_pop += map_params.pop[v];
-//         county_pop[county] += map_params.pop[v];
-//         if (c_visited[county]) {
-//             c_visited[county] = false;
-//         }
-//         county_members[county].push_back(v);
-//         // Now we clear the ust at this vertex
-//         // ust.clear_vertex(i);
-//         ust[v].clear();
-//         // Now we clear the subgraph 
-//         wilson_submap.clear_vertex(v);
-//         // now we add all the neighbors not ignored 
-//         for (auto const v_nbor: map_params.g[v])
-//         {
-//             if (!ignore[v_nbor]){
-//                 wilson_submap.add_directed_edge(v, v_nbor);
-//             }
-//         }
+    bool first_county_seen = false;
+
+    g_scratch.remaining = 0;
+    int const V = map_params.V;
+    for (int v = 0; v < V; v++)
+    {
+        if (ignore[v]) {
+            // if we're ignoring we just mark as visited and continue
+            visited[v] = true;
+            // there's nothing more to do 
+            continue;
+        } 
+        // Else it means v is part of the subgraph we care about 
+        visited[v] = false;
+        g_scratch.remaining++;
+        auto v_county = map_params.counties[v] - 1;
+        mg_scratch.total_pop += map_params.pop[v];
+        mg_scratch.county_pop[v_county] += map_params.pop[v];
+        if (mg_scratch.c_visited[v_county]) {
+            mg_scratch.c_visited[v_county] = false;
+            ++mg_scratch.c_remaining;
+            // This will be our initial start vertex since this will 
+            // TODO add another check 
+            if(!first_county_seen){
+                g_scratch.smallest_v_seen = v;
+                first_county_seen = true;
+            }
+
+            // TODO add this vertex to county root vector 
+            // TODO in the future clear the county multigraph and add this edge 
+        }
+        mg_scratch.county_members[v_county].push_back(v);
+        // Now we clear the ust at this vertex
+        // ust.clear_vertex(i);
+        ust[v].clear();
+        // Now we clear the subgraph 
+        // wilson_submap.clear_vertex(v);
+        // // now we add all the neighbors not ignored and in the same county 
+        // for (auto const u: map_params.g[v])
+        // {
+        //     if (!ignore[u] && map_params.counties[u] - 1 == v_county){
+        //         wilson_submap.add_directed_edge(v, u);
+        //     }
+        // }
         
-//     }
+    }
 
-    
+    return g_scratch.remaining;
+}
 
-//     // We also assume the tree has been properly cleared
-//     // Now get a uniform spanning tree drawn on the subgraph denoted by the ignore
-//     // vertices 
-//     auto const result = sample_sub_ust<true>(map_params, ust, lower, upper, visited, ignore,
-//                                 county_tree, county_stack, dummy_county_tree_queue,
-//                                 county_pop, county_members,
-//                                 c_visited, cty_pop_below, county_path, path, rng_state
-//                                 );
-//     // result.code == 0 means it was successful
-//     return std::make_pair(result.code == 0, result.root);
-// }
+USTDrawResult USTSampler::draw_fresh_ust(
+      double const lower, double const upper,
+        RNGState &rng_state) {
+
+
+    // prep the inputs and get the number of vertices 
+    int const num_tree_vertices = prep_fresh_ust_call();
+    // REprintf("%d Vertices!\n", num_tree_vertices);
+
+    auto const result = sample_ust<true>(map_params, ust, 
+        lower, upper, visited, ignore,
+        county_tree, g_scratch, mg_scratch, rng_state
+    );
+
+    if constexpr(perf_config::object_integrity_checking){
+        if (result.code == 0){
+            check_tree_integrity(
+                get_vertex_tree(),
+                "Just called `sample_sub_ust` in attempt_to_draw_tree_on_region\n",
+                result.root,
+                num_tree_vertices,
+                true
+            );
+        }
+    }
+
+    // result.code == 0 means it was successful
+    return USTDrawResult{result.code == 0, num_tree_vertices, result.root};
+}
  
 
 std::pair<bool, int> USTSampler::draw_ust(
@@ -1264,7 +957,7 @@ std::pair<bool, int> USTSampler::draw_ust(
     // We also assume the tree has been properly cleared
     // Now get a uniform spanning tree drawn on the subgraph denoted by the ignore
     // vertices 
-    auto const result = sample_sub_ust<false>(map_params, ust, lower, upper, visited, ignore,
+    auto const result = sample_sub_ust<true>(map_params, ust, lower, upper, visited, ignore,
                                 county_tree, mg_scratch.county_stack, g_scratch.dummy_county_tree_queue,
                                 mg_scratch.county_pop, mg_scratch.county_members,
                                 mg_scratch.c_visited, mg_scratch.cty_pop_below, 
@@ -1275,25 +968,79 @@ std::pair<bool, int> USTSampler::draw_ust(
 }
 
 
+USTDrawResult USTSampler::OLD_attempt_to_draw_tree_on_region(
+    RNGState &rng_state, Plan const &plan, const int region_to_draw_tree_on,
+    bool const use_custom_bounds, double const custom_sample_sub_ust_lower,
+    double const custom_sample_sub_ust_upper) {
+    int V = map_params.V;
+
+    int num_region_vertices = 0;
+    // Mark it as ignore if its not in the region to split and clear those vertices in 
+    // the region
+    for (int i = 0; i < V; ++i) {
+        // check if in the region
+        bool const in_region = plan.region_ids[i] == region_to_draw_tree_on;
+        ignore[i] = !in_region;
+        // clear if in the region
+        if (in_region) {
+            // ust.clear_vertex(i);
+            ust[i].clear();
+            ++num_region_vertices;
+        }
+    }
+
+    double sample_sub_ust_lower, sample_sub_ust_upper;
+
+    if (use_custom_bounds){
+        // if using custom upper and lwoer bounds set those
+        sample_sub_ust_lower = custom_sample_sub_ust_lower;
+        sample_sub_ust_upper = custom_sample_sub_ust_upper;
+    }else{
+        // else just do upper and lower scaled by min and max possible cut size
+        // get upper and lower bounds on region pops
+        auto min_max_pair = splitting_schedule.all_regions_min_and_max_possible_cut_sizes
+                                [plan.region_sizes[region_to_draw_tree_on]];
+        sample_sub_ust_lower = min_max_pair.first * map_params.lower; // lower
+        sample_sub_ust_upper = min_max_pair.second * map_params.upper; // upper
+    }
+
+
+    // Now sample a uniform spanning tree drawn on that region
+    auto const result = draw_ust(
+        sample_sub_ust_lower, // lower, 
+        sample_sub_ust_upper, // upper
+        rng_state
+        );
+    bool const valid_tree = result.first;
+
+    if constexpr(perf_config::object_integrity_checking){
+        if (valid_tree){
+            check_tree_integrity(
+                get_vertex_tree(),
+                "Just called `sample_sub_ust` in attempt_to_draw_tree_on_region\n",
+                result.second,
+                num_region_vertices,
+                true
+            );
+        }
+    }
+
+    return USTDrawResult{result.first, num_region_vertices, result.second};
+}
+
+
 USTDrawResult USTSampler::attempt_to_draw_tree_on_region(
     RNGState &rng_state, Plan const &plan, const int region_to_draw_tree_on,
     bool const use_custom_bounds, double const custom_sample_sub_ust_lower,
     double const custom_sample_sub_ust_upper) {
     int V = map_params.V;
 
-    int num_region_vertices = 0;
     // Mark it as ignore if its not in the region to split and clear those vertices in 
     // the region
     for (int i = 0; i < V; ++i) {
         // check if in the region
-        bool const in_region = plan.region_ids[i] == region_to_draw_tree_on;
-        ignore[i] = !in_region;
-        // clear if in the region
-        if (in_region) {
-            // ust.clear_vertex(i);
-            ust[i].clear();
-            ++num_region_vertices;
-        }
+        // TODO: in the future make this all a single pass through
+        ignore[i] = plan.region_ids[i] != region_to_draw_tree_on;
     }
 
     double sample_sub_ust_lower, sample_sub_ust_upper;
@@ -1310,94 +1057,18 @@ USTDrawResult USTSampler::attempt_to_draw_tree_on_region(
         sample_sub_ust_lower = min_max_pair.first * map_params.lower; // lower
         sample_sub_ust_upper = min_max_pair.second * map_params.upper; // upper
     }
-
-
     // Now sample a uniform spanning tree drawn on that region
-    auto const result = draw_ust(
+    auto const result = draw_fresh_ust(
         sample_sub_ust_lower, // lower, 
         sample_sub_ust_upper, // upper
         rng_state
         );
-    bool const valid_tree = result.first;
 
-    if constexpr(perf_config::object_integrity_checking){
-        if (valid_tree){
-            check_tree_integrity(
-                get_vertex_tree(),
-                "Just called `sample_sub_ust` in attempt_to_draw_tree_on_region\n",
-                result.second,
-                num_region_vertices,
-                true
-            );
-        }
-    }
-
-    return USTDrawResult{result.first, num_region_vertices, result.second};
+    return result;
 }
 
 
-USTDrawResult USTSampler::NEW_attempt_to_draw_tree_on_region(
-    RNGState &rng_state, Plan const &plan, const int region_to_draw_tree_on,
-    bool const use_custom_bounds, double const custom_sample_sub_ust_lower,
-    double const custom_sample_sub_ust_upper) {
-    int V = map_params.V;
-
-    int num_region_vertices = 0;
-    // Mark it as ignore if its not in the region to split and clear those vertices in 
-    // the region
-    for (int i = 0; i < V; ++i) {
-        // check if in the region
-        bool const in_region = plan.region_ids[i] == region_to_draw_tree_on;
-        ignore[i] = !in_region;
-        // clear if in the region
-        if (in_region) {
-            // ust.clear_vertex(i);
-            ust[i].clear();
-            ++num_region_vertices;
-        }
-    }
-
-    double sample_sub_ust_lower, sample_sub_ust_upper;
-
-    if (use_custom_bounds){
-        // if using custom upper and lwoer bounds set those
-        sample_sub_ust_lower = custom_sample_sub_ust_lower;
-        sample_sub_ust_upper = custom_sample_sub_ust_upper;
-    }else{
-        // else just do upper and lower scaled by min and max possible cut size
-        // get upper and lower bounds on region pops
-        auto min_max_pair = splitting_schedule.all_regions_min_and_max_possible_cut_sizes
-                                [plan.region_sizes[region_to_draw_tree_on]];
-        sample_sub_ust_lower = min_max_pair.first * map_params.lower; // lower
-        sample_sub_ust_upper = min_max_pair.second * map_params.upper; // upper
-    }
-
-
-    // Now sample a uniform spanning tree drawn on that region
-    auto const result = draw_ust(
-        sample_sub_ust_lower, // lower, 
-        sample_sub_ust_upper, // upper
-        rng_state
-        );
-    bool const valid_tree = result.first;
-
-    if constexpr(perf_config::object_integrity_checking){
-        if (valid_tree){
-            check_tree_integrity(
-                get_vertex_tree(),
-                "Just called `sample_sub_ust` in attempt_to_draw_tree_on_region\n",
-                result.second,
-                num_region_vertices,
-                true
-            );
-        }
-    }
-
-    return USTDrawResult{result.first, num_region_vertices, result.second};
-}
-
-
-USTDrawResult USTSampler::attempt_to_draw_tree_on_merged_region(RNGState &rng_state, Plan const &plan,
+USTDrawResult USTSampler::OLD_attempt_to_draw_tree_on_merged_region(RNGState &rng_state, Plan const &plan,
                                                        const int region1_to_draw_tree_on,
                                                        const int region2_to_draw_tree_on,
     bool const use_custom_bounds, double const custom_sample_sub_ust_lower,
@@ -1463,6 +1134,57 @@ USTDrawResult USTSampler::attempt_to_draw_tree_on_merged_region(RNGState &rng_st
     }
 
     return USTDrawResult{valid_tree, num_merged_region_vertices, result.second};
+}
+
+
+USTDrawResult USTSampler::attempt_to_draw_tree_on_merged_region(RNGState &rng_state, Plan const &plan,
+                                                       const int region1_to_draw_tree_on,
+                                                       const int region2_to_draw_tree_on,
+    bool const use_custom_bounds, double const custom_sample_sub_ust_lower,
+    double const custom_sample_sub_ust_upper) {
+    int V = map_params.V;
+
+
+    // mark the ignore values
+    for (int i = 0; i < V; ++i) {
+        // check if in the region
+        ignore[i] = plan.region_ids[i] != region1_to_draw_tree_on &&
+                    plan.region_ids[i] != region2_to_draw_tree_on;
+    }
+
+    double sample_sub_ust_lower, sample_sub_ust_upper;
+
+    if (use_custom_bounds){
+        // if using custom upper and lwoer bounds set those
+        sample_sub_ust_lower = custom_sample_sub_ust_lower;
+        sample_sub_ust_upper = custom_sample_sub_ust_upper;
+    }else{
+        // else just do upper and lower scaled by min and max possible cut size
+        // get upper and lower bounds on region pops
+        int merged_region_size =
+            plan.region_sizes[region1_to_draw_tree_on] + plan.region_sizes[region2_to_draw_tree_on];
+        // get upper and lower bounds on region pops
+        auto min_max_pair =
+            splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size];
+
+        sample_sub_ust_lower = min_max_pair.first * map_params.lower; // lower
+        sample_sub_ust_upper = min_max_pair.second * map_params.upper; // upper
+    }
+
+
+    // Now sample a uniform spanning tree drawn on that region
+    auto const result = draw_fresh_ust(
+        sample_sub_ust_lower, // lower, 
+        sample_sub_ust_upper, // upper
+        rng_state
+        );
+
+    return result;
+}
+
+void USTSampler::fill_in_skipped_subtrees(RNGState &rng_state, int max_tries){
+    // TODO
+    // Need to mark all the vertices to fill in as not visited, everything else is fine
 }
 
 std::pair<bool, EdgeCut> USTSampler::try_to_find_and_erase_splittable_edge(
@@ -1592,6 +1314,9 @@ std::pair<bool, int>  USTSampler::draw_tree_on_subgraph(
         }
     }
 
+    // prepare the inputs for a `sample_ust` call
+    prep_fresh_ust_call();
+
     auto prep_end_time = std::chrono::steady_clock::now();
 
     std::chrono::duration<double, std::ratio<1>> prep_time_diff = prep_end_time - prep_start_time;
@@ -1600,6 +1325,79 @@ std::pair<bool, int>  USTSampler::draw_tree_on_subgraph(
     std::pair<bool, int> result;
 
     auto sample_ust_start_time = std::chrono::steady_clock::now();
+    // Now sample a uniform spanning tree drawn on that region
+    if (skip_unsplittable_subtrees){
+        auto const ust_result = sample_ust<true>(map_params, ust, 
+            lower, upper, visited, ignore,
+            county_tree, g_scratch, mg_scratch, rng_state
+        );
+        result = std::make_pair(ust_result.code == 0, ust_result.root);
+    }else{
+        auto const ust_result = sample_ust<false>(map_params, ust, 
+            lower, upper, visited, ignore,
+            county_tree, g_scratch, mg_scratch, rng_state
+        );
+        result = std::make_pair(ust_result.code == 0, ust_result.root);
+    }
+    auto sample_ust_end_time = std::chrono::steady_clock::now();
+    std::chrono::duration<double, std::ratio<1>> ust_time_diff = sample_ust_end_time - sample_ust_start_time;
+    wilson_times.sub_ust_call_time += ust_time_diff.count();
+    
+    bool const valid_tree = result.first;
+
+    if constexpr(perf_config::object_integrity_checking){
+        if (valid_tree){
+            check_tree_integrity(
+                get_vertex_tree(),
+                "Just called `sample_sub_ust` in attempt_to_draw_tree_on_region\n",
+                result.second,
+                num_vertices,
+                true
+            );
+        }
+    }
+
+    return result;
+}
+
+
+std::pair<bool, int>  USTSampler::OLD_draw_tree_on_subgraph(
+      RNGState &rng_state, std::vector<bool> const &vertices_to_ignore,
+      bool const skip_unsplittable_subtrees, 
+      const double lower, const double upper,
+      WilsonTimes &wilson_times
+){
+    auto prep_start_time = std::chrono::steady_clock::now();
+
+    int V = map_params.V;
+    int num_vertices = 0;
+
+    // Mark it as ignore if its not in the region to split and clear those vertices in 
+    // the region
+    for (int i = 0; i < V; ++i) {
+        ignore[i] = vertices_to_ignore[i];
+        // check if we're ignoring it
+        if (!ignore[i]) {
+            // ust.clear_vertex(i);
+            ust[i].clear();
+            num_vertices++;
+        }
+    }
+
+    auto prep_end_time = std::chrono::steady_clock::now();
+
+    std::chrono::duration<double, std::ratio<1>> prep_time_diff = prep_end_time - prep_start_time;
+    wilson_times.input_prep_time += prep_time_diff.count();
+
+    std::pair<bool, int> result;
+
+    auto sample_ust_start_time = std::chrono::steady_clock::now();
+    // result = draw_fresh_ust(lower, upper, rng_state);
+    // auto sample_ust_end_time = std::chrono::steady_clock::now();
+    // std::chrono::duration<double, std::ratio<1>> ust_time_diff = sample_ust_end_time - sample_ust_start_time;
+    // wilson_times.sub_ust_call_time += ust_time_diff.count();
+    // return result;
+
     // Now sample a uniform spanning tree drawn on that region
     if (skip_unsplittable_subtrees){
         auto const ust_result = sample_sub_ust<true>(map_params, ust, lower, upper, visited, ignore,

@@ -78,7 +78,8 @@ Tree sample_ust(Rcpp::List l, const Rcpp::IntegerVector &pop, double lower, doub
     int count = 0;
     // keep sampling until successful 
     while(!tree_drawn){
-        tree_drawn = ust_sampler.draw_tree_on_subgraph(
+        // tree_drawn = ust_sampler.draw_tree_on_subgraph(
+        tree_drawn = ust_sampler.OLD_draw_tree_on_subgraph(
             rng_state, ignore,
             skip_unsplittable_subtrees, 
             lower, upper, wilson_times
@@ -568,7 +569,8 @@ Rcpp::List sample_uniform_trees(
     int const num_tree,
     int num_threads,
     bool const skip_unsplittable_units,
-    bool const verbose
+    bool const verbose,
+    bool const count_and_return_unique_trees // whether or not to hash trees
 ) {
     // Create thread pool.
     RcppThread::ThreadPool pool = get_thread_pool(num_threads);
@@ -602,7 +604,7 @@ Rcpp::List sample_uniform_trees(
      * Each worker writes only to its own unordered_map. This avoids
      * needing a mutex every time a tree is sampled.
      */
-    std::vector<TreeCountMap> thread_tree_counts(num_threads);
+    std::vector<TreeCountMap> thread_tree_counts(count_and_return_unique_trees ? num_threads : 0);
     // timing 
     std::vector<WilsonTimes> wilson_times_vec(num_threads);
 
@@ -656,6 +658,7 @@ Rcpp::List sample_uniform_trees(
             tree_drawn =
                 ust_samplers[thread_id]
                     .draw_tree_on_subgraph(
+                    // .OLD_draw_tree_on_subgraph(
                         rng_states[thread_id],
                         vertices_to_ignore,
                         skip_unsplittable_units,
@@ -672,42 +675,46 @@ Rcpp::List sample_uniform_trees(
             );
         }
 
+
+        if (count_and_return_unique_trees){
         /*
          * get_vertex_tree() returns the sampled Tree:
          *
          *     using Tree = std::vector<std::vector<int>>;
          */
-        Tree sampled_tree =
-            ust_samplers[thread_id].get_vertex_tree();
+            Tree sampled_tree =
+                ust_samplers[thread_id].get_vertex_tree();
 
-        /*
-         * Convert the tree to a canonical Boolean edge vector solely
-         * for hashing and equality comparisons.
-         */
-        std::vector<bool> edge_key =
-            vector_tree_to_edge_vector(
-                map_params.graph_edge_index,
-                sampled_tree
-            );
-
-        TreeCountMap &tree_counts =
-            thread_tree_counts[thread_id];
-
-        auto const existing_tree = tree_counts.find(edge_key);
-
-        if (existing_tree == tree_counts.end()) {
             /*
-             * This is the first occurrence of the tree on this worker.
-             * Store both its Boolean key and its vertex-tree form.
-             */
-            tree_counts.try_emplace(
-                std::move(edge_key),
-                std::move(sampled_tree),
-                1
-            );
-        } else {
-            ++existing_tree->second.count;
+            * Convert the tree to a canonical Boolean edge vector solely
+            * for hashing and equality comparisons.
+            */
+            std::vector<bool> edge_key =
+                vector_tree_to_edge_vector(
+                    map_params.graph_edge_index,
+                    sampled_tree
+                );
+
+            TreeCountMap &tree_counts =
+                thread_tree_counts[thread_id];
+
+            auto const existing_tree = tree_counts.find(edge_key);
+
+            if (existing_tree == tree_counts.end()) {
+                /*
+                * This is the first occurrence of the tree on this worker.
+                * Store both its Boolean key and its vertex-tree form.
+                */
+                tree_counts.try_emplace(
+                    std::move(edge_key),
+                    std::move(sampled_tree),
+                    1
+                );
+            } else {
+                ++existing_tree->second.count;
+            }
         }
+
 
         if (verbose) ++bar;
     });
@@ -721,58 +728,11 @@ Rcpp::List sample_uniform_trees(
          thread_id < num_threads;
          ++thread_id) {
         num_attempts += thread_attempts[thread_id];
-
-        upper_bound_num_unique_trees +=
-            thread_tree_counts[thread_id].size();
-    }
-
-    /*
-     * Merge the per-worker hash tables into one global table.
-     */
-    TreeCountMap unique_tree_counts;
-    unique_tree_counts.reserve(upper_bound_num_unique_trees);
-
-    for (TreeCountMap &thread_counts : thread_tree_counts) {
-        /*
-         * Move every entry whose key is not yet present into the global
-         * map. Duplicate keys remain in thread_counts.
-         */
-        unique_tree_counts.merge(thread_counts);
-
-        /*
-         * Add counts for entries that were duplicated across workers.
-         */
-        for (auto const &[edge_key, sampled_tree_count] :
-             thread_counts) {
-            auto const global_entry =
-                unique_tree_counts.find(edge_key);
-
-            global_entry->second.count +=
-                sampled_tree_count.count;
+        
+        if(count_and_return_unique_trees){
+            upper_bound_num_unique_trees +=
+                thread_tree_counts[thread_id].size();
         }
-    }
-
-    std::vector<Tree> unique_trees;
-    std::vector<int> tree_counts;
-
-    unique_trees.reserve(unique_tree_counts.size());
-    tree_counts.reserve(unique_tree_counts.size());
-
-    /*
-     * Move the stored Tree values into the returned vector. Extracting
-     * nodes allows the Tree to be moved rather than copied.
-     */
-    while (!unique_tree_counts.empty()) {
-        auto node =
-            unique_tree_counts.extract(
-                unique_tree_counts.begin()
-            );
-
-        tree_counts.push_back(node.mapped().count);
-
-        unique_trees.push_back(
-            std::move(node.mapped().tree)
-        );
     }
 
     // get the time 
@@ -786,14 +746,70 @@ Rcpp::List sample_uniform_trees(
         total_prep_time += wilson_times_vec[thread_id].input_prep_time;
     }
     
-
-    return Rcpp::List::create(
-        Rcpp::_["unique_trees"] = unique_trees,
-        Rcpp::_["tree_counts"] = tree_counts,
+    Rcpp::List out = Rcpp::List::create(
         Rcpp::_["num_attempts"] = num_attempts,
         Rcpp::_["total_prep_time"] = total_prep_time,
         Rcpp::_["total_sample_ust_time"] = total_sample_ust_time
     );
+
+    
+
+    if (count_and_return_unique_trees){
+        /*
+        * Merge the per-worker hash tables into one global table.
+        */
+        TreeCountMap unique_tree_counts;
+        unique_tree_counts.reserve(upper_bound_num_unique_trees);
+
+        for (TreeCountMap &thread_counts : thread_tree_counts) {
+            /*
+            * Move every entry whose key is not yet present into the global
+            * map. Duplicate keys remain in thread_counts.
+            */
+            unique_tree_counts.merge(thread_counts);
+
+            /*
+            * Add counts for entries that were duplicated across workers.
+            */
+            for (auto const &[edge_key, sampled_tree_count] :
+                thread_counts) {
+                auto const global_entry =
+                    unique_tree_counts.find(edge_key);
+
+                global_entry->second.count +=
+                    sampled_tree_count.count;
+            }
+        }
+
+        std::vector<Tree> unique_trees;
+        std::vector<int> tree_counts;
+
+        unique_trees.reserve(unique_tree_counts.size());
+        tree_counts.reserve(unique_tree_counts.size());
+
+        /*
+        * Move the stored Tree values into the returned vector. Extracting
+        * nodes allows the Tree to be moved rather than copied.
+        */
+        while (!unique_tree_counts.empty()) {
+            auto node =
+                unique_tree_counts.extract(
+                    unique_tree_counts.begin()
+                );
+
+            tree_counts.push_back(node.mapped().count);
+
+            unique_trees.push_back(
+                std::move(node.mapped().tree)
+            );
+        }
+        
+        out["unique_trees"] = unique_trees;
+        out["tree_counts"] = tree_counts;
+    }
+
+    return out;
+
 }
 // Draws num_plans number of plans on a region
 // if unsuccessful then just returns the unsplit plan

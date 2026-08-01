@@ -340,8 +340,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // sample_uniform_trees
-Rcpp::List sample_uniform_trees(Rcpp::List const& adj_list, Rcpp::IntegerVector const& counties, Rcpp::IntegerVector const& pop, std::vector<bool> const& vertices_to_ignore, double const lower, double const upper, int const num_tree, int num_threads, bool const skip_unsplittable_units, bool const verbose);
-RcppExport SEXP _redist_sample_uniform_trees(SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP vertices_to_ignoreSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP num_treeSEXP, SEXP num_threadsSEXP, SEXP skip_unsplittable_unitsSEXP, SEXP verboseSEXP) {
+Rcpp::List sample_uniform_trees(Rcpp::List const& adj_list, Rcpp::IntegerVector const& counties, Rcpp::IntegerVector const& pop, std::vector<bool> const& vertices_to_ignore, double const lower, double const upper, int const num_tree, int num_threads, bool const skip_unsplittable_units, bool const verbose, bool const count_and_return_unique_trees);
+RcppExport SEXP _redist_sample_uniform_trees(SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP vertices_to_ignoreSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP num_treeSEXP, SEXP num_threadsSEXP, SEXP skip_unsplittable_unitsSEXP, SEXP verboseSEXP, SEXP count_and_return_unique_treesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -355,7 +355,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type num_threads(num_threadsSEXP);
     Rcpp::traits::input_parameter< bool const >::type skip_unsplittable_units(skip_unsplittable_unitsSEXP);
     Rcpp::traits::input_parameter< bool const >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(sample_uniform_trees(adj_list, counties, pop, vertices_to_ignore, lower, upper, num_tree, num_threads, skip_unsplittable_units, verbose));
+    Rcpp::traits::input_parameter< bool const >::type count_and_return_unique_trees(count_and_return_unique_treesSEXP);
+    rcpp_result_gen = Rcpp::wrap(sample_uniform_trees(adj_list, counties, pop, vertices_to_ignore, lower, upper, num_tree, num_threads, skip_unsplittable_units, verbose, count_and_return_unique_trees));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -1053,7 +1054,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_sample_ust", (DL_FUNC) &_redist_sample_ust, 7},
     {"_redist_draw_a_tree_on_a_region", (DL_FUNC) &_redist_draw_a_tree_on_a_region, 12},
     {"_redist_perform_a_valid_multidistrict_split", (DL_FUNC) &_redist_perform_a_valid_multidistrict_split, 17},
-    {"_redist_sample_uniform_trees", (DL_FUNC) &_redist_sample_uniform_trees, 10},
+    {"_redist_sample_uniform_trees", (DL_FUNC) &_redist_sample_uniform_trees, 11},
     {"_redist_attempt_splits_on_a_region", (DL_FUNC) &_redist_attempt_splits_on_a_region, 16},
     {"_redist_compute_log_unnormalized_target_density_components", (DL_FUNC) &_redist_compute_log_unnormalized_target_density_components, 19},
     {"_redist_compute_plans_log_optimal_weights", (DL_FUNC) &_redist_compute_plans_log_optimal_weights, 17},
