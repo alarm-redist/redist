@@ -4,11 +4,10 @@
 #define TREE_OP_H
 
 /*
- * Generate a random vertex (integer) among unvisited vertices
- * `lower` is a lower bound (inclusive) on the index of the first unvisited element
+ * Find the lowest-index unvisited vertex at or after `lower`.
  */
 // TESTED
-int rvtx(const std::vector<bool> &visited, int size, int remaining, int &lower);
+int rvtx(const std::vector<bool> &visited, int size, int &lower);
 
 /*
  * Generate a random neighbor to a vertex, except for the `last` vertex.
