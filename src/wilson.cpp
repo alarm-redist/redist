@@ -62,6 +62,64 @@ int find_unvisited_vertex(
     return -1;
 }
 
+int find_unvisited_county_vertex(
+    std::vector<int> const &county_vertices,
+    std::vector<bool> const &visited,
+    std::size_t &lower_index
+) {
+    while (
+        lower_index < county_vertices.size() &&
+        visited[county_vertices[lower_index]]
+    ) {
+        ++lower_index;
+    }
+
+    return lower_index < county_vertices.size()
+        ? county_vertices[lower_index]
+        : -1;
+}
+
+// First sees if the start vertex has any unvisited neighors 
+// then finds the smallest unvisited vertex starting from lower
+int find_unvisited_walk_vertex(
+    Graph const &admin_restricted_graph,
+    int const V,
+    const std::vector<bool> &visited, 
+    int const last_start,
+    int &lower) {
+    if constexpr (perf_config::supposedly_safe_input_checks) {
+        if (
+            static_cast<int>(admin_restricted_graph.size()) != V ||
+            static_cast<int>(visited.size()) != V
+        ) {
+            throw std::runtime_error(
+                "find_unvisited_walk_vertex: size mismatch."
+            );
+        }
+
+        if (last_start < -1 || last_start >= V) {
+            throw std::runtime_error(
+                "find_unvisited_walk_vertex: invalid last_start."
+            );
+        }
+    }
+
+    // first see if last_start has any unvisited neighbors 
+    // since admin restricted we don't need to worry about finding 
+    // a neighbor across an admin boundary
+    for (auto const u: admin_restricted_graph[last_start]){
+        if (!visited[u]) return u;
+    }
+
+    for (int i = lower; i < V; i++) {
+        if (!visited[i]){
+            lower = i;
+            return i;
+        }
+    }
+    return -1;
+}
+
 
 /*
  * Add a deterministic tree on the active portion of one county.
@@ -178,28 +236,6 @@ static int add_county_to_tree_dfs(
     }
 
     return added;
-}
-
-/*
- * Generate a random vertex (integer) among unvisited vertices
- * `lower` is a lower bound (inclusive) on the index of the first unvisited element
- */
-// TESTED
-int rvtx(const std::vector<bool> &visited, int size, int remaining, int &lower,
-         RNGState &rng_state) {
-    int idx = rng_state.r_int(remaining);
-    int accuml = 0;
-    bool seen_one = false;
-    for (int i = lower; i < size - 1; i++) {
-        accuml += 1 - visited[i];
-        if (!seen_one && !visited[i]) {
-            seen_one = true;
-            lower = i;
-        }
-        if (accuml - 1 == idx)
-            return i;
-    }
-    return size - 1;
 }
 
 
@@ -811,16 +847,16 @@ SampleSubUSTResult sample_full_ust(
             county_tree, map_params.counties[root] - 1, 
             mg_scratch.county_stack, mg_scratch.county_pop,
             mg_scratch.cty_pop_below);
-        for (int i = 0; i < n_county; i++) {
-            if (mg_scratch.admin_ignore[i]) continue;
+        for (int county_i = 0; county_i < n_county; county_i++) {
+            if (mg_scratch.admin_ignore[county_i]) continue;
             // check child counties
-            int children = county_tree[i].size();
-            int split_ub = mg_scratch.cty_pop_below[i];
-            int split_lb = split_ub - mg_scratch.county_pop[i];
-            if (lower - 1 < mg_scratch.county_pop[i])
+            int children = county_tree[county_i].size();
+            int split_ub = mg_scratch.cty_pop_below[county_i];
+            int split_lb = split_ub - mg_scratch.county_pop[county_i];
+            if (lower - 1 < mg_scratch.county_pop[county_i])
                 split_lb = (int)lower;
             for (int j = 0; j < children; j++) {
-                int pop_child = mg_scratch.cty_pop_below[county_tree[i][j]];
+                int pop_child = mg_scratch.cty_pop_below[county_tree[county_i][j]];
                 if (pop_child >= 0 && pop_child < split_lb) {
                     split_lb = pop_child;
                 }
@@ -839,15 +875,21 @@ SampleSubUSTResult sample_full_ust(
 
             // impossible for this county to need to be split
             // so we fill in a dummy tree 
-            if (mg_scratch.cty_pop_below[i] >= 0 && (miss_first && miss_second)) {
+            if (mg_scratch.cty_pop_below[county_i] >= 0 && (miss_first && miss_second)) {
                 int const vertices_added = add_county_to_tree_dfs(
                     map_params.county_restricted_graph,
-                    i, // pass in the county CAREFUL COUNTIES ARE 1-indexed
-                    mg_scratch.admin_roots[i],
+                    county_i, // pass in the county CAREFUL COUNTIES ARE 1-indexed
+                    mg_scratch.admin_roots[county_i],
                     visited,
                     g_scratch.dummy_county_tree_queue,
                     tree
                 );
+                // note we filled this one in deterministically assuming not a singleton county
+                if (vertices_added > 0) {
+                    mg_scratch.deterministic_counties.push_back(
+                        county_i
+                    );
+                }
                 g_scratch.remaining -= vertices_added; // function does not count the already visited county root
             }
         }
@@ -879,8 +921,13 @@ SampleSubUSTResult sample_full_ust(
 
         int max_try = graph_tries_multiple * g_scratch.remaining * (static_cast<int>(std::log(g_scratch.remaining)) + 1);
 
+        // int unvisited_vertex = root;
         while (g_scratch.remaining > 0) {
             int unvisited_vertex = find_unvisited_vertex(V, visited, g_scratch.smallest_v_seen);
+            // Profiled on NY and the comment out method seemed a little slower
+            // unvisited_vertex = find_unvisited_walk_vertex(map_params.county_restricted_graph,
+            //     V, visited, unvisited_vertex,  g_scratch.smallest_v_seen);
+
             if (unvisited_vertex < 0) {
                 std::ostringstream oss;
                 oss << "sample_full_ust: unvisited_vertex="
@@ -889,7 +936,6 @@ SampleSubUSTResult sample_full_ust(
 
                 throw std::runtime_error(oss.str());
             }
-            // int unvisited_vertex = rvtx(visited, V, g_scratch.remaining, g_scratch.smallest_v_seen, rng_state);
             // random walk from `unvisited_vertex` until we hit the path
             int vertices_added = add_walk_from(
                 map_params.county_restricted_flat_graph,
@@ -949,10 +995,10 @@ template <typename IsActive>
 int USTSampler::prep_fresh_ust_call(IsActive const &is_active){
     // We will now 
     // - properly set the visited vector 
-    // - Set the wilson_submap so its the subgraph restricted to vertices and 
-    //   edges solely contained in the `ignore[v] == false`
+
     // - TODO: set up county multigraph stuff 
 
+    // First we clear the multigraph stuff
     mg_scratch.c_remaining = 0;
     mg_scratch.total_pop = 0;
     // Set 
@@ -966,6 +1012,7 @@ int USTSampler::prep_fresh_ust_call(IsActive const &is_active){
         mg_scratch.admin_ignore.end(),
         true
     );
+    mg_scratch.deterministic_counties.clear();
     
 
     bool first_county_seen = true;
@@ -1196,9 +1243,208 @@ USTDrawResult USTSampler::attempt_to_draw_tree_on_merged_region(RNGState &rng_st
     );
 }
 
-void USTSampler::fill_in_skipped_subtrees(RNGState &rng_state, int max_tries){
-    // TODO
-    // Need to mark all the vertices to fill in as not visited, everything else is fine
+bool USTSampler::fill_in_skipped_subtrees(
+    EdgeBitset &packed_forest_edges,
+    RNGState &rng_state, 
+    int const max_tries_multiple
+){
+    if (mg_scratch.deterministic_counties.empty()) {
+        return true;
+    }
+
+    if constexpr (perf_config::supposedly_safe_input_checks) {
+        if (max_tries_multiple <= 0) {
+            throw std::runtime_error(
+                "fill_in_skipped_subtrees: max_tries must be positive."
+            );
+        }
+    }
+
+    int const V = map_params.V;
+
+    // We loop over each of the deterministically filled counties 
+    /*
+     * Remove every deterministic within-county tree.
+     *
+     * Cross-county children are retained. The edge entering the county is
+     * stored in the parent county's adjacency list, so it is not touched here.
+     */
+    for (int const county_i: mg_scratch.deterministic_counties){
+        int county_remaining = 0;
+        std::size_t lower_index = 0;
+        if constexpr (perf_config::bounds_checking) {
+            if (
+                county_i < 0 ||
+                county_i >= map_params.num_counties
+            ) {
+                throw std::runtime_error(
+                    "fill_in_skipped_subtrees: invalid county."
+                );
+            }
+            int county_root = mg_scratch.admin_roots[county_i];
+            if (
+                county_root < 0 ||
+                county_root >= V
+            ) {
+                throw std::runtime_error(
+                    "fill_in_skipped_subtrees: invalid county root."
+                );
+            }
+            if (
+                static_cast<int>(
+                    map_params.counties[county_root]
+                ) - 1 != county_i
+            ) {
+                throw std::runtime_error(
+                    "fill_in_skipped_subtrees: root belongs to wrong county."
+                );
+            }
+            if (ignore[county_root]) {
+                throw std::runtime_error(
+                    "fill_in_skipped_subtrees: county root is ignored."
+                );
+            }
+        }
+        // get the county root 
+        int county_root = mg_scratch.admin_roots[county_i];
+        visited[county_root] = true;
+        // g_scratch.smallest_v_seen = county_root;
+        // We keep the county root as visited 
+        // Now we walk through `ust` and erase all within county edges 
+        // We also set those edges in the packed forest to be false 
+        auto &queue =
+            g_scratch.dummy_county_tree_queue;
+
+        queue.clear();
+        queue.push(county_root);
+
+        while (!queue.empty()) {
+            int const v = queue.pop();
+            auto &children = ust[v];
+
+        /*
+        * Compact the child vector in place:
+        *
+        * - within-county children are removed;
+        * - cross-county children are retained.
+        */
+        // NOTE when moving to multilevel trees might need to think if we want to preserve edges
+        // in which case 
+        //  - define a std::size_t write_pos = 0; 
+        //  - children[write_pos++] = child; when the child is cross county edge
+        //  - children.resize(write_pos); at the end after going through all children 
+        
+            for (int const child : children) {
+                int const child_county = static_cast<int>(map_params.counties[child]) - 1;
+
+                if (child_county == county_i) {
+                    // if (child < g_scratch.smallest_v_seen){
+                    //     g_scratch.smallest_v_seen = child;
+                    // }
+                    /*
+                     * Follow the old deterministic tree before deleting its
+                     * edge, so we discover the entire county subtree.
+                     */
+                    queue.push(child);
+                    /*
+                     * Clear the edge in the packed forest 
+                     */
+                    packed_forest_edges.clear_edge(
+                        v,
+                        child,
+                        map_params.graph_edge_index
+                    );
+                    /*
+                     * Every nonroot county vertex must be resampled.
+                     */
+                    visited[child] = false;
+                    ++county_remaining;
+                }
+            }
+            // now clear all these edges since we're erasing all within county edges
+            // and we don't care about across count edges 
+            children.clear();
+        }
+
+        if (county_remaining == 0) {
+            continue;
+        }
+
+        if constexpr (perf_config::bounds_checking) {
+            std::int64_t const max_try_wide =
+                static_cast<std::int64_t>(max_tries_multiple) *
+                static_cast<std::int64_t>(county_remaining) *
+                (static_cast<int>(std::log(county_remaining)) + 1);
+            if (max_try_wide > std::numeric_limits<int>::max()) {
+                std::ostringstream oss;
+                oss << "sample_full_ust: max_try exceeds int maximum.\n";
+                oss << "remaining=" << county_remaining << "\n";
+                oss << "max_try=" << max_try_wide << "\n";
+
+                throw std::overflow_error(oss.str());
+            }
+        }
+
+        int max_tries = max_tries_multiple * county_remaining * (static_cast<int>(std::log(county_remaining)) + 1);
+
+        while (county_remaining > 0){
+            int unvisited_vertex = find_unvisited_county_vertex(
+                    map_params.county_vertices[county_i],
+                    visited,
+                    lower_index
+            );
+            if (unvisited_vertex < 0) {
+                throw std::runtime_error(
+                    "fill_in_skipped_subtrees: "
+                    "county_remaining is positive but no "
+                    "unvisited county vertex exists."
+                );
+            }
+            // perform another loop erased walk 
+            int const vertices_added = add_walk_from(
+                map_params.county_restricted_flat_graph,
+                ust,
+                unvisited_vertex,
+                max_tries,
+                g_scratch.next_vertex,
+                visited, ignore, rng_state
+            );
+
+            // if nothing added then we throw an error
+            if (vertices_added == 0) {
+                throw std::runtime_error(
+                    "fill_in_skipped_subtrees: "
+                    "Wilson failed while filling county."
+                );
+            }
+
+            county_remaining -= vertices_added;
+
+        }
+        // Now starting from the root we can traverse the tree and 
+        // fill in the packed forest 
+        // TODO confirm the tree is still a properly directed tree
+        queue.push(county_root);
+        while (!queue.empty()) {
+            int const v = queue.pop();
+            for (int const child : ust[v]) {
+                int const child_county = map_params.counties[child] - 1;
+
+                if (child_county != county_i) {
+                    continue;
+                }
+                // set the edge
+                packed_forest_edges.set_edge(
+                    v,
+                    child,
+                    map_params.graph_edge_index
+                );
+                queue.push(child);
+            }
+        }
+    }
+    mg_scratch.deterministic_counties.clear();
+    return true;
 }
 
 std::pair<bool, EdgeCut> USTSampler::try_to_find_and_erase_splittable_edge(
@@ -1220,7 +1466,7 @@ std::pair<bool, EdgeCut> USTSampler::try_to_find_and_erase_splittable_edge(
 
     std::pair<bool, EdgeCut> edge_search_result = tree_splitter.attempt_to_find_edge_to_cut(
         map_params, scoring_function, rng_state, plan, split_region1, split_region2, ust, root,
-        pops_below_vertex, ignore, region_populations, region_size,
+        pops_below_vertex, region_populations, region_size,
         min_possible_cut_size, max_possible_cut_size,
         splitting_schedule.all_regions_smaller_cut_sizes_to_try[region_size],
         save_selection_prob);

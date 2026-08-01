@@ -87,6 +87,28 @@ Multigraph county_multigraph(
     return admin_graph;
 }
 
+std::vector<std::vector<int>> build_county_vertices(
+    std::vector<unsigned int> const &counties,
+    int const num_counties
+) {
+    std::vector<std::vector<int>> result(num_counties);
+
+    for (std::size_t v = 0; v < counties.size(); ++v) {
+        unsigned int const county_id = counties[v];
+
+        if (county_id == 0 ||
+            county_id > static_cast<unsigned int>(num_counties)) {
+            throw std::runtime_error(
+                "County IDs must be between 1 and num_counties."
+            );
+        }
+
+        result[county_id - 1].push_back(static_cast<int>(v));
+    }
+
+    return result;
+}
+
 /*
  * Given a graph G and county assignments this creates the potentially disconnected graph
  * created when all edges across counties are removed from G. This guarantees that any
@@ -462,6 +484,7 @@ MapParams::MapParams(Graph const &g,
         counties(counties.begin(), counties.end()), 
         num_counties(*std::max_element(counties.begin(), counties.end())), 
         cg(county_multigraph(g, counties)),
+        county_vertices(build_county_vertices(counties, num_counties)),
         county_restricted_graph(num_counties > 1 ? build_restricted_county_graph(g, counties)
                                                 : g),
         county_restricted_flat_graph(county_restricted_graph),

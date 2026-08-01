@@ -238,6 +238,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         Rprintf("A Splitting Checkpoint 1.5!\n");
     }
     // now split that region we found on the old one
+    // We don't need to fill in any deterministic subtrees yet though 
     new_plan.update_from_successful_split(tree_splitter, ust_sampler,
                                           std::get<1>(edge_search_result), region1_id,
                                           region2_id, false);
@@ -253,7 +254,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     auto build_attempt = new_plan.attempt_to_get_valid_mergesplit_pairs(
         proposed_plan_multigraph, splitting_schedule, scoring_function, is_final);
     if constexpr (perf_config::track_granular_times){
-        add_elapsed(granular_times.get_valid_pairs, new_pair_building_time); // optional timing 
+        add_elapsed(granular_times.get_valid_mergepairs, new_pair_building_time); // optional timing 
     }
 
     // new plan is valid if build attempt successful and passes any hard constraints
@@ -428,6 +429,14 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         if constexpr (perf_config::track_granular_times){
             add_elapsed(granular_times.plan_copying, final_copy_time); // optional timing
         }
+        auto extra_wilson_time = maybe_now(); // optional timing 
+        // now fill in any deterministic subtrees if needed
+        plan.fill_in_skipped_subtrees(
+            ust_sampler, rng_state
+        );
+        if constexpr (perf_config::track_granular_times){
+            add_elapsed(granular_times.backfill_wilson_time, extra_wilson_time); // optional timing
+        }
         if constexpr (DEBUG_MERGING_VERBOSE)
             Rprintf("Plan updated, now swapping multigraphs\n");
 
@@ -468,7 +477,7 @@ int run_merge_split_steps(MapParams const &map_params,
 
     auto current_plan_adj_region_pairs = pair_build_attempt.second;
     if constexpr (perf_config::track_granular_times){
-        add_elapsed(granular_times.get_valid_pairs, pair_building_time); // optional timing
+        add_elapsed(granular_times.get_valid_mergepairs, pair_building_time); // optional timing
     }
     if (!pair_build_attempt.first) {
         std::ostringstream oss;

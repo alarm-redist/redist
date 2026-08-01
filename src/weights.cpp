@@ -760,7 +760,7 @@ void compute_all_plans_log_optimal_incremental_weights(
     if constexpr (perf_config::track_granular_times){
         for (size_t thread_id = 0; thread_id < num_threads; thread_id++)
         {
-            smc_diagnostics.get_valid_pairs_times[step_num] += granular_weight_times[thread_id].get_valid_pairs;
+            smc_diagnostics.get_valid_smc_pairs_times[smc_step_num] += granular_weight_times[thread_id].get_valid_pairs;
             smc_diagnostics.plan_scores_times[step_num] += granular_weight_times[thread_id].plan_scores;
             smc_diagnostics.region_scores_times[step_num] += granular_weight_times[thread_id].region_scores;
             smc_diagnostics.log_tau_times[step_num] += granular_weight_times[thread_id].tau_terms;

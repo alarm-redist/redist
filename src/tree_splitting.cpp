@@ -981,7 +981,7 @@ constexpr bool MERGED_TREE_SPLITTING_VERBOSE = false; // Compile-time constant
 std::vector<EdgeCut> TreeSplitter::get_all_valid_pop_edge_cuts_in_directed_tree(
     const MapParams &map_params, Tree const &ust, // FlatGraph const &ust, 
     const int root, 
-    std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
+    std::vector<int> &pops_below_vertex, 
     int const region_population, int const region_size, const int min_potential_cut_size,
     const int max_potential_cut_size, std::vector<int> const &smaller_cut_sizes_to_try) const {
 
@@ -1000,12 +1000,12 @@ std::pair<bool, EdgeCut> TreeSplitter::attempt_to_find_edge_to_cut(
     const MapParams &map_params, ScoringFunction const &scoring_function, RNGState &rng_state,
     Plan const &plan, int const split_region1, int const split_region2, Tree const &ust, // FlatGraph const &ust,
     const int root, std::vector<int> &pops_below_vertex,
-    std::vector<bool> &no_valid_edges_vertices, int const region_population,
+    int const region_population,
     int const region_size, const int min_potential_cut_size, const int max_potential_cut_size,
     std::vector<int> const &smaller_cut_sizes_to_try, bool save_selection_prob) {
     // get all the valid edges
     std::vector<EdgeCut> valid_edges = get_all_valid_pop_edge_cuts_in_directed_tree(
-        map_params, ust, root, pops_below_vertex, no_valid_edges_vertices,
+        map_params, ust, root, pops_below_vertex, 
         region_population, region_size, min_potential_cut_size, max_potential_cut_size,
         smaller_cut_sizes_to_try);
 
@@ -1346,12 +1346,12 @@ std::pair<bool, EdgeCut> ConstraintSplitter::attempt_to_find_edge_to_cut(
     const MapParams &map_params, ScoringFunction const &scoring_function, RNGState &rng_state,
     Plan const &plan, int const split_region1, int const split_region2, Tree const &ust, // FlatGraph const &ust,
     const int root, std::vector<int> &pops_below_vertex,
-    std::vector<bool> &no_valid_edges_vertices, int const region_population,
+    int const region_population,
     int const region_size, const int min_potential_cut_size, const int max_potential_cut_size,
     std::vector<int> const &smaller_cut_sizes_to_try, bool save_selection_prob) {
     // get all the valid edges
     std::vector<EdgeCut> valid_edges = get_all_valid_pop_edge_cuts_in_directed_tree(
-        map_params, ust, root, pops_below_vertex, no_valid_edges_vertices,
+        map_params, ust, root, pops_below_vertex, 
         region_population, region_size, min_potential_cut_size, max_potential_cut_size,
         smaller_cut_sizes_to_try);
 

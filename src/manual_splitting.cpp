@@ -315,7 +315,7 @@ Rcpp::List perform_a_valid_multidistrict_split(Rcpp::List adj_list, const Rcpp::
             *plan_ensemble.plan_ptr_vec[0], region_id_to_split, plan_ensemble.plan_ptr_vec[0]->num_regions,
             ust_sampler.ust, result.root,
             ust_sampler.pops_below_vertex, 
-            ust_sampler.ignore, region_population, region_size,
+            region_population, region_size,
             min_possible_cut_size, max_possible_cut_size,
             splitting_schedule_ptr->all_regions_smaller_cut_sizes_to_try[region_size],
             true);
@@ -335,6 +335,10 @@ Rcpp::List perform_a_valid_multidistrict_split(Rcpp::List adj_list, const Rcpp::
             plan_ensemble.plan_ptr_vec[0]->update_from_successful_split(
                 *tree_splitter, ust_sampler, std::get<1>(edge_search_result), region_id_to_split,
                 plan_ensemble.plan_ptr_vec[0]->num_regions, true);
+            // Now fill in the deterministic subtrees
+            plan_ensemble.plan_ptr_vec[0]->fill_in_skipped_subtrees(
+                ust_sampler, rng_state
+            );
         }else{
             // Try again and increase counter if tree not drawn
             try_counter++;
@@ -935,6 +939,11 @@ Rcpp::List attempt_splits_on_a_region(Rcpp::List const &adj_list, const Rcpp::In
             thread_plan_ensemble.plan_ptr_vec[thread_id]->update_from_successful_split(
                 *tree_splitter_ptrs_vec[thread_id], ust_sampler, std::get<1>(edge_search_result), region_id_to_split,
                 thread_plan_ensemble.plan_ptr_vec[thread_id]->num_regions, true);
+            
+            // Now fill in the deterministic subtrees
+            thread_plan_ensemble.plan_ptr_vec[thread_id]->fill_in_skipped_subtrees(
+                ust_sampler, rng_states[thread_id]
+            );
         }
 
         // check if there are any additional hard constraints

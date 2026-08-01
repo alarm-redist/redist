@@ -204,11 +204,13 @@ class SMCDiagnostics {
     // These are granular time stuff that is only tracked when 
     // TRACK_GRANULAR_PERFORMANCE_TIMES (in redist_constants.h) is set to true 
     std::vector<double> wilson_call_times; // time spent drawing spanning trees with wilson
+    std::vector<double> wilson_backfill_call_times; // time spent drawing spanning trees with wilson to replace skipped deterministic ones
     std::vector<double> md_selection_times; // time spent picking a multidistrict to split 
     std::vector<double> plan_updating_times; // Times spent updating a plan object after a split 
     std::vector<double> hard_constraint_split_times; // Time spent checking hard constraints in splitting 
     Rcpp::NumericMatrix total_plan_smc_split_times; // Time spent in smc splitting step per plan
-    std::vector<double> get_valid_pairs_times; // Time spent finding adjacent pairs and effective boundary lengths for smc. Just time getting pairs for mcmc
+    std::vector<double> get_valid_smc_pairs_times; // Time spent finding adjacent pairs and effective boundary lengths for smc. Just time getting pairs for mcmc
+    std::vector<double> get_valid_mergepairs_times; // Time spent constructing the list of valid adjacent pairs to merge for mcmc
     std::vector<double> plan_scores_times; // Time spent computing plan based scores in smc weights and mergesplit
     std::vector<double> region_scores_times; // Time spent computing region based scores in smc weights and mergesplit
     std::vector<double> log_tau_times; // Time spent computing log spanning trees in smc weights and mergesplit 

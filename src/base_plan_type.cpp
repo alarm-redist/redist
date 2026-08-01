@@ -1044,6 +1044,22 @@ void Plan::update_from_successful_split(TreeSplitter const &tree_splitter,
                                                   new_region1_id, new_region2_id, add_region);
 }
 
+void Plan::fill_in_skipped_subtrees(
+    USTSampler &ust_sampler,
+    RNGState &rng_state,
+    int const max_tries_multiple
+) {
+    // only do if we have forest edges
+    if (!forest_edges.empty()){
+        ust_sampler.fill_in_skipped_subtrees(
+            forest_edges,
+            rng_state,
+            max_tries_multiple
+        );
+    }
+    return;
+}
+
 // Attempts Gets valid pairs to merge for MCMC
 // Returns false if multigraph was not successfully built
 std::pair<bool, std::vector<std::pair<RegionID, RegionID>>>

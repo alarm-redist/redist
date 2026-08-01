@@ -61,7 +61,10 @@ class WilsonMultiGraphScratch {
               num_admin_units,
               AdminEdge{-1, -1, -1}
           ),
-          admin_roots(num_admin_units, -1) {}
+          admin_roots(num_admin_units, -1),
+          deterministic_counties() {
+            deterministic_counties.reserve(num_admin_units);
+          }
 
     int num_admin_units;
     int total_pop; // tracks total population
@@ -81,6 +84,8 @@ class WilsonMultiGraphScratch {
     // Maps each admin unit to a vertex in said admin unit
     // This is used for filling in a tree after acceptance
     std::vector<int> admin_roots;
+    // vector of the counties where a deterministic tree was filled in
+    std::vector<int> deterministic_counties;
 };
 
 // Class for wrapping wilson code in 
@@ -88,6 +93,7 @@ class USTSampler {
 
   private:
     std::vector<bool> visited;
+    std::vector<bool> ignore; // TODO make visited private and create one for tree splitter
 
     // This takes a function `is_active` which given a vertex v
     // returns true if it should be included and false if not 
@@ -141,7 +147,6 @@ class USTSampler {
     Tree ust;
     // FlatGraph wilson_submap; // subgraph of g restricted to only the vertices we care about 
     std::vector<int> pops_below_vertex;
-    std::vector<bool> ignore; // TODO make visited private and create one for tree splitter
     TreePopStack stack; // graph
     Tree county_tree; // county 
     WilsonGraphScratch g_scratch;
@@ -184,7 +189,11 @@ class USTSampler {
     // Fills in hierarchical subtrees that were skipped 
     // Will throw an error if for any subunit no trees can be filled after 
     // max_tries 
-    void fill_in_skipped_subtrees(RNGState &rng_state, int max_tries = 1000);
+    bool fill_in_skipped_subtrees(
+      EdgeBitset &packed_forest_edges,
+      RNGState &rng_state, 
+      int const max_tries_multiple = 1000
+    );
 
 
 

@@ -608,6 +608,7 @@ class MapParams {
     std::vector<unsigned int> const counties;           // county labels
     int const num_counties;              // The number of distinct counties
     Multigraph const cg;                 // county multigraph
+    std::vector<std::vector<int>> county_vertices;    // The vertices in each county 
     Graph const county_restricted_graph; // g but with all edges crossing counties removed
     FlatGraph county_restricted_flat_graph; // flat version
     std::vector<unsigned int> const pop; // population of each vertex
