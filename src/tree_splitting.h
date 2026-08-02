@@ -26,12 +26,21 @@ class TreeSplitter {
     visited(map_graph.size()),
     no_valid_edges_vertices(map_graph.size()),
     stack(map_graph.size()+1)
-    {};
+    // balanced_edge_cuts()
+    {
+        // balanced_edge_cuts.reserve(
+        //     static_cast<int>(std::ceil(.1 * map_graph.size()))
+        // );
+    };
     TreeSplitter(int const V) : 
         forest_graph(), 
         visited(0),
         no_valid_edges_vertices(V),
-        stack(V + 1) {};
+        stack(V + 1) { 
+        // balanced_edge_cuts.reserve(
+        //     static_cast<int>(std::ceil(.1 * V))
+        // );
+    };
 
 
     virtual ~TreeSplitter() = default;
@@ -40,6 +49,7 @@ class TreeSplitter {
     std::vector<bool> visited; // used in retroactive prob so not needed for naive k
     mutable std::vector<bool> no_valid_edges_vertices; // used in finding balanced edge cuts
     mutable TreePopStack stack; // used in splitting so needed for all 
+    // mutable std::vector<EdgeCut> balanced_edge_cuts;
 
     // Returns a vector of all the valid edges in the tree
     std::vector<EdgeCut> get_all_valid_pop_edge_cuts_in_directed_tree(

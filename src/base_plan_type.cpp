@@ -481,10 +481,9 @@ void Plan::shallow_copy(Plan const &plan_to_copy) {
         forest_edges.copy(plan_to_copy.forest_edges);
     }
 
-    // if linking edges exist then copy that
-    if (plan_to_copy.linking_edges.size() > 0) {
-        linking_edges = plan_to_copy.linking_edges;
-    }
+    // we copy linking edges as if there's none then 
+    // its an empty vector and thats ok
+    linking_edges = plan_to_copy.linking_edges;
     return;
 }
 
@@ -2605,6 +2604,10 @@ void swap_pair_maps(RegionPairHash &a, RegionPairHash &b) {
     std::swap(a.values, b.values);
     std::swap(a.hashed, b.hashed);
     std::swap(a.hashed_pairs, b.hashed_pairs);
+    std::swap(
+        a.num_hier_smc_merge_valid_pairs,
+        b.num_hier_smc_merge_valid_pairs
+    );
 };
 
 PlanMultigraph::PlanMultigraph(MapParams const &map_params,

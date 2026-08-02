@@ -741,9 +741,9 @@ std::vector<EdgeCut> get_valid_pop_edges_in_joined_packed_tree(
     const int region2_pop, const int min_potential_cut_size, const int max_potential_cut_size,
     std::vector<int> const &smaller_cut_sizes_to_try, const int total_merged_region_size) {
     int const total_merged_region_pop = region1_pop + region2_pop;
-    // auto func_start = std::chrono::steady_clock::now();
-    // reset pops_below_vertex
-    std::fill(pops_below_vertex.begin(), pops_below_vertex.end(), 0);
+
+    // Don't need to reset pops below as it starts from the child nodes 
+    // so it overwrites old values 
     std::fill(no_valid_edges_vertices.begin(), no_valid_edges_vertices.end(), false);
 
     // create the valid cut list
@@ -929,13 +929,14 @@ std::vector<EdgeCut> get_valid_edges_in_joined_flattree(
     const int region2_pop, const int min_potential_cut_size, const int max_potential_cut_size,
     std::vector<int> const &smaller_cut_sizes_to_try, const int total_merged_region_size) {
     int const total_merged_region_pop = region1_pop + region2_pop;
-    // auto func_start = std::chrono::steady_clock::now();
-    // reset pops_below_vertex
-    std::fill(pops_below_vertex.begin(), pops_below_vertex.end(), 0);
+    // Don't need to reset pops below as it starts from the child nodes 
+    // so it overwrites old values 
+
     std::fill(no_valid_edges_vertices.begin(), no_valid_edges_vertices.end(), false);
 
     // create the valid cut list
     std::vector<EdgeCut> edge_across_valid_edge_cuts;
+    
 
     // find the valid edges in this half of the tree
     get_all_valid_edges_in_undirected_vertex_tree(edge_across_valid_edge_cuts,
@@ -985,8 +986,11 @@ std::vector<EdgeCut> TreeSplitter::get_all_valid_pop_edge_cuts_in_directed_tree(
     int const region_population, int const region_size, const int min_potential_cut_size,
     const int max_potential_cut_size, std::vector<int> const &smaller_cut_sizes_to_try) const {
 
+    
+    // Don't need to reset pops below as it starts from the child nodes 
+    // so it overwrites old values 
+
     // reset pops_below_vertex and valid edges thing
-    std::fill(pops_below_vertex.begin(), pops_below_vertex.end(), 0);
     std::fill(no_valid_edges_vertices.begin(), no_valid_edges_vertices.end(), false);
     std::vector<EdgeCut> valid_edges = get_all_valid_edges_in_directed_tree(
         ust, root, map_params.pop, stack, pops_below_vertex, no_valid_edges_vertices,
@@ -1206,6 +1210,15 @@ double TreeSplitter::get_log_retroactive_splitting_prob_from_valid_pop_cut_list(
         }
     }
 
+    if (it == valid_edges.end()) {
+        std::ostringstream oss;
+        oss << "Actual cut edge not found in retroactive "
+            << "valid-edge list.\n";
+        oss << "valid_edges.size()="
+            << valid_edges.size() << "\n";
+
+        throw std::runtime_error(oss.str());
+    }
 
     int actual_cut_edge_index = std::distance(valid_edges.begin(), it);
     

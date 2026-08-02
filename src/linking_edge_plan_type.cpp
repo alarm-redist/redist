@@ -86,8 +86,15 @@ std::vector<std::pair<int, int>> get_intial_linking_edges(PlanMultigraph &plan_m
             if (pair_found)
                 break;
         }
-        if (!pair_found)
-            REprintf("ERROR! No edge found!\n");
+        // if (!pair_found)
+        //     REprintf("ERROR! No edge found!\n");
+    }
+
+    if (static_cast<int>(tree_edges.size()) != num_regions - 1) {
+        throw std::runtime_error(
+            "The valid region adjacency graph is "
+            "disconnected; no linking tree exists."
+        );
     }
 
     return initial_edges;
@@ -293,6 +300,8 @@ double LinkingEdgePlan::get_log_eff_boundary_len(
                 edge_pair.log_prob =
                     get_regions_log_splitting_prob(scoring_function, tree_splitter, ust_sampler,
                                                    edge_pair.vertex1, edge_pair.vertex2);
+                // now mark it as valid 
+                edge_pair.valid_log_prob = true;
             }
 
             return edge_pair.log_prob;
@@ -357,6 +366,8 @@ LinkingEdgePlan::get_valid_adj_regions_and_eff_log_boundary_lens(
                 edge_pair.log_prob =
                     get_regions_log_splitting_prob(scoring_function, tree_splitter, ust_sampler,
                                                    edge_pair.vertex1, edge_pair.vertex2);
+                // now mark it as valid 
+                edge_pair.valid_log_prob = true;
             }
 
             if (DEBUG_L_EDGE_PLANS_VERBOSE && std::isinf(edge_pair.log_prob)) {

@@ -724,6 +724,7 @@ void run_merge_split_step_on_all_plans(
         for (size_t thread_id = 0; thread_id < num_threads; thread_id++)
         {
             smc_diagnostics.wilson_call_times[step_num] += granular_weight_times[thread_id].wilson_time;
+            smc_diagnostics.wilson_backfill_call_times[step_num] += granular_weight_times[thread_id].backfill_wilson_time;
             smc_diagnostics.get_valid_mergepairs_times[merge_split_step_num] += granular_weight_times[thread_id].get_valid_mergepairs;
             smc_diagnostics.selecting_merge_pair_times[merge_split_step_num] += granular_weight_times[thread_id].selecting_merge_pair;
             smc_diagnostics.hard_constraint_split_times[step_num] += granular_weight_times[thread_id].hard_constraint_time;
@@ -1100,7 +1101,7 @@ Rcpp::List run_redist_smc(
                     }
                 }
                 // its the final splitting step if step_num + 1 == total_smc steps
-                bool const is_final_splitting_step = step_num + 1 == total_smc_steps;
+                bool const is_final_splitting_step = smc_step_num + 1 == total_smc_steps;
                 // If we have any custom hard constraints then must switch to single threading
                 // for everything
 

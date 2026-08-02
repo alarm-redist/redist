@@ -175,6 +175,13 @@ double get_log_mh_ratio(MapParams const &map_params, ScoringFunction const &scor
         Rprintf("Ratio is now %f\n", std::exp(log_mh_ratio));
     }
 
+    if (!std::isfinite(log_mh_ratio)) {
+        throw std::runtime_error(
+            "Merge-split operation produced a nonfinite "
+            "log Metropolis-Hastings ratio."
+        );
+    }
+
     return log_mh_ratio;
 }
 
@@ -400,7 +407,14 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
                              new_region1_log_compactness, new_region2_log_compactness, plan,
                              new_plan, rho, using_caching, weight_cache,
                              granular_times);
-        proposal_accepted = rng_state.r_unif() <= std::exp(log_mh_ratio);
+        // Auto-accept when log_mh_ratio >= 0 because the MH ratio is at least 1.
+        // we're drawing Unif[0,1] to compare 
+        if (log_mh_ratio >= 0.0){
+            proposal_accepted = true;
+        }else{
+            proposal_accepted = std::log(rng_state.r_unif()) <= log_mh_ratio;
+        }
+        
         if constexpr (DEBUG_MERGING_VERBOSE)
             Rprintf("Ratio is %f and it is ", std::exp(log_mh_ratio));
 

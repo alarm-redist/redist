@@ -156,6 +156,7 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params,
         EdgeBitWord{0}
     ),
       plan_ptr_vec(nsims) {
+    int const num_threads = get_num_threads(pool);
     // make sure 0 indexed plans were not passed in
     if (*std::min_element(flattened_all_plans.begin(), flattened_all_plans.end()) <= 0) {
         throw Rcpp::exception(
@@ -211,8 +212,15 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params,
     bool const use_lct_graph_space = sampling_space == SamplingSpace::LCTGraphSpace;
 
     if (!use_graph_space && !use_lct_graph_space) {
-        if (rng_states.size() > (pool.getNumThreads() == 0 ? 1 : pool.getNumThreads())) {
-            throw Rcpp::exception("RNG States vector is more than the number of threads!\n");
+        if (rng_states.size() < static_cast<std::size_t>(num_threads)) {
+            std::ostringstream oss;
+            oss << "Not enough RNG states.\n";
+            oss << "rng_states.size()="
+                << rng_states.size() << "\n";
+            oss << "n_threads="
+                << num_threads << "\n";
+
+            throw std::runtime_error(oss.str());
         }
     }
 
