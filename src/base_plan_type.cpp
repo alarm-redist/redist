@@ -481,10 +481,9 @@ void Plan::shallow_copy(Plan const &plan_to_copy) {
         forest_edges.copy(plan_to_copy.forest_edges);
     }
 
-    // if linking edges exist then copy that
-    if (plan_to_copy.linking_edges.size() > 0) {
-        linking_edges = plan_to_copy.linking_edges;
-    }
+    // we copy linking edges as if there's none then 
+    // its an empty vector and thats ok
+    linking_edges = plan_to_copy.linking_edges;
     return;
 }
 
@@ -1042,6 +1041,22 @@ void Plan::update_from_successful_split(TreeSplitter const &tree_splitter,
     // Now update the vertex level information
     update_vertex_and_plan_specific_info_from_cut(tree_splitter, ust_sampler, cut_edge,
                                                   new_region1_id, new_region2_id, add_region);
+}
+
+void Plan::fill_in_skipped_subtrees(
+    USTSampler &ust_sampler,
+    RNGState &rng_state,
+    int const max_tries_multiple
+) {
+    // only do if we have forest edges
+    if (!forest_edges.empty()){
+        ust_sampler.fill_in_skipped_subtrees(
+            forest_edges,
+            rng_state,
+            max_tries_multiple
+        );
+    }
+    return;
 }
 
 // Attempts Gets valid pairs to merge for MCMC
@@ -2589,6 +2604,10 @@ void swap_pair_maps(RegionPairHash &a, RegionPairHash &b) {
     std::swap(a.values, b.values);
     std::swap(a.hashed, b.hashed);
     std::swap(a.hashed_pairs, b.hashed_pairs);
+    std::swap(
+        a.num_hier_smc_merge_valid_pairs,
+        b.num_hier_smc_merge_valid_pairs
+    );
 };
 
 PlanMultigraph::PlanMultigraph(MapParams const &map_params,

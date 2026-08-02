@@ -9,7 +9,8 @@ RcppThread::ThreadPool get_thread_pool(int const num_threads) {
     } else if (num_threads > 1) {
         return RcppThread::ThreadPool(num_threads);
     } else {
-        return RcppThread::ThreadPool(std::thread::hardware_concurrency());
+        auto hardware_threads = std::thread::hardware_concurrency();
+        return RcppThread::ThreadPool(hardware_threads > 0 ? hardware_threads : 1);
     }
 }
 

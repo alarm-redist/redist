@@ -12,6 +12,7 @@ remove (splitting the tree)
 #include "base_plan_type.h"
 
 constexpr bool FINDING_EDGE_CUTS_VERBOSE = false;
+constexpr bool FINDING_JOINED_EDGE_CUTS_VERBOSE = false;
 
 namespace{
 
@@ -332,6 +333,8 @@ arma::vec compute_almost_best_weights_on_smaller_dev_edges(std::vector<EdgeCut> 
 
 // takes an uncut tree and an edge in the tree
 // and updates the region ids as if the cut edge was really removed
+// NOTE: When Wilson trees switch to undirected this can probably 
+// be deleted and replaced with assign_region_ids_from_joined_undirected_tree
 void assign_region_ids_from_uncut_tree(Tree const &ust, // FlatGraph const &ust, 
     PlanVector &region_ids, int const root,
                                        int const root_region_id, int const cut_vertex_root,
@@ -345,6 +348,8 @@ void assign_region_ids_from_uncut_tree(Tree const &ust, // FlatGraph const &ust,
     // for (auto const &child_vertex : ust.neighbors(root)) {
     for (auto const &child_vertex : ust[root]) {
         // check if this edge is one to remove in which case we ignore
+        // NOTE/TODO When trees become undirected need to check below as well
+        // child_vertex == cut_vertex_parent && root == cut_vertex_root
         if (root == cut_vertex_parent && child_vertex == cut_vertex_root)
             continue;
 
@@ -361,6 +366,8 @@ void assign_region_ids_from_uncut_tree(Tree const &ust, // FlatGraph const &ust,
         // for (auto const &child_vertex : ust.neighbors(vertex)) {
         for (auto const &child_vertex : ust[vertex]) {
             // check if this edge is one to remove in which case we ignore
+            // NOTE/TODO When trees become undirected need to check below as well
+            // child_vertex == cut_vertex_parent && vertex == cut_vertex_root
             if (vertex == cut_vertex_parent && child_vertex == cut_vertex_root)
                 continue;
 
@@ -387,6 +394,7 @@ void assign_region_ids_from_uncut_tree(Tree const &ust, // FlatGraph const &ust,
         // for (auto const &child_vertex : ust.neighbors(vertex)) {
         for (auto const &child_vertex : ust[vertex]) {
             // since tree is directed we don't need to check anything
+            // TODO/NOTE When trees become undirected we do need to check this 
             vertex_queue.push({child_vertex, 0});
         }
     }
@@ -394,36 +402,94 @@ void assign_region_ids_from_uncut_tree(Tree const &ust, // FlatGraph const &ust,
     return;
 }
 
-arma::vec compute_soft_constraint_edge_cut_weights(
+// Given a vector of edge cuts it 
+// - removes any edge cuts that don't satisfy hard constraints 
+// - Gives the remaining edge cuts an unnormalized weight equal to e^(-score)
+arma::vec compute_constraint_edge_cut_weights(
     std::vector<EdgeCut> &valid_edges, ScoringFunction const &scoring_function, Tree const &ust, // FlatGraph const &ust,
     int const num_regions, PlanVector &region_ids, RegionSizes &region_sizes,
     IntPlanAttribute &region_pops, int const split_region_id1, int const split_region_id2,
     CircularQueue<std::pair<int, int>> &vertex_queue) {
+    // Allocate enough space for every edge. We shrink this after removing
+    // edges that violate a hard constraint.
     arma::vec unnormalized_wgts(valid_edges.size());
 
-    for (size_t i = 0; i < valid_edges.size(); i++) {
-        // update split info
-        region_sizes[split_region_id1] = valid_edges[i].cut_above_region_size;
-        region_sizes[split_region_id2] = valid_edges[i].cut_below_region_size;
+    // read_idx identifies the edge currently being evaluated.
+    // write_idx identifies where the next valid edge and weight should go.
+    std::size_t write_idx = 0;
 
-        region_pops[split_region_id1] = valid_edges[i].cut_above_pop;
-        region_pops[split_region_id2] = valid_edges[i].cut_below_pop;
+    for (std::size_t read_idx = 0;
+         read_idx < valid_edges.size();
+         ++read_idx) {
 
-        // update the region ids
-        assign_region_ids_from_uncut_tree(ust, region_ids, valid_edges[i].tree_root,
-                                          split_region_id1, valid_edges[i].cut_vertex,
-                                          valid_edges[i].cut_vertex_parent, split_region_id2,
-                                          vertex_queue);
+        EdgeCut const &edge_cut = valid_edges[read_idx];
 
-        // get the soft score
-        double const score = scoring_function.compute_full_split_plan_soft_score(
-            num_regions, region_ids, region_sizes, region_pops, split_region_id1,
-            split_region_id2);
+        // Temporarily update the split-region sizes for this candidate cut.
+        region_sizes[split_region_id1] =
+            edge_cut.cut_above_region_size;
+        region_sizes[split_region_id2] =
+            edge_cut.cut_below_region_size;
 
-        // REprintf("Soft score %f, unnormed weight %.20f\n", score, std::exp(-score));
+        // Temporarily update the split-region populations.
+        region_pops[split_region_id1] =
+            edge_cut.cut_above_pop;
+        region_pops[split_region_id2] =
+            edge_cut.cut_below_pop;
 
-        unnormalized_wgts[i] = std::exp(-score);
+        // Assign region IDs corresponding to this candidate cut.
+        assign_region_ids_from_uncut_tree(
+            ust,
+            region_ids,
+            edge_cut.tree_root,
+            split_region_id1,
+            edge_cut.cut_vertex,
+            edge_cut.cut_vertex_parent,
+            split_region_id2,
+            vertex_queue
+        );
+
+        // first  = whether all applicable hard constraints are satisfied
+        // second = total soft-constraint score
+        std::pair<bool, double> const score_result =
+            scoring_function.compute_full_split_plan_score(
+                num_regions,
+                region_ids,
+                region_sizes,
+                region_pops,
+                split_region_id1,
+                split_region_id2
+            );
+
+        // Do not retain this cut if it violates a hard constraint.
+        if (!score_result.first) {
+            continue;
+        }
+
+        // Compact the valid edges toward the beginning of the vector.
+        //
+        // If no invalid edges have appeared yet, read_idx == write_idx and
+        // no move is needed. Once an invalid edge is skipped, later valid
+        // edges are moved left to fill the gap.
+        if (write_idx != read_idx) {
+            valid_edges[write_idx] =
+                std::move(valid_edges[read_idx]);
+        }
+
+        // The weight index must correspond to the compacted edge index,
+        // not the original read index.
+        unnormalized_wgts[write_idx] =
+            std::exp(-score_result.second);
+
+        ++write_idx;
     }
+
+
+    // Remove the unused tail containing rejected or moved-from edges.
+    valid_edges.resize(write_idx);
+
+    // Keep exactly one weight for every retained edge.
+    unnormalized_wgts.resize(write_idx);
+
 
     return unnormalized_wgts;
 }
@@ -452,6 +518,8 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
     // std::stack<std::tuple<int, int, bool>> stack;
     // Clear the stack now
     stack.clear();
+    // set the root to false 
+    no_valid_edges_vertices[root] = false;
 
     // Start by adding all the roots children to the stack
     // for (auto const &root_children : a_ust.neighbors(root)) {
@@ -469,6 +537,8 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
         bool const is_revisiting = std::get<2>(popped);
 
         if (!is_revisiting) { // This is the first time visiting the node
+            // reset this vertex to false 
+            no_valid_edges_vertices[vtx] = false;
 
             // Push the vertex back onto the stack as "revisiting"
             stack.push({vtx, parent, true});
@@ -580,6 +650,7 @@ void get_all_valid_edges_in_undirected_tree(
     // Stack for DFS
     // Elements are: vertex, parent, is_revisiting
     stack.clear();
+    no_valid_edges_vertices[root] = false;
 
 
     // Start by adding all the roots children to the stack
@@ -600,6 +671,7 @@ void get_all_valid_edges_in_undirected_tree(
         bool const is_revisiting = std::get<2>(popped);
 
         if (!is_revisiting) { // This is the first time visiting the node
+            no_valid_edges_vertices[vtx] = false;
 
             // Push the vertex back onto the stack as "revisiting"
             stack.push({vtx, parent, true});
@@ -668,17 +740,19 @@ void get_all_valid_edges_in_undirected_tree(
 // finds all valid edges if you joined the two trees
 // with the edge (region1_root, region2_root)
 // THIS INCLUDES (region1_root, region2_root) as an edge!!
-std::vector<EdgeCut> get_valid_edges_in_joined_packed_tree(
+std::vector<EdgeCut> get_valid_pop_edges_in_joined_packed_tree(
     MapParams const &map_params, EdgeBitset const &forest_edges, TreePopStack &stack,
     std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
     const int region1_root, const int region1_pop, const int region2_root,
     const int region2_pop, const int min_potential_cut_size, const int max_potential_cut_size,
     std::vector<int> const &smaller_cut_sizes_to_try, const int total_merged_region_size) {
     int const total_merged_region_pop = region1_pop + region2_pop;
-    // auto func_start = std::chrono::steady_clock::now();
-    // reset pops_below_vertex
-    std::fill(pops_below_vertex.begin(), pops_below_vertex.end(), 0);
-    std::fill(no_valid_edges_vertices.begin(), no_valid_edges_vertices.end(), false);
+
+    // Don't need to reset pops below as it starts from the child nodes 
+    // so it overwrites old values 
+    // Also don't need to reset no_valid_edges_vertices as we 
+    // can just set them to false the first time we see the vertex when 
+    // traversing the tree 
 
     // create the valid cut list
     std::vector<EdgeCut> edge_across_valid_edge_cuts;
@@ -707,11 +781,13 @@ std::vector<EdgeCut> get_valid_edges_in_joined_packed_tree(
         static_cast<double>(region2_pop), static_cast<double>(region1_pop), map_params.lower,
         map_params.target, map_params.upper, smaller_cut_sizes_to_try);
 
-    if constexpr (FINDING_EDGE_CUTS_VERBOSE) {
+    if constexpr (FINDING_JOINED_EDGE_CUTS_VERBOSE) {
+        pops_below_vertex[region1_root] = region1_pop;
+        pops_below_vertex[region2_root] = region2_pop;
         REprintf("Pop below region2_root is %d so above is %d so foound %d\n",
                  pops_below_vertex.at(region2_root),
                  total_merged_region_pop - pops_below_vertex.at(region2_root),
-                 (int)edge_across_valid_edge_cuts.size());
+                 (int) edge_across_valid_edge_cuts.size());
     }
 
 
@@ -775,6 +851,7 @@ void get_all_valid_edges_in_undirected_vertex_tree(
     // Stack for DFS
     // Elements are: vertex, parent, is_revisiting
     stack.clear();
+    no_valid_edges_vertices[root] = false;
 
 
     // Start by adding all the roots children to the stack
@@ -792,6 +869,7 @@ void get_all_valid_edges_in_undirected_vertex_tree(
         bool const is_revisiting = std::get<2>(popped);
 
         if (!is_revisiting) { // This is the first time visiting the node
+            no_valid_edges_vertices[vtx] = false;
 
             // Push the vertex back onto the stack as "revisiting"
             stack.push({vtx, parent, true});
@@ -856,20 +934,22 @@ void get_all_valid_edges_in_undirected_vertex_tree(
 // finds all valid edges if you joined the two trees
 // with the edge (region1_root, region2_root)
 // THIS INCLUDES (region1_root, region2_root) as an edge!!
-std::vector<EdgeCut> get_valid_edges_in_joined_vertex_tree(
+std::vector<EdgeCut> get_valid_edges_in_joined_flattree(
     MapParams const &map_params, FlatGraph const &forest_graph, TreePopStack &stack,
     std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
     const int region1_root, const int region1_pop, const int region2_root,
     const int region2_pop, const int min_potential_cut_size, const int max_potential_cut_size,
     std::vector<int> const &smaller_cut_sizes_to_try, const int total_merged_region_size) {
     int const total_merged_region_pop = region1_pop + region2_pop;
-    // auto func_start = std::chrono::steady_clock::now();
-    // reset pops_below_vertex
-    std::fill(pops_below_vertex.begin(), pops_below_vertex.end(), 0);
-    std::fill(no_valid_edges_vertices.begin(), no_valid_edges_vertices.end(), false);
+    // Don't need to reset pops below as it starts from the child nodes 
+    // so it overwrites old values 
+    // Also don't need to reset no_valid_edges_vertices as we 
+    // can just set them to false the first time we see the vertex when 
+    // traversing the tree 
 
     // create the valid cut list
     std::vector<EdgeCut> edge_across_valid_edge_cuts;
+    
 
     // find the valid edges in this half of the tree
     get_all_valid_edges_in_undirected_vertex_tree(edge_across_valid_edge_cuts,
@@ -895,7 +975,9 @@ std::vector<EdgeCut> get_valid_edges_in_joined_vertex_tree(
         static_cast<double>(region2_pop), static_cast<double>(region1_pop), map_params.lower,
         map_params.target, map_params.upper, smaller_cut_sizes_to_try);
 
-    if constexpr (FINDING_EDGE_CUTS_VERBOSE) {
+    if constexpr (FINDING_JOINED_EDGE_CUTS_VERBOSE) {
+        pops_below_vertex[region1_root] = region1_pop;
+        pops_below_vertex[region2_root] = region2_pop;
         REprintf("Pop below region2_root is %d so above is %d so foound %d\n",
                  pops_below_vertex.at(region2_root),
                  total_merged_region_pop - pops_below_vertex.at(region2_root),
@@ -914,14 +996,19 @@ constexpr bool MERGED_TREE_SPLITTING_VERBOSE = false; // Compile-time constant
 
 std::vector<EdgeCut> TreeSplitter::get_all_valid_pop_edge_cuts_in_directed_tree(
     const MapParams &map_params, Tree const &ust, // FlatGraph const &ust, 
-    const int root, TreePopStack &stack,
-    std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
+    const int root, 
+    std::vector<int> &pops_below_vertex, 
     int const region_population, int const region_size, const int min_potential_cut_size,
     const int max_potential_cut_size, std::vector<int> const &smaller_cut_sizes_to_try) const {
 
+    
+    // Don't need to reset pops below as it starts from the child nodes 
+    // so it overwrites old values 
+    // Also don't need to reset no_valid_edges_vertices as we 
+    // can just set them to false the first time we see the vertex when 
+    // traversing the tree 
+
     // reset pops_below_vertex and valid edges thing
-    std::fill(pops_below_vertex.begin(), pops_below_vertex.end(), 0);
-    std::fill(no_valid_edges_vertices.begin(), no_valid_edges_vertices.end(), false);
     std::vector<EdgeCut> valid_edges = get_all_valid_edges_in_directed_tree(
         ust, root, map_params.pop, stack, pops_below_vertex, no_valid_edges_vertices,
         min_potential_cut_size, max_potential_cut_size, smaller_cut_sizes_to_try,
@@ -933,13 +1020,13 @@ std::vector<EdgeCut> TreeSplitter::get_all_valid_pop_edge_cuts_in_directed_tree(
 std::pair<bool, EdgeCut> TreeSplitter::attempt_to_find_edge_to_cut(
     const MapParams &map_params, ScoringFunction const &scoring_function, RNGState &rng_state,
     Plan const &plan, int const split_region1, int const split_region2, Tree const &ust, // FlatGraph const &ust,
-    const int root, TreePopStack &stack, std::vector<int> &pops_below_vertex,
-    std::vector<bool> &no_valid_edges_vertices, int const region_population,
+    const int root, std::vector<int> &pops_below_vertex,
+    int const region_population,
     int const region_size, const int min_potential_cut_size, const int max_potential_cut_size,
     std::vector<int> const &smaller_cut_sizes_to_try, bool save_selection_prob) {
     // get all the valid edges
     std::vector<EdgeCut> valid_edges = get_all_valid_pop_edge_cuts_in_directed_tree(
-        map_params, ust, root, stack, pops_below_vertex, no_valid_edges_vertices,
+        map_params, ust, root, pops_below_vertex, 
         region_population, region_size, min_potential_cut_size, max_potential_cut_size,
         smaller_cut_sizes_to_try);
 
@@ -1014,7 +1101,7 @@ double TreeSplitter::get_log_selection_prob(std::vector<EdgeCut> &valid_edges, i
 
 double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_packed_tree(
     MapParams const &map_params, ScoringFunction const &scoring_function,
-    EdgeBitset const &forest_edges, TreePopStack &stack, std::vector<bool> &visited,
+    EdgeBitset const &forest_edges, 
     std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
     Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
     std::vector<int> const &smaller_cut_sizes_to_try) {
@@ -1026,7 +1113,7 @@ double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_packed_tree(
     int total_merged_region_size = region1_size + region2_size;
 
     // Get all the valid edges in the joined tree
-    std::vector<EdgeCut> valid_edges = get_valid_edges_in_joined_packed_tree(
+    std::vector<EdgeCut> valid_edges = get_valid_pop_edges_in_joined_packed_tree(
         map_params, forest_edges, stack, pops_below_vertex, visited, region1_root,
         region1_population, region2_root, region2_population, min_potential_cut_size,
         max_potential_cut_size, smaller_cut_sizes_to_try, total_merged_region_size);
@@ -1036,90 +1123,16 @@ double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_packed_tree(
     EdgeCut actual_cut_edge(region1_root, region2_root, region1_root, region2_size,
                             region2_population, region1_size, region1_population);
 
-    if (MERGED_TREE_SPLITTING_VERBOSE) {
-        REprintf("Finding Merge prob for (%d, %d) - %zu valid edges!\n", region1_root,
-                 region2_root, valid_edges.size());
-    }
-
-    // find the index of the edge we actually removed to get these two regions.
-    // it should be 0 if pop bounds are tight but this allows it to work even
-    // if not.
-    auto it = std::find(valid_edges.begin(), valid_edges.end(), actual_cut_edge);
-
-    if constexpr (perf_config::bounds_checking){
-        if (it == valid_edges.end()) {
-            std::ostringstream oss;
-
-            oss << "Actual cut edge not found in valid_edges in "
-                << "get_log_retroactive_splitting_prob_for_joined_packed_tree.\n";
-
-            oss << "region1_root=" << region1_root << "\n";
-            oss << "region2_root=" << region2_root << "\n";
-            oss << "region1_id=" << static_cast<int>(plan.region_ids[region1_root]) << "\n";
-            oss << "region2_id=" << static_cast<int>(plan.region_ids[region2_root]) << "\n";
-            oss << "region1_size=" << region1_size << "\n";
-            oss << "region2_size=" << region2_size << "\n";
-            oss << "region1_population=" << region1_population << "\n";
-            oss << "region2_population=" << region2_population << "\n";
-            oss << "valid_edges.size()=" << valid_edges.size() << "\n";
-
-            oss << "Actual cut edge: "
-                << "tree_root=" << actual_cut_edge.tree_root
-                << ", cut_vertex=" << actual_cut_edge.cut_vertex
-                << ", cut_vertex_parent=" << actual_cut_edge.cut_vertex_parent
-                << ", cut_below_region_size=" << actual_cut_edge.cut_below_region_size
-                << ", cut_below_pop=" << actual_cut_edge.cut_below_pop
-                << ", cut_above_region_size=" << actual_cut_edge.cut_above_region_size
-                << ", cut_above_pop=" << actual_cut_edge.cut_above_pop
-                << "\n";
-
-            oss << "Valid edges:\n";
-            for (std::size_t k = 0; k < valid_edges.size(); ++k) {
-                auto const &e = valid_edges[k];
-
-                oss << "  [" << k << "] "
-                    << "tree_root=" << e.tree_root
-                    << ", cut_vertex=" << e.cut_vertex
-                    << ", cut_vertex_parent=" << e.cut_vertex_parent
-                    << ", cut_below_region_size=" << e.cut_below_region_size
-                    << ", cut_below_pop=" << e.cut_below_pop
-                    << ", cut_above_region_size=" << e.cut_above_region_size
-                    << ", cut_above_pop=" << e.cut_above_pop
-                    << ", log_prob=" << e.log_prob
-                    << "\n";
-            }
-
-            throw std::runtime_error(oss.str());
-        }
-    }
-
-
-    int actual_cut_edge_index = std::distance(valid_edges.begin(), it);
-    
-    if constexpr (perf_config::bounds_checking){
-        if (actual_cut_edge_index < 0 ||
-        actual_cut_edge_index >= static_cast<int>(valid_edges.size())) {
-            std::ostringstream oss;
-            oss << "actual_cut_edge_index out of bounds. "
-                << "actual_cut_edge_index=" << actual_cut_edge_index
-                << ", valid_edges.size()=" << valid_edges.size();
-
-            throw std::runtime_error(oss.str());
-        }
-    }
-
-    if (MERGED_TREE_SPLITTING_VERBOSE) {
-        REprintf("Actual Cut Edge at Index %d and so prob is %f \n", actual_cut_edge_index,
-                 get_log_selection_prob(valid_edges, actual_cut_edge_index));
-    }
-
-    return get_log_selection_prob(valid_edges, actual_cut_edge_index);
+    // Now return the probability we actually selected that cut edge 
+    return get_log_retroactive_splitting_prob_from_valid_pop_cut_list(
+        valid_edges, actual_cut_edge
+    );
 }
 
 
-double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_vertex_tree(
+double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_flattree(
     MapParams const &map_params, ScoringFunction const &scoring_function,
-    FlatGraph const &forest_graph, TreePopStack &stack, std::vector<bool> &visited,
+    FlatGraph const &forest_graph,
     std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
     Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
     std::vector<int> const &smaller_cut_sizes_to_try) {
@@ -1131,7 +1144,7 @@ double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_vertex_tree(
     int total_merged_region_size = region1_size + region2_size;
 
     // Get all the valid edges in the joined tree
-    std::vector<EdgeCut> valid_edges = get_valid_edges_in_joined_vertex_tree(
+    std::vector<EdgeCut> valid_edges = get_valid_edges_in_joined_flattree(
         map_params, forest_graph, stack, pops_below_vertex, visited, region1_root,
         region1_population, region2_root, region2_population, min_potential_cut_size,
         max_potential_cut_size, smaller_cut_sizes_to_try, total_merged_region_size);
@@ -1141,7 +1154,19 @@ double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_vertex_tree(
     EdgeCut actual_cut_edge(region1_root, region2_root, region1_root, region2_size,
                             region2_population, region1_size, region1_population);
 
+    // Now return the probability we actually selected that cut edge 
+    return get_log_retroactive_splitting_prob_from_valid_pop_cut_list(
+        valid_edges, actual_cut_edge
+    );
+}
+
+
+double TreeSplitter::get_log_retroactive_splitting_prob_from_valid_pop_cut_list(
+        std::vector<EdgeCut> &valid_edges, EdgeCut const actual_cut_edge
+){
     if (MERGED_TREE_SPLITTING_VERBOSE) {
+        int region1_root = actual_cut_edge.tree_root;
+        int region2_root = actual_cut_edge.cut_vertex;
         REprintf("Finding Merge prob for (%d, %d) - %zu valid edges!\n", region1_root,
                  region2_root, valid_edges.size());
     }
@@ -1153,15 +1178,19 @@ double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_vertex_tree(
 
     if constexpr (perf_config::bounds_checking){
         if (it == valid_edges.end()) {
+            int region1_root = actual_cut_edge.tree_root;
+            int region2_root = actual_cut_edge.cut_vertex;
+            int region1_size = actual_cut_edge.cut_above_region_size;
+            int region1_population = actual_cut_edge.cut_above_pop;
+            int region2_size = actual_cut_edge.cut_below_region_size;
+            int region2_population = actual_cut_edge.cut_below_pop;
             std::ostringstream oss;
 
             oss << "Actual cut edge not found in valid_edges in "
-                << "get_log_retroactive_splitting_prob_for_joined_vertex_tree.\n";
+                << "get_log_retroactive_splitting_prob_from_valid_pop_cut_list.\n";
 
             oss << "region1_root=" << region1_root << "\n";
             oss << "region2_root=" << region2_root << "\n";
-            oss << "region1_id=" << static_cast<int>(plan.region_ids[region1_root]) << "\n";
-            oss << "region2_id=" << static_cast<int>(plan.region_ids[region2_root]) << "\n";
             oss << "region1_size=" << region1_size << "\n";
             oss << "region2_size=" << region2_size << "\n";
             oss << "region1_population=" << region1_population << "\n";
@@ -1198,6 +1227,15 @@ double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_vertex_tree(
         }
     }
 
+    if (it == valid_edges.end()) {
+        std::ostringstream oss;
+        oss << "Actual cut edge not found in retroactive "
+            << "valid-edge list.\n";
+        oss << "valid_edges.size()="
+            << valid_edges.size() << "\n";
+
+        throw std::runtime_error(oss.str());
+    }
 
     int actual_cut_edge_index = std::distance(valid_edges.begin(), it);
     
@@ -1333,45 +1371,17 @@ double ExperimentalSplitter::get_log_selection_prob(std::vector<EdgeCut> &valid_
     return log(unnormalized_wgts(idx)) - log(arma::sum(unnormalized_wgts));
 }
 
-// std::pair<bool, EdgeCut> ConstraintSplitter::select_edge_to_cut(
-//     ScoringFunction const &scoring_function, Tree const &ust,
-//     RNGState &rng_state, std::vector<EdgeCut> &valid_edges,
-//     bool save_selection_prob
-// ){
-//     int num_valid_edges = static_cast<int>(valid_edges.size());
-//     // if only 1 edge just return that
-//     if(num_valid_edges == 1) return std::make_pair(true, valid_edges[0]);
-
-//     // get the weights
-//     arma::vec unnormalized_wgts = compute_soft_constraint_edge_cut_weights(
-//         valid_edges, scoring_function, ust,
-//         region_ids, region_sizes, region_pops,
-//         int const split_region_id1, int const split_region_id2
-//     )
-
-//     // select with prob proportional to the weights
-//     int idx = rng_state.r_int_unnormalized_wgt(unnormalized_wgts);
-//     EdgeCut selected_edge_cut = valid_edges.at(idx);
-//     // compute selection probability if needed
-//     double log_selection_prob = 0.0;
-//     if(save_selection_prob){
-//         selected_edge_cut.log_prob = std::log(unnormalized_wgts(idx)) -
-//         std::log(arma::sum(unnormalized_wgts));
-//     }
-
-//     return std::make_pair(true, selected_edge_cut);
-// }
 
 std::pair<bool, EdgeCut> ConstraintSplitter::attempt_to_find_edge_to_cut(
     const MapParams &map_params, ScoringFunction const &scoring_function, RNGState &rng_state,
     Plan const &plan, int const split_region1, int const split_region2, Tree const &ust, // FlatGraph const &ust,
-    const int root, TreePopStack &stack, std::vector<int> &pops_below_vertex,
-    std::vector<bool> &no_valid_edges_vertices, int const region_population,
+    const int root, std::vector<int> &pops_below_vertex,
+    int const region_population,
     int const region_size, const int min_potential_cut_size, const int max_potential_cut_size,
     std::vector<int> const &smaller_cut_sizes_to_try, bool save_selection_prob) {
     // get all the valid edges
     std::vector<EdgeCut> valid_edges = get_all_valid_pop_edge_cuts_in_directed_tree(
-        map_params, ust, root, stack, pops_below_vertex, no_valid_edges_vertices,
+        map_params, ust, root, pops_below_vertex, 
         region_population, region_size, min_potential_cut_size, max_potential_cut_size,
         smaller_cut_sizes_to_try);
 
@@ -1379,9 +1389,10 @@ std::pair<bool, EdgeCut> ConstraintSplitter::attempt_to_find_edge_to_cut(
     // if no valid edges immediately return false
     if (num_valid_edges == 0) {
         return std::make_pair(false, EdgeCut());
-    } else if (num_valid_edges == 1) {
+    } else if (num_valid_edges == 1 && !scoring_function.any_hard_constraints) {
         return std::make_pair(true, valid_edges[0]);
     }
+
 
     // copy over the current plan information
     region_ids.copy(plan.region_ids);
@@ -1391,9 +1402,16 @@ std::pair<bool, EdgeCut> ConstraintSplitter::attempt_to_find_edge_to_cut(
     region_pops.copy(plan.region_pops);
 
     // get the weights
-    arma::vec unnormalized_wgts = compute_soft_constraint_edge_cut_weights(
+    arma::vec unnormalized_wgts = compute_constraint_edge_cut_weights(
         valid_edges, scoring_function, ust, plan.num_regions + 1, region_ids, region_sizes,
         region_pops, split_region1, split_region2, vertex_queue);
+
+    // check if all filtered
+    num_valid_edges = static_cast<int>(valid_edges.size());
+    // if no valid edges immediately return false
+    if (num_valid_edges == 0) {
+        return std::make_pair(false, EdgeCut());
+    }
 
     // select with prob proportional to the weights
     int idx = rng_state.r_int_unnormalized_wgt(unnormalized_wgts);
@@ -1401,14 +1419,18 @@ std::pair<bool, EdgeCut> ConstraintSplitter::attempt_to_find_edge_to_cut(
     // compute selection probability if needed
     if (save_selection_prob) {
         selected_edge_cut.log_prob =
-            std::log(unnormalized_wgts(idx)) - std::log(arma::sum(unnormalized_wgts));
+            std::log(unnormalized_wgts[idx]) - std::log(
+                std::accumulate(unnormalized_wgts.begin(), unnormalized_wgts.end(), 0.0)
+            );
         // REprintf("Selection prob %f\n", selected_edge_cut.log_prob);
     }
+
 
     return std::make_pair(true, selected_edge_cut);
 }
 
 // assumes two trees in spanning forest have been joined
+// at the edge (cut_vertex_root_region_id, cut_vertex_parent)
 void assign_region_ids_from_joined_undirected_tree(
     Tree const &forest_graph, PlanVector &region_ids, int const cut_vertex_root,
     int const cut_vertex_root_region_id, int const cut_vertex_parent,
@@ -1475,7 +1497,7 @@ void assign_region_ids_from_joined_undirected_tree(
 
 double ConstraintSplitter::get_log_retroactive_splitting_prob_for_joined_packed_tree(
     MapParams const &map_params, ScoringFunction const &scoring_function,
-    EdgeBitset const &forest_edges, TreePopStack &stack, std::vector<bool> &visited,
+    EdgeBitset const &forest_edges, 
     std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
     Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
     std::vector<int> const &smaller_cut_sizes_to_try) {
@@ -1490,21 +1512,150 @@ double ConstraintSplitter::get_log_retroactive_splitting_prob_for_joined_packed_
     auto const region2_id = plan.region_ids[region2_root];
 
     // Get all the valid edges in the joined tree
-    std::vector<EdgeCut> valid_edges = get_valid_edges_in_joined_packed_tree(
+    std::vector<EdgeCut> valid_edges = get_valid_pop_edges_in_joined_packed_tree(
         map_params, forest_edges, stack, pops_below_vertex, visited, region1_root,
         region1_population, region2_root, region2_population, min_potential_cut_size,
         max_potential_cut_size, smaller_cut_sizes_to_try, total_merged_region_size);
 
     int num_valid_edges = static_cast<int>(valid_edges.size());
     // if only 1 valid edge then its log(1) = 0
-    if (num_valid_edges == 1) {
+    if (num_valid_edges == 1 && !scoring_function.any_hard_constraints) {
         return 0.0;
     }
+
+    // copy the forest over to the dummy forest 
+    dummy_forest = forest_edges.get_graph_tree(map_params.graph_edge_index);
 
     // find the index of the actual edge we cut
     // where we take region2 root as the cut_vertex
     EdgeCut actual_cut_edge(region1_root, region2_root, region1_root, region2_size,
                             region2_population, region1_size, region1_population);
+
+    // Now return the probability we actually selected that cut edge 
+    return custom_get_log_retroactive_splitting_prob_from_valid_pop_cut_list(
+        valid_edges, actual_cut_edge, map_params, scoring_function, plan
+    );
+}
+
+
+double ConstraintSplitter::get_log_retroactive_splitting_prob_for_joined_flattree(
+        MapParams const &map_params, ScoringFunction const &scoring_function,
+        FlatGraph const &forest_graph, 
+        std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
+        Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
+        std::vector<int> const &smaller_cut_sizes_to_try){
+    const int region1_population = plan.region_pops[plan.region_ids[region1_root]];
+    const int region2_population = plan.region_pops[plan.region_ids[region2_root]];
+
+    const int region1_size = plan.region_sizes[plan.region_ids[region1_root]];
+    const int region2_size = plan.region_sizes[plan.region_ids[region2_root]];
+    int total_merged_region_size = region1_size + region2_size;
+
+    // Get all the valid edges in the joined tree
+    std::vector<EdgeCut> valid_edges = get_valid_edges_in_joined_flattree(
+        map_params, forest_graph, stack, pops_below_vertex, visited, region1_root,
+        region1_population, region2_root, region2_population, min_potential_cut_size,
+        max_potential_cut_size, smaller_cut_sizes_to_try, total_merged_region_size);
+
+    int num_valid_edges = static_cast<int>(valid_edges.size());
+    // if only 1 valid edge then its log(1) = 0
+    if (num_valid_edges == 1 && !scoring_function.any_hard_constraints) {
+        return 0.0;
+    }
+
+    // copy the forest over to the dummy forest 
+    dummy_forest = forest_graph.to_vertex_graph();
+
+    // find the index of the actual edge we cut
+    // where we take region2 root as the cut_vertex
+    EdgeCut actual_cut_edge(region1_root, region2_root, region1_root, region2_size,
+                            region2_population, region1_size, region1_population);
+
+    // Now return the probability we actually selected that cut edge 
+    return custom_get_log_retroactive_splitting_prob_from_valid_pop_cut_list(
+        valid_edges, actual_cut_edge, map_params, scoring_function, plan
+    );
+
+}
+
+double ConstraintSplitter::custom_get_log_retroactive_splitting_prob_from_valid_pop_cut_list(
+    std::vector<EdgeCut> &valid_edges, EdgeCut const actual_cut_edge,
+    MapParams const &map_params, ScoringFunction const &scoring_function,
+    Plan const &plan
+){
+    int const region1_root = actual_cut_edge.tree_root;
+    int const region2_root = actual_cut_edge.cut_vertex;
+    auto const region1_id = plan.region_ids[region1_root];
+    auto const region2_id = plan.region_ids[region2_root];
+    // copy over the current plan information
+    region_ids.copy(plan.region_ids);
+    // copy the region sizes vector
+    region_sizes.copy(plan.region_sizes);
+    // copy population
+    region_pops.copy(plan.region_pops);
+
+
+    // add the actual removed edge back
+    dummy_forest[region1_root].push_back(region2_root);
+    dummy_forest[region2_root].push_back(region1_root);
+
+    std::vector<long double> unnormed_wgts;
+    unnormed_wgts.reserve(valid_edges.size());
+
+    std::size_t write_idx = 0;
+
+    for (std::size_t read_idx = 0; read_idx < valid_edges.size(); ++read_idx) {
+        EdgeCut const &edge_cut = valid_edges[read_idx];
+
+        // Update split information.
+        region_sizes[region1_id] = edge_cut.cut_above_region_size;
+        region_sizes[region2_id] = edge_cut.cut_below_region_size;
+
+        region_pops[region1_id] = edge_cut.cut_above_pop;
+        region_pops[region2_id] = edge_cut.cut_below_pop;
+
+        // Update the region IDs.
+        assign_region_ids_from_joined_undirected_tree(
+            dummy_forest,
+            region_ids,
+            edge_cut.cut_vertex,
+            region2_id,                 // below side
+            edge_cut.cut_vertex_parent,
+            region1_id,                 // above side
+            vertex_queue
+        );
+
+        std::pair<bool, double> const score_result =
+            scoring_function.compute_full_split_plan_score(
+                plan.num_regions,
+                region_ids,
+                region_sizes,
+                region_pops,
+                region1_id,
+                region2_id
+            );
+
+        // Remove cuts that violate a hard constraint by not copying them
+        // into the retained portion of valid_edges.
+        if (!score_result.first) {
+            continue;
+        }
+
+        if (write_idx != read_idx) {
+            valid_edges[write_idx] = std::move(valid_edges[read_idx]);
+        }
+
+        unnormed_wgts.push_back(
+            std::exp(-score_result.second)
+        );
+
+        ++write_idx;
+    }
+
+    // Remove the rejected edge cuts from the end of the vector.
+    valid_edges.resize(write_idx);
+
+
 
     if (MERGED_TREE_SPLITTING_VERBOSE) {
         REprintf("Finding Merge prob for (%d, %d) - %zu valid edges!\n", region1_root,
@@ -1516,50 +1667,15 @@ double ConstraintSplitter::get_log_retroactive_splitting_prob_for_joined_packed_
     // if not.
     auto it = std::find(valid_edges.begin(), valid_edges.end(), actual_cut_edge);
 
-    // copy over the current plan information
-    region_ids.copy(plan.region_ids);
-    // copy the region sizes vector
-    region_sizes.copy(plan.region_sizes);
-    // copy population
-    region_pops.copy(plan.region_pops);
-
-    int actual_cut_edge_index = std::distance(valid_edges.begin(), it);
-    // copy the forest over
-    dummy_forest = forest_edges.get_graph_tree(map_params.graph_edge_index);
-    // add the actual removed edge back
-    dummy_forest[region1_root].push_back(region2_root);
-    dummy_forest[region2_root].push_back(region1_root);
-
-    std::vector<long double> unnormed_wgts;
-    unnormed_wgts.reserve(valid_edges.size());
-
-    for (size_t i = 0; i < valid_edges.size(); i++) {
-        // update split info
-        region_sizes[region1_id] = valid_edges[i].cut_above_region_size;
-        region_sizes[region2_id] = valid_edges[i].cut_below_region_size;
-
-        region_pops[region1_id] = valid_edges[i].cut_above_pop;
-        region_pops[region2_id] = valid_edges[i].cut_below_pop;
-
-        // TODO: Reimplement this 
+    if (it == valid_edges.end()) {
+        // The actual cut was rejected by a hard constraint or was otherwise absent.
         std::ostringstream oss;
-        oss << "Constraint splitter code is under maintenance right now.\n";
-        oss << "This path should not be called.\n";
+        oss << "Error in ConstraintSplitter. In get_log_retroactive_splitting_prob_for_joined_packed_tree "
+            << "there were no valid tree cuts which is theoretically impossible unless a non-splittable"
+            << " score function was supplied!\n";
         throw std::runtime_error(oss.str());
-        // update the region ids
-        // assign_region_ids_from_joined_undirected_tree(
-        //     forest_graph, region_ids, valid_edges[i].cut_vertex, region1_id,
-        //     valid_edges[i].cut_vertex_parent, region2_id, vertex_queue);
-
-        // get the soft score
-        double const score = scoring_function.compute_full_split_plan_soft_score(
-            plan.num_regions, region_ids, region_sizes, region_pops, region1_id, region2_id);
-
-        unnormed_wgts.push_back(std::exp(-score));
-
-        // REprintf("Soft score %f, unnormed weight %.30f vs  %.30f \n", score,
-        // unnormed_wgts[i], std::exp(-score));
     }
+    int actual_cut_edge_index = std::distance(valid_edges.begin(), it);
 
     auto sum = std::accumulate(unnormed_wgts.begin(), unnormed_wgts.end(), 0.0);
     auto log_sum = std::log(sum);
@@ -1567,8 +1683,7 @@ double ConstraintSplitter::get_log_retroactive_splitting_prob_for_joined_packed_
 
     // compute selection probability if needed
     double log_selection_prob = std::log(unnormed_wgts[actual_cut_edge_index]) - log_sum;
-    // REprintf("Actual Cut Edge at Index %d and so prob is %f \n",
-    //     actual_cut_edge_index, log_selection_prob);
+
 
     if (MERGED_TREE_SPLITTING_VERBOSE) {
         REprintf("Actual Cut Edge at Index %d and so prob is %f \n", actual_cut_edge_index,
@@ -1578,18 +1693,18 @@ double ConstraintSplitter::get_log_retroactive_splitting_prob_for_joined_packed_
     return log_selection_prob;
 
     // get the weights
-    arma::vec unnormalized_wgts(unnormed_wgts.size());
+    // arma::vec unnormalized_wgts(unnormed_wgts.size());
 
-    for (size_t i = 0; i < unnormed_wgts.size(); i++) {
-        unnormalized_wgts[i] = std::exp(std::log(unnormed_wgts[i]) - log_sum);
-        REprintf("%.30f\n", unnormalized_wgts[i]);
-    }
+    // for (size_t i = 0; i < unnormed_wgts.size(); i++) {
+    //     unnormalized_wgts[i] = std::exp(std::log(unnormed_wgts[i]) - log_sum);
+    //     REprintf("%.30f\n", unnormalized_wgts[i]);
+    // }
 
-    unnormalized_wgts = arma::cumsum(unnormalized_wgts);
+    // unnormalized_wgts = arma::cumsum(unnormalized_wgts);
 
-    REprintf("Weights are:\n");
-    for (auto const v : unnormalized_wgts) {
-        REprintf("%.20f, ", v);
-    }
-    REprintf("\n");
+    // REprintf("Weights are:\n");
+    // for (auto const v : unnormalized_wgts) {
+    //     REprintf("%.20f, ", v);
+    // }
+    // REprintf("\n");
 }

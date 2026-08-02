@@ -19,13 +19,6 @@ static inline void check_vertex_in_range(int v, int V, char const *where) {
     }
 }
 
-/*
- * Generate a random vertex (integer) among unvisited vertices
- * `lower` is a lower bound (inclusive) on the index of the first unvisited element
- */
-// TESTED
-int rvtx(const std::vector<bool> &visited, int size, int remaining, int &lower,
-         RNGState &rng_state);
 
 
 /*

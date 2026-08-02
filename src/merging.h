@@ -22,7 +22,8 @@ class WeightCache;
 // Simple struct for tracking granular time
 struct GranularMCMCTimes {
     double wilson_time = 0.0;
-    double get_valid_pairs = 0.0;
+    double backfill_wilson_time = 0.0;
+    double get_valid_mergepairs = 0.0;
     double selecting_merge_pair = 0.0;
     double hard_constraint_time = 0.0;
     double eff_boundary_length = 0.0;

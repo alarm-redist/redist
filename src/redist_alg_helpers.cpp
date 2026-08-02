@@ -156,6 +156,7 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params,
         EdgeBitWord{0}
     ),
       plan_ptr_vec(nsims) {
+    int const num_threads = get_num_threads(pool);
     // make sure 0 indexed plans were not passed in
     if (*std::min_element(flattened_all_plans.begin(), flattened_all_plans.end()) <= 0) {
         throw Rcpp::exception(
@@ -211,8 +212,15 @@ PlanEnsemble::PlanEnsemble(MapParams const &map_params,
     bool const use_lct_graph_space = sampling_space == SamplingSpace::LCTGraphSpace;
 
     if (!use_graph_space && !use_lct_graph_space) {
-        if (rng_states.size() > (pool.getNumThreads() == 0 ? 1 : pool.getNumThreads())) {
-            throw Rcpp::exception("RNG States vector is more than the number of threads!\n");
+        if (rng_states.size() < static_cast<std::size_t>(num_threads)) {
+            std::ostringstream oss;
+            oss << "Not enough RNG states.\n";
+            oss << "rng_states.size()="
+                << rng_states.size() << "\n";
+            oss << "n_threads="
+                << num_threads << "\n";
+
+            throw std::runtime_error(oss.str());
         }
     }
 
@@ -827,7 +835,7 @@ get_tree_splitter_ptrs(MapParams const &map_params, SplittingMethodType const sp
     if (splitting_method == SplittingMethodType::NaiveTopK) {
         // set splitting k to -1
         std::generate_n(std::back_inserter(tree_splitters_ptr_vec), num_threads,
-                        [] { return std::make_unique<NaiveTopKSplitter>(1); });
+                        [V] { return std::make_unique<NaiveTopKSplitter>(V, 1); });
     } else if (splitting_method == SplittingMethodType::UnifValid) {
         std::generate_n(std::back_inserter(tree_splitters_ptr_vec), num_threads,
                         [&map_graph = map_params.map_graph] { return std::make_unique<UniformValidSplitter>(map_graph); });
@@ -861,6 +869,44 @@ get_tree_splitter_ptrs(MapParams const &map_params, SplittingMethodType const sp
     return tree_splitters_ptr_vec;
 }
 
+std::vector<bool> vector_tree_to_edge_vector(
+    GraphEdgeIndex const &edge_index,
+    Tree const &tree
+){
+    // make a boolean vector of length edge_vec
+    std::vector<bool> edge_vec(edge_index.num_edges, false);
+    // Now we walk through the tree and mark edges in edge_vec as true
+    for (int v = 0; v < edge_index.V; v++)
+    {
+        for (int const u: tree[v])
+        {
+            // make this edge as true 
+            edge_vec[edge_index.get_edge_id(v, u)] = true;
+        }
+    }
+
+    return edge_vec;
+}
+
+Rcpp::List graph_edge_index_to_list(
+    GraphEdgeIndex const &edge_index
+) {
+    Rcpp::List edge_list(edge_index.num_edges);
+
+    for (int edge_id = 0; edge_id < edge_index.num_edges; ++edge_id) {
+        auto const [u, v] = edge_index.get_edge_endpoints(
+            static_cast<EdgeID>(edge_id)
+        );
+
+        edge_list[edge_id] = Rcpp::IntegerVector::create(
+            static_cast<int>(u) + 1,
+            static_cast<int>(v) + 1
+        );
+    }
+
+    return edge_list;
+}
+
 SMCDiagnostics::SMCDiagnostics(SamplingSpace const sampling_space,
                                SplittingMethodType const splitting_method_type,
                                SplittingSizeScheduleType const splitting_schedule_type,
@@ -883,6 +929,7 @@ SMCDiagnostics::SMCDiagnostics(SamplingSpace const sampling_space,
       ms_step_parameter_estimation_times(total_ms_steps),
       ms_step_times(total_ms_steps),
       wilson_call_times(perf_config::track_granular_times ? total_smc_steps + total_ms_steps : 0),
+      wilson_backfill_call_times(perf_config::track_granular_times ? total_smc_steps + total_ms_steps : 0),
       md_selection_times(perf_config::track_granular_times ? total_smc_steps : 0),
       plan_updating_times(perf_config::track_granular_times ? total_smc_steps + total_ms_steps : 0),
       hard_constraint_split_times(perf_config::track_granular_times ? total_smc_steps + total_ms_steps : 0),
@@ -890,7 +937,8 @@ SMCDiagnostics::SMCDiagnostics(SamplingSpace const sampling_space,
         perf_config::track_granular_times ? nsims : 0,
         perf_config::track_granular_times ? total_smc_steps : 0
       ),
-      get_valid_pairs_times(perf_config::track_granular_times ? total_smc_steps + total_ms_steps : 0),
+      get_valid_smc_pairs_times(perf_config::track_granular_times ? total_smc_steps : 0),
+      get_valid_mergepairs_times(perf_config::track_granular_times ? total_ms_steps : 0),
       plan_scores_times(perf_config::track_granular_times ? total_smc_steps + total_ms_steps : 0),
       region_scores_times(perf_config::track_granular_times ? total_smc_steps + total_ms_steps : 0),
       log_tau_times(perf_config::track_granular_times ? total_smc_steps + total_ms_steps : 0),
@@ -1043,11 +1091,13 @@ void SMCDiagnostics::add_diagnostics_to_out_list(Rcpp::List &out) {
         granular_timing = Rcpp::List::create(
             Rcpp::_["granular_time_tracked"] = true,
             Rcpp::_["wilson_call_times"] = wilson_call_times,
+            Rcpp::_["wilson_backfill_call_times"] = wilson_backfill_call_times,
             Rcpp::_["multidistrict_selection_times"] = md_selection_times,
             Rcpp::_["plan_updating_times"] = plan_updating_times,
             Rcpp::_["hard_constraint_split_times"] = hard_constraint_split_times,
             Rcpp::_["total_plan_smc_split_times"] = total_plan_smc_split_times,
-            Rcpp::_["getting_valid_pairs_times"] = get_valid_pairs_times,
+            Rcpp::_["get_valid_smc_pairs_times"] = get_valid_smc_pairs_times,
+            Rcpp::_["getting_valid_mergepairs_times"] = get_valid_mergepairs_times,
             Rcpp::_["computing_plan_scores_times"] = plan_scores_times,
             Rcpp::_["computing_region_scores_times"] = region_scores_times,
             Rcpp::_["computing_spanning_tree_count_times"] = log_tau_times,   

@@ -101,11 +101,6 @@ int r_int_mixstrat(int max, int stratum, double p, arma::vec cum_wgts);
 // TESTED
 int global_rng_select_k(std::vector<double> x, int k);
 
-/*
- * Generate an integer vector of resampling indices with a low-variance resampler.
- */
-// [[Rcpp::export]]
-arma::ivec resample_lowvar(arma::vec wgts);
 
 // legacy code. Global RNG state
 // NOT THREAD SAFE

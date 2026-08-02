@@ -121,7 +121,7 @@ test_that("Labeling accounted for", {
 test_that("Partial sampling works accurately", {
     skip_on_cran()
     set.seed(1935)
-    nsims <- 1000
+    nsims <- 10000
     compactness <- 1L
 
     # check that sampling all the way and partial sampling return about the same

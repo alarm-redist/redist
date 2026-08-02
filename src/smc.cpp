@@ -167,6 +167,9 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
     std::vector<double> wilson_call_times (
         perf_config::track_granular_times ? num_threads : 0
     );
+    std::vector<double> backfill_wilson_times (
+        perf_config::track_granular_times ? num_threads : 0
+    );
     std::vector<double> md_selection_times (
         perf_config::track_granular_times ? num_threads : 0
     );
@@ -300,7 +303,7 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
                     region_id_to_split, new_region_id, save_edge_selection_prob);
             if constexpr (perf_config::track_granular_times){
                 add_elapsed(wilson_call_times[thread_id], wilson_time); // optional timing
-            }
+            }            
 
 
             if constexpr (DEBUG_GSMC_PLANS_VERBOSE) {
@@ -368,6 +371,14 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
                         thread_successful_tree_sizes[thread_id],
                         oss.str()
                     );
+                }
+                auto backfill_wilson_time = maybe_now();
+                // Now fill in the deterministic subtrees
+                new_plan_ensemble->plan_ptr_vec[i]->fill_in_skipped_subtrees(
+                    ust_samplers_vec[thread_id], rng_states[thread_id]
+                );
+                if constexpr (perf_config::track_granular_times){
+                    add_elapsed(backfill_wilson_times[thread_id], backfill_wilson_time); // optional timing
                 }
                 // add as successful tree size
                 ++thread_successful_tree_sizes[thread_id][region_to_split_size - 1];
@@ -534,6 +545,7 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
         for (size_t thread_id = 0; thread_id < num_threads; thread_id++)
         {
             smc_diagnostics.wilson_call_times[step_num] += wilson_call_times[thread_id];
+            smc_diagnostics.wilson_backfill_call_times[step_num] += backfill_wilson_times[thread_id];
             smc_diagnostics.md_selection_times[smc_step_num] += md_selection_times[thread_id];
             smc_diagnostics.hard_constraint_split_times[step_num] += hard_constraint_split_times[thread_id];
             smc_diagnostics.plan_updating_times[step_num] += plan_updating_times[thread_id];
@@ -712,7 +724,8 @@ void run_merge_split_step_on_all_plans(
         for (size_t thread_id = 0; thread_id < num_threads; thread_id++)
         {
             smc_diagnostics.wilson_call_times[step_num] += granular_weight_times[thread_id].wilson_time;
-            smc_diagnostics.get_valid_pairs_times[step_num] += granular_weight_times[thread_id].get_valid_pairs;
+            smc_diagnostics.wilson_backfill_call_times[step_num] += granular_weight_times[thread_id].backfill_wilson_time;
+            smc_diagnostics.get_valid_mergepairs_times[merge_split_step_num] += granular_weight_times[thread_id].get_valid_mergepairs;
             smc_diagnostics.selecting_merge_pair_times[merge_split_step_num] += granular_weight_times[thread_id].selecting_merge_pair;
             smc_diagnostics.hard_constraint_split_times[step_num] += granular_weight_times[thread_id].hard_constraint_time;
             smc_diagnostics.eff_boundary_times[merge_split_step_num] += granular_weight_times[thread_id].eff_boundary_length;
@@ -1088,7 +1101,7 @@ Rcpp::List run_redist_smc(
                     }
                 }
                 // its the final splitting step if step_num + 1 == total_smc steps
-                bool const is_final_splitting_step = step_num + 1 == total_smc_steps;
+                bool const is_final_splitting_step = smc_step_num + 1 == total_smc_steps;
                 // If we have any custom hard constraints then must switch to single threading
                 // for everything
 

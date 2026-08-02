@@ -196,6 +196,14 @@ class Plan {
                                       int const new_region1_id, int const new_region2_id,
                                       bool const add_region);
 
+    // Fills in any deterministic subtrees if the plan 
+    // stores a packed forest 
+    void fill_in_skipped_subtrees(
+        USTSampler &ust_sampler,
+        RNGState &rng_state,
+        int const max_tries_multiple = 500
+    );
+
     // virtual redist_smc methods
     virtual void update_vertex_and_plan_specific_info_from_cut(
         TreeSplitter const &tree_splitter, USTSampler &ust_sampler, EdgeCut const cut_edge,

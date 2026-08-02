@@ -342,6 +342,13 @@ class EdgeCut {
     bool operator<(const EdgeCut &other) const { return cut_vertex < other.cut_vertex; }
 };
 
+struct AdminEdge {
+    int neighbor_admin;
+    int current_map_vertex;
+    int neighbor_map_vertex;
+};
+typedef std::vector<std::vector<AdminEdge>> Multigraph;
+
 // Flat representation of graphs where its 
 // fixed at runtime 
 class FlatGraph {
@@ -583,6 +590,16 @@ class MapParams {
               double const target, double const upper,
               SamplingSpace const sampling_space);
 
+    // Constructor for when we only need map information
+    // so fake district info is ued 
+    MapParams(Graph const &g, 
+              const std::vector<unsigned int> &counties, 
+              const std::vector<unsigned int> &pop,
+              double const lower, double const upper
+             );
+
+
+
     Graph const g;                       // The graph as undirected adjacency list
     FlatGraph map_graph;                 // The graph stored as a FlatGraph type
     int const num_edges;                 // number of undirected edges in g
@@ -591,6 +608,7 @@ class MapParams {
     std::vector<unsigned int> const counties;           // county labels
     int const num_counties;              // The number of distinct counties
     Multigraph const cg;                 // county multigraph
+    std::vector<std::vector<int>> county_vertices;    // The vertices in each county 
     Graph const county_restricted_graph; // g but with all edges crossing counties removed
     FlatGraph county_restricted_flat_graph; // flat version
     std::vector<unsigned int> const pop; // population of each vertex
@@ -741,6 +759,7 @@ template <typename T> class CircularQueue {
 };
 
 typedef CircularQueue<int> DummyTreeQueue;
+
 
 
 

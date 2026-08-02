@@ -179,9 +179,9 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
             auto max_possible_cut_size = cut_size_bounds.second;
 
             double log_edge_selection_prob =
-                edge_splitter.get_log_retroactive_splitting_prob_for_joined_vertex_tree(
+                edge_splitter.get_log_retroactive_splitting_prob_for_joined_flattree(
                     plan_multigraph.map_params, scoring_function, edge_splitter.forest_graph,
-                    ust_sampler.stack, ust_sampler.visited, ust_sampler.pops_below_vertex, v,
+                    ust_sampler.pops_below_vertex, v,
                     v_nbor, plan, min_possible_cut_size, max_possible_cut_size,
                     splitting_schedule
                         .all_regions_smaller_cut_sizes_to_try[merged_region_size]);
@@ -237,7 +237,7 @@ double ForestPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
                                             ScoringFunction const &scoring_function,
                                             const int region1_id, int const region2_id) const {
     // reset the neccesary variables
-    ust_sampler.stack.clear();
+    tree_splitter.stack.clear();
 
     if constexpr (perf_config::object_integrity_checking){
         check_forest_integrity(
@@ -284,20 +284,20 @@ double ForestPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
                 // Start with v
                 forest_edges.fill_vector_tree_component_from_root(
                     ust_sampler.map_params.graph_edge_index, v,
-                    tree_splitter.forest_graph, ust_sampler.stack
+                    tree_splitter.forest_graph, tree_splitter.stack
                 );
                 // now clear from nbor
                 forest_edges.fill_vector_tree_component_from_root(
                     ust_sampler.map_params.graph_edge_index, nbor,
-                    tree_splitter.forest_graph, ust_sampler.stack
+                    tree_splitter.forest_graph, tree_splitter.stack
                 );
                 region_trees_cleared = true;
             }
 
             double log_edge_selection_prob =
-                tree_splitter.get_log_retroactive_splitting_prob_for_joined_vertex_tree(
+                tree_splitter.get_log_retroactive_splitting_prob_for_joined_flattree(
                     plan_multigraph.map_params, scoring_function, tree_splitter.forest_graph,
-                    ust_sampler.stack, ust_sampler.visited, ust_sampler.pops_below_vertex, v,
+                    ust_sampler.pops_below_vertex, v,
                     nbor, *this, min_possible_cut_size, max_possible_cut_size,
                     splitting_schedule
                         .all_regions_smaller_cut_sizes_to_try[merged_region_size]);

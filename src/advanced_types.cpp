@@ -15,44 +15,98 @@
 namespace{
 
 
-
 /*
- * Initialize empty multigraph structure on graph with `V` vertices
+ * Construct the administrative-unit multigraph from the map graph.
+ *
+ * For every directed adjacency v -> u crossing an administrative boundary,
+ * store an AdminEdge in the adjacency list of v's administrative unit:
+ *
+ *   neighbor_admin      = administrative unit containing u
+ *   current_map_vertex  = v
+ *   neighbor_map_vertex = u
+ *
+ * Parallel administrative edges are intentionally retained because distinct
+ * map edges crossing the same administrative boundary must remain distinct
+ * in the multigraph random walk.
  */
-// TESTED
-Multigraph init_multigraph(int V) {
-    Multigraph g;
-    for (int i = 0; i < V; i++) {
-        std::vector<std::array<int, 3>> el;
-        g.push_back(el);
-    }
-    return g;
-}
+Multigraph county_multigraph(
+    Graph const &g,
+    std::vector<unsigned int> const &counties
+) {
+    int const num_admin_units =
+        static_cast<int>(
+            *std::max_element(
+                counties.begin(),
+                counties.end()
+            )
+        );
 
-/*
- * Make a county graph from a precinct graph and list of counties
- * County graph is list of list of 3: <cty of nbor, index of vtx, index of nbor>
- */
-// TESTED
-Multigraph county_graph(const Graph &g, const std::vector<unsigned int> &counties) {
-    int n_county = *std::max_element(counties.begin(), counties.end());
-    Multigraph cg = init_multigraph(n_county);
+    /*
+     * Construct one initially empty adjacency list for each administrative
+     * unit. This replaces the old init_multigraph() helper.
+     */
+    Multigraph admin_graph(num_admin_units);
 
-    int V = g.size();
-    for (int i = 0; i < V; i++) {
-        std::vector<int> nbors = g[i];
-        int length = nbors.size();
-        int county = counties.at(i) - 1;
-        for (int j = 0; j < length; j++) {
-            int nbor_cty = counties.at(nbors[j]) - 1;
-            if (county == nbor_cty)
+    int const V =
+        static_cast<int>(g.size());
+
+    for (int current_map_vertex = 0;
+         current_map_vertex < V;
+         ++current_map_vertex) {
+
+        int const current_admin =
+            static_cast<int>(
+                counties.at(current_map_vertex)
+            ) - 1;
+
+        for (int const neighbor_map_vertex :
+             g[current_map_vertex]) {
+
+            int const neighbor_admin =
+                static_cast<int>(
+                    counties.at(neighbor_map_vertex)
+                ) - 1;
+
+            /*
+             * Only retain map edges that cross administrative boundaries.
+             */
+            if (current_admin == neighbor_admin) {
                 continue;
-            std::array<int, 3> el = {nbor_cty, i, nbors[j]};
-            cg.at(county).push_back(el);
+            }
+
+            admin_graph.at(current_admin).push_back(
+                AdminEdge{
+                    neighbor_admin,
+                    current_map_vertex,
+                    neighbor_map_vertex
+                }
+            );
         }
     }
 
-    return cg;
+    return admin_graph;
+}
+
+std::vector<std::vector<int>> build_county_vertices(
+    std::vector<unsigned int> const &counties,
+    int const num_counties
+) {
+    std::vector<std::vector<int>> result(num_counties);
+
+    for (std::size_t v = 0; v < counties.size(); ++v) {
+        unsigned int const county_id = counties[v];
+
+        if (county_id == 0 ||
+            county_id > static_cast<unsigned int>(num_counties)) {
+            throw std::runtime_error(
+                "County IDs must be between 1 and num_counties."
+            );
+        }
+
+        result[county_id - 1].push_back(static_cast<int>(v));
+    }
+
+    return result;
 }
 
 /*
@@ -429,7 +483,8 @@ MapParams::MapParams(Graph const &g,
     graph_edge_index(g, num_edges), num_edge_bit_words(compute_num_edge_bit_words(num_edges)),
         counties(counties.begin(), counties.end()), 
         num_counties(*std::max_element(counties.begin(), counties.end())), 
-        cg(county_graph(g, counties)),
+        cg(county_multigraph(g, counties)),
+        county_vertices(build_county_vertices(counties, num_counties)),
         county_restricted_graph(num_counties > 1 ? build_restricted_county_graph(g, counties)
                                                 : g),
         county_restricted_flat_graph(county_restricted_graph),
@@ -494,3 +549,12 @@ MapParams::MapParams(Graph const &g,
         );
     }
 };
+
+
+MapParams::MapParams(Graph const &g, 
+    const std::vector<unsigned int> &counties, 
+    const std::vector<unsigned int> &pop,
+    double const lower, double const upper
+): MapParams(g, counties, pop,
+        6, 6, std::vector<int>{1}, lower,
+                         42.0, upper, SamplingSpace::GraphSpace) {};

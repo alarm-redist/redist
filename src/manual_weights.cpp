@@ -333,7 +333,7 @@ arma::vec compute_plans_log_optimal_weights(
                                pool);
 
     // create the splitter
-    NaiveTopKSplitter tree_splitter(1);
+    NaiveTopKSplitter tree_splitter(map_params.V, 1);
 
     arma::vec log_weights(num_plans, arma::fill::none);
 
@@ -462,7 +462,7 @@ arma::vec compute_plans_log_simple_weights(
                                pool);
 
     // create the splitter
-    NaiveTopKSplitter tree_splitter(1);
+    NaiveTopKSplitter tree_splitter(map_params.V, 1);
 
     arma::vec log_weights(num_plans, arma::fill::none);
 

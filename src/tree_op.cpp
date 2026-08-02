@@ -2,27 +2,7 @@
 
 #include "random.h"
 
-/*
- * Generate a random vertex (integer) among unvisited vertices
- * `lower` is a lower bound (inclusive) on the index of the first unvisited element
- */
-// TESTED
-int rvtx(const std::vector<bool> &visited, int size, int remaining, int &lower,
-         RNGState &rng_state) {
-    int idx = rng_state.r_int(remaining);
-    int accuml = 0;
-    bool seen_one = false;
-    for (int i = lower; i < size - 1; i++) {
-        accuml += 1 - visited[i];
-        if (!seen_one && !visited[i]) {
-            seen_one = true;
-            lower = i;
-        }
-        if (accuml - 1 == idx)
-            return i;
-    }
-    return size - 1;
-}
+
 
 
 

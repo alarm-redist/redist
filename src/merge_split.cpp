@@ -410,12 +410,13 @@ Rcpp::List ms_plans(
         granular_timing = Rcpp::List::create(
             Rcpp::_["granular_time_tracked"] = true,
             Rcpp::_["wilson_call_times"] = granular_times.wilson_time,
+            Rcpp::_["wilson_backfill_call_times"] = granular_times.backfill_wilson_time,
             Rcpp::_["selecting_merge_pair"] = granular_times.selecting_merge_pair,
             Rcpp::_["hard_constraint_split_times"] = granular_times.hard_constraint_time,
             Rcpp::_["eff_boundary_times"] = granular_times.eff_boundary_length,
             Rcpp::_["computing_plan_scores_times"] = granular_times.plan_scores,
             Rcpp::_["computing_region_scores_times"] = granular_times.region_scores,
-            Rcpp::_["getting_valid_pairs_times"] = granular_times.get_valid_pairs,
+            Rcpp::_["get_valid_mergepairs_times"] = granular_times.get_valid_mergepairs,
             Rcpp::_["computing_spanning_tree_count_times"] = granular_times.tau_terms,   
             Rcpp::_["plan_updating_times"] = granular_times.plan_copying
         );
