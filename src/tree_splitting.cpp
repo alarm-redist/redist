@@ -518,6 +518,8 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
     // std::stack<std::tuple<int, int, bool>> stack;
     // Clear the stack now
     stack.clear();
+    // set the root to false 
+    no_valid_edges_vertices[root] = false;
 
     // Start by adding all the roots children to the stack
     // for (auto const &root_children : a_ust.neighbors(root)) {
@@ -535,6 +537,8 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
         bool const is_revisiting = std::get<2>(popped);
 
         if (!is_revisiting) { // This is the first time visiting the node
+            // reset this vertex to false 
+            no_valid_edges_vertices[vtx] = false;
 
             // Push the vertex back onto the stack as "revisiting"
             stack.push({vtx, parent, true});
@@ -646,6 +650,7 @@ void get_all_valid_edges_in_undirected_tree(
     // Stack for DFS
     // Elements are: vertex, parent, is_revisiting
     stack.clear();
+    no_valid_edges_vertices[root] = false;
 
 
     // Start by adding all the roots children to the stack
@@ -666,6 +671,7 @@ void get_all_valid_edges_in_undirected_tree(
         bool const is_revisiting = std::get<2>(popped);
 
         if (!is_revisiting) { // This is the first time visiting the node
+            no_valid_edges_vertices[vtx] = false;
 
             // Push the vertex back onto the stack as "revisiting"
             stack.push({vtx, parent, true});
@@ -744,7 +750,9 @@ std::vector<EdgeCut> get_valid_pop_edges_in_joined_packed_tree(
 
     // Don't need to reset pops below as it starts from the child nodes 
     // so it overwrites old values 
-    std::fill(no_valid_edges_vertices.begin(), no_valid_edges_vertices.end(), false);
+    // Also don't need to reset no_valid_edges_vertices as we 
+    // can just set them to false the first time we see the vertex when 
+    // traversing the tree 
 
     // create the valid cut list
     std::vector<EdgeCut> edge_across_valid_edge_cuts;
@@ -774,6 +782,8 @@ std::vector<EdgeCut> get_valid_pop_edges_in_joined_packed_tree(
         map_params.target, map_params.upper, smaller_cut_sizes_to_try);
 
     if constexpr (FINDING_JOINED_EDGE_CUTS_VERBOSE) {
+        pops_below_vertex[region1_root] = region1_pop;
+        pops_below_vertex[region2_root] = region2_pop;
         REprintf("Pop below region2_root is %d so above is %d so foound %d\n",
                  pops_below_vertex.at(region2_root),
                  total_merged_region_pop - pops_below_vertex.at(region2_root),
@@ -841,6 +851,7 @@ void get_all_valid_edges_in_undirected_vertex_tree(
     // Stack for DFS
     // Elements are: vertex, parent, is_revisiting
     stack.clear();
+    no_valid_edges_vertices[root] = false;
 
 
     // Start by adding all the roots children to the stack
@@ -858,6 +869,7 @@ void get_all_valid_edges_in_undirected_vertex_tree(
         bool const is_revisiting = std::get<2>(popped);
 
         if (!is_revisiting) { // This is the first time visiting the node
+            no_valid_edges_vertices[vtx] = false;
 
             // Push the vertex back onto the stack as "revisiting"
             stack.push({vtx, parent, true});
@@ -931,8 +943,9 @@ std::vector<EdgeCut> get_valid_edges_in_joined_flattree(
     int const total_merged_region_pop = region1_pop + region2_pop;
     // Don't need to reset pops below as it starts from the child nodes 
     // so it overwrites old values 
-
-    std::fill(no_valid_edges_vertices.begin(), no_valid_edges_vertices.end(), false);
+    // Also don't need to reset no_valid_edges_vertices as we 
+    // can just set them to false the first time we see the vertex when 
+    // traversing the tree 
 
     // create the valid cut list
     std::vector<EdgeCut> edge_across_valid_edge_cuts;
@@ -963,6 +976,8 @@ std::vector<EdgeCut> get_valid_edges_in_joined_flattree(
         map_params.target, map_params.upper, smaller_cut_sizes_to_try);
 
     if constexpr (FINDING_JOINED_EDGE_CUTS_VERBOSE) {
+        pops_below_vertex[region1_root] = region1_pop;
+        pops_below_vertex[region2_root] = region2_pop;
         REprintf("Pop below region2_root is %d so above is %d so foound %d\n",
                  pops_below_vertex.at(region2_root),
                  total_merged_region_pop - pops_below_vertex.at(region2_root),
@@ -989,9 +1004,11 @@ std::vector<EdgeCut> TreeSplitter::get_all_valid_pop_edge_cuts_in_directed_tree(
     
     // Don't need to reset pops below as it starts from the child nodes 
     // so it overwrites old values 
+    // Also don't need to reset no_valid_edges_vertices as we 
+    // can just set them to false the first time we see the vertex when 
+    // traversing the tree 
 
     // reset pops_below_vertex and valid edges thing
-    std::fill(no_valid_edges_vertices.begin(), no_valid_edges_vertices.end(), false);
     std::vector<EdgeCut> valid_edges = get_all_valid_edges_in_directed_tree(
         ust, root, map_params.pop, stack, pops_below_vertex, no_valid_edges_vertices,
         min_potential_cut_size, max_potential_cut_size, smaller_cut_sizes_to_try,
@@ -1602,9 +1619,9 @@ double ConstraintSplitter::custom_get_log_retroactive_splitting_prob_from_valid_
             dummy_forest,
             region_ids,
             edge_cut.cut_vertex,
-            region1_id,
+            region2_id,                 // below side
             edge_cut.cut_vertex_parent,
-            region2_id,
+            region1_id,                 // above side
             vertex_queue
         );
 
