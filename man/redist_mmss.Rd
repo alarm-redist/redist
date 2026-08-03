@@ -13,8 +13,8 @@ redist_mmss(
   init_plan = NULL,
   chains = 1L,
   counties = NULL,
+  hierarchy_mode = c("connected", "strict", "heuristic"),
   project_plan_hier = FALSE,
-  enforce_hierarchy = FALSE,
   compactness = 1,
   constraints = list(),
   max_retries = 200L,
@@ -60,13 +60,18 @@ the algorithm will generate maps that tend to follow county lines. Multiple
 nested levels may be supplied as a concatenated vector, ordered coarsest to
 finest, e.g. \code{counties = c(county, mcd)}.}
 
-\item{project_plan_hier}{Whether to split administrative units into connected
-pseudo-units within the initial plan before sampling. This changes the
-administrative units used by the target. Defaults to \code{FALSE}.}
+\item{hierarchy_mode}{How to use the supplied hierarchy. \code{connected} uses
+hierarchical proposals and requires every district-by-unit intersection to
+be connected. \code{strict} additionally enforces the global hierarchical-plan
+condition. \code{heuristic} uses hierarchical proposals without enforcing
+hierarchical plan validity. If \code{counties} is omitted, no hierarchy is
+used. Defaults to \code{connected}.}
 
-\item{enforce_hierarchy}{Whether to enforce the global hierarchical nesting
-condition when \code{counties} is supplied. If \code{FALSE}, administrative
-units guide the proposals and local connectivity only. Defaults to \code{FALSE}.}
+\item{project_plan_hier}{Whether to split administrative units into connected
+pseudo-units within the initial plan before sampling. In \code{connected} and
+\code{strict} modes, this changes the administrative units used by the target.
+In \code{heuristic} mode, it only changes proposal generation. Defaults to
+\code{FALSE}.}
 
 \item{compactness}{Controls the compactness of the generated districts, with
 higher values preferring more compact districts. Must be nonnegative. See

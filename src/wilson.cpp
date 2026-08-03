@@ -1,9 +1,4 @@
 #include "wilson.h"
-#include <array>
-
-using LevelEdge = std::array<int, 3>;
-using LevelPath = std::vector<LevelEdge>;
-using ActiveMultigraph = std::vector<std::vector<LevelEdge>>;
 
 int rvtx_subset(const std::vector<int> &vertices,
                 const std::vector<bool> &visited,
@@ -18,6 +13,12 @@ class Frontier {
             vertices_.push_back(vertex);
             queued_[vertex] = true;
         }
+    }
+
+    void clear() {
+        vertices_.clear();
+        std::fill(queued_.begin(), queued_.end(), false);
+        next_vertex_ = 0;
     }
 
     int next(const std::vector<bool> &visited, int size, int &lower) {
@@ -82,18 +83,16 @@ static void add_precinct_frontier(const Graph &g, int vertex,
     }
 }
 
-static void add_label_frontier(const Graph &g, int vertex,
-                               const std::vector<bool> &visited,
-                               const std::vector<bool> &ignore,
-                               const std::vector<int> &labels,
-                               Frontier &frontier) {
-    if (ignore[vertex]) {
-        return;
-    }
-    for (int neighbor : g[vertex]) {
-        if (!ignore[neighbor] && labels[neighbor] == labels[vertex]) {
-            frontier.add(neighbor, visited);
-        }
+static void add_flat_frontier(const std::vector<int> &flat_adj,
+                              const std::vector<int> &flat_off,
+                              int vertex,
+                              const std::vector<bool> &visited,
+                              const std::vector<bool> &ignore,
+                              Frontier &frontier) {
+    if (ignore[vertex]) return;
+    for (int i = flat_off[vertex]; i < flat_off[vertex + 1]; i++) {
+        int neighbor = flat_adj[i];
+        if (!ignore[neighbor]) frontier.add(neighbor, visited);
     }
 }
 
@@ -131,27 +130,26 @@ void walk_until_active_level(ActiveMultigraph &mg, int root,
                              std::vector<int> &next_edge,
                              const std::vector<bool> &visited);
 
-ActiveMultigraph active_level_graph(const Graph &g, const std::vector<int> &level,
-                                    const std::vector<bool> &ignore,
-                                    const std::vector<int> &active_vertices,
-                                    int n_group,
-                                    const std::vector<int> &parent);
+void active_level_graph(
+                        const Graph &g,
+                        const std::vector<int> &level,
+                        const std::vector<bool> &ignore,
+                        const std::vector<int> &active_vertices,
+                        int n_group,
+                        const std::vector<int> &parent,
+                        ActiveMultigraph &mg);
 
 int rvtx_subset(const std::vector<int> &vertices,
                 const std::vector<bool> &visited,
                 int &lower);
 
-void prepare_active_levels(const std::vector<uvec> &levels,
-                           const std::vector<int> &active_vertices,
-                           std::vector<std::vector<int>> &active_levels,
-                           std::vector<int> &n_groups);
-
-int walk_until_label(const Graph &g, int root,
-                     std::vector<int> &path, int MAX,
-                     std::vector<int> &next_vertex,
-                     const std::vector<bool> &visited,
-                     const std::vector<bool> &ignore,
-                     const std::vector<int> &labels);
+int walk_until_flat(const std::vector<int> &flat_adj,
+                    const std::vector<int> &flat_off,
+                    int root,
+                    std::vector<int> &path,
+                    int MAX,
+                    std::vector<std::int8_t> &status,
+                    std::vector<int> &path_pos);
 
 void prune_finest_groups(Tree &tree,
                          const std::vector<int> &active_vertices,
@@ -161,7 +159,8 @@ void prune_finest_groups(Tree &tree,
                          std::vector<bool> &visited,
                          int &remaining,
                          const uvec &pop,
-                         double lower, double upper);
+                         double lower, double upper,
+                         HierarchicalSamplerWorkspace &workspace);
 
 // [[Rcpp::export]]
 Tree sample_ust(List l, const arma::uvec &pop, double lower, double upper,
@@ -346,13 +345,17 @@ int sample_sub_ust_hier(const Graph &g, Tree &tree, int V, int &root,
                         const std::vector<int> &active_vertices,
                         const uvec &pop,
                         double lower, double upper,
-                        const std::vector<uvec> &levels) {
+                        const std::vector<std::vector<int>> &levels,
+                        const std::vector<int> &n_groups,
+                        const std::vector<std::vector<int>> &parents,
+                        HierarchicalSamplerWorkspace &workspace,
+                        const std::vector<int> &finest_adj,
+                        const std::vector<int> &finest_off) {
     int n_levels = levels.size();
-    if (n_levels == 0) return 1;
-
-    std::vector<std::vector<int>> active_levels;
-    std::vector<int> n_groups;
-    prepare_active_levels(levels, active_vertices, active_levels, n_groups);
+    if (n_levels == 0 || n_groups.size() != n_levels ||
+        parents.size() != n_levels) {
+        return 1;
+    }
 
     std::fill(visited.begin(), visited.end(), true);
     for (int v : active_vertices) visited[v] = false;
@@ -364,42 +367,42 @@ int sample_sub_ust_hier(const Graph &g, Tree &tree, int V, int &root,
     visited[root] = true;
     remaining--;
 
-    LevelPath path;
+    LevelPath &path = workspace.level_path;
+    path.clear();
     for (int lev = n_levels - 1; lev >= 0; lev--) {
         int n_group = n_groups[lev];
-        std::vector<bool> group_active(n_group, false);
-        std::vector<bool> group_has_root(n_group, false);
-        std::vector<int> group_parent(n_group, -1);
+        workspace.group_active.assign(n_group, false);
+        workspace.group_has_root.assign(n_group, false);
+        const std::vector<int> &group_parent = parents[lev];
 
         for (int i : active_vertices) {
-            int grp = active_levels[lev][i] - 1;
-            group_active[grp] = true;
+            int grp = levels[lev][i] - 1;
+            workspace.group_active[grp] = true;
             if (visited[i]) {
-                group_has_root[grp] = true;
-            }
-            if (lev < n_levels - 1 && group_parent[grp] < 0) {
-                group_parent[grp] = active_levels[lev + 1][i] - 1;
+                workspace.group_has_root[grp] = true;
             }
         }
 
-        ActiveMultigraph active_mg = active_level_graph(g, active_levels[lev], ignore,
-                                                        active_vertices, n_group,
-                                                        group_parent);
-        std::vector<int> next_group(n_group, -1);
-        std::vector<int> next_edge(n_group, -1);
+        active_level_graph(g, levels[lev], ignore, active_vertices, n_group,
+                           group_parent, workspace.active_graph);
+        workspace.next_group.assign(n_group, -1);
+        workspace.next_edge.assign(n_group, -1);
 
         if (lev == n_levels - 1) {
-            std::vector<bool> group_visited(n_group, true);
+            workspace.group_visited.assign(n_group, true);
+            std::vector<bool> &group_visited = workspace.group_visited;
             int group_remaining = 0;
             for (int grp = 0; grp < n_group; grp++) {
-                group_visited[grp] = !group_active[grp] || group_has_root[grp];
+                group_visited[grp] = !workspace.group_active[grp] ||
+                                     workspace.group_has_root[grp];
                 if (!group_visited[grp]) group_remaining++;
             }
 
             Frontier group_frontier(n_group);
             for (int grp = 0; grp < n_group; grp++) {
                 if (group_visited[grp]) {
-                    add_active_level_frontier(active_mg, grp, group_visited,
+                    add_active_level_frontier(workspace.active_graph, grp,
+                                              group_visited,
                                               group_frontier);
                 }
             }
@@ -407,18 +410,21 @@ int sample_sub_ust_hier(const Graph &g, Tree &tree, int V, int &root,
             while (group_remaining > 0) {
                 int add = group_frontier.next(group_visited, n_group, lower_g);
 
-                walk_until_active_level(active_mg, add, path, next_group, next_edge,
+                walk_until_active_level(workspace.active_graph, add, path,
+                                        workspace.next_group, workspace.next_edge,
                                         group_visited);
                 int added = path.size();
                 if (added == 0) return 1;
 
                 group_remaining -= added;
                 group_visited[add] = true;
-                add_active_level_frontier(active_mg, add, group_visited,
-                                          group_frontier);
+                add_active_level_frontier(workspace.active_graph, add,
+                                          group_visited,
+                                           group_frontier);
                 for (int i = 0; i < added; i++) {
                     group_visited[path[i][0]] = true;
-                    add_active_level_frontier(active_mg, path[i][0], group_visited,
+                    add_active_level_frontier(workspace.active_graph, path[i][0],
+                                              group_visited,
                                               group_frontier);
                     tree[path[i][2]].push_back(path[i][1]);
                     visited[path[i][1]] = true;
@@ -426,23 +432,27 @@ int sample_sub_ust_hier(const Graph &g, Tree &tree, int V, int &root,
                 }
             }
         } else {
-            std::vector<bool> parent_seen(n_groups[lev + 1], false);
+            workspace.parent_seen.assign(n_groups[lev + 1], false);
+            std::vector<bool> &parent_seen = workspace.parent_seen;
+            Frontier group_frontier(n_group);
             for (int grp = 0; grp < n_group; grp++) {
-                if (!group_active[grp]) continue;
+                if (!workspace.group_active[grp]) continue;
                 int parent_id = group_parent[grp];
                 if (parent_id < 0 || parent_seen[parent_id]) continue;
                 parent_seen[parent_id] = true;
 
-                std::vector<bool> group_visited(n_group, true);
+                workspace.group_visited.assign(n_group, true);
+                std::vector<bool> &group_visited = workspace.group_visited;
                 int group_remaining = 0;
                 bool has_root = false;
                 for (int grp2 = 0; grp2 < n_group; grp2++) {
-                    if (!group_active[grp2] || group_parent[grp2] != parent_id) {
+                    if (!workspace.group_active[grp2] ||
+                        group_parent[grp2] != parent_id) {
                         group_visited[grp2] = true;
                         continue;
                     }
-                    group_visited[grp2] = group_has_root[grp2];
-                    if (group_has_root[grp2]) {
+                    group_visited[grp2] = workspace.group_has_root[grp2];
+                    if (workspace.group_has_root[grp2]) {
                         has_root = true;
                     } else {
                         group_remaining++;
@@ -450,29 +460,31 @@ int sample_sub_ust_hier(const Graph &g, Tree &tree, int V, int &root,
                 }
                 if (!has_root) return 1;
 
-                Frontier group_frontier(n_group);
+                group_frontier.clear();
                 for (int grp2 = 0; grp2 < n_group; grp2++) {
-                    if (group_has_root[grp2]) {
-                        add_active_level_frontier(active_mg, grp2, group_visited,
-                                                  group_frontier);
+                    if (workspace.group_has_root[grp2]) {
+                        add_active_level_frontier(workspace.active_graph, grp2,
+                                                  group_visited, group_frontier);
                     }
                 }
                 int lower_g = 0;
                 while (group_remaining > 0) {
                     int add = group_frontier.next(group_visited, n_group, lower_g);
 
-                    walk_until_active_level(active_mg, add, path, next_group, next_edge,
-                                            group_visited);
+                    walk_until_active_level(workspace.active_graph, add, path,
+                                            workspace.next_group,
+                                            workspace.next_edge, group_visited);
                     int added = path.size();
                     if (added == 0) return 1;
 
                     group_remaining -= added;
                     group_visited[add] = true;
-                    add_active_level_frontier(active_mg, add, group_visited,
-                                              group_frontier);
+                    add_active_level_frontier(workspace.active_graph, add,
+                                              group_visited, group_frontier);
                     for (int i = 0; i < added; i++) {
                         group_visited[path[i][0]] = true;
-                        add_active_level_frontier(active_mg, path[i][0], group_visited,
+                        add_active_level_frontier(workspace.active_graph,
+                                                  path[i][0], group_visited,
                                                   group_frontier);
                         tree[path[i][2]].push_back(path[i][1]);
                         visited[path[i][1]] = true;
@@ -483,32 +495,39 @@ int sample_sub_ust_hier(const Graph &g, Tree &tree, int V, int &root,
         }
     }
 
-    prune_finest_groups(tree, active_vertices, active_levels[0], n_groups[0],
-                        root, visited, remaining, pop, lower, upper);
+    prune_finest_groups(tree, active_vertices, levels[0], n_groups[0],
+                        root, visited, remaining, pop, lower, upper,
+                        workspace);
 
     if (remaining > 0) {
-        std::vector<int> walk_path(remaining + 2);
-        std::vector<int> next_vertex(V, -1);
+        workspace.walk_path.resize(remaining + 2);
+        workspace.path_pos.assign(V, -1);
+        workspace.status.assign(V, 2);
+        for (int vertex : active_vertices) {
+            workspace.status[vertex] = visited[vertex] ? 1 : 0;
+        }
         Frontier finest_frontier(V);
         for (int vertex : active_vertices) {
             if (visited[vertex]) {
-                add_label_frontier(g, vertex, visited, ignore, active_levels[0],
-                                   finest_frontier);
+                add_flat_frontier(finest_adj, finest_off, vertex, visited,
+                                  ignore, finest_frontier);
             }
         }
         int max_try = std::max(50, 50 * remaining * ((int) std::log(remaining)));
         while (remaining > 0) {
             int add = finest_frontier.next_subset(active_vertices, visited, lower_i);
-            int added = walk_until_label(g, add, walk_path, max_try,
-                                         next_vertex, visited, ignore,
-                                         active_levels[0]);
+            int added = walk_until_flat(finest_adj, finest_off, add,
+                                        workspace.walk_path, max_try,
+                                        workspace.status, workspace.path_pos);
             if (added == 0) return 1;
             remaining -= added - 1;
             for (int i = 0; i < added - 1; i++) {
-                visited[walk_path[i]] = true;
-                add_label_frontier(g, walk_path[i], visited, ignore, active_levels[0],
-                                   finest_frontier);
-                tree[walk_path[i+1]].push_back(walk_path[i]);
+                visited[workspace.walk_path[i]] = true;
+                workspace.status[workspace.walk_path[i]] = 1;
+                add_flat_frontier(finest_adj, finest_off,
+                                  workspace.walk_path[i], visited, ignore,
+                                  finest_frontier);
+                tree[workspace.walk_path[i+1]].push_back(workspace.walk_path[i]);
             }
         }
     }
@@ -678,12 +697,14 @@ void walk_until_active_level(ActiveMultigraph &mg, int root,
     }
 }
 
-ActiveMultigraph active_level_graph(const Graph &g, const std::vector<int> &level,
-                                    const std::vector<bool> &ignore,
-                                    const std::vector<int> &active_vertices,
-                                    int n_group,
-                                    const std::vector<int> &parent) {
-    ActiveMultigraph mg(n_group);
+void active_level_graph(const Graph &g, const std::vector<int> &level,
+                        const std::vector<bool> &ignore,
+                        const std::vector<int> &active_vertices,
+                        int n_group,
+                        const std::vector<int> &parent,
+                        ActiveMultigraph &mg) {
+    mg.resize(n_group);
+    for (std::vector<LevelEdge> &group_edges : mg) group_edges.clear();
     for (int i : active_vertices) {
         int grp = level[i] - 1;
         for (int nbor : g[i]) {
@@ -691,11 +712,10 @@ ActiveMultigraph active_level_graph(const Graph &g, const std::vector<int> &leve
             int nbor_grp = level[nbor] - 1;
             if (grp == nbor_grp) continue;
             if (parent[grp] >= 0 && parent[nbor_grp] != parent[grp]) continue;
-            LevelEdge el = {nbor_grp, i, nbor};
-            mg[grp].push_back(el);
+            LevelEdge edge = {nbor_grp, i, nbor};
+            mg[grp].push_back(edge);
         }
     }
-    return mg;
 }
 
 int rvtx_subset(const std::vector<int> &vertices,
@@ -711,67 +731,40 @@ int rvtx_subset(const std::vector<int> &vertices,
     return -1;
 }
 
-void prepare_active_levels(const std::vector<uvec> &levels,
-                           const std::vector<int> &active_vertices,
-                           std::vector<std::vector<int>> &active_levels,
-                           std::vector<int> &n_groups) {
-    int n_levels = levels.size();
-    int V = levels.empty() ? 0 : levels[0].n_elem;
-    active_levels.assign(n_levels, std::vector<int>(V, 0));
-    n_groups.assign(n_levels, 0);
-
-    for (int lev = 0; lev < n_levels; lev++) {
-        std::vector<int> &label = active_levels[lev];
-        int max_raw = 0;
-        for (int v : active_vertices) {
-            int raw_label = (int) levels[lev](v);
-            if (raw_label > max_raw) max_raw = raw_label;
-        }
-        std::vector<int> relabel(max_raw + 1, 0);
-        for (int v : active_vertices) {
-            int raw_label = (int) levels[lev](v);
-            if (relabel[raw_label] == 0) {
-                relabel[raw_label] = ++n_groups[lev];
-            }
-            label[v] = relabel[raw_label];
-        }
-    }
-}
-
-int walk_until_label(const Graph &g, int root,
-                     std::vector<int> &path, int MAX,
-                     std::vector<int> &next_vertex,
-                     const std::vector<bool> &visited,
-                     const std::vector<bool> &ignore,
-                     const std::vector<int> &labels) {
+int walk_until_flat(const std::vector<int> &flat_adj,
+                    const std::vector<int> &flat_off,
+                    int root,
+                    std::vector<int> &path,
+                    int MAX,
+                    std::vector<std::int8_t> &status,
+                    std::vector<int> &path_pos) {
+    path[0] = root;
+    path_pos[root] = 0;
     int curr = root;
-    int label = labels[root];
-    bool hit_tree = false;
-    for (int i = 0; i < MAX; i++) {
-        int proposal = rnbor(g, curr);
-        if (ignore[proposal] || labels[proposal] != label) {
+    int added = 1;
+    int i;
+    for (i = 0; i < MAX; i++) {
+        int off = flat_off[curr];
+        int degree = flat_off[curr + 1] - off;
+        if (degree == 0) return 0;
+        int proposal = flat_adj[off + r_int(degree)];
+        std::int8_t proposal_status = status[proposal];
+        if (proposal_status == 2) {
             continue;
-        }
-
-        next_vertex[curr] = proposal;
-        if (visited[proposal]) {
-            hit_tree = true;
+        } else if (proposal_status == 0) {
+            int position = path_pos[proposal];
+            if (position >= 0 && position < added && path[position] == proposal) {
+                added = position;
+            }
+            path[added] = proposal;
+            path_pos[proposal] = added++;
+        } else {
+            path[added++] = proposal;
             break;
         }
         curr = proposal;
     }
-
-    if (!hit_tree) {
-        return 0;
-    }
-
-    int added = 0;
-    curr = root;
-    while (!visited[curr]) {
-        path[added++] = curr;
-        curr = next_vertex[curr];
-    }
-    path[added++] = curr;
+    if (i == MAX) return 0;
     return added;
 }
 
@@ -783,12 +776,22 @@ void prune_finest_groups(Tree &tree,
                          std::vector<bool> &visited,
                          int &remaining,
                          const uvec &pop,
-                         double lower, double upper) {
+                         double lower, double upper,
+                         HierarchicalSamplerWorkspace &workspace) {
     if (n_group <= 1 || remaining <= 0) return;
 
-    Tree group_tree = init_tree(n_group);
-    uvec group_pop(n_group, fill::zeros);
-    std::vector<std::vector<int>> members(n_group);
+    Tree &group_tree = workspace.prune_group_tree;
+    if (static_cast<int>(group_tree.size()) != n_group) {
+        group_tree = init_tree(n_group);
+    } else {
+        for (std::vector<int> &children : group_tree) children.clear();
+    }
+    uvec &group_pop = workspace.prune_group_pop;
+    group_pop.set_size(n_group);
+    group_pop.zeros();
+    std::vector<std::vector<int>> &members = workspace.prune_members;
+    members.resize(n_group);
+    for (std::vector<int> &group_members : members) group_members.clear();
     int total_pop = 0;
 
     for (int v : active_vertices) {
@@ -804,8 +807,10 @@ void prune_finest_groups(Tree &tree,
         }
     }
 
-    std::vector<int> group_pop_below(n_group, -1);
-    std::vector<int> group_parent(n_group);
+    std::vector<int> &group_pop_below = workspace.prune_group_pop_below;
+    group_pop_below.assign(n_group, -1);
+    std::vector<int> &group_parent = workspace.prune_group_parent;
+    group_parent.resize(n_group);
     int group_root = finest_level[root] - 1;
     tree_pop(group_tree, group_root, group_pop, group_pop_below, group_parent);
 

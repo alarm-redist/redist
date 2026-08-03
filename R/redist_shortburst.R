@@ -70,6 +70,9 @@
 #'   forest walks for cyclewalk backend (default 0.1).
 #' @param mmss_l The number of districts to merge and re-split at each step for
 #'   the `mmss` backend (default 3). Must be at least 2.
+#' @param mmss_hierarchy_mode The hierarchy mode for the `mmss` backend:
+#'   `"heuristic"`, `"connected"`, or `"strict"`. Defaults to
+#'   `"heuristic"`. If `counties` is omitted, no hierarchy is used.
 #' @param verbose Whether to print out intermediate information while sampling.
 #' Recommended for monitoring purposes.
 #'
@@ -114,6 +117,7 @@ redist_shortburst <- function(
     cw_instep = 10L,
     cw_cycle_walk_frac = 0.1,
     mmss_l = 3L,
+    mmss_hierarchy_mode = c("heuristic", "connected", "strict"),
     verbose = TRUE
 ) {
     map <- validate_redist_map(map)
@@ -128,6 +132,7 @@ redist_shortburst <- function(
     }
     max_bursts <- as.integer(max_bursts)
     match.arg(backend, c("flip", "mergesplit", "cyclewalk", "mmss"))
+    mmss_hierarchy_mode <- match.arg(mmss_hierarchy_mode)
 
     score_fn <- rlang::as_closure(score_fn)
     stopifnot(is.function(score_fn))
@@ -151,6 +156,7 @@ redist_shortburst <- function(
     }
 
     counties <- rlang::eval_tidy(rlang::enquo(counties), map)
+    has_counties <- !is.null(counties)
     if (is.null(counties)) {
         counties <- rep(1, V)
     } else {
@@ -300,7 +306,17 @@ redist_shortburst <- function(
                 "{.arg mmss_l} must be at most the number of districts ({ndists})."
             )
         }
-        control <- list(max_retries = 200L)
+        control_hierarchy_mode <- mmss_hierarchy_mode
+        if (!has_counties) {
+            control_hierarchy_mode <- "none"
+        }
+        control <- list(
+            max_retries = 200L,
+            hierarchy_mode = match(
+                control_hierarchy_mode,
+                c("none", "connected", "strict", "heuristic")
+            ) - 1L
+        )
         if (!is.null(fixed_k)) {
             control$k_seq <- as.integer(fixed_k)
         }

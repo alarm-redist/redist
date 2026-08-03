@@ -393,12 +393,9 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     Graph g= list_to_graph(l);
     Multigraph cg = county_graph(g, counties);
     int V = g.size();
-    HierarchySpec hierarchy = hierarchy_spec_from_control(control, counties);
-    bool use_hierarchy_sampler = hierarchy.enabled();
-    std::vector<uvec> county_tree_levels;
-    if (!use_hierarchy_sampler && cg.size() > 1) {
-        county_tree_levels.push_back(counties);
-    }
+    HierarchySpec hierarchy = hierarchy_spec_from_control(control, counties, g);
+    bool use_hierarchy_sampler =
+        hierarchy.mode != HierarchyMode::none && !hierarchy.levels.empty();
 
     int n_out = N / thin + 2;
     umat districts(V, n_out, fill::zeros);
@@ -435,7 +432,7 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
         if (use_hierarchy_sampler) {
             Rcout << "Sampling hierarchically across " << hierarchy.levels.size()
                   << " administrative levels.\n";
-        } else if (cg.size() > 1) {
+        } else if (hierarchy.mode != HierarchyMode::none && cg.size() > 1) {
             Rcout << "Sampling hierarchically with respect to the "
                   << cg.size() << " administrative units.\n";
         }
@@ -514,6 +511,7 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     Tree ust = init_tree(V);
     std::vector<bool> visited(V);
     std::vector<bool> ignore(V);
+    HierarchicalSamplerWorkspace hierarchy_workspace;
 
     // Pre-allocated buffers for cut_one_mms (avoid allocation in retry loop)
     std::vector<int> pop_below_buf(V, 0);
@@ -528,7 +526,7 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     std::vector<int> walk_pos(V, -1);
 
     // Detect single-county case for fast-path UST sampling
-    bool use_fast_ust = (cg.size() == 1 && !use_hierarchy_sampler);
+    bool use_fast_ust = hierarchy.mode == HierarchyMode::none;
     dev_verts_buf.reserve(V);
 
     // CSR flat graph for cache-friendly random walks in no-county UST
@@ -556,10 +554,12 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     // Pre-allocated buffer for iteration region vertices
     std::vector<int> iter_region;
     iter_region.reserve(V);
+    std::vector<char> region_mark(V, false);
     std::vector<int> active_region;
     active_region.reserve(V);
 
     for (int i = 1; i <= N; i++) {
+        if (i % 64 == 0) Rcpp::checkUserInterrupt();
         double prop_lp = 0.0;
         mh_decisions(idx - 1) = 0;
         districts.col(idx + 1) = districts.col(idx);
@@ -579,15 +579,21 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
         // districts.col(idx) is unchanged during proposal and serves as the
         // "saved plan" for restoring on retry.
         iter_region.clear();
+        std::fill(region_mark.begin(), region_mark.end(), false);
         for (int v = 0; v < V; v++) {
             int lbl = (int) districts(v, idx);
             for (int d : sel_districts) {
-                if (lbl == d) { iter_region.push_back(v); break; }
+                if (lbl == d) {
+                    iter_region.push_back(v);
+                    region_mark[v] = true;
+                    break;
+                }
             }
         }
 
         if (hierarchy.enabled() &&
-            !hierarchy_region_connected(g, iter_region, hierarchy)) {
+            !hierarchy_region_connected(g, iter_region, region_mark,
+                                        hierarchy)) {
             n_hierarchical_merge_reject++;
             districts.col(idx + 1) = districts.col(idx);
             if (i % thin == 0) idx++;
@@ -679,12 +685,12 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                     result = sample_sub_ust_hier(g, ust, V, root, visited,
                                                   ignore, active_region,
                                                   pop, ust_lower, ust_upper,
-                                                  hierarchy.sampler_levels);
-                } else if (cg.size() > 1) {
-                    result = sample_sub_ust_hier(g, ust, V, root, visited,
-                                                 ignore, active_region,
-                                                 pop, ust_lower, ust_upper,
-                                                 county_tree_levels);
+                                                  hierarchy.sampler_labels,
+                                                  hierarchy.sampler_group_counts,
+                                                  hierarchy.sampler_parents,
+                                                  hierarchy_workspace,
+                                                  hierarchy.sampler_finest_adj,
+                                                  hierarchy.sampler_finest_off);
                 } else {
                     result = sample_sub_ust(g, ust, V, root, visited, ignore,
                                              pop, ust_lower, ust_upper, counties, cg);
@@ -717,7 +723,8 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                 uvec forward_plan = districts.col(idx + 1);
                 std::vector<int> forward_other = {remain};
                 int forward_boundary = admissible_boundary_count(
-                    g, forward_plan, peel, forward_other, iter_region, hierarchy
+                    g, forward_plan, peel, forward_other, iter_region,
+                    region_mark, hierarchy
                 );
                 if (forward_boundary <= 0) {
                     n_zero_boundary++;
@@ -798,7 +805,8 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                     if (t != s) other_labels.push_back(sel_districts[t]);
                 }
                 int reverse_boundary = admissible_boundary_count(
-                    g, old_plan, dist_label, other_labels, iter_region, hierarchy
+                    g, old_plan, dist_label, other_labels, iter_region,
+                    region_mark, hierarchy
                 );
                 if (reverse_boundary <= 0) {
                     n_zero_boundary++;

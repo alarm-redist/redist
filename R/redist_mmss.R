@@ -43,12 +43,17 @@
 #'   the algorithm will generate maps that tend to follow county lines. Multiple
 #'   nested levels may be supplied as a concatenated vector, ordered coarsest to
 #'   finest, e.g. `counties = c(county, mcd)`.
+#' @param hierarchy_mode How to use the supplied hierarchy. `connected` uses
+#'   hierarchical proposals and requires every district-by-unit intersection to
+#'   be connected. `strict` additionally enforces the global hierarchical-plan
+#'   condition. `heuristic` uses hierarchical proposals without enforcing
+#'   hierarchical plan validity. If `counties` is omitted, no hierarchy is
+#'   used. Defaults to `connected`.
 #' @param project_plan_hier Whether to split administrative units into connected
-#'   pseudo-units within the initial plan before sampling. This changes the
-#'   administrative units used by the target. Defaults to `FALSE`.
-#' @param enforce_hierarchy Whether to enforce the global hierarchical nesting
-#'   condition when `counties` is supplied. If `FALSE`, administrative
-#'   units guide the proposals and local connectivity only. Defaults to `FALSE`.
+#'   pseudo-units within the initial plan before sampling. In `connected` and
+#'   `strict` modes, this changes the administrative units used by the target.
+#'   In `heuristic` mode, it only changes proposal generation. Defaults to
+#'   `FALSE`.
 #' @param compactness Controls the compactness of the generated districts, with
 #'   higher values preferring more compact districts. Must be nonnegative. See
 #'   the 'Details' section for more information, and computational
@@ -94,8 +99,8 @@ redist_mmss <- function(
   init_plan = NULL,
   chains = 1L,
   counties = NULL,
+  hierarchy_mode = c("connected", "strict", "heuristic"),
   project_plan_hier = FALSE,
-  enforce_hierarchy = FALSE,
   compactness = 1,
   constraints = list(),
   max_retries = 200L,
@@ -116,24 +121,16 @@ redist_mmss <- function(
   chains <- as.integer(chains)
   l <- as.integer(l)
 
-  if (
-    !is.logical(enforce_hierarchy) ||
-      length(enforce_hierarchy) != 1L ||
-      is.na(enforce_hierarchy)
-  ) {
-    cli::cli_abort('{.arg enforce_hierarchy} must be a single TRUE or FALSE.')
-  }
+  hierarchy_mode <- match.arg(
+    hierarchy_mode,
+    c("connected", "strict", "heuristic")
+  )
   if (
     !is.logical(project_plan_hier) ||
       length(project_plan_hier) != 1L ||
       is.na(project_plan_hier)
   ) {
     cli::cli_abort('{.arg project_plan_hier} must be a single TRUE or FALSE.')
-  }
-
-  hierarchy_mode <- 'speedup'
-  if (enforce_hierarchy) {
-    hierarchy_mode <- 'strict'
   }
 
   # Input validation
@@ -179,11 +176,8 @@ redist_mmss <- function(
     )
   }
   hierarchy_levels <- normalize_hierarchy_levels(adj, raw_levels)
-  if (enforce_hierarchy && is.null(hierarchy_levels)) {
-    cli::cli_abort('{.arg enforce_hierarchy} = TRUE requires {.arg counties}.')
-  }
   if (project_plan_hier && is.null(hierarchy_levels)) {
-    cli::cli_abort('{.arg project_plan_hier} = TRUE requires {.arg counties}.')
+    cli::cli_abort('{.arg project_plan_hier} requires {.arg counties}.')
   }
   init_counties <- NULL
   if (!is.null(hierarchy_levels)) {
@@ -342,7 +336,7 @@ redist_mmss <- function(
     max_retries = as.integer(max_retries),
     hierarchy_mode = match(
       control_hierarchy_mode,
-      c("none", "speedup", "strict")
+      c("none", "connected", "strict", "heuristic")
     ) -
       1L
   )

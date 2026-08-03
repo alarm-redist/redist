@@ -16,7 +16,7 @@ test_that('hierarchy enforcement rejects an initial plan with a hierarchy cycle'
       3L,
       init_plan = plans_10[, 1L],
       counties = rep('all', nrow(fl_map)),
-      enforce_hierarchy = TRUE,
+      hierarchy_mode = 'strict',
       silent = TRUE
     ),
     'strict hierarchical-plan condition'

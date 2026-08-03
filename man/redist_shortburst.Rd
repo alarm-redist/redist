@@ -26,6 +26,7 @@ redist_shortburst(
   cw_instep = 10L,
   cw_cycle_walk_frac = 0.1,
   mmss_l = 3L,
+  mmss_hierarchy_mode = c("heuristic", "connected", "strict"),
   verbose = TRUE
 )
 }
@@ -106,6 +107,10 @@ forest walks for cyclewalk backend (default 0.1).}
 
 \item{mmss_l}{The number of districts to merge and re-split at each step for
 the \code{mmss} backend (default 3). Must be at least 2.}
+
+\item{mmss_hierarchy_mode}{The hierarchy mode for the \code{mmss} backend:
+\code{"heuristic"}, \code{"connected"}, or \code{"strict"}. Defaults to
+\code{"heuristic"}. If \code{counties} is omitted, no hierarchy is used.}
 
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended for monitoring purposes.}
