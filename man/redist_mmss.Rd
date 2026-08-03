@@ -13,6 +13,8 @@ redist_mmss(
   init_plan = NULL,
   chains = 1L,
   counties = NULL,
+  project_plan_hier = FALSE,
+  enforce_hierarchy = FALSE,
   compactness = 1,
   constraints = list(),
   max_retries = 200L,
@@ -21,7 +23,6 @@ redist_mmss(
   cl_type = "PSOCK",
   return_all = TRUE,
   init_name = NULL,
-  relabel_by_contiguity = FALSE,
   verbose = FALSE,
   silent = FALSE
 )
@@ -59,6 +60,14 @@ the algorithm will generate maps that tend to follow county lines. Multiple
 nested levels may be supplied as a concatenated vector, ordered coarsest to
 finest, e.g. \code{counties = c(county, mcd)}.}
 
+\item{project_plan_hier}{Whether to split administrative units into connected
+pseudo-units within the initial plan before sampling. This changes the
+administrative units used by the target. Defaults to \code{FALSE}.}
+
+\item{enforce_hierarchy}{Whether to enforce the global hierarchical nesting
+condition when \code{counties} is supplied. If \code{FALSE}, administrative
+units guide the proposals and local connectivity only. Defaults to \code{FALSE}.}
+
 \item{compactness}{Controls the compactness of the generated districts, with
 higher values preferring more compact districts. Must be nonnegative. See
 the 'Details' section for more information, and computational
@@ -70,6 +79,10 @@ considerations.}
 sequence before giving up. Higher values reduce proposal failures at the cost
 of more computation per step. The default of 200 is sufficient for most
 problems; increase for very tight population tolerances or large districts.}
+
+\item{k_seq}{An integer vector giving the fixed top-eqn{k} window used at
+each sequential cut. A single value is reused at every cut; \code{NULL} uses
+the default sequence \verb{l, l - 1, ..., 2}.}
 
 \item{ncores}{The number of parallel processes to run. Defaults to the
 number of available cores, capped at the number of chains. Only used when
@@ -84,17 +97,9 @@ the final plan from each chain.}
 \item{init_name}{A name for the initial plan, or \code{FALSE} to not include
 the initial plan in the output.}
 
-\item{relabel_by_contiguity}{Relabel administrative units by their contiguous
-components before sampling.}
-
 \item{verbose}{Whether to print out intermediate information while sampling.}
 
 \item{silent}{Whether to suppress all diagnostic information.}
-
-\item{k_est}{The number of spanning trees to draw from the merged region
-when estimating the pre-fixed \eqn{k_s} sequence used by the top-k cut
-proposal. The same estimated sequence is reused across all MCMC steps.
-Default is 50.}
 }
 \value{
 A \link{redist_plans} object containing the simulated plans.
@@ -126,15 +131,7 @@ fl_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1)
 sampled <- redist_mmss(fl_map, 100, l = 3)
 }
 \references{
-Carter, D., Herschlag, G., Hunter, Z., and Mattingly, J. (2019). A
-merge-split proposal for reversible Monte Carlo Markov chain sampling of
-redistricting plans. arXiv preprint arXiv:1911.01503.
-
-McCartan, C., & Imai, K. (2023). Sequential Monte Carlo for Sampling
-Balanced and Compact Redistricting Plans. \emph{Annals of Applied Statistics} 17(4).
-Available at \doi{10.1214/23-AOAS1763}.
-
-DeFord, D., Duchin, M., and Solomon, J. (2019). Recombination: A family of
-Markov chains for redistricting. arXiv preprint arXiv:1911.05725.
+Kenny, C. (2026). A Multi-District Markov Chain Monte Carlo Sampler for
+Redistricting. osf.io/preprints/socarxiv/un8sk_v1.
 }
 \concept{simulate}

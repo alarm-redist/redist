@@ -141,12 +141,10 @@ int rvtx_subset(const std::vector<int> &vertices,
                 const std::vector<bool> &visited,
                 int &lower);
 
-void split_active_components(const Graph &g,
-                             const std::vector<uvec> &levels,
-                             const std::vector<bool> &ignore,
-                             const std::vector<int> &active_vertices,
-                             std::vector<std::vector<int>> &active_levels,
-                             std::vector<int> &n_groups);
+void prepare_active_levels(const std::vector<uvec> &levels,
+                           const std::vector<int> &active_vertices,
+                           std::vector<std::vector<int>> &active_levels,
+                           std::vector<int> &n_groups);
 
 int walk_until_label(const Graph &g, int root,
                      std::vector<int> &path, int MAX,
@@ -354,8 +352,7 @@ int sample_sub_ust_hier(const Graph &g, Tree &tree, int V, int &root,
 
     std::vector<std::vector<int>> active_levels;
     std::vector<int> n_groups;
-    split_active_components(g, levels, ignore, active_vertices,
-                            active_levels, n_groups);
+    prepare_active_levels(levels, active_vertices, active_levels, n_groups);
 
     std::fill(visited.begin(), visited.end(), true);
     for (int v : active_vertices) visited[v] = false;
@@ -714,55 +711,29 @@ int rvtx_subset(const std::vector<int> &vertices,
     return -1;
 }
 
-void split_active_components(const Graph &g,
-                             const std::vector<uvec> &levels,
-                             const std::vector<bool> &ignore,
-                             const std::vector<int> &active_vertices,
-                             std::vector<std::vector<int>> &active_levels,
-                             std::vector<int> &n_groups) {
+void prepare_active_levels(const std::vector<uvec> &levels,
+                           const std::vector<int> &active_vertices,
+                           std::vector<std::vector<int>> &active_levels,
+                           std::vector<int> &n_groups) {
     int n_levels = levels.size();
-    int V = ignore.size();
+    int V = levels.empty() ? 0 : levels[0].n_elem;
     active_levels.assign(n_levels, std::vector<int>(V, 0));
     n_groups.assign(n_levels, 0);
-    std::vector<int> stack;
-    stack.reserve(active_vertices.size());
 
     for (int lev = 0; lev < n_levels; lev++) {
         std::vector<int> &label = active_levels[lev];
-        if (lev > 0) {
-            int max_raw = 0;
-            for (int v : active_vertices) {
-                int raw_label = (int) levels[lev](v);
-                if (raw_label > max_raw) max_raw = raw_label;
-            }
-            std::vector<int> relabel(max_raw + 1, 0);
-            for (int v : active_vertices) {
-                int raw_label = (int) levels[lev](v);
-                if (relabel[raw_label] == 0) {
-                    relabel[raw_label] = ++n_groups[lev];
-                }
-                label[v] = relabel[raw_label];
-            }
-            continue;
+        int max_raw = 0;
+        for (int v : active_vertices) {
+            int raw_label = (int) levels[lev](v);
+            if (raw_label > max_raw) max_raw = raw_label;
         }
-
-        for (int start : active_vertices) {
-            if (label[start] != 0) continue;
-            int base = levels[lev](start);
-            int comp = ++n_groups[lev];
-            label[start] = comp;
-            stack.clear();
-            stack.push_back(start);
-            while (!stack.empty()) {
-                int v = stack.back();
-                stack.pop_back();
-                for (int nbor : g[v]) {
-                    if (ignore[nbor] || label[nbor] != 0) continue;
-                    if ((int) levels[lev](nbor) != base) continue;
-                    label[nbor] = comp;
-                    stack.push_back(nbor);
-                }
+        std::vector<int> relabel(max_raw + 1, 0);
+        for (int v : active_vertices) {
+            int raw_label = (int) levels[lev](v);
+            if (relabel[raw_label] == 0) {
+                relabel[raw_label] = ++n_groups[lev];
             }
+            label[v] = relabel[raw_label];
         }
     }
 }

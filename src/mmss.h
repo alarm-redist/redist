@@ -2,6 +2,7 @@
 #define MMSS_H
 
 #include "merge_split.h"
+#include "hierarchy.h"
 
 /*
  * Main entry point for Multiple Merge Sequential Split MCMC.

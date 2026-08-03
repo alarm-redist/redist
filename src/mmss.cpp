@@ -262,24 +262,6 @@ static bool cut_one_mms(Tree &ust, int root,
 
 
 /*
- * Compute log boundary between peel and remain, scanning only region vertices.
- */
-static double log_boundary_region(const Graph &g,
-                                  const subview_col<uword> &districts,
-                                  int distr_root, int distr_other,
-                                  const std::vector<int> &region_verts) {
-    double count = 0;
-    for (int v : region_verts) {
-        if ((int) districts(v) != distr_root) continue;
-        for (int nbor : g[v]) {
-            if ((int) districts(nbor) == distr_other) count += 1.0;
-        }
-    }
-    return std::log(count);
-}
-
-
-/*
  * Random walk along `g` from `root` until something in `visited` is hit.
  * No county check — for single-county or county-free regions.
  * Uses CSR flat graph and int8_t status array for fast random access.
@@ -411,22 +393,10 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     Graph g= list_to_graph(l);
     Multigraph cg = county_graph(g, counties);
     int V = g.size();
-    int n_cty = max(counties);
-    std::vector<uvec> tree_levels;
-    bool use_multi_hierarchy = false;
-    if (control.containsElementNamed("tree_levels")) {
-        IntegerMatrix level_mat = control["tree_levels"];
-        for (int j = 0; j < level_mat.ncol(); j++) {
-            uvec lvl(V);
-            for (int i = 0; i < V; i++) {
-                lvl(i) = level_mat(i, j);
-            }
-            tree_levels.push_back(lvl);
-        }
-        use_multi_hierarchy = tree_levels.size() > 1;
-    }
+    HierarchySpec hierarchy = hierarchy_spec_from_control(control, counties);
+    bool use_hierarchy_sampler = hierarchy.enabled();
     std::vector<uvec> county_tree_levels;
-    if (!use_multi_hierarchy && n_cty > 1) {
+    if (!use_hierarchy_sampler && cg.size() > 1) {
         county_tree_levels.push_back(counties);
     }
 
@@ -434,6 +404,21 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     umat districts(V, n_out, fill::zeros);
     districts.col(0) = init;
     districts.col(1) = init;
+
+    if (hierarchy.enabled()) {
+        uvec initial_plan = districts.col(1);
+        bool initial_valid = hierarchy_plan_connected(g, initial_plan, hierarchy);
+        if (hierarchy.mode == HierarchyMode::strict) {
+            initial_valid = hierarchy_plan_valid(g, initial_plan, hierarchy);
+        }
+        if (!initial_valid) {
+            Rcpp::stop(
+                hierarchy.mode == HierarchyMode::strict
+                    ? "The initial plan does not satisfy the strict hierarchical-plan condition."
+                    : "The initial plan is not connected within every administrative unit."
+            );
+        }
+    }
 
     Rcpp::IntegerVector mh_decisions(N / thin + 1);
     double mha;
@@ -447,8 +432,8 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
         Rcout << std::fixed << std::setprecision(0);
         Rcout << "Sampling " << N << " " << V << "-unit maps with " << n_distr
               << " districts and population between " << lower << " and " << upper << ".\n";
-        if (use_multi_hierarchy) {
-            Rcout << "Sampling hierarchically across " << tree_levels.size()
+        if (use_hierarchy_sampler) {
+            Rcout << "Sampling hierarchically across " << hierarchy.levels.size()
                   << " administrative levels.\n";
         } else if (cg.size() > 1) {
             Rcout << "Sampling hierarchically with respect to the "
@@ -500,6 +485,9 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     long long n_ust_draws = 0;
     long long n_ust_fail = 0;
     long long n_cut_fail = 0;
+    long long n_hierarchical_merge_reject = 0;
+    long long n_hierarchical_plan_reject = 0;
+    long long n_zero_boundary = 0;
     long long n_proposal_success = 0;
     // Per-step valid cut distributions from successful cuts, indexed [s][0..3]
     // where 3 means "3 or more". Records K_T^s (total valid cuts in the drawn
@@ -540,7 +528,7 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     std::vector<int> walk_pos(V, -1);
 
     // Detect single-county case for fast-path UST sampling
-    bool use_fast_ust = (n_cty == 1 && !use_multi_hierarchy);
+    bool use_fast_ust = (cg.size() == 1 && !use_hierarchy_sampler);
     dev_verts_buf.reserve(V);
 
     // CSR flat graph for cache-friendly random walks in no-county UST
@@ -564,9 +552,6 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
 
     // Pre-allocated status array for fast-path UST (0=unvisited, 1=in-tree, 2=ignored)
     std::vector<int8_t> ust_status(V);
-
-    // Pre-allocated buffer for reverse boundary computation
-    std::vector<int> rev_label(V, 0);
 
     // Pre-allocated buffer for iteration region vertices
     std::vector<int> iter_region;
@@ -600,6 +585,15 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                 if (lbl == d) { iter_region.push_back(v); break; }
             }
         }
+
+        if (hierarchy.enabled() &&
+            !hierarchy_region_connected(g, iter_region, hierarchy)) {
+            n_hierarchical_merge_reject++;
+            districts.col(idx + 1) = districts.col(idx);
+            if (i % thin == 0) idx++;
+            continue;
+        }
+
         // Pre-set ignore for all non-region vertices (constant across retries)
         std::fill(ignore.begin(), ignore.end(), true);
 
@@ -607,6 +601,7 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
         double fwd_boundary_lp = 0.0;
         double rev_boundary_lp = 0.0;
         double prop_correction = 0.0;
+        bool proposal_boundary_reject = false;
 
         // Whole-sequence retry: draw full split sequence, retry from scratch if any step fails.
         split_failed = true;
@@ -680,12 +675,12 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                                                ust, V, root, ust_status,
                                                ignore, walk_buf, walk_pos,
                                                unvisited_buf, unvis_pos);
-                } else if (use_multi_hierarchy) {
+                } else if (use_hierarchy_sampler) {
                     result = sample_sub_ust_hier(g, ust, V, root, visited,
-                                                 ignore, active_region,
-                                                 pop, ust_lower, ust_upper,
-                                                 tree_levels);
-                } else if (n_cty > 1) {
+                                                  ignore, active_region,
+                                                  pop, ust_lower, ust_upper,
+                                                  hierarchy.sampler_levels);
+                } else if (cg.size() > 1) {
                     result = sample_sub_ust_hier(g, ust, V, root, visited,
                                                  ignore, active_region,
                                                  pop, ust_lower, ust_upper,
@@ -719,7 +714,18 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                 n_cuts_dist[s][std::min(nvc, 3)]++;
                 if (nvc > max_valid_cuts[s]) max_valid_cuts[s] = nvc;
 
-                fwd_boundary_lp += log_boundary_region(g, districts.col(idx + 1), peel, remain, iter_region);
+                uvec forward_plan = districts.col(idx + 1);
+                std::vector<int> forward_other = {remain};
+                int forward_boundary = admissible_boundary_count(
+                    g, forward_plan, peel, forward_other, iter_region, hierarchy
+                );
+                if (forward_boundary <= 0) {
+                    n_zero_boundary++;
+                    proposal_boundary_reject = true;
+                    attempt_ok = false;
+                    break;
+                }
+                fwd_boundary_lp += std::log(forward_boundary);
 
                 // Restore: un-merge vertices that were relabeled to remain
                 // For l_merge=2, no intermediate districts were merged — skip.
@@ -739,15 +745,15 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
             } // end steps loop
 
             if (attempt_ok) { split_failed = false; break; }
+            if (proposal_boundary_reject) break;
         } // end retry loop
 
         if (split_failed) {
-            n_m_hit++;
+            if (!proposal_boundary_reject) n_m_hit++;
             districts.col(idx + 1) = districts.col(idx);
             if (i % thin == 0) idx++;
             continue;
         }
-        n_proposal_success++;
 
         // Ensure all vertices in the selected set are properly assigned.
         // For l=2, cut_one_mms already assigns all vertices via assign_district — skip.
@@ -767,35 +773,48 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
             }
         }
 
-        // 3. Reverse proposal boundary terms (needed for both paths)
-        {
-            const uvec &old_plan = districts.unsafe_col(idx);
-            for (int v : iter_region) {
-                rev_label[v] = 0;
+        if (hierarchy.enabled()) {
+            uvec proposed_plan = districts.col(idx + 1);
+            bool proposal_valid = hierarchy_plan_connected(g, proposed_plan, hierarchy);
+            if (hierarchy.mode == HierarchyMode::strict) {
+                proposal_valid = hierarchy_plan_valid(g, proposed_plan, hierarchy);
             }
-            for (int s = 0; s < l_merge - 1; s++) {
-                int dist_label = sel_districts[s];
-                for (int v : iter_region) {
-                    if ((int) old_plan(v) == dist_label && rev_label[v] == 0) {
-                        rev_label[v] = dist_label;
-                    }
-                }
-                // Compute boundary between label 0 and dist_label, region only
-                // Note: non-region neighbors always have rev_label = 0 (cleaned up after each iter)
-                double count = 0;
-                for (int v : iter_region) {
-                    if (rev_label[v] != 0) continue;
-                    for (int nbor : g[v]) {
-                        if (rev_label[nbor] == dist_label) count += 1.0;
-                    }
-                }
-                rev_boundary_lp += std::log(count);
-            }
-            // Clean up rev_label for region vertices so next iteration starts clean
-            for (int v : iter_region) {
-                rev_label[v] = 0;
+            if (!proposal_valid) {
+                n_hierarchical_plan_reject++;
+                districts.col(idx + 1) = districts.col(idx);
+                if (i % thin == 0) idx++;
+                continue;
             }
         }
+        // 3. Reverse proposal boundary terms (needed for both paths)
+        bool reverse_boundary_failed = false;
+        {
+            uvec old_plan = districts.col(idx);
+            for (int s = 0; s < l_merge - 1; s++) {
+                int dist_label = sel_districts[s];
+                std::vector<int> other_labels;
+                other_labels.reserve(l_merge - 1);
+                for (int t = 0; t < l_merge; t++) {
+                    if (t != s) other_labels.push_back(sel_districts[t]);
+                }
+                int reverse_boundary = admissible_boundary_count(
+                    g, old_plan, dist_label, other_labels, iter_region, hierarchy
+                );
+                if (reverse_boundary <= 0) {
+                    n_zero_boundary++;
+                    reverse_boundary_failed = true;
+                    break;
+                }
+                rev_boundary_lp += std::log(reverse_boundary);
+            }
+        }
+
+        if (reverse_boundary_failed) {
+            districts.col(idx + 1) = districts.col(idx);
+            if (i % thin == 0) idx++;
+            continue;
+        }
+        n_proposal_success++;
 
         // For l_merge >= 3: apply the effective top-k correction
         if (l_merge >= 3) {
@@ -823,15 +842,11 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
         // 4. Compactness (tau)
         if (rho != 1) {
             double log_st = 0;
-            for (int j = 1; j <= n_cty; j++) {
-                for (int d : sel_districts) {
-                    log_st += log_st_distr(g, districts, counties, idx, d, j);
-                    log_st -= log_st_distr(g, districts, counties, idx + 1, d, j);
-                }
-            }
+            uvec old_plan = districts.col(idx);
+            uvec new_plan = districts.col(idx + 1);
             for (int d : sel_districts) {
-                log_st += log_st_contr(g, districts, counties, n_cty, idx, d);
-                log_st -= log_st_contr(g, districts, counties, n_cty, idx + 1, d);
+                log_st += log_hierarchical_tree_count(g, old_plan, d, hierarchy);
+                log_st -= log_hierarchical_tree_count(g, new_plan, d, hierarchy);
             }
             prop_lp += (1 - rho) * log_st;
         }
@@ -935,6 +950,9 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
     out["n_ust_draws"] = (double) n_ust_draws;
     out["n_ust_fail"] = (double) n_ust_fail;
     out["n_cut_fail"] = (double) n_cut_fail;
+    out["n_hierarchical_merge_reject"] = (double) n_hierarchical_merge_reject;
+    out["n_hierarchical_plan_reject"] = (double) n_hierarchical_plan_reject;
+    out["n_zero_boundary"] = (double) n_zero_boundary;
     out["n_proposal_success"] = (double) n_proposal_success;
     // Per-step valid cut distribution matrix: rows = steps, cols = [1, 2, 3+, max]
     // "0" column omitted since cut_one_mms only records on success (nvc >= 1)

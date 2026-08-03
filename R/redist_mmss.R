@@ -43,6 +43,12 @@
 #'   the algorithm will generate maps that tend to follow county lines. Multiple
 #'   nested levels may be supplied as a concatenated vector, ordered coarsest to
 #'   finest, e.g. `counties = c(county, mcd)`.
+#' @param project_plan_hier Whether to split administrative units into connected
+#'   pseudo-units within the initial plan before sampling. This changes the
+#'   administrative units used by the target. Defaults to `FALSE`.
+#' @param enforce_hierarchy Whether to enforce the global hierarchical nesting
+#'   condition when `counties` is supplied. If `FALSE`, administrative
+#'   units guide the proposals and local connectivity only. Defaults to `FALSE`.
 #' @param compactness Controls the compactness of the generated districts, with
 #'   higher values preferring more compact districts. Must be nonnegative. See
 #'   the 'Details' section for more information, and computational
@@ -52,10 +58,9 @@
 #'   sequence before giving up. Higher values reduce proposal failures at the cost
 #'   of more computation per step. The default of 200 is sufficient for most
 #'   problems; increase for very tight population tolerances or large districts.
-#' @param k_est The number of spanning trees to draw from the merged region
-#'   when estimating the pre-fixed \eqn{k_s} sequence used by the top-k cut
-#'   proposal. The same estimated sequence is reused across all MCMC steps.
-#'   Default is 50.
+#' @param k_seq An integer vector giving the fixed top-eqn{k} window used at
+#'   each sequential cut. A single value is reused at every cut; `NULL` uses
+#'   the default sequence `l, l - 1, ..., 2`.
 #' @param ncores The number of parallel processes to run. Defaults to the
 #'   number of available cores, capped at the number of chains. Only used when
 #'   `chains > 1`.
@@ -65,8 +70,6 @@
 #'   the final plan from each chain.
 #' @param init_name A name for the initial plan, or `FALSE` to not include
 #'   the initial plan in the output.
-#' @param relabel_by_contiguity Relabel administrative units by their contiguous
-#'   components before sampling.
 #' @param verbose Whether to print out intermediate information while sampling.
 #' @param silent Whether to suppress all diagnostic information.
 #'
@@ -75,414 +78,446 @@
 #'
 #' @concept simulate
 #' @references
-#' Carter, D., Herschlag, G., Hunter, Z., and Mattingly, J. (2019). A
-#' merge-split proposal for reversible Monte Carlo Markov chain sampling of
-#' redistricting plans. arXiv preprint arXiv:1911.01503.
-#'
-#' McCartan, C., & Imai, K. (2023). Sequential Monte Carlo for Sampling
-#' Balanced and Compact Redistricting Plans. *Annals of Applied Statistics* 17(4).
-#' Available at \doi{10.1214/23-AOAS1763}.
-#'
-#' DeFord, D., Duchin, M., and Solomon, J. (2019). Recombination: A family of
-#' Markov chains for redistricting. arXiv preprint arXiv:1911.05725.
+#' Kenny, C. (2026). A Multi-District Markov Chain Monte Carlo Sampler for
+#' Redistricting. osf.io/preprints/socarxiv/un8sk_v1.
 #'
 #' @examples
 #' data(fl25)
 #' fl_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1)
 #' sampled <- redist_mmss(fl_map, 100, l = 3)
-redist_mmss <- function(map,
-                       nsims,
-                       warmup = 0,
-                       thin = 1L,
-                       l = 3L,
-                       init_plan = NULL,
-                       chains = 1L,
-                       counties = NULL, compactness = 1,
-                       constraints = list(),
-                       max_retries = 200L,
-                       k_seq = NULL,
-                       ncores = NULL,
-                       cl_type = "PSOCK",
-                       return_all = TRUE,
-                       init_name = NULL,
-                       relabel_by_contiguity = FALSE,
-                       verbose = FALSE, silent = FALSE) {
-    map <- validate_redist_map(map)
-    V <- nrow(map)
-    adj <- get_adj(map)
-    ndists <- attr(map, "ndists")
-    warmup <- max(warmup, 0L)
-    thin <- as.integer(thin)
-    chains <- as.integer(chains)
-    l <- as.integer(l)
+redist_mmss <- function(
+  map,
+  nsims,
+  warmup = 0,
+  thin = 1L,
+  l = 3L,
+  init_plan = NULL,
+  chains = 1L,
+  counties = NULL,
+  project_plan_hier = FALSE,
+  enforce_hierarchy = FALSE,
+  compactness = 1,
+  constraints = list(),
+  max_retries = 200L,
+  k_seq = NULL,
+  ncores = NULL,
+  cl_type = "PSOCK",
+  return_all = TRUE,
+  init_name = NULL,
+  verbose = FALSE,
+  silent = FALSE
+) {
+  map <- validate_redist_map(map)
+  V <- nrow(map)
+  adj <- get_adj(map)
+  ndists <- attr(map, "ndists")
+  warmup <- max(warmup, 0L)
+  thin <- as.integer(thin)
+  chains <- as.integer(chains)
+  l <- as.integer(l)
 
-    # Input validation
-    if (compactness < 0) {
-        cli::cli_abort("{.arg compactness} must be non-negative.")
-    }
-    if (nsims <= warmup) {
-        cli::cli_abort("{.arg nsims} must be greater than {.arg warmup}.")
-    }
-    if (thin < 1 || thin > nsims - warmup) {
-        cli::cli_abort("{.arg thin} must be a positive integer, and no larger than {.arg nsims - warmup}.")
-    }
-    if (nsims < 1) {
-        cli::cli_abort("{.arg nsims} must be positive.")
-    }
-    if (chains < 1) {
-        cli::cli_abort("{.arg chains} must be positive.")
-    }
-    if (l < 2) {
-        cli::cli_abort("{.arg l} must be at least 2.")
-    }
-    if (l > ndists) {
-        cli::cli_abort("{.arg l} must be at most the number of districts ({ndists}).")
-    }
+  if (
+    !is.logical(enforce_hierarchy) ||
+      length(enforce_hierarchy) != 1L ||
+      is.na(enforce_hierarchy)
+  ) {
+    cli::cli_abort('{.arg enforce_hierarchy} must be a single TRUE or FALSE.')
+  }
+  if (
+    !is.logical(project_plan_hier) ||
+      length(project_plan_hier) != 1L ||
+      is.na(project_plan_hier)
+  ) {
+    cli::cli_abort('{.arg project_plan_hier} must be a single TRUE or FALSE.')
+  }
 
-    # Set up initial plans for chains
-    exist_name <- attr(map, "existing_col")
-    counties <- rlang::eval_tidy(rlang::enquo(counties), map)
+  hierarchy_mode <- 'speedup'
+  if (enforce_hierarchy) {
+    hierarchy_mode <- 'strict'
+  }
 
-    raw_hierarchy <- list()
-    if (!is.null(counties) && length(counties) > V && length(counties) %% V == 0L) {
-        county_levels <- split(counties, rep(seq_len(length(counties) / V), each = V))
-        counties <- county_levels[[1]]
-        raw_hierarchy <- rev(county_levels[-1])
-    } else if (!is.null(counties) && length(counties) != V) {
-        cli::cli_abort("{.arg counties} must have one value per unit in {.arg map}, or be a concatenated set of nested levels.")
-    }
-    raw_counties <- counties
-
-    # Handle different init_plan scenarios
-    if (is.null(init_plan)) {
-        if (!is.null(exist_name)) {
-            init_plans <- matrix(rep(vctrs::vec_group_id(get_existing(map)), chains), ncol = chains)
-            if (is.null(init_name)) {
-                init_names <- rep(exist_name, chains)
-            } else {
-                init_names <- rep(init_name, chains)
-            }
-        } else {
-            init_plan <- "sample"
-        }
-    }
-
-    if (is.null(init_plan) || (is.character(init_plan) && init_plan == "sample")) {
-        if (verbose) {
-            cli::cli_inform("Sampling initial plans with SMC\n")
-        }
-        init_plans <- get_plans_matrix(
-            redist_smc(map, chains, counties, compactness, constraints,
-                       resample = TRUE, ref_name = FALSE, verbose = verbose,
-                       silent = TRUE, ncores = 1
-            )
-        )
-        if (is.null(init_name)) {
-            init_names <- paste0("<sample ", seq_len(chains), ">")
-        } else {
-            init_names <- paste(init_name, seq_len(chains))
-        }
-    } else if (!is.null(init_plan) && !is.character(init_plan)) {
-        if (is.matrix(init_plan)) {
-            if (ncol(init_plan) < chains) {
-                cli::cli_abort("{.arg init_plan} matrix must have at least {chains} column{?s}.")
-            }
-            init_plans <- init_plan[, seq_len(chains), drop = FALSE]
-        } else {
-            init_plans <- matrix(rep(as.integer(init_plan), chains), ncol = chains)
-        }
-
-        if (is.null(init_name)) {
-            init_names <- paste0("<init ", seq_len(chains), ">")
-        } else if (is.matrix(init_plan) && chains > 1) {
-            init_names <- paste(init_name, seq_len(chains))
-        } else {
-            init_names <- rep(init_name, chains)
-        }
-    }
-
-    # Validate init_plans
-    if (nrow(init_plans) != V) {
-        cli::cli_abort("{.arg init_plan} must be as long as the number of units as `map`.")
-    }
-    if (max(init_plans) != ndists) {
-        cli::cli_abort("{.arg init_plan} must have the same number of districts as `map`.")
-    }
-    if (any(apply(init_plans, 2, function(x) contiguity(adj, x)) != 1)) {
-        cli::cli_warn("{.arg init_plan} should have contiguous districts.")
-    }
-
-    # Handle counties
-    if (is.null(raw_counties)) {
-        counties <- rep(1L, V)
-    } else {
-        counties <- raw_counties
-        if (any(is.na(counties)))
-            cli::cli_abort("County vector must not contain missing values.")
-
-        if (relabel_by_contiguity) {
-            for (j in seq_len(ndists)) {
-                idx_distr <- which(init_plans[, 1] == j)
-                adj_distr <- redist.reduce.adjacency(adj, idx_distr)
-                component <- contiguity(adj_distr, vctrs::vec_group_id(counties[idx_distr]))
-                counties[idx_distr] <- paste0(
-                    j, ":",
-                    dplyr::if_else(component > 1,
-                                   paste0(as.character(counties[idx_distr]), "-", component),
-                                   as.character(counties[idx_distr]))
-                )
-            }
-            counties <- vctrs::vec_group_id(counties)
-        } else {
-            component <- contiguity(adj, vctrs::vec_group_id(counties))
-            counties <- dplyr::if_else(component > 1,
-                                       paste0(as.character(counties), "-", component),
-                                       as.character(counties)) |>
-                vctrs::vec_group_id()
-        }
-    }
-
-    tree_levels <- NULL
-    if (length(raw_hierarchy) > 0) {
-        relabel_components <- function(labels, by_init_district = FALSE) {
-            if (relabel_by_contiguity || by_init_district) {
-                out <- as.character(labels)
-                for (j in seq_len(ndists)) {
-                    idx_distr <- which(init_plans[, 1] == j)
-                    adj_distr <- redist.reduce.adjacency(adj, idx_distr)
-                    component <- contiguity(adj_distr, vctrs::vec_group_id(labels[idx_distr]))
-                    out[idx_distr] <- paste0(
-                        j, ":",
-                        dplyr::if_else(component > 1,
-                                       paste0(as.character(labels[idx_distr]), "-", component),
-                                       as.character(labels[idx_distr]))
-                    )
-                }
-                out
-            } else {
-                component <- contiguity(adj, vctrs::vec_group_id(labels))
-                dplyr::if_else(component > 1,
-                               paste0(as.character(labels), "-", component),
-                               as.character(labels))
-            }
-        }
-
-        if (any(vapply(raw_hierarchy, function(x) any(is.na(x)), logical(1)))) {
-            cli::cli_abort("{.arg counties} hierarchy levels must not contain missing values.")
-        }
-
-        hierarchy_levels <- raw_hierarchy
-        if (!is.null(raw_counties)) {
-            last_matches_county <- identical(
-                as.character(hierarchy_levels[[length(hierarchy_levels)]]),
-                as.character(raw_counties)
-            )
-            if (!last_matches_county) {
-                hierarchy_levels <- c(hierarchy_levels, list(raw_counties))
-            }
-            hierarchy_levels[[length(hierarchy_levels)]] <-
-                relabel_components(hierarchy_levels[[length(hierarchy_levels)]],
-                                   by_init_district = TRUE)
-        }
-
-        tree_levels <- matrix(NA_integer_, nrow = V, ncol = length(hierarchy_levels))
-        for (j in seq_along(hierarchy_levels)) {
-            if (j == length(hierarchy_levels) && !is.null(raw_counties)) {
-                tree_levels[, j] <- vctrs::vec_group_id(hierarchy_levels[[j]])
-            } else {
-                lvl <- do.call(paste, c(lapply(hierarchy_levels[j:length(hierarchy_levels)], as.character),
-                                        sep = "\r"))
-                lvl <- relabel_components(lvl, by_init_district = TRUE)
-                tree_levels[, j] <- vctrs::vec_group_id(lvl)
-            }
-        }
-
-        if (ncol(tree_levels) > 1) {
-            for (j in seq_len(ncol(tree_levels) - 1L)) {
-                nested <- tapply(tree_levels[, j + 1L], tree_levels[, j],
-                                 function(x) length(unique(x)) == 1L)
-                if (!all(unlist(nested))) {
-                    cli::cli_abort("{.arg counties} hierarchy levels must be nested from coarser to finer.")
-                }
-            }
-        }
-    }
-
-    # Handle constraints
-    if (!inherits(constraints, "redist_constr")) {
-        constraints <- new_redist_constr(rlang::eval_tidy(rlang::enquo(constraints), map))
-    }
-    if (any(c("edges_removed", "log_st") %in% names(constraints))) {
-        cli::cli_warn(c("{.var edges_removed} or {.var log_st} constraint found in
-           {.arg constraints} and will be ignored.",
-                        ">" = "Adjust using {.arg compactness} instead."))
-    }
-    if (any(c("polsby", "fry_hold") %in% names(constraints)) && compactness == 1) {
-        cli::cli_warn("{.var polsby} or {.var fry_hold} constraint found in {.arg constraints}
-                 with {.arg compactness == 1}. This may disrupt efficient sampling.")
-    }
-    constraints <- as.list(constraints)
-
-    # Set verbosity
-    verbosity <- 1
-    if (verbose) {
-        verbosity <- 3
-    }
-    if (silent) {
-        verbosity <- 0
-    }
-
-    # Population bounds
-    pop_bounds <- attr(map, "pop_bounds")
-    pop <- map[[attr(map, "pop_col")]]
-
-    init_pop <- pop_tally(init_plans, pop, ndists)
-    if (any(init_pop < pop_bounds[1]) | any(init_pop > pop_bounds[3])) {
-        cli::cli_abort("Provided initialization does not meet population bounds.")
-    }
-    if (any(pop >= pop_bounds[3])) {
-        too_big <- as.character(which(pop >= pop_bounds[3]))
-        cli::cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
-                    population larger than the maximum district size.",
-                         "x" = "Redistricting impossible."))
-    }
-
-    control <- list(max_retries = as.integer(max_retries))
-    if (!is.null(tree_levels)) {
-        control$tree_levels <- tree_levels
-    }
-    if (!is.null(k_seq)) {
-        control$k_seq <- as.integer(k_seq)
-    }
-
-    # Set up parallel cluster if needed
-    if (is.null(ncores)) {
-        ncores <- parallel::detectCores()
-    }
-    ncores <- min(ncores, chains)
-
-    if (ncores > 1 && chains > 1) {
-        `%oper%` <- `%dorng%`
-        if (!silent) {
-            of <- ifelse(Sys.info()[["sysname"]] == "Windows",
-                         tempfile(pattern = paste0("mmss_", substr(Sys.time(), 1, 10)), fileext = ".txt"),
-                         "")
-            cl <- parallel::makeCluster(ncores,
-                                        type = cl_type, outfile = of, methods = FALSE,
-                                        useXDR = .Platform$endian != "little")
-        } else {
-            cl <- parallel::makeCluster(ncores,
-                                        type = cl_type, methods = FALSE,
-                                        useXDR = .Platform$endian != "little")
-        }
-        doParallel::registerDoParallel(cl)
-        on.exit(parallel::stopCluster(cl))
-    } else {
-        `%oper%` <- `%do%`
-    }
-
-    # Run chains (in parallel or sequentially)
-    out_par <- foreach::foreach(
-        chain = seq_len(chains), .inorder = FALSE,
-        .packages = "redist"
-    ) %oper% {
-        if (!silent) cat("Starting chain ", chain, "\n", sep = "")
-        run_verbosity <- if (chain == 1 || verbosity == 3) verbosity else 0
-
-        t1_run <- Sys.time()
-        algout <- mmss_plans(nsims, adj, init_plans[, chain], counties, pop,
-                            ndists, pop_bounds[2], pop_bounds[1], pop_bounds[3],
-                            compactness, constraints, control, thin, l, run_verbosity)
-        t2_run <- Sys.time()
-
-        # Process output for this chain
-        storage.mode(algout$plans) <- "integer"
-        acceptances <- as.logical(algout$mhdecisions)
-
-        l_diag <- list(
-            runtime = as.numeric(t2_run - t1_run, units = "secs"),
-            n_m_hit = algout$n_m_hit,
-            n_attempts = algout$n_attempts,
-            n_ust_draws = algout$n_ust_draws,
-            n_ust_fail = algout$n_ust_fail,
-            n_cut_fail = algout$n_cut_fail,
-            n_proposal_success = algout$n_proposal_success,
-            k_seq = algout$k_seq,
-            valid_cuts_by_step = algout$valid_cuts_by_step
-        )
-
-        warmup_idx <- c(seq_len(1 + warmup %/% thin), ncol(algout$plans))
-        if (return_all) {
-            algout$plans <- algout$plans[, -warmup_idx, drop = FALSE]
-        } else {
-            algout$plans <- algout$plans[, ncol(algout$plans) - 1L, drop = FALSE]
-        }
-
-        warmup_idx_acc <- c(seq_len(warmup %/% thin), length(acceptances))
-        if (!return_all) {
-            algout$mhdecisions <- as.logical(acceptances[length(acceptances) - 1L])
-        } else {
-            algout$mhdecisions <- acceptances[-warmup_idx_acc]
-        }
-
-        algout$l_diag <- l_diag
-        algout$mh <- mean(as.logical(algout$mhdecisions))
-        algout
-    }
-
-    # Combine results from all chains
-    plans <- lapply(out_par, function(algout) algout$plans)
-    each_len <- ncol(plans[[1]])
-    plans <- do.call(cbind, plans)
-    storage.mode(plans) <- "integer"
-
-    mh <- sapply(out_par, function(algout) algout$mh)
-    l_diag <- lapply(out_par, function(algout) algout$l_diag)
-    acceptances <- sapply(out_par, function(algout) algout$mhdecisions)
-
-    out <- new_redist_plans(
-        plans = plans,
-        map = map,
-        algorithm = "mmss",
-        wgt = NULL,
-        resampled = FALSE,
-        compactness = compactness,
-        constraints = constraints,
-        ndists = ndists,
-        mh_acceptance = mh,
-        version = packageVersion("redist"),
-        diagnostics = l_diag
+  # Input validation
+  if (compactness < 0) {
+    cli::cli_abort("{.arg compactness} must be non-negative.")
+  }
+  if (nsims <= warmup) {
+    cli::cli_abort("{.arg nsims} must be greater than {.arg warmup}.")
+  }
+  if (thin < 1 || thin > nsims - warmup) {
+    cli::cli_abort(
+      "{.arg thin} must be a positive integer, and no larger than {.arg nsims - warmup}."
     )
+  }
+  if (nsims < 1) {
+    cli::cli_abort("{.arg nsims} must be positive.")
+  }
+  if (chains < 1) {
+    cli::cli_abort("{.arg chains} must be positive.")
+  }
+  if (l < 2) {
+    cli::cli_abort("{.arg l} must be at least 2.")
+  }
+  if (l > ndists) {
+    cli::cli_abort(
+      "{.arg l} must be at most the number of districts ({ndists})."
+    )
+  }
 
-    # Add chain column and acceptance info
-    if (chains > 1) {
-        out <- out |>
-            dplyr::mutate(
-                chain = rep(seq_len(chains), each = each_len * ndists),
-                mcmc_accept = rep(acceptances, each = ndists)
-            )
+  # Set up initial plans for chains
+  exist_name <- attr(map, "existing_col")
+  counties <- rlang::eval_tidy(rlang::enquo(counties), map)
+  raw_levels <- NULL
+  if (!is.null(counties) && length(counties) == V) {
+    raw_levels <- list(counties)
+  } else if (
+    !is.null(counties) && length(counties) > V && length(counties) %% V == 0L
+  ) {
+    raw_levels <- split(counties, rep(seq_len(length(counties) / V), each = V))
+  } else if (!is.null(counties)) {
+    cli::cli_abort(
+      "{.arg counties} must have one value per unit in {.arg map}, or be a concatenated set of nested levels."
+    )
+  }
+  hierarchy_levels <- normalize_hierarchy_levels(adj, raw_levels)
+  if (enforce_hierarchy && is.null(hierarchy_levels)) {
+    cli::cli_abort('{.arg enforce_hierarchy} = TRUE requires {.arg counties}.')
+  }
+  if (project_plan_hier && is.null(hierarchy_levels)) {
+    cli::cli_abort('{.arg project_plan_hier} = TRUE requires {.arg counties}.')
+  }
+  init_counties <- NULL
+  if (!is.null(hierarchy_levels)) {
+    init_counties <- hierarchy_levels[, 1]
+  }
+
+  # Handle different init_plan scenarios
+  if (is.null(init_plan)) {
+    if (!is.null(exist_name)) {
+      init_plans <- matrix(
+        rep(vctrs::vec_group_id(get_existing(map)), chains),
+        ncol = chains
+      )
+      if (is.null(init_name)) {
+        init_names <- rep(exist_name, chains)
+      } else {
+        init_names <- rep(init_name, chains)
+      }
     } else {
-        out <- out |>
-            dplyr::mutate(mcmc_accept = rep(acceptances, each = ndists))
+      init_plan <- "sample"
+    }
+  }
+
+  if (
+    is.null(init_plan) || (is.character(init_plan) && init_plan == "sample")
+  ) {
+    if (verbose) {
+      cli::cli_inform("Sampling initial plans with SMC\n")
+    }
+    init_plans <- get_plans_matrix(
+      redist_smc(
+        map,
+        chains,
+        init_counties,
+        compactness,
+        constraints,
+        resample = TRUE,
+        ref_name = FALSE,
+        verbose = verbose,
+        silent = TRUE,
+        ncores = 1
+      )
+    )
+    if (is.null(init_name)) {
+      init_names <- paste0("<sample ", seq_len(chains), ">")
+    } else {
+      init_names <- paste(init_name, seq_len(chains))
+    }
+  } else if (!is.null(init_plan) && !is.character(init_plan)) {
+    if (is.matrix(init_plan)) {
+      if (ncol(init_plan) < chains) {
+        cli::cli_abort(
+          "{.arg init_plan} matrix must have at least {chains} column{?s}."
+        )
+      }
+      init_plans <- init_plan[, seq_len(chains), drop = FALSE]
+    } else {
+      init_plans <- matrix(rep(as.integer(init_plan), chains), ncol = chains)
     }
 
-    # Add reference plans
-    if (!is.null(init_names) && !isFALSE(init_name)) {
-        if (chains == 1) {
-            out <- add_reference(out, init_plans[, 1], init_names[1])
-        } else if (all(init_names[1] == init_names)) {
-            out <- add_reference(out, init_plans[, 1], init_names[1])
-        } else {
-            out <- Reduce(function(cur, idx) {
-                add_reference(cur, init_plans[, idx], init_names[idx]) |>
-                    dplyr::mutate(chain = dplyr::coalesce(chain, idx))
-            }, rev(seq_len(chains)), init = out)
-        }
+    if (is.null(init_name)) {
+      init_names <- paste0("<init ", seq_len(chains), ">")
+    } else if (is.matrix(init_plan) && chains > 1) {
+      init_names <- paste(init_name, seq_len(chains))
+    } else {
+      init_names <- rep(init_name, chains)
+    }
+  }
+
+  # Validate init_plans
+  if (nrow(init_plans) != V) {
+    cli::cli_abort(
+      "{.arg init_plan} must be as long as the number of units as `map`."
+    )
+  }
+  if (max(init_plans) != ndists) {
+    cli::cli_abort(
+      "{.arg init_plan} must have the same number of districts as `map`."
+    )
+  }
+  if (any(apply(init_plans, 2, function(x) contiguity(adj, x)) != 1)) {
+    cli::cli_warn("{.arg init_plan} should have contiguous districts.")
+  }
+
+  if (project_plan_hier) {
+    hierarchy_levels <- project_plan_hierarchy(
+      adj,
+      init_plans,
+      hierarchy_levels
+    )
+  }
+
+  # Handle hierarchy labels
+  if (is.null(hierarchy_levels)) {
+    counties <- rep(1L, V)
+    hierarchy_levels <- NULL
+  } else {
+    counties <- hierarchy_levels[, 1]
+  }
+
+  # Handle constraints
+  if (!inherits(constraints, "redist_constr")) {
+    constraints <- new_redist_constr(rlang::eval_tidy(
+      rlang::enquo(constraints),
+      map
+    ))
+  }
+  if (any(c("edges_removed", "log_st") %in% names(constraints))) {
+    cli::cli_warn(c(
+      "{.var edges_removed} or {.var log_st} constraint found in
+           {.arg constraints} and will be ignored.",
+      ">" = "Adjust using {.arg compactness} instead."
+    ))
+  }
+  if (
+    any(c("polsby", "fry_hold") %in% names(constraints)) && compactness == 1
+  ) {
+    cli::cli_warn(
+      "{.var polsby} or {.var fry_hold} constraint found in {.arg constraints}
+                 with {.arg compactness == 1}. This may disrupt efficient sampling."
+    )
+  }
+  constraints <- as.list(constraints)
+
+  # Set verbosity
+  verbosity <- 1
+  if (verbose) {
+    verbosity <- 3
+  }
+  if (silent) {
+    verbosity <- 0
+  }
+
+  # Population bounds
+  pop_bounds <- attr(map, "pop_bounds")
+  pop <- map[[attr(map, "pop_col")]]
+
+  init_pop <- pop_tally(init_plans, pop, ndists)
+  if (any(init_pop < pop_bounds[1]) || any(init_pop > pop_bounds[3])) {
+    cli::cli_abort("Provided initialization does not meet population bounds.")
+  }
+  if (any(pop >= pop_bounds[3])) {
+    too_big <- as.character(which(pop >= pop_bounds[3]))
+    cli::cli_abort(c(
+      "Unit{?s} {too_big} ha{?ve/s/ve}
+                    population larger than the maximum district size.",
+      "x" = "Redistricting impossible."
+    ))
+  }
+
+  control_hierarchy_mode <- hierarchy_mode
+  if (is.null(hierarchy_levels)) {
+    control_hierarchy_mode <- "none"
+  }
+  control <- list(
+    max_retries = as.integer(max_retries),
+    hierarchy_mode = match(
+      control_hierarchy_mode,
+      c("none", "speedup", "strict")
+    ) -
+      1L
+  )
+  if (!is.null(hierarchy_levels)) {
+    control$hierarchy_levels <- hierarchy_levels
+  }
+  if (!is.null(k_seq)) {
+    control$k_seq <- as.integer(k_seq)
+  }
+
+  # Set up parallel cluster if needed
+  if (is.null(ncores)) {
+    ncores <- parallel::detectCores()
+  }
+  ncores <- min(ncores, chains)
+
+  if (ncores > 1 && chains > 1) {
+    `%oper%` <- `%dorng%`
+    if (!silent) {
+      of <- ifelse(
+        Sys.info()[["sysname"]] == "Windows",
+        tempfile(
+          pattern = paste0("mmss_", substr(Sys.time(), 1, 10)),
+          fileext = ".txt"
+        ),
+        ""
+      )
+      cl <- parallel::makeCluster(
+        ncores,
+        type = cl_type,
+        outfile = of,
+        methods = FALSE,
+        useXDR = .Platform$endian != "little"
+      )
+    } else {
+      cl <- parallel::makeCluster(
+        ncores,
+        type = cl_type,
+        methods = FALSE,
+        useXDR = .Platform$endian != "little"
+      )
+    }
+    doParallel::registerDoParallel(cl)
+    on.exit(parallel::stopCluster(cl))
+  } else {
+    `%oper%` <- `%do%`
+  }
+
+  # Run chains (in parallel or sequentially)
+  out_par <- foreach::foreach(
+    chain = seq_len(chains),
+    .inorder = FALSE,
+    .packages = "redist"
+  ) %oper%
+    {
+      if (!silent) {
+        cat("Starting chain ", chain, "\n", sep = "")
+      }
+      run_verbosity <- if (chain == 1 || verbosity == 3) verbosity else 0
+
+      t1_run <- Sys.time()
+      algout <- mmss_plans(
+        nsims,
+        adj,
+        init_plans[, chain],
+        counties,
+        pop,
+        ndists,
+        pop_bounds[2],
+        pop_bounds[1],
+        pop_bounds[3],
+        compactness,
+        constraints,
+        control,
+        thin,
+        l,
+        run_verbosity
+      )
+      t2_run <- Sys.time()
+
+      # Process output for this chain
+      storage.mode(algout$plans) <- "integer"
+      acceptances <- as.logical(algout$mhdecisions)
+
+      l_diag <- list(
+        runtime = as.numeric(t2_run - t1_run, units = "secs"),
+        n_m_hit = algout$n_m_hit,
+        n_attempts = algout$n_attempts,
+        n_ust_draws = algout$n_ust_draws,
+        n_ust_fail = algout$n_ust_fail,
+        n_cut_fail = algout$n_cut_fail,
+        n_hierarchical_merge_reject = algout$n_hierarchical_merge_reject,
+        n_hierarchical_plan_reject = algout$n_hierarchical_plan_reject,
+        n_zero_boundary = algout$n_zero_boundary,
+        n_proposal_success = algout$n_proposal_success,
+        k_seq = algout$k_seq,
+        valid_cuts_by_step = algout$valid_cuts_by_step
+      )
+
+      warmup_idx <- c(seq_len(1 + warmup %/% thin), ncol(algout$plans))
+      if (return_all) {
+        algout$plans <- algout$plans[, -warmup_idx, drop = FALSE]
+      } else {
+        algout$plans <- algout$plans[, ncol(algout$plans) - 1L, drop = FALSE]
+      }
+
+      warmup_idx_acc <- c(seq_len(warmup %/% thin), length(acceptances))
+      if (!return_all) {
+        algout$mhdecisions <- as.logical(acceptances[length(acceptances) - 1L])
+      } else {
+        algout$mhdecisions <- acceptances[-warmup_idx_acc]
+      }
+
+      algout$l_diag <- l_diag
+      algout$mh <- mean(as.logical(algout$mhdecisions))
+      algout
     }
 
-    if (chains > 1) {
-        out <- dplyr::relocate(out, chain, .after = "draw")
-    }
+  # Combine results from all chains
+  plans <- lapply(out_par, function(algout) algout$plans)
+  each_len <- ncol(plans[[1]])
+  plans <- do.call(cbind, plans)
+  storage.mode(plans) <- "integer"
 
-    out
+  mh <- sapply(out_par, function(algout) algout$mh)
+  l_diag <- lapply(out_par, function(algout) algout$l_diag)
+  acceptances <- sapply(out_par, function(algout) algout$mhdecisions)
+
+  out <- new_redist_plans(
+    plans = plans,
+    map = map,
+    algorithm = "mmss",
+    wgt = NULL,
+    resampled = FALSE,
+    compactness = compactness,
+    constraints = constraints,
+    ndists = ndists,
+    mh_acceptance = mh,
+    version = packageVersion("redist"),
+    diagnostics = l_diag
+  )
+
+  # Add chain column and acceptance info
+  if (chains > 1) {
+    out <- out |>
+      dplyr::mutate(
+        chain = rep(seq_len(chains), each = each_len * ndists),
+        mcmc_accept = rep(acceptances, each = ndists)
+      )
+  } else {
+    out <- out |>
+      dplyr::mutate(mcmc_accept = rep(acceptances, each = ndists))
+  }
+
+  # Add reference plans
+  if (!is.null(init_names) && !isFALSE(init_name)) {
+    if (chains == 1) {
+      out <- add_reference(out, init_plans[, 1], init_names[1])
+    } else if (all(init_names[1] == init_names)) {
+      out <- add_reference(out, init_plans[, 1], init_names[1])
+    } else {
+      out <- Reduce(
+        function(cur, idx) {
+          add_reference(cur, init_plans[, idx], init_names[idx]) |>
+            dplyr::mutate(chain = dplyr::coalesce(chain, idx))
+        },
+        rev(seq_len(chains)),
+        init = out
+      )
+    }
+  }
+
+  if (chains > 1) {
+    out <- dplyr::relocate(out, chain, .after = "draw")
+  }
+
+  out
 }
