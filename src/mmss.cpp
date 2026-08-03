@@ -688,6 +688,8 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                                                   hierarchy.sampler_labels,
                                                   hierarchy.sampler_group_counts,
                                                   hierarchy.sampler_parents,
+                                                  hierarchy.mode ==
+                                                      HierarchyMode::heuristic,
                                                   hierarchy_workspace,
                                                   hierarchy.sampler_finest_adj,
                                                   hierarchy.sampler_finest_off);
