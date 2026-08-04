@@ -608,6 +608,7 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
         double rev_boundary_lp = 0.0;
         double prop_correction = 0.0;
         bool proposal_boundary_reject = false;
+        bool heuristic_ust_failure = false;
 
         // Whole-sequence retry: draw full split sequence, retry from scratch if any step fails.
         split_failed = true;
@@ -700,6 +701,8 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                 if (result != 0) {
                     n_ust_fail++;
                     attempt_ok = false;
+                    heuristic_ust_failure =
+                        hierarchy.mode == HierarchyMode::heuristic;
                     break;
                 }
 
@@ -755,6 +758,9 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
 
             if (attempt_ok) { split_failed = false; break; }
             if (proposal_boundary_reject) break;
+            // A failed heuristic hierarchy draw cannot be repaired by
+            // redrawing the same active region, so avoid retry amplification.
+            if (heuristic_ust_failure) break;
         } // end retry loop
 
         if (split_failed) {
