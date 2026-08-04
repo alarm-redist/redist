@@ -7,6 +7,11 @@
 
 #include "redist_alg_helpers.h"
 
+#include <algorithm>
+#include <cstdint>
+#include <utility>
+#include <vector>
+
 #include "forest_plan_type.h"
 #include "graph_plan_type.h"
 #include "lct_graph_plan_type.h"
@@ -340,9 +345,16 @@ Rcpp::IntegerMatrix PlanEnsemble::get_R_sizes_matrix(RcppThread::ThreadPool &poo
 }
 
 int PlanEnsemble::count_unique_plans(RcppThread::ThreadPool &pool) const {
+    if (nsims == 0) {
+        return 0;
+    }
+
     int const num_regions = plan_ptr_vec[0]->num_regions;
     int const num_threads = get_num_threads(pool);
-    std::vector<std::unordered_set<std::string>> plan_count_maps_vec(num_threads);
+    std::vector<std::vector<int>> region_reindex_vecs(num_threads, std::vector<int>(num_regions));
+
+    // Stores only {hash, plan index}: normally 16 bytes per plan.
+    std::vector<std::pair<std::uint64_t, int>> hashed_plans(nsims);
 
     // Trick to give each thread a unique id
     // We need the extra steps to avoid the problem where
@@ -351,14 +363,10 @@ int PlanEnsemble::count_unique_plans(RcppThread::ThreadPool &pool) const {
     static std::atomic<int> global_generation_counter{0};
     int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
     std::atomic<int> thread_id_counter{0};
-
-    std::vector<std::vector<RegionID>> reindexed_plan_vecs(num_threads,
-                                                           std::vector<RegionID>(V));
-    std::vector<std::vector<int>> reindex_vecs(num_threads, std::vector<int>(num_regions));
-
-    pool.parallelFor(0, nsims, [&](int i) {
+    // First pass: compute each plan's canonical hash.
+    pool.parallelFor(0, nsims, [&](int const plan_idx) {
         static thread_local int thread_generation_counter = -1;
-        static thread_local int thread_id;
+        static thread_local int thread_id = -1;
 
         // check if the thread id was generated this function call
         if (thread_generation_counter != generation) {
@@ -367,103 +375,143 @@ int PlanEnsemble::count_unique_plans(RcppThread::ThreadPool &pool) const {
             thread_generation_counter = generation;
         }
 
-        if (thread_id < 0 || thread_id >= num_threads) {
-            RcppThread::Rcerr << "Thread id out of range: " << thread_id << " / " << num_threads
-                              << "\n";
-            throw std::runtime_error("Thread id out of range");
-        }
+        std::vector<int> &region_reindex = region_reindex_vecs[thread_id];
+        region_reindex.assign(num_regions, -1);
 
-        // reset the vector indices
-        std::fill(reindex_vecs[thread_id].begin(), reindex_vecs[thread_id].end(), -1);
+        int next_region_id = 0;
 
-        int current_region_relabel_counter = 0;
+        // Standard FNV-1a 64-bit constants.
+        std::uint64_t hash = 14695981039346656037ULL;
+        constexpr std::uint64_t fnv_prime = 1099511628211ULL;
 
-        for (size_t v = 0; v < V; v++) {
-            auto v_region = plan_ptr_vec[i]->region_ids[v];
+        std::size_t const offset =
+            static_cast<std::size_t>(plan_idx) *
+            static_cast<std::size_t>(V);
 
-            // check if this region has been relabelled yet
-            if (reindex_vecs[thread_id][v_region] < 0) {
-                // if not then we haven't set a relabel for this region
-                reindex_vecs[thread_id][v_region] = current_region_relabel_counter;
-                ++current_region_relabel_counter;
+        for (int v = 0; v < V; ++v) {
+            int const old_region =
+                static_cast<int>(flattened_all_plans[offset + v]);
+
+            int &canonical_region = region_reindex[old_region];
+
+            if (canonical_region < 0) {
+                canonical_region = next_region_id++;
             }
 
-            if (reindex_vecs[thread_id][v_region] < 0 ||
-                reindex_vecs[thread_id][v_region] >= num_regions) {
-                // REprintf("%d Regions - Vertex %d - Reindexed Region %d to %d \n",
-                //     num_regions, v, v_region, reindex_vec[v_region]
-                // );
-                // REprintf("Reindex Vec is: ");
-                // for (int j = 0; j < reindex_vec.size(); j++)
-                // {
-                //     REprintf("|%d -> %d| ", j, reindex_vecs[thread_id][j]);
-                // }
-                // REprintf("\nPlan Vectors:");
-                // for (int u = 0; u < V; u++)
-                // {
-                //      REprintf("|%d -> %d| ",
-                //         plan_ptr_vec[i]->region_ids[u],
-                //         reindex_vecs[thread_id][plan_ptr_vec[i]->region_ids[u]]
-                //     );
-                // }
-                // REprintf("\n");
-                // throw Rcpp::exception("!\n");
-                std::ostringstream oss;
+            std::uint16_t const value =
+                static_cast<std::uint16_t>(canonical_region);
 
-                oss << num_regions << " Regions - Vertex " << v << " - Reindexed Region "
-                    << v_region << " to " << reindex_vecs[thread_id][v_region] << '\n';
+            hash ^= static_cast<std::uint8_t>(value & 0xffU);
+            hash *= fnv_prime;
 
-                oss << "Reindex Vec is: ";
-                for (int j = 0; j < static_cast<int>(reindex_vecs[thread_id].size()); ++j) {
-                    oss << '|' << j << " -> " << reindex_vecs[thread_id][j] << "| ";
-                }
-
-                oss << "\nPlan Vectors:";
-                for (int u = 0; u < V; ++u) {
-                    int rid = plan_ptr_vec[i]->region_ids[u];
-                    int mapped =
-                        (rid >= 0 && rid < static_cast<int>(reindex_vecs[thread_id].size()))
-                            ? reindex_vecs[thread_id][rid]
-                            : -1; // sentinel if out of range
-                    oss << '|' << rid << " -> " << mapped << "| ";
-                }
-                oss << '\n';
-
-                // Safe in workers: buffers and flushes on main thread at pool.wait()/join()
-                Rcpp::Rcout << oss.str();
-
-                // Throw a plain C++ exception from the worker (safe). Catch on main thread and
-                // convert to R error if desired.
-                throw std::range_error("Out\n");
-            }
-
-            // now relabel
-            reindexed_plan_vecs[thread_id][v] = reindex_vecs[thread_id][v_region];
+            hash ^= static_cast<std::uint8_t>((value >> 8) & 0xffU);
+            hash *= fnv_prime;
         }
 
-        // now hash the plan
-        std::ostringstream oss;
-
-        for (int row = 0; row < V; ++row) {
-            oss << reindexed_plan_vecs[thread_id][row];
-            if (row < V - 1) {
-                oss << ",";
-            }
-        }
-        auto key = oss.str();
-        plan_count_maps_vec[thread_id].insert(key);
+        hashed_plans[plan_idx] = {hash, plan_idx};
     });
+
     pool.wait();
 
-    // now combine into one map
-    std::unordered_set<std::string> pattern_counts;
-    for (size_t i = 0; i < plan_count_maps_vec.size(); i++) {
-        for (const auto &plans_str : plan_count_maps_vec[i]) {
-            pattern_counts.insert(plans_str);
+    // Put plans with matching hashes next to each other.
+    std::sort(hashed_plans.begin(), hashed_plans.end());
+
+    // Returns true exactly when two plans define the same partition,
+    // ignoring their region labels.
+    std::vector<int> plan1_to_plan2(num_regions);
+    std::vector<int> plan2_to_plan1(num_regions);
+
+    auto const plans_are_equal =
+        [&](int const plan1_idx, int const plan2_idx) {
+            std::fill(
+                plan1_to_plan2.begin(),
+                plan1_to_plan2.end(),
+                -1
+            );
+            std::fill(
+                plan2_to_plan1.begin(),
+                plan2_to_plan1.end(),
+                -1
+            );
+
+            std::size_t const offset1 =
+                static_cast<std::size_t>(plan1_idx) *
+                static_cast<std::size_t>(V);
+
+            std::size_t const offset2 =
+                static_cast<std::size_t>(plan2_idx) *
+                static_cast<std::size_t>(V);
+
+            for (int v = 0; v < V; ++v) {
+                int const region1 =
+                    static_cast<int>(flattened_all_plans[offset1 + v]);
+
+                int const region2 =
+                    static_cast<int>(flattened_all_plans[offset2 + v]);
+
+                int &mapped_region2 = plan1_to_plan2[region1];
+                int &mapped_region1 = plan2_to_plan1[region2];
+
+                if (mapped_region2 < 0 && mapped_region1 < 0) {
+                    mapped_region2 = region2;
+                    mapped_region1 = region1;
+                } else if (
+                    mapped_region2 != region2 ||
+                    mapped_region1 != region1
+                ) {
+                    return false;
+                }
+            }
+
+            return true;
+        };
+
+    int num_unique_plans = 0;
+
+    // Usually this vector has one entry. It gets more than one only if
+    // distinct plans happen to have the same 64-bit hash.
+    std::vector<int> representatives;
+    representatives.reserve(2);
+
+    std::size_t group_begin = 0;
+
+    while (group_begin < hashed_plans.size()) {
+        std::size_t group_end = group_begin + 1;
+
+        while (
+            group_end < hashed_plans.size() &&
+            hashed_plans[group_end].first ==
+                hashed_plans[group_begin].first
+        ) {
+            ++group_end;
         }
+
+        representatives.clear();
+
+        for (std::size_t i = group_begin; i < group_end; ++i) {
+            int const candidate_idx = hashed_plans[i].second;
+            bool already_counted = false;
+
+            for (int const representative_idx : representatives) {
+                if (plans_are_equal(
+                        candidate_idx,
+                        representative_idx
+                    )) {
+                    already_counted = true;
+                    break;
+                }
+            }
+
+            if (!already_counted) {
+                representatives.push_back(candidate_idx);
+                ++num_unique_plans;
+            }
+        }
+
+        group_begin = group_end;
     }
 
-    return pattern_counts.size();
+    return num_unique_plans;
 }
 
 Rcpp::IntegerMatrix PlanEnsemble::get_region_pops_matrix(RcppThread::ThreadPool &pool) {

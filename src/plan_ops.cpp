@@ -10,6 +10,10 @@
 // #include <Rcpp.h>
 #include <RcppArmadillo.h>
 #include <vector>
+#include <algorithm>
+#include <limits>
+#include <string>
+#include <unordered_set>
 #include "advanced_types.h"
 #include "random.h"
 #include "scoring.h"
