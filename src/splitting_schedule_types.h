@@ -2,6 +2,7 @@
 #ifndef SPLITTING_SCHEDULE_TYPES_H
 #define SPLITTING_SCHEDULE_TYPES_H
 
+#include <memory>
 #include "advanced_types.h"
 #include <Rcpp.h>
 
