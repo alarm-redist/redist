@@ -6,6 +6,7 @@
  ********************************************************/
 
 #include "splitting_schedule_types.h"
+#include <memory>
 
 constexpr bool DEBUG_SPLITTING_SCHEDULES_VERBOSE = false;
 
