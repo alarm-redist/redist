@@ -22,8 +22,8 @@ class TreeSplitter {
   public:
     // Default Constructor
     TreeSplitter(FlatGraph const &map_graph) :
-    forest_graph(map_graph.get_flat_empty_tree()), 
     visited(map_graph.size()),
+    reroot_weight(map_graph.size()),
     no_valid_edges_vertices(map_graph.size()),
     stack(map_graph.size()+1)
     // balanced_edge_cuts()
@@ -33,8 +33,8 @@ class TreeSplitter {
         // );
     };
     TreeSplitter(int const V) : 
-        forest_graph(), 
         visited(0),
+        reroot_weight(0),
         no_valid_edges_vertices(V),
         stack(V + 1) { 
         // balanced_edge_cuts.reserve(
@@ -45,10 +45,12 @@ class TreeSplitter {
 
     virtual ~TreeSplitter() = default;
 
-    FlatGraph forest_graph; // used for computing get_log_retroactive_splitting_prob_for_joined_flattree
     std::vector<bool> visited; // used in retroactive prob so not needed for naive k
+    mutable std::vector<double> reroot_weight;
     mutable std::vector<bool> no_valid_edges_vertices; // used in finding balanced edge cuts
+    
     mutable TreePopStack stack; // used in splitting so needed for all 
+    
     // mutable std::vector<EdgeCut> balanced_edge_cuts;
 
     // Returns a vector of all the valid edges in the tree
@@ -82,18 +84,14 @@ class TreeSplitter {
         Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
         std::vector<int> const &smaller_cut_sizes_to_try);
 
-
-    // Get probability a specific edge was cut in the tree made by joining
-    // the trees in the two regions where the forest is stored as a vertex of vertex forest
-    // This is primarily called by forest space plans since its cheaper to copy to vertex
-    // forest once for the indexing gains 
-    virtual double get_log_retroactive_splitting_prob_for_joined_flattree(
+    virtual double get_log_eff_boundary_len_for_adj_region_pair(
         MapParams const &map_params, ScoringFunction const &scoring_function,
-        FlatGraph const &forest_graph, 
+        EdgeBitset const &forest_edges, 
         std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
         Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
-        std::vector<int> const &smaller_cut_sizes_to_try);
-
+        std::vector<int> const &smaller_cut_sizes_to_try,
+        bool const count_edges_across
+    );
 
 
     virtual double get_log_retroactive_splitting_prob_from_valid_pop_cut_list(
@@ -109,6 +107,8 @@ class TreeSplitter {
     // the best cut 
     // NOTE: We always assume this called on balanced input (ie above and below regions 
     // are balanced for thier size).
+    // To recap: Things must not depend on the arbitrary rooting or endpoint labels 
+    // except insofar as they determine the two induced vertex sets.
     virtual double get_unnormed_selection_prob(
         int const root,
         int const cut_vertex,
@@ -338,14 +338,6 @@ class ConstraintSplitter : public TreeSplitter {
         std::vector<int> const &smaller_cut_sizes_to_try) override;
 
 
-    double get_log_retroactive_splitting_prob_for_joined_flattree(
-        MapParams const &map_params, ScoringFunction const &scoring_function,
-        FlatGraph const &forest_graph, 
-        std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
-        Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
-        std::vector<int> const &smaller_cut_sizes_to_try) override;
-
-    
     double custom_get_log_retroactive_splitting_prob_from_valid_pop_cut_list(
             std::vector<EdgeCut> &valid_edges, EdgeCut const actual_cut_edge,
             MapParams const &map_params, ScoringFunction const &scoring_function,

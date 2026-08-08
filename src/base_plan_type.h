@@ -257,7 +257,9 @@ struct PairHashData {
     PairHashData()
         : admin_adjacent(false), same_admin_component(false), shared_county(-1),
           within_county_edges(0), across_county_edges(0), merge_is_hier_valid(true),
-          count_pair(true), eff_boundary_len(0.0) {};
+          count_pair(true), eff_boundary_len(0.0),
+          representative_vertex1(-1),
+          representative_vertex2(-1) {};
 
     // specific constructor
     PairHashData(bool const admin_adjacent, bool const same_admin_component,
@@ -267,7 +269,9 @@ struct PairHashData {
         : admin_adjacent(admin_adjacent), same_admin_component(same_admin_component),
           shared_county(shared_county), within_county_edges(within_county_edges),
           across_county_edges(across_county_edges), merge_is_hier_valid(merge_is_hier_valid),
-          count_pair(count_pair), eff_boundary_len(eff_boundary_len) {};
+          count_pair(count_pair), eff_boundary_len(eff_boundary_len),
+          representative_vertex1(-1),
+          representative_vertex2(-1) {};
 
     bool admin_adjacent;       // whether or not adjacent within a county
     bool same_admin_component; // whether or not two regions are in the same administrative
@@ -281,6 +285,22 @@ struct PairHashData {
     bool count_pair; // only used for forest space, whether or not to compute probabilties for
                      // pairs
     double eff_boundary_len; // NOT THE LOG, THE ACTUAL BOUNDARY
+
+    /*
+     * Endpoints of one map-graph edge joining these two regions.
+     *
+     * representative_vertex1 belongs to the smaller region ID.
+     * representative_vertex2 belongs to the larger region ID.
+     *
+     * In hierarchical mode, if this pair is administratively adjacent,
+     * these vertices are guaranteed to form a within-county edge, since
+     * only within-county edges count toward the effective boundary for
+     * such a pair.
+     *
+     * Both are -1 when no representative edge has been assigned.
+     */
+    int representative_vertex1;
+    int representative_vertex2;
 };
 
 // Hashes pairs (x,y) where 0 <= x != y < num_elements to the
@@ -330,7 +350,10 @@ class RegionPairHash {
     }
 
     // gets the value a pair is hashed to if its been hashed
-    std::pair<bool, PairHashData> get_value(RegionID const x, RegionID const y) const {
+    std::pair<bool, PairHashData> get_value(RegionID x, RegionID y) const {
+        if (y < x) {
+            std::swap(x, y);
+        }
         auto hash_index = pair_hash(x, y);
         // check if we've hashed this pair or not
         if (hashed[hash_index]) {
@@ -372,33 +395,12 @@ class RegionPairHash {
     }
 
     // increase the graph edge count between a pair of regions
-    void count_graph_edge(RegionID region1_id, RegionID region2_id, bool const same_county,
-                          int const county) {
-        // swap if region2_id < region1_id
-        if (region2_id < region1_id)
-            std::swap(region1_id, region2_id);
-        // get the index
-        auto hash_index = pair_hash(region1_id, region2_id);
-        // add to the pair list if not already there
-        if (!hashed[hash_index]) {
-            hashed[hash_index] = true;
-            hashed_pairs.push_back({region1_id, region2_id});
-            ++num_hashed_pairs;
-        }
-
-        if (same_county) {
-            // if edges in the same county increase within county count
-            // and mark as administratively adjacent
-            values[hash_index].admin_adjacent = true;
-            values[hash_index].same_admin_component = true;
-            values[hash_index].shared_county = county;
-            values[hash_index].within_county_edges++;
-        } else {
-            // else increase count of across county stuff
-            values[hash_index].across_county_edges++;
-        }
-        return;
-    }
+    void count_graph_edge(RegionID region1_id, RegionID region2_id, 
+        int vertex1,
+        int vertex2,
+        bool const same_county,
+        int const county
+    );
 
     // Add this amount to the effective boundary length
     // only used for forest plans
@@ -462,6 +464,10 @@ class PlanMultigraph {
     std::string debug_string_detailed(Plan const &plan) const;
     void Rprint() const;
     void Rprint_detailed(Plan const &plan);
+    void check_representative_edges(
+        PlanVector const &region_ids
+    ) const;
+
 
     // Checks if the a plan is hierarchically connected, ie
     // Each county intersect region has at most 1 component
@@ -528,6 +534,5 @@ class PlanMultigraph {
 
 // swap function
 void swap_plan_multigraphs(PlanMultigraph &a, PlanMultigraph &b);
-
 
 #endif

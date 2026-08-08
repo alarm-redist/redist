@@ -1449,6 +1449,71 @@ std::string sorted_pairs_to_string(
 }
 
 
+
+void RegionPairHash::count_graph_edge(RegionID region1_id, RegionID region2_id, 
+    int vertex1,
+    int vertex2,
+    bool const same_county,
+    int const county) {
+    // swap if region2_id < region1_id
+    // so its always true that 
+    // region1_id < region2_id
+    // vertex1 belongs to region1_id
+    // vertex2 belongs to region2_id
+    if (region2_id < region1_id){
+        std::swap(region1_id, region2_id);
+        std::swap(vertex1, vertex2);
+    }
+        
+    // get the index
+    auto hash_index = pair_hash(region1_id, region2_id);
+    /*
+    * If this is the first map edge encountered between these regions,
+    * create the pair and save this edge as the initial representative.
+    */
+    if (!hashed[hash_index]) {
+        hashed[hash_index] = true;
+        hashed_pairs.push_back({region1_id, region2_id});
+        ++num_hashed_pairs;
+        values[hash_index].representative_vertex1 = vertex1;
+        values[hash_index].representative_vertex2 = vertex2;
+    }
+
+    if (same_county) {
+        /*
+        * IMPORTANT FOR HIERARCHICAL SAMPLING:
+        *
+        * If this is the FIRST within-county edge encountered for this
+        * pair, replace the existing representative edge with this one.
+        *
+        * Why?
+        *
+        * If a pair has at least one within-county edge, admin_adjacent
+        * becomes true, and ForestPlan later ignores across-county edges
+        * for this pair. Therefore our representative edge must also be
+        * one of the countable within-county edges.
+        *
+        * admin_adjacent is still false exactly when this is the first
+        * within-county edge encountered.
+        */
+        if (!values[hash_index].admin_adjacent) {
+            values[hash_index].representative_vertex1 = vertex1;
+            values[hash_index].representative_vertex2 = vertex2;
+        }
+        // if edges in the same county increase within county count
+        // and mark as administratively adjacent
+        values[hash_index].admin_adjacent = true;
+        values[hash_index].same_admin_component = true;
+        values[hash_index].shared_county = county;
+        values[hash_index].within_county_edges++;
+    } else {
+        // else increase count of across county stuff
+        values[hash_index].across_county_edges++;
+    }
+    return;
+}
+
+
 // Creates helpful debug string 
 std::string RegionPairHash::debug_string(
     std::vector<int> const &county_component
@@ -1488,6 +1553,11 @@ std::string RegionPairHash::debug_string(
             << " | " << val.within_county_edges << " within county edges"
             << " | " << val.across_county_edges << " across county edges"
             << "\n";
+        oss << " | representative_edge=("
+            << val.representative_vertex1
+            << ", "
+            << val.representative_vertex2
+            << ")";
     }
 
     return oss.str();
@@ -2689,6 +2759,203 @@ void PlanMultigraph::Rprint_detailed(Plan const &plan) {
     Rcpp::Rcerr << debug_string_detailed(plan);
 }
 
+void PlanMultigraph::check_representative_edges(
+    PlanVector const &region_ids
+) const {
+    int const V = map_params.V;
+
+    for (auto const &[region1_id, region2_id] :
+         pair_map.hashed_pairs) {
+
+        auto const hash_index =
+            pair_map.pair_hash(
+                region1_id,
+                region2_id
+            );
+
+        PairHashData const &pair_data =
+            pair_map.values[hash_index];
+
+        int const v1 =
+            pair_data.representative_vertex1;
+
+        int const v2 =
+            pair_data.representative_vertex2;
+
+        /*
+         * Every hashed pair represents at least one actual map edge,
+         * so it must have a representative edge.
+         */
+        if (
+            v1 < 0 || v1 >= V ||
+            v2 < 0 || v2 >= V
+        ) {
+            std::ostringstream oss;
+
+            oss << "Invalid representative edge in PlanMultigraph.\n";
+            oss << "regions=("
+                << static_cast<int>(region1_id)
+                << ", "
+                << static_cast<int>(region2_id)
+                << ")\n";
+            oss << "representative_edge=("
+                << v1
+                << ", "
+                << v2
+                << ")\n";
+            oss << "V=" << V << "\n";
+
+            throw std::runtime_error(oss.str());
+        }
+
+        /*
+         * Representative edges are stored in canonical region order:
+         *
+         *     v1 belongs to region1_id
+         *     v2 belongs to region2_id
+         *
+         * where region1_id < region2_id.
+         */
+        if (
+            region_ids[v1] != region1_id ||
+            region_ids[v2] != region2_id
+        ) {
+            std::ostringstream oss;
+
+            oss << "Representative edge has incorrect region orientation.\n";
+            oss << "stored region pair=("
+                << static_cast<int>(region1_id)
+                << ", "
+                << static_cast<int>(region2_id)
+                << ")\n";
+            oss << "representative_edge=("
+                << v1
+                << ", "
+                << v2
+                << ")\n";
+            oss << "actual endpoint regions=("
+                << static_cast<int>(region_ids[v1])
+                << ", "
+                << static_cast<int>(region_ids[v2])
+                << ")\n";
+
+            throw std::runtime_error(oss.str());
+        }
+
+        /*
+         * Check that (v1, v2) is genuinely an edge of the map graph.
+         *
+         * This linear search through the adjacency list is fine here
+         * because object_integrity_checking is explicitly expensive.
+         */
+        auto const &v1_nbors =
+            map_params.g[v1];
+
+        bool const is_map_edge =
+            std::find(
+                v1_nbors.begin(),
+                v1_nbors.end(),
+                v2
+            ) != v1_nbors.end();
+
+        if (!is_map_edge) {
+            std::ostringstream oss;
+
+            oss << "Representative region edge is not a map edge.\n";
+            oss << "regions=("
+                << static_cast<int>(region1_id)
+                << ", "
+                << static_cast<int>(region2_id)
+                << ")\n";
+            oss << "representative_edge=("
+                << v1
+                << ", "
+                << v2
+                << ")\n";
+
+            throw std::runtime_error(oss.str());
+        }
+
+        /*
+         * A hashed pair must have at least one boundary edge.
+         */
+        if (
+            pair_data.within_county_edges +
+                pair_data.across_county_edges <=
+            0
+        ) {
+            std::ostringstream oss;
+
+            oss << "Hashed region pair has no map boundary edges.\n";
+            oss << "regions=("
+                << static_cast<int>(region1_id)
+                << ", "
+                << static_cast<int>(region2_id)
+                << ")\n";
+
+            throw std::runtime_error(oss.str());
+        }
+
+        if (counties_on) {
+            bool const same_county =
+                map_params.counties[v1] ==
+                map_params.counties[v2];
+
+            /*
+             * If the pair is administratively adjacent, our representative
+             * must be one of its within-county boundary edges.
+             */
+            if (
+                pair_data.admin_adjacent &&
+                !same_county
+            ) {
+                std::ostringstream oss;
+
+                oss << "Administratively adjacent region pair has an "
+                       "across-county representative edge.\n";
+                oss << "regions=("
+                    << static_cast<int>(region1_id)
+                    << ", "
+                    << static_cast<int>(region2_id)
+                    << ")\n";
+                oss << "representative_edge=("
+                    << v1
+                    << ", "
+                    << v2
+                    << ")\n";
+
+                throw std::runtime_error(oss.str());
+            }
+
+            /*
+             * Conversely, if there is no within-county adjacency, the
+             * representative should be across a county boundary.
+             */
+            if (
+                !pair_data.admin_adjacent &&
+                same_county
+            ) {
+                std::ostringstream oss;
+
+                oss << "Non-admin-adjacent region pair has a "
+                       "within-county representative edge.\n";
+                oss << "regions=("
+                    << static_cast<int>(region1_id)
+                    << ", "
+                    << static_cast<int>(region2_id)
+                    << ")\n";
+                oss << "representative_edge=("
+                    << v1
+                    << ", "
+                    << v2
+                    << ")\n";
+
+                throw std::runtime_error(oss.str());
+            }
+        }
+    }
+}
+
 // indexing (i,j) in a matrix
 // assuming the length of a row is row_length
 // i is the row index
@@ -2782,7 +3049,7 @@ void PlanMultigraph::build_plan_non_hierarchical_multigraph(PlanVector const &re
             auto u_region = region_ids[u];
             if (v_region < u_region) {
                 // if true then count
-                pair_map.count_graph_edge(v_region, u_region, true, 0);
+                pair_map.count_graph_edge(v_region, u_region, v, u, true, 0);
             }
         }
     }
@@ -2890,7 +3157,7 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(PlanVector const &region
 
                 // if v_region < u_region then count the edge
                 if (v_region < u_region) {
-                    pair_map.count_graph_edge(v_region, u_region, same_county, u_county - 1);
+                    pair_map.count_graph_edge(v_region, u_region, v, u, same_county, u_county - 1);
                 }
                 // if already visited don't add to the queue again
                 if (vertices_visited[u])
@@ -3014,12 +3281,30 @@ bool PlanMultigraph::build_plan_hierarchical_multigraph(PlanVector const &region
 
 bool PlanMultigraph::build_plan_multigraph(PlanVector const &region_ids,
                                            int const num_regions) {
+    bool successful;
     if (counties_on) {
-        return build_plan_hierarchical_multigraph(region_ids, num_regions);
+        successful = build_plan_hierarchical_multigraph(region_ids, num_regions);
     } else {
         build_plan_non_hierarchical_multigraph(region_ids);
-        return true;
+        successful = true;
     }
+    /*
+     * Only check after a successful complete construction.
+     *
+     * A failed hierarchical build may have returned before pair_map
+     * represents a complete plan multigraph.
+     */
+    if constexpr (
+        perf_config::object_integrity_checking
+    ) {
+        if (successful) {
+            check_representative_edges(
+                region_ids
+            );
+        }
+    }
+
+    return successful;
 }
 
 void PlanMultigraph::remove_invalid_size_pairs(Plan const &plan,
