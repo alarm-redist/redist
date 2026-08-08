@@ -1325,7 +1325,7 @@ bool ScoringFunction::merged_region_ok(Plan const &plan, int const region1_id,
             continue;
 
         // skip if not a number of regions we score
-        if (!region_constraint_ptr->region_sizes_to_score[merged_num_regions]){
+        if (!region_constraint_ptr->region_sizes_to_score[combined_region_size]){
             continue;
         }
 
@@ -1452,7 +1452,7 @@ std::pair<bool, double> ScoringFunction::compute_full_split_plan_score(int const
             continue;
 
         // only compute the score if we score this size
-        if (region_constraint_ptr->region_sizes_to_score[split_region1]){
+        if (region_constraint_ptr->region_sizes_to_score[region1_size]){
             auto score_result = region_constraint_ptr->compute_region_score(
                 num_regions, region_ids, region_sizes, region_pops, split_region1
             );
@@ -1466,7 +1466,7 @@ std::pair<bool, double> ScoringFunction::compute_full_split_plan_score(int const
                 score += score_result.second;
             }
         }
-        if (region_constraint_ptr->region_sizes_to_score[split_region2]){
+        if (region_constraint_ptr->region_sizes_to_score[region2_size]){
             auto score_result = region_constraint_ptr->compute_region_score(
                 num_regions, region_ids, region_sizes, region_pops, split_region2
             );

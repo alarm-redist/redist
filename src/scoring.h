@@ -529,6 +529,8 @@ class PlanConstraint {
     double const strength; // constraint strength
 
   public:
+    // This is for things passed into R. It will automatically shift from
+    // R 1-based indexing to c++ 0 based indexing in the num regions and sizes to score
     PlanConstraint(Rcpp::List const &constr_inst, int const ndists)
         : strength(constr_inst.containsElementNamed("strength")
                        ? Rcpp::as<double>(constr_inst["strength"])
@@ -551,6 +553,18 @@ class PlanConstraint {
           hard_threshold(constr_inst.containsElementNamed("hard_threshold")
                              ? Rcpp::as<double>(constr_inst["hard_threshold"])
                              : 0.0) {};
+
+    // Use this constructor for c++ creations. This will not perform any index shifting 
+    PlanConstraint(
+        double const strength,
+        std::vector<bool> const &num_regions_to_score,
+        bool const hard_constraint,
+        double const hard_threshold
+    )
+        : strength(strength),
+          num_regions_to_score(num_regions_to_score),
+          hard_constraint(hard_constraint),
+          hard_threshold(hard_threshold) {}
 
     virtual ~PlanConstraint() = default;
     // attributes
@@ -724,18 +738,23 @@ class ValidDistrictsConstraint : public PlanConstraint {
 
   public:
     ValidDistrictsConstraint(MapParams const &map_params)
-        : PlanConstraint(
-                    Rcpp::List::create(
-              Rcpp::_["strength"] = 1.0,
-              Rcpp::_["hard_constraint"] = true,
-              Rcpp::_["hard_threshold"] = 0.5,
-              Rcpp::_["nregions_to_score"] = [&map_params]() {
-                  // we only score full plans
-                  std::vector<bool> num_regions_to_score(map_params.ndists + 1, false);
+        : PlanConstraint(1.0,
+              [&map_params]() {
+                  /*
+                  * This is already C++ indexed:
+                  *
+                  * index i means "score plans with i regions".
+                  */
+                  std::vector<bool> num_regions_to_score(
+                      map_params.ndists + 1,
+                      false
+                  );
                   num_regions_to_score[map_params.ndists] = true;
+
                   return num_regions_to_score;
-              }()), 
-              map_params.ndists
+              }(),
+              true,
+              0.5
           ),
           map_params(map_params) {};
 

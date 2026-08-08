@@ -405,8 +405,7 @@ double ForestPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
         count_edges_across = true;
     }
 
-    double new_log_edge_selection_prob =
-                    tree_splitter.get_log_eff_boundary_len_for_adj_region_pair(
+    double log_eff_boundary = tree_splitter.get_log_eff_boundary_len_for_adj_region_pair(
                         plan_multigraph.map_params, scoring_function, forest_edges,
                         ust_sampler.pops_below_vertex, region1_root,
                         region2_root, *this, min_possible_cut_size, max_possible_cut_size,
@@ -442,7 +441,7 @@ double ForestPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
 
 
 
-
+    double const new_log_edge_selection_prob = log_eff_boundary;
     double const old_log_edge_selection_prob =
         std::log(tree_selection_probs);
 
