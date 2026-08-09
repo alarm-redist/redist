@@ -408,7 +408,7 @@ RegionMultigraphCount get_region_multigraph(Rcpp::List const &adj_list,
 
     AllPlansVector underlying_id_vec(region_ids.begin(), region_ids.end());
 
-    PlanVector region_id_vec(underlying_id_vec, 0, underlying_id_vec.size() - 1);
+    PlanVector region_id_vec(underlying_id_vec, 0, underlying_id_vec.size());
 
     int num_regions = uniqueElements.size();
     return (build_region_multigraph(list_to_graph(adj_list), region_id_vec, num_regions));
@@ -814,6 +814,7 @@ void validate_init_seats_cpp(Rcpp::IntegerMatrix const &init_seats, int const nu
         // check each value is positive and sums to nseats
         int seat_sum = 0;
         for (size_t j = 0; j < num_regions; j++) {
+            int const seat = init_seats(static_cast<int>(j), i);
             if (init_seats(i, j) <= 0) {
                 REprintf("Region %zu of plan %i does not have a positive seat count (%d)!\n",
                          j + 1, i + 1, init_seats(i, j));
@@ -832,10 +833,14 @@ void validate_init_seats_cpp(Rcpp::IntegerMatrix const &init_seats, int const nu
                 throw Rcpp::exception("Seat values greater than `nseats` in `init_seats`!\n");
             }
 
-            if (split_districts_only) {
-                if (j + 1 != num_regions && !is_district[init_seats(i, j)]) {
-                    throw Rcpp::exception("Non-remainder region is not a district!\n");
-                }
+            if (
+                split_districts_only &&
+                j + 1 != num_regions &&
+                !is_district[seat]
+            ) {
+                throw Rcpp::exception(
+                    "Non-remainder region is not a district!\n"
+                );
             }
             seat_sum += init_seats(i, j);
         }

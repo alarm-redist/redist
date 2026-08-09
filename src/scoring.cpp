@@ -173,6 +173,12 @@ int count_plan_incumbent_pairings(arma::uvec const &incumbents,
         if (!region_is_district[region_reindex_vec[region_id]])
             continue;
 
+        // To avoid double counting 
+        int const mapped_region = region_reindex_vec[region_id];
+        if (mapped_region != static_cast<int>(region_id)) {
+            continue;
+        }
+
         if (region_incumbent_counts[region_reindex_vec[region_id]] > 1) {
             districts_with_multiple_incumbents++;
         }

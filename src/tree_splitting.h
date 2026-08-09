@@ -75,8 +75,6 @@ class TreeSplitter {
 
     // Get probability a specific edge was cut in the tree made by joining
     // the trees in the two regions where the forest is stored as a packed forest
-    // This is called by linking edge plans since its not worth it to copy 
-    // over to a vertex forest 
     virtual double get_log_retroactive_splitting_prob_for_joined_packed_tree(
         MapParams const &map_params, ScoringFunction const &scoring_function,
         EdgeBitset const &forest_edges, 
@@ -84,6 +82,8 @@ class TreeSplitter {
         Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
         std::vector<int> const &smaller_cut_sizes_to_try);
 
+    // computes the effective region tree boundary length for a pair of adjacent
+    // trees in one pass
     virtual double get_log_eff_boundary_len_for_adj_region_pair(
         MapParams const &map_params, ScoringFunction const &scoring_function,
         EdgeBitset const &forest_edges, 
@@ -139,8 +139,6 @@ class TreeSplitter {
     // returns edge cut and log probability it was chosen
     // for tree splitters where the selection probability is solely a function of the 
     // balanced tree cuts. It can't depend on anything else
-    // For that just make a custom version of 
-    // get_log_retroactive_splitting_prob_for_joined_flattree
     virtual std::pair<bool, EdgeCut> select_edge_to_cut(
         RNGState &rng_state, std::vector<EdgeCut> &valid_edges,
         bool save_selection_prob

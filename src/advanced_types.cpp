@@ -490,13 +490,8 @@ MapParams::MapParams(Graph const &g,
         county_restricted_flat_graph(county_restricted_graph),
         pop(pop), V(static_cast<int>(g.size())), ndists(ndists), total_seats(total_seats),
         lower(lower), target(target), upper(upper),
-        smallest_district_size(
-            *std::min_element(district_seat_sizes.begin(), district_seat_sizes.end())),
-        largest_district_size(
-            *std::max_element(district_seat_sizes.begin(), district_seat_sizes.end())),
-        district_seat_sizes(district_seat_sizes),
         is_district([ndists, total_seats, &district_seat_sizes]() {
-            if (district_seat_sizes.size() == 0) {
+            if (ndists != total_seats && district_seat_sizes.size() == 0) {
                 throw std::runtime_error("District Seat Sizes vector must be non-empty!\n");
             }
             // vector where index i is true iff i seats is a district
@@ -506,7 +501,7 @@ MapParams::MapParams(Graph const &g,
                                     "the total number of seats!\n");
             } else if (ndists != total_seats) {
                 for (auto const &a_size : district_seat_sizes) {
-                    if (a_size < 0)
+                    if (a_size <= 0)
                         throw std::runtime_error(
                             "District Seat Sizes must be strictly positive!\n");
                     if (a_size >= total_seats)
@@ -521,6 +516,11 @@ MapParams::MapParams(Graph const &g,
             }
             return is_district_vec;
         }()),
+        district_seat_sizes(district_seat_sizes),
+        smallest_district_size(
+            *std::min_element(district_seat_sizes.begin(), district_seat_sizes.end())),
+        largest_district_size(
+            *std::max_element(district_seat_sizes.begin(), district_seat_sizes.end())),
         is_mmd(ndists != total_seats),
         sampling_space(sampling_space) {
     // check the sizes are ok

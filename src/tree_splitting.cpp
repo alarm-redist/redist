@@ -504,115 +504,6 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
  * @return A vector of EdgeCut objects
  *
  */
-void get_all_valid_edges_in_undirected_tree(
-    std::vector<EdgeCut> &existing_cuts,
-    GraphEdgeIndex const &edge_index,
-    EdgeBitset const &forest_edges, 
-    const int root, const std::vector<unsigned int> &pop, TreePopStack &stack,
-    std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
-    const int min_potential_cut_size, const int max_potential_cut_size,
-    std::vector<int> const &smaller_cut_sizes_to_try, const int total_region_pop,
-    const int total_region_size, const double lower, const double upper, const double target) {
-
-    // this is the largest size a region can be
-    // If the population above is bigger than this you can terminate the serach
-    // since pop above only gets larger as you continue down the tree
-    double biggest_upper_bound = upper * max_potential_cut_size;
-
-    // this is the smallest size a region can be
-    // If the pop below is below this then you can terminate the search since
-    // pop below only gets smaller as you continue along the tree
-    double smallest_lower_bound = lower * min_potential_cut_size;
-
-    // Stack for DFS
-    // Elements are: vertex, parent, is_revisiting
-    stack.clear();
-    no_valid_edges_vertices[root] = false;
-
-
-    // Start by adding all the roots children to the stack
-    // This essentially iterates over each vertex which is adjacent
-    // to the root in the forest edge and applies the anonymous function
-    // so root_child is the neighbor of root
-    forest_edges.for_each_neighbor(root, edge_index, [&](int const root_child) {
-        stack.push({root_child, root, false});
-    });
-
-    // Loop until the stack is empty
-    while (!stack.empty()) {
-        // get the top of the stack
-        auto popped = stack.pop();
-
-        int const vtx = std::get<0>(popped);
-        int const parent = std::get<1>(popped);
-        bool const is_revisiting = std::get<2>(popped);
-
-        if (!is_revisiting) { // This is the first time visiting the node
-            no_valid_edges_vertices[vtx] = false;
-
-            // Push the vertex back onto the stack as "revisiting"
-            stack.push({vtx, parent, true});
-
-
-            // Push unvisited child vertices onto the stack to get pop below
-            // Again using the anonymous function
-            forest_edges.for_each_neighbor(vtx, edge_index, [&](int const child_vtx) {
-                // skip if its the parent
-                if (child_vtx == parent) {
-                    return;
-                }
-                stack.push({child_vtx, vtx, false});
-            });
-        } else if (no_valid_edges_vertices[vtx]) {
-            // if parent isn't valid then neither is its parent so mark that
-            no_valid_edges_vertices[parent] = true;
-        } else if (!no_valid_edges_vertices[parent]) {
-            // if revisiting it true that means we already visited all the nodes children
-            // so we can get pop_below
-            // if no valid edges is true we no there's no point in searching up this path
-            // anymore
-
-            // All children of this vertex are processed; calculate its population below
-            int pop_below_vtx = pop[vtx]; // Start with the vertex's own population
-            
-
-            // Add population below from each child
-            // again using anonymous lambdas
-            forest_edges.for_each_neighbor(vtx, edge_index, [&](int const child) {
-                // ignore the parent 
-                if (child == parent) {
-                    return;
-                }
-                // sum up the pop below 
-                pop_below_vtx += pops_below_vertex[child];
-            });
-
-            pops_below_vertex[vtx] = pop_below_vtx;
-
-            // Check if any cut can be made
-            // If pop below is too small we need to keep going up
-            if (pop_below_vtx < smallest_lower_bound ||
-                total_region_pop - pop_below_vtx > biggest_upper_bound) {
-                continue;
-            } else if (pop_below_vtx > biggest_upper_bound ||
-                       total_region_pop - pop_below_vtx < smallest_lower_bound) {
-                no_valid_edges_vertices[parent] = true;
-                continue;
-                // Recall pop below is only increasing for the parent so we can skip this entire
-                // lineage if we want
-            }
-
-            // See if any valid edge cuts can be made with this edge
-            // if yes,then the function will add them
-            get_all_valid_edge_cuts_from_edge(
-                existing_cuts,
-                root, vtx, parent, total_region_size, pops_below_vertex[vtx],
-                total_region_pop - pops_below_vertex[vtx], lower, upper,
-                smaller_cut_sizes_to_try);
-        }
-    }
-
-}
 
 /*
  * Calls the function `emit_valid_cut` on every potentially splittable edge 
@@ -2039,8 +1930,9 @@ double TreeSplitter::get_log_retroactive_splitting_prob_from_valid_pop_cut_list(
     // if not.
     auto it = std::find(valid_edges.begin(), valid_edges.end(), actual_cut_edge);
 
-    if constexpr (perf_config::bounds_checking){
-        if (it == valid_edges.end()) {
+    
+    if (it == valid_edges.end()) {
+        if constexpr (perf_config::bounds_checking){
             int region1_root = actual_cut_edge.tree_root;
             int region2_root = actual_cut_edge.cut_vertex;
             int region1_size = actual_cut_edge.cut_above_region_size;
@@ -2085,41 +1977,36 @@ double TreeSplitter::get_log_retroactive_splitting_prob_from_valid_pop_cut_list(
                     << ", log_prob=" << e.log_prob
                     << "\n";
             }
+            throw std::runtime_error(oss.str());
+        }else{
+            std::ostringstream oss;
+            oss << "Actual cut edge not found in retroactive "
+                << "valid-edge list.\n";
+            oss << "valid_edges.size()="
+                << valid_edges.size() << "\n";
 
             throw std::runtime_error(oss.str());
         }
     }
 
-    if (it == valid_edges.end()) {
-        std::ostringstream oss;
-        oss << "Actual cut edge not found in retroactive "
-            << "valid-edge list.\n";
-        oss << "valid_edges.size()="
-            << valid_edges.size() << "\n";
-
-        throw std::runtime_error(oss.str());
-    }
 
     int actual_cut_edge_index = std::distance(valid_edges.begin(), it);
-    
-    if constexpr (perf_config::bounds_checking){
-        if (actual_cut_edge_index < 0 ||
-        actual_cut_edge_index >= static_cast<int>(valid_edges.size())) {
-            std::ostringstream oss;
-            oss << "actual_cut_edge_index out of bounds. "
-                << "actual_cut_edge_index=" << actual_cut_edge_index
-                << ", valid_edges.size()=" << valid_edges.size();
 
-            throw std::runtime_error(oss.str());
-        }
-    }
+    double const log_selection_prob =
+        get_log_selection_prob(
+            valid_edges,
+            actual_cut_edge_index
+        );
 
     if (MERGED_TREE_SPLITTING_VERBOSE) {
-        REprintf("Actual Cut Edge at Index %d and so prob is %f \n", actual_cut_edge_index,
-                 get_log_selection_prob(valid_edges, actual_cut_edge_index));
+        REprintf(
+            "Actual Cut Edge at Index %d and so prob is %f\n",
+            actual_cut_edge_index,
+            log_selection_prob
+        );
     }
 
-    return get_log_selection_prob(valid_edges, actual_cut_edge_index);
+    return log_selection_prob;
 }
 
 void NaiveTopKSplitter::update_single_int_param(int int_param) {

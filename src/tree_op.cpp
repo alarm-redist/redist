@@ -242,13 +242,11 @@ void assign_region_id_and_forest_from_tree(const Tree &ust,  // const FlatGraph 
 
             if (u == parent) {
                 // Add the new tree edge from parent to v.
-                if constexpr (perf_config::supposedly_safe_input_checks){
-                    // this branch adds an extra check that we find a parent edge period. 
+                if constexpr (perf_config::supposedly_safe_input_checks) {
                     found_parent_edge = true;
-                }else{ 
-                    // else we're not checking if a parent edge was found so just set now 
-                    forest_edges.set_edge_id(incident_edge.edge_id);
                 }
+                // Set the edge 
+                forest_edges.set_edge_id(incident_edge.edge_id);
                 // continue so we don't remove this edge
                 continue;
             }

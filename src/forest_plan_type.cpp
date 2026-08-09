@@ -100,7 +100,6 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
     PlanMultigraph &plan_multigraph,
     const SplittingSchedule &splitting_schedule, USTSampler &ust_sampler,
     TreeSplitter &edge_splitter, ScoringFunction const &scoring_function) {
-    int const V = plan_multigraph.map_params.V;
 
     if constexpr (perf_config::object_integrity_checking){
         plan.check_forest_integrity(
@@ -187,156 +186,6 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
         );
     }
 
-    for (int v = 0; v < V; v++) {
-        // Find out which region this vertex corresponds to
-        auto v_region_num = plan.region_ids[v];
-        auto v_region_size = plan.region_sizes[v_region_num];
-
-        // check if its a region we want to find regions adjacent to
-        // and if not keep going
-        if (!splitting_schedule.check_adj_to_regions.at(v_region_size))
-            continue;
-
-        // now iterate over its neighbors
-        for (auto const v_nbor : plan_multigraph.map_params.g[v]) {
-            // find which region neighbor corresponds to
-            auto v_nbor_region_num = plan.region_ids[v_nbor];
-            // ignore if same region
-            if (v_region_num == v_nbor_region_num)
-                continue;
-
-            auto v_nbor_region_size = plan.region_sizes[v_nbor_region_num];
-            // else they are different so regions are adj
-            // check if we need to be aware of double counting. IE if both regions
-            // are ones where check adjacent is true then its possible to double count edges
-            bool const double_counting_possible =
-                splitting_schedule.check_adj_to_regions[v_nbor_region_size];
-            // ignore if double counting is possible and v is smaller region
-            if (double_counting_possible && v_region_num < v_nbor_region_num)
-                continue;
-
-            // see if this pair is one we count
-            auto search_result =
-                plan_multigraph.pair_map.get_value(v_nbor_region_num, v_region_num);
-
-            // plan_multigraph.Rprint();
-            // REprintf("(%d, %d) - (%u, %u)\n",
-            //     v, v_nbor, v_region_num, v_nbor_region_num);
-
-            // REprintf("Its %s and %s\n",
-            //     (search_result.first ? "TRUE" : "FALSE"),
-            // (std::get<3>(search_result.second) ? "TRUE" : "FALSE") );
-
-            // ignore if not a pair in the map or we're ignoring it for other reasons
-            if (!search_result.first || !search_result.second.count_pair)
-                continue;
-
-            // ignore if hierarchically adjacent but this edge isn't in the same county
-            if ((plan_multigraph.map_params.counties[v] !=
-                 plan_multigraph.map_params.counties[v_nbor]) &&
-                search_result.second.admin_adjacent)
-                continue;
-
-            // Now we can get the effective boundary length
-            auto merged_region_size = v_region_size + v_nbor_region_size;
-            auto cut_size_bounds =
-                splitting_schedule
-                    .all_regions_min_and_max_possible_cut_sizes[merged_region_size];
-            auto min_possible_cut_size = cut_size_bounds.first;
-            auto max_possible_cut_size = cut_size_bounds.second;
-
-            double log_edge_selection_prob =
-                edge_splitter.get_log_retroactive_splitting_prob_for_joined_packed_tree(
-                    plan_multigraph.map_params, scoring_function, forest_edges,
-                    ust_sampler.pops_below_vertex, v,
-                    v_nbor, plan, min_possible_cut_size, max_possible_cut_size,
-                    splitting_schedule
-                        .all_regions_smaller_cut_sizes_to_try[merged_region_size]);
-
-            // we add to the boundary
-            plan_multigraph.pair_map.add_to_eff_boundary(v_region_num, v_nbor_region_num,
-                                                         std::exp(log_edge_selection_prob));
-
-            // Rprintf("Adding (%d,%d) w/ %.4f\n", v, v_nbor,
-            // std::exp(log_edge_selection_prob));
-        }
-    }
-
-    // now make the output vector
-    std::vector<std::tuple<RegionID, RegionID, double>> OLD_region_pairs_tuple_vec;
-    OLD_region_pairs_tuple_vec.reserve(plan_multigraph.pair_map.num_hashed_pairs);
-
-    for (auto const key_val_pair : plan_multigraph.pair_map.get_all_values()) {
-        OLD_region_pairs_tuple_vec.emplace_back(
-            key_val_pair.first.first, key_val_pair.first.second, 
-            std::log(key_val_pair.second.eff_boundary_len)); 
-    }
-    
-
-    if (OLD_region_pairs_tuple_vec.size() != region_pairs_tuple_vec.size()){
-        throw std::runtime_error("Ru ro no match!\n");
-    }
-
-    for (size_t i = 0; i < OLD_region_pairs_tuple_vec.size(); i++)
-    {
-        RegionID const new_region1_id =
-            std::get<0>(region_pairs_tuple_vec[i]);
-        RegionID const new_region2_id =
-            std::get<1>(region_pairs_tuple_vec[i]);
-
-        RegionID const old_region1_id =
-            std::get<0>(OLD_region_pairs_tuple_vec[i]);
-        RegionID const old_region2_id =
-            std::get<1>(OLD_region_pairs_tuple_vec[i]);
-
-        if (
-            new_region1_id != old_region1_id ||
-            new_region2_id != old_region2_id
-        ) {
-            std::ostringstream oss;
-            oss << "Region pair order mismatch at index " << i << ".\n"
-                << "New pair = ("
-                << static_cast<int>(new_region1_id) << ", "
-                << static_cast<int>(new_region2_id) << ")\n"
-                << "Old pair = ("
-                << static_cast<int>(old_region1_id) << ", "
-                << static_cast<int>(old_region2_id) << ")\n";
-
-            throw std::runtime_error(oss.str());
-        }
-        double const new_log_edge_selection_prob = std::get<2>(region_pairs_tuple_vec[i]);
-        double const old_log_edge_selection_prob = std::get<2>(OLD_region_pairs_tuple_vec[i]);
-
-        double const abs_diff =
-            std::fabs(
-                new_log_edge_selection_prob -
-                old_log_edge_selection_prob
-            );
-
-        double const scale =
-            std::max({
-                1.0,
-                std::fabs(new_log_edge_selection_prob),
-                std::fabs(old_log_edge_selection_prob)
-            });
-
-        double const rel_scaled_diff = abs_diff / scale;
-
-        if (rel_scaled_diff > 1e-12) {
-            std::cout
-                << "MISMATCH: New is "
-                << new_log_edge_selection_prob
-                << " and old is "
-                << old_log_edge_selection_prob
-                << ". Absolute diff = "
-                << abs_diff
-                << ", scaled diff = "
-                << rel_scaled_diff
-                << '\n';
-        }
-    }
-    
-
     return region_pairs_tuple_vec;
 }
 
@@ -369,8 +218,6 @@ double ForestPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
                                             TreeSplitter &tree_splitter,
                                             ScoringFunction const &scoring_function,
                                             const int region1_id, int const region2_id) const {
-    // reset the neccesary variables
-    tree_splitter.stack.clear();
 
     if constexpr (perf_config::object_integrity_checking){
         check_forest_integrity(
@@ -379,7 +226,6 @@ double ForestPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
         );
     }
 
-    int const V = plan_multigraph.map_params.V;
     int const merged_region_size = region_sizes[region1_id] + region_sizes[region2_id];
 
     auto cut_size_bounds =
@@ -413,65 +259,5 @@ double ForestPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
                             .all_regions_smaller_cut_sizes_to_try[merged_region_size],
                         count_edges_across);
 
-    // To save time we'll wait until we find vertices in the region 
-    double tree_selection_probs = 0.0;
-    for (int v = 0; v < V; v++) {
-        if (region_ids[v] != region1_id)
-            continue; // Only count if starting vertex in region 1
-        auto v_county = plan_multigraph.map_params.counties[v];
-        for (auto nbor : plan_multigraph.map_params.g[v]) {
-            // ignore if not region 2
-            if (region_ids[nbor] != region2_id)
-                continue;
-            // ignore if we can't count this boundary
-            if (v_county != plan_multigraph.map_params.counties[nbor] && !count_edges_across)
-                continue;
-
-            double log_edge_selection_prob =
-                tree_splitter.get_log_retroactive_splitting_prob_for_joined_packed_tree(
-                    plan_multigraph.map_params, scoring_function, forest_edges,
-                    ust_sampler.pops_below_vertex, v,
-                    nbor, *this, min_possible_cut_size, max_possible_cut_size,
-                    splitting_schedule
-                        .all_regions_smaller_cut_sizes_to_try[merged_region_size]);
-
-            tree_selection_probs += std::exp(log_edge_selection_prob);
-        }
-    }
-
-
-
-    double const new_log_edge_selection_prob = log_eff_boundary;
-    double const old_log_edge_selection_prob =
-        std::log(tree_selection_probs);
-
-    double const abs_diff =
-        std::fabs(
-            new_log_edge_selection_prob -
-            old_log_edge_selection_prob
-        );
-
-    double const scale =
-        std::max({
-            1.0,
-            std::fabs(new_log_edge_selection_prob),
-            std::fabs(old_log_edge_selection_prob)
-        });
-
-    double const rel_scaled_diff = abs_diff / scale;
-
-    if (rel_scaled_diff > 1e-12) {
-        std::cout
-            << "MISMATCH: New is "
-            << new_log_edge_selection_prob
-            << " and old is "
-            << old_log_edge_selection_prob
-            << ". Absolute diff = "
-            << abs_diff
-            << ", scaled diff = "
-            << rel_scaled_diff
-            << '\n';
-    }
-
-    return std::log(tree_selection_probs);
+    return log_eff_boundary;
 }
