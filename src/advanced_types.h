@@ -618,11 +618,11 @@ class MapParams {
     double const lower;                  // lower bound on district population
     double const target;                 // target district population
     double const upper;                  // upper bound on district population
-    int const smallest_district_size;    // smallest district size
-    int const largest_district_size;     // largest district size
-    std::vector<int> const district_seat_sizes; // vector of all district seat sizes
     std::vector<bool> const
         is_district;   // of length total_seats that says whether or not that size is a district
+    std::vector<int> const district_seat_sizes; // vector of all district seat sizes
+    int const smallest_district_size;    // smallest district size
+    int const largest_district_size;     // largest district size
     bool const is_mmd; // Whether or not multimember districting
     SamplingSpace const sampling_space;
 };

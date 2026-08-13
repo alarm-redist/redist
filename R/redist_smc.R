@@ -680,13 +680,15 @@ redist_smc <- function(
           dplyr::n_distinct(rs_idx[seq_along(rs_idx)])
         )
                 # need to add unique after resample
-                nunique_plans <- c(
-            algout$nunique_plans,
-            nrow(get_plan_counts(
-                algout$plans, dplyr::n_distinct(algout$plans[,1]),
-                TRUE, ncores
-            ))
-        )
+                # TODO switch resampling to c++ to avoid memory usage
+        #         nunique_plans <- c(
+        #     algout$nunique_plans,
+        #     nrow(get_plan_counts(
+        #         algout$plans, dplyr::n_distinct(algout$plans[,1]),
+        #         TRUE, ncores
+        #     ))
+        # )
+                nunique_plans <- algout$nunique_plans
             } else {
                 nunique_parent_indices <- algout$nunique_parent_indices
                 nunique_plans <- algout$nunique_plans

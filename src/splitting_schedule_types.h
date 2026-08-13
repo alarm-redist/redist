@@ -41,7 +41,7 @@ class SplittingSchedule {
                                         "the total number of seats!\n");
               } else if (ndists != total_seats) {
                   for (auto const &a_size : district_seat_sizes) {
-                      if (a_size < 0)
+                      if (a_size <= 0)
                           throw Rcpp::exception(
                               "District Seat Sizes must be strictly positive!\n");
                       if (a_size >= total_seats)
