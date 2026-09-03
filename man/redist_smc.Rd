@@ -23,7 +23,11 @@ redist_smc(
   final_infl = 1,
   ref_name = NULL,
   verbose = FALSE,
-  silent = FALSE
+  silent = FALSE,
+  checkpoint_file = NULL,
+  checkpoint_every = 1L,
+  resume = FALSE,
+  checkpoint_compress = TRUE
 )
 }
 \arguments{
@@ -113,6 +117,34 @@ output. Defaults to the column name of the existing plan.}
 Recommended.}
 
 \item{silent}{Whether to suppress all diagnostic information.}
+
+\item{checkpoint_file}{An optional file path. If provided, the sampler writes
+its full state to this file (atomically) after every \code{checkpoint_every}
+splits, and again after the final split, so that an interrupted run can be
+resumed with \code{resume = TRUE}. Only supported with \code{runs = 1}, and
+currently incompatible with a user-supplied \code{init_particles} or
+\code{n_steps}. The file is roughly the size of the plan matrix, so at large
+scale you will want \code{checkpoint_every > 1}.}
+
+\item{checkpoint_every}{How many splits to complete between checkpoint writes.
+The default, \code{1}, writes after every split. Larger values reduce I/O at the
+cost of redoing more work after a crash. The final split is always
+checkpointed.}
+
+\item{resume}{If \code{TRUE} and \code{checkpoint_file} exists, resume sampling
+from that checkpoint instead of starting over. Structural arguments (the map,
+\code{nsims}, \code{compactness}, \code{counties}, and \code{constraints}) must
+match the checkpointed run; tuning parameters (\code{pop_temper},
+\code{final_infl}, \code{seq_alpha}, \code{adapt_k_thresh}) may be changed and
+take effect from the resumed split onward. A resumed run reproduces an
+uninterrupted run exactly when \code{ncores = 1}; with more cores the sampler is
+already not reproducible via \code{\link[=set.seed]{set.seed()}}, and resume is
+statistically valid but not bit-identical. If the file does not exist, a new run
+is started.}
+
+\item{checkpoint_compress}{Passed to \code{\link[=saveRDS]{saveRDS()}} as
+\code{compress} when writing the checkpoint. \code{TRUE} (the default) uses gzip;
+\code{FALSE} writes faster but produces a much larger file.}
 }
 \value{
 \code{redist_smc} returns a \link{redist_plans} object containing the simulated

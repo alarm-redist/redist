@@ -161,6 +161,113 @@ test_that("SMC checks arguments", {
     expect_error(redist_smc(fl_map, 0), "positive")
 })
 
+test_that("checkpoint arguments are validated", {
+    expect_error(redist_smc(fl_map, 10, checkpoint_file = tempfile(), runs = 2),
+        "runs = 1")
+    expect_error(redist_smc(fl_map, 10, resume = TRUE), "checkpoint_file")
+    expect_error(
+        redist_smc(fl_map, 10, checkpoint_file = tempfile(), resume = TRUE,
+                   init_particles = matrix(0L, nrow(fl_map), 10)),
+        "cannot be combined")
+})
+
+test_that("checkpointing does not change SMC results", {
+    skip_on_cran()
+    ckpt <- tempfile(fileext = ".rds")
+    on.exit(unlink(ckpt), add = TRUE)
+
+    set.seed(2024)
+    a <- redist_smc(fl_map, 50, silent = TRUE)
+    set.seed(2024)
+    b <- redist_smc(fl_map, 50, silent = TRUE,
+        checkpoint_file = ckpt, checkpoint_every = 1L)
+
+    expect_identical(get_plans_matrix(a), get_plans_matrix(b))
+    expect_equal(weights(a), weights(b))
+
+    expect_true(file.exists(ckpt))
+    ck <- readRDS(ckpt)
+    expect_identical(ck$state$completed_steps, attr(fl_map, "ndists") - 1L)
+    expect_true(is.matrix(ck$state$districts))
+    expect_length(ck$state$rng, 6L)
+})
+
+test_that("resuming from a completed checkpoint reproduces the run", {
+    skip_on_cran()
+    ckpt <- tempfile(fileext = ".rds")
+    on.exit(unlink(ckpt), add = TRUE)
+
+    set.seed(99)
+    a <- redist_smc(fl_map, 50, silent = TRUE,
+        checkpoint_file = ckpt, checkpoint_every = 1L)
+    b <- redist_smc(fl_map, 50, silent = TRUE,
+        checkpoint_file = ckpt, resume = TRUE)
+
+    expect_identical(get_plans_matrix(a), get_plans_matrix(b))
+    expect_equal(weights(a), weights(b))
+})
+
+test_that("resume refuses a mismatched checkpoint", {
+    skip_on_cran()
+    ckpt <- tempfile(fileext = ".rds")
+    on.exit(unlink(ckpt), add = TRUE)
+
+    set.seed(1)
+    redist_smc(fl_map, 30, silent = TRUE, checkpoint_file = ckpt)
+    expect_error(
+        redist_smc(fl_map, 60, silent = TRUE, checkpoint_file = ckpt, resume = TRUE),
+        "does not match")
+})
+
+test_that("resuming mid-run reproduces an uninterrupted run bit-for-bit", {
+    skip_on_cran()
+    ndists <- attr(fl_map, "ndists")
+    skip_if(ndists < 3, "need at least two splits to test a mid-run resume")
+
+    adj  <- get_adj(fl_map)
+    pop  <- fl_map[[attr(fl_map, "pop_col")]]
+    pb   <- attr(fl_map, "pop_bounds")
+    V    <- nrow(fl_map)
+    N    <- 40L
+    lags <- 1 + unique(round((ndists - 1)^0.8 * seq(0, 0.7, length.out = 4)^0.9))
+    base_ctrl <- list(adapt_k_thresh = 0.99, seq_alpha = 0.5, pop_temper = 0,
+        final_infl = 1, lags = lags, cores = 1L)
+
+    # uninterrupted reference, direct from the C++ entry point
+    set.seed(42)
+    ref <- smc_plans(N, adj, rep(1, V), pop, ndists, pb[2], pb[1], pb[3], 1,
+        matrix(0L, V, N), 0L, ndists - 1L, list(), base_ctrl, 0L)
+
+    # same run, but grab the checkpoint state after the first split
+    saved <- NULL
+    ctrl_ckpt <- c(base_ctrl, list(checkpoint_every = 1L,
+        checkpoint_fn = function(state) {
+            if (is.null(saved) && state$completed_steps == 1L) saved <<- state
+            invisible(NULL)
+        }))
+    set.seed(42)
+    invisible(smc_plans(N, adj, rep(1, V), pop, ndists, pb[2], pb[1], pb[3], 1,
+        matrix(0L, V, N), 0L, ndists - 1L, list(), ctrl_ckpt, 0L))
+    expect_false(is.null(saved))
+    expect_identical(saved$completed_steps, 1L)
+
+    # resume from that 1-split checkpoint
+    ip <- saved$districts
+    storage.mode(ip) <- "integer"
+    rs <- saved
+    rs$districts <- NULL
+    ctrl_res <- c(base_ctrl, list(resume_state = rs))
+    set.seed(1)  # deliberately different; the restored RNG state must dominate
+    resumed <- smc_plans(N, adj, rep(1, V), pop, ndists, pb[2], pb[1], pb[3], 1,
+        ip, 0L, ndists - 1L, list(), ctrl_res, 0L)
+
+    expect_identical(resumed$plans, ref$plans)
+    expect_equal(resumed$lp, ref$lp)
+    expect_equal(resumed$est_k, ref$est_k)
+    expect_equal(resumed$step_n_eff, ref$step_n_eff)
+    expect_equal(resumed$accept_rate, ref$accept_rate)
+})
+
 test_that("Parallel runs are reproducible", {
     set.seed(5118)
     pl1 <- redist_smc(fl_map, 100, runs = 2, silent = TRUE)

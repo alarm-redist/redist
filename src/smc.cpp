@@ -9,6 +9,97 @@
 
 
 /*
+ * Serialize the evolving SMC loop state into an R list for checkpointing.
+ *
+ * `completed` is the number of splits fully finished so far (equivalently, the
+ * `i_split` value of the next split to run). The plan matrix is included so the
+ * checkpoint file is self-contained.
+ */
+static List smc_serialize_state(const umat &districts, const vec &lp,
+                                const vec &log_temper, const vec &pop_left,
+                                const umat &ancestors, const vec &cum_wgt,
+                                const std::vector<int> &cut_k,
+                                const std::vector<int> &n_unique,
+                                const std::vector<double> &n_eff,
+                                const std::vector<double> &accept_rate,
+                                const std::vector<double> &sd_lp,
+                                const std::vector<double> &sd_temper,
+                                int completed) {
+    return List::create(
+        _["completed_steps"] = completed,
+        _["districts"] = districts,
+        _["lp"] = lp,
+        _["log_temper"] = log_temper,
+        _["pop_left"] = pop_left,
+        _["ancestors"] = ancestors,
+        _["cum_wgt"] = cum_wgt,
+        _["cut_k"] = wrap(cut_k),
+        _["n_unique"] = wrap(n_unique),
+        _["n_eff"] = wrap(n_eff),
+        _["accept_rate"] = wrap(accept_rate),
+        _["sd_lp"] = wrap(sd_lp),
+        _["sd_temper"] = wrap(sd_temper),
+        _["rng"] = rng_state_get()
+    );
+}
+
+/*
+ * Restore SMC loop state from a checkpoint list produced by
+ * `smc_serialize_state()`.
+ *
+ * `districts` is deliberately NOT restored here: on resume the caller passes the
+ * checkpoint's plan matrix directly as the `districts` argument, which avoids a
+ * second allocation of a (potentially very large) V-by-N matrix. The number of
+ * already-completed splits is returned through `completed`. The diagnostic
+ * vectors are expected to already be sized to `n_steps`.
+ */
+static void smc_restore_state(List state, int n_steps,
+                              vec &lp, vec &log_temper, vec &pop_left,
+                              umat &ancestors, vec &cum_wgt,
+                              std::vector<int> &cut_k,
+                              std::vector<int> &n_unique,
+                              std::vector<double> &n_eff,
+                              std::vector<double> &accept_rate,
+                              std::vector<double> &sd_lp,
+                              std::vector<double> &sd_temper,
+                              int &completed) {
+    completed = as<int>(state["completed_steps"]);
+    lp = as<vec>(state["lp"]);
+    log_temper = as<vec>(state["log_temper"]);
+    pop_left = as<vec>(state["pop_left"]);
+    ancestors = as<umat>(state["ancestors"]);
+    cum_wgt = as<vec>(state["cum_wgt"]);
+
+    std::vector<int> ck = as<std::vector<int>>(state["cut_k"]);
+    std::vector<int> nu = as<std::vector<int>>(state["n_unique"]);
+    std::vector<double> ne = as<std::vector<double>>(state["n_eff"]);
+    std::vector<double> ar = as<std::vector<double>>(state["accept_rate"]);
+    std::vector<double> sl = as<std::vector<double>>(state["sd_lp"]);
+    std::vector<double> st = as<std::vector<double>>(state["sd_temper"]);
+
+    if ((int) ck.size() != n_steps || (int) nu.size() != n_steps ||
+        (int) ne.size() != n_steps || (int) ar.size() != n_steps ||
+        (int) sl.size() != n_steps || (int) st.size() != n_steps) {
+        Rcpp::stop("Checkpoint diagnostic vectors are inconsistent with the current "
+                   "run parameters (expected length %d). Refusing to resume.", n_steps);
+    }
+    if (completed < 1 || completed > n_steps) {
+        Rcpp::stop("Checkpoint reports %d completed splits, out of range [1, %d].",
+                   completed, n_steps);
+    }
+
+    cut_k = ck;
+    n_unique = nu;
+    n_eff = ne;
+    accept_rate = ar;
+    sd_lp = sl;
+    sd_temper = st;
+
+    rng_state_set(as<Rcpp::IntegerVector>(state["rng"]));
+}
+
+
+/*
  * Main entry point.
  *
  * Sample `N` redistricting plans on map `g`, ensuring that the maximum
@@ -27,6 +118,20 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     double pop_temper = (double) control["pop_temper"];
     double final_infl = (double) control["final_infl"];
     std::vector<int> lags = as<std::vector<int>>(control["lags"]);
+
+    // checkpoint / resume plumbing (all optional, passed through `control`)
+    SEXP resume_sexp = control.containsElementNamed("resume_state") ?
+        (SEXP) control["resume_state"] : R_NilValue;
+    SEXP ckpt_sexp = control.containsElementNamed("checkpoint_fn") ?
+        (SEXP) control["checkpoint_fn"] : R_NilValue;
+    bool do_resume = !Rf_isNull(resume_sexp);
+    bool do_ckpt = !Rf_isNull(ckpt_sexp);
+    Rcpp::Function ckpt_fn = do_ckpt ? Rcpp::Function(ckpt_sexp) :
+        Rcpp::Function("identity");
+    int ckpt_every = 1;
+    if (control.containsElementNamed("checkpoint_every"))
+        ckpt_every = as<int>(control["checkpoint_every"]);
+    if (ckpt_every < 1) ckpt_every = 1;
 
     int cores = (int) control["cores"];
     if (cores <= 0) cores = std::thread::hardware_concurrency();
@@ -73,7 +178,10 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     }
 
     vec pop_left(N);
-    if (n_drawn == 0) {
+    if (do_resume) {
+        // pop_left is restored from the checkpoint below
+        pop_left.zeros();
+    } else if (n_drawn == 0) {
         pop_left.fill(total_pop);
     } else {
         // compute population not assigned (i.e., in district '0')
@@ -100,12 +208,26 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     vec cum_wgt(N, fill::value(1.0 / N));
     cum_wgt = cumsum(cum_wgt);
 
+    // On resume, overwrite the freshly-initialized loop state with the
+    // checkpointed values. `districts` is already the checkpoint's plan matrix
+    // (passed in as the `districts` argument). `resume_from` is the number of
+    // splits already completed; the loop below skips them.
+    int resume_from = 0;
+    if (do_resume) {
+        smc_restore_state(as<List>(resume_sexp), n_steps,
+                          lp, log_temper, pop_left, ancestors, cum_wgt,
+                          cut_k, n_unique, n_eff, accept_rate, sd_lp, sd_temper,
+                          resume_from);
+    }
+
     RcppThread::ThreadPool pool(cores);
 
     std::string bar_fmt = "Split [{cli::pb_current}/{cli::pb_total}] {cli::pb_bar} | ETA{cli::pb_eta}";
     RObject bar = cli_progress_bar(n_steps, cli_config(false, bar_fmt.c_str()));
+    if (do_resume && verbosity == 1)
+        cli_progress_set(bar, resume_from);
     try {
-    for (int ctr = n_drawn + 1; ctr <= n_drawn + n_steps; ctr++) {
+    for (int ctr = n_drawn + 1 + resume_from; ctr <= n_drawn + n_steps; ctr++) {
         int i_split = ctr - n_drawn - 1;
         if (verbosity >= 3) {
             Rcout << "Making split " << ctr - n_drawn << " of " << n_steps;
@@ -142,6 +264,18 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
 
         if (verbosity == 1 && CLI_SHOULD_TICK)
             cli_progress_set(bar, i_split);
+
+        // write a checkpoint after this split if requested
+        if (do_ckpt) {
+            int completed = i_split + 1;
+            if (completed == n_steps || completed % ckpt_every == 0) {
+                ckpt_fn(smc_serialize_state(districts, lp, log_temper, pop_left,
+                                            ancestors, cum_wgt, cut_k, n_unique,
+                                            n_eff, accept_rate, sd_lp, sd_temper,
+                                            completed));
+            }
+        }
+
         Rcpp::checkUserInterrupt();
     } // end for
     } catch (Rcpp::internal::InterruptedException e) {

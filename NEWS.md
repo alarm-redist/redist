@@ -1,3 +1,17 @@
+# redist 4.3.2.9000
+
+* `redist_smc()` gains checkpoint/resume support through the new
+  `checkpoint_file`, `checkpoint_every`, `resume`, and `checkpoint_compress`
+  arguments. When `checkpoint_file` is set, the full sampler state is written to
+  disk (atomically) after every `checkpoint_every` splits and after the final
+  split; passing `resume = TRUE` continues an interrupted run from the last
+  checkpoint. A resumed run reproduces an uninterrupted run bit-for-bit when
+  `ncores = 1`. Currently limited to `runs = 1` and incompatible with a
+  user-supplied `init_particles` or `n_steps`.
+* An interrupted `redist_smc()` run now aborts with a clear message (and, when
+  checkpointing is enabled, instructions to resume) instead of erroring later
+  on an empty result.
+
 # redist 4.3.2
 
 * Allows for parallel flip with `chains` argument in `redist_flip()`.

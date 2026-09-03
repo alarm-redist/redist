@@ -14,6 +14,18 @@ using namespace arma;
 void seed_rng(int seed);
 
 /*
+ * Get / restore the internal RNG state, for checkpoint / resume.
+ *
+ * The state is packed into a length-6 integer vector by bit-casting:
+ *   [0:1] = state_sr    (one uint64_t)
+ *   [2:5] = state_xo[4] (four uint32_t)
+ * The integers are opaque (they may read as negative or as NA); only their
+ * bit patterns matter, and they round-trip exactly through save / load.
+ */
+Rcpp::IntegerVector rng_state_get();
+void rng_state_set(const Rcpp::IntegerVector& state);
+
+/*
  * Generate a uniform random integer in [0, max). Very slightly biased.
  */
 int r_int(uint32_t max);
