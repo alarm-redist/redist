@@ -100,6 +100,29 @@
 #' @param verbose Whether to print out intermediate information while sampling.
 #' Recommended.
 #' @param silent Whether to suppress all diagnostic information.
+#' @param checkpoint_file An optional file path. If provided, the sampler writes
+#' its full state to this file (atomically) after every `checkpoint_every`
+#' splits, and again after the final split, so that an interrupted run can be
+#' resumed with `resume = TRUE`. Only supported with `runs = 1`, and currently
+#' incompatible with a user-supplied `init_particles` or `n_steps`. The file is
+#' roughly the size of the plan matrix, so at large scale you will want
+#' `checkpoint_every > 1`.
+#' @param checkpoint_every How many splits to complete between checkpoint
+#' writes. The default, `1`, writes after every split. Larger values reduce I/O
+#' at the cost of redoing more work after a crash. The final split is always
+#' checkpointed.
+#' @param resume If `TRUE` and `checkpoint_file` exists, resume sampling from
+#' that checkpoint instead of starting over. Structural arguments (the map,
+#' `nsims`, `compactness`, `counties`, and `constraints`) must match the
+#' checkpointed run; tuning parameters (`pop_temper`, `final_infl`, `seq_alpha`,
+#' `adapt_k_thresh`) may be changed and take effect from the resumed split
+#' onward. A resumed run reproduces an uninterrupted run exactly when
+#' `ncores = 1`; with more cores the sampler is already not reproducible via
+#' [set.seed()], and resume is statistically valid but not bit-identical. If the
+#' file does not exist, a new run is started.
+#' @param checkpoint_compress Passed to [saveRDS()] as `compress` when writing
+#' the checkpoint. `TRUE` (the default) uses gzip; `FALSE` writes faster but
+#' produces a much larger file.
 #'
 #' @return `redist_smc` returns a [redist_plans] object containing the simulated
 #' plans.
@@ -136,7 +159,9 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
                        n_steps = NULL, adapt_k_thresh = 0.99, seq_alpha = 0.5,
                        truncate = (compactness != 1), trunc_fn = redist_quantile_trunc,
                        pop_temper = 0, final_infl = 1,
-                       ref_name = NULL, verbose = FALSE, silent = FALSE) {
+                       ref_name = NULL, verbose = FALSE, silent = FALSE,
+                       checkpoint_file = NULL, checkpoint_every = 1L, resume = FALSE,
+                       checkpoint_compress = TRUE) {
     map <- validate_redist_map(map)
     V <- nrow(map)
     adj <- get_adj(map)
@@ -149,6 +174,27 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
         cli::cli_abort("{.arg seq_alpha} must lie in (0, 1].")
     if (nsims < 1)
         cli::cli_abort("{.arg nsims} must be positive.")
+
+    # checkpoint / resume argument validation
+    if (!is.null(checkpoint_file)) {
+        if (!is.character(checkpoint_file) || length(checkpoint_file) != 1L)
+            cli::cli_abort("{.arg checkpoint_file} must be a single file path or {.code NULL}.")
+        if (runs > 1L)
+            cli::cli_abort(c(
+                "{.arg checkpoint_file} is only supported with {.code runs = 1}.",
+                "i" = "For multiple runs, call {.fn redist_smc} once per run, each with its
+                       own {.arg checkpoint_file}, then combine with {.fn rbind}."))
+        checkpoint_every <- as.integer(checkpoint_every)
+        if (is.na(checkpoint_every) || checkpoint_every < 1L)
+            cli::cli_abort("{.arg checkpoint_every} must be a positive integer.")
+        checkpoint_file <- path.expand(checkpoint_file)
+    } else if (isTRUE(resume)) {
+        cli::cli_abort("{.arg resume} requires {.arg checkpoint_file} to be set.")
+    }
+    if (isTRUE(resume) && !is.null(init_particles))
+        cli::cli_abort("{.arg resume} cannot be combined with a user-supplied {.arg init_particles}.")
+    if (isTRUE(resume) && !is.null(n_steps))
+        cli::cli_abort("{.arg resume} does not support an explicit {.arg n_steps}.")
 
     counties <- rlang::eval_tidy(rlang::enquo(counties), map)
     if (is.null(counties)) {
@@ -198,6 +244,52 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
             "x" = "Redistricting impossible."))
     }
 
+    # checkpoint metadata: identifies the run a checkpoint belongs to. Tuning
+    # parameters are deliberately excluded so they can be changed on resume.
+    ckpt_meta <- list(
+        redist_version = as.character(packageVersion("redist")),
+        V = V, nsims = as.integer(nsims), ndists = as.integer(ndists),
+        compactness = compactness, pop_bounds = pop_bounds, counties = counties,
+        adj_fingerprint = c(n = length(adj), deg = sum(lengths(adj)),
+                            checksum = sum(as.numeric(unlist(adj)))),
+        constraints = constraints
+    )
+
+    # resume: load a matching checkpoint and hand its state to the sampler
+    resume_state <- NULL
+    if (isTRUE(resume) && file.exists(checkpoint_file)) {
+        ck <- readRDS(checkpoint_file)
+        if (!is.list(ck) || is.null(ck$state) || is.null(ck$meta))
+            cli::cli_abort("{.file {checkpoint_file}} is not a valid {.pkg redist} SMC checkpoint.")
+        structural <- c("V", "nsims", "ndists", "compactness", "pop_bounds",
+                        "counties", "adj_fingerprint")
+        if (!identical(ck$meta[structural], ckpt_meta[structural]))
+            cli::cli_abort(c(
+                "Checkpoint {.file {checkpoint_file}} does not match this call.",
+                "x" = "The map, {.arg nsims}, {.arg ndists}, {.arg compactness}, or
+                       {.arg counties} differ from the checkpointed run.",
+                "i" = "Resuming would produce invalid results; restore the original
+                       arguments or start a fresh run."))
+        if (!identical(ck$meta$constraints, ckpt_meta$constraints))
+            cli::cli_warn(c(
+                "Constraints differ from the checkpointed run, or could not be
+                 compared exactly.",
+                "i" = "Resuming anyway; results may be invalid if the constraints
+                       actually changed."))
+        if (!identical(ck$meta$redist_version, ckpt_meta$redist_version))
+            cli::cli_warn("Checkpoint was written by {.pkg redist} {ck$meta$redist_version};
+                           running {ckpt_meta$redist_version}. Resuming anyway.")
+        resume_state <- ck$state
+        init_particles <- resume_state$districts
+        storage.mode(init_particles) <- "integer"
+        resume_state$districts <- NULL
+        if (!silent)
+            cli::cli_inform("Resuming SMC from checkpoint: {resume_state$completed_steps} of
+                             {ndists - 1L} split{?s} already completed.")
+    } else if (isTRUE(resume) && !silent) {
+        cli::cli_inform("No checkpoint found at {.file {checkpoint_file}}; starting a new run.")
+    }
+
     # handle particle inits
     if (is.null(init_particles)) {
         init_particles <- matrix(0L, nrow = V, ncol = nsims)
@@ -211,6 +303,12 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
     }
     if (is.null(n_steps)) {
         n_steps <- ndists - n_drawn - 1L
+    }
+    if (!is.null(resume_state)) {
+        # Resume keeps the whole-run framing (n_drawn = 0, all splits); the
+        # sampler skips already-completed splits via `completed_steps`.
+        n_drawn <- 0L
+        n_steps <- ndists - 1L
     }
     final_dists <- n_drawn + n_steps + 1L
     if (final_dists > ndists) {
@@ -236,6 +334,27 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
                     final_infl = final_infl,
                     lags = lags,
                     cores = as.integer(ncores_per))
+
+    # wire up checkpointing (runs == 1 only, enforced above). The closure
+    # captures `checkpoint_file`, `ckpt_meta`, and `checkpoint_compress` from
+    # this frame; none are reassigned after this point.
+    if (!is.null(checkpoint_file)) {
+        control$checkpoint_every <- checkpoint_every
+        control$checkpoint_fn <- function(state) {
+            tryCatch({
+                tmp <- paste0(checkpoint_file, ".tmp")
+                saveRDS(list(meta = ckpt_meta, state = state), tmp,
+                        compress = checkpoint_compress)
+                file.rename(tmp, checkpoint_file)
+            }, error = function(e) {
+                cli::cli_warn("Checkpoint write failed (continuing): {conditionMessage(e)}")
+            })
+            invisible(NULL)
+        }
+    }
+    if (!is.null(resume_state)) {
+        control$resume_state <- resume_state
+    }
 
 
     if (ncores_runs > 1) {
@@ -271,6 +390,16 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
         if (length(algout) == 0) {
             cli::cli_process_done()
             cli::cli_process_done()
+            if (!is.null(checkpoint_file) && file.exists(checkpoint_file)) {
+                cli::cli_abort(c(
+                    "SMC sampling was interrupted.",
+                    "i" = "Progress through the last completed split is saved in
+                           {.file {checkpoint_file}}.",
+                    ">" = "Resume with {.code resume = TRUE}."), call = NULL)
+            } else {
+                cli::cli_abort("SMC sampling was interrupted before any results were produced.",
+                    call = NULL)
+            }
         }
 
         lr <- -algout$lp

@@ -1,5 +1,7 @@
 #include "random.h"
 
+#include <cstring>
+
 std::random_device rd;
 
 
@@ -57,6 +59,32 @@ void seed_rng(int seed) {
     state_xo[1] = (uint32_t) (next_sr() >> 32);
     state_xo[2] = (uint32_t) (next_sr() >> 32);
     state_xo[3] = (uint32_t) (next_sr() >> 32);
+}
+
+/*
+ * Snapshot the internal RNG state for checkpointing. See random.h.
+ */
+Rcpp::IntegerVector rng_state_get() {
+    static_assert(sizeof(uint64_t) == 2 * sizeof(int32_t),
+                  "unexpected integer widths for RNG state packing");
+    static_assert(sizeof(uint32_t) == sizeof(int32_t),
+                  "unexpected integer widths for RNG state packing");
+    Rcpp::IntegerVector out(6);
+    std::memcpy(out.begin(), &state_sr, sizeof(uint64_t));
+    std::memcpy(out.begin() + 2, &(state_xo[0]), 4 * sizeof(uint32_t));
+    return out;
+}
+
+/*
+ * Restore a previously snapshotted RNG state. See random.h.
+ */
+void rng_state_set(const Rcpp::IntegerVector& state) {
+    if (state.size() != 6)
+        Rcpp::stop("Invalid RNG state vector (expected length 6, got %d).",
+                   (int) state.size());
+    Rcpp::IntegerVector s(state);
+    std::memcpy(&state_sr, s.begin(), sizeof(uint64_t));
+    std::memcpy(&(state_xo[0]), s.begin() + 2, 4 * sizeof(uint32_t));
 }
 
 /*
