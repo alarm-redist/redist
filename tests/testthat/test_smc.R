@@ -8,6 +8,32 @@ test_that("SMC runs without errors", {
     expect_s3_class(res, "redist_plans")
 })
 
+test_that("adapt_parameters does not corrupt the remaining-region mask across particles", {
+    skip_on_cran()
+    # adapt_parameters() scans up to `nsims` particles to collect (at most) 100
+    # valid spanning-tree samples for choosing k. Its `ignore` mask used to be
+    # built with `if (districts(j, i) != 0) ignore[j] = true;` -- only ever
+    # setting entries TRUE and never resetting them FALSE for the next
+    # particle -- so it silently accumulated the union of every
+    # previously-examined particle's assigned units across the whole scan,
+    # rather than reflecting just the particle currently being examined. This
+    # doesn't affect split 1 (nothing is assigned yet, for any particle), but
+    # corrupts every later split once particles have diverged, becoming more
+    # severe as more particles need to be scanned. A large enough nsims here
+    # ensures the scan goes deep enough into a set of particles that have
+    # genuinely diverged by split 2-3 for this to show up as degraded
+    # resampling efficiency and acceptance, even though nothing about the map
+    # or constraints changed between splits.
+    set.seed(2024)
+    iowa_map <- redist_map(iowa, ndists = 4, pop_tol = 0.05)
+    res <- redist_smc(iowa_map, 500, n_steps = 3, silent = TRUE)
+    diag <- attr(res, "diagnostics")[[1]]
+
+    expect_s3_class(res, "redist_plans")
+    expect_true(all(diag$step_n_eff > 5))
+    expect_true(all(diag$accept_rate > 0.01))
+})
+
 test_that("County constraint works", {
     iowa_map <- redist_map(iowa, ndists = 4, pop_tol = 0.05)
     plans <- redist_smc(iowa_map, 50, counties = region, silent = TRUE)

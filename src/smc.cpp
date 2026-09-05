@@ -602,10 +602,18 @@ void adapt_parameters(const Graph &g, int &k, int last_k, const vec &lp, double 
 
         int n_vtx = V;
         for (int j = 0; j < V; j++) {
-            if (districts(j, i) != 0) {
-                ignore[j] = true;
-                n_vtx--;
-            }
+            // Full reassignment, not a conditional set: `ignore` is shared
+            // across iterations of this loop (one per particle), so every
+            // entry must be explicitly reset each time. Previously this only
+            // ever set entries to `true` and never back to `false`, so
+            // `ignore` silently accumulated the union of every
+            // previously-examined particle's assigned units across the
+            // whole loop, corrupting the remaining-region view for every
+            // particle after the first. This mirrors the correct pattern
+            // already used for the same purpose in split_map() below
+            // (`ignore[i] = districts(i) != 0;`).
+            ignore[j] = districts(j, i) != 0;
+            if (ignore[j]) n_vtx--;
         }
         if (n_vtx > max_V) max_V = n_vtx;
 
