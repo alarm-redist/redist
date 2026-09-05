@@ -1,3 +1,18 @@
+# redist 4.3.2.9000
+
+* Fixes a bug in `redist_smc()`'s internal `adapt_parameters()` (the step that
+  picks each split's `k_i`): its `ignore` mask, tracking which units are
+  already assigned, was only ever set `true` and never reset `false` between
+  the particles it scans within one call, so it silently accumulated the
+  union of every previously-examined particle's assigned units instead of
+  reflecting just the particle currently being examined. This doesn't affect
+  the first split (nothing is assigned yet for any particle) but corrupts the
+  view of the remaining region for every later split, more severely as more
+  particles need to be scanned to reach the target sample count -- degrading
+  `k` selection and, in turn, resampling efficiency, sometimes drastically, on
+  larger maps. `split_map()` (the actual per-particle sampling step) already
+  built this mask correctly and was unaffected.
+
 # redist 4.3.2
 
 * Allows for parallel flip with `chains` argument in `redist_flip()`.

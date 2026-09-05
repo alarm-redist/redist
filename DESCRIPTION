@@ -1,5 +1,5 @@
 Package: redist
-Version: 4.3.2
+Version: 4.3.2.9000
 Date: 2026-02-10
 Title: Simulation Methods for Legislative Redistricting
 Authors@R: c(
