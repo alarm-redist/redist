@@ -404,9 +404,11 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
 
     if (hierarchy.enabled()) {
         uvec initial_plan = districts.col(1);
-        bool initial_valid = hierarchy_plan_connected(g, initial_plan, hierarchy);
+        bool initial_valid;
         if (hierarchy.mode == HierarchyMode::strict) {
             initial_valid = hierarchy_plan_valid(g, initial_plan, hierarchy);
+        } else {
+            initial_valid = hierarchy_plan_connected(g, initial_plan, hierarchy);
         }
         if (!initial_valid) {
             Rcpp::stop(
@@ -790,9 +792,12 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
 
         if (hierarchy.enabled()) {
             uvec proposed_plan = districts.col(idx + 1);
-            bool proposal_valid = hierarchy_plan_connected(g, proposed_plan, hierarchy);
+            bool proposal_valid;
             if (hierarchy.mode == HierarchyMode::strict) {
                 proposal_valid = hierarchy_plan_valid(g, proposed_plan, hierarchy);
+            } else {
+                proposal_valid =
+                    hierarchy_plan_connected(g, proposed_plan, hierarchy);
             }
             if (!proposal_valid) {
                 n_hierarchical_plan_reject++;
