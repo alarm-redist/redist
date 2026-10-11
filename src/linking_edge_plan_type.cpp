@@ -182,17 +182,14 @@ LinkingEdgePlan::LinkingEdgePlan(
 double LinkingEdgePlan::get_regions_log_splitting_prob(ScoringFunction const &scoring_function,
                                                        TreeSplitter &tree_splitter,
                                                        USTSampler &ust_sampler,
+                                                       SplittingSchedule const &splitting_schedule,
+                                                       ScheduleContext &schedule_ctx,
                                                        const int region1_root,
                                                        const int region2_root) const {
     int region1_id = region_ids[region1_root];
     int region2_id = region_ids[region2_root];
-    int region1_size = region_sizes[region1_id];
-    int region2_size = region_sizes[region2_id];
-    int merged_region_size = region1_size + region2_size;
-    auto cut_size_bounds = ust_sampler.splitting_schedule
-                               .all_regions_min_and_max_possible_cut_sizes[merged_region_size];
-    int min_possible_cut_size = cut_size_bounds.first;
-    int max_possible_cut_size = cut_size_bounds.second;
+    CutSizeOptions const cut_options =
+        splitting_schedule.merged_region_cut_sizes(*this, schedule_ctx, region1_id, region2_id);
 
     if constexpr (perf_config::object_integrity_checking){
         check_forest_integrity(
@@ -205,9 +202,7 @@ double LinkingEdgePlan::get_regions_log_splitting_prob(ScoringFunction const &sc
     return tree_splitter.get_log_retroactive_splitting_prob_for_joined_packed_tree(
         ust_sampler.map_params, scoring_function, forest_edges,
         ust_sampler.pops_below_vertex, region1_root, region2_root, *this,
-        min_possible_cut_size, max_possible_cut_size,
-        ust_sampler.splitting_schedule
-            .all_regions_smaller_cut_sizes_to_try[merged_region_size]);
+        cut_options.min_cut_size, cut_options.max_cut_size, cut_options.smaller_cut_sizes);
 }
 
 void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
@@ -306,7 +301,7 @@ void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
 }
 
 double LinkingEdgePlan::get_log_eff_boundary_len(
-    PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
+    PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule, ScheduleContext &schedule_ctx,
     USTSampler &ust_sampler, TreeSplitter &tree_splitter,
     ScoringFunction const &scoring_function, const int region1_id, int const region2_id) const {
     // Go through and find that pair
@@ -320,9 +315,9 @@ double LinkingEdgePlan::get_log_eff_boundary_len(
             // if log prob not accurate then recompute first
             if (!edge_pair.valid_log_prob) {
                 // else recompute first
-                edge_pair.log_prob =
-                    get_regions_log_splitting_prob(scoring_function, tree_splitter, ust_sampler,
-                                                   edge_pair.vertex1, edge_pair.vertex2);
+                edge_pair.log_prob = get_regions_log_splitting_prob(
+                    scoring_function, tree_splitter, ust_sampler, splitting_schedule,
+                    schedule_ctx, edge_pair.vertex1, edge_pair.vertex2);
                 // now mark it as valid 
                 edge_pair.valid_log_prob = true;
             }
@@ -343,7 +338,7 @@ double LinkingEdgePlan::get_log_eff_boundary_len(
 // log ratio is log(plan linking edges) - log(merged plan linking edges)
 std::vector<std::tuple<RegionID, RegionID, double>>
 LinkingEdgePlan::get_valid_adj_regions_and_eff_log_boundary_lens(
-    PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
+    PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule, ScheduleContext &schedule_ctx,
     ScoringFunction const &scoring_function, bool const is_final_split, USTSampler &ust_sampler,
     TreeSplitter &tree_splitter) const {
     // build the multigraph
@@ -359,6 +354,7 @@ LinkingEdgePlan::get_valid_adj_regions_and_eff_log_boundary_lens(
     std::vector<std::tuple<RegionID, RegionID, double>> valid_adj_region_pairs_to_boundary_map;
     valid_adj_region_pairs_to_boundary_map.reserve(linking_edges.size());
 
+
     // Go through and find that pair
     for (auto &edge_pair : linking_edges) {
         // get the regions associated with the linking edge
@@ -373,7 +369,8 @@ LinkingEdgePlan::get_valid_adj_regions_and_eff_log_boundary_lens(
         double log_linking_edge_ratio = plan_log_linking_edge_term;
 
         // Add if its ok to merge
-        if (splitting_schedule.valid_merge_pair_sizes[edge_region1_size][edge_region2_size]) {
+        if (splitting_schedule.is_valid_merge_pair(*this, schedule_ctx, edge_region1,
+                                                   edge_region2)) {
             // sanity check that we never get invalid pair
             auto search_result = plan_multigraph.pair_map.get_value(edge_region1, edge_region2);
             if (!search_result.first || !search_result.second.merge_is_hier_valid) {
@@ -397,9 +394,9 @@ LinkingEdgePlan::get_valid_adj_regions_and_eff_log_boundary_lens(
             // check if we need to recompute selection probability
             if (!edge_pair.valid_log_prob) {
                 // else recompute first
-                edge_pair.log_prob =
-                    get_regions_log_splitting_prob(scoring_function, tree_splitter, ust_sampler,
-                                                   edge_pair.vertex1, edge_pair.vertex2);
+                edge_pair.log_prob = get_regions_log_splitting_prob(
+                    scoring_function, tree_splitter, ust_sampler, splitting_schedule,
+                    schedule_ctx, edge_pair.vertex1, edge_pair.vertex2);
                 // now mark it as valid 
                 edge_pair.valid_log_prob = true;
             }
@@ -478,7 +475,7 @@ LinkingEdgePlan::get_valid_adj_regions_and_eff_log_boundary_lens(
 }
 
 std::vector<std::pair<RegionID, RegionID>> LinkingEdgePlan::get_valid_smc_merge_regions(
-    PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule,
+    PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule, ScheduleContext &schedule_ctx,
     ScoringFunction const &scoring_function, bool const is_final_split) const {
     // build the multigraph
     plan_multigraph.build_plan_multigraph(region_ids, num_regions);
@@ -489,6 +486,7 @@ std::vector<std::pair<RegionID, RegionID>> LinkingEdgePlan::get_valid_smc_merge_
 
     std::vector<std::pair<RegionID, RegionID>> valid_adj_region;
     valid_adj_region.reserve(linking_edges.size());
+
 
     // Go through and find that pair
     for (auto const &edge_pair : linking_edges) {
@@ -502,7 +500,8 @@ std::vector<std::pair<RegionID, RegionID>> LinkingEdgePlan::get_valid_smc_merge_
         int edge_region2_size = region_sizes[edge_region2];
 
         // Add if its ok to merge
-        if (splitting_schedule.valid_merge_pair_sizes[edge_region1_size][edge_region2_size]) {
+        if (splitting_schedule.is_valid_merge_pair(*this, schedule_ctx, edge_region1,
+                                                   edge_region2)) {
             // sanity check that we never get invalid pair
             auto search_result = plan_multigraph.pair_map.get_value(edge_region1, edge_region2);
             if (!search_result.first) {
@@ -526,7 +525,7 @@ std::vector<std::pair<RegionID, RegionID>> LinkingEdgePlan::get_valid_smc_merge_
 
 std::pair<bool, std::vector<std::pair<RegionID, RegionID>>>
 LinkingEdgePlan::attempt_to_get_valid_mergesplit_pairs(
-    PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule,
+    PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule, ScheduleContext &schedule_ctx,
     ScoringFunction const &scoring_function, bool const is_final_split) const {
     // attempt to build valid multigraph
     bool const result = plan_multigraph.build_plan_multigraph(region_ids, num_regions);
@@ -544,6 +543,7 @@ LinkingEdgePlan::attempt_to_get_valid_mergesplit_pairs(
     std::vector<std::pair<RegionID, RegionID>> valid_adj_region;
     valid_adj_region.reserve(linking_edges.size());
 
+
     // Go through and find that pair
     for (auto const &edge_pair : linking_edges) {
         // get the regions associated with the linking edge
@@ -557,7 +557,8 @@ LinkingEdgePlan::attempt_to_get_valid_mergesplit_pairs(
         // REprintf("(%u, %u) \n", edge_region1, edge_region2);
 
         // Add if its ok to merge
-        if (splitting_schedule.valid_merge_pair_sizes[edge_region1_size][edge_region2_size]) {
+        if (splitting_schedule.is_valid_merge_pair(*this, schedule_ctx, edge_region1,
+                                                   edge_region2)) {
             // sanity check that we never get invalid pair
             auto search_result = plan_multigraph.pair_map.get_value(edge_region1, edge_region2);
             if (!search_result.first) {

@@ -643,6 +643,8 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
     for (size_t i = 0; i < num_threads; i++) {
         ust_samplers_vec.emplace_back(map_params, splitting_schedule);
     }
+    // one schedule context per thread, rebuilt for each plan a thread tries to split
+    std::vector<ScheduleContext> schedule_ctxs(num_threads);
 
 
     // sample extra plan if needed
@@ -667,26 +669,29 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
         extra_particle_reject_ct++;
         // sample previous plan
         int idx = rng_states[0].r_int_wgt(normalized_cumulative_weights);
+        Plan const &old_plan = *old_plan_ensemble->plan_ptr_vec[idx];
+        splitting_schedule.build_context(old_plan, schedule_ctxs[0]);
         // Get region id the split
         int region_id_to_split;
         if (smd_split_district_only) {
             // if just doing district splits just use remainder region
             // which is always the highest id
-            region_id_to_split = old_plan_ensemble->plan_ptr_vec[idx]->num_regions - 1;
+            region_id_to_split = old_plan.num_regions - 1;
         } else {
             // if generalized split pick a region to try to split
-            region_id_to_split =
-                old_plan_ensemble->plan_ptr_vec[idx]->choose_multidistrict_to_split(
-                    splitting_schedule.valid_region_sizes_to_split, rng_states[0],
-                    multidistrict_selection_alpha);
+            region_id_to_split = old_plan.choose_multidistrict_to_split(
+                splitting_schedule, schedule_ctxs[0], rng_states[0],
+                multidistrict_selection_alpha);
         }
 
         // Try to split the region
+        CutSizeOptions const cut_options =
+            splitting_schedule.region_cut_sizes(old_plan, schedule_ctxs[0], region_id_to_split);
         std::pair<bool, EdgeCut> edge_search_result =
             ust_samplers_vec[0].attempt_to_find_valid_tree_split(
                 rng_states[0], scoring_functions[0],
-                *tree_splitters[0], *old_plan_ensemble->plan_ptr_vec[idx],
-                region_id_to_split, new_region_id, save_edge_selection_prob);
+                *tree_splitters[0], old_plan,
+                region_id_to_split, new_region_id, cut_options, save_edge_selection_prob);
 
 
 
@@ -770,6 +775,9 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
             draw_tries_buffer[i]++;
             // sample previous plan
             idx = rng_states[thread_id].r_int_wgt(normalized_cumulative_weights);
+            Plan const &old_plan = *old_plan_ensemble->plan_ptr_vec[idx];
+            ScheduleContext &schedule_ctx = schedule_ctxs[thread_id];
+            splitting_schedule.build_context(old_plan, schedule_ctx);
 
             // Get region id the split
             int region_id_to_split;
@@ -777,13 +785,12 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
             if (smd_split_district_only) {
                 // if just doing district splits just use remainder region
                 // which is always the highest id
-                region_id_to_split = old_plan_ensemble->plan_ptr_vec[idx]->num_regions - 1;
+                region_id_to_split = old_plan.num_regions - 1;
             } else {
                 // if generalized split pick a region to try to split
-                region_id_to_split =
-                    old_plan_ensemble->plan_ptr_vec[idx]->choose_multidistrict_to_split(
-                        splitting_schedule.valid_region_sizes_to_split, rng_states[thread_id],
-                        multidistrict_selection_alpha);
+                region_id_to_split = old_plan.choose_multidistrict_to_split(
+                    splitting_schedule, schedule_ctx, rng_states[thread_id],
+                    multidistrict_selection_alpha);
             }
             if constexpr (perf_config::track_granular_times){
                 add_elapsed(md_selection_times[thread_id], md_selection_time); // optional timing
@@ -815,11 +822,13 @@ void run_smc_step(const MapParams &map_params, SplittingSchedule const &splittin
 
             // Try to split the region
             auto wilson_time = maybe_now();
+            CutSizeOptions const cut_options =
+                splitting_schedule.region_cut_sizes(old_plan, schedule_ctx, region_id_to_split);
             std::pair<bool, EdgeCut> edge_search_result =
                 ust_samplers_vec[thread_id].attempt_to_find_valid_tree_split(
                     rng_states[thread_id], scoring_functions[thread_id],
-                    *tree_splitters[thread_id], *old_plan_ensemble->plan_ptr_vec[idx],
-                    region_id_to_split, new_region_id, save_edge_selection_prob);
+                    *tree_splitters[thread_id], old_plan,
+                    region_id_to_split, new_region_id, cut_options, save_edge_selection_prob);
             if constexpr (perf_config::track_granular_times){
                 add_elapsed(wilson_call_times[thread_id], wilson_time); // optional timing
             }            

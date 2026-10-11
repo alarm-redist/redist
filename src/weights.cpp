@@ -28,64 +28,6 @@ constexpr bool DEBUG_WEIGHTS_VERBOSE = false; // Compile-time constant
 
 
 
-// Computes the effective sample size from log incremental weights
-// Get the probability the union of two regions was chosen to split
-//
-// Given a plan object and two regions in the plan this returns the probability
-// the union of the two regions was chosen to be split.
-//
-// @title Get Retroactive Split Selection Probability
-//
-// @param plan A plan object
-// @param region1_id The id of the first region to union
-// @param region2_id The id of the second region to union
-//
-// @details No modifications to inputs made
-//
-// @return the log of the probability the union of the two regions would be
-// chosen to split.
-//
-double get_log_retroactive_splitting_prob(const Plan &plan,
-                                          const std::vector<bool> &valid_region_sizes_to_split,
-                                          const int region1_id, const int region2_id,
-                                          double const selection_alpha) {
-    if constexpr (DEBUG_WEIGHTS_VERBOSE)
-        Rprintf("Possible options: ");
-
-    // compute weight of the merged region
-    auto unioned_region_size = plan.region_sizes[region1_id] + plan.region_sizes[region2_id];
-    double unioned_region_prob = std::pow(unioned_region_size, selection_alpha);
-    // get the sum of all regions
-    double prob_sum = unioned_region_prob;
-
-    // add the unioned region
-    if constexpr (DEBUG_WEIGHTS_VERBOSE)
-        Rprintf(" (unioned) %d | ", unioned_region_size);
-
-    for (int region_id = 0; region_id < plan.num_regions; region_id++) {
-        auto region_size = plan.region_sizes[region_id];
-
-        // add if valid multidistrict and not the two we started with
-        if (valid_region_sizes_to_split[region_size] && region_id != region1_id &&
-            region_id != region2_id) {
-            if constexpr (DEBUG_WEIGHTS_VERBOSE)
-                Rprintf(" %d | ", region_size);
-            // add the count and label to vector
-            prob_sum += std::pow(region_size, selection_alpha);
-        }
-    }
-
-    // so prob of picking is weight of first over sum
-    double log_prob = std::log(unioned_region_prob) - std::log(prob_sum);
-
-    if constexpr (DEBUG_WEIGHTS_VERBOSE) {
-        Rprintf("\nFor regions (%d,%d), size (%u,%u) - Prob is %.5f/%.5f, so log is %.5f\n",
-                region1_id, region2_id, plan.region_sizes[region1_id],
-                plan.region_sizes[region2_id], unioned_region_prob, prob_sum, log_prob);
-    }
-
-    return log_prob;
-}
 
 
 /*
@@ -139,9 +81,14 @@ double compute_simple_log_incremental_weight(Plan const &plan, PlanMultigraph &p
         Rcpp::Rcerr << std::flush;
     }
 
+    // build the schedule context once for this plan
+    ScheduleContext schedule_ctx;
+    splitting_schedule.build_context(plan, schedule_ctx);
+
     // build the plan multigraph and get valid adj pairs
     auto time_get_pairs = maybe_now(); // optional timing
     auto valid_adj_pairs = plan.get_valid_smc_merge_regions(plan_multigraph, splitting_schedule,
+                                                            schedule_ctx,
                                                             scoring_function, is_final_split);
     if constexpr (perf_config::track_granular_times) {
         add_elapsed(granular_times.get_valid_pairs, time_get_pairs); // optional timing
@@ -160,7 +107,8 @@ double compute_simple_log_incremental_weight(Plan const &plan, PlanMultigraph &p
         log_backwards_kernel_term -= std::log(static_cast<double>(num_valid_adj_region_pairs));
         // taus cancel so just add the boundary length which we have from hash map
         log_forward_kernel_term = plan.get_log_eff_boundary_len(
-            plan_multigraph, splitting_schedule, ust_sampler, edge_splitter, scoring_function,
+            plan_multigraph, splitting_schedule, schedule_ctx, ust_sampler, edge_splitter,
+            scoring_function,
             region1_id, region2_id);
         if (compute_log_tau) {
             // do merged region tau if neccesary
@@ -197,7 +145,8 @@ double compute_simple_log_incremental_weight(Plan const &plan, PlanMultigraph &p
         log_forward_kernel_term -= last_split_merge_log_tau;
         // tree boundary length
         log_forward_kernel_term += plan.get_log_eff_boundary_len(
-            plan_multigraph, splitting_schedule, ust_sampler, edge_splitter, scoring_function,
+            plan_multigraph, splitting_schedule, schedule_ctx, ust_sampler, edge_splitter,
+            scoring_function,
             region1_id, region2_id);
 
         if (compute_log_tau) {
@@ -225,9 +174,8 @@ double compute_simple_log_incremental_weight(Plan const &plan, PlanMultigraph &p
         // in generalized region split find probability you would have
         // picked to split the union of the the two regions
         auto time_split_prob = maybe_now(); // optional timing
-        log_splitting_prob = get_log_retroactive_splitting_prob(
-            plan, splitting_schedule.valid_region_sizes_to_split, region1_id, region2_id,
-            multidistrict_selection_alpha);
+        log_splitting_prob = splitting_schedule.log_merged_region_selection_prob(
+            plan, schedule_ctx, region1_id, region2_id, multidistrict_selection_alpha);
         if constexpr (perf_config::track_granular_times) {
             add_elapsed(granular_times.splitting_prob, time_split_prob); // optional timing
         }
@@ -395,11 +343,16 @@ double compute_log_optimal_incremental_weights(
     if constexpr (DEBUG_WEIGHTS_VERBOSE)
         Rprintf("Getting Pairs!\n");
 
+    // build the schedule context once for this plan
+    ScheduleContext schedule_ctx;
+    splitting_schedule.build_context(plan, schedule_ctx);
+
     // get region pair to effective boundary length map
     auto time_get_pairs = maybe_now(); // optional timing 
     auto region_pair_log_eff_boundary_map =
         plan.get_valid_adj_regions_and_eff_log_boundary_lens(
-            plan_multigraph, splitting_schedule, scoring_function, is_final_split, ust_sampler,
+            plan_multigraph, splitting_schedule, schedule_ctx, scoring_function, is_final_split,
+            ust_sampler,
             edge_splitter);
     if constexpr (perf_config::track_granular_times){
         add_elapsed(granular_times.get_valid_pairs, time_get_pairs); // optional timing 
@@ -451,9 +404,8 @@ double compute_log_optimal_incremental_weights(
             // in generalized region split find probability you would have
             // picked to split the union of the the two regions
             auto time_split_prob = maybe_now(); // optional timing 
-            double log_splitting_prob = get_log_retroactive_splitting_prob(
-                plan, splitting_schedule.valid_region_sizes_to_split, region1_id, region2_id,
-                multidistrict_selection_alpha);
+            double log_splitting_prob = splitting_schedule.log_merged_region_selection_prob(
+                plan, schedule_ctx, region1_id, region2_id, multidistrict_selection_alpha);
     
             if constexpr (perf_config::track_granular_times){
                 add_elapsed(granular_times.splitting_prob, time_split_prob); // optional timing 

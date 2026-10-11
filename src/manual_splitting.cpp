@@ -310,19 +310,18 @@ Rcpp::List perform_a_valid_multidistrict_split(Rcpp::List adj_list, const Rcpp::
         auto region_size = plan_ensemble.plan_ptr_vec[0]->region_sizes[region_id_to_split];
         auto region_population = plan_ensemble.plan_ptr_vec[0]->region_pops[region_id_to_split];
 
-        auto cut_size_bounds =
-            splitting_schedule_ptr->all_regions_min_and_max_possible_cut_sizes[region_size];
-        int min_possible_cut_size = cut_size_bounds.first;
-        int max_possible_cut_size = cut_size_bounds.second;
+        ScheduleContext schedule_ctx;
+        splitting_schedule_ptr->build_context(*plan_ensemble.plan_ptr_vec[0], schedule_ctx);
+        CutSizeOptions const cut_options = splitting_schedule_ptr->region_cut_sizes(
+            *plan_ensemble.plan_ptr_vec[0], schedule_ctx, region_id_to_split);
 
         auto edge_search_result = tree_splitter->attempt_to_find_edge_to_cut(
-            map_params, scoring_function, rng_state, 
+            map_params, scoring_function, rng_state,
             *plan_ensemble.plan_ptr_vec[0], region_id_to_split, plan_ensemble.plan_ptr_vec[0]->num_regions,
             ust_sampler.ust, result.root,
-            ust_sampler.pops_below_vertex, 
+            ust_sampler.pops_below_vertex,
             region_population, region_size,
-            min_possible_cut_size, max_possible_cut_size,
-            splitting_schedule_ptr->all_regions_smaller_cut_sizes_to_try[region_size],
+            cut_options.min_cut_size, cut_options.max_cut_size, cut_options.smaller_cut_sizes,
             true);
 
         bool search_successful = std::get<0>(edge_search_result);
@@ -929,11 +928,16 @@ Rcpp::List attempt_splits_on_a_region(Rcpp::List const &adj_list, const Rcpp::In
             *plan_ensemble.plan_ptr_vec[0]);
 
         // attempt to split a plan
+        Plan const &thread_plan = *thread_plan_ensemble.plan_ptr_vec[thread_id];
+        ScheduleContext schedule_ctx;
+        splitting_schedule->build_context(thread_plan, schedule_ctx);
+        CutSizeOptions const cut_options =
+            splitting_schedule->region_cut_sizes(thread_plan, schedule_ctx, region_id_to_split);
         std::pair<bool, EdgeCut> edge_search_result =
         ust_sampler_buffers[thread_id].attempt_to_find_valid_tree_split(
             rng_states[thread_id], scoring_functions[thread_id],
-            *tree_splitter_ptrs_vec[thread_id], *thread_plan_ensemble.plan_ptr_vec[thread_id],
-            region_id_to_split, thread_plan_ensemble.plan_ptr_vec[thread_id]->num_regions, 
+            *tree_splitter_ptrs_vec[thread_id], thread_plan,
+            region_id_to_split, thread_plan.num_regions, cut_options,
             true);
 
         bool ok = std::get<0>(edge_search_result);

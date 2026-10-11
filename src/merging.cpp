@@ -193,7 +193,8 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     ScoringFunction const &scoring_function, RNGState &rng_state,
     SamplingSpace const sampling_space, Plan &plan, Plan &new_plan, USTSampler &ust_sampler,
     TreeSplitter &tree_splitter, PlanMultigraph &current_plan_multigraph,
-    PlanMultigraph &proposed_plan_multigraph, std::string const merge_prob_type,
+    PlanMultigraph &proposed_plan_multigraph, ScheduleContext &current_schedule_ctx,
+    ScheduleContext &proposed_schedule_ctx, std::string const merge_prob_type,
     bool save_edge_selection_prob, std::vector<std::pair<RegionID, RegionID>> &adj_region_pairs,
     std::vector<double> &unnormalized_pair_wgts, double const rho, bool const is_final, bool const do_mh,
     bool const using_caching, WeightCache *weight_cache,
@@ -218,10 +219,13 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
 
     // try to draw a region
     auto wilson_time = maybe_now(); // optional timing 
+    CutSizeOptions const cut_options = splitting_schedule.merged_region_cut_sizes(
+        plan, current_schedule_ctx, region1_id, region2_id);
     std::tuple<bool, EdgeCut> edge_search_result =
         ust_sampler.attempt_to_find_valid_tree_mergesplit(rng_state, scoring_function,
                                                           tree_splitter, plan, region1_id,
-                                                          region2_id, save_edge_selection_prob);
+                                                          region2_id, cut_options,
+                                                          save_edge_selection_prob);
     if constexpr (perf_config::track_granular_times){
         add_elapsed(granular_times.wilson_time, wilson_time); // optional timing
     }
@@ -258,10 +262,14 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         add_elapsed(granular_times.plan_copying, initial_copy_time); // optional timing 
     }
 
+    // the proposed plan's regions are now final so build its schedule context
+    splitting_schedule.build_context(new_plan, proposed_schedule_ctx);
+
     // check new plan is hierarchically valid if needed
-    auto new_pair_building_time = maybe_now(); // optional timing 
+    auto new_pair_building_time = maybe_now(); // optional timing
     auto build_attempt = new_plan.attempt_to_get_valid_mergesplit_pairs(
-        proposed_plan_multigraph, splitting_schedule, scoring_function, is_final);
+        proposed_plan_multigraph, splitting_schedule, proposed_schedule_ctx, scoring_function,
+        is_final);
     if constexpr (perf_config::track_granular_times){
         add_elapsed(granular_times.get_valid_mergepairs, new_pair_building_time); // optional timing 
     }
@@ -364,11 +372,11 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         // compute the boundary length
         auto eff_boundary_time = maybe_now();
         double current_log_eff_boundary = plan.get_log_eff_boundary_len(
-            current_plan_multigraph, splitting_schedule, ust_sampler, tree_splitter,
-            scoring_function, region1_id, region2_id);
+            current_plan_multigraph, splitting_schedule, current_schedule_ctx, ust_sampler,
+            tree_splitter, scoring_function, region1_id, region2_id);
         double proposed_log_eff_boundary = new_plan.get_log_eff_boundary_len(
-            proposed_plan_multigraph, splitting_schedule, ust_sampler, tree_splitter,
-            scoring_function, region1_id, region2_id);
+            proposed_plan_multigraph, splitting_schedule, proposed_schedule_ctx, ust_sampler,
+            tree_splitter, scoring_function, region1_id, region2_id);
         // If linking edge space we need to subtract linking edge correction term
         if (using_linking_edge_space) {
             // add instead of subtract bc its flipped in MH ratio
@@ -463,8 +471,9 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         if constexpr (DEBUG_MERGING_VERBOSE)
             Rprintf("Plan updated, now swapping multigraphs\n");
 
-        // swap the plan multigraphs
+        // swap the plan multigraphs and schedule contexts
         swap_plan_multigraphs(current_plan_multigraph, proposed_plan_multigraph);
+        std::swap(current_schedule_ctx, proposed_schedule_ctx);
         // update pairs and weights to be current one
         unnormalized_pair_wgts = new_valid_pair_weights;
         adj_region_pairs = new_valid_adj_region_pairs;
@@ -493,10 +502,17 @@ int run_merge_split_steps(MapParams const &map_params,
     int num_succesful_steps = 0;
     bool save_edge_selection_prob = sampling_space == SamplingSpace::LinkingEdgeSpace;
 
+    // Build the schedule context for the current plan. It is swapped with the
+    // proposed plan's context whenever a proposal is accepted, so it always
+    // matches the current plan.
+    ScheduleContext current_schedule_ctx, proposed_schedule_ctx;
+    splitting_schedule.build_context(plan, current_schedule_ctx);
+
     // Build the multigraph and get pairs of adj districts
-    auto pair_building_time = maybe_now(); // optional timing 
-    auto pair_build_attempt = plan.attempt_to_get_valid_mergesplit_pairs(current_plan_multigraph, splitting_schedule,
-                                                   scoring_function, is_final);
+    auto pair_building_time = maybe_now(); // optional timing
+    auto pair_build_attempt = plan.attempt_to_get_valid_mergesplit_pairs(
+        current_plan_multigraph, splitting_schedule, current_schedule_ctx, scoring_function,
+        is_final);
 
     auto current_plan_adj_region_pairs = pair_build_attempt.second;
     if constexpr (perf_config::track_granular_times){
@@ -529,7 +545,8 @@ int run_merge_split_steps(MapParams const &map_params,
         std::tuple<bool, bool, double, int> mergesplit_result = attempt_mergesplit_step(
             map_params, splitting_schedule, scoring_function, rng_state, sampling_space, plan,
             dummy_plan, ust_sampler, tree_splitter, current_plan_multigraph,
-            proposed_plan_multigraph, merge_prob_type, save_edge_selection_prob,
+            proposed_plan_multigraph, current_schedule_ctx, proposed_schedule_ctx,
+            merge_prob_type, save_edge_selection_prob,
             current_plan_adj_region_pairs, current_plan_pair_unnoramalized_wgts, rho, is_final,
             true, using_caching, weight_cache, granular_times);
 

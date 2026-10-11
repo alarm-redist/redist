@@ -9,6 +9,7 @@ class PlanMultigraph;
 class ScoringFunction;
 class TreeSplitter;
 class SplittingSchedule;
+class ScheduleContext;
 class RNGState;
 
 class LinkingEdgePlan : public Plan {
@@ -45,7 +46,7 @@ class LinkingEdgePlan : public Plan {
         const int split_region1_id, const int split_region2_id, bool const add_region) override;
 
     double get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
-                                    const SplittingSchedule &splitting_schedule,
+                                    const SplittingSchedule &splitting_schedule, ScheduleContext &schedule_ctx,
                                     USTSampler &ust_sampler, TreeSplitter &tree_splitter,
                                     ScoringFunction const &scoring_function,
                                     const int region1_id, int const region2_id) const override;
@@ -55,7 +56,7 @@ class LinkingEdgePlan : public Plan {
     // log ratio is log(plan linking edges) - log(merged plan linking edges)
     std::vector<std::tuple<RegionID, RegionID, double>>
     get_valid_adj_regions_and_eff_log_boundary_lens(PlanMultigraph &plan_multigraph,
-                                                    const SplittingSchedule &splitting_schedule,
+                                                    const SplittingSchedule &splitting_schedule, ScheduleContext &schedule_ctx,
                                                     ScoringFunction const &scoring_function,
                                                     bool const is_final_split,
                                                     USTSampler &ust_sampler,
@@ -65,19 +66,21 @@ class LinkingEdgePlan : public Plan {
     // that edge would be split in the merged tree across the two regions
     double get_regions_log_splitting_prob(ScoringFunction const &scoring_function,
                                           TreeSplitter &tree_splitter, USTSampler &ust_sampler,
+                                          SplittingSchedule const &splitting_schedule,
+                                          ScheduleContext &schedule_ctx,
                                           const int region1_root, const int region2_root) const;
 
     // This builds a plan multigraph and
     // This just returns pairs with a linking edge between them and valid size
     std::pair<bool, std::vector<std::pair<RegionID, RegionID>>>
     attempt_to_get_valid_mergesplit_pairs(PlanMultigraph &plan_multigraph,
-                                          SplittingSchedule const &splitting_schedule,
+                                          SplittingSchedule const &splitting_schedule, ScheduleContext &schedule_ctx,
                                           ScoringFunction const &scoring_function,
                                           bool const is_final_split) const override;
 
     // Get a vector of all valid adj region pairs for the backwards kernel
     std::vector<std::pair<RegionID, RegionID>> get_valid_smc_merge_regions(
-        PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule,
+        PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule, ScheduleContext &schedule_ctx,
         ScoringFunction const &scoring_function, bool const is_final_split) const override;
 };
 

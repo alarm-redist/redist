@@ -41,14 +41,14 @@ class ForestPlan : public Plan {
         const int split_region1_id, const int split_region2_id, bool const add_region) override;
 
     double get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
-                                    const SplittingSchedule &splitting_schedule,
+                                    const SplittingSchedule &splitting_schedule, ScheduleContext &schedule_ctx,
                                     USTSampler &ust_sampler, TreeSplitter &tree_splitter,
                                     ScoringFunction const &scoring_function,
                                     const int region1_id, int const region2_id) const override;
 
     std::vector<std::tuple<RegionID, RegionID, double>>
     get_valid_adj_regions_and_eff_log_boundary_lens(PlanMultigraph &plan_multigraph,
-                                                    const SplittingSchedule &splitting_schedule,
+                                                    const SplittingSchedule &splitting_schedule, ScheduleContext &schedule_ctx,
                                                     ScoringFunction const &scoring_function,
                                                     bool const is_final_split,
                                                     USTSampler &ust_sampler,

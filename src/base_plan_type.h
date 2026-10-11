@@ -24,6 +24,7 @@ class PlanMultigraph;
 class ScoringFunction;
 class TreeSplitter;
 class SplittingSchedule;
+class ScheduleContext;
 class RNGState;
 
 
@@ -157,19 +158,24 @@ class Plan {
     double compute_region_score(ScoringFunction &scoring_function, int const region_id);
     double compute_just_plan_component_score(ScoringFunction &scoring_function);
 
-    // attempts to build a plan multigraph and return valid merge split pairs
+    // attempts to build a plan multigraph and return valid merge split pairs.
+    // `schedule_ctx` must be built for this plan.
     virtual std::pair<bool, std::vector<std::pair<RegionID, RegionID>>>
     attempt_to_get_valid_mergesplit_pairs(PlanMultigraph &plan_multigraph,
                                           SplittingSchedule const &splitting_schedule,
+                                          ScheduleContext &schedule_ctx,
                                           ScoringFunction const &scoring_function,
                                           bool const is_final_split) const;
 
+    // `schedule_ctx` must be built for this plan.
     virtual std::vector<std::pair<RegionID, RegionID>> get_valid_smc_merge_regions(
         PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule,
-        ScoringFunction const &scoring_function, bool const is_final_split) const;
+        ScheduleContext &schedule_ctx, ScoringFunction const &scoring_function,
+        bool const is_final_split) const;
 
     // redist_smc related methods
-    int choose_multidistrict_to_split(std::vector<bool> const &valid_region_sizes_to_split,
+    int choose_multidistrict_to_split(SplittingSchedule const &splitting_schedule,
+                                      ScheduleContext const &schedule_ctx,
                                       RNGState &rng_state,
                                       double const selection_alpha) const;
 
@@ -223,9 +229,11 @@ class Plan {
 
     // Computes the log effective boundary length between two regions
     // The specifics depend on the sampling space
-    // assumes the muligraph was already generated
+    // assumes the muligraph was already generated and `schedule_ctx` is built
+    // for this plan
     virtual double get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
                                             const SplittingSchedule &splitting_schedule,
+                                            ScheduleContext &schedule_ctx,
                                             USTSampler &ust_sampler,
                                             TreeSplitter &tree_splitter,
                                             ScoringFunction const &scoring_function,
@@ -242,6 +250,7 @@ class Plan {
     virtual std::vector<std::tuple<RegionID, RegionID, double>>
     get_valid_adj_regions_and_eff_log_boundary_lens(PlanMultigraph &plan_multigraph,
                                                     const SplittingSchedule &splitting_schedule,
+                                                    ScheduleContext &schedule_ctx,
                                                     ScoringFunction const &scoring_function,
                                                     bool const is_final_split,
                                                     USTSampler &ust_sampler,
@@ -507,7 +516,8 @@ class PlanMultigraph {
     // Removes the pairs with invalid merge sizes
     // from the hash map
     void remove_invalid_size_pairs(Plan const &plan,
-                                   const SplittingSchedule &splitting_schedule);
+                                   const SplittingSchedule &splitting_schedule,
+                                   ScheduleContext const &schedule_ctx);
 
     // Removes pairs where merging them makes a plan that
     // doesn't satisfy hard constraints

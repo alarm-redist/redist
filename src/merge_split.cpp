@@ -202,10 +202,18 @@ Rcpp::List ms_plans(
             throw Rcpp::exception("Initial Plan is not hierarchically valid. Either turn off "
                                   "counties or pass in a hierarchically valid plan\n");
         }
+        // Build the schedule context for the current plan. It is swapped with the
+        // proposed plan's context whenever a proposal is accepted, so it always
+        // matches the current plan.
+        ScheduleContext current_schedule_ctx, proposed_schedule_ctx;
+        splitting_schedule_ptr->build_context(*plan_ensemble.plan_ptr_vec[0],
+                                              current_schedule_ctx);
+
         // build multigraph on current plan and get pairs of adj districts to merge
         auto build_result =
             plan_ensemble.plan_ptr_vec[0]->attempt_to_get_valid_mergesplit_pairs(
-                current_plan_multigraph, *splitting_schedule_ptr, scoring_function, true);
+                current_plan_multigraph, *splitting_schedule_ptr, current_schedule_ctx,
+                scoring_function, true);
         // shouldn't be possible but just a sanity check
         if (!build_result.first) {
             throw Rcpp::exception("BIG ERROR: Plan registered as hierarchically valid but we "
@@ -214,7 +222,8 @@ Rcpp::List ms_plans(
         auto current_plan_adj_region_pairs =
             plan_ensemble.plan_ptr_vec[0]
                 ->attempt_to_get_valid_mergesplit_pairs(
-                    current_plan_multigraph, *splitting_schedule_ptr, scoring_function, true)
+                    current_plan_multigraph, *splitting_schedule_ptr, current_schedule_ctx,
+                    scoring_function, true)
                 .second;
 
         // get weights
@@ -316,7 +325,8 @@ Rcpp::List ms_plans(
                 map_params, *splitting_schedule_ptr, scoring_function, rng_state,
                 sampling_space, *plan_ensemble.plan_ptr_vec[0],
                 *proposal_plan_ensemble.plan_ptr_vec[0], ust_sampler, *tree_splitter_ptr_vec[0],
-                current_plan_multigraph, proposed_plan_multigraph, pair_rule,
+                current_plan_multigraph, proposed_plan_multigraph, current_schedule_ctx,
+                proposed_schedule_ctx, pair_rule,
                 save_edge_selection_prob, current_plan_adj_region_pairs,
                 current_plan_pair_unnoramalized_wgts, rho, true, do_mh, false, nullptr,
                 granular_times);

@@ -76,18 +76,8 @@ void GraphPlan::update_vertex_and_plan_specific_info_from_cut(
  * regions to the length of the boundary between them in `g`
  *
  *
- * @param g A graph (adjacency list) passed by reference
- * @param plan A plan object
- * @param check_adj_to_regions A vector tracking whether or not we should
- * check for edges adjacent to vertices in a region of a particular size. For
- * example, `check_adj_to_regions[i] == true` means we will attempt to find
- * edges adjacent to any vertex in a region of size i. This vector is 1-indexed
- * meaning we don't need to subtract region size by 1 when accessing.
- * @param valid_merge_pairs A 2D `ndists+1` by `ndists+1` boolean matrix that
- * uses region size to check whether or not two regions are considered a valid
- * merge that can be counted in the map. For example `valid_merge_pairs[i][j]`
- * being true means that any regions where the sizes are (i,j) are considered
- * valid to merge. 2D matrix is 1 indexed (don't need to subtract region size)
+ * @param plan_multigraph The plan multigraph, rebuilt for this plan
+ * @param splitting_schedule The splitting schedule deciding which pairs are valid merges
  * @param existing_pair_map A hash map mapping pairs of regions to a double.
  * This is an optional parameter and if its empty then its ignored. If its not
  * empty then pairs already in the hash won't be counted added to the output.
@@ -100,7 +90,7 @@ void GraphPlan::update_vertex_and_plan_specific_info_from_cut(
 
 std::vector<std::tuple<RegionID, RegionID, double>>
 GraphPlan::get_valid_adj_regions_and_eff_log_boundary_lens(
-    PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
+    PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule, ScheduleContext &schedule_ctx,
     ScoringFunction const &scoring_function, bool const is_final_split, USTSampler &ust_sampler,
     TreeSplitter &tree_splitter) const {
 
@@ -109,7 +99,7 @@ GraphPlan::get_valid_adj_regions_and_eff_log_boundary_lens(
     // remove invalid hierarchical merges if needed
     plan_multigraph.remove_invalid_hierarchical_merge_pairs(*this);
     // remove invalid size pairs
-    plan_multigraph.remove_invalid_size_pairs(*this, splitting_schedule);
+    plan_multigraph.remove_invalid_size_pairs(*this, splitting_schedule, schedule_ctx);
     // remove invalid hard constraint pairs
     plan_multigraph.remove_invalid_hard_constraint_pairs(*this, scoring_function,
                                                          is_final_split);
@@ -136,7 +126,7 @@ GraphPlan::get_valid_adj_regions_and_eff_log_boundary_lens(
 }
 
 double GraphPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
-                                           const SplittingSchedule &splitting_schedule,
+                                           const SplittingSchedule &splitting_schedule, ScheduleContext &schedule_ctx,
                                            USTSampler &ust_sampler, TreeSplitter &tree_splitter,
                                            ScoringFunction const &scoring_function,
                                            const int region1_id, int const region2_id) const {
@@ -247,6 +237,8 @@ int estimate_mergesplit_cut_k(const MapParams &map_params,
     int max_ok = 0;
 
     USTSampler ust_sampler(map_params, splitting_schedule);
+    ScheduleContext schedule_ctx;
+    splitting_schedule.build_context(plan, schedule_ctx);
 
     int max_V = 0;
     for (int i = 0; i < N_adapt; i++) {
@@ -254,10 +246,10 @@ int estimate_mergesplit_cut_k(const MapParams &map_params,
         auto a_pair = plan_multigraph.pair_map.hashed_pairs[random_pair_index];
         auto merged_size = plan.region_sizes[a_pair.first] + plan.region_sizes[a_pair.second];
         auto merged_pop = plan.region_pops[a_pair.first] + plan.region_pops[a_pair.second];
-        std::pair<int, int> min_and_max_possible_cut_sizes =
-            splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_size];
-        int min_possible_cut_size = min_and_max_possible_cut_sizes.first;
-        int max_possible_cut_size = min_and_max_possible_cut_sizes.second;
+        CutSizeOptions const cut_options = splitting_schedule.merged_region_cut_sizes(
+            plan, schedule_ctx, a_pair.first, a_pair.second);
+        int min_possible_cut_size = cut_options.min_cut_size;
+        int max_possible_cut_size = cut_options.max_cut_size;
 
         // now attempt to sample the tree on the biggest region
         auto const result = ust_sampler.attempt_to_draw_tree_on_merged_region(
@@ -287,8 +279,7 @@ int estimate_mergesplit_cut_k(const MapParams &map_params,
         devs.push_back(get_ordered_tree_cut_devs(
             result.root, ust_sampler.pops_below_vertex, plan_multigraph.map_params.target, plan.region_ids,
             a_pair.first, a_pair.second, merged_size, merged_pop, min_possible_cut_size,
-            max_possible_cut_size,
-            splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_size]));
+            max_possible_cut_size, cut_options.smaller_cut_sizes));
 
         int n_ok = 0;
         // NOTE very hacky, not sure if need to change because MMD now
@@ -358,6 +349,7 @@ void estimate_cut_k(const MapParams &map_params, const SplittingSchedule &splitt
     int max_ok = 0;
 
     USTSampler ust_sampler(map_params, splitting_schedule);
+    ScheduleContext schedule_ctx;
 
     int idx = 0;
     int max_V = 0;
@@ -367,6 +359,8 @@ void estimate_cut_k(const MapParams &map_params, const SplittingSchedule &splitt
         splitting_schedule.schedule_type == SplittingSizeScheduleType::AnyValidSizeSMD;
 
     for (int i = 0; i < N_max && idx < N_adapt; i++, idx++) {
+        Plan const &plan = *plan_ptrs_vec[i];
+        splitting_schedule.build_context(plan, schedule_ctx);
 
         // Get the index of the region with the largest dval
         int biggest_region_id;
@@ -390,7 +384,7 @@ void estimate_cut_k(const MapParams &map_params, const SplittingSchedule &splitt
             for (int j = 0; j < num_regions; j++) {
                 int region_size = plan_ptrs_vec[i]->region_sizes[j];
                 // check if valid and bigger
-                if (splitting_schedule.valid_region_sizes_to_split[region_size] &&
+                if (splitting_schedule.region_is_splittable(plan, schedule_ctx, j) &&
                     region_size > biggest_region_size) {
                     biggest_region_id = j;
                     biggest_region_size = region_size;
@@ -399,10 +393,10 @@ void estimate_cut_k(const MapParams &map_params, const SplittingSchedule &splitt
         }
 
         int biggest_size_region_pop = plan_ptrs_vec[i]->region_pops[biggest_region_id];
-        std::pair<int, int> min_and_max_possible_cut_sizes =
-            splitting_schedule.all_regions_min_and_max_possible_cut_sizes[biggest_region_size];
-        int min_possible_cut_size = min_and_max_possible_cut_sizes.first;
-        int max_possible_cut_size = min_and_max_possible_cut_sizes.second;
+        CutSizeOptions const cut_options =
+            splitting_schedule.region_cut_sizes(plan, schedule_ctx, biggest_region_id);
+        int min_possible_cut_size = cut_options.min_cut_size;
+        int max_possible_cut_size = cut_options.max_cut_size;
 
         // now attempt to sample the tree on the biggest region
         auto const result = ust_sampler.attempt_to_draw_tree_on_region(
@@ -429,8 +423,7 @@ void estimate_cut_k(const MapParams &map_params, const SplittingSchedule &splitt
             result.root, ust_sampler.pops_below_vertex, 
             target, plan_ptrs_vec[i]->region_ids,
             biggest_region_id, biggest_region_id, biggest_region_size, biggest_size_region_pop,
-            min_possible_cut_size, max_possible_cut_size,
-            splitting_schedule.all_regions_smaller_cut_sizes_to_try[biggest_region_size]));
+            min_possible_cut_size, max_possible_cut_size, cut_options.smaller_cut_sizes));
 
         int n_ok = 0;
         for (const auto &a_dev : devs.at(idx)) {

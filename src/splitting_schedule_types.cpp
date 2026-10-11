@@ -6,10 +6,13 @@
  ********************************************************/
 
 #include "splitting_schedule_types.h"
+#include "base_plan_type.h" // Plan
+#include "redist_constants.h" // perf_config
 
-// for `Rprintf` / `REprintf` 
+// for `Rprintf` / `REprintf`
 #include <R_ext/Print.h>
 
+#include <algorithm>
 #include <cmath>
 #include <memory>
 #include <numeric>
@@ -17,6 +20,146 @@
 #include <string>
 
 constexpr bool DEBUG_SPLITTING_SCHEDULES_VERBOSE = false;
+
+DistrictSizeSums::DistrictSizeSums(int const total_seats, int const ndists,
+                                   std::vector<int> const &district_seat_sizes)
+    : total_seats(total_seats), ndists(ndists),
+      smallest_district_size(
+          *std::min_element(district_seat_sizes.begin(), district_seat_sizes.end())),
+      largest_district_size(
+          *std::max_element(district_seat_sizes.begin(), district_seat_sizes.end())),
+      seat_sizes_contiguous([&district_seat_sizes]() {
+          // contiguous if the distinct sizes fill the range from smallest to largest
+          std::vector<int> sizes(district_seat_sizes);
+          std::sort(sizes.begin(), sizes.end());
+          sizes.erase(std::unique(sizes.begin(), sizes.end()), sizes.end());
+          return sizes.back() - sizes.front() + 1 == static_cast<int>(sizes.size());
+      }()) {}
+
+bool DistrictSizeSums::table_is_sum_of(int const region_size, int const num_districts) const {
+    throw std::runtime_error(
+        "DistrictSizeSums::table_is_sum_of: district seat sizes that are not a contiguous "
+        "range are not supported yet.\n");
+}
+
+void SplittingSchedule::check_context(Plan const &plan, ScheduleContext const &ctx) const {
+    if (ctx.num_regions != plan.num_regions) {
+        std::ostringstream oss;
+        oss << "ScheduleContext was built for a plan with " << ctx.num_regions
+            << " regions but was used with a plan with " << plan.num_regions
+            << " regions. Rebuild the context with `build_context` after the plan changes.\n";
+        throw std::runtime_error(oss.str());
+    }
+}
+
+void SplittingSchedule::build_context(Plan const &plan, ScheduleContext &ctx) const {
+    ctx.num_regions = plan.num_regions;
+    // schedules that only use the size tables have nothing to compute
+    if (!plan_context_needed) return;
+    fill_context(plan, ctx);
+}
+
+/*
+ * Whether some district size is itself a sum of two or more district sizes
+ * (eg sizes 3 to 6, where 6 = 3 + 3). When none is, the district only MMD
+ * schedule can be answered from the size tables alone; otherwise which
+ * regions can be split depends on the rest of the plan.
+ *
+ * For a contiguous range this is just largest >= 2 * smallest. Non-contiguous
+ * sizes conservatively return true, since building a context that isn't
+ * needed is always safe.
+ */
+static bool some_district_size_is_sum_of_districts(std::vector<int> const &district_seat_sizes) {
+    DistrictSizeSums const size_sums(0, 0, district_seat_sizes);
+    if (!size_sums.seat_sizes_contiguous) return true;
+    return size_sums.largest_district_size >= 2 * size_sums.smallest_district_size;
+}
+
+bool SplittingSchedule::region_is_splittable(Plan const &plan, ScheduleContext const &ctx,
+                                             int const region_id) const {
+    if constexpr (perf_config::object_integrity_checking) check_context(plan, ctx);
+    return region_is_splittable_impl(plan, ctx, region_id);
+}
+
+CutSizeOptions SplittingSchedule::region_cut_sizes(Plan const &plan, ScheduleContext &ctx,
+                                                   int const region_id) const {
+    if constexpr (perf_config::object_integrity_checking) check_context(plan, ctx);
+    return region_cut_sizes_impl(plan, ctx, region_id);
+}
+
+CutSizeOptions SplittingSchedule::merged_region_cut_sizes(Plan const &plan,
+                                                          ScheduleContext &ctx,
+                                                          int const region1_id,
+                                                          int const region2_id) const {
+    if constexpr (perf_config::object_integrity_checking) check_context(plan, ctx);
+    return merged_region_cut_sizes_impl(plan, ctx, region1_id, region2_id);
+}
+
+bool SplittingSchedule::is_valid_merge_pair(Plan const &plan, ScheduleContext const &ctx,
+                                            int const region1_id, int const region2_id) const {
+    if constexpr (perf_config::object_integrity_checking) check_context(plan, ctx);
+    return is_valid_merge_pair_impl(plan, ctx, region1_id, region2_id);
+}
+
+double SplittingSchedule::log_merged_region_selection_prob(Plan const &plan,
+                                                           ScheduleContext const &ctx,
+                                                           int const region1_id,
+                                                           int const region2_id,
+                                                           double const selection_alpha) const {
+    if constexpr (perf_config::object_integrity_checking) check_context(plan, ctx);
+    return log_merged_region_selection_prob_impl(plan, ctx, region1_id, region2_id,
+                                                 selection_alpha);
+}
+
+bool SplittingSchedule::region_is_splittable_impl(Plan const &plan, ScheduleContext const &ctx,
+                                                  int const region_id) const {
+    return valid_region_sizes_to_split[plan.region_sizes[region_id]];
+}
+
+CutSizeOptions SplittingSchedule::region_cut_sizes_impl(Plan const &plan, ScheduleContext &ctx,
+                                                        int const region_id) const {
+    return size_cut_options(plan.region_sizes[region_id]);
+}
+
+CutSizeOptions SplittingSchedule::merged_region_cut_sizes_impl(Plan const &plan,
+                                                               ScheduleContext &ctx,
+                                                               int const region1_id,
+                                                               int const region2_id) const {
+    return size_cut_options(plan.region_sizes[region1_id] + plan.region_sizes[region2_id]);
+}
+
+bool SplittingSchedule::is_valid_merge_pair_impl(Plan const &plan, ScheduleContext const &ctx,
+                                                 int const region1_id,
+                                                 int const region2_id) const {
+    return valid_merge_pair_sizes[plan.region_sizes[region1_id]]
+                                 [plan.region_sizes[region2_id]];
+}
+
+/*
+ * Regions are picked to split with probability proportional to size^alpha
+ * among the splittable regions. This is the probability the region made by
+ * merging `region1_id` and `region2_id` would have been picked in the plan
+ * where they are merged.
+ */
+double SplittingSchedule::log_merged_region_selection_prob_impl(
+    Plan const &plan, ScheduleContext const &ctx, int const region1_id, int const region2_id,
+    double const selection_alpha) const {
+    // weight of the merged region
+    auto merged_region_size = plan.region_sizes[region1_id] + plan.region_sizes[region2_id];
+    double merged_region_wgt = std::pow(merged_region_size, selection_alpha);
+    double wgt_sum = merged_region_wgt;
+
+    for (int region_id = 0; region_id < plan.num_regions; region_id++) {
+        auto region_size = plan.region_sizes[region_id];
+        // add if splittable and not one of the two being merged
+        if (valid_region_sizes_to_split[region_size] && region_id != region1_id &&
+            region_id != region2_id) {
+            wgt_sum += std::pow(region_size, selection_alpha);
+        }
+    }
+
+    return std::log(merged_region_wgt) - std::log(wgt_sum);
+}
 
 void SplittingSchedule::reset_splitting_and_merge_booleans() {
     // reset all regions that can be split to false
@@ -27,8 +170,6 @@ void SplittingSchedule::reset_splitting_and_merge_booleans() {
         std::fill(valid_merge_pair_sizes[region_size].begin(),
                   valid_merge_pair_sizes[region_size].end(), false);
     }
-    // reset check adj to
-    std::fill(check_adj_to_regions.begin(), check_adj_to_regions.end(), false);
 }
 
 void SplittingSchedule::print_current_step_splitting_info() {
@@ -58,11 +199,6 @@ void SplittingSchedule::print_current_step_splitting_info() {
         }
     }
     Rprintf(")\n");
-    Rprintf("Now doing check_adj_to:\n");
-    for (size_t i = 1; i <= total_seats; i++) {
-        std::string t_str = check_adj_to_regions[i] ? "true" : "false";
-        Rprintf("%d: %s\n", (int)i, t_str.c_str());
-    }
 
     Rprintf("The following valid merge pairs are:\n");
     Rprintf("_ |");
@@ -92,7 +228,7 @@ void SplittingSchedule::print_current_step_splitting_info() {
 DistrictOnlySplittingSchedule::DistrictOnlySplittingSchedule(const int num_splits,
                                                              const int ndists)
     : SplittingSchedule(SplittingSizeScheduleType::DistrictOnlySMD, ndists, ndists,
-                        std::vector<int>{1}) {
+                        std::vector<int>{1}, false) {
     // For each size above 2 make the min=1 and the max=size-1
     for (int region_size = 2; region_size <= ndists; region_size++) {
         all_regions_smaller_cut_sizes_to_try[region_size] = std::vector<int>{1};
@@ -121,7 +257,6 @@ void DistrictOnlySplittingSchedule::set_potential_cut_sizes_for_each_valid_size(
     // we can only merge 1 and reminader region size -1
     valid_merge_pair_sizes[1][after_split_remainder_size] = true;
     valid_merge_pair_sizes[after_split_remainder_size][1] = true;
-    check_adj_to_regions[after_split_remainder_size] = true;
 
     return;
 }
@@ -143,7 +278,7 @@ void DistrictOnlySplittingSchedule::update_cut_sizes_for_mergesplit_step(int spl
 AnyRegionSMDSplittingSchedule::AnyRegionSMDSplittingSchedule(const int num_splits,
                                                              const int ndists)
     : SplittingSchedule(SplittingSizeScheduleType::AnyValidSizeSMD, ndists, ndists,
-                        std::vector<int>{1}) {
+                        std::vector<int>{1}, false) {
     // If doing any sizes then for `region_size` the possible split sizes are always
     // if any sizes allowed then for 2, ..., ndists make it 1,...,floor(size/2)
     for (int region_size = 2; region_size <= ndists; region_size++) {
@@ -178,7 +313,6 @@ void AnyRegionSMDSplittingSchedule::set_potential_cut_sizes_for_each_valid_size(
     valid_split_region_sizes[1] = true;
     // make the largest size false since you'll never get this from a split
     valid_split_region_sizes[presplit_biggest_possible_size] = false;
-    check_adj_to_regions = valid_split_region_sizes;
     // valid merge pairs are anything that sums to less than or equal to the max valid size
     for (size_t region1_size = 1; region1_size < presplit_biggest_possible_size;
          region1_size++) {
@@ -197,26 +331,17 @@ DistrictOnlyMMDSplittingSchedule::DistrictOnlyMMDSplittingSchedule(
     const int num_splits, const int ndists, const int total_seats,
     std::vector<int> const &district_seat_sizes)
     : SplittingSchedule(SplittingSizeScheduleType::DistrictOnlyMMD, ndists, total_seats,
-                        district_seat_sizes) {
+                        district_seat_sizes,
+                        some_district_size_is_sum_of_districts(district_seat_sizes)) {
 
     // right now only ranges are supported
-    auto not_a_range_error = [&]() {
+    if (!size_sums.seat_sizes_contiguous) {
         std::ostringstream oss;
         oss << "For multi-member districting with district only splits the district seat "
             << "sizes must be a consecutive range of sizes with no gaps, but got sizes: ";
         for (int const size : district_seat_sizes) oss << size << " ";
         oss << "\n";
-        return std::runtime_error(oss.str());
-    };
-    int cur_index = 0;
-    for (int i = smallest_district_size; i < largest_district_size; i++) {
-        if (district_seat_sizes[cur_index] != i) {
-            throw not_a_range_error();
-        }
-        cur_index++;
-    }
-    if (largest_district_size - smallest_district_size + 1 != district_seat_sizes.size()) {
-        throw not_a_range_error();
+        throw std::runtime_error(oss.str());
     }
 
     // For a range it must be smallest_district_size <= total_seats/ndists <=
@@ -264,116 +389,38 @@ void DistrictOnlyMMDSplittingSchedule::set_potential_cut_sizes_for_each_valid_si
         throw schedule_error("the number of presplit regions must be between 1 and ndists - 1.");
     }
 
-    // the biggest remainder size assumes we split smallest district each time
-    int presplit_biggest_possible_size = total_seats - presplit_ndists * smallest_district_size;
-
-    if constexpr (DEBUG_SPLITTING_SCHEDULES_VERBOSE) {
-        REprintf("%d Remaining Districts!\n", remainder_ndists);
-        REprintf("Total Seats: %d\n Presplit Districts: %d\n Smallest District Size: %d\n "
-                 "Largest District Size: %d\n",
-                 total_seats, presplit_ndists, smallest_district_size, largest_district_size);
-        REprintf("There are %d presplit regions! Starting with Biggest presplit size %d\n",
-                 presplit_num_regions, presplit_biggest_possible_size);
-    }
-
-    // If this isn't a splittable number then keep increasing by one until we get something
-    while (smallest_district_size >
-               presplit_biggest_possible_size / static_cast<double>(remainder_ndists) ||
-           largest_district_size <
-               presplit_biggest_possible_size / static_cast<double>(remainder_ndists)) {
-        if constexpr (DEBUG_SPLITTING_SCHEDULES_VERBOSE)
-            REprintf("%d\n", presplit_biggest_possible_size);
-        presplit_biggest_possible_size--;
-        if (presplit_biggest_possible_size <= 0 ||
-            presplit_biggest_possible_size >= total_seats) {
-            throw schedule_error(
-                "no remainder region size can be split into the remaining districts when "
-                "searching down from the biggest possible remainder size (reached " +
-                std::to_string(presplit_biggest_possible_size) + " seats).");
-        }
-    }
-    // REprintf("Biggest Remainder Size: %d\n", presplit_biggest_possible_size);
-
-    // start off with
-    int presplit_smallest_possible_size =
-        std::max(0, total_seats - presplit_ndists * largest_district_size);
-    if constexpr (DEBUG_SPLITTING_SCHEDULES_VERBOSE) {
-        REprintf("There are %d presplit regions! Starting with Smallest presplit size %d\n",
-                 presplit_num_regions, presplit_smallest_possible_size);
-    }
-
-    while (smallest_district_size >
-               presplit_smallest_possible_size / static_cast<double>(remainder_ndists) ||
-           largest_district_size <
-               presplit_smallest_possible_size / static_cast<double>(remainder_ndists)) {
-        if constexpr (DEBUG_SPLITTING_SCHEDULES_VERBOSE)
-            REprintf("%d\n", presplit_smallest_possible_size);
-        presplit_smallest_possible_size++;
-        if (presplit_smallest_possible_size >= total_seats) {
-            throw schedule_error(
-                "no remainder region size can be split into the remaining districts when "
-                "searching up from the smallest possible remainder size (reached " +
-                std::to_string(presplit_smallest_possible_size) + " seats).");
-        }
-    }
-    // REprintf("Smallest Remainder Size: %d\n", presplit_smallest_possible_size);
-
-    // Don't think this should be possible but just adding a flag
-    if (presplit_biggest_possible_size < largest_district_size) {
-        throw schedule_error(
-            "the biggest possible remainder region size (" +
-            std::to_string(presplit_biggest_possible_size) +
-            " seats) is less than the largest district size (" +
-            std::to_string(largest_district_size) + " seats).");
-    }
-
     // reset all regions split and merge booleans
     reset_splitting_and_merge_booleans();
 
-    if constexpr (DEBUG_SPLITTING_SCHEDULES_VERBOSE) {
-        REprintf("We're looking at remainders between %d and %d\n",
-                 presplit_biggest_possible_size, presplit_smallest_possible_size);
-    }
-    // now look at each possible remainder size
-    for (int remainder_size = presplit_smallest_possible_size;
-         remainder_size <= presplit_biggest_possible_size; remainder_size++) {
-        // check if it is possible to reach
-        // if not smallest_district_size <= remainder_size/remainder_ndists <=
-        // largest_district_size
-        if (smallest_district_size > remainder_size / static_cast<double>(remainder_ndists) ||
-            largest_district_size < remainder_size / static_cast<double>(remainder_ndists)) {
+    // A remainder of size s is possible if s can be split into `remainder_ndists`
+    // districts and the other `presplit_ndists` districts can hold the rest of the seats.
+    bool any_remainder_size = false;
+    for (int remainder_size = 1; remainder_size <= total_seats; remainder_size++) {
+        if (!size_sums.is_sum_of(remainder_size, remainder_ndists) ||
+            !size_sums.is_sum_of(total_seats - remainder_size, presplit_ndists)) {
             continue;
         }
+        any_remainder_size = true;
         // clear split sizes to try
         all_regions_smaller_cut_sizes_to_try[remainder_size].clear();
-        // Now check for each district size if it can be split off
-        for (int district_size = smallest_district_size; district_size <= largest_district_size;
-             district_size++) {
+        // We can split off any district that leaves a remainder that can still be
+        // split into the remaining districts
+        for (int const district_size : district_seat_sizes) {
             if (district_size >= remainder_size)
                 continue;
             int new_remainder_size = remainder_size - district_size;
+            if (!size_sums.is_sum_of(new_remainder_size, remainder_ndists - 1))
+                continue;
 
-            double new_piece_ratio =
-                (new_remainder_size) / static_cast<double>(remainder_ndists - 1);
-            // if smallest_district_size <= (remainder_size-district_size)/(remainder_ndists-1)
-            // <= largest_district_size then it is ok
-            if (smallest_district_size <= new_piece_ratio &&
-                new_piece_ratio <= largest_district_size) {
-                // If so then add this size as an option
-                // Add the smaller of the two cut pieces
-                all_regions_smaller_cut_sizes_to_try[remainder_size].push_back(
-                    std::min(new_remainder_size, district_size));
-                // Now also add this district as a possible split size
-                valid_split_region_sizes[district_size] = true;
-                valid_split_region_sizes[new_remainder_size] = true;
-                // The district and the new remainder are also valid merge pairs
-                valid_merge_pair_sizes[new_remainder_size][district_size] = true;
-                valid_merge_pair_sizes[district_size][new_remainder_size] = true;
-                // We also add these as check adjacent to just because things aren't as
-                // easy as SMD case
-                check_adj_to_regions[new_remainder_size] = true;
-                check_adj_to_regions[district_size] = true;
-            }
+            // Add the smaller of the two cut pieces
+            all_regions_smaller_cut_sizes_to_try[remainder_size].push_back(
+                std::min(new_remainder_size, district_size));
+            // Now also add this district as a possible split size
+            valid_split_region_sizes[district_size] = true;
+            valid_split_region_sizes[new_remainder_size] = true;
+            // The district and the new remainder are also valid merge pairs
+            valid_merge_pair_sizes[new_remainder_size][district_size] = true;
+            valid_merge_pair_sizes[district_size][new_remainder_size] = true;
         }
 
         if (all_regions_smaller_cut_sizes_to_try[remainder_size].size() == 0)
@@ -391,6 +438,11 @@ void DistrictOnlyMMDSplittingSchedule::set_potential_cut_sizes_for_each_valid_si
             all_regions_smaller_cut_sizes_to_try[remainder_size][0],
             remainder_size - all_regions_smaller_cut_sizes_to_try[remainder_size][0]};
     }
+
+    if (!any_remainder_size) {
+        throw schedule_error("no remainder region size can be split into the remaining "
+                             "districts.");
+    }
 }
 
 void DistrictOnlyMMDSplittingSchedule::update_cut_sizes_for_mergesplit_step(int split_num,
@@ -403,7 +455,7 @@ AnyRegionMMDSplittingSchedule::AnyRegionMMDSplittingSchedule(
     const int num_splits, const int ndists, const int total_seats,
     std::vector<int> const &district_seat_sizes)
     : SplittingSchedule(SplittingSizeScheduleType::AnyValidSizeMMD, ndists, total_seats,
-                        district_seat_sizes),
+                        district_seat_sizes, true),
       reachable_size(total_seats + 1, false) {
 
     // the smallest size divided by total seats must be at least ndists or its not even
@@ -525,8 +577,6 @@ void AnyRegionMMDSplittingSchedule::set_potential_cut_sizes_for_each_valid_size(
         }
     }
 
-    check_adj_to_regions = valid_split_region_sizes;
-
     // valid merge pairs are anything where both sizes are reachable
     // TODO this
     for (size_t region1_size = smallest_district_size;
@@ -551,7 +601,7 @@ void AnyRegionMMDSplittingSchedule::set_potential_cut_sizes_for_each_valid_size(
 PureMSSplittingSchedule::PureMSSplittingSchedule(const int ndists, const int total_size,
                                                  std::vector<int> const &district_seat_sizes)
     : SplittingSchedule(SplittingSizeScheduleType::PureMergeSplitSize, ndists, total_size,
-                        district_seat_sizes) {
+                        district_seat_sizes, false) {
 
     for (int const district_size1: district_seat_sizes) {
         for (int const district_size2: district_seat_sizes) {
@@ -569,7 +619,6 @@ PureMSSplittingSchedule::PureMSSplittingSchedule(const int ndists, const int tot
         }
     }
 
-    check_adj_to_regions = valid_split_region_sizes;
     // make smaller cut sizes unique and sort
     // get min and max sizes
 

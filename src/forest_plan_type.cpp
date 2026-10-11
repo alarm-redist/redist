@@ -84,18 +84,11 @@ void ForestPlan::update_vertex_and_plan_specific_info_from_cut(
  * the tree made by merging each boundary edge
  *
  *
- * @param g A graph (adjacency list) passed by reference
+ * Assumes every pair left in the plan multigraph is already a valid merge.
+ *
  * @param plan A plan object
- * @param check_adj_to_regions A vector tracking whether or not we should
- * check for edges adjacent to vertices in a region of a particular size. For
- * example, `check_adj_to_regions[i] == true` means we will attempt to find
- * edges adjacent to any vertex in a region of size i. This vector is 1-indexed
- * meaning we don't need to subtract region size by 1 when accessing.
- * @param valid_merge_pairs A 2D `ndists+1` by `ndists+1` boolean matrix that
- * uses region size to check whether or not two regions are considered a valid
- * merge that can be counted in the map. For example `valid_merge_pairs[i][j]`
- * being true means that any regions where the sizes are (i,j) are considered
- * valid to merge. 2D matrix is 1 indexed (don't need to subtract region size)
+ * @param splitting_schedule The splitting schedule giving the allowed cut sizes
+ * @param schedule_ctx The schedule context built for `plan`
  *
  * @details No modifications to inputs made
  * @return A hash map mapping (std::pair<int,int> to double) that maps a pair of
@@ -105,7 +98,8 @@ void ForestPlan::update_vertex_and_plan_specific_info_from_cut(
 std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundary_lens(
     const ForestPlan &plan, EdgeBitset const &forest_edges,
     PlanMultigraph &plan_multigraph,
-    const SplittingSchedule &splitting_schedule, USTSampler &ust_sampler,
+    const SplittingSchedule &splitting_schedule, ScheduleContext &schedule_ctx,
+    USTSampler &ust_sampler,
     TreeSplitter &edge_splitter, ScoringFunction const &scoring_function) {
 
     if constexpr (perf_config::object_integrity_checking){
@@ -122,9 +116,7 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
     for (auto const key_val_pair : plan_multigraph.pair_map.get_all_values()) {
         RegionID const region1_id = key_val_pair.first.first;
         RegionID const region2_id = key_val_pair.first.second;
-        PairHashData const &pair_data = key_val_pair.second;    
-        int const region1_size = plan.region_sizes[region1_id];
-        int const region2_size = plan.region_sizes[region2_id];
+        PairHashData const &pair_data = key_val_pair.second;
         /*
         * Skip pairs that have already been marked as not needing their
         * effective boundary computed.
@@ -132,23 +124,9 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
         if (!pair_data.count_pair) {
             continue;
         }
-        // skip if we don't check adjacent pairs for these sizes
-        if (
-            !splitting_schedule.check_adj_to_regions[region1_size] &&
-            !splitting_schedule.check_adj_to_regions[region2_size]
-        ) {
-            continue;
-        }
 
-        int const merged_region_size = region1_size + region2_size;
-
-        auto const cut_size_bounds = splitting_schedule
-                .all_regions_min_and_max_possible_cut_sizes[
-                    merged_region_size
-                ];
-
-        int const min_possible_cut_size = cut_size_bounds.first;
-        int const max_possible_cut_size = cut_size_bounds.second;
+        CutSizeOptions const cut_options = splitting_schedule.merged_region_cut_sizes(
+            plan, schedule_ctx, region1_id, region2_id);
 
         /*
         * If the regions are administratively adjacent, only within-county
@@ -177,12 +155,9 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
                 region1_root,
                 region2_root,
                 plan,
-                min_possible_cut_size,
-                max_possible_cut_size,
-                splitting_schedule
-                    .all_regions_smaller_cut_sizes_to_try[
-                        merged_region_size
-                    ],
+                cut_options.min_cut_size,
+                cut_options.max_cut_size,
+                cut_options.smaller_cut_sizes,
                 count_edges_across
             );
 
@@ -198,7 +173,7 @@ std::vector<std::tuple<RegionID, RegionID, double>> compute_log_tree_eff_boundar
 
 std::vector<std::tuple<RegionID, RegionID, double>>
 ForestPlan::get_valid_adj_regions_and_eff_log_boundary_lens(
-    PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule,
+    PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule, ScheduleContext &schedule_ctx,
     ScoringFunction const &scoring_function, bool const is_final_split, USTSampler &ust_sampler,
     TreeSplitter &tree_splitter) const {
     // build the multigraph
@@ -206,21 +181,21 @@ ForestPlan::get_valid_adj_regions_and_eff_log_boundary_lens(
     // remove invalid hierarchical merges if needed
     plan_multigraph.remove_invalid_hierarchical_merge_pairs(*this);
     // remove invalid size pairs
-    plan_multigraph.remove_invalid_size_pairs(*this, splitting_schedule);
+    plan_multigraph.remove_invalid_size_pairs(*this, splitting_schedule, schedule_ctx);
     // remove invalid hard constraint pairs
     plan_multigraph.remove_invalid_hard_constraint_pairs(*this, scoring_function,
                                                          is_final_split);
 
     // get pairs and log tree effective boundary
     auto region_pairs_tuple_vec = compute_log_tree_eff_boundary_lens(
-        *this, forest_edges, plan_multigraph, splitting_schedule, ust_sampler, tree_splitter,
-        scoring_function);
+        *this, forest_edges, plan_multigraph, splitting_schedule, schedule_ctx, ust_sampler,
+        tree_splitter, scoring_function);
 
     return region_pairs_tuple_vec;
 }
 
 double ForestPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
-                                            const SplittingSchedule &splitting_schedule,
+                                            const SplittingSchedule &splitting_schedule, ScheduleContext &schedule_ctx,
                                             USTSampler &ust_sampler,
                                             TreeSplitter &tree_splitter,
                                             ScoringFunction const &scoring_function,
@@ -233,12 +208,8 @@ double ForestPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
         );
     }
 
-    int const merged_region_size = region_sizes[region1_id] + region_sizes[region2_id];
-
-    auto cut_size_bounds =
-        splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size];
-    int min_possible_cut_size = cut_size_bounds.first;
-    int max_possible_cut_size = cut_size_bounds.second;
+    CutSizeOptions const cut_options =
+        splitting_schedule.merged_region_cut_sizes(*this, schedule_ctx, region1_id, region2_id);
 
     auto const search_result = plan_multigraph.pair_map.get_value(
             region1_id,
@@ -261,9 +232,8 @@ double ForestPlan::get_log_eff_boundary_len(PlanMultigraph &plan_multigraph,
     double log_eff_boundary = tree_splitter.get_log_eff_boundary_len_for_adj_region_pair(
                         plan_multigraph.map_params, scoring_function, forest_edges,
                         ust_sampler.pops_below_vertex, region1_root,
-                        region2_root, *this, min_possible_cut_size, max_possible_cut_size,
-                        splitting_schedule
-                            .all_regions_smaller_cut_sizes_to_try[merged_region_size],
+                        region2_root, *this, cut_options.min_cut_size,
+                        cut_options.max_cut_size, cut_options.smaller_cut_sizes,
                         count_edges_across);
 
     return log_eff_boundary;

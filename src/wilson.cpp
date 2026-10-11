@@ -1374,12 +1374,13 @@ USTDrawResult USTSampler::attempt_to_draw_tree_on_region(
         sample_sub_ust_lower = custom_sample_sub_ust_lower;
         sample_sub_ust_upper = custom_sample_sub_ust_upper;
     }else{
-        // else just do upper and lower scaled by min and max possible cut size
-        // get upper and lower bounds on region pops
-        auto min_max_pair = splitting_schedule.all_regions_min_and_max_possible_cut_sizes
-                                [plan.region_sizes[region_to_draw_tree_on]];
-        sample_sub_ust_lower = min_max_pair.first * map_params.lower; // lower
-        sample_sub_ust_upper = min_max_pair.second * map_params.upper; // upper
+        // else use the schedule's size table bounds for a region of this size.
+        // Splits pass their plan specific bounds in as custom bounds, so this is
+        // only used when drawing a tree outside of a split.
+        CutSizeOptions const size_options =
+            splitting_schedule.size_cut_options(plan.region_sizes[region_to_draw_tree_on]);
+        sample_sub_ust_lower = size_options.min_cut_size * map_params.lower; // lower
+        sample_sub_ust_upper = size_options.max_cut_size * map_params.upper; // upper
     }
     auto const is_active = [&plan, region_to_draw_tree_on](
         int const v
@@ -1431,16 +1432,15 @@ USTDrawResult USTSampler::attempt_to_draw_tree_on_merged_region(RNGState &rng_st
         sample_sub_ust_lower = custom_sample_sub_ust_lower;
         sample_sub_ust_upper = custom_sample_sub_ust_upper;
     }else{
-        // else just do upper and lower scaled by min and max possible cut size
-        // get upper and lower bounds on region pops
+        // else use the schedule's size table bounds for a region of the merged size.
+        // Merge splits pass their plan specific bounds in as custom bounds, so this
+        // is only used when drawing a tree outside of a split.
         int merged_region_size =
             plan.region_sizes[region1_to_draw_tree_on] + plan.region_sizes[region2_to_draw_tree_on];
-        // get upper and lower bounds on region pops
-        auto min_max_pair =
-            splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size];
+        CutSizeOptions const size_options = splitting_schedule.size_cut_options(merged_region_size);
 
-        sample_sub_ust_lower = min_max_pair.first * map_params.lower; // lower
-        sample_sub_ust_upper = min_max_pair.second * map_params.upper; // upper
+        sample_sub_ust_lower = size_options.min_cut_size * map_params.lower; // lower
+        sample_sub_ust_upper = size_options.max_cut_size * map_params.upper; // upper
     }
 
 
@@ -1692,25 +1692,14 @@ bool USTSampler::fill_in_skipped_subtrees(
 std::pair<bool, EdgeCut> USTSampler::try_to_find_and_erase_splittable_edge(
     Plan const &plan, int const split_region1, int const split_region2, int const root,
     ScoringFunction const &scoring_function, RNGState &rng_state, TreeSplitter &tree_splitter,
-    int const region_populations, int const region_size, bool const save_selection_prob) {
+    int const region_populations, int const region_size, CutSizeOptions const &cut_options,
+    bool const save_selection_prob) {
     // We assume a tree has already been successfully drawn so
     // try to find a valid cut
-    auto cut_size_bounds =
-        splitting_schedule.all_regions_min_and_max_possible_cut_sizes[region_size];
-    int min_possible_cut_size = cut_size_bounds.first;
-    int max_possible_cut_size = cut_size_bounds.second;
-
-    // REprintf("Remainder Size: %d Cut sizes:", region_size);
-    // for(auto const &v: splitting_schedule.all_regions_smaller_cut_sizes_to_try[region_size]){
-    //     REprintf("%d, ", v);
-    // }
-    // REprintf("\n");
-
     std::pair<bool, EdgeCut> edge_search_result = tree_splitter.attempt_to_find_edge_to_cut(
         map_params, scoring_function, rng_state, plan, split_region1, split_region2, ust, root,
         pops_below_vertex, region_populations, region_size,
-        min_possible_cut_size, max_possible_cut_size,
-        splitting_schedule.all_regions_smaller_cut_sizes_to_try[region_size],
+        cut_options.min_cut_size, cut_options.max_cut_size, cut_options.smaller_cut_sizes,
         save_selection_prob);
 
     bool search_successful = std::get<0>(edge_search_result);
@@ -1730,9 +1719,11 @@ std::pair<bool, EdgeCut> USTSampler::try_to_find_and_erase_splittable_edge(
 std::pair<bool, EdgeCut> USTSampler::attempt_to_find_valid_tree_split(
     RNGState &rng_state, ScoringFunction const &scoring_function, TreeSplitter &tree_splitter,
     Plan const &plan, int const region_to_split, int const new_region_id,
-    bool const save_selection_prob) {
+    CutSizeOptions const &cut_options, bool const save_selection_prob) {
     // Try to draw a tree
-    auto const result = attempt_to_draw_tree_on_region(rng_state, plan, region_to_split);
+    auto const result = attempt_to_draw_tree_on_region(
+        rng_state, plan, region_to_split, true,
+        cut_options.min_cut_size * map_params.lower, cut_options.max_cut_size * map_params.upper);
     // return false if unsuccessful
     if (!result.successful)
         return std::make_pair(false, EdgeCut());
@@ -1744,15 +1735,17 @@ std::pair<bool, EdgeCut> USTSampler::attempt_to_find_valid_tree_split(
     return try_to_find_and_erase_splittable_edge(plan, region_to_split, new_region_id, result.root,
         scoring_function,
                                          rng_state, tree_splitter, region_to_split_population,
-                                         region_to_split_size, save_selection_prob);
+                                         region_to_split_size, cut_options, save_selection_prob);
 }
 
 std::pair<bool, EdgeCut> USTSampler::attempt_to_find_valid_tree_mergesplit(
     RNGState &rng_state, ScoringFunction const &scoring_function, TreeSplitter &tree_splitter,
     Plan const &plan, int const merge_region1, int const merge_region2,
-    bool const save_selection_prob) {
+    CutSizeOptions const &cut_options, bool const save_selection_prob) {
     // Try to draw a tree
-    auto const result = attempt_to_draw_tree_on_merged_region(rng_state, plan, merge_region1, merge_region2);
+    auto const result = attempt_to_draw_tree_on_merged_region(
+        rng_state, plan, merge_region1, merge_region2, true,
+        cut_options.min_cut_size * map_params.lower, cut_options.max_cut_size * map_params.upper);
     // return false if unsuccessful
     if (!result.successful)
         return std::make_pair(false, EdgeCut());
@@ -1765,7 +1758,7 @@ std::pair<bool, EdgeCut> USTSampler::attempt_to_find_valid_tree_mergesplit(
 
     return try_to_find_and_erase_splittable_edge(plan, merge_region1, merge_region2, result.root, scoring_function,
                                          rng_state, tree_splitter, region_to_split_population,
-                                         region_to_split_size, save_selection_prob);
+                                         region_to_split_size, cut_options, save_selection_prob);
 }
 
 

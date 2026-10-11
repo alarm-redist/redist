@@ -10,6 +10,7 @@ class Plan;
 class ScoringFunction;
 class TreeSplitter;
 class SplittingSchedule;
+struct CutSizeOptions;
 
 
 struct USTDrawResult {
@@ -170,7 +171,8 @@ class USTSampler {
                                   int const split_region2, int const root,
                                   ScoringFunction const &scoring_function, RNGState &rng_state,
                                   TreeSplitter &tree_splitter, int const region_populations,
-                                  int const region_size, bool const save_selection_prob);
+                                  int const region_size, CutSizeOptions const &cut_options,
+                                  bool const save_selection_prob);
 
   public:
     USTSampler(MapParams const &map_params, SplittingSchedule const &splitting_schedule)
@@ -267,16 +269,22 @@ class USTSampler {
       int const max_tries_multiple = 1000
     );
 
+    // `cut_options` are the allowed ways to split `region_to_split`, from the
+    // splitting schedule
     std::pair<bool, EdgeCut> attempt_to_find_valid_tree_split(
         RNGState &rng_state, ScoringFunction const &scoring_function,
         TreeSplitter &tree_splitter, Plan const &plan, int const region_to_split,
-        int const new_region_id, bool const save_selection_prob);
+        int const new_region_id, CutSizeOptions const &cut_options,
+        bool const save_selection_prob);
 
 
+    // `cut_options` are the allowed ways to split the merged region, from the
+    // splitting schedule
     std::pair<bool, EdgeCut> attempt_to_find_valid_tree_mergesplit(
         RNGState &rng_state, ScoringFunction const &scoring_function,
         TreeSplitter &tree_splitter, Plan const &plan, int const merge_region1,
-        int const merge_region2, bool const save_selection_prob);
+        int const merge_region2, CutSizeOptions const &cut_options,
+        bool const save_selection_prob);
 
     // Tree get_vertex_tree ()const {return ust.to_vertex_graph();}
     Tree get_vertex_tree ()const {return ust;}
