@@ -312,8 +312,10 @@ double LinkingEdgePlan::get_log_eff_boundary_len(
         int edge_region2 =
             std::max(region_ids[edge_pair.vertex1], region_ids[edge_pair.vertex2]);
         if (edge_region1 == region1_id && edge_region2 == region2_id) {
-            // if log prob not accurate then recompute first
-            if (!edge_pair.valid_log_prob) {
+            // if log prob not accurate then recompute first. When the cut sizes
+            // depend on the plan the cached value may have been computed with
+            // different cut sizes, so always recompute.
+            if (!edge_pair.valid_log_prob || splitting_schedule.plan_context_needed) {
                 // else recompute first
                 edge_pair.log_prob = get_regions_log_splitting_prob(
                     scoring_function, tree_splitter, ust_sampler, splitting_schedule,
@@ -391,8 +393,10 @@ LinkingEdgePlan::get_valid_adj_regions_and_eff_log_boundary_lens(
                 throw std::runtime_error(oss.str());
             }
 
-            // check if we need to recompute selection probability
-            if (!edge_pair.valid_log_prob) {
+            // check if we need to recompute selection probability. When the cut
+            // sizes depend on the plan the cached value may have been computed
+            // with different cut sizes, so always recompute.
+            if (!edge_pair.valid_log_prob || splitting_schedule.plan_context_needed) {
                 // else recompute first
                 edge_pair.log_prob = get_regions_log_splitting_prob(
                     scoring_function, tree_splitter, ust_sampler, splitting_schedule,

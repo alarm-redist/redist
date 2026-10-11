@@ -451,6 +451,127 @@ void DistrictOnlyMMDSplittingSchedule::update_cut_sizes_for_mergesplit_step(int 
     return;
 }
 
+void DistrictOnlyMMDSplittingSchedule::fill_context(Plan const &plan,
+                                                    ScheduleContext &ctx) const {
+    // find the one region that isn't district sized, if there is one
+    ctx.non_district_region = -1;
+    for (int region_id = 0; region_id < plan.num_regions; region_id++) {
+        if (is_district[plan.region_sizes[region_id]])
+            continue;
+        if (ctx.non_district_region >= 0) {
+            std::ostringstream oss;
+            oss << "DistrictOnlyMMDSplittingSchedule: plan has more than one region that is not "
+                << "district sized (regions " << ctx.non_district_region << " and " << region_id
+                << ") so it can't be completed by splitting off one district at a time.\n"
+                << plan.debug_string(true);
+            throw std::runtime_error(oss.str());
+        }
+        ctx.non_district_region = region_id;
+    }
+}
+
+bool DistrictOnlyMMDSplittingSchedule::region_is_splittable_impl(Plan const &plan,
+                                                                 ScheduleContext const &ctx,
+                                                                 int const region_id) const {
+    bool const size_splittable =
+        SplittingSchedule::region_is_splittable_impl(plan, ctx, region_id);
+    // if every region is district sized any splittable size can be the remainder
+    if (!plan_context_needed || ctx.non_district_region < 0)
+        return size_splittable;
+    // otherwise the non district sized region is the remainder and the only
+    // region that can be split
+    return region_id == ctx.non_district_region && size_splittable;
+}
+
+bool DistrictOnlyMMDSplittingSchedule::is_valid_merge_pair_impl(Plan const &plan,
+                                                                ScheduleContext const &ctx,
+                                                                int const region1_id,
+                                                                int const region2_id) const {
+    bool const sizes_ok =
+        SplittingSchedule::is_valid_merge_pair_impl(plan, ctx, region1_id, region2_id);
+    if (!plan_context_needed || !sizes_ok)
+        return sizes_ok;
+    // If one region isn't district sized it is the remainder, and a split can
+    // only have made it from the previous remainder, so it must be in the pair
+    int const non_district_region = ctx.non_district_region;
+    return non_district_region < 0 || region1_id == non_district_region ||
+           region2_id == non_district_region;
+}
+
+double DistrictOnlyMMDSplittingSchedule::log_merged_region_selection_prob_impl(
+    Plan const &plan, ScheduleContext const &ctx, int const region1_id, int const region2_id,
+    double const selection_alpha) const {
+    if (plan_context_needed) {
+        // If the merged region isn't district sized it was the only region
+        // that could be split, so it was picked with probability 1
+        int const merged_region_size =
+            plan.region_sizes[region1_id] + plan.region_sizes[region2_id];
+        if (!is_district[merged_region_size])
+            return 0.0;
+    }
+    // otherwise every region was district sized and it was picked from all
+    // the regions whose size is splittable
+    return SplittingSchedule::log_merged_region_selection_prob_impl(
+        plan, ctx, region1_id, region2_id, selection_alpha);
+}
+
+void DistrictOnlyMMDSplittingSchedule::check_initial_plan(Plan const &plan) const {
+    int const num_regions = plan.num_regions;
+    // the number of districts the remainder still has to be split into
+    int const remainder_ndists = ndists - num_regions + 1;
+
+    auto plan_error = [&](std::string const &problem) {
+        std::ostringstream oss;
+        oss << "The initial partial plan can't be completed by splitting off one district at a "
+            << "time: " << problem << "\n"
+            << "num_regions=" << num_regions << ", ndists=" << ndists
+            << ", total_seats=" << total_seats << ", district sizes " << smallest_district_size
+            << " to " << largest_district_size << ".\n"
+            << plan.debug_string(true);
+        return std::runtime_error(oss.str());
+    };
+
+    if (num_regions < 1 || num_regions > ndists) {
+        throw plan_error("the number of regions must be between 1 and ndists.");
+    }
+
+    int seat_sum = 0;
+    int non_district_region = -1;
+    bool any_possible_remainder = false;
+    for (int region_id = 0; region_id < num_regions; region_id++) {
+        int const region_size = plan.region_sizes[region_id];
+        if (region_size < 1 || region_size > total_seats) {
+            throw plan_error("region " + std::to_string(region_id) + " has " +
+                             std::to_string(region_size) + " seats.");
+        }
+        seat_sum += region_size;
+        if (size_sums.is_sum_of(region_size, remainder_ndists))
+            any_possible_remainder = true;
+        if (is_district[region_size])
+            continue;
+        if (non_district_region >= 0) {
+            throw plan_error("more than one region is not district sized.");
+        }
+        non_district_region = region_id;
+    }
+
+    if (seat_sum != total_seats) {
+        throw plan_error("the region seats sum to " + std::to_string(seat_sum) + ".");
+    }
+    if (non_district_region >= 0) {
+        // the non district sized region has to be the remainder
+        int const remainder_size = plan.region_sizes[non_district_region];
+        if (!size_sums.is_sum_of(remainder_size, remainder_ndists)) {
+            throw plan_error("region " + std::to_string(non_district_region) + " with " +
+                             std::to_string(remainder_size) + " seats can't be split into " +
+                             std::to_string(remainder_ndists) + " districts.");
+        }
+    } else if (!any_possible_remainder) {
+        throw plan_error("no region can be split into the remaining " +
+                         std::to_string(remainder_ndists) + " districts.");
+    }
+}
+
 AnyRegionMMDSplittingSchedule::AnyRegionMMDSplittingSchedule(
     const int num_splits, const int ndists, const int total_seats,
     std::vector<int> const &district_seat_sizes)

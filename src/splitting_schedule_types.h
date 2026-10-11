@@ -84,6 +84,9 @@ class ScheduleContext {
     int num_regions = -1;
     // storage for plan dependent cut size lists returned in CutSizeOptions
     std::vector<int> cut_sizes_scratch;
+    // District only MMD: the id of the one region whose size is not a district
+    // size (the remainder), or -1 if every region is district sized
+    int non_district_region = -1;
 };
 
 /*
@@ -225,6 +228,10 @@ class SplittingSchedule {
         return;
     };
 
+    // Throws if `plan`, a partial plan passed in to start sampling from, can't
+    // be completed into a full plan under this schedule. Does nothing by default.
+    virtual void check_initial_plan(Plan const &plan) const { return; };
+
     // Sets all the boolean vectors and matrices related to splitting and merging to false
     void reset_splitting_and_merge_booleans();
 
@@ -293,6 +300,19 @@ class AnyRegionSMDSplittingSchedule : public SplittingSchedule {
  * Derived Class for district only split schedule for multi-member districts
  * This is the splitting schedule where at each step we split off a district
  * from the remainder.
+ *
+ * With r regions every region but one (the remainder) must be a district and
+ * the remainder must still be splittable into the remaining D - r + 1
+ * districts. Which splits of the remainder are allowed only depends on the
+ * step and its size, so the size tables handle that.
+ *
+ * Which region is the remainder is not always decided by size alone. If some
+ * district size is a sum of other district sizes (eg sizes 3 to 6, 6 = 3 + 3)
+ * a district sized region can also be splittable, so with a remainder that
+ * isn't district sized, size alone would let that district be split and
+ * leave a plan that can't be completed. In that case (`plan_context_needed`)
+ * the context records the non district sized region, and when there is one
+ * it is the only region that can be split.
  */
 class DistrictOnlyMMDSplittingSchedule : public SplittingSchedule {
 
@@ -305,6 +325,18 @@ class DistrictOnlyMMDSplittingSchedule : public SplittingSchedule {
     void set_potential_cut_sizes_for_each_valid_size(int split_num,
                                                      int presplit_num_regions) override;
     void update_cut_sizes_for_mergesplit_step(int split_num, int num_regions) override;
+
+    void check_initial_plan(Plan const &plan) const override;
+
+  protected:
+    void fill_context(Plan const &plan, ScheduleContext &ctx) const override;
+    bool region_is_splittable_impl(Plan const &plan, ScheduleContext const &ctx,
+                                   int const region_id) const override;
+    bool is_valid_merge_pair_impl(Plan const &plan, ScheduleContext const &ctx,
+                                  int const region1_id, int const region2_id) const override;
+    double log_merged_region_selection_prob_impl(Plan const &plan, ScheduleContext const &ctx,
+                                                 int const region1_id, int const region2_id,
+                                                 double const selection_alpha) const override;
 };
 
 /*

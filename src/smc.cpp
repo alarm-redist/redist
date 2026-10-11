@@ -1781,6 +1781,15 @@ Rcpp::List run_redist_smc(
         region_id_mat, region_sizes_mat, rng_states, pool, verbosity,
         get_initial_augmented_samples(control, map_params, nsims));
 
+    // make sure any partial plans passed in can actually be completed
+    if constexpr (perf_config::supposedly_safe_input_checks) {
+        if (initial_num_regions > 1) {
+            for (auto const &plan_ptr : plan_ensemble_ptr->plan_ptr_vec) {
+                splitting_schedule_ptr->check_initial_plan(*plan_ptr);
+            }
+        }
+    }
+
     // compute the log of the unnormalized density of the entire map 
     // which is log spanning tree count  - score 
     double log_blank_map_target_density = NA_REAL;
@@ -2387,6 +2396,23 @@ Rcpp::List run_redist_smc(
         cli_progress_done(bar);
         if constexpr (DEBUG_GSMC_PLANS_VERBOSE) {
             REprintf("Done with main for loop!\n");
+        }
+
+        // Every region of a finished plan must be an allowed district size. The
+        // splitting schedule should guarantee this, so this only catches bugs.
+        if constexpr (perf_config::redundancy_checks) {
+            if (splitting_all_the_way) {
+                for (auto const &plan_ptr : plan_ensemble_ptr->plan_ptr_vec) {
+                    for (int region_id = 0; region_id < plan_ptr->num_regions; region_id++) {
+                        int const region_size = plan_ptr->region_sizes[region_id];
+                        if (!map_params.is_district[region_size]) {
+                            Rcpp::stop("redist_smc produced a plan with a %d seat district, "
+                                       "which is not an allowed district size.\n%s",
+                                       region_size, plan_ptr->debug_string(true));
+                        }
+                    }
+                }
+            }
         }
 
         // if not all diagnostic mode and split district only reorder the plans
