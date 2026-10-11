@@ -362,6 +362,29 @@ DistrictOnlyMMDSplittingSchedule::DistrictOnlyMMDSplittingSchedule(
             << " seats per district.\n";
         throw std::runtime_error(oss.str());
     }
+
+    // For merge split: the ways to split two merged districts back into two
+    // districts. These only depend on the merged size, not the step.
+    district_pair_smaller_cut_sizes.resize(total_seats + 1);
+    district_pair_min_and_max_cut_sizes.resize(total_seats + 1, {0, 0});
+    for (int const district1_size : district_seat_sizes) {
+        for (int const district2_size : district_seat_sizes) {
+            int const merged_size = district1_size + district2_size;
+            if (merged_size > total_seats)
+                continue;
+            district_pair_smaller_cut_sizes[merged_size].push_back(
+                std::min(district1_size, district2_size));
+        }
+    }
+    for (int merged_size = 1; merged_size <= total_seats; merged_size++) {
+        auto &cut_sizes = district_pair_smaller_cut_sizes[merged_size];
+        if (cut_sizes.empty())
+            continue;
+        std::sort(cut_sizes.begin(), cut_sizes.end());
+        cut_sizes.erase(std::unique(cut_sizes.begin(), cut_sizes.end()), cut_sizes.end());
+        district_pair_min_and_max_cut_sizes[merged_size] = {cut_sizes[0],
+                                                            merged_size - cut_sizes[0]};
+    }
 }
 
 void DistrictOnlyMMDSplittingSchedule::set_potential_cut_sizes_for_each_valid_size(
@@ -388,6 +411,9 @@ void DistrictOnlyMMDSplittingSchedule::set_potential_cut_sizes_for_each_valid_si
     if (presplit_num_regions < 1 || presplit_num_regions >= ndists) {
         throw schedule_error("the number of presplit regions must be between 1 and ndists - 1.");
     }
+
+    // district pair merges are only for merge split rounds
+    mergesplit_district_pairs = false;
 
     // reset all regions split and merge booleans
     reset_splitting_and_merge_booleans();
@@ -447,8 +473,37 @@ void DistrictOnlyMMDSplittingSchedule::set_potential_cut_sizes_for_each_valid_si
 
 void DistrictOnlyMMDSplittingSchedule::update_cut_sizes_for_mergesplit_step(int split_num,
                                                                             int num_regions) {
-    // make it
-    return;
+    // let adjacent districts be merged and resplit during merge split rounds
+    mergesplit_district_pairs = true;
+}
+
+bool DistrictOnlyMMDSplittingSchedule::is_district_pair_merge(Plan const &plan,
+                                                              ScheduleContext const &ctx,
+                                                              int const region1_id,
+                                                              int const region2_id) const {
+    if (!mergesplit_district_pairs)
+        return false;
+    if (!is_district[plan.region_sizes[region1_id]] ||
+        !is_district[plan.region_sizes[region2_id]])
+        return false;
+    // The plan needs a non district sized remainder, which then isn't one of the
+    // two districts. If no district size is a sum of other district sizes
+    // every plan short of a full plan has one.
+    if (plan_context_needed)
+        return ctx.non_district_region >= 0;
+    return plan.num_regions < ndists;
+}
+
+CutSizeOptions DistrictOnlyMMDSplittingSchedule::merged_region_cut_sizes_impl(
+    Plan const &plan, ScheduleContext &ctx, int const region1_id, int const region2_id) const {
+    if (is_district_pair_merge(plan, ctx, region1_id, region2_id)) {
+        // two districts can only be resplit into two districts
+        int const merged_size = plan.region_sizes[region1_id] + plan.region_sizes[region2_id];
+        return {district_pair_smaller_cut_sizes[merged_size],
+                district_pair_min_and_max_cut_sizes[merged_size].first,
+                district_pair_min_and_max_cut_sizes[merged_size].second};
+    }
+    return SplittingSchedule::merged_region_cut_sizes_impl(plan, ctx, region1_id, region2_id);
 }
 
 void DistrictOnlyMMDSplittingSchedule::fill_context(Plan const &plan,
@@ -487,6 +542,10 @@ bool DistrictOnlyMMDSplittingSchedule::is_valid_merge_pair_impl(Plan const &plan
                                                                 ScheduleContext const &ctx,
                                                                 int const region1_id,
                                                                 int const region2_id) const {
+    // during merge split two districts can be merged if a remainder exists elsewhere
+    if (is_district_pair_merge(plan, ctx, region1_id, region2_id))
+        return true;
+
     bool const sizes_ok =
         SplittingSchedule::is_valid_merge_pair_impl(plan, ctx, region1_id, region2_id);
     if (!plan_context_needed || !sizes_ok)

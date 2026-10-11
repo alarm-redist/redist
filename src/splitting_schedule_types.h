@@ -332,11 +332,35 @@ class DistrictOnlyMMDSplittingSchedule : public SplittingSchedule {
     void fill_context(Plan const &plan, ScheduleContext &ctx) const override;
     bool region_is_splittable_impl(Plan const &plan, ScheduleContext const &ctx,
                                    int const region_id) const override;
+    CutSizeOptions merged_region_cut_sizes_impl(Plan const &plan, ScheduleContext &ctx,
+                                                int const region1_id,
+                                                int const region2_id) const override;
     bool is_valid_merge_pair_impl(Plan const &plan, ScheduleContext const &ctx,
                                   int const region1_id, int const region2_id) const override;
     double log_merged_region_selection_prob_impl(Plan const &plan, ScheduleContext const &ctx,
                                                  int const region1_id, int const region2_id,
                                                  double const selection_alpha) const override;
+
+  private:
+    /*
+     * During merge split rounds two adjacent districts can also be merged and
+     * resplit into two districts, as long as the plan has a non district sized
+     * remainder that isn't one of them. That leaves the remainder unchanged so
+     * the plan stays completable. (When every region is district sized this
+     * isn't always safe, so it isn't allowed.)
+     *
+     * `mergesplit_district_pairs` is turned on by
+     * `update_cut_sizes_for_mergesplit_step` and off again by the next
+     * `set_potential_cut_sizes_for_each_valid_size`, so SMC steps never see it.
+     */
+    bool mergesplit_district_pairs = false;
+    // For each merged size, the ways to split it into two districts
+    std::vector<std::vector<int>> district_pair_smaller_cut_sizes;
+    std::vector<std::pair<int, int>> district_pair_min_and_max_cut_sizes;
+
+    // whether merging the two regions is a district pair merge as described above
+    bool is_district_pair_merge(Plan const &plan, ScheduleContext const &ctx,
+                                int const region1_id, int const region2_id) const;
 };
 
 /*
