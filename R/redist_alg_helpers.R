@@ -379,12 +379,12 @@ validate_initial_region_id_mat <- function(
 #' the administratively adjacent quotient graph has no cycles.
 #'
 #' The `counties` argument must be the county vector returned by
-#' [get_map_parameters()], not the raw column from the map. That function
+#' `get_map_parameters()`, not the raw column from the map. That function
 #' splits any discontinuous county into its contiguous pieces, and checking
 #' against the unprocessed labels would give the wrong answer.
 #'
 #' @param adj_list Zero-indexed adjacency list, as from [get_adj()].
-#' @param counties Integer county labels from [get_map_parameters()].
+#' @param counties Integer county labels from `get_map_parameters()`.
 #' @param plans A matrix of 1-indexed plans, one per column, or a single plan
 #'   as a vector.
 #' @param ndists The number of districts in each plan.

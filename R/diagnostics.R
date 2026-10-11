@@ -597,7 +597,7 @@ diag_ranknorm <- function(x) {
 #'
 #' The grouping depends only on `grp`, never on the statistic being
 #' summarised, so it can be built once and reused across every statistic and
-#' across both halves of [diag_rhat()]. Splitting the row indices once is much
+#' across both halves of `diag_rhat()`. Splitting the row indices once is much
 #' cheaper than letting `tapply()` and `table()` rebuild the factor on every
 #' call.
 #'
@@ -640,7 +640,7 @@ diag_rhat <- function(x, grp = NULL, split = FALSE,
 #' Compute an rhat for every (statistic, district) pair
 #'
 #' Flattens the per-district row indices and group memberships into the
-#' CSR-style layout [compute_rhats_cpp()] expects, then hands the numeric work
+#' CSR-style layout `compute_rhats_cpp()` expects, then hands the numeric work
 #' to C++, which parallelizes over the pairs.
 #'
 #' The groups are built in R and passed down so that the split-chain
@@ -649,7 +649,7 @@ diag_rhat <- function(x, grp = NULL, split = FALSE,
 #' @param stats_df dataframe of summary statistics
 #' @param rhat_cols names of the columns to compute rhats for
 #' @param district_idx list of row indices, one entry per district
-#' @param district_groups list of [make_rhat_groups()] results, one per district
+#' @param district_groups list of `make_rhat_groups()` results, one per district
 #' @param ncores number of cores to use; 1 runs serially
 #'
 #' @returns A districts by statistics matrix of rhats.
@@ -888,7 +888,7 @@ drop_na_rhats <- function(rhats_df) {
 #' 99th percentile at or below 1.05 with all rhats at or below 1.1.
 #'
 #' @param rhat_vals numeric vector of rhats
-#' @param thresh the result of [resolve_rhat_thresh()]
+#' @param thresh the result of `resolve_rhat_thresh()`
 #'
 #' @returns A list with `status` (one of `"strong"`, `"weak"`,
 #' `"not_converged"`) and `q99`, the 99th percentile of the rhats.
@@ -912,8 +912,8 @@ classify_rhat_convergence <- function(rhat_vals, thresh) {
 #' Print the rhat table, the threshold breakdown, and any convergence alert
 #'
 #' @param rhats_df long dataframe of rhats, with `NA`s already removed
-#' @param convergence the result of [classify_rhat_convergence()]
-#' @param thresh the result of [resolve_rhat_thresh()]
+#' @param convergence the result of `classify_rhat_convergence()`
+#' @param thresh the result of `resolve_rhat_thresh()`
 #' @inheritParams summary.redist_plans
 #'
 #' @returns `NULL`, invisibly. Called for its printed output.

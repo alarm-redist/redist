@@ -344,11 +344,7 @@ redist_smc <- function(
     districting_scheme <- map_params$districting_scheme
 
     # check that the seat sizes are a range
-    if (
-        any(
-            seats_range != seq.int(from = min(seats_range), to = max(seats_range))
-        )
-    ) {
+    if (!setequal(seats_range, seq.int(from = min(seats_range), to = max(seats_range)))) {
         cli::cli_abort(
       "For {.arg seats_range} only a continuous range of district seat sizes are allowed!"
     )
