@@ -154,6 +154,27 @@ Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
         // if only the entire plan
         bool entire_prob_zero = false;
 
+        // The region sizes must add up to the total number of seats. Each size
+        // being a valid district size isn't enough (eg sizes 1,2,2,2 when there
+        // are 6 seats), so a plan that doesn't add up has probability zero.
+        int seat_sum = 0;
+        for (int region_id = 0; region_id < num_regions; region_id++) {
+            seat_sum += plan_ensemble.plan_ptr_vec[i]->region_sizes[region_id];
+        }
+        if (seat_sum != total_seats) {
+            if (just_single_density) {
+                log_unnormalized_component_densities(0, i) = R_NegInf;
+                if (verbosity >= 3) {
+                    ++bar;
+                }
+                RcppThread::checkUserInterrupt(i % check_int == 0);
+                return; // return to break the loop in the lambda
+            } else {
+                // it's a property of the whole plan so mark the plan component
+                log_unnormalized_component_densities(num_regions, i) = R_NegInf;
+            }
+        }
+
         // first check each population is ok
         auto pop_valid_result =
             plan_ensemble.plan_ptr_vec[i]->all_region_pops_valid(map_params);
