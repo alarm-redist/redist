@@ -814,8 +814,9 @@ Rcpp::List mmss_plans(int N, List l, const arma::uvec init, const arma::uvec &co
                 int dist_label = sel_districts[s];
                 std::vector<int> other_labels;
                 other_labels.reserve(l_merge - 1);
-                for (int t = 0; t < l_merge; t++) {
-                    if (t != s) other_labels.push_back(sel_districts[t]);
+                // Earlier peeled districts are outside the reverse remainder.
+                for (int t = s + 1; t < l_merge; t++) {
+                    other_labels.push_back(sel_districts[t]);
                 }
                 int reverse_boundary = admissible_boundary_count(
                     g, old_plan, dist_label, other_labels, iter_region,
