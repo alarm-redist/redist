@@ -26,9 +26,9 @@ quantity of interest.}
 \code{qty} (the default), \code{"desc"} for descending order, or
 \code{FALSE} or \code{"none"} for no sorting.}
 
-\item{geom}{the \code{ggplot2} geom to use in plotting the simulated districts: either
+\item{geom}{the `ggplot2` geom to use in plotting the simulated districts: either
 \code{"jitter"} or \code{"boxplot"}. Can also take in a function, so long as the
-function accepts \code{...}.}
+function accepts `...`.}
 
 \item{color_thresh}{if a number, the threshold to use in coloring the points.
 Plans with quantities of interest above the threshold will be colored
@@ -38,11 +38,11 @@ differently than plans below the threshold.}
 
 \item{ref_geom}{The reference plan geometry type. \code{"line"} or \code{"point"}
 can be passed for reasonable defaults. Can also take in a function, so long as the
-function accepts \code{...}.}
+function accepts `...`.}
 
 \item{ref_label}{A human-readable name for the reference plan. By default
-the name in the \code{plan} column is used. This can also take in a function which returns
-a call to \code{ggplot2::labs()}.}
+the name in the `plan` column is used. This can also take in a function which returns
+a call to `ggplot2::labs()`.}
 
 \item{...}{passed on to \code{\link[ggplot2]{geom_boxplot}}}
 }
@@ -54,22 +54,22 @@ Plots a boxplot of a quantity of interest across districts, with districts
 optionally sorted by this quantity. Adds reference points for each reference
 plan, if applicable.
 }
-\section{Using \code{ggdist}}{
+\section{Using `ggdist`}{
 
 
-For custom functions in \code{geom}, we can also create more complicated things like rainclouds
-using the \code{ggdist} package. For example:
+For custom functions in `geom`, we can also create more complicated things like rainclouds
+using the `ggdist` package. For example:
 
-\if{html}{\out{<div class="sourceCode r">}}\preformatted{raincloud <- function(...) \{
+```r
+raincloud <- function(...) {
 list(
     ggdist::stat_slab(aes(thickness = ggplot2::after_stat(pdf*n)), scale = 0.7),
    ggdist::stat_dotsinterval(side = "bottom", scale = 0.7,
                              slab_size = NA, quantiles = 200)
 )
-\}
-}\if{html}{\out{</div>}}
-
-These functions can be then passed to \code{geom}.
+}
+```
+These functions can be then passed to `geom`.
 }
 
 \examples{

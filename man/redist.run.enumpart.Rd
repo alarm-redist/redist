@@ -17,19 +17,19 @@ redist.run.enumpart(
 )
 }
 \arguments{
-\item{ordered_path}{Path used in \code{redist.prep.enumpart()} (not including
-\code{".dat"}).}
+\item{ordered_path}{Path used in `redist.prep.enumpart()` (not including
+`".dat"`).}
 
 \item{out_path}{Valid path to output the enumerated districts.}
 
 \item{ndists}{Number of districts to enumerate.}
 
-\item{all}{If \code{TRUE}, outputs all districts. If \code{FALSE}, draws \code{n}
+\item{all}{If `TRUE`, outputs all districts. If `FALSE`, draws `n`
 districts uniformly at random.}
 
-\item{n}{Number of districts to output if \code{all} is \code{FALSE}.}
+\item{n}{Number of districts to output if `all` is `FALSE`.}
 
-\item{weight_path}{A path (not including \code{".dat"}) to a vertex weights file.}
+\item{weight_path}{A path (not including `".dat"`) to a vertex weights file.}
 
 \item{lower}{A lower bound on each partition's total weight.}
 
@@ -41,12 +41,12 @@ districts uniformly at random.}
 0 on success.
 }
 \description{
-\strong{Deprecated}: Use \code{\link[=redist_enumpart]{redist_enumpart()}} instead.
+**Deprecated**: Use [redist_enumpart()] instead.
 }
 \references{
 Fifield, B., Imai, K., Kawahara, J., & Kenny, C. T. (2020).
 The essential role of empirical validation in legislative redistricting
-simulation. \emph{Statistics and Public Policy}, 7(1), 52-68.
+simulation. *Statistics and Public Policy*, 7(1), 52-68.
 }
 \concept{enumerate}
 \keyword{internal}

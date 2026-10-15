@@ -29,30 +29,30 @@ redist.enumpart(
 
 \item{ndists}{Number of districts to enumerate.}
 
-\item{all}{If \code{TRUE}, outputs all districts. If \code{FALSE}, draws \code{n}
+\item{all}{If `TRUE`, outputs all districts. If `FALSE`, draws `n`
 districts uniformly at random.}
 
-\item{n}{Number of districts to output if \code{all} is \code{FALSE}.}
+\item{n}{Number of districts to output if `all` is `FALSE`.}
 
-\item{weight_path}{A path (not including \code{".dat"}) to a vertex weights file.}
+\item{weight_path}{A path (not including `".dat"`) to a vertex weights file.}
 
 \item{lower}{A lower bound on each partition's total weight.}
 
 \item{upper}{An upper bound on each partition's total weight.}
 
-\item{init}{If \code{TRUE}, runs initialization first.}
+\item{init}{If `TRUE`, runs initialization first.}
 
-\item{read}{If \code{TRUE}, reads and returns the results.}
+\item{read}{If `TRUE`, reads and returns the results.}
 
 \item{total_pop}{The vector of precinct populations.}
 
 \item{unordered_path}{Deprecated, ignored.}
 }
 \value{
-A list with \code{plans} (district membership matrix) and \code{parity}.
+A list with `plans` (district membership matrix) and `parity`.
 }
 \description{
-\strong{Deprecated}: Use \code{\link[=redist_enumpart]{redist_enumpart()}} instead.
+**Deprecated**: Use [redist_enumpart()] instead.
 
 Single function for standard enumeration analysis, using ZDD methodology
 (Fifield, Imai, Kawahara, and Kenny 2020).
@@ -60,7 +60,7 @@ Single function for standard enumeration analysis, using ZDD methodology
 \references{
 Fifield, B., Imai, K., Kawahara, J., & Kenny, C. T. (2020).
 The essential role of empirical validation in legislative redistricting
-simulation. \emph{Statistics and Public Policy}, 7(1), 52-68.
+simulation. *Statistics and Public Policy*, 7(1), 52-68.
 }
 \concept{enumerate}
 \keyword{internal}

@@ -2,16 +2,16 @@
 % Please edit documentation in R/tidy.R
 \name{pl}
 \alias{pl}
-\title{Access the Current \code{redist_plans()} Object}
+\title{Access the Current `redist_plans()` Object}
 \usage{
 pl()
 }
 \value{
-A \code{redist_plans} object, or \code{NULL} if not called from inside a
-\code{dplyr} function.
+A `redist_plans` object, or `NULL` if not called from inside a
+  `dplyr` function.
 }
 \description{
-Useful inside piped expressions and \code{dplyr} functions.
+Useful inside piped expressions and `dplyr` functions.
 }
 \examples{
 pl()

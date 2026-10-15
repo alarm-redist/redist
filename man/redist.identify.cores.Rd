@@ -54,6 +54,6 @@ redist.plot.cores(shp = fl250, plan = plan, core = core)
 
 }
 \seealso{
-\code{\link[=redist.plot.cores]{redist.plot.cores()}} for a plotting function
+[redist.plot.cores()] for a plotting function
 }
 \concept{prepare}

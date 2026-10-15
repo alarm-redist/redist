@@ -10,12 +10,12 @@ redist.init.enumpart()
 0 on success.
 }
 \description{
-\strong{Deprecated}: Use \code{\link[=redist_enumpart]{redist_enumpart()}} with \code{init = TRUE} instead.
+**Deprecated**: Use [redist_enumpart()] with `init = TRUE` instead.
 }
 \references{
 Fifield, B., Imai, K., Kawahara, J., & Kenny, C. T. (2020).
 The essential role of empirical validation in legislative redistricting
-simulation. \emph{Statistics and Public Policy}, 7(1), 52-68.
+simulation. *Statistics and Public Policy*, 7(1), 52-68.
 }
 \concept{enumerate}
 \keyword{internal}

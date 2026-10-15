@@ -36,9 +36,9 @@ scorer_status_quo(map, existing_plan = get_existing(map))
 
 \item{counties}{A numeric vector with an integer from 1:n_counties}
 
-\item{perim_df}{perimeter distance dataframe from \code{\link[redistmetrics:prep_perims]{redistmetrics::prep_perims()}}}
+\item{perim_df}{perimeter distance dataframe from [redistmetrics::prep_perims()]}
 
-\item{areas}{area of each precinct (ie \code{st_area(map)})}
+\item{areas}{area of each precinct (ie `st_area(map)`)}
 
 \item{m}{the m-th from the bottom Polsby Popper to return as the score. Defaults to 1,
 the minimum Polsby Popper score}
