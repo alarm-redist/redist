@@ -13,19 +13,16 @@ new_redist_constr <- function(constr = list(), data = tibble()) {
     constr <- reconstruct.redist_constr(constr, NULL)
 
     if (length(constr) > 0) {
-        if (is.null(names(constr))) {
-            cli::cli_abort("Null names.")
-        }
-        if (!all(nzchar(names(constr)))) {
-            cli::cli_abort("Empty names.")
+        if (is.null(names(constr)) || !all(nzchar(constr))) {
+            cli::cli_abort("{.arg constr} must have non-empty names set")
         }
         for (el in constr) {
             if (!is.list(el)) {
-                cli::cli_abort("Not a nested list")
+                cli::cli_abort("{.arg constr} has a corrupted format")
             }
             classes <- vapply(el, class, character(1))
             if (length(classes) == 0 || any(classes != "list")) {
-                cli::cli_abort("Not a nested list")
+                cli::cli_abort("{.arg constr} has a corrupted format")
             }
         }
     }
@@ -38,11 +35,8 @@ new_redist_constr <- function(constr = list(), data = tibble()) {
 
 # jarl-ignore unused_function: to be used in future, hopefully
 validate_redist_constr <- function(constr) {
-    if (!is.list(constr)) {
-        cli::cli_abort("Not a list")
-    }
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
+    if (!is.list(constr) || !inherits(constr, "redist_constr")) {
+        cli::cli_abort("{.arg constr} must be a {.cls redist_constr} object")
     }
 
     constr
@@ -59,7 +53,7 @@ validate_redist_constr <- function(constr) {
 #' You can view the exact structure of this list by calling [str()].
 #' Constraints may be added by using one of the following functions:
 #'
-#' `r paste0("* [", setdiff(ls("package:redist")[grep("add_constr_", ls("package:redist"))], "add_constr_qps"), "()]", collapse="\n")`
+#' `r paste0("* [", ls("package:redist")[grep("add_constr_", ls("package:redist"))], "()]", collapse="\n")`
 #'
 #' More information about each constraint can be found on the relevant constraint page.
 #'
@@ -127,6 +121,185 @@ add_to_constr <- function(constr, name, new_constr) {
     constr
 }
 
+# validates the only_nregions input and returns a
+# vector of length `ndists` for whether or not to score a plan
+# with that many regions
+get_nregion_score_vec <- function(only_nregions, ndists) {
+    # if false then means apply to any number of regions
+    if (isFALSE(only_nregions)) {
+        nregion_to_score <- rep(TRUE, ndists)
+    } else if (!rlang::is_integerish(only_nregions)) {
+        cli::cli_abort("{.arg only_nregions} must be integers")
+    } else if (any(only_nregions < 1) || any(only_nregions > ndists)) {
+        cli::cli_abort("{.arg only_nregions} must be between 1 and {.arg ndists}")
+    } else {
+        nregion_to_score <- rep(FALSE, ndists)
+        nregion_to_score[only_nregions] <- TRUE
+    }
+
+    nregion_to_score
+}
+
+
+# validates the only_nseats input and returns a
+# vector of length `nseats` for whether or not to score a region
+# with that many seats
+get_nseats_score_vec <- function(only_nseats, nseats, ndists) {
+    # if nseats is NULL then assume its a pre-5.0 redist map and
+    # nseats == ndists
+    if (is.null(nseats)){
+        nseats <- ndists
+    }
+    # check nseats is an integer
+    if (!rlang::is_integerish(nseats)){
+        cli::cli_abort("{.arg nseats} was not an integer, it was {nseats}.")
+    }
+    # if false then means apply to any number of regions
+    if (isFALSE(only_nseats)) {
+        nseats_to_score <- rep(TRUE, nseats)
+    } else if (!rlang::is_integerish(only_nseats)) {
+        cli::cli_abort("{.arg only_nseats} must be integers")
+    } else if (any(only_nseats < 1) || any(only_nseats > nseats)) {
+        cli::cli_abort("{.arg only_nseats} must be between 1 and {.arg nseats}")
+    } else {
+        nseats_to_score <- rep(FALSE, nseats)
+        nseats_to_score[only_nseats] <- TRUE
+    }
+
+    nseats_to_score
+}
+
+# helper function
+# Evaluates a defused constraint argument, erroring clearly when the caller
+# did not supply it.
+#
+# `rlang::enquo()` on a missing argument yields an *empty* quosure, and
+# `rlang::eval_tidy()` on an empty quosure fails with the opaque
+# `object '' not found`, which names neither the function nor the argument.
+# Checking for that case first lets us say which argument is missing.
+#
+# The quosure must be defused by the caller and passed in: calling `missing()`
+# or defusing at the wrong point interferes with promise capture.
+eval_constr_arg <- function(quo, arg, data) {
+    if (rlang::quo_is_missing(quo)) {
+        cli::cli_abort("{.arg {arg}} is required but was not supplied.")
+    }
+    rlang::eval_tidy(quo, data)
+}
+
+# helper function
+# validates the common inputs to all region constraints
+# and returns the base list to add
+get_base_region_constraint_list <- function(
+    constr,
+    strength,
+    only_nregions,
+    only_nseats,
+    thresh
+){
+    # check a constraint was actually passed in
+    if (!inherits(constr, "redist_constr")) {
+        cli::cli_abort("Not a {.cls redist_constr} object")
+    }
+    # warn for negative strength
+    if (strength <= 0) {
+        cli::cli_warn("Nonpositive strength may lead to unexpected results")
+    }
+    # validate thresh input
+    if (is.null(thresh)) {
+        # no thresholding
+        hard_constraint <- FALSE
+        hard_threshold <- 0
+    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
+        cli::cli_abort("{.arg thresh} must be a finite scalar.")
+    } else {
+        hard_constraint <- TRUE
+        hard_threshold <- thresh
+    }
+    # validate nregions to score
+    nregions_to_score <- get_nregion_score_vec(
+        only_nregions,
+        attr(attr(constr, "data"), "ndists")
+    )
+    # validate nseats to score
+    nseats_to_score <- get_nseats_score_vec(
+        only_nseats,
+        attr(attr(constr, "data"), "nseats"),
+        attr(attr(constr, "data"), "ndists")
+    )
+
+    new_constr <- list(
+        strength = strength,
+        nregions_to_score = nregions_to_score,
+        nseats_to_score = nseats_to_score,
+        hard_constraint = hard_constraint,
+        hard_threshold = hard_threshold
+    )
+
+    return(new_constr)
+}
+
+
+# helper function
+# validates the common inputs to all plan constraints
+# and returns the base list to add
+get_base_plan_constraint_list <- function(
+        constr,
+        strength,
+        only_nregions,
+        thresh
+){
+    # check a constraint was actually passed in
+    if (!inherits(constr, "redist_constr")) {
+        cli::cli_abort("Not a {.cls redist_constr} object")
+    }
+    # warn for negative strength
+    if (strength <= 0) {
+        cli::cli_warn("Nonpositive strength may lead to unexpected results")
+    }
+    # validate thresh input
+    if (is.null(thresh)) {
+        # no thresholding
+        hard_constraint <- FALSE
+        hard_threshold <- 0
+    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
+        cli::cli_abort("{.arg thresh} must be a finite scalar.")
+    } else {
+        hard_constraint <- TRUE
+        hard_threshold <- thresh
+    }
+    # validate nregions to score
+    nregions_to_score <- get_nregion_score_vec(
+        only_nregions,
+        attr(attr(constr, "data"), "ndists")
+    )
+
+    new_constr <- list(
+        strength = strength,
+        nregions_to_score = nregions_to_score,
+        hard_constraint = hard_constraint,
+        hard_threshold = hard_threshold
+    )
+
+    return(new_constr)
+}
+
+# validates a population vector by ensuring
+# - the vector is length V and numeric
+# - There are no missing entries
+# - All entries are non-negative
+validate_population_vector <- function(V, pop_vector) {
+    if (!is.numeric(pop_vector)) {
+        cli::cli_abort("Population vectors must be numeric")
+    } else if (length(pop_vector) != V) {
+        cli::cli_abort("Population vectors must be of length {V}")
+    } else if (anyNA(pop_vector) || !any(is.finite(pop_vector))) {
+        cli::cli_abort("Population vector values must be non-missing and finite")
+    } else if (any(pop_vector < 0)) {
+        cli::cli_abort("Population vector values must be non-negative")
+    }
+}
+
 #' Sampling constraints
 #'
 #' The [redist_smc()] and [redist_mergesplit()] algorithms in this package allow
@@ -139,8 +312,29 @@ add_to_constr <- function(constr, name, new_constr) {
 #' constraint set by the corresponding `strength` parameter.
 #' The strength can be any real number, with zero corresponding to no constraint.
 #' Higher and higher `strength` values will eventually cause the algorithm's
-#' accuracy and efficiency to suffer. Whenever you use constraints, be sure to
-#' check all sampling diagnostics.
+#' accuracy and efficiency to suffer and potentially cause floating point
+#' overflow errors. Whenever you use constraints, be sure to check all sampling
+#' diagnostics.
+#'
+#' An optional `thresh` value can also be set as well to incorporate hard
+#' thresholding. Setting a `thresh` value turns that constraint into an indicator
+#' function meaning when the output of a constraint is greater than or equal to
+#' `thresh` the plan will automatically be rejected at the splitting stage. If
+#' the constraint score is less than the threshold it will not affect the weights
+#' at all. This ensures that in the final sample there will be no plans with
+#' scores at or above `thresh`. Lower `thresh` values will eventually cause the
+#' algorithms efficiency to suffer. Depending on how its used `thresh` can
+#' violate the theoretical guarantees of the algorithm so caution is advised.
+#' Please see the appendix of gSMC CITE HERE and the discussion on "splittable"
+#' score functions for more information.
+#'
+#' Optional vales of `only_nregions` and `only_nseats` can be set for all region-
+#' based constraints and values of `only_nregions` can be set for all plan-based
+#' constraints. Specifying values for `only_nregions` means that the constraint
+#' will only be applied to plans with regions in the range of values in `only_nregions.`
+#' Likewise for `only_nseats` then it will only be applied to regions with a number
+#' of seats in the `only_nseats` range.
+#'
 #'
 #' The `status_quo` constraint adds a term measuring the variation of
 #' information distance between the plan and the reference, rescaled to \[0, 1\].
@@ -189,8 +383,7 @@ add_to_constr <- function(constr, name, new_constr) {
 #' small, given that the underlying values are counts.
 #'
 #' The `edges_rem` constraint adds a term counting the number of edges removed from the
-#' adjacency graph. This is only usable with `redist_flip()`, as other algorithms
-#' implicitly use this via the `compactness` parameter. Values of `strength` should
+#' adjacency graph. Values of `strength` should
 #' generally be small, given that the underlying values are counts.
 #'
 #' The `log_st` constraint constraint adds a term counting the log number of spanning
@@ -210,6 +403,10 @@ add_to_constr <- function(constr, name, new_constr) {
 #' The `pop_dev` constraint adds a term encouraging plans to have smaller population deviations
 #' from the target population.
 #'
+#' The `seats` constraint adds an indicator term for regions with the desired
+#' number of seats. Values of `strength` may be of moderate size.
+#'
+#'
 #' The `custom` constraint allows the user to specify their own constraint using
 #' a function which evaluates districts one at a time. The provided function
 #' `fn` should take two arguments: a vector describing the current plan
@@ -221,13 +418,51 @@ add_to_constr <- function(constr, name, new_constr) {
 #' users want to penalize an entire plan, they can have the penalty function
 #' return a scalar that does not depend on the district. It is important that
 #' `fn` not use information from precincts not included in `distr`, since in the
-#' case of SMC these precincts may not be assigned any district at all (`plan`
-#' will take the value of 0 for these precincts). The flexibility of this
-#' constraint comes with an additional computational cost, since the other
-#' constraints are written in C++ and so are more performant.
+#' case of SMC these precincts may not be assigned any district at all.
+#' The flexibility of this constraint comes with additional computational
+#' costs, since the other constraints are written in C++ and so are more performant.
+#' In addition to the cost of not being native C++ code, weights with custom
+#' R functions can not be computed in parallel and must be computed sequentially.
+#' This can especially slow down performance on Spanning Forest and Linking Edge
+#' Space as the weights for those spaces tend to be the slowest step.
+#' These effects can be somewhat mitigated by by increasing the number of
+#' processes(`nproc`) if multiple runs are being done.
+#'
+#' The `min_group_frac` constraint adds a term counting the number of districts
+#' in a plan where the fraction `group_pop/total_pop` is greater than or equal to
+#' a certain threshold, `min_frac` for each of the populations passed in.
+#'
+#' The `custom_plan` constraint allows the user to specify their own constraint using
+#' a function which evaluates the entire plan. Unlike the `custom` constraint,
+#' this allows users to penalize an entire plan, not just specific districts.
+#' The provided function `fn` should take three arguments: a 1-indexed vector
+#' describing the current plan assignment for each unit as its first argument,
+#' a 1-indexed vector mapping region ids to the number of seats in the region,
+#' and the number of regions the plan has.
+#' The function must return a single scalar for each plan where a value of 0
+#' indicates no penalty is applied.
+#' The flexibility of this constraint comes with additional computational
+#' costs, since the other constraints are written in C++ and so are more performant.
+#' In addition to the cost of not being native C++ code, weights with custom
+#' R functions can not be computed in parallel and must be computed sequentially.
+#' This can especially slow down performance on Spanning Forest and Linking Edge
+#' Space as the weights for those spaces tend to be the slowest step.
+#' These effects can be somewhat mitigated by by increasing the number of
+#' processes(`nproc`) if multiple runs are being done.
+#'
 #'
 #' @param constr A [redist_constr()] object
 #' @param strength The strength of the constraint. Higher values mean a more restrictive constraint.
+#' @param only_nregions Whether or not to only apply entire-plan or region constraints
+#' when the plan has a particular number of regions. A value of `FALSE` means
+#' the constraint will applied to plans at every step.
+#' @param only_nseats Whether or not to only apply region constraints
+#' when the region has a particular number of seats. A value of `FALSE` means
+#' the constraint will applied to regions at every number of seats.
+#' @param thresh Thresholding value for constraints. If set then any plan where
+#' the constraints score is greater than or equal to `thresh` will be rejected
+#' at the splitting stage, ensuring that none of those plans will be in the final
+#' sample.
 #'
 #' @examples
 #' data(iowa)
@@ -251,27 +486,43 @@ NULL
 #' @param current The reference map for the status quo constraint.
 #' @rdname constraints
 #' @export
-add_constr_status_quo <- function(constr, strength, current) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results")
-    }
+add_constr_status_quo <- function(
+    constr,
+    strength,
+    current,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
+    thresh = NULL
+) {
+
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
+
     data <- attr(constr, "data")
     # defuse `current` first; calling `missing()` before `enquo()` interferes
     # with promise capture and can drop the calling-frame expression
-    current_q <- enquo(current)
+    current_q <- rlang::enquo(current)
     if (rlang::quo_is_missing(current_q)) {
         current <- get_existing(data)
     } else {
-        current <- eval_tidy(current_q, data)
+        current <- rlang::eval_tidy(current_q, data)
     }
 
-    new_constr <- list(strength = strength, current = current)
+    new_constr <- c(
+        new_constr,
+        list(
+            current = current
+        )
+    )
+
     if (is.null(current) || length(new_constr$current) != nrow(data)) {
-        cli::cli_abort("{.arg current} must be provided, and must have as many
-                  precincts as the {.cls redist_map}")
+        cli::cli_abort(
+      "{.arg current} must be provided, and must have as many
+                  precincts as the {.cls redist_map}"
+    )
     }
     new_constr$n_current <- max(new_constr$current)
 
@@ -292,20 +543,28 @@ add_constr_grp_pow <- function(
     total_pop = NULL,
     tgt_group = 0.5,
     tgt_other = 0.5,
-    pow = 1.0
+    pow = 1.0,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
+    thresh = NULL
 ) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results")
-    }
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
+
     data <- attr(constr, "data")
 
-    new_constr <- list(strength = strength,
-        group_pop = eval_tidy(enquo(group_pop), data),
-        total_pop = eval_tidy(enquo(total_pop), data),
-        tgt_group = tgt_group, tgt_other = tgt_other, pow = pow)
+    new_constr <- c(new_constr,
+        list(
+            group_pop = eval_constr_arg(rlang::enquo(group_pop), "group_pop", data),
+            total_pop = rlang::eval_tidy(rlang::enquo(total_pop), data),
+            tgt_group = tgt_group,
+            tgt_other = tgt_other,
+            pow = pow
+        ))
+
     if (is.null(new_constr$total_pop)) {
         if (!is.null(attr(data, "pop_col"))) {
             new_constr$total_pop <- data[[attr(data, "pop_col")]]
@@ -314,8 +573,8 @@ add_constr_grp_pow <- function(
         }
     }
 
-    stopifnot(length(new_constr$group_pop) == nrow(data))
-    stopifnot(length(new_constr$total_pop) == nrow(data))
+    validate_population_vector(nrow(data), new_constr$total_pop)
+    validate_population_vector(nrow(data), new_constr$group_pop)
 
     add_to_constr(constr, "grp_pow", new_constr)
 }
@@ -328,18 +587,25 @@ add_constr_grp_hinge <- function(
     strength,
     group_pop,
     total_pop = NULL,
-    tgts_group = c(0.55)
+    tgts_group = c(0.55),
+    only_nregions = FALSE,
+    only_nseats = FALSE,
+    thresh = NULL
 ) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    # if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results")
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
     data <- attr(constr, "data")
+    new_constr <- c(new_constr,
+                    list(
+                        group_pop = eval_constr_arg(rlang::enquo(group_pop), "group_pop", data),
+                        total_pop = rlang::eval_tidy(rlang::enquo(total_pop), data),
+                        tgts_group = tgts_group
+                    ))
 
-    new_constr <- list(strength = strength,
-        group_pop = eval_tidy(enquo(group_pop), data),
-        total_pop = eval_tidy(enquo(total_pop), data),
-        tgts_group = tgts_group)
+
     if (is.null(new_constr$total_pop)) {
         if (!is.null(attr(data, "pop_col"))) {
             new_constr$total_pop <- data[[attr(data, "pop_col")]]
@@ -348,8 +614,9 @@ add_constr_grp_hinge <- function(
         }
     }
 
-    stopifnot(length(new_constr$group_pop) == nrow(data))
-    stopifnot(length(new_constr$total_pop) == nrow(data))
+    validate_population_vector(nrow(data), new_constr$total_pop)
+    validate_population_vector(nrow(data), new_constr$group_pop)
+
 
     add_to_constr(constr, "grp_hinge", new_constr)
 }
@@ -363,18 +630,26 @@ add_constr_grp_inv_hinge <- function(
     strength,
     group_pop,
     total_pop = NULL,
-    tgts_group = c(0.55)
+    tgts_group = c(0.55),
+    only_nregions = FALSE,
+    only_nseats = FALSE,
+    thresh = NULL
 ) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    # if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results")
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
     data <- attr(constr, "data")
+    new_constr <- c(new_constr,
+                    list(
+                        group_pop = rlang::eval_tidy(rlang::enquo(total_pop), data) -
+                            eval_constr_arg(rlang::enquo(group_pop), "group_pop", data),
+                        total_pop = rlang::eval_tidy(rlang::enquo(total_pop), data),
+                        tgts_group = tgts_group
+                    ))
 
-    new_constr <- list(strength = strength,
-        group_pop = eval_tidy(enquo(total_pop), data) - eval_tidy(enquo(group_pop), data),
-        total_pop = eval_tidy(enquo(total_pop), data),
-        tgts_group = tgts_group)
+
     if (is.null(new_constr$total_pop)) {
         if (!is.null(attr(data, "pop_col"))) {
             new_constr$total_pop <- data[[attr(data, "pop_col")]]
@@ -383,27 +658,38 @@ add_constr_grp_inv_hinge <- function(
         }
     }
 
-    stopifnot(length(new_constr$group_pop) == nrow(data))
-    stopifnot(length(new_constr$total_pop) == nrow(data))
+    validate_population_vector(nrow(data), new_constr$total_pop)
+    validate_population_vector(nrow(data), new_constr$group_pop)
 
     add_to_constr(constr, "grp_inv_hinge", new_constr)
 }
 #' @param dvote,rvote A vector of Democratic or Republican vote counts
 #' @rdname constraints
 #' @export
-add_constr_compet <- function(constr, strength, dvote, rvote, pow = 0.5) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results")
-    }
+add_constr_compet <- function(
+    constr,
+    strength,
+    dvote,
+    rvote,
+    pow = 0.5,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
+    thresh = NULL
+) {
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
     data <- attr(constr, "data")
+    new_constr <- c(new_constr,
+                    list(
+                        dvote = eval_constr_arg(rlang::enquo(dvote), "dvote", data),
+                        rvote = eval_constr_arg(rlang::enquo(rvote), "rvote", data),
+                        pow = pow
+                    ))
 
-    new_constr <- list(strength = strength,
-        dvote = eval_tidy(enquo(dvote), data),
-        rvote = eval_tidy(enquo(rvote), data),
-        pow = pow)
+
     stopifnot(length(new_constr$dvote) == nrow(data))
     stopifnot(length(new_constr$rvote) == nrow(data))
 
@@ -416,17 +702,25 @@ add_constr_compet <- function(constr, strength, dvote, rvote, pow = 0.5) {
 #' having two or more incumbents be in the same district.
 #' @rdname constraints
 #' @export
-add_constr_incumbency <- function(constr, strength, incumbents) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results")
-    }
+add_constr_incumbency <- function(
+    constr,
+    strength,
+    incumbents,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
+    thresh = NULL
+) {
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
     data <- attr(constr, "data")
+    new_constr <- c(new_constr,
+                    list(
+                        incumbents = eval_constr_arg(rlang::enquo(incumbents), "incumbents", data)
+                    ))
 
-    new_constr <- list(strength = strength,
-        incumbents = eval_tidy(enquo(incumbents), data))
 
     add_to_constr(constr, "incumbency", new_constr)
 }
@@ -434,16 +728,23 @@ add_constr_incumbency <- function(constr, strength, incumbents) {
 #' @param admin A vector indicating administrative unit membership
 #' @rdname constraints
 #' @export
-add_constr_splits <- function(constr, strength, admin) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results")
-    }
+add_constr_splits <- function(
+    constr,
+    strength,
+    admin,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
+    thresh = NULL
+) {
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
+
     data <- attr(constr, "data")
 
-    admin <- eval_tidy(enquo(admin), data)
+    admin <- eval_constr_arg(rlang::enquo(admin), "admin", data)
     if (is.null(admin)) {
         cli::cli_abort("{.arg admin} may not be {.val NULL}.")
     }
@@ -452,25 +753,34 @@ add_constr_splits <- function(constr, strength, admin) {
     }
     admin <- vctrs::vec_group_id(admin)
 
-    new_constr <- list(strength = strength,
-        admin = admin,
-        n = length(unique(admin)))
+    new_constr <- c(new_constr,
+                    list(
+                        admin = admin,
+                        n = length(unique(admin))
+                    ))
 
     add_to_constr(constr, "splits", new_constr)
 }
 
 #' @rdname constraints
 #' @export
-add_constr_multisplits <- function(constr, strength, admin) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results")
-    }
+add_constr_multisplits <- function(
+    constr,
+    strength,
+    admin,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
+    thresh = NULL
+) {
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
+
     data <- attr(constr, "data")
 
-    admin <- eval_tidy(enquo(admin), data)
+    admin <- eval_constr_arg(rlang::enquo(admin), "admin", data)
     if (is.null(admin)) {
         cli::cli_abort("{.arg admin} may not be {.val NULL}.")
     }
@@ -480,24 +790,34 @@ add_constr_multisplits <- function(constr, strength, admin) {
 
     admin <- vctrs::vec_group_id(admin)
 
-    new_constr <- list(strength = strength,
-        admin = admin,
-        n = length(unique(admin)))
+    new_constr <- c(new_constr,
+                    list(
+                        admin = admin,
+                        n = length(unique(admin))
+                    ))
+
     add_to_constr(constr, "multisplits", new_constr)
 }
 
 #' @rdname constraints
 #' @export
-add_constr_total_splits <- function(constr, strength, admin) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results")
-    }
+add_constr_total_splits <- function(
+    constr,
+    strength,
+    admin,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
+    thresh = NULL
+) {
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
+
     data <- attr(constr, "data")
 
-    admin <- eval_tidy(enquo(admin), data)
+    admin <- eval_constr_arg(rlang::enquo(admin), "admin", data)
     if (is.null(admin)) {
         cli::cli_abort("{.arg admin} may not be {.val NULL}.")
     }
@@ -507,45 +827,57 @@ add_constr_total_splits <- function(constr, strength, admin) {
 
     admin <- vctrs::vec_group_id(admin)
 
-    new_constr <- list(strength = strength,
-        admin = admin,
-        n = length(unique(admin)))
+    new_constr <- c(new_constr,
+                    list(
+                        admin = admin,
+                        n = length(unique(admin))
+                    ))
+
     add_to_constr(constr, "total_splits", new_constr)
 }
 
 #' @rdname constraints
 #' @export
-add_constr_pop_dev <- function(constr, strength) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results.")
-    }
-    data <- attr(constr, "data")
-
-    new_constr <- list(strength = strength)
+add_constr_pop_dev <- function(
+    constr,
+    strength,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
+    thresh = NULL
+) {
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
     add_to_constr(constr, "pop_dev", new_constr)
 }
 
 #' @rdname constraints
 #' @export
-add_constr_segregation <- function(constr, strength, group_pop, total_pop = NULL) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results.")
-    }
+add_constr_segregation <- function(
+    constr,
+    strength,
+    group_pop,
+    total_pop = NULL,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
+    thresh = NULL
+) {
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
+
     data <- attr(constr, "data")
 
-    group_q <- enquo(group_pop)
-    if (rlang::quo_is_missing(group_q)) {
-        cli::cli_abort("{.arg group_pop} missing.")
-    }
-    new_constr <- list(strength = strength,
-        group_pop = eval_tidy(group_q, data),
-        total_pop = eval_tidy(enquo(total_pop), data))
+    new_constr <- c(new_constr,
+                    list(
+                        group_pop = eval_constr_arg(rlang::enquo(group_pop), "group_pop", data),
+                        total_pop = rlang::eval_tidy(rlang::enquo(total_pop), data)
+                    ))
+
     if (is.null(new_constr$total_pop)) {
         if (!is.null(attr(data, "pop_col"))) {
             new_constr$total_pop <- data[[attr(data, "pop_col")]]
@@ -553,22 +885,33 @@ add_constr_segregation <- function(constr, strength, group_pop, total_pop = NULL
             cli::cli_abort("{.arg total_pop} missing.")
         }
     }
+    if (is.null(new_constr$group_pop)) {
+        cli::cli_abort("{.arg group_pop} missing.")
+    }
 
-    stopifnot(length(new_constr$group_pop) == nrow(data))
-    stopifnot(length(new_constr$total_pop) == nrow(data))
+    validate_population_vector(nrow(data), new_constr$total_pop)
+    validate_population_vector(nrow(data), new_constr$group_pop)
+
     add_to_constr(constr, "segregation", new_constr)
 }
 
 #' @param perim_df A dataframe output from `redistmetrics::prep_perims`
 #' @rdname constraints
 #' @export
-add_constr_polsby <- function(constr, strength, perim_df = NULL) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results.")
-    }
+add_constr_polsby <- function(
+    constr,
+    strength,
+    perim_df = NULL,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
+    thresh = NULL
+) {
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
+
     data <- attr(constr, "data")
 
     if (!inherits(data, "sf")) {
@@ -581,11 +924,13 @@ add_constr_polsby <- function(constr, strength, perim_df = NULL) {
         perim_df <- redistmetrics::prep_perims(data)
     }
 
-    new_constr <- list(strength = strength,
-        from = perim_df$origin,
-        to = perim_df$touching,
-        area = areas,
-        perimeter = perim_df$edge)
+    new_constr <- c(new_constr,
+                    list(
+                        from = perim_df$origin,
+                        to = perim_df$touching,
+                        area = areas,
+                        perimeter = perim_df$edge
+                    ))
 
     add_to_constr(constr, "polsby", new_constr)
 }
@@ -599,17 +944,20 @@ add_constr_fry_hold <- function(
     strength,
     total_pop = NULL,
     ssdmat = NULL,
-    denominator = 1
+    denominator = 1,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
+    thresh = NULL
 ) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results.")
-    }
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
+
     data <- attr(constr, "data")
 
-    total_pop <- eval_tidy(enquo(total_pop), data)
+    total_pop <- rlang::eval_tidy(rlang::enquo(total_pop), data)
     if (is.null(total_pop)) {
         if (!is.null(attr(data, "pop_col"))) {
             total_pop <- data[[attr(data, "pop_col")]]
@@ -621,26 +969,35 @@ add_constr_fry_hold <- function(
         ssdmat <- calcPWDh(sf::st_coordinates(sf::st_centroid(data)))
     }
 
-    new_constr <- list(strength = strength,
-        total_pop = total_pop,
-        ssdmat = ssdmat,
-        denominator = denominator)
+    new_constr <- c(new_constr,
+                    list(
+                        total_pop = total_pop,
+                        ssdmat = ssdmat,
+                        denominator = denominator
+                    ))
 
     add_to_constr(constr, "fry_hold", new_constr)
 }
 
 #' @rdname constraints
 #' @export
-add_constr_log_st <- function(constr, strength, admin = NULL) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results.")
-    }
+add_constr_log_st <- function(
+    constr,
+    strength,
+    admin = NULL,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
+    thresh = NULL
+) {
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
+
     data <- attr(constr, "data")
 
-    admin <- eval_tidy(enquo(admin), data)
+    admin <- eval_constr_arg(rlang::enquo(admin), "admin", data)
     if (is.null(admin)) {
         admin <- rep(1, nrow(data))
     }
@@ -650,46 +1007,124 @@ add_constr_log_st <- function(constr, strength, admin = NULL) {
 
     admin <- vctrs::vec_group_id(admin)
 
-    new_constr <- list(strength = strength,
-        admin = admin)
+    new_constr <- c(new_constr,
+                    list(
+                        admin = admin
+                    ))
 
     add_to_constr(constr, "log_st", new_constr)
 }
 
+
 #' @rdname constraints
+#' @param seats The desired seat values. These must be between 1 and `nseats`.
+#' Any region whose seat count is in `seats` will return a raw score of 1.
 #' @export
-add_constr_edges_rem <- function(constr, strength) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results.")
-    }
+add_constr_seats <- function(
+        constr,
+        strength,
+        seats,
+        only_nregions = FALSE,
+        only_nseats = FALSE,
+        thresh = NULL
+) {
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
+
     data <- attr(constr, "data")
+    nseats <- attr(data, "nseats")
+    smallest_seat_size <- attr(data, "seats_range") |> min()
 
-    new_constr <- list(strength = strength)
+    # check seats is integers and between smallest district and `nseats`
+    if (!rlang::is_integerish(seats)) {
+        cli::cli_abort("{.arg seats} must be integers")
+    } else if (any(seats < smallest_seat_size) || any(seats > nseats)) {
+        cli::cli_abort("{.arg seats} must be between {smallest_seat_size} and {.arg nseats}")
+    }
+    # sort and remove duplicates
+    seats <- sort(unique(seats))
 
-    add_to_constr(constr, "edges_removed", new_constr)
+    new_constr <- c(new_constr,
+                    list(
+                        seats_to_score = seats
+                    ))
+
+    add_to_constr(constr, "seats", new_constr)
 }
 
-#' @param cities A vector containing zero entries for non-cities and non-zero entries for each city for `qps`.
-#' @noRd
-add_constr_qps <- function(constr, strength, cities, total_pop = NULL) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results.")
-    }
+#' @param fn A function
+#' @rdname constraints
+#' @export
+add_constr_custom <- function(
+    constr,
+    strength,
+    fn,
+    only_nregions = FALSE,
+    only_nseats = FALSE,
+    thresh = NULL
+) {
+    new_constr <- get_base_region_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        only_nseats = only_nseats, thresh = thresh
+    )
+
     data <- attr(constr, "data")
 
-    new_constr <- list(strength = strength,
-        cities = eval_tidy(enquo(cities), data))
-    new_constr$n_cty <- max(new_constr$cities) + 1
+    args <- rlang::fn_fmls(fn)
+    if (length(args) != 2) {
+        cli::cli_abort("Function must take exactly two arguments.")
+    }
 
-    cli::cli_inform("The QPS constraint is not officially supported and may disappear.",
-        .frequency = "once", .frequency_id = "redist_qps_unsupported")
-    add_to_constr(constr, "qps", new_constr)
+    constr_env <- rlang::fn_env(fn)
+    constr_env <- rlang::env(constr_env)
+    # every symbol used in the function (except the 2 arguments)
+    var_names <- setdiff(
+        all.names(rlang::fn_body(fn)),
+        names(args)
+    )
+
+    for (nm in var_names) {
+        found <- find_env(nm, constr_env)
+        if (
+            !is.null(found) &&
+            !identical(found, rlang::base_env()) &&
+            !identical(found, constr_env) &&
+            !identical(found, rlang::pkg_env("redist"))
+        ) {
+            constr_env[[nm]] <- get(nm, envir = found)
+        }
+    }
+
+    if (!is.null(plan <- get_existing(attr(constr, "data")))) {
+        out <- tryCatch(fn(plan, min(plan)), error = function(e) {
+            cli::cli_abort(c(
+                "Ran into an error testing custom constraint
+                        on the existing plan:",
+                "x" = e$message
+            ))
+        })
+        if (!is.numeric(out) || length(out) != 1 || !is.finite(out)) {
+            cli::cli_abort(c(
+                "Evaluting custom constraint on the existing plan failed.",
+                "*" = "The constraint function should return a single scalar value.",
+                "*" = "Make sure that your constraint function tests all edge cases
+                             and never returns {.val {NA}} or {.val {Inf}}."
+            ))
+        }
+    }
+
+    rlang::fn_env(fn) <- constr_env
+
+    new_constr <- c(new_constr,
+                    list(
+                        fn = fn
+                    ))
+
+    add_to_constr(constr, "custom", new_constr)
 }
 
 # utilty functions for parsing ASTs
@@ -712,26 +1147,248 @@ extract_vars <- function(expr) {
     }
 }
 
+######
+# Whole Plan constraints
+######
+
+#' @param use_frac Whether or not to normalize the number of edges removed by
+#' the total number of edges in the graph. If `TRUE` then the raw score will be
+#' bounded between 0 and 1.
+#' @rdname constraints
+#' @export
+add_constr_edges_rem <- function(
+        constr,
+        strength,
+        use_frac = FALSE,
+        only_nregions = FALSE,
+        thresh = NULL
+) {
+    new_constr <- get_base_plan_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        thresh = thresh
+    )
+
+    new_constr <- c(new_constr,
+                    list(
+                        use_frac = use_frac
+                    ))
+
+    add_to_constr(constr, "edges_removed", new_constr)
+}
+
+#' @param admin A vector indicating administrative unit membership
+#' @rdname constraints
+#' @export
+add_constr_plan_splits <- function(
+    constr,
+    strength,
+    admin,
+    only_nregions = FALSE,
+    thresh = NULL
+) {
+
+    new_constr <- get_base_plan_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        thresh = thresh
+    )
+
+    data <- attr(constr, "data")
+
+    admin <- eval_constr_arg(rlang::enquo(admin), "admin", data)
+    if (is.null(admin)) {
+        cli::cli_abort("{.arg admin} may not be {.val NULL}.")
+    }
+    if (anyNA(admin)) {
+        cli::cli_abort("{.arg admin} many not contain {.val NA}s.")
+    }
+    admin <- vctrs::vec_group_id(admin)
+
+    new_constr <- c(new_constr,
+                    list(
+                        admin = admin,
+                        n = length(unique(admin))
+                    ))
+
+    add_to_constr(constr, "plan_splits", new_constr)
+}
+
+
+#' @param admin A vector indicating administrative unit membership
+#' @rdname constraints
+#' @export
+add_constr_total_plan_splits <- function(
+    constr,
+    strength,
+    admin,
+    only_nregions = FALSE,
+    thresh = NULL
+) {
+    new_constr <- get_base_plan_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        thresh = thresh
+    )
+
+    data <- attr(constr, "data")
+
+    admin <- eval_constr_arg(rlang::enquo(admin), "admin", data)
+    if (is.null(admin)) {
+        cli::cli_abort("{.arg admin} may not be {.val NULL}.")
+    }
+    if (anyNA(admin)) {
+        cli::cli_abort("{.arg admin} many not contain {.val NA}s.")
+    }
+    admin <- vctrs::vec_group_id(admin)
+
+    new_constr <- c(new_constr,
+                    list(
+                        admin = admin,
+                        n = length(unique(admin))
+                    ))
+
+    add_to_constr(constr, "total_plan_splits", new_constr)
+}
+
+
+#' @param incumbents A vector of unit indices for incumbents. For example, if
+#' three incumbents live in the precincts that correspond to rows 1, 2, and
+#' 100 of your [redist_map], entering incumbents = c(1, 2, 100) would avoid
+#' having two or more incumbents be in the same district.
+#' @rdname constraints
+#' @export
+add_constr_plan_incumbency <- function(
+    constr,
+    strength,
+    incumbents,
+    only_nregions = FALSE,
+    thresh = NULL
+) {
+    new_constr <- get_base_plan_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        thresh = thresh
+    )
+
+    data <- attr(constr, "data")
+
+    new_constr <- c(new_constr,
+                    list(
+                        incumbents = eval_constr_arg(rlang::enquo(incumbents), "incumbents", data)
+                    ))
+
+    add_to_constr(constr, "plan_incumbency", new_constr)
+}
+
+
+#' @param group_pops A list of vectors of target group populations
+#' @param total_pops A list of vectors of total populations
+#' @param min_fracs A vector of minimum fraction thresholds for each of the
+#' different population sets
+#' @rdname constraints
+#' @export
+add_constr_min_group_frac <- function(
+    constr,
+    strength,
+    group_pops,
+    total_pops,
+    min_fracs,
+    only_nregions = FALSE,
+    thresh = NULL
+) {
+    new_constr <- get_base_plan_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        thresh = thresh
+    )
+
+    data <- attr(constr, "data")
+
+    V <- nrow(data)
+
+    # check the fraction is between zero and 1
+    if (!is.numeric(min_fracs)) {
+        cli::cli_abort("{.arg min_fracs} must be a finite scalar.")
+    }
+    if (any(min_fracs <= 0) || any(min_fracs >= 1)) {
+        cli::cli_abort("{.arg min_fracs} must be between 0 and 1.")
+    }
+
+    # check the lengths are all the same
+    if (length(group_pops) != length(total_pops)) {
+        cli::cli_abort("The number of {.arg group_pops} must be the same as {.arg total_pops}.")
+    }
+    num_populations <- length(min_fracs)
+    if (num_populations == 1) {
+        # if just a vector then put it inside a list
+        if (!rlang::is_list(group_pops)) {
+            validate_population_vector(V, group_pops)
+            group_pops <- list(group_pops)
+        }
+        if (!rlang::is_list(total_pops)) {
+            validate_population_vector(V, total_pops)
+            total_pops <- list(total_pops)
+        }
+    }
+
+    # if more than one population check there's the same number of minimum fractions
+    if (length(group_pops) != length(min_fracs)) {
+        cli::cli_abort("The number of {.arg group_pops} must be the same length as the length of {.arg min_fracs}.")
+    }
+
+    # check the populations are a list of vectors
+    if (!rlang::is_list(group_pops)) {
+        cli::cli_abort("{.arg group_pops} must either by a single vector or a list of vectors.")
+    } else if (!rlang::is_list(total_pops)) {
+        cli::cli_abort("{.arg total_pops} must either by a single vector or a list of vectors.")
+    }
+    # now check each one
+    for (pop_num in seq_len(num_populations)) {
+        validate_population_vector(V, group_pops[[pop_num]])
+        validate_population_vector(V, total_pops[[pop_num]])
+        if (any(group_pops[[pop_num]] > total_pops[[pop_num]])) {
+            cli::cli_abort("Each population in {.arg group_pops} must be less than or equal to {.arg total_pops}")
+        }
+    }
+
+    new_constr <- c(new_constr,
+                    list(
+                        group_pops = group_pops,
+                        total_pops = total_pops,
+                        min_fracs = min_fracs,
+                        num_populations = num_populations
+                    ))
+
+    add_to_constr(constr, "min_group_frac", new_constr)
+}
 
 #' @param fn A function
 #' @rdname constraints
 #' @export
-add_constr_custom <- function(constr, strength, fn) {
-    if (!inherits(constr, "redist_constr")) {
-        cli::cli_abort("Not a {.cls redist_constr} object")
-    }
-    if (strength <= 0) {
-        cli::cli_warn("Nonpositive strength may lead to unexpected results")
-    }
+add_constr_custom_plan <- function(
+    constr,
+    strength,
+    fn,
+    only_nregions = FALSE,
+    thresh = NULL
+) {
+    new_constr <- get_base_plan_constraint_list(
+        constr = constr, strength = strength,
+        only_nregions = only_nregions,
+        thresh = thresh
+    )
+
+    data <- attr(constr, "data")
 
     args <- rlang::fn_fmls(fn)
-    if (length(args) != 2) {
-        cli::cli_abort("Function must take exactly two arguments.")
+    if (length(args) != 3) {
+        cli::cli_abort("Function must take exactly three arguments.")
     }
 
     constr_env <- rlang::fn_env(fn)
     constr_env <- rlang::env(constr_env)
-    # every symbol used in the function (except the 2 arguments)
+    # every symbol used in the function (except the 3 arguments)
     var_names <- setdiff(
         all.names(rlang::fn_body(fn)),
         names(args)
@@ -750,27 +1407,143 @@ add_constr_custom <- function(constr, strength, fn) {
     }
 
     if (!is.null(plan <- get_existing(attr(constr, "data")))) {
-        out <- tryCatch(fn(plan, min(plan)), error = function(e) {
-            cli::cli_abort(c("Ran into an error testing custom constraint
+        fake_sizes <- rep(1L, length(unique(plan)))
+        num_regions <- dplyr::n_distinct(plan)
+        out <- tryCatch(fn(plan, fake_sizes, num_regions), error = function(e) {
+            cli::cli_abort(c(
+        "Ran into an error testing custom constraint
                         on the existing plan:",
-                "x" = e$message))
+        "x" = e$message
+      ))
         })
         if (!is.numeric(out) || length(out) != 1 || !is.finite(out)) {
-            cli::cli_abort(c("Evaluting custom constraint on the existing plan failed.",
-                "*" = "The constraint function should return a single scalar value.",
-                "*" = "Make sure that your constraint function tests all edge cases
-                             and never returns {.val {NA}} or {.val {Inf}}."))
+            cli::cli_abort(c(
+        "Evaluting custom constraint on the existing plan failed.",
+        "*" = "The constraint function should return a single scalar value.",
+        "*" = "Make sure that your constraint function tests all edge cases
+                             and never returns {.val {NA}} or {.val {Inf}}."
+      ))
         }
     }
 
     rlang::fn_env(fn) <- constr_env
 
-    new_constr <- list(strength = strength, fn = fn)
-    add_to_constr(constr, "custom", new_constr)
+    new_constr <- c(new_constr,
+                    list(
+                        fn = fn
+                    ))
+
+    add_to_constr(constr, "custom_plan", new_constr)
 }
+
 
 #######################
 # generics
+
+# Human-readable description of each constraint type, keyed by the name used in
+# `add_to_constr()`. `unlist()` suffixes these when a type appears more than
+# once (e.g. "grp_pow1", "grp_pow2"), so they are matched with `startsWith()`.
+constr_type_labels <- c(
+    status_quo        = "A status quo constraint",
+    grp_pow           = "A (power-type) group share constraint",
+    grp_hinge         = "A (hinge-type) group share constraint",
+    grp_inv_hinge     = "An (inverse-hinge-type) group share constraint",
+    compet            = "A competitiveness constraint",
+    incumbency        = "An incumbency constraint",
+    splits            = "A splits constraint",
+    multisplits       = "A multisplits constraint",
+    total_splits      = "A total splits constraint",
+    plan_splits       = "A whole-plan splits constraint",
+    total_plan_splits = "A whole-plan total splits constraint",
+    plan_incumbency   = "A whole-plan incumbency constraint",
+    min_group_frac    = "A minimum group fraction constraint",
+    pop_dev           = "A population deviation constraint",
+    segregation       = "A dissimilarity segregation constraint",
+    edges_rem         = "An (edges-removed-type) compactness constraint",
+    log_st            = "A (log-spanning-tree-type) compactness constraint",
+    polsby            = "A (Polsby-Popper-type) compactness constraint",
+    fry_hold          = "A (Fryer-Holden-type) compactness constraint",
+    seats      = "A region seats constraint",
+    custom_plan       = "A custom plan constraint",
+    custom            = "A custom constraint"
+)
+
+# Constraints carrying large admin vectors, whose `str()` details are
+# suppressed to keep the printout readable.
+constr_skip_details <- c(
+    "splits", "multisplits", "total_splits",
+    "plan_splits", "total_plan_splits"
+)
+
+# Resolve an entry name from a `redist_constr` to its constraint type.
+# Longest names are tried first so that, e.g., "custom_plan" is not claimed by
+# "custom". Returns `NA_character_` for an unrecognized name.
+constr_type <- function(nm) {
+    types <- names(constr_type_labels)
+    types <- types[order(nchar(types), decreasing = TRUE)]
+    hit <- types[startsWith(nm, types)]
+    if (length(hit) == 0) NA_character_ else hit[1]
+}
+
+# Pluralize `unit` unless the only value listed is 1 ("1 seat", "2 seats",
+# "1 or 3 seats").
+pluralize_unit <- function(values, unit) {
+    if (length(values) == 1 && values == 1) unit else paste0(unit, "s")
+}
+
+# "1", "1 or 2", "1, 2, or 3", "1, 2, 3, 4, 5, or 2 more"
+commas_or <- function(x, trunc = 5) {
+    x <- as.character(x)
+    n <- length(x)
+    if (n == 0) {
+        return("none")
+    }
+    if (n > trunc) {
+        x <- c(x[seq_len(trunc)], paste0(n - trunc, " more"))
+        n <- trunc + 1L
+    }
+    if (n == 1) {
+        return(x)
+    }
+    paste0(paste(x[-n], collapse = ", "), if (n > 2) "," else "", " or ", x[n])
+}
+
+# Describe what a constraint is scored on, from the `nseats_to_score` and
+# `nregions_to_score` logical vectors built by
+# `get_base_region_constraint_list()` and `get_base_plan_constraint_list()`.
+# Plan-level constraints have no `nseats_to_score`.
+constr_scope_str <- function(cn) {
+    seats <- cn$nseats_to_score
+    nregions <- cn$nregions_to_score
+
+    if (is.null(seats)) {
+        target <- "the whole plan"
+    } else if (all(seats)) {
+        target <- "all regions"
+    } else if (!any(seats)) {
+        target <- "no regions"
+    } else if (identical(which(seats), 1L)) {
+        # a one-seat region is a district
+        target <- "districts only"
+    } else {
+        sizes <- which(seats)
+        target <- paste0(
+            "regions with ", commas_or(sizes), " ", pluralize_unit(sizes, "seat")
+        )
+    }
+
+    if (is.null(nregions) || all(nregions)) {
+        return(target)
+    }
+    counts <- which(nregions)
+    if (length(counts) == 0) {
+        return(paste0(target, ", but at no number of regions"))
+    }
+    paste0(
+        target, ", only when the plan has ", commas_or(counts), " ",
+        pluralize_unit(counts, "region")
+    )
+}
 
 #' Generic to print redist_constr
 #' @param x redist_constr
@@ -778,75 +1551,66 @@ add_constr_custom <- function(constr, strength, fn) {
 #' @param details if FALSE, then suppress the details of each constraint
 #' @param \dots additional arguments
 #' @method print redist_constr
-#' @return Prints to console and returns input redist_constr
+#' @return Invisibly returns the input `redist_constr`
 #' @export
 print.redist_constr <- function(x, header = TRUE, details = TRUE, ...) {
+    constr <- x
+
     if (header) {
         cli::cli_text("A {.cls redist_constr} with {length(x)} constraint{?s}")
     }
 
-    print_constr <- function(x) {
-        if (details) {
-            idx_strength <- which(names(x) == "strength")
-            str(x[-idx_strength], no.list = TRUE, comp.str = "   ", give.attr = FALSE)
+    # Reported in the bullet itself, so not repeated in the details.
+    summarised <- c(
+        "strength", "nregions_to_score", "nseats_to_score",
+        "hard_constraint", "hard_threshold"
+    )
+
+    print_constr <- function(cn) {
+        if (!details) {
+            return(invisible(NULL))
+        }
+        rest <- cn[!names(cn) %in% summarised]
+        if (length(rest) > 0) {
+            str(rest, no.list = TRUE, comp.str = "   ", give.attr = FALSE)
         }
     }
 
     x <- unlist(x, recursive = FALSE)
     for (nm in names(x)) {
-        if (startsWith(nm, "status_quo")) {
-            cli::cli_bullets(c("*" = "A status quo constraint of strength {x[[nm]]$strength}"))
-            print_constr(x[[nm]])
-        } else if (startsWith(nm, "grp_pow")) {
-            cli::cli_bullets(c("*" = "A (power-type) group share constraint of strength {x[[nm]]$strength}"))
-            print_constr(x[[nm]])
-        } else if (startsWith(nm, "grp_hinge")) {
-            cli::cli_bullets(c("*" = "A (hinge-type) group share constraint of strength {x[[nm]]$strength}"))
-            print_constr(x[[nm]])
-        } else if (startsWith(nm, "grp_inv_hinge")) {
-            cli::cli_bullets(c("*" = "An (inverse-hinge-type) group share constraint of strength {x[[nm]]$strength}"))
-            print_constr(x[[nm]])
-        } else if (startsWith(nm, "compet")) {
-            cli::cli_bullets(c("*" = "A competitiveness constraint of strength {x[[nm]]$strength}"))
-            print_constr(x[[nm]])
-        } else if (startsWith(nm, "incumbency")) {
-            cli::cli_bullets(c("*" = "An incumbency constraint of strength {x[[nm]]$strength}"))
-            print_constr(x[[nm]])
-        } else if (startsWith(nm, "splits")) {
-            cli::cli_bullets(c("*" = "A splits constraint of strength {x[[nm]]$strength}"))
-        } else if (startsWith(nm, "multisplits")) {
-            cli::cli_bullets(c("*" = "A multisplits constraint of strength {x[[nm]]$strength}"))
-        } else if (startsWith(nm, "total_splits")) {
-            cli::cli_bullets(c("*" = "A total splits constraint of strength {x[[nm]]$strength}"))
-        } else if (startsWith(nm, "custom")) {
-            cli::cli_bullets(c("*" = "A custom constraint of strength {x[[nm]]$strength}"))
-            print_constr(x[[nm]])
-        } else if (startsWith(nm, "edges_rem")) {
-            cli::cli_bullets(c("*" = "An (edges-removed-type) compactness constraint of strength {x[[nm]]$strength}"))
-            print_constr(x[[nm]])
-        } else if (startsWith(nm, "log_st")) {
-            cli::cli_bullets(c("*" = "A (log-spanning-tree-type) compactness constraint of strength {x[[nm]]$strength}"))
-            print_constr(x[[nm]])
-        } else if (startsWith(nm, "polsby")) {
-            cli::cli_bullets(c("*" = "A (Polsby-Popper-type) compactness constraint of strength {x[[nm]]$strength}"))
-            print_constr(x[[nm]])
-        } else if (startsWith(nm, "fry_hold")) {
-            cli::cli_bullets(c("*" = "A (Fryer-Holden-type) compactness constraint of strength {x[[nm]]$strength}"))
-            print_constr(x[[nm]])
-        } else if (startsWith(nm, "pop_dev")) {
-            cli::cli_bullets(c("*" = "A population deviation constraint of strength {x[[nm]]$strength}"))
-            print_constr(x[[nm]])
-        } else if (startsWith(nm, "segregation")) {
-            cli::cli_bullets(c("*" = "A dissimilarity segregation constraint of strength {x[[nm]]$strength}"))
-            print_constr(x[[nm]])
+        cn <- x[[nm]]
+        score_str <- constr_scope_str(cn)
+
+        if (isTRUE(cn$hard_constraint)) {
+            thresh_str <- sprintf(
+                " with a hard threshold of %.3f",
+                cn$hard_threshold
+            )
         } else {
-            cli::cli_bullets(c("*" = "An unknown constraint {.var {nm}}"))
-            print_constr(x[[nm]])
+            thresh_str <- ""
+        }
+
+        type <- constr_type(nm)
+
+        if (is.na(type)) {
+            cli::cli_bullets(c(
+                "*" = "An unknown constraint {.var {nm}} applied to {score_str}{thresh_str}"
+            ))
+            print_constr(cn)
+            next
+        }
+
+        label <- unname(constr_type_labels[[type]])
+        cli::cli_bullets(c(
+            "*" = "{label} of strength {cn$strength} applied to {score_str}{thresh_str}"
+        ))
+        if (!type %in% constr_skip_details) {
+            print_constr(cn)
         }
     }
+
+    invisible(constr)
 }
-
-
 #' Visualize constraints
 #'
 #' Plots the constraint strength versus some running variable. Currently
@@ -886,7 +1650,8 @@ plot.redist_constr <- function(x, y, type = "group", xlim = c(0, 1), ...) {
         for (obj in x$grp_pow) {
             out$penalty <- out$penalty +
                 obj$strength *
-                    (abs(out$share - obj$tgt_group) * abs(out$share - obj$tgt_other))^obj$pow
+                    (abs(out$share - obj$tgt_group) *
+                        abs(out$share - obj$tgt_other))^obj$pow
         }
     }
 
@@ -917,9 +1682,10 @@ plot.redist_constr <- function(x, y, type = "group", xlim = c(0, 1), ...) {
 
     ggplot(out, aes(x = .data$share, y = .data$penalty)) +
         geom_path() +
-        ggplot2::scale_x_continuous("Group share of district population", labels = function(x) {
-            paste0(round(100 * x), "%")
-        }) +
+        ggplot2::scale_x_continuous(
+            "Group share of district population",
+            labels = function(x) paste0(round(100 * x), "%")
+        ) +
         labs(y = "Penalty")
 }
 

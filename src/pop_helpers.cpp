@@ -1,4 +1,4 @@
-#include "smc_base.h"
+#include "pop_helpers.h"
 
 // [[Rcpp::export]]
 int closest_adj_pop(IntegerVector adj, int i_dist, NumericVector g_prop) {

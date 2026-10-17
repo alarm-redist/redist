@@ -7,23 +7,25 @@
 redist_enumpart_frontier(adj = NULL, ordered_path = NULL)
 }
 \arguments{
-\item{adj}{An adjacency list (as returned by [redist.adjacency()]). Ignored
-if `ordered_path` is provided.}
+\item{adj}{An adjacency list (as returned by \code{\link[=redist.adjacency]{redist.adjacency()}}). Ignored
+if \code{ordered_path} is provided.}
 
-\item{ordered_path}{Path (without `".dat"` extension) to an ordered edge
-file written by [redist_enumpart()]. If provided, `adj` is ignored.}
+\item{ordered_path}{Path (without \code{".dat"} extension) to an ordered edge
+file written by \code{\link[=redist_enumpart]{redist_enumpart()}}. If provided, \code{adj} is ignored.}
 }
 \value{
 A list with four elements:
-- `max`: maximum frontier size
-- `average`: average frontier size
-- `average_sq`: average of squared frontier sizes
-- `sequence`: numeric vector of frontier sizes at each step
+\itemize{
+\item \code{max}: maximum frontier size
+\item \code{average}: average frontier size
+\item \code{average_sq}: average of squared frontier sizes
+\item \code{sequence}: numeric vector of frontier sizes at each step
+}
 }
 \description{
 Computes the frontier sizes along an edge ordering, which determines the
 computational complexity of the enumpart algorithm. Smaller frontier sizes
-lead to faster enumeration. This is primarily a helper for `enumpart`.
+lead to faster enumeration. This is primarily a helper for \code{enumpart}.
 }
 \examples{
 data(fl25)
@@ -33,6 +35,6 @@ redist_enumpart_frontier(adj)
 \references{
 Fifield, B., Imai, K., Kawahara, J., & Kenny, C. T. (2020).
 The essential role of empirical validation in legislative redistricting
-simulation. *Statistics and Public Policy*, 7(1), 52-68.
+simulation. \emph{Statistics and Public Policy}, 7(1), 52-68.
 }
 \concept{enumerate}

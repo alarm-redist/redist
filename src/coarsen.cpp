@@ -1,4 +1,5 @@
-#include "smc_base.h"
+#include <Rcpp.h>
+using namespace Rcpp;
 
 // [[Rcpp::export]]
 List coarsen_adjacency(List adj, IntegerVector groups) {

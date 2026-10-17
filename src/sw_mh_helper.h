@@ -9,19 +9,15 @@
 #ifndef SW_MH_HELPER_H
 #define SW_MH_HELPER_H
 
-#include "constraint_calc_helper.h"
-#include "make_swaps_helper.h"
-#include "map_calc.h"
-#include "mcmc_gibbs.h"
 #include "redist_types.h"
-#include <RcppArmadillo.h>
+#include <Rcpp.h>
 
 using namespace Rcpp;
 
-Rcpp::NumericVector init_pop(Rcpp::NumericVector popvec, arma::vec cds);
+Rcpp::NumericVector init_pop(Rcpp::NumericVector popvec, Rcpp::NumericVector cds);
 Rcpp::List add_ties(Rcpp::List aList);
 Rcpp::List cut_edges(Rcpp::List aList_con, double eprob);
-Rcpp::List bsearch_boundary(Rcpp::List aList, arma::vec boundary);
+Rcpp::List bsearch_boundary(Rcpp::List aList, Rcpp::NumericVector boundary);
 int count_valid(Rcpp::List aList, Rcpp::List boundarypart, Rcpp::NumericVector cdvec);
 int draw_p(int lambda);
 Rcpp::List make_swaps(Rcpp::List boundary_cc, Rcpp::List aList, Rcpp::NumericVector cds_old,
@@ -30,7 +26,7 @@ Rcpp::List make_swaps(Rcpp::List boundary_cc, Rcpp::List aList, Rcpp::NumericVec
                       double maxparity, double parity, int p, double eprob, double beta,
                       const Graph &g);
 int mh_decision(double mh_prob);
-Rcpp::List changeBeta(arma::vec betavec, double beta, double constraint,
+Rcpp::List changeBeta(Rcpp::NumericVector betavec, double beta, double constraint,
                       Rcpp::NumericVector weights, int adjswap);
 
 #endif

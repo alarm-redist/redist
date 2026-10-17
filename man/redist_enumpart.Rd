@@ -15,57 +15,61 @@ redist_enumpart(
   out_path = tempfile("enum_out"),
   weight_path = if (!is.null(lower) || !is.null(upper)) tempfile("enum_wgt") else NULL,
   read = TRUE,
-  init = !file.exists(system.file("enumpart", package = "redist"))
+  init = !file.exists(system.file("enumpart", package = "redist")),
+  verbose = FALSE
 )
 }
 \arguments{
-\item{map}{A [redist_map] object}
+\item{map}{A \link{redist_map} object}
 
 \item{ndists}{The number of districts. Defaults to the number specified
-in `map`}
+in \code{map}}
 
-\item{n}{Number of partitions to draw uniformly at random. If `NULL`
+\item{n}{Number of partitions to draw uniformly at random. If \code{NULL}
 (default), all valid partitions are enumerated}
 
 \item{total_pop}{A vector of precinct populations. Defaults to the
-population column in `map`}
+population column in \code{map}}
 
 \item{lower}{Lower bound on each district's total population. Defaults to
-the lower bound in `map` if one is set}
+the lower bound in \code{map} if one is set}
 
 \item{upper}{Upper bound on each district's total population. Defaults to
-the upper bound in `map` if one is set}
+the upper bound in \code{map} if one is set}
 
-\item{ordered_path}{Path (without `".dat"`) for the ordered edge file.
-Defaults to a path in `tempdir()`}
+\item{ordered_path}{Path (without \code{".dat"}) for the ordered edge file.
+Defaults to a path in \code{tempdir()}}
 
-\item{out_path}{Path (without `".dat"`) for the enumerated output file.
-Defaults to a path in `tempdir()`. If the file already exists, it is read
- directly}
+\item{out_path}{Path (without \code{".dat"}) for the enumerated output file.
+Defaults to a path in \code{tempdir()}. If the file already exists, it is read
+directly}
 
-\item{weight_path}{Path (without `".dat"`) for the vertex weights file.
-Defaults to a path in `tempdir()` when `lower` or `upper` are non-`NULL`.}
+\item{weight_path}{Path (without \code{".dat"}) for the vertex weights file.
+Defaults to a path in \code{tempdir()} when \code{lower} or \code{upper} are non-\code{NULL}.}
 
-\item{read}{If `TRUE` (default), reads and returns the enumerated plans as a
-[redist_plans] object. If `FALSE`, runs enumpart and returns `out_path`
+\item{read}{If \code{TRUE} (default), reads and returns the enumerated plans as a
+\link{redist_plans} object. If \code{FALSE}, runs enumpart and returns \code{out_path}
 invisibly.}
 
-\item{init}{If `TRUE`, builds enumpart before running. Must be
-run once after installing the package. Defaults to `FALSE`.}
+\item{init}{If \code{TRUE}, builds enumpart before running. Must be
+run once after installing the package. Defaults to \code{FALSE}.}
+
+\item{verbose}{If \code{TRUE}, the stderr output of the enumpart binary (frontier
+sizes, reduction progress, etc.) is shown. Defaults to \code{FALSE}.}
 }
 \value{
-A [redist_plans] object, or `out_path` invisibly if `read = FALSE`.
+A \link{redist_plans} object, or \code{out_path} invisibly if \code{read = FALSE}.
 }
 \description{
 Enumerates all valid partitions (or a uniform random subset) for a given
 redistricting problem.
 }
 \details{
-Path arguments default to `tempdir()`, so no file management is required
+Path arguments default to \code{tempdir()}, so no file management is required
 for typical use. Supply explicit paths to retain intermediate files across
 sessions. This is recommended
 
-If a file already exists at `out_path`, `enumpart` is not run and
+If a file already exists at \code{out_path}, \code{enumpart} is not run and
 the existing file is read directly. This makes it easy to resume or
 re-read a previous enumeration.
 }
@@ -83,6 +87,6 @@ plans <- redist_enumpart(fl_map, out_path = path)  # reads existing file
 \references{
 Fifield, B., Imai, K., Kawahara, J., & Kenny, C. T. (2020).
 The essential role of empirical validation in legislative redistricting
-simulation. *Statistics and Public Policy*, 7(1), 52-68.
+simulation. \emph{Statistics and Public Policy}, 7(1), 52-68.
 }
 \concept{enumerate}

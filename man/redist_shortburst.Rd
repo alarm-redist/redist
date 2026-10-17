@@ -12,12 +12,12 @@ redist_shortburst(
   max_bursts = 500L,
   maximize = TRUE,
   init_plan = NULL,
+  init_seats = NULL,
   counties = NULL,
   constraints = redist_constr(map),
   compactness = 1,
-  adapt_k_thresh = 0.95,
   reversible = TRUE,
-  fixed_k = NULL,
+  enforce_hierarchical = FALSE,
   return_all = TRUE,
   thin = 1L,
   backend = "mergesplit",
@@ -58,6 +58,9 @@ the reference map of the \code{map} object, or if none exists, will sample
 a random initial state using \code{\link[=redist_smc]{redist_smc()}}. You can also request
 a random initial state by setting \code{init_plan="sample"}.}
 
+\item{init_seats}{Seat in each district of the \code{init_plan}. Only required if
+the initial plan passed in is a multi-member plan.}
+
 \item{counties}{A vector containing county (or other administrative or
 geographic unit) labels for each unit, which may be integers ranging from 1
 to the number of counties, or a factor or character vector.  If provided, the
@@ -70,17 +73,15 @@ If no county-split constraint is desired, this parameter should be left blank.}
 higher values preferring more compact districts. Must be non-negative. See
 \code{\link{redist_mergesplit}} for more information.}
 
-\item{adapt_k_thresh}{The threshold value used in the heuristic to select a
-value \code{k_i} for each splitting iteration.}
-
 \item{reversible}{If \code{FALSE} and \code{backend="mergesplit"}, the Markov chain
 used will not be reversible. This may speed up optimization.}
 
-\item{fixed_k}{If not \code{NULL}, will be used to set the \code{k} parameter for the
-\code{mergesplit} backend. If e.g. \code{k=1} then the best edge in each spanning
-tree will be used.  Lower values may speed up optimization at the
-cost of the Markov chain no longer targeting a known distribution.
-Recommended only in conjunction with \code{reversible=FALSE}.}
+\item{enforce_hierarchical}{When \code{backend="mergesplit"} this controls whether
+the sampled plans must be hierarchically valid with respect to the inputted
+administrative units. See O'Sullivan, McCartan, and Imai (2023)
+\url{doi:10.48550/arXiv.2603.22188} for a definition of hierarchical plans.
+When \code{reversible} is \code{TRUE} the calculated Metropolis-Hastings ratio will
+generally not be correct.}
 
 \item{return_all}{Whether to return all the burst results or just the best
 one (generally, the Pareto frontier). Recommended for monitoring purposes.}

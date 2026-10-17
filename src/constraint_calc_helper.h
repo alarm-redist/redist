@@ -9,10 +9,11 @@
 #ifndef CONSTRAINT_CALC_HELPER_H
 #define CONSTRAINT_CALC_HELPER_H
 
+#include <Rcpp.h>
+
 #include "redist_types.h"
 
 Rcpp::NumericVector findBoundary(Rcpp::List fullList, Rcpp::List conList);
-arma::uvec getIn(arma::ivec vec1, arma::ivec vec2);
 Rcpp::List genAlConn(Rcpp::List aList, Rcpp::NumericVector cds);
 
 #endif

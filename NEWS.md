@@ -1,10 +1,46 @@
-# redist (development)
+# redist 5.0.0
+* Replaces old SMC weights with generally lower variance optimal weights.
+* Adds the option to add Mergesplit MCMC steps at any point during an SMC run. 
+Adding mergesplit steps can help boost convergence for plans with a larger 
+number of districts without increasing the sample size. 
+* Improves SMC and Mergesplit MCMC performance by pre-allocating and reusing as 
+much memory as possible while drawing spanning trees.
+* Introduces new methods for sampling plans for both SMC and Mergesplit MCMC. 
+The final output is still plans from the same distribution as before but new 
+sampling spaces and splitting methods will sometimes perform better under some
+scenarios. The `adapt_k_thresh` parameter is not needed for these new sampling
+methods.
+* Introduces a new method for splitting in SMC - generalized region splits.
+Instead of splitting off one district at a time this allows for splitting into
+two arbitrary sized regions. This tends to reduce the runtime for a fixed
+sample size since on average it draws spanning trees on smaller subgraphs then 
+single district splits. 
+* Allow sampling multimember district plans for both SMC and 
+mergesplit MCMC under some mild conditions. The district seat sizes (how many 
+legislators a district can have) must be a range of values e.g. (3,4,5). 
+* When counties are used `redist_mergesplit` now samples from the same target 
+distribution as `redist_smc` (it guarantees no more than the number of districts
+minus 1 splits). For more details 
+see O'Sullivan, McCartan, and Imai (2023) <doi:10.48550/arXiv.2603.22188>. 
+* `redist_mergesplit` inputs now work differently. 
+    * `nsims` is now the number of plans saved. 
+    * `warmup` is the number of steps to run the chain for before collecting any samples.
+    * `thin` means we will run the chain for `thin - 1` steps between saving plans
+    * Overall the chain will be run for `warmup + nsims * thin` and return `nsims` plans.
+* Adds the option to incorporate rejection sampling for all constraints in SMC
+and mergesplit MCMC. Any constraint can now include a threshold argument `thresh` 
+where for a newly split plan if the score is
+greater than or equal to `thresh` then the plan will be automatically rejected. 
+This amounts to giving plans where any region has a score above `thresh` a 
+probability of 0. 
+* The mergesplit backend for `redist_shortburst` now uses uniform edge sampling 
+with forest space for the backend instead of sampling with graph space and all
+`k` related parameters have been removed. 
 
-* Speeds up spanning-tree sampling by starting Wilson walks near the existing tree and using successor-based loop erasure.
+# redist 4.4.0
 * Old `enumpart` functions are deprecated in favor of `redist_enumpart()` which provides a more consistent syntax.
 
 # redist 4.3.2
-
 * Allows for parallel flip with `chains` argument in `redist_flip()`.
 * Fixes URL issues causing a note on CRAN. We have pointed the links to our website directly.
 

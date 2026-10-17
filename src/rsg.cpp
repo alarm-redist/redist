@@ -3,7 +3,7 @@
 #include "make_swaps_helper.h"
 #include "redist_types.h"
 #include "sw_mh_helper.h"
-#include <RcppArmadillo.h>
+#include <Rcpp.h>
 
 using namespace Rcpp;
 
@@ -25,7 +25,7 @@ List rsg(List adj_list, NumericVector population, int Ndistrict, double target_p
     NumericVector maxpop_dist(Ndistrict);
     int j_candidates_size, p_neighbors_size;
     IntegerVector idist_members, jdist_members;
-    arma::vec i_dist_vec, j_dist_vec, maxpop_dist_vec, j_candidates_vec, p_index_vec;
+    NumericVector i_dist_vec, j_dist_vec, maxpop_dist_vec, j_candidates_vec, p_index_vec;
 
     // member_dvec tracks which district each precinct belongs to
     // Always of length Nprecinct
