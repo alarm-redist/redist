@@ -13,24 +13,43 @@
 #'
 #' For SMC, diagnostics statistics include:
 #'
-#' * **Effective samples**: the effective sample size at each iteration, computed
+#' * **Effective samples**: the effective sample size at each split, computed
 #' using the SMC weights. Larger is better. The percentage in parentheses is the
 #' ratio of the effective samples to the total samples.
-#' * **Acceptance rate**: the fraction of drawn spanning trees which yield a valid
-#' redistricting plan within the population tolerance. Very small values (< 1%)
-#' can indicate a bottleneck and may lead to a lack of diversity.
+#' * **Acceptance rate**: the fraction of drawn spanning trees that gave a valid
+#' split. Low values make sampling slower but don't by themselves make the
+#' sample less accurate.
 #' * **Standard deviation of the log weights**: More variable weights (larger s.d.)
-#' indicate less efficient sampling. Values greater than 3 are likely problematic.
-#' * **Maximum unique plans:** The number of unique redistricting
-#' plans that survive each stage. The percentage in parentheses is the ratio of
-#' this number to the total number of samples. Small values (< 100) indicate a
-#' bottleneck, which leads to a loss of sample diversity and a higher variance.
+#' indicate less efficient sampling.
+#' * **Maximum unique plans:** The number of distinct plans from the previous
+#' step that became parents of the plans at this step. The percentage in
+#' parentheses is relative to the number expected if the weights were even,
+#' about 63% of the samples, so it can be above 100%.
+#' * **Unique plans**: The number of distinct plans after each split, and after
+#' the final resampling. Only shown for plans that stored it.
 #' * **Estimated `k` parameter**: For graph space plans displays how many
 #' spanning tree edges were considered for cutting at each split. Mostly
 #' informational, though large jumps may indicate a need to increase
 #' `adapt_k_thresh`.
-#' * **Bottleneck**: An asterisk will appear in the right column if a bottleneck
-#' appears likely, based on the values of the other statistics.
+#' * **Flags**: The right column flags potential problems at each split:
+#'     * `*` (bottleneck): the maximum unique plans is below 5% of the samples,
+#'       or below the smaller of 40% of the samples and 100. Few plans from the
+#'       previous step became parents, which lowers sample diversity and can
+#'       increase the variance of estimates across runs. This is often driven
+#'       by uneven weights at the previous step or by hard constraints.
+#'     * `A` (low acceptance): the acceptance rate is below 1%, usually because
+#'       of a tight population tolerance, hard (thresholded) constraints, or
+#'       splitting within administrative units.
+#'     * `W` (low effective sample size): the effective samples are below 10%
+#'       or the standard deviation of the log weights is above 3, usually
+#'       because of strong soft constraints or a `compactness` far from 1.
+#'
+#' For SMC with merge-split steps, a second table shows the acceptance rate of
+#' each merge-split step, the number of merge-split steps run per plan, and the
+#' number of unique plans afterward. Merge-split steps after a bottleneck can
+#' increase the number of unique plans. Steps with an acceptance rate below 5%
+#' are flagged with a dagger (†), since mixing will be slow and increasing
+#' `mh_accept_per_smc` will be expensive.
 #'
 #' For CycleWalk MCMC, additional diagnostic statistics include:
 #'
@@ -53,8 +72,8 @@
 #' summary statistics. We strongly recommend calling `match_numbers()` or
 #' `number_by()` before examining these district-level statistics. A value of
 #' `FALSE` indicates to compute the rhats for all districts
-#' @param all_runs When there are multiple SMC runs, show detailed summary
-#' statistics for all runs (the default), or only the first run?
+#' @param all_runs When there are multiple SMC runs, whether to show detailed
+#' summary statistics for all runs, or only the first run (the default).
 #' @param vi_max The maximum number of plans to sample in computing the pairwise
 #' variation of information distance (sample diversity).
 #' @param order_stats Whether or not to compute rhats on the ordered district
@@ -73,7 +92,11 @@
 #'
 #' @param \dots additional arguments (ignored)
 #'
-#' @return A data frame containing diagnostic information, invisibly.
+#' @return A list of diagnostic information, invisibly. For SMC this has a
+#' `smc_diagnostic_dfs` data frame with the statistics for each split, and a
+#' `ms_diagnostic_dfs` data frame for any merge-split steps. For MCMC it has a
+#' `mcmc_diagnostic_dfs` data frame. If R-hat values were computed, it also has
+#' `rhats_df` and `rhat`.
 #'
 #' @examples
 #' data(iowa)
@@ -274,21 +297,34 @@ summary.redist_plans <- function(
         smc_ms_run_dfs <- list()
         n_runs <- length(all_diagn)
         warn_bottlenecks <- FALSE
+        warn_low_accept <- FALSE
+        warn_low_ess <- FALSE
+        warn_low_ms_accept <- FALSE
 
         for (i in seq_len(n_runs)) {
+            # each run's plans are its block of columns in run order
+            run_nsims <- all_run_info[[i]]$nsims
+            run_plans_m <- plans_m[, (i - 1) * run_nsims + seq_len(run_nsims), drop = FALSE]
+            run_nunique_plans <- get_run_nunique_plans(
+                all_diagn[[i]], all_run_info[[i]], resampled, run_plans_m
+            )
+
             smc_summary_result_list <- get_smc_summary_df(
                 all_diagn[[i]],
                 all_run_info[[i]],
                 resampled,
-                warn_bottlenecks
+                warn_bottlenecks,
+                run_nunique_plans
             )
 
             smc_run_dfs[[i]] <- smc_summary_result_list$smc_summary_df
             smc_tbl_print <- smc_summary_result_list$smc_print_tbl
             warn_bottlenecks <- smc_summary_result_list$warn_bottlenecks
+            warn_low_accept <- warn_low_accept || smc_summary_result_list$warn_low_accept
+            warn_low_ess <- warn_low_ess || smc_summary_result_list$warn_low_ess
 
             if (i == 1 || isTRUE(all_runs)) {
-                cat_cli("Sampling diagnostics for SMC run {i} of {n_runs} ({fmt_comma(n_samp)} samples)")
+                cat_cli("Sampling diagnostics for SMC run {i} of {n_runs} ({fmt_comma(run_nsims)} samples)")
                 print(smc_tbl_print, digits = 2)
                 cat("\n")
             }
@@ -297,13 +333,16 @@ summary.redist_plans <- function(
                 smc_ms_summary_result_list <- get_smc_ms_summary_df(
                     all_diagn[[i]],
                     all_run_info[[i]],
-                    resampled
+                    resampled,
+                    run_nunique_plans
                 )
                 smc_ms_run_dfs[[i]] <- smc_ms_summary_result_list$smc_ms_summary_df
                 smc_ms_tbl_print <- smc_ms_summary_result_list$smc_ms_print_tbl
+                warn_low_ms_accept <- warn_low_ms_accept ||
+                    smc_ms_summary_result_list$warn_low_ms_accept
 
                 if (i == 1 || isTRUE(all_runs)) {
-                    cat_cli("Sampling diagnostics for Mergesplit Steps of SMC run {i} of {n_runs} ({fmt_comma(n_samp)} samples)")
+                    cat_cli("Sampling diagnostics for merge-split steps of SMC run {i} of {n_runs} ({fmt_comma(run_nsims)} samples)")
                     print(smc_ms_tbl_print, digits = 2)
                     cat("\n")
                 }
@@ -314,8 +353,6 @@ summary.redist_plans <- function(
         if (algo == MS_SMC_ALG_TYPE) {
             out_list[["ms_diagnostic_dfs"]] <- bind_rows(smc_ms_run_dfs)
         }
-
-        #step_nums <- ave(seq_along(all_run_info[[i]]$step_types), all_run_info[[i]]$step_types, FUN = seq_along)
 
         cat_cli_fmt(cli::cli_li(cli::col_grey(
             "
@@ -328,39 +365,141 @@ summary.redist_plans <- function(
         if (div_bad) {
             cat_cli_fmt(cli::cli_li(
                 "{.strong Low diversity:} Check for potential bottlenecks.
-                        Increase the number of samples.
+                        Increase the number of samples or `mh_accept_per_smc`.
                         Examine the diversity plot with
                         `hist(plans_diversity({name}), breaks=24)`.
                         Consider weakening or removing constraints, or increasing
-                        the population tolerance. If the acceptance rate drops
-                        quickly in the final splits, try increasing
-                        {.arg pop_temper} by 0.01."
+                        the population tolerance."
             ))
         }
         if (warn_converge) {
             cat_cli_fmt(cli::cli_li(
-                "{.strong SMC convergence:} Increase the number of samples.
+                "{.strong SMC convergence:} Increase the number of samples or `mh_accept_per_smc`.
                         If you are experiencing low plan diversity or bottlenecks as well,
                         address those issues first."
             ))
         }
         if (warn_bottlenecks) {
+            bottleneck_causes <- "This is often driven by uneven weights at the
+                previous step (see W) or by hard constraints that only allow a
+                subset of plans to be split."
+            bottleneck_ms <- if (algo == MS_SMC_ALG_TYPE) {
+                "Merge-split steps after a bottleneck can alleviate this somewhat by
+                increasing diversity, though the new plans stay similar to their
+                shared ancestors. Check how much the number of unique plans increases
+                in the merge-split step after each flagged split."
+            } else {
+                "Running merge-split steps after each split (see `ms_params`) can
+                alleviate this somewhat by increasing diversity, though the new plans
+                stay similar to their shared ancestors. The number of unique plans
+                after each merge-split step shows how much they help."
+            }
             cat_cli_fmt(cli::cli_li(
-                "(*) {.strong Bottlenecks found:} Consider weakening or removing
-                        constraints, or increasing the population tolerance.
-                        If the acceptance rate drops quickly in the final splits,
-                        try increasing {.arg pop_temper} by 0.01.
-                        If the weight variance (Log wgt. sd) increases steadily
-                        or is particularly large for the \"Resample\" step,
-                        consider increasing {.arg seq_alpha}.
-                        To visualize what geographic areas may be causing problems,
-                        try running the following code. Highlighted areas are
-                        those that may be causing the bottleneck.\n\n"
+                "(*) {.strong Bottlenecks found:} Only a small percentage of plans
+                from the previous step were successfully split, potentially degrading
+                sample quality. {bottleneck_causes} {bottleneck_ms}
+                Consider weakening or removing
+                            constraints, or increasing the population tolerance.
+                            If the acceptance rate drops quickly in the final splits,
+                            try increasing {.arg pop_temper} by 0.01.
+                            If the weight variance (Log wgt. sd) increases steadily
+                            or is particularly large for the \"Resample\" step,
+                            consider increasing {.arg seq_alpha} if merge-split steps
+                            are not also being used."
             ))
-            code <- str_glue(
-                "plot(<map object>, rowMeans(as.matrix({name}) == <bottleneck iteration>))"
+        }
+        constraint_counts <- count_soft_and_hard_constraints(attr(object, "constraints"))
+        # "There is 1 ... constraint" / "There are n ... constraints"
+        describe_constraint_count <- function(n, type) {
+            sprintf(
+                "There %s %d %s constraint%s that could be contributing.",
+                if (n == 1) "is" else "are", n, type, if (n == 1) "" else "s"
             )
-            cli::cat_line("    ", cli::code_highlight(code, "Material"))
+        }
+        if (warn_low_accept) {
+            accept_causes <- if (is.null(constraint_counts)) {
+                "This is usually caused by a tight population tolerance or by hard
+                (thresholded) constraints rejecting splits."
+            } else if (constraint_counts[["hard"]] > 0) {
+                paste(
+                    "This is usually caused by a tight population tolerance or by hard
+                    (thresholded) constraints rejecting splits.",
+                    describe_constraint_count(constraint_counts[["hard"]], "hard (thresholded)")
+                )
+            } else {
+                "No hard (thresholded) constraints were used, so the population
+                tolerance or the geography of the map is the likely cause."
+            }
+            if (isTRUE(attr(object, "num_admin_units") > 1)) {
+                accept_causes <- paste(
+                    accept_causes,
+                    "Splitting within administrative units can also lower the acceptance rate."
+                )
+            }
+            # only suggest loosening thresholds if there may be hard constraints
+            accept_fixes <- if (isTRUE(constraint_counts[["hard"]] == 0)) {
+                "Consider increasing the population tolerance."
+            } else {
+                "Consider increasing the population tolerance or loosening constraint
+                thresholds."
+            }
+            low_accept_pct <- sprintf("%g%%", 100 * SMC_LOW_ACCEPT_RATE)
+            cat_cli_fmt(cli::cli_li(
+                "(A) {.strong Low acceptance:} Fewer than {low_accept_pct} of tree
+                        draws gave a valid split. This makes sampling slower but
+                        doesn't by itself make the sample less accurate.
+                        {accept_causes} {accept_fixes} If the acceptance rate only
+                        drops sharply in the final splits, try increasing
+                        {.arg pop_temper} by 0.01."
+            ))
+        }
+        if (warn_low_ess) {
+            ess_causes <- if (is.null(constraint_counts)) {
+                ""
+            } else if (constraint_counts[["soft"]] > 0) {
+                describe_constraint_count(constraint_counts[["soft"]], "soft")
+            } else {
+                "No soft constraints were used."
+            }
+            compactness <- attr(object, "compactness")
+            if (is.numeric(compactness) && isTRUE(compactness != 1)) {
+                ess_causes <- paste(
+                    ess_causes,
+                    sprintf("These plans were sampled with `compactness` = %g.", compactness)
+                )
+            }
+            pop_temper <- all_diagn[[1]]$pop_temper
+            if (isTRUE(pop_temper > 0)) {
+                ess_causes <- paste(
+                    ess_causes,
+                    sprintf("Population tempering (`pop_temper` = %g) trades acceptance
+                            in the final splits for more uneven weights.", pop_temper)
+                )
+            }
+            if (any(vapply(all_diagn, function(d) isTRUE(d$seq_alpha < 1), logical(1)))) {
+                ess_causes <- paste(
+                    ess_causes,
+                    "If the weight variance grows steadily across the splits,
+                    increasing `seq_alpha` may help."
+                )
+            }
+            low_eff_pct <- sprintf("%g%%", 100 * SMC_LOW_EFF_SAMPLE_FRAC)
+            cat_cli_fmt(cli::cli_li(
+                "(W) {.strong Low effective sample size:} The weights are very uneven
+                        (effective samples below {low_eff_pct} or a log weight sd above
+                        {SMC_HIGH_LOG_WGT_SD}), which is usually caused by strong soft
+                        constraints or a {.arg compactness} far from 1.
+                        {ess_causes} Consider weakening the strongest
+                        constraints."
+            ))
+        }
+        if (warn_low_ms_accept) {
+            cat_cli_fmt(cli::cli_li(
+                "(\u2020) {.strong Low merge-split acceptance:} An acceptance rate
+                        below 5% means mixing will be slow, and increasing the
+                        expected number of successful steps
+                        ({.arg mh_accept_per_smc}) will be expensive."
+            ))
         }
     } else if (algo == "cyclewalk") {
         mh <- attr(object, "mh_acceptance")
@@ -475,10 +614,76 @@ print_algo_specific_params <- function(algo, all_diagn, all_run_info, pre_v5_pla
 }
 
 
+#' Get the number of unique plans after each step of an SMC run
+#'
+#' Not every run stores these, and some runs only stored them for the
+#' splitting and mergesplit steps and not the final resampling step. In that
+#' case the count for the resampling step is computed from the run's final
+#' plans.
+#'
+#' @param diagn The run's diagnostics
+#' @param run_info The run's `run_information`
+#' @param resampled Whether the plans were resampled after the last step
+#' @param run_plans_m The run's final plans matrix
+#'
+#' @returns A vector with the number of unique plans after each step, and after
+#' the resampling step last if resampled, or `NULL` if they weren't stored.
+#' @noRd
+get_run_nunique_plans <- function(diagn, run_info, resampled, run_plans_m) {
+    nunique_plans <- diagn$nunique_plans
+    n_steps <- length(run_info$step_types)
+    if (is.null(nunique_plans) || n_steps == 0) {
+        return(NULL)
+    }
+
+    # compute the count after resampling if it wasn't stored
+    if (resampled && length(nunique_plans) == n_steps) {
+        num_regions <- dplyr::n_distinct(run_plans_m[, 1])
+        nunique_plans <- c(nunique_plans, nrow(get_plan_counts(run_plans_m, num_regions)))
+    }
+
+    if (length(nunique_plans) != n_steps + resampled) {
+        return(NULL)
+    }
+    nunique_plans
+}
+
+# SMC steps are flagged in `summary()` with "A" if the acceptance rate is below
+# SMC_LOW_ACCEPT_RATE and with "W" if the effective sample fraction is below
+# SMC_LOW_EFF_SAMPLE_FRAC or the log weight sd is above SMC_HIGH_LOG_WGT_SD
+SMC_LOW_ACCEPT_RATE <- 0.01
+SMC_LOW_EFF_SAMPLE_FRAC <- 0.1
+SMC_HIGH_LOG_WGT_SD <- 3
+
+#' Counts the soft and hard (thresholded) constraints plans were sampled with
+#'
+#' @param constraints The `constraints` attribute of a `redist_plans` object
+#'
+#' @returns A vector with the number of `soft` and `hard` constraints, or
+#' `NULL` if the constraints aren't known
+#' @noRd
+count_soft_and_hard_constraints <- function(constraints) {
+    if (!is.list(constraints)) {
+        return(NULL)
+    }
+    # as.logical so no constraints gives logical(0) rather than NULL
+    is_hard <- as.logical(unlist(lapply(constraints, function(constraint_type) {
+        vapply(constraint_type, function(x) isTRUE(x$hard_constraint), logical(1))
+    })))
+    c(soft = sum(!is_hard), hard = sum(is_hard))
+}
+
+#' Formats unique plan counts as the count and its percent of the samples
+#' @noRd
+format_unique_plans <- function(unique_plans, n_samp) {
+    str_glue("{fmt_comma(unique_plans)} ({sprintf('%3.0f%%', 100 * unique_plans / n_samp)})")
+}
+
 #' Get Summary and Print Dataframe for SMC steps
 #'
 #' @noRd
-get_smc_summary_df <- function(diagn, run_info, resampled, warn_bottlenecks) {
+get_smc_summary_df <- function(diagn, run_info, resampled, warn_bottlenecks,
+                               nunique_plans = NULL) {
     n_samp <- run_info$nsims
     run_sampling_space <- run_info$sampling_space
 
@@ -507,6 +712,13 @@ get_smc_summary_df <- function(diagn, run_info, resampled, warn_bottlenecks) {
         }
     }
 
+    # add the number of unique plans after each split if stored
+    if (!is.null(nunique_plans)) {
+        # the mask is padded so the resampling step's count isn't recycled in
+        run_summary_df$unique_plans <- nunique_plans[c(smc_step_mask, rep(FALSE, resampled))]
+        run_summary_names <- c(run_summary_names, "Unique plans")
+    }
+
     # add row if resampled
     if (resampled) {
         run_summary_df[nrow(run_summary_df) + 1, ] <- NA
@@ -514,16 +726,34 @@ get_smc_summary_df <- function(diagn, run_info, resampled, warn_bottlenecks) {
         run_summary_df[nrow(run_summary_df), "n_eff"] <- diagn$n_eff
         run_summary_df[nrow(run_summary_df), "eff"] <- diagn$n_eff / n_samp
         run_summary_df[nrow(run_summary_df), "max_unique"] <- tail(diagn$unique_survive, 1)
+        if (!is.null(nunique_plans)) {
+            run_summary_df[nrow(run_summary_df), "unique_plans"] <- tail(nunique_plans, 1)
+        }
     }
 
-    # add extra column name for asterisk
+    # add extra column name for the flags (*, A, W)
     run_summary_names <- c(run_summary_names, "")
 
     tbl_print <- as.data.frame(run_summary_df)
     min_n <- max(0.05 * n_samp, min(0.4 * n_samp, 100))
-    bottlenecks <- dplyr::coalesce(with(tbl_print, pmin(max_unique, n_eff) < min_n), FALSE)
+    # * bottleneck: few distinct plans from the previous step became parents of
+    # this step's plans. This only uses the unique parents since uneven weights
+    # are flagged separately with W
+    bottlenecks <- dplyr::coalesce(tbl_print$max_unique < min_n, FALSE)
     warn_bottlenecks <- warn_bottlenecks || any(bottlenecks)
-    tbl_print$bottleneck <- ifelse(bottlenecks, " * ", "")
+    # A low acceptance: few tree draws give a valid split, usually from the
+    # population tolerance or hard constraints
+    low_accept <- dplyr::coalesce(tbl_print$accept_rate < SMC_LOW_ACCEPT_RATE, FALSE)
+    # W low effective sample size: very uneven weights, usually from strong
+    # soft constraints
+    low_ess <- dplyr::coalesce(
+        tbl_print$eff < SMC_LOW_EFF_SAMPLE_FRAC | tbl_print$sd_log_wgt > SMC_HIGH_LOG_WGT_SD,
+        FALSE
+    )
+    tbl_print$flags <- paste0(
+        " ", ifelse(bottlenecks, "*", ""), ifelse(low_accept, "A", ""),
+        ifelse(low_ess, "W", ""), " "
+    )
     tbl_print$n_eff <- with(
         tbl_print,
         str_glue("{fmt_comma(n_eff)} ({sprintf('%0.1f%%', 100*eff)})")
@@ -535,9 +765,13 @@ get_smc_summary_df <- function(diagn, run_info, resampled, warn_bottlenecks) {
         tbl_print,
         str_glue("{fmt_comma(max_unique)} ({sprintf('%3.0f%%', 100*max_pct)})")
     )
+    if (!is.null(nunique_plans)) {
+        tbl_print$unique_plans <- format_unique_plans(tbl_print$unique_plans, n_samp)
+    }
 
     names(tbl_print) <- run_summary_names
-    new_row_names <- paste("Split", seq_len(nrow(tbl_print) - 1))
+    # the last row is the resampling step only if the plans were resampled
+    new_row_names <- paste("Split", seq_len(nrow(tbl_print) - resampled))
 
     if (resampled) {
         new_row_names <- c(new_row_names, "Resample")
@@ -548,7 +782,9 @@ get_smc_summary_df <- function(diagn, run_info, resampled, warn_bottlenecks) {
     list(
         smc_summary_df = run_summary_df,
         smc_print_tbl = tbl_print,
-        warn_bottlenecks = warn_bottlenecks
+        warn_bottlenecks = warn_bottlenecks,
+        warn_low_accept = any(low_accept),
+        warn_low_ess = any(low_ess)
     )
 }
 
@@ -556,11 +792,12 @@ get_smc_summary_df <- function(diagn, run_info, resampled, warn_bottlenecks) {
 #' Get Summary and Print Dataframe for Mergesplit within SMC steps
 #'
 #' @noRd
-get_smc_ms_summary_df <- function(diagn, run_info, resampled) {
+get_smc_ms_summary_df <- function(diagn, run_info, resampled, nunique_plans = NULL) {
     n_samp <- run_info$nsims
     run_sampling_space <- run_info$sampling_space
 
-    ms_accept_rate <- diagn$accept_rate[run_info$step_types == "ms"]
+    ms_step_mask <- run_info$step_types == "ms"
+    ms_accept_rate <- diagn$accept_rate[ms_step_mask]
     ms_steps_per_plan <- diagn$ms_step_counts
 
     run_summary_df <- tibble(
@@ -570,9 +807,23 @@ get_smc_ms_summary_df <- function(diagn, run_info, resampled) {
 
     run_summary_names <- c("Acc. rate", "MS Steps per Plan")
 
+    # add the number of unique plans after each mergesplit round if stored
+    if (!is.null(nunique_plans)) {
+        run_summary_df$unique_plans <- nunique_plans[c(ms_step_mask, rep(FALSE, resampled))]
+        run_summary_names <- c(run_summary_names, "Unique plans")
+    }
+
     tbl_print <- as.data.frame(run_summary_df)
 
+    # mark rounds with low acceptance, like the bottleneck asterisk in the SMC table
+    low_accept <- dplyr::coalesce(tbl_print$accept_rate < 0.05, FALSE)
+    tbl_print$low_accept <- ifelse(low_accept, " \u2020 ", "")
+    run_summary_names <- c(run_summary_names, "")
+
     tbl_print$accept_rate <- with(tbl_print, sprintf("%0.1f%%", 100 * accept_rate))
+    if (!is.null(nunique_plans)) {
+        tbl_print$unique_plans <- format_unique_plans(tbl_print$unique_plans, n_samp)
+    }
 
     names(tbl_print) <- run_summary_names
     new_row_names <- paste("MS Step", seq_len(nrow(tbl_print)))
@@ -581,7 +832,8 @@ get_smc_ms_summary_df <- function(diagn, run_info, resampled) {
 
     list(
         smc_ms_summary_df = run_summary_df,
-        smc_ms_print_tbl = tbl_print
+        smc_ms_print_tbl = tbl_print,
+        warn_low_ms_accept = any(low_accept)
     )
 }
 

@@ -23,8 +23,8 @@ summary statistics. We strongly recommend calling \code{match_numbers()} or
 \code{number_by()} before examining these district-level statistics. A value of
 \code{FALSE} indicates to compute the rhats for all districts}
 
-\item{all_runs}{When there are multiple SMC runs, show detailed summary
-statistics for all runs (the default), or only the first run?}
+\item{all_runs}{When there are multiple SMC runs, whether to show detailed
+summary statistics for all runs, or only the first run (the default).}
 
 \item{vi_max}{The maximum number of plans to sample in computing the pairwise
 variation of information distance (sample diversity).}
@@ -47,7 +47,11 @@ where the R-hat computation dominates the cost of this function.}
 \item{\dots}{additional arguments (ignored)}
 }
 \value{
-A data frame containing diagnostic information, invisibly.
+A list of diagnostic information, invisibly. For SMC this has a
+\code{smc_diagnostic_dfs} data frame with the statistics for each split, and a
+\code{ms_diagnostic_dfs} data frame for any merge-split steps. For MCMC it has a
+\code{mcmc_diagnostic_dfs} data frame. If R-hat values were computed, it also has
+\code{rhats_df} and \code{rhat}.
 }
 \description{
 Prints diagnostic information, which varies by algorithm. All algorithms
@@ -64,25 +68,46 @@ calculated for the first district only.
 
 For SMC, diagnostics statistics include:
 \itemize{
-\item \strong{Effective samples}: the effective sample size at each iteration, computed
+\item \strong{Effective samples}: the effective sample size at each split, computed
 using the SMC weights. Larger is better. The percentage in parentheses is the
 ratio of the effective samples to the total samples.
-\item \strong{Acceptance rate}: the fraction of drawn spanning trees which yield a valid
-redistricting plan within the population tolerance. Very small values (< 1\%)
-can indicate a bottleneck and may lead to a lack of diversity.
+\item \strong{Acceptance rate}: the fraction of drawn spanning trees that gave a valid
+split. Low values make sampling slower but don't by themselves make the
+sample less accurate.
 \item \strong{Standard deviation of the log weights}: More variable weights (larger s.d.)
-indicate less efficient sampling. Values greater than 3 are likely problematic.
-\item \strong{Maximum unique plans:} The number of unique redistricting
-plans that survive each stage. The percentage in parentheses is the ratio of
-this number to the total number of samples. Small values (< 100) indicate a
-bottleneck, which leads to a loss of sample diversity and a higher variance.
+indicate less efficient sampling.
+\item \strong{Maximum unique plans:} The number of distinct plans from the previous
+step that became parents of the plans at this step. The percentage in
+parentheses is relative to the number expected if the weights were even,
+about 63\% of the samples, so it can be above 100\%.
+\item \strong{Unique plans}: The number of distinct plans after each split, and after
+the final resampling. Only shown for plans that stored it.
 \item \strong{Estimated \code{k} parameter}: For graph space plans displays how many
 spanning tree edges were considered for cutting at each split. Mostly
 informational, though large jumps may indicate a need to increase
 \code{adapt_k_thresh}.
-\item \strong{Bottleneck}: An asterisk will appear in the right column if a bottleneck
-appears likely, based on the values of the other statistics.
+\item \strong{Flags}: The right column flags potential problems at each split:
+\itemize{
+\item \code{*} (bottleneck): the maximum unique plans is below 5\% of the samples,
+or below the smaller of 40\% of the samples and 100. Few plans from the
+previous step became parents, which lowers sample diversity and can
+increase the variance of estimates across runs. This is often driven
+by uneven weights at the previous step or by hard constraints.
+\item \code{A} (low acceptance): the acceptance rate is below 1\%, usually because
+of a tight population tolerance, hard (thresholded) constraints, or
+splitting within administrative units.
+\item \code{W} (low effective sample size): the effective samples are below 10\%
+or the standard deviation of the log weights is above 3, usually
+because of strong soft constraints or a \code{compactness} far from 1.
 }
+}
+
+For SMC with merge-split steps, a second table shows the acceptance rate of
+each merge-split step, the number of merge-split steps run per plan, and the
+number of unique plans afterward. Merge-split steps after a bottleneck can
+increase the number of unique plans. Steps with an acceptance rate below 5\%
+are flagged with a dagger (†), since mixing will be slow and increasing
+\code{mh_accept_per_smc} will be expensive.
 
 For CycleWalk MCMC, additional diagnostic statistics include:
 \itemize{
