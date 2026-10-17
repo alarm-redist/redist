@@ -7,7 +7,7 @@
 tally_var(map, x, .data = pl(), ncores = 1)
 }
 \arguments{
-\item{map}{a `redist_map` object}
+\item{map}{a \code{redist_map} object}
 
 \item{x}{a variable to tally. Tidy-evaluated.}
 

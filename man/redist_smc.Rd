@@ -156,20 +156,26 @@ and larger values result in more unstable weights.
 }
 }}
 
-\item{ms_params}{A list of mergesplit parameters.
+\item{ms_params}{A list of mergesplit parameters. Mergesplit rounds are run
+if any of the parameters below are passed. For maps with 10 or more districts
+they are also run by default, with the defaults below, unless \code{ms_params} is
+\code{NULL}. Pass \code{ms_params = NULL} to turn mergesplit off.
 \itemize{
 \item \code{frequency}: How often to perform mergesplit rounds after SMC
 steps. Should either be an integer (meaning run after every _ smc steps)
 or a vector of 1 indexed step numbers indicating after which smc steps to
 run a mergesplit round. A value of -1 means just run a single mergesplit round
 after all smc steps have been run. A value of 1 means run after every smc step.
+Defaults to 1.
 \item \code{mh_accept_per_smc} Multiplier to the baseline number of mergesplit
 steps to be performed each round. For a mergesplit round the baseline number of
 steps is calculated as the ceiling of 1 over the previous mergesplit round
 acceptance rate (or smc step if no prior mergesplit rounds were done). The
 total number of steps is \code{ceiling(mh_accept_per_smc * baseline_num_steps)}.
 This should be thought of as specifying how many successful mergesplit steps
-are desired for each mergesplit round.
+are desired for each mergesplit round. Defaults to the number of districts
+divided by 3, rounded down, for maps with 10 or more districts and 1
+otherwise.
 \item \code{pair_rule} What probability to use to select regions to merge
 in the mergesplit kernel. Defaults to giving all pairs equal probability.
 }}

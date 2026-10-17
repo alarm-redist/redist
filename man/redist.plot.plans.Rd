@@ -26,7 +26,7 @@ rather than a static map. Only uses the first element of \code{draws}}
 
 \item{...}{additional arguments passed to the plotting functions.}
 
-\item{geom, shp}{the \code{redist_map} geometry to use (`geom` is deprecated).}
+\item{geom, shp}{the \code{redist_map} geometry to use (\code{geom} is deprecated).}
 }
 \value{
 A ggplot

@@ -135,20 +135,26 @@
 #'          and larger values result in more unstable weights.
 #'      }
 #'  }
-#' @param ms_params A list of mergesplit parameters.
+#' @param ms_params A list of mergesplit parameters. Mergesplit rounds are run
+#' if any of the parameters below are passed. For maps with 10 or more districts
+#' they are also run by default, with the defaults below, unless `ms_params` is
+#' `NULL`. Pass `ms_params = NULL` to turn mergesplit off.
 #' \itemize{
 #'  \item \code{frequency}: How often to perform mergesplit rounds after SMC
 #' steps. Should either be an integer (meaning run after every _ smc steps)
 #' or a vector of 1 indexed step numbers indicating after which smc steps to
 #' run a mergesplit round. A value of -1 means just run a single mergesplit round
 #' after all smc steps have been run. A value of 1 means run after every smc step.
+#' Defaults to 1.
 #' \item \code{mh_accept_per_smc} Multiplier to the baseline number of mergesplit
 #' steps to be performed each round. For a mergesplit round the baseline number of
 #' steps is calculated as the ceiling of 1 over the previous mergesplit round
 #' acceptance rate (or smc step if no prior mergesplit rounds were done). The
 #' total number of steps is `ceiling(mh_accept_per_smc * baseline_num_steps)`.
 #' This should be thought of as specifying how many successful mergesplit steps
-#' are desired for each mergesplit round.
+#' are desired for each mergesplit round. Defaults to the number of districts
+#' divided by 3, rounded down, for maps with 10 or more districts and 1
+#' otherwise.
 #' \item \code{pair_rule} What probability to use to select regions to merge
 #' in the mergesplit kernel. Defaults to giving all pairs equal probability.
 #' }
@@ -403,7 +409,7 @@ redist_smc <- function(
     total_smc_steps <- n_steps
 
     # get merge split parameter information
-    ms_params_list <- extract_ms_params(ms_params, total_smc_steps)
+    ms_params_list <- extract_ms_params(ms_params, total_smc_steps, ndists)
     run_ms <- ms_params_list$run_ms
     pair_rule <- ms_params_list$pair_rule
     mh_accept_per_smc <- ms_params_list$mh_accept_per_smc
@@ -1458,6 +1464,7 @@ extract_control_params <- function(control, compactness) {
 #'
 #' @inheritParams run_redist_smc
 #' @param total_smc_steps How many SMC steps will be run
+#' @param ndists The number of districts in the map, which sets the defaults
 #'
 #' @returns A list with the following
 #'     - `run_ms`: Whether or not any mergesplit steps will be run
@@ -1468,13 +1475,21 @@ extract_control_params <- function(control, compactness) {
 #'     - `merge_split_step_vec`: vector whose length is the total number of steps
 #'     and a value of true indicates that step is a mergesplit step.
 #' @noRd
-extract_ms_params <- function(ms_params, total_smc_steps) {
+extract_ms_params <- function(ms_params, total_smc_steps, ndists) {
     ms_param_names <- c("mh_accept_per_smc", "frequency", "pair_rule")
+    # maps with this many districts run mergesplit by default
+    default_ms_min_ndists <- 10
+
+    # Mergesplit runs if any mergesplit parameters are passed or, for maps with
+    # enough districts, by default. Passing `NULL` turns it off.
+    run_ms <- is.list(ms_params) && (
+        any(ms_param_names %in% names(ms_params)) || ndists >= default_ms_min_ndists
+    )
 
     # create merge split parameter information
-    if (is.list(ms_params) && any(ms_param_names %in% names(ms_params))) {
-        run_ms <- TRUE
-        # check if mh_accept_per_smc was passed else default to 1
+    if (run_ms) {
+        # check if mh_accept_per_smc was passed else default to a third of the
+        # districts for large maps and 1 otherwise
         if ("mh_accept_per_smc" %in% names(ms_params)) {
             mh_accept_per_smc <- ms_params[["mh_accept_per_smc"]]
             # check that mh_accept_per_smc is positive
@@ -1484,6 +1499,8 @@ extract_ms_params <- function(ms_params, total_smc_steps) {
             ) {
                 cli::cli_abort("{.arg mh_accept_per_smc} must be a positive scalar")
             }
+        } else if (ndists >= default_ms_min_ndists) {
+            mh_accept_per_smc <- floor(ndists / 3)
         } else {
             mh_accept_per_smc <- 1L
         }

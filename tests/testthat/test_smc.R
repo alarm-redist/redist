@@ -558,3 +558,27 @@ test_that("mergesplit rounds are sized off the previous mergesplit round", {
     expect_equal(diag$ms_step_counts[1], expected_steps(diag$accept_rate[2]))
     expect_equal(diag$ms_step_counts[2], expected_steps(diag$accept_rate[3]))
 })
+
+test_that("mergesplit runs by default for maps with 10 or more districts", {
+    # fewer than 10 districts runs no mergesplit unless asked for
+    expect_false(extract_ms_params(list(), 8, ndists = 9)$run_ms)
+    small <- extract_ms_params(list(frequency = 1), 4, ndists = 5)
+    expect_true(small$run_ms)
+    expect_equal(small$mh_accept_per_smc, 1)
+
+    # 10 or more districts defaults to every step with a third of the districts
+    default <- extract_ms_params(list(), 9, ndists = 10)
+    expect_true(default$run_ms)
+    expect_equal(default$mh_accept_per_smc, 3)
+    expect_equal(default$ms_frequency, 1)
+    expect_equal(default$merge_split_step_vec, rep(c(FALSE, TRUE), 9))
+
+    # the defaults fill in anything not passed
+    expect_equal(extract_ms_params(list(frequency = 2), 12, ndists = 13)$mh_accept_per_smc, 4)
+    expect_equal(
+        extract_ms_params(list(mh_accept_per_smc = 2), 12, ndists = 13)$mh_accept_per_smc, 2
+    )
+
+    # NULL turns mergesplit off
+    expect_false(extract_ms_params(NULL, 12, ndists = 13)$run_ms)
+})

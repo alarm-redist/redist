@@ -23,6 +23,7 @@ Useful links:
 
 Authors:
 \itemize{
+  \item Christopher T. Kenny \email{ctkenny@proton.me} (\href{https://orcid.org/0000-0002-9386-6860}{ORCID})
   \item Cory McCartan \email{mccartan@psu.edu} (\href{https://orcid.org/0000-0002-6251-669X}{ORCID})
   \item Philip O'Sullivan \email{posullivan@fas.harvard.edu} (\href{https://orcid.org/0000-0002-9665-2462}{ORCID})
   \item Ben Fifield \email{benfifield@gmail.com} (\href{https://orcid.org/0000-0002-2247-0201}{ORCID})
