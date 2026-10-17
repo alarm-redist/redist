@@ -171,18 +171,26 @@ test_that("full diagnostics store named per step forests and linking edges", {
     )
     diag <- attr(plans, "internal_diagnostics")[[1]]
     step_names <- c(
-        "smc_step1", "ms_step1", "smc_step2", "ms_step2", "smc_step3", "ms_step3",
-        "resample"
+        "smc_step1", "ms_step1", "smc_step2", "ms_step2", "smc_step3", "resample",
+        "ms_step3"
     )
 
-    # the resample entry is the final plans
+    # the run ends in a mergesplit round so the plans are resampled after the
+    # last split, the resample entry is the last split's plans reindexed by the
+    # resampling, and the final plans are the last mergesplit round's
     aug <- attr(plans, "augmented_samples")
+    resample_index <- diag$parent_index_mat[, ncol(diag$parent_index_mat)]
     expect_equal(
         unname(diag$region_ids_mat_list$resample),
+        unname(diag$region_ids_mat_list$smc_step3[, resample_index])
+    )
+    expect_equal(
+        unname(diag$region_ids_mat_list$ms_step3),
         unname(get_plans_matrix(subset_sampled(plans)))
     )
-    expect_equal(diag$forest_adjs_list$resample, aug$spanning_forests)
-    expect_equal(diag$linking_edges_list$resample, aug$linking_edges)
+    expect_equal(diag$forest_adjs_list$ms_step3, aug$spanning_forests)
+    expect_equal(diag$linking_edges_list$ms_step3, aug$linking_edges)
+    expect_true(attr(plans, "run_information")[[1]]$resample_before_final_ms)
 
     expect_named(diag$region_ids_mat_list, step_names)
     expect_named(diag$forest_adjs_list, step_names)
@@ -367,8 +375,9 @@ test_that("a restarted run's diagnostics look like a single run through every st
 
     # per step lists are numbered across both runs
     step_names <- c(
-        "smc_step1", "ms_step1", "smc_step2", "ms_step2", "smc_step3", "ms_step3", "resample"
+        "smc_step1", "ms_step1", "smc_step2", "ms_step2", "smc_step3", "resample", "ms_step3"
     )
+    expect_equal(run_info$all_step_types, c("smc", "ms", "smc", "ms", "smc", "resample", "ms"))
     expect_named(internal$region_ids_mat_list, step_names)
     expect_equal(internal$region_ids_mat_list[1:4], init_internal$region_ids_mat_list)
     expect_named(internal$forest_adjs_list, step_names)

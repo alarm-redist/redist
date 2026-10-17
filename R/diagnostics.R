@@ -47,7 +47,11 @@
 #' For SMC with merge-split steps, a second table shows the acceptance rate of
 #' each merge-split step, the number of merge-split steps run per plan, and the
 #' number of unique plans afterward. Merge-split steps after a bottleneck can
-#' increase the number of unique plans. Steps with an acceptance rate below 5%
+#' increase the number of unique plans. If the plans were resampled and the run
+#' ends with a merge-split step, the resampling is done before that step, so the
+#' "Resample" row of the SMC table shows the unique plans before it and the
+#' number of unique plans after it is reported separately. Steps with an
+#' acceptance rate below 5%
 #' are flagged with a dagger (†), since mixing will be slow and increasing
 #' `mh_accept_per_smc` will be expensive.
 #'
@@ -342,6 +346,17 @@ summary.redist_plans <- function(
                     smc_ms_summary_result_list$warn_low_ms_accept
 
                 if (i == 1 || isTRUE(all_runs)) {
+                    # If the plans were resampled before the final mergesplit
+                    # round then the Resample row above is from before it, so
+                    # also report the unique plans after it
+                    run_all_step_types <- get_all_step_types(all_run_info[[i]], resampled)
+                    if (resampled && !is.null(run_nunique_plans) &&
+                        utils::tail(run_all_step_types, 1) == "ms") {
+                        final_unique <- utils::tail(run_nunique_plans, 1)
+                        final_unique_pct <- sprintf("%0.0f%%", 100 * final_unique / run_nsims)
+                        cat_cli("After the post-resampling merge-split round there are {fmt_comma(final_unique)} ({final_unique_pct}) unique plans.")
+                        cat("\n")
+                    }
                     cat_cli("Sampling diagnostics for merge-split steps of SMC run {i} of {n_runs} ({fmt_comma(run_nsims)} samples)")
                     print(smc_ms_tbl_print, digits = 2)
                     cat("\n")
@@ -636,8 +651,11 @@ get_run_nunique_plans <- function(diagn, run_info, resampled, run_plans_m) {
         return(NULL)
     }
 
-    # compute the count after resampling if it wasn't stored
-    if (resampled && length(nunique_plans) == n_steps) {
+    # Compute the count after resampling if it wasn't stored. Only older runs
+    # without `all_step_types` didn't store it, and they resampled after every
+    # other step so their final plans are the resampled plans.
+    if (resampled && length(nunique_plans) == n_steps &&
+        is.null(run_info$all_step_types)) {
         num_regions <- dplyr::n_distinct(run_plans_m[, 1])
         nunique_plans <- c(nunique_plans, nrow(get_plan_counts(run_plans_m, num_regions)))
     }
@@ -713,9 +731,10 @@ get_smc_summary_df <- function(diagn, run_info, resampled, warn_bottlenecks,
     }
 
     # add the number of unique plans after each split if stored
+    # the steps in the order they were done, which `nunique_plans` follows
+    all_step_types <- get_all_step_types(run_info, resampled)
     if (!is.null(nunique_plans)) {
-        # the mask is padded so the resampling step's count isn't recycled in
-        run_summary_df$unique_plans <- nunique_plans[c(smc_step_mask, rep(FALSE, resampled))]
+        run_summary_df$unique_plans <- nunique_plans[all_step_types == "smc"]
         run_summary_names <- c(run_summary_names, "Unique plans")
     }
 
@@ -727,7 +746,9 @@ get_smc_summary_df <- function(diagn, run_info, resampled, warn_bottlenecks,
         run_summary_df[nrow(run_summary_df), "eff"] <- diagn$n_eff / n_samp
         run_summary_df[nrow(run_summary_df), "max_unique"] <- tail(diagn$unique_survive, 1)
         if (!is.null(nunique_plans)) {
-            run_summary_df[nrow(run_summary_df), "unique_plans"] <- tail(nunique_plans, 1)
+            # the resampling may be before the final mergesplit round
+            run_summary_df[nrow(run_summary_df), "unique_plans"] <-
+                nunique_plans[all_step_types == "resample"]
         }
     }
 
@@ -809,7 +830,8 @@ get_smc_ms_summary_df <- function(diagn, run_info, resampled, nunique_plans = NU
 
     # add the number of unique plans after each mergesplit round if stored
     if (!is.null(nunique_plans)) {
-        run_summary_df$unique_plans <- nunique_plans[c(ms_step_mask, rep(FALSE, resampled))]
+        run_summary_df$unique_plans <-
+            nunique_plans[get_all_step_types(run_info, resampled) == "ms"]
         run_summary_names <- c(run_summary_names, "Unique plans")
     }
 

@@ -105,7 +105,11 @@ because of strong soft constraints or a \code{compactness} far from 1.
 For SMC with merge-split steps, a second table shows the acceptance rate of
 each merge-split step, the number of merge-split steps run per plan, and the
 number of unique plans afterward. Merge-split steps after a bottleneck can
-increase the number of unique plans. Steps with an acceptance rate below 5\%
+increase the number of unique plans. If the plans were resampled and the run
+ends with a merge-split step, the resampling is done before that step, so the
+"Resample" row of the SMC table shows the unique plans before it and the
+number of unique plans after it is reported separately. Steps with an
+acceptance rate below 5\%
 are flagged with a dagger (†), since mixing will be slow and increasing
 \code{mh_accept_per_smc} will be expensive.
 

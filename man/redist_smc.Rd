@@ -61,7 +61,9 @@ information on sampling constraints. See \link{constraints} for more information
 \item{resample}{Whether to perform a final resampling step so that the
 generated plans can be used immediately.  Set this to \code{FALSE} to
 perform direct importance sampling estimates, or to adjust the weights
-manually.}
+manually. The resampling is done after the last SMC split, so if the run
+ends with mergesplit rounds they are run on the resampled plans, which can
+restore some of the diversity lost in resampling.}
 
 \item{runs}{How many independent parallel runs to conduct. Each run will
 have \code{nsims} simulations. Multiple runs allows for estimation of simulation

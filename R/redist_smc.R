@@ -51,7 +51,9 @@
 #' @param resample Whether to perform a final resampling step so that the
 #' generated plans can be used immediately.  Set this to `FALSE` to
 #' perform direct importance sampling estimates, or to adjust the weights
-#' manually.
+#' manually. The resampling is done after the last SMC split, so if the run
+#' ends with mergesplit rounds they are run on the resampled plans, which can
+#' restore some of the diversity lost in resampling.
 #' @param runs How many independent parallel runs to conduct. Each run will
 #' have `nsims` simulations. Multiple runs allows for estimation of simulation
 #' standard errors. Output will only be shown for the first run. For
@@ -732,15 +734,26 @@ redist_smc <- function(
                 algout$step_split_types == "ms"
             )
 
-            # name the per step diagnostic lists (smc_step1, smc_step2,
-            # ms_step1, ...) so the plans, forests, and linking edges from a
-            # step can be matched by name or index. If the plans were resampled
-            # at the end there is an extra final `resample` entry holding the
-            # plans after resampling.
-            step_names <- get_step_list_names(algout$step_split_types, resample)
-            for (step_list in c("region_ids_mat_list", "forest_adjs_list", "linking_edges_list")) {
-                if (length(algout[[step_list]]) == length(step_names)) {
-                    names(algout[[step_list]]) <- step_names
+            # The order the steps were done in, including the final resampling
+            # which is right after the last split. The sampler stores the
+            # diagnostics indexed by every step with the resampling last, so
+            # those are put in this order.
+            all_step_types <- build_all_step_types(algout$step_split_types, resample)
+            step_order <- get_step_order(all_step_types)
+            if (length(algout$nunique_plans) == length(step_order)) {
+                algout$nunique_plans <- algout$nunique_plans[step_order]
+            }
+            # the per step diagnostic lists are also named (smc_step1,
+            # smc_step2, ms_step1, ..., resample) so the plans, forests, and
+            # linking edges from a step can be matched by name or index
+            step_names <- get_step_list_names(all_step_types)
+            for (step_list in c("region_ids_mat_list", "forest_adjs_list", "linking_edges_list",
+                                "region_seats_mat_list")) {
+                if (length(algout[[step_list]]) == length(step_order)) {
+                    algout[step_list] <- list(algout[[step_list]][step_order])
+                    if (step_list != "region_seats_mat_list") {
+                        names(algout[[step_list]]) <- step_names
+                    }
                 }
             }
 
@@ -855,7 +868,14 @@ redist_smc <- function(
         mh_accept_per_smc = mh_accept_per_smc,
         pair_rule = pair_rule,
         step_types = step_types,
-        nsims = nsims
+        nsims = nsims,
+        # if resampled and the run ends in mergesplit rounds, the resampling
+        # was done after the last split, before those rounds
+        # This was added after the realization that performing MCMC moves after
+        # the resample as opposed to before is never worse.
+        resample_before_final_ms = TRUE,
+        # the steps in the order they were done, including any resampling
+        all_step_types = all_step_types
       )
 
             # add cut k for graph space
@@ -903,7 +923,7 @@ redist_smc <- function(
 
     # combine the initial plans' diagnostics with this run's (runs is 1 here)
     if (!is.null(init_plans_info) && !is.null(all_out[[1]])) {
-        all_out[[1]] <- combine_init_plan_info(init_plans_info, all_out[[1]], resample)
+        all_out[[1]] <- combine_init_plan_info(init_plans_info, all_out[[1]])
     }
 
     bad_runs <- sapply(all_out, is.null)
@@ -1079,21 +1099,78 @@ get_splitting_schedule <- function(split_params, districting_scheme) {
 #' Names of the per step diagnostic lists
 #'
 #' The steps are named by type and counted separately (`smc_step1`,
-#' `smc_step2`, `ms_step1`, ...), with an extra final `resample` entry if the
-#' plans were resampled at the end.
+#' `smc_step2`, `ms_step1`, ...), with the final resampling named `resample`.
 #'
-#' @param step_types Character vector of `"smc"` and `"ms"` step types
-#' @param resampled Whether the plans were resampled after the last step
+#' @param all_step_types Character vector of `"smc"`, `"ms"`, and
+#' `"resample"` steps in the order they were done, see `get_all_step_types()`
 #'
 #' @returns A character vector of names
 #' @noRd
-get_step_list_names <- function(step_types, resampled) {
-    step_type_counts <- stats::ave(seq_along(step_types), step_types, FUN = seq_along)
-    step_names <- paste0(step_types, "_step", step_type_counts)
-    if (resampled) {
-        step_names <- c(step_names, "resample")
+get_step_list_names <- function(all_step_types) {
+    step_type_counts <- stats::ave(
+        seq_along(all_step_types), all_step_types, FUN = seq_along
+    )
+    ifelse(
+        all_step_types == "resample",
+        "resample",
+        paste0(all_step_types, "_step", step_type_counts)
+    )
+}
+
+
+#' The order the steps of a new SMC run are done in
+#'
+#' The final resampling, if done, is right after the last split. So if the run
+#' ends in mergesplit rounds they are run on the resampled plans.
+#'
+#' @param step_types Character vector of `"smc"` and `"ms"` step types
+#' @param resampled Whether the plans were resampled
+#'
+#' @returns `step_types` with `"resample"` added after the last split if
+#' resampled
+#' @noRd
+build_all_step_types <- function(step_types, resampled) {
+    if (!resampled) {
+        return(step_types)
     }
-    step_names
+    append(step_types, "resample", after = max(which(step_types == "smc")))
+}
+
+
+#' The order the steps of an SMC run were done in
+#'
+#' Runs store this as `all_step_types` in their `run_information`. Older runs
+#' that didn't store it resampled after every other step, so it is inferred as
+#' their step types followed by `"resample"` if they were resampled.
+#'
+#' @param run_info The run's `run_information`
+#' @param resampled Whether the plans were resampled
+#'
+#' @returns A character vector of `"smc"`, `"ms"`, and `"resample"` steps in
+#' the order they were done
+#' @noRd
+get_all_step_types <- function(run_info, resampled) {
+    if (!is.null(run_info$all_step_types)) {
+        return(run_info$all_step_types)
+    }
+    c(run_info$step_types, if (resampled) "resample")
+}
+
+
+#' Indices putting per step values into the order the steps were done
+#'
+#' The sampler stores values indexed by every step with the final resampling's
+#' value last. Indexing them with this puts them in the order the steps were
+#' done in.
+#'
+#' @param all_step_types The order the steps were done in, see
+#' `get_all_step_types()`
+#'
+#' @returns An integer vector of indices
+#' @noRd
+get_step_order <- function(all_step_types) {
+    is_resample <- all_step_types == "resample"
+    ifelse(is_resample, length(all_step_types), cumsum(!is_resample))
 }
 
 
@@ -1109,11 +1186,10 @@ get_step_list_names <- function(step_types, resampled) {
 #' `internal_diagnostics` of the initial plans' run
 #' @param algout The output of the run started from the initial plans after
 #' its `l_diag`, `run_information`, and `internal_diagnostics` are created
-#' @param resampled Whether this run resampled the plans after its last step
 #'
 #' @returns `algout` with the combined diagnostics
 #' @noRd
-combine_init_plan_info <- function(init_info, algout, resampled) {
+combine_init_plan_info <- function(init_info, algout) {
     init_diag <- init_info$diagnostics
     init_run_info <- init_info$run_information
     init_internal <- init_info$internal_diagnostics
@@ -1137,11 +1213,12 @@ combine_init_plan_info <- function(init_info, algout, resampled) {
         new
     }
 
-    # names for this run's per step list entries continue the initial run's
+    # names for this run's per step list entries continue the initial run's.
+    # The initial plans weren't resampled so their steps are their step types
     step_types <- c(init_run_info$step_types, algout$run_information$step_types)
-    new_step_names <- get_step_list_names(step_types, resampled)[
-        -seq_along(init_run_info$step_types)
-    ]
+    init_all_step_types <- get_all_step_types(init_run_info, FALSE)
+    all_step_types <- c(init_all_step_types, algout$run_information$all_step_types)
+    new_step_names <- get_step_list_names(all_step_types)[-seq_along(init_all_step_types)]
     combine_step_list <- function(old, new) {
         if (length(new) == length(new_step_names)) {
             names(new) <- new_step_names
@@ -1166,6 +1243,7 @@ combine_init_plan_info <- function(init_info, algout, resampled) {
     # information about the steps run
     run_info <- algout$run_information
     run_info$step_types <- step_types
+    run_info$all_step_types <- all_step_types
     run_info$merge_split_step_vec <- c(
         init_run_info$merge_split_step_vec, run_info$merge_split_step_vec
     )

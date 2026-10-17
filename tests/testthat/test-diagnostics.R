@@ -81,10 +81,13 @@ test_that("summary shows unique plans when stored and computes a missing resampl
     stored <- get_run_nunique_plans(diagn, run_info, TRUE, plans_m)
     expect_equal(stored, diagn$nunique_plans)
 
-    # runs that didn't store the count after resampling have it computed
+    # older runs (without all_step_types) that didn't store the count after
+    # resampling have it computed
     no_resample_count <- diagn
     no_resample_count$nunique_plans <- head(diagn$nunique_plans, -1)
-    expect_equal(get_run_nunique_plans(no_resample_count, run_info, TRUE, plans_m), stored)
+    old_run_info <- run_info
+    old_run_info$all_step_types <- NULL
+    expect_equal(get_run_nunique_plans(no_resample_count, old_run_info, TRUE, plans_m), stored)
 
     # runs that didn't store any counts don't get a column
     no_counts <- diagn
@@ -198,4 +201,39 @@ test_that("summary works for plans that were not resampled", {
         attr(plans, "diagnostics")[[1]], attr(plans, "run_information")[[1]], FALSE, FALSE
     )$smc_print_tbl
     expect_equal(rownames(tbl), paste("Split", 1:3))
+})
+
+test_that("summary reads unique plans in the order the steps were done", {
+    iowa_map <- suppressMessages(redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05))
+    plans <- redist_smc(iowa_map, 60, silent = TRUE, ms_params = list(frequency = 1))
+    diagn <- attr(plans, "diagnostics")[[1]]
+    run_info <- attr(plans, "run_information")[[1]]
+    expect_equal(run_info$all_step_types, c("smc", "ms", "smc", "ms", "smc", "resample", "ms"))
+
+    # give each step a distinct count to check which one each row shows
+    diagn$nunique_plans <- c(11, 12, 13, 14, 15, 16, 17)
+    smc_df <- get_smc_summary_df(diagn, run_info, TRUE, FALSE, diagn$nunique_plans)$smc_summary_df
+    expect_equal(smc_df$unique_plans, c(11, 13, 15, 16))
+    ms_df <- get_smc_ms_summary_df(diagn, run_info, TRUE, diagn$nunique_plans)$smc_ms_summary_df
+    expect_equal(ms_df$unique_plans, c(12, 14, 17))
+
+    # the unique plans after the final mergesplit round are reported separately
+    attr(plans, "diagnostics")[[1]] <- diagn
+    out <- gsub("\\s+", " ", paste(utils::capture.output(summary(plans)), collapse = " "))
+    expect_match(out, "merge-split round there are 17 \\(28%\\) unique plans")
+
+    not_resampled <- redist_smc(
+        iowa_map, 60, silent = TRUE, ms_params = list(frequency = 1), resample = FALSE
+    )
+    out <- paste(utils::capture.output(summary(not_resampled)), collapse = " ")
+    expect_no_match(out, "merge-split round there are")
+
+    # older runs without all_step_types resampled after every other step
+    old_info <- run_info
+    old_info$all_step_types <- NULL
+    expect_equal(
+        get_all_step_types(old_info, TRUE), c("smc", "ms", "smc", "ms", "smc", "ms", "resample")
+    )
+    smc_df <- get_smc_summary_df(diagn, old_info, TRUE, FALSE, diagn$nunique_plans)$smc_summary_df
+    expect_equal(smc_df$unique_plans, c(11, 13, 15, 17))
 })

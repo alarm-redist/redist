@@ -1863,6 +1863,45 @@ Rcpp::List run_redist_smc(
             std::make_unique<WeightCacheEnsemble>(using_caching, map_params, nsims, rho,
                                                   sampling_space);
 
+        // If the run ends in mergesplit rounds the final resampling is done
+        // after the last split instead of at the very end, so those rounds run
+        // on the resampled plans and can rebuild the diversity resampling loses.
+        // The first step is always a split so there is always a last split.
+        int last_smc_step_num = total_steps - 1;
+        while (merge_split_step_vec[last_smc_step_num]) --last_smc_step_num;
+        bool const resample_before_final_ms =
+            final_resample && last_smc_step_num < total_steps - 1;
+
+        // Resamples the plans with the current weights and records it. The
+        // weight caches are reordered the same way so they stay with their plans.
+        auto do_final_resample = [&]() {
+            std::vector<int> const resample_index = resample_plan_ensemble(
+                pool, rng_states[0], log_weights, plan_ensemble_ptr,
+                dummy_plan_ensemble_ptr);
+            if (using_caching) {
+                for (int i = 0; i < nsims; i++) {
+                    dummy_cache_ensemble_ptr->weight_cache_ptr_vec[i]->copy_from(
+                        *cache_ensemble_ptr->weight_cache_ptr_vec[resample_index[i]]);
+                }
+                std::swap(cache_ensemble_ptr, dummy_cache_ensemble_ptr);
+            }
+            smc_diagnostics.record_final_resample(
+                resample_index, plan_ensemble_ptr->count_unique_plans(pool));
+            if (verbosity >= 3) {
+                Rcpp::Rcout << "Resampling: " << std::setprecision(2)
+                            << 100.0 * smc_diagnostics.nunique_parents.back() / nsims
+                            << "% of plans were preserved in the resample, there are now "
+                            << smc_diagnostics.nunique_plans.back() << " unique plans."
+                            << std::endl;
+            }
+            // the per step lists are sized to the steps so this is still last
+            if (diagnostic_mode) {
+                smc_diagnostics.add_final_resample_full_diagnostics(
+                    splitting_all_the_way, sampling_space, map_params, pool,
+                    *plan_ensemble_ptr, *splitting_schedule_ptr);
+            }
+        };
+
         double entire_map_compactness = 0.0;
         // compute the whole map compactness if we're starting from scratch
         if (initial_num_regions == 1) {
@@ -2375,6 +2414,11 @@ Rcpp::List run_redist_smc(
                         *plan_ensemble_ptr, *dummy_plan_ensemble_ptr, *splitting_schedule_ptr);
                 }
 
+                // resample after the last split if mergesplit rounds follow it
+                if (resample_before_final_ms && step_num == last_smc_step_num) {
+                    do_final_resample();
+                }
+
                 if (verbosity == 1 && CLI_SHOULD_TICK) {
                     cli_progress_set(bar, step_num);
                 }
@@ -2422,20 +2466,12 @@ Rcpp::List run_redist_smc(
                               dummy_plan_ensemble_ptr->plan_ptr_vec);
         }
 
-        // Resample while the dummy ensemble is still in scope to gather into.
+        // Resample while the dummy ensemble is still in scope to gather into,
+        // unless that was already done before the final mergesplit rounds.
         // After this the plans are in their final order, so everything below
         // exports them to R exactly once.
-        if (final_resample) {
-            std::vector<int> const resample_index = resample_plan_ensemble(
-                pool, rng_states[0], log_weights, plan_ensemble_ptr,
-                dummy_plan_ensemble_ptr);
-            smc_diagnostics.record_final_resample(
-                resample_index, plan_ensemble_ptr->count_unique_plans(pool));
-            if (diagnostic_mode) {
-                smc_diagnostics.add_final_resample_full_diagnostics(
-                    splitting_all_the_way, sampling_space, map_params, pool,
-                    *plan_ensemble_ptr, *splitting_schedule_ptr);
-            }
+        if (final_resample && !resample_before_final_ms) {
+            do_final_resample();
         }
         // end of scope
     }
