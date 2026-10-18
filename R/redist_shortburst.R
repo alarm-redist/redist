@@ -51,7 +51,7 @@
 #' used will not be reversible. This may speed up optimization.
 #' @param enforce_hierarchical When `backend="mergesplit"` this controls whether
 #' the sampled plans must be hierarchically valid with respect to the inputted
-#' administrative units. See O'Sullivan, McCartan, and Imai (2023) 
+#' administrative units. See O'Sullivan, Imai, and McCartan (2026) 
 #' <doi:10.48550/arXiv.2603.22188> for a definition of hierarchical plans.
 #' When `reversible` is `TRUE` the calculated Metropolis-Hastings ratio will
 #' generally not be correct.

@@ -5,11 +5,13 @@
 ## Purpose: Wrapper for running smc cpp code
 ##############################################
 
-#' Generalized SMCS Redistricting Sampler (O'Sullivan, McCartan and Imai forthcoming)
+#' Generalized SMCS Redistricting Sampler (O'Sullivan, Imai, and McCartan (2026) 
+#' <doi:10.48550/arXiv.2603.22188>)
 #'
 #'
 #' `redist_smc` uses a Sequential Monte Carlo Sampler algorithm
-#' (O'Sullivan, McCartan and Imai forthcoming) to generate representative samples of
+#' (O'Sullivan, Imai, and McCartan (2026) 
+#' <doi:10.48550/arXiv.2603.22188>) to generate representative samples of
 #' congressional or legislative redistricting plans according to
 #' contiguity, population, compactness, and administrative boundary constraints.
 #'

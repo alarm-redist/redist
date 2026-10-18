@@ -2,7 +2,8 @@
 % Please edit documentation in R/redist_smc.R
 \name{redist_smc}
 \alias{redist_smc}
-\title{Generalized SMCS Redistricting Sampler (O'Sullivan, McCartan and Imai forthcoming)}
+\title{Generalized SMCS Redistricting Sampler (O'Sullivan, Imai, and McCartan (2026)
+\url{doi:10.48550/arXiv.2603.22188})}
 \usage{
 redist_smc(
   map,
@@ -271,7 +272,8 @@ plans.
 }
 \description{
 \code{redist_smc} uses a Sequential Monte Carlo Sampler algorithm
-(O'Sullivan, McCartan and Imai forthcoming) to generate representative samples of
+(O'Sullivan, Imai, and McCartan (2026)
+\url{doi:10.48550/arXiv.2603.22188}) to generate representative samples of
 congressional or legislative redistricting plans according to
 contiguity, population, compactness, and administrative boundary constraints.
 }

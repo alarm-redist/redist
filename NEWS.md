@@ -27,7 +27,7 @@ single district splits. Currently only supported for single-member maps.
 * When counties are used `redist_mergesplit` now samples from the same target 
 distribution as `redist_smc` (it guarantees no more than the number of districts
 minus 1 splits). For more details 
-see O'Sullivan, McCartan, and Imai (2023) <doi:10.48550/arXiv.2603.22188>. 
+see O'Sullivan, McCartan, and Imai (2026) <doi:10.48550/arXiv.2603.22188>. 
 * `redist_mergesplit_parallel` is deprecated. `redist_mergesplit` can be run in
 parallel using the `ncores` argument. 
 * `redist_mergesplit` inputs now work differently. 

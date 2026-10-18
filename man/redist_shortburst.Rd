@@ -78,7 +78,7 @@ used will not be reversible. This may speed up optimization.}
 
 \item{enforce_hierarchical}{When \code{backend="mergesplit"} this controls whether
 the sampled plans must be hierarchically valid with respect to the inputted
-administrative units. See O'Sullivan, McCartan, and Imai (2023)
+administrative units. See O'Sullivan, Imai, and McCartan (2026)
 \url{doi:10.48550/arXiv.2603.22188} for a definition of hierarchical plans.
 When \code{reversible} is \code{TRUE} the calculated Metropolis-Hastings ratio will
 generally not be correct.}
