@@ -799,12 +799,8 @@ redist_smc <- function(
                 cli::cli_warn(c(
           "Less than 5% resampling efficiency.",
           "*" = "Increase the number of samples.",
-          "*" = "Consider weakening or removing constraints.",
-          "i" = "If sampling efficiency drops precipitously in the final
-                                iterations, population balance is likely causing a bottleneck.
-                                Try increasing {.arg pop_temper} by 0.01.",
-          "i" = "If sampling efficiency declines steadily across iterations,
-                                adjusting {.arg seq_alpha} upward may help a bit."
+          "*" = "Increase `mh_accept_per_smc` or start adding mergesplit steps if not already using them.",
+          "*" = "Consider weakening or removing constraints if sampling efficiency is low."
         ))
             }
 
