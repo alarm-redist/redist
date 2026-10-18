@@ -582,3 +582,10 @@ test_that("mergesplit runs by default for maps with 10 or more districts", {
     # NULL turns mergesplit off
     expect_false(extract_ms_params(NULL, 12, ndists = 13)$run_ms)
 })
+
+test_that("normalizing constant estimates require seq_alpha = 1", {
+    iowa_map <- suppressMessages(redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05))
+    plans <- redist_smc(iowa_map, 30, silent = TRUE, seq_alpha = 0.5, ms_params = NULL)
+    expect_error(est_norm_unbiased(iowa_map, plans), "seq_alpha = 1")
+    expect_error(est_norm_biased(iowa_map, plans), "seq_alpha = 1")
+})

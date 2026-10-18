@@ -19,5 +19,6 @@ Returns an unbiased estimate of the log normalizing constant for plans
 sampled using \code{redist_smc}. Requires that the plans were sampled with
 \code{control = list(est_norm_unbiased = TRUE)}, which draws one extra particle
 per step and discards it so that the attempt counts give an unbiased
-estimate.
+estimate. The plans must also have been sampled with \code{seq_alpha = 1}; plans
+sampled with any other \code{seq_alpha} give an error.
 }

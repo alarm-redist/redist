@@ -22,5 +22,7 @@ discarded particle that \code{\link[=est_norm_unbiased]{est_norm_unbiased()}} us
 }
 \details{
 Unlike \code{\link[=est_norm_unbiased]{est_norm_unbiased()}} this needs no extra bookkeeping from the
-sampler, so it works on any plans object from \verb{Redist 5.0} or later.
+sampler, so it works on any plans object from \verb{Redist 5.0} or later that was
+sampled with \code{seq_alpha = 1}. Plans sampled with any other \code{seq_alpha} give
+an error.
 }

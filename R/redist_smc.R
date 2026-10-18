@@ -1687,6 +1687,18 @@ est_log_norm_const <- function(plans, include_extra_tries) {
     if (attr(plans, "version") < "5.0") {
         cli::cli_abort("{.arg plans} must have been sampled with Redist 5.0 or later!")
     }
+    # the estimators assume the weights are fully resampled at every step
+    seq_alphas <- vapply(
+        attr(plans, "diagnostics"), function(x) x$seq_alpha %||% 1, numeric(1)
+    )
+    if (any(seq_alphas != 1)) {
+        cli::cli_abort(c(
+            "Normalizing constant estimation is only supported for plans sampled
+            with {.code seq_alpha = 1}.",
+            "x" = "{.arg plans} were sampled with {.arg seq_alpha} =
+                   {.val {unique(seq_alphas)}}."
+        ))
+    }
 
     internal_diagnostics <- attr(plans, "internal_diagnostics")
 
@@ -1806,7 +1818,9 @@ est_log_norm_const <- function(plans, include_extra_tries) {
 #' discarded particle that [est_norm_unbiased()] uses to remove the bias.
 #'
 #' Unlike [est_norm_unbiased()] this needs no extra bookkeeping from the
-#' sampler, so it works on any plans object from `Redist 5.0` or later.
+#' sampler, so it works on any plans object from `Redist 5.0` or later that was
+#' sampled with `seq_alpha = 1`. Plans sampled with any other `seq_alpha` give
+#' an error.
 #'
 #' @param plans A `redist_plans` object generated using `Redist 5.0` or later.
 #' @inheritParams redist_smc
@@ -1827,7 +1841,8 @@ est_norm_biased <- function(map, plans) {
 #' sampled using `redist_smc`. Requires that the plans were sampled with
 #' `control = list(est_norm_unbiased = TRUE)`, which draws one extra particle
 #' per step and discards it so that the attempt counts give an unbiased
-#' estimate.
+#' estimate. The plans must also have been sampled with `seq_alpha = 1`; plans
+#' sampled with any other `seq_alpha` give an error.
 #'
 #' @param plans A `redist_plans` object generated using `Redist 5.1` or later.
 #' @inheritParams redist_smc
