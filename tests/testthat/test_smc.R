@@ -589,3 +589,28 @@ test_that("normalizing constant estimates require seq_alpha = 1", {
     expect_error(est_norm_unbiased(iowa_map, plans), "seq_alpha = 1")
     expect_error(est_norm_biased(iowa_map, plans), "seq_alpha = 1")
 })
+
+test_that("md_alpha is passed in split_params", {
+    iowa_map <- suppressMessages(redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05))
+    plans <- redist_smc(
+        iowa_map, 20, silent = TRUE,
+        split_params = list(splitting_schedule = "any_valid_sizes", md_alpha = 2)
+    )
+    expect_equal(
+        attr(plans, "diagnostics")[[1]]$forward_kernel_params$multidistrict_selection_alpha, 2
+    )
+
+    # other splitting schedules don't use it
+    expect_warning(
+        redist_smc(
+            iowa_map, 20, silent = TRUE,
+            split_params = list(splitting_schedule = "split_district_only", md_alpha = 2)
+        ),
+        "only used with the"
+    )
+
+    expect_error(
+        redist_smc(iowa_map, 20, silent = TRUE, split_params = list(md_alpha = "a")),
+        "numeric scalar"
+    )
+})

@@ -129,6 +129,11 @@ include
 into any two sizes (assuming the sizes can eventually be split into
 districts.) Currently this is only supported for single member districting.
 }
+\item \code{md_alpha} What power to use for multidistrict selection
+probability with the \code{any_valid_sizes} splitting schedule. When
+choosing a multidistrict to split, one will be chosen with probability
+proportional to \if{html}{\out{<size>}}^md_alpha. Ignored, with a warning, for other
+splitting schedules.
 }
 Parameters for \code{split_method} Any relevant parameters for the
 \code{split_method}. These include the following
@@ -249,9 +254,6 @@ those of this run, so the output has the diagnostics of every step as if
 all the steps had been run at once. Requires \code{runs = 1} both here and for
 the initial plans, the same \code{nsims}, and initial plans sampled with
 \code{resample = FALSE}. Defaults to \code{FALSE}.
-\item \code{md_alpha} What power to use for multidistrict selection
-probability. When choosing a multidistrict to split, one will be chosen with
-probability proportional to \if{html}{\out{<size>}}^md_alpha.
 }}
 
 \item{adapt_k_thresh}{Deprecated. Pass in through the \code{split_params} arg.

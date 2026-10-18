@@ -110,6 +110,11 @@
 #'      into any two sizes (assuming the sizes can eventually be split into
 #'      districts.) Currently this is only supported for single member districting.
 #'  }
+#'  \item \code{md_alpha} What power to use for multidistrict selection
+#'  probability with the \code{any_valid_sizes} splitting schedule. When
+#'  choosing a multidistrict to split, one will be chosen with probability
+#'  proportional to <size>^md_alpha. Ignored, with a warning, for other
+#'  splitting schedules.
 #' }
 #' Parameters for \code{split_method} Any relevant parameters for the
 #'  \code{split_method}. These include the following
@@ -221,9 +226,6 @@
 #'  all the steps had been run at once. Requires `runs = 1` both here and for
 #'  the initial plans, the same `nsims`, and initial plans sampled with
 #'  `resample = FALSE`. Defaults to `FALSE`.
-#'  \item \code{md_alpha} What power to use for multidistrict selection
-#'  probability. When choosing a multidistrict to split, one will be chosen with
-#'  probability proportional to <size>^md_alpha.
 #' }
 #' @param adapt_k_thresh Deprecated. Pass in through the `split_params` arg.
 #' The threshold value used in the heuristic to select a
@@ -612,11 +614,21 @@ redist_smc <- function(
     pair_rule = pair_rule
   )
 
-    # add md alpha if included
-    if ("md_alpha" %in% names(control_params_list)){
-        md_alpha <- control_params_list[["md_alpha"]]
-        cpp_control_list <- c(cpp_control_list,
-                              list(md_alpha = md_alpha))
+    # add the multidistrict selection power if passed, which is only used by
+    # the any_valid_sizes splitting schedule
+    if (is.list(split_params) && "md_alpha" %in% names(split_params)) {
+        md_alpha <- split_params[["md_alpha"]]
+        if (!rlang::is_scalar_atomic(md_alpha) || !is.numeric(md_alpha)) {
+            cli::cli_abort("{.arg md_alpha} in {.arg split_params} must be a numeric scalar")
+        }
+        if (splitting_size_regime == "any_valid_sizes") {
+            cpp_control_list$md_alpha <- md_alpha
+        } else {
+            cli::cli_warn(
+                "{.arg md_alpha} in {.arg split_params} is only used with the
+                {.val any_valid_sizes} splitting schedule, so it will be ignored."
+            )
+        }
     }
 
 
@@ -1517,20 +1529,6 @@ extract_control_params <- function(control, compactness) {
     return_augmented_samples = return_augmented_samples,
     keep_init_plan_info = keep_init_plan_info
   )
-
-    if ("md_alpha" %in% names(control)){
-        md_alpha <- control[["md_alpha"]]
-        if(
-            !rlang::is_scalar_atomic(md_alpha) ||
-            !is.numeric(md_alpha)
-        ){
-            cli::cli_abort("{.arg md_alpha} must be a numeric scalar")
-        }
-        control_params <- c(
-            control_params,
-            list(md_alpha = md_alpha)
-        )
-    }
 
     control_params
 }
