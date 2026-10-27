@@ -41,11 +41,12 @@ devtools::check()
 ### Formatting and linting
 
 ```sh
-air format .
+air format path/to/edited_file.R
 jarl check .
 ```
 
-- Always run `air format .` and `jarl check .` after generating or changing code.
+- After generating or changing code, run `air format` only on files actually
+  edited, and run `jarl check .`. Never run `air format .` on the whole repository.
 
 ### Running R
 
