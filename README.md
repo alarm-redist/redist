@@ -55,16 +55,10 @@ data(iowa)
 # set a 0.1% population constraint
 iowa_map <- redist_map(iowa, existing_plan=cd_2010, pop_tol=0.001, total_pop = pop)
 # simulate 500 plans using the SMC algorithm
-<<<<<<< HEAD
 iowa_plans = redist_smc(iowa_map, nsims=500)
 #> Starting Chain 1
 #> SEQUENTIAL MONTE CARLO
 #> Using Graph Sampling space to sample 500 99-unit maps with 4 districts and population between 760827 and 762350.
-=======
-iowa_plans <- redist_smc(iowa_map, nsims=500)
-#> SEQUENTIAL MONTE CARLO
-#> Sampling 500 99-unit maps with 4 districts and population between 760827 and 762350.
->>>>>>> upstream/dev
 ```
 
 After generating plans, you can use `redist`’s plotting functions to
