@@ -8,9 +8,13 @@
 
 // Header files
 #include "sw_mh_helper.h"
+#include "constraint_calc_helper.h"
+#include "make_swaps_helper.h"
+#include "map_calc.h"
+#include "mcmc_gibbs.h"
 
 // Function to generate initial vector of populations
-NumericVector init_pop(NumericVector popvec, arma::vec cds) {
+NumericVector init_pop(NumericVector popvec, NumericVector cds) {
 
     /* Inputs to function:
      cds: Vector of congressional district populations
@@ -19,7 +23,7 @@ NumericVector init_pop(NumericVector popvec, arma::vec cds) {
      */
 
     // Get number of cds
-    int ncds = cds.max() + 1;
+    int ncds = Rcpp::max(cds) + 1;
 
     // Create container vector
     NumericVector distpop(ncds);
@@ -27,7 +31,6 @@ NumericVector init_pop(NumericVector popvec, arma::vec cds) {
     // Initialize
     int i;
     int pop;
-    arma::uvec cd_i_ind;
     int j;
 
     // Loop through cd assignments
@@ -36,12 +39,11 @@ NumericVector init_pop(NumericVector popvec, arma::vec cds) {
         // Initialize population count
         pop = 0;
 
-        // Get indices of cds
-        cd_i_ind = find(cds == i);
-
-        // Loop through cd_i_ind, get population values
-        for (j = 0; j < cd_i_ind.n_elem; j++) {
-            pop += popvec(cd_i_ind(j));
+        // Loop through the units in this cd, get population values
+        for (j = 0; j < cds.size(); j++) {
+            if (cds(j) == i) {
+                pop += popvec(j);
+            }
         }
 
         // Put in distpop
@@ -107,7 +109,7 @@ List cut_edges(List aList_con, double eprob) {
     int i;
     NumericVector cc_vec_i_all;
     NumericVector cc_vec_i;
-    arma::vec draws;
+    NumericVector draws;
 
     // Define list to store output of both lists
 
@@ -161,16 +163,19 @@ List cut_edges(List aList_con, double eprob) {
 
 /* Function to run breadth-first search, returning only sets of connected
  components that reside on the boundary of the districts */
-List bsearch_boundary(List aList, arma::vec boundary) {
+List bsearch_boundary(List aList, NumericVector boundary) {
 
     /* Inputs to function:
      aList: adjacency list
 
-     boundary: vector of boundary element indicators (as arma)
+     boundary: vector of boundary element indicators
      */
 
     // Get indices of boundary units
-    arma::uvec boundary_indices = find(boundary == 1);
+    std::vector<int> boundary_indices;
+    for (int b = 0; b < boundary.size(); b++) {
+        if (boundary(b) == 1) boundary_indices.push_back(b);
+    }
 
     // Container - outputted of breadth search, a list
     List bsearch;
@@ -185,9 +190,9 @@ List bsearch_boundary(List aList, arma::vec boundary) {
     NumericVector q;
 
     // Initialize breadth search with first element in boundary_indices
-    mark(boundary_indices(0)) = boundary_indices(0);
-    partition.push_back(boundary_indices(0));
-    q = aList(boundary_indices(0));
+    mark(boundary_indices[0]) = boundary_indices[0];
+    partition.push_back(boundary_indices[0]);
+    q = aList(boundary_indices[0]);
 
     // Initialize objects inside loop
     int u;
@@ -245,9 +250,9 @@ List bsearch_boundary(List aList, arma::vec boundary) {
 
             /* First, find boundary units that are in the reached partition and
              remove them from boundary_units vector */
-            for (i = boundary_indices.n_elem - 1; i >= 0; i--) {
-                if (is_true(any(partition == boundary_indices(i))) == TRUE) {
-                    boundary_indices.shed_row(i);
+            for (i = (int)boundary_indices.size() - 1; i >= 0; i--) {
+                if (is_true(any(partition == boundary_indices[i])) == TRUE) {
+                    boundary_indices.erase(boundary_indices.begin() + i);
                 }
             }
 
@@ -256,14 +261,14 @@ List bsearch_boundary(List aList, arma::vec boundary) {
             partition.erase(partition.begin(), partition.end());
 
             // Re-initialize breadth search from new starting value if nonempty
-            if (boundary_indices.n_elem > 0) {
-                q = aList(boundary_indices(0));
-                mark(boundary_indices(0)) = boundary_indices(0);
-                partition.push_back(boundary_indices(0));
+            if ((int)boundary_indices.size() > 0) {
+                q = aList(boundary_indices[0]);
+                mark(boundary_indices[0]) = boundary_indices[0];
+                partition.push_back(boundary_indices[0]);
             }
         }
 
-    } while (boundary_indices.n_elem > 0);
+    } while ((int)boundary_indices.size() > 0);
 
     // Get breadth search size
     int bsearch_size = bsearch.size();
@@ -283,28 +288,31 @@ List bsearch_boundary(List aList, arma::vec boundary) {
 int count_valid(List aList, List boundarypart, NumericVector cdvec) {
 
     int cd_boundary;
-    arma::vec part;
+    NumericVector part;
     int j;
     int i;
-    arma::uvec find_cds;
+    std::vector<int> find_cds;
     int counter = 0;
 
     for (i = 0; i < boundarypart.size(); i++) {
 
         // Get the partition
-        part = as<arma::vec>(boundarypart(i));
+        part = as<NumericVector>(boundarypart(i));
 
         // Get the congressional district of the boundary
         cd_boundary = cdvec(part(0));
 
         // Find indices within that congressional district
-        find_cds = find(as<arma::vec>(cdvec) == cd_boundary);
+        find_cds.clear();
+        for (int t = 0; t < cdvec.size(); t++) {
+            if (cdvec(t) == cd_boundary) find_cds.push_back(t);
+        }
 
         // Remove elements in the partition from that cd
         NumericVector cd_less_boundary;
-        for (j = 0; j < find_cds.n_elem; j++) {
-            if (any(part == find_cds(j)) == false) {
-                cd_less_boundary.push_back(find_cds(j));
+        for (j = 0; j < (int)find_cds.size(); j++) {
+            if (is_true(any(part == find_cds[j])) == false) {
+                cd_less_boundary.push_back(find_cds[j]);
             }
         }
 
@@ -324,7 +332,7 @@ int count_valid(List aList, List boundarypart, NumericVector cdvec) {
             // Subset down to elements in cd_less_boundary
             NumericVector getadjvec_sub;
             for (int k = 0; k < getadjvec.size(); k++) {
-                if (any(as<arma::vec>(cd_less_boundary) == getadjvec(k))) {
+                if (is_true(any(cd_less_boundary == getadjvec(k)))) {
                     getadjvec_sub.push_back(getadjvec(k));
                 }
             }
@@ -332,8 +340,14 @@ int count_valid(List aList, List boundarypart, NumericVector cdvec) {
             // Change indices
             NumericVector getadjvec_new;
             for (int k = 0; k < getadjvec_sub.size(); k++) {
-                arma::uvec ind = find(as<arma::vec>(cd_less_boundary) == getadjvec_sub(k));
-                getadjvec_new.push_back(ind(0));
+                int ind = -1;
+                for (int t = 0; t < cd_less_boundary.size(); t++) {
+                    if (cd_less_boundary(t) == getadjvec_sub(k)) {
+                        ind = t;
+                        break;
+                    }
+                }
+                getadjvec_new.push_back(ind);
             }
 
             // Add to newadj
@@ -456,7 +470,7 @@ List make_swaps(List boundary_cc, List aList, NumericVector cds_old, NumericVect
             Rcpp::checkUserInterrupt();
 
             // (1) - select a connected component from boundary_cc randomly
-            arma::vec rand_sample_index = runif(1, 0, 1000000000);
+            NumericVector rand_sample_index = runif(1, 0, 1000000000);
             int sample_index = fmod(rand_sample_index(0), boundary_cc.size());
 
             prop_partitions = boundary_cc(sample_index);
@@ -507,7 +521,7 @@ List make_swaps(List boundary_cc, List aList, NumericVector cds_old, NumericVect
 
                 // Draw an element from possible_cds_swaps
                 if (possible_cd_swaps.size() > 1) {
-                    arma::vec rand_test_cd_ind = runif(1, 0, 1000000000);
+                    NumericVector rand_test_cd_ind = runif(1, 0, 1000000000);
                     int test_cd_ind = fmod(rand_test_cd_ind(0), possible_cd_swaps.size());
 
                     prop_cd = possible_cd_swaps(test_cd_ind);
@@ -609,18 +623,19 @@ List make_swaps(List boundary_cc, List aList, NumericVector cds_old, NumericVect
 
     std::vector<int> swaps_v = as<std::vector<int>>(swaps);
 
-    mat districts(cds_prop.size(), 2, fill::zeros);
+    // 1-indexed district assignments for the proposed and current plans
+    std::vector<int> districts_prop(nprec);
+    std::vector<int> districts_old(nprec);
     for (int r = 0; r < nprec; r++) {
-        districts(r, 0) = cds_prop(r) + 1;
-        districts(r, 1) = cds_old(r) + 1;
+        districts_prop[r] = static_cast<int>(cds_prop(r)) + 1;
+        districts_old[r] = static_cast<int>(cds_old(r)) + 1;
     }
-    arma::umat udistricts = conv_to<umat>::from(districts);
-    arma::uvec pops = conv_to<arma::uvec>::from(as<arma::vec>(pop_vec));
+    std::vector<unsigned int> pops = Rcpp::as<std::vector<unsigned int>>(pop_vec);
 
     // Multiply mh_prob by constraint values
-    double energy_new = calc_gibbs_tgt(udistricts.col(0), ndists, nprec, swaps_v, new_psi, pops,
+    double energy_new = calc_gibbs_tgt(districts_prop, ndists, nprec, swaps_v, new_psi, pops,
                                        parity, g, constraints);
-    double energy_old = calc_gibbs_tgt(udistricts.col(1), ndists, nprec, swaps_v, old_psi, pops,
+    double energy_old = calc_gibbs_tgt(districts_old, ndists, nprec, swaps_v, old_psi, pops,
                                        parity, g, constraints);
 
     mh_prob = (double)mh_prob * exp(-1.0 * beta * (energy_new - energy_old));
@@ -658,7 +673,7 @@ int mh_decision(double mh_prob) {
     }
 
     // Draw from uniform
-    arma::vec draw_prob = runif(1);
+    NumericVector draw_prob = runif(1);
 
     // Make decision
     if (draw_prob(0) <= acc_prob) {
@@ -669,7 +684,7 @@ int mh_decision(double mh_prob) {
 }
 
 // Function that applies the Geyer Thompson algorithm for simulated tempering
-List changeBeta(arma::vec betavec, double beta, double constraint, NumericVector weights,
+List changeBeta(NumericVector betavec, double beta, double constraint, NumericVector weights,
                 int adjswap = 1) {
 
     /* Inputs to function
@@ -685,8 +700,13 @@ List changeBeta(arma::vec betavec, double beta, double constraint, NumericVector
      */
 
     // Find beta in betavec
-    arma::uvec findBetaVec = find(betavec == beta);
-    int findBeta = findBetaVec(0);
+    int findBeta = -1;
+    for (int b = 0; b < betavec.size(); b++) {
+        if (betavec(b) == beta) {
+            findBeta = b;
+            break;
+        }
+    }
 
     // Object to test whether beta is at RHS of vector
     int betaLoc = betavec.size() - 1;
@@ -716,7 +736,7 @@ List changeBeta(arma::vec betavec, double beta, double constraint, NumericVector
             qij = .5;
             qji = .5;
             wi = weights(findBeta);
-            arma::vec betaswitch = runif(1);
+            NumericVector betaswitch = runif(1);
             if (betaswitch(0) < .5) {
                 propBeta = betavec(findBeta - 1);
                 wj = weights(findBeta - 1);
@@ -733,7 +753,7 @@ List changeBeta(arma::vec betavec, double beta, double constraint, NumericVector
         qji = 1;
 
         // Draw element from betavec
-        arma::vec rand_randindex = runif(1, 0, 1000000000);
+        NumericVector rand_randindex = runif(1, 0, 1000000000);
         int randindex = fmod(rand_randindex(0), betaLoc);
 
         // Weight wi
@@ -754,7 +774,7 @@ List changeBeta(arma::vec betavec, double beta, double constraint, NumericVector
     if (mhprobGT > 1) {
         mhprobGT = 1;
     }
-    arma::vec testkeepGT = runif(1);
+    NumericVector testkeepGT = runif(1);
     int decision = 0;
     if (testkeepGT(0) <= mhprobGT) {
         decision++;

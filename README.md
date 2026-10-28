@@ -47,6 +47,7 @@ functions: `redist_smc`, `redist_flip`, and `redist_mergesplit`.
 
 ``` r
 library(redist)
+#> Warning: package 'redistmetrics' was built under R version 4.4.3
 library(dplyr)
 
 data(iowa)
@@ -54,9 +55,10 @@ data(iowa)
 # set a 0.1% population constraint
 iowa_map <- redist_map(iowa, existing_plan=cd_2010, pop_tol=0.001, total_pop = pop)
 # simulate 500 plans using the SMC algorithm
-iowa_plans <- redist_smc(iowa_map, nsims=500)
+iowa_plans = redist_smc(iowa_map, nsims=500)
+#> Starting Chain 1
 #> SEQUENTIAL MONTE CARLO
-#> Sampling 500 99-unit maps with 4 districts and population between 760827 and 762350.
+#> Using Graph Sampling space to sample 500 99-unit maps with 4 districts and population between 760827 and 762350.
 ```
 
 After generating plans, you can use `redist`’s plotting functions to

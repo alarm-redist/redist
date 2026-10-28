@@ -1,0 +1,627 @@
+/********************************************************
+ * Author: Philip O'Sullivan
+ * Institution: Harvard University
+ * Date Created: 2025/03
+ * Purpose: Implementation of Plan type for Linking Edge space
+ ********************************************************/
+
+#include <functional>
+
+#include <Rcpp.h>
+#include "linking_edge_plan_type.h"
+
+#include "scoring.h"
+#include "splitting_schedule_types.h"
+#include "tree_splitting.h"
+#include "wilson.h"
+
+constexpr bool DEBUG_L_EDGE_PLANS_VERBOSE = false; // Compile-time constant
+
+// randomly initalize a set of linking edges
+std::vector<std::pair<int, int>> get_intial_linking_edges(PlanMultigraph &plan_multigraph,
+                                                          PlanVector const &region_ids,
+                                                          int const num_regions,
+                                                          Graph &region_graph) {
+    // First clear the region graph
+    for (size_t i = 0; i < region_graph.size(); i++) {
+        region_graph[i].clear();
+    }
+
+    // Now build the plan multigraph
+    plan_multigraph.build_plan_multigraph(region_ids, num_regions);
+
+    // Now iterate over the pairs and build the region graph
+    // Where two regions are adjacent iff they are a valid merge
+    for (auto const a_pair : plan_multigraph.pair_map.hashed_pairs) {
+        // Get the value
+        auto val = plan_multigraph.pair_map.get_value(a_pair.first, a_pair.second).second;
+        // continue if not a valid hierarchical merge
+        if (!val.merge_is_hier_valid)
+            continue;
+        // else add edge to the graph
+        region_graph[a_pair.first].push_back(a_pair.second);
+        region_graph[a_pair.second].push_back(a_pair.first);
+    }
+
+    // Now we're going to make a random walk through the graph to make
+    // a spanning tree.
+    std::vector<bool> visited(num_regions, false);
+    std::vector<std::pair<int, int>> tree_edges;
+    tree_edges.reserve(num_regions - 1);
+
+    // DFS helper
+    std::function<void(int)> dfs = [&](int v) {
+        visited[v] = true;
+        for (int u : region_graph[v]) {
+            if (!visited[u]) {
+                tree_edges.emplace_back(v, u); // record tree edge
+                dfs(u);
+            }
+        }
+    };
+
+    dfs(0); // start from node 0
+
+    std::vector<std::pair<int, int>> initial_edges;
+    initial_edges.reserve(num_regions - 1);
+
+    // Now for each pair walk through the graph and find the first edge
+    // in those regions
+    for (auto const a_pair : tree_edges) {
+        // REprintf("(%d, %d)\n", a_pair.first, a_pair.second);
+        bool pair_found = false;
+        for (size_t v = 0; v < plan_multigraph.map_params.V; v++) {
+            auto v_region = region_ids[v];
+            // REprintf("%d in region %d\n", v, v_region);
+            if (v_region != a_pair.first)
+                continue;
+
+            for (auto const u : plan_multigraph.map_params.g[v]) {
+                auto u_region = region_ids[u];
+                if (u_region == a_pair.second) {
+                    // means we found edge between (region1, region2) so push back
+                    initial_edges.push_back({v, u});
+                    pair_found = true;
+                    break;
+                }
+            }
+            if (pair_found)
+                break;
+        }
+        // if (!pair_found)
+        //     REprintf("ERROR! No edge found!\n");
+    }
+
+    if (static_cast<int>(tree_edges.size()) != num_regions - 1) {
+        std::ostringstream oss;
+        oss << "get_intial_linking_edges: the valid region adjacency graph is disconnected "
+            << "so no linking tree exists. Found " << tree_edges.size()
+            << " linking edges but a plan with " << num_regions << " regions needs "
+            << num_regions - 1 << ".\n";
+        throw std::runtime_error(oss.str());
+    }
+
+    return initial_edges;
+}
+
+
+LinkingEdgePlan::LinkingEdgePlan(int const total_seats, int const total_pop,
+                                 PlanVector &this_plan_region_ids,
+                                 RegionSizes &this_plan_region_sizes,
+                                 IntPlanAttribute &this_plan_region_pops,
+                                 IntPlanAttribute &this_plan_order_added,
+                                 PlanEdgeBits &this_plan_forest_edge_bits)
+    : Plan(total_seats, total_pop, this_plan_region_ids, this_plan_region_sizes,
+           this_plan_region_pops, this_plan_order_added, this_plan_forest_edge_bits) {
+    linking_edges.reserve(this_plan_region_sizes.size() - 1);
+};
+
+LinkingEdgePlan::LinkingEdgePlan(
+    int const ndists, int const num_regions, const std::vector<unsigned int> &pop,
+    PlanVector &this_plan_region_ids, RegionSizes &this_plan_region_sizes,
+    IntPlanAttribute &this_plan_region_pops, IntPlanAttribute &this_plan_order_added,
+    PlanEdgeBits &this_plan_forest_edge_bits,
+    TreeSplitter const &tree_splitter, USTSampler &ust_sampler, PlanMultigraph &plan_multigraph,
+    Graph &region_graph, RNGState &rng_state, EdgeBitWord const *initial_forest_words,
+    std::vector<LinkingEdge> const *initial_linking_edges)
+    : Plan(num_regions, pop, this_plan_region_ids, this_plan_region_sizes,
+           this_plan_region_pops, this_plan_order_added, this_plan_forest_edge_bits) {
+
+    // reserve space for ndists - 1 linking edges
+    linking_edges.reserve(ndists - 1);
+
+    if (initial_forest_words != nullptr && initial_linking_edges != nullptr) {
+        // use the inputted forest and linking edges as is. The linking edge log
+        // probabilities are marked invalid so they are recomputed when needed
+        forest_edges.copy_words(initial_forest_words);
+        linking_edges.assign(initial_linking_edges->begin(), initial_linking_edges->end());
+        return;
+    } else {
+        // else just build a forest at random
+        for (size_t region_id = 0; region_id < num_regions; region_id++) {
+            auto result = draw_tree_on_region(
+                ust_sampler, region_id,
+                rng_state, INITIAL_PLAN_TREE_DRAW_ATTEMPTS
+            );
+
+            if (!result.first) {
+                std::ostringstream oss;
+
+                oss << "Failed to draw tree on region " << region_id
+                    << " after " << INITIAL_PLAN_TREE_DRAW_ATTEMPTS
+                    << " attempts.\n";
+                oss << "This usually means the plan is not hierarchically "
+                       "valid, that is some region splits a county into "
+                       "disconnected pieces. Either pass a hierarchically "
+                       "valid plan or turn counties off.\n";
+
+                throw std::runtime_error(oss.str());
+            }
+        }
+    }
+
+    if constexpr (perf_config::object_integrity_checking){
+        check_forest_equality(
+            ust_sampler.get_undirected_vertex_tree(),
+            forest_edges.get_graph_tree(ust_sampler.map_params.graph_edge_index),
+            ust_sampler.map_params.graph_edge_index,
+            "IN Partial Linking Edge Plan Constructor, checking ust vs forest edges (through get_graph_tree)"
+        );
+    }
+
+
+    auto random_linking_edges =
+        get_intial_linking_edges(plan_multigraph, region_ids, num_regions, region_graph);
+
+    for (auto const a_pair : random_linking_edges) {
+        // REprintf("(%d, %d)\n", a_pair.first, a_pair.second);
+        linking_edges.push_back({a_pair.first, a_pair.second});
+    }
+}
+
+double LinkingEdgePlan::get_regions_log_splitting_prob(ScoringFunction const &scoring_function,
+                                                       TreeSplitter &tree_splitter,
+                                                       USTSampler &ust_sampler,
+                                                       SplittingSchedule const &splitting_schedule,
+                                                       ScheduleContext &schedule_ctx,
+                                                       const int region1_root,
+                                                       const int region2_root) const {
+    int region1_id = region_ids[region1_root];
+    int region2_id = region_ids[region2_root];
+    CutSizeOptions const cut_options =
+        splitting_schedule.merged_region_cut_sizes(*this, schedule_ctx, region1_id, region2_id);
+
+    if constexpr (perf_config::object_integrity_checking){
+        check_forest_integrity(
+            ust_sampler.map_params.graph_edge_index,
+            "IN get_regions_log_splitting_prob, checking forest_edges integrity"
+        );      
+    }
+
+    // get the log probability
+    return tree_splitter.get_log_retroactive_splitting_prob_for_joined_packed_tree(
+        ust_sampler.map_params, scoring_function, forest_edges,
+        ust_sampler.pops_below_vertex, region1_root, region2_root, *this,
+        cut_options.min_cut_size, cut_options.max_cut_size, cut_options.smaller_cut_sizes);
+}
+
+void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
+    TreeSplitter const &tree_splitter, USTSampler &ust_sampler, EdgeCut const cut_edge,
+    const int split_region1_id, const int split_region2_id, bool const add_region) {
+
+    // If we're not adding a region we need to erase the old linking edge associated
+    // with these two regions if it exists
+    if (!add_region) {
+        if constexpr (DEBUG_L_EDGE_PLANS_VERBOSE) {
+            Rprintf("Adding Edge (%d, %d) - Regions (%d, %d)\n", cut_edge.cut_vertex,
+                    cut_edge.cut_vertex_parent, split_region1_id, split_region2_id);
+            Rprintf("Current Linking Edges:\n");
+            for (auto const &a_edge : linking_edges) {
+                Rprintf("\tEdge(%d, %d) - Region (%d, %d)- Prob %f \n", a_edge.vertex1,
+                        a_edge.vertex2, region_ids[a_edge.vertex1], region_ids[a_edge.vertex2],
+                        std::exp(a_edge.log_prob));
+            }
+            Rprintf("\n");
+        }
+        int erase_index;
+        bool need_to_erase = false;
+        std::set<int> merge_region_ids = {split_region1_id, split_region2_id};
+        // Go through and find that pair
+        for (int i = 0; i < linking_edges.size(); i++) {
+            auto edge_region1 = region_ids[linking_edges[i].vertex1];
+            auto edge_region2 = region_ids[linking_edges[i].vertex2];
+            // get the regions associated with the linking edge
+            std::set<int> candidate_pairs = {static_cast<int>(edge_region1),
+                                             static_cast<int>(edge_region2)};
+            // if they match break
+            if (candidate_pairs == merge_region_ids) {
+                erase_index = i;
+                need_to_erase = true;
+                break;
+            }
+        }
+        // erase that pair of linking edges if needed
+        if (need_to_erase) {
+            linking_edges.erase(linking_edges.begin() + erase_index);
+        } else {
+            std::ostringstream oss;
+            oss << "LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut: "
+                << "could not find the linking edge between the regions being merged.\n"
+                << "split_region1_id=" << split_region1_id
+                << ", split_region2_id=" << split_region2_id
+                << ", num_regions=" << num_regions << "\n"
+                << debug_string(true);
+            throw std::runtime_error(oss.str());
+        }
+    }
+
+    // NOTE This code is also called when updating forest plans
+    // it updates the plan ids and the forest but doesn't touch the linking edges 
+    update_plan_ids_and_forest_from_cut(tree_splitter, 
+        ust_sampler, cut_edge,
+        split_region1_id, split_region2_id, add_region
+    );
+            
+
+    // TODO need to find the edge and update that stuff
+    // Now update the linking edge stuff
+
+    // First iterate through the old linking edges and update ones touching a split region
+    for (auto &a_linking_edge : linking_edges) {
+        int v = a_linking_edge.vertex1;
+        int u = a_linking_edge.vertex2;
+        int edge_region1 = region_ids[v];
+        int edge_region2 = region_ids[u];
+        // If either of the vertices in the edge is now in a split region we need
+        // to mark that the probability the edge was chosen is no longer valid
+        if (edge_region1 == split_region1_id || edge_region2 == split_region1_id ||
+            edge_region1 == split_region2_id || edge_region2 == split_region2_id) {
+
+            // we will recompute this later if needed
+            a_linking_edge.valid_log_prob = false;
+
+            if constexpr (DEBUG_L_EDGE_PLANS_VERBOSE) {
+                Rprintf("(%d,%d) in Region (%d,%d)", v, u, edge_region1, edge_region2);
+                Rprintf(" Linking edge prob is invalidated!\n");
+            }
+        }
+    }
+
+    // Append the new linking edge from the region we just split
+    linking_edges.push_back(
+        {cut_edge.cut_vertex, cut_edge.cut_vertex_parent, cut_edge.log_prob});
+    if constexpr (DEBUG_L_EDGE_PLANS_VERBOSE) {
+        Rprintf("\nAdding New Edge (%d,%d) in Region (%d,%d), log prob %f\n",
+                cut_edge.cut_vertex, cut_edge.cut_vertex_parent,
+                region_ids[cut_edge.cut_vertex], region_ids[cut_edge.cut_vertex_parent],
+                cut_edge.log_prob);
+    }
+
+    return;
+}
+
+double LinkingEdgePlan::get_log_eff_boundary_len(
+    PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule, ScheduleContext &schedule_ctx,
+    USTSampler &ust_sampler, TreeSplitter &tree_splitter,
+    ScoringFunction const &scoring_function, const int region1_id, int const region2_id) const {
+    // Go through and find that pair
+    for (auto &edge_pair : linking_edges) {
+        // get the regions associated with the linking edge
+        int edge_region1 =
+            std::min(region_ids[edge_pair.vertex1], region_ids[edge_pair.vertex2]);
+        int edge_region2 =
+            std::max(region_ids[edge_pair.vertex1], region_ids[edge_pair.vertex2]);
+        if (edge_region1 == region1_id && edge_region2 == region2_id) {
+            // if log prob not accurate then recompute first. When the cut sizes
+            // depend on the plan the cached value may have been computed with
+            // different cut sizes, so always recompute.
+            if (!edge_pair.valid_log_prob || splitting_schedule.plan_context_needed) {
+                // else recompute first
+                edge_pair.log_prob = get_regions_log_splitting_prob(
+                    scoring_function, tree_splitter, ust_sampler, splitting_schedule,
+                    schedule_ctx, edge_pair.vertex1, edge_pair.vertex2);
+                // now mark it as valid 
+                edge_pair.valid_log_prob = true;
+            }
+
+            return edge_pair.log_prob;
+        }
+    }
+    std::ostringstream oss;
+    oss << "LinkingEdgePlan::get_log_eff_boundary_len: no linking edge between regions "
+        << region1_id << " and " << region2_id << " (num_regions=" << num_regions
+        << "). Regions passed in must be linked and ordered with region1_id < region2_id.\n"
+        << debug_string(true);
+    throw std::runtime_error(oss.str());
+}
+
+// - for linking edge sampling its the edge selection probability PLUS
+// the ratio (1/merged plan linking edges)/(1/plan linking edges) so
+// log ratio is log(plan linking edges) - log(merged plan linking edges)
+std::vector<std::tuple<RegionID, RegionID, double>>
+LinkingEdgePlan::get_valid_adj_regions_and_eff_log_boundary_lens(
+    PlanMultigraph &plan_multigraph, const SplittingSchedule &splitting_schedule, ScheduleContext &schedule_ctx,
+    ScoringFunction const &scoring_function, bool const is_final_split, USTSampler &ust_sampler,
+    TreeSplitter &tree_splitter) const {
+    // build the multigraph
+    plan_multigraph.build_plan_multigraph(region_ids, num_regions);
+    // remove invalid hard constraint merges
+    plan_multigraph.remove_invalid_hard_constraint_pairs(*this, scoring_function,
+                                                         is_final_split);
+
+    // compute log linking edges for the plan
+    double const plan_log_linking_edge_term =
+        plan_multigraph.compute_log_multigraph_tau(num_regions, scoring_function);
+
+    std::vector<std::tuple<RegionID, RegionID, double>> valid_adj_region_pairs_to_boundary_map;
+    valid_adj_region_pairs_to_boundary_map.reserve(linking_edges.size());
+
+
+    // Go through and find that pair
+    for (auto &edge_pair : linking_edges) {
+        // get the regions associated with the linking edge
+        int edge_region1 =
+            std::min(region_ids[edge_pair.vertex1], region_ids[edge_pair.vertex2]);
+        int edge_region2 =
+            std::max(region_ids[edge_pair.vertex1], region_ids[edge_pair.vertex2]);
+
+        int edge_region1_size = region_sizes[edge_region1];
+        int edge_region2_size = region_sizes[edge_region2];
+
+        double log_linking_edge_ratio = plan_log_linking_edge_term;
+
+        // Add if its ok to merge
+        if (splitting_schedule.is_valid_merge_pair(*this, schedule_ctx, edge_region1,
+                                                   edge_region2)) {
+            // sanity check that we never get invalid pair
+            auto search_result = plan_multigraph.pair_map.get_value(edge_region1, edge_region2);
+            if (!search_result.first || !search_result.second.merge_is_hier_valid) {
+                std::ostringstream oss;
+                oss << "LinkingEdgePlan::get_valid_adj_regions_and_eff_log_boundary_lens: "
+                    << "regions " << edge_region1 << " and " << edge_region2
+                    << " (sizes " << edge_region1_size << " and " << edge_region2_size
+                    << ") share the linking edge (" << edge_pair.vertex1 << ", "
+                    << edge_pair.vertex2 << ") but ";
+                if (!search_result.first) {
+                    oss << "the pair is not in the plan multigraph. Either the regions are "
+                        << "not adjacent or merging them violates a hard constraint.\n";
+                } else {
+                    oss << "merging them is not hierarchically valid with respect to the "
+                        << "administrative units.\n";
+                }
+                oss << debug_string(true);
+                throw std::runtime_error(oss.str());
+            }
+
+            // check if we need to recompute selection probability. When the cut
+            // sizes depend on the plan the cached value may have been computed
+            // with different cut sizes, so always recompute.
+            if (!edge_pair.valid_log_prob || splitting_schedule.plan_context_needed) {
+                // else recompute first
+                edge_pair.log_prob = get_regions_log_splitting_prob(
+                    scoring_function, tree_splitter, ust_sampler, splitting_schedule,
+                    schedule_ctx, edge_pair.vertex1, edge_pair.vertex2);
+                // now mark it as valid 
+                edge_pair.valid_log_prob = true;
+            }
+
+            if (DEBUG_L_EDGE_PLANS_VERBOSE && std::isinf(edge_pair.log_prob)) {
+                std::ostringstream oss;
+                oss << "LinkingEdgePlan::get_valid_adj_regions_and_eff_log_boundary_lens: "
+                    << "infinite log splitting probability " << edge_pair.log_prob
+                    << " for the linking edge (" << edge_pair.vertex1 << ", "
+                    << edge_pair.vertex2 << ") between regions " << edge_region1 << " and "
+                    << edge_region2 << " (sizes " << edge_region1_size << " and "
+                    << edge_region2_size << ").\n"
+                    << debug_string(true);
+                throw std::runtime_error(oss.str());
+            }
+
+            if (num_regions > 2) {
+                double merged_tau = plan_multigraph.compute_merged_log_multigraph_tau(
+                    num_regions, edge_region1, edge_region2, scoring_function);
+                // the ratio is (1/merged)/(1/current) = current/merged so since its already
+                // current term we just add merged
+                log_linking_edge_ratio -= merged_tau;
+
+                // std::vector<int> merge_index_reshuffle(num_regions, 0);
+
+                // // TEMP just rebuild the multigraph
+                // std::vector<RegionID> flattened_all_plans(plan_multigraph.map_params.V);
+                // PlanVector plan_region_ids(flattened_all_plans, 0,
+                // plan_multigraph.map_params.V);
+                // // REprintf("Size is %u!\n", plan_region_ids.size());
+
+                // // set merge reindex
+                // int const merged_reindex = num_regions-2;
+                // for (int current_reindex = 0, i = 0; i < num_regions; i++){
+                //     if(i == edge_region1 || i == edge_region2){
+                //         merge_index_reshuffle[i] = merged_reindex;
+                //     }else{
+                //         merge_index_reshuffle[i] = current_reindex;
+                //         ++current_reindex;
+                //     }
+                //     // REprintf("Mapping %d to %d!\n", i, merge_index_reshuffle[i]);
+                // }
+
+                // // REprintf("Merging (%u, %u)\n", region1_id, region2_id);
+                // for (size_t i = 0; i < region_ids.size(); i++)
+                // {
+                //     plan_region_ids[i] = merge_index_reshuffle[region_ids[i]];
+                //     // REprintf("Plan %u | Merged %u \n", plan.region_ids[i],
+                //     plan_region_ids[i]);
+                // }
+
+                // PlanMultigraph temp_multi(plan_multigraph.map_params, true);
+                // temp_multi.build_plan_multigraph(plan_region_ids, num_regions -1);
+
+                // double temp_tau = temp_multi.compute_log_multigraph_tau(num_regions-1,
+                // scoring_function);
+
+                // if(std::fabs(merged_tau - temp_tau) > 1e16){
+                //     REprintf("Difference %f | Merging (%u, %u) | Merged Plan - Merged Code -
+                //     %f, NO MERGE Code - %f and Equality Check = %s\n",
+                //         merged_tau - temp_tau,
+                //         edge_region1, edge_region2,
+                //     merged_tau, temp_tau,
+                //     (merged_tau == temp_tau) ? "TRUE" : "FALSE" );
+                //     Rprint(true);
+                //     throw std::runtime_error("DIFFERENT LOG TAU VALUES!\n");
+                // }
+            }
+
+            // Now we add the edge probability and linking edge ratio
+            valid_adj_region_pairs_to_boundary_map.push_back(
+                {edge_region1, edge_region2, edge_pair.log_prob + log_linking_edge_ratio});
+        }
+    }
+    return (valid_adj_region_pairs_to_boundary_map);
+}
+
+std::vector<std::pair<RegionID, RegionID>> LinkingEdgePlan::get_valid_smc_merge_regions(
+    PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule, ScheduleContext &schedule_ctx,
+    ScoringFunction const &scoring_function, bool const is_final_split) const {
+    // build the multigraph
+    plan_multigraph.build_plan_multigraph(region_ids, num_regions);
+
+    // remove invalid hard constraint merges
+    plan_multigraph.remove_invalid_hard_constraint_pairs(*this, scoring_function,
+                                                         is_final_split);
+
+    std::vector<std::pair<RegionID, RegionID>> valid_adj_region;
+    valid_adj_region.reserve(linking_edges.size());
+
+
+    // Go through and find that pair
+    for (auto const &edge_pair : linking_edges) {
+        // get the regions associated with the linking edge
+        int edge_region1 =
+            std::min(region_ids[edge_pair.vertex1], region_ids[edge_pair.vertex2]);
+        int edge_region2 =
+            std::max(region_ids[edge_pair.vertex1], region_ids[edge_pair.vertex2]);
+
+        int edge_region1_size = region_sizes[edge_region1];
+        int edge_region2_size = region_sizes[edge_region2];
+
+        // Add if its ok to merge
+        if (splitting_schedule.is_valid_merge_pair(*this, schedule_ctx, edge_region1,
+                                                   edge_region2)) {
+            // sanity check that we never get invalid pair
+            auto search_result = plan_multigraph.pair_map.get_value(edge_region1, edge_region2);
+            if (!search_result.first) {
+                std::ostringstream oss;
+                oss << "LinkingEdgePlan::get_valid_smc_merge_regions: regions " << edge_region1
+                    << " and " << edge_region2 << " (sizes " << edge_region1_size << " and "
+                    << edge_region2_size << ") share the linking edge (" << edge_pair.vertex1
+                    << ", " << edge_pair.vertex2 << ") but the pair is not in the plan "
+                    << "multigraph. Either the regions are not adjacent or merging them "
+                    << "violates a hard constraint.\n"
+                    << debug_string(true);
+                throw std::runtime_error(oss.str());
+            }
+
+            // add
+            valid_adj_region.push_back({edge_region1, edge_region2});
+        }
+    }
+    return (valid_adj_region);
+}
+
+std::pair<bool, std::vector<std::pair<RegionID, RegionID>>>
+LinkingEdgePlan::attempt_to_get_valid_mergesplit_pairs(
+    PlanMultigraph &plan_multigraph, SplittingSchedule const &splitting_schedule, ScheduleContext &schedule_ctx,
+    ScoringFunction const &scoring_function, bool const is_final_split) const {
+    // attempt to build valid multigraph
+    bool const result = plan_multigraph.build_plan_multigraph(region_ids, num_regions);
+    // return false if not successful
+    if (!result)
+        return std::make_pair(false, std::vector<std::pair<RegionID, RegionID>>{});
+
+    // removes all merges where the either
+    // - the merged region triggers hard constraint
+    // - the mergd plan triggers hard constraint
+    //      NOTE: For plan based constraints this doesn't work right now
+    plan_multigraph.remove_invalid_hard_constraint_pairs(*this, scoring_function,
+                                                         is_final_split);
+
+    std::vector<std::pair<RegionID, RegionID>> valid_adj_region;
+    valid_adj_region.reserve(linking_edges.size());
+
+
+    // Go through and find that pair
+    for (auto const &edge_pair : linking_edges) {
+        // get the regions associated with the linking edge
+        int edge_region1 =
+            std::min(region_ids[edge_pair.vertex1], region_ids[edge_pair.vertex2]);
+        int edge_region2 =
+            std::max(region_ids[edge_pair.vertex1], region_ids[edge_pair.vertex2]);
+
+        int edge_region1_size = region_sizes[edge_region1];
+        int edge_region2_size = region_sizes[edge_region2];
+        // REprintf("(%u, %u) \n", edge_region1, edge_region2);
+
+        // Add if its ok to merge
+        if (splitting_schedule.is_valid_merge_pair(*this, schedule_ctx, edge_region1,
+                                                   edge_region2)) {
+            // sanity check that we never get invalid pair
+            auto search_result = plan_multigraph.pair_map.get_value(edge_region1, edge_region2);
+            if (!search_result.first) {
+                std::ostringstream oss;
+                oss << "LinkingEdgePlan::attempt_to_get_valid_mergesplit_pairs: regions "
+                    << edge_region1 << " and " << edge_region2 << " (sizes "
+                    << edge_region1_size << " and " << edge_region2_size
+                    << ") share the linking edge (" << edge_pair.vertex1 << ", "
+                    << edge_pair.vertex2 << ") but the pair is not in the plan multigraph. "
+                    << "Either the regions are not adjacent or merging them violates a hard "
+                    << "constraint.\n"
+                    << debug_string(true) << plan_multigraph.debug_string();
+                throw std::runtime_error(oss.str());
+            }
+
+            valid_adj_region.push_back({edge_region1, edge_region2});
+        }
+    }
+
+    return std::make_pair(true, valid_adj_region);
+};
+
+std::string LinkingEdgePlan::linking_edges_to_string() const {
+    std::ostringstream oss;
+
+    oss << "Current Linking Edges:\n";
+
+    for (auto const &edge : linking_edges) {
+        int const v1 = static_cast<int>(edge.vertex1);
+        int const v2 = static_cast<int>(edge.vertex2);
+
+        oss << "\tEdge(" << v1 << ", " << v2 << ")";
+
+        if (v1 >= 0 && v1 < static_cast<int>(region_ids.size()) &&
+            v2 >= 0 && v2 < static_cast<int>(region_ids.size())) {
+            oss << " - Region ("
+                << static_cast<int>(region_ids[v1]) << ", "
+                << static_cast<int>(region_ids[v2]) << ")";
+        } else {
+            oss << " - Region (invalid endpoint)";
+        }
+
+        if (std::isfinite(edge.log_prob)) {
+            oss << " - Prob " << edge.log_prob;
+        } else {
+            oss << " - No valid Prob";
+        }
+
+        oss << "\n";
+    }
+
+    return oss.str();
+}
+
+std::string LinkingEdgePlan::debug_string(bool print_region_ids) const {
+    auto plan_str = Plan::debug_string(print_region_ids);
+    return plan_str + linking_edges_to_string();
+}
+
+void LinkingEdgePlan::Rprint(bool verbose) const {
+    Rcpp::Rcerr << debug_string(verbose);
+}

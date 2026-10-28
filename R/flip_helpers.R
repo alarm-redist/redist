@@ -60,8 +60,6 @@
 #' minority constraint for each accepted redistricting plan.}
 #' \item{constraint_hinge}{A vector containing the value of the
 #' hinge constraint for each accepted redistricting plan.}
-#' \item{constraint_qps}{A vector containing the value of the
-#' QPS constraint for each accepted redistricting plan.}
 #' \item{beta_sequence}{A vector containing the value of beta for each iteration
 #' of the algorithm. Returned when tempering is being used.}
 #' \item{mhdecisions_beta}{A vector specifying whether a proposed beta value was
@@ -151,7 +149,7 @@ redist.ipw <- function(
     }))
 
     ## Subset the entire list
-    plans %>% slice(indx)
+    plans |> slice(indx)
 }
 
 redist.warmup.chain <- function(algout, warmup = 1) {

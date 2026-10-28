@@ -1,3 +1,6 @@
+#include <algorithm>
+#include <utility>
+
 #include <Rcpp.h>
 #include <set>
 #include <vector>

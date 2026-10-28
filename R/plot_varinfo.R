@@ -34,9 +34,9 @@ redist.plot.varinfo <- function(plans, group_pop, total_pop, shp) {
         )
     }
 
-    sub <- tb %>% group_by(cluster) %>% filter(dist == min(dist)) %>% slice(1)
+    sub <- tb |> group_by(cluster) |> filter(dist == min(dist)) |> slice(1)
 
-    p <- tb %>%
+    p <- tb |>
         ggplot(aes(x = mds1, y = mds2, color = pct_min)) +
         geom_point() +
         theme_bw() +
@@ -51,10 +51,10 @@ redist.plot.varinfo <- function(plans, group_pop, total_pop, shp) {
             return(NULL)
         }
         shp$newcd <- as.character(plans[, sub$id[x - 1]])
-        shpdist <- shp %>%
-            group_by(newcd) %>%
+        shpdist <- shp |>
+            group_by(newcd) |>
             summarize(geometry = st_union(sf::st_geometry(geometry)))
-        shp %>%
+        shp |>
             ggplot() +
             geom_sf(aes(fill = ratio)) +
             labs(fill = "Minority\nPercent", title = sub$id[x - 1]) +

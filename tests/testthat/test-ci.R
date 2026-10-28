@@ -15,9 +15,8 @@ test_that("redist_quantile_trunc caps values above a self-determined quantile", 
 
 test_that("redist_smc_ci returns a 1-row, 3-column tibble bracketing the mean", {
     set.seed(11)
-    plans <- redist_smc(fl_map, 200, runs = 2, silent = TRUE) %>%
-        suppressWarnings()
-    plans <- plans %>% mutate(value = total_pop / sum(fl25$pop))
+    plans <- redist_smc(fl_map, 200, runs = 2, silent = TRUE) |> suppressWarnings()
+    plans <- plans |> mutate(value = total_pop / sum(fl25$pop))
 
     ci <- redist_smc_ci(plans, value, district = 1)
     expect_s3_class(ci, "tbl_df")
@@ -30,9 +29,8 @@ test_that("redist_smc_ci returns a 1-row, 3-column tibble bracketing the mean", 
 
 test_that("redist_ci dispatches to the algorithm-specific CI", {
     set.seed(11)
-    plans <- redist_smc(fl_map, 200, runs = 2, silent = TRUE) %>%
-        suppressWarnings()
-    plans <- plans %>% mutate(value = total_pop / sum(fl25$pop))
+    plans <- redist_smc(fl_map, 200, runs = 2, silent = TRUE) |> suppressWarnings()
+    plans <- plans |> mutate(value = total_pop / sum(fl25$pop))
 
     ci_dispatch <- suppressWarnings(redist_ci(plans, value, district = 1))
     ci_direct <- suppressWarnings(redist_smc_ci(plans, value, district = 1))
@@ -51,7 +49,7 @@ test_that("redist_ci errors when the algorithm attribute is missing", {
 test_that("redist_mcmc_ci returns a 3-column tibble bracketing the mean", {
     skip_if_not_installed("coda")
     set.seed(2)
-    plans <- redist_mergesplit(fl_map, 100, warmup = 20, silent = TRUE) %>%
+    plans <- redist_mergesplit(fl_map, 100, warmup = 20, silent = TRUE) |>
         mutate(value = total_pop / sum(fl25$pop))
 
     ci <- suppressWarnings(redist_mcmc_ci(plans, value, district = 1))

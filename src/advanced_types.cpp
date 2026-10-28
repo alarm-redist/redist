@@ -1,0 +1,620 @@
+/********************************************************
+ * Author: Philip O'Sullivan
+ * Institution: Harvard University
+ * Date Created: 2026/07
+ * Purpose: Contains classes and types used in the new (Redist 5.0)
+ * code. Seperated out from RedistTypes to reduce compile time since a 
+ * lot of legacy code must link to redist_types
+ ********************************************************/
+
+#include "advanced_types.h"
+#include "redist_constants.h"
+#include "redist_types.h"
+
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <limits>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <unordered_set>
+#include <vector>
+
+namespace{
+
+
+/*
+ * Construct the administrative-unit multigraph from the map graph.
+ *
+ * For every directed adjacency v -> u crossing an administrative boundary,
+ * store an AdminEdge in the adjacency list of v's administrative unit:
+ *
+ *   neighbor_admin      = administrative unit containing u
+ *   current_map_vertex  = v
+ *   neighbor_map_vertex = u
+ *
+ * Parallel administrative edges are intentionally retained because distinct
+ * map edges crossing the same administrative boundary must remain distinct
+ * in the multigraph random walk.
+ */
+Multigraph county_multigraph(
+    Graph const &g,
+    std::vector<unsigned int> const &counties
+) {
+    int const num_admin_units =
+        static_cast<int>(
+            *std::max_element(
+                counties.begin(),
+                counties.end()
+            )
+        );
+
+    /*
+     * Construct one initially empty adjacency list for each administrative
+     * unit. This replaces the old init_multigraph() helper.
+     */
+    Multigraph admin_graph(num_admin_units);
+
+    int const V =
+        static_cast<int>(g.size());
+
+    for (int current_map_vertex = 0;
+         current_map_vertex < V;
+         ++current_map_vertex) {
+
+        int const current_admin =
+            static_cast<int>(
+                counties.at(current_map_vertex)
+            ) - 1;
+
+        for (int const neighbor_map_vertex :
+             g[current_map_vertex]) {
+
+            int const neighbor_admin =
+                static_cast<int>(
+                    counties.at(neighbor_map_vertex)
+                ) - 1;
+
+            /*
+             * Only retain map edges that cross administrative boundaries.
+             */
+            if (current_admin == neighbor_admin) {
+                continue;
+            }
+
+            admin_graph.at(current_admin).push_back(
+                AdminEdge{
+                    neighbor_admin,
+                    current_map_vertex,
+                    neighbor_map_vertex
+                }
+            );
+        }
+    }
+
+    return admin_graph;
+}
+
+std::vector<std::vector<int>> build_county_vertices(
+    std::vector<unsigned int> const &counties,
+    int const num_counties
+) {
+    std::vector<std::vector<int>> result(num_counties);
+
+    for (std::size_t v = 0; v < counties.size(); ++v) {
+        unsigned int const county_id = counties[v];
+
+        if (county_id == 0 ||
+            county_id > static_cast<unsigned int>(num_counties)) {
+            throw std::runtime_error(
+                "County IDs must be between 1 and num_counties."
+            );
+        }
+
+        result[county_id - 1].push_back(static_cast<int>(v));
+    }
+
+    return result;
+}
+
+/*
+ * Given a graph G and county assignments this creates the potentially disconnected graph
+ * created when all edges across counties are removed from G. This guarantees that any
+ * search started from a vertex in one county will never leave that county
+ *
+ */
+Graph build_restricted_county_graph(Graph const &g, std::vector<unsigned int> const &counties) {
+    Graph county_graph(g.size());
+    // iterate through g and only add edges in the same county
+    for (int v = 0; v < g.size(); v++) {
+        // iterate over v's neighbors
+        for (const auto u : g[v]) {
+            // if same county add the edge
+            if (counties[v] == counties[u]) {
+                county_graph[v].push_back(u);
+            }
+        }
+    }
+    return county_graph;
+}
+
+
+} // namespace
+
+// Counts the number of undirected edges in a graph. 
+// It also checks the graph is actually symmetric 
+int count_undirected_edges(Graph const &g) {
+    int edge_count = 0;
+    int total_edge_count = 0;
+
+    for (int v = 0; v < static_cast<int>(g.size()); ++v) {
+        for (int u : g[v]) {
+            if (u < 0 || u >= static_cast<int>(g.size())) {
+                throw std::runtime_error("GraphEdgeIndex found invalid neighbor index!");
+            }
+            total_edge_count++; // this counts total edges
+
+            if (v < u) {
+                ++edge_count;
+            }
+        }
+    }
+
+    if (edge_count > static_cast<std::size_t>(std::numeric_limits<EdgeID>::max())) {
+        throw std::runtime_error("Too many graph edges for EdgeID!\n");
+    }
+
+    if (edge_count > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
+        throw std::runtime_error("Too many graph edges for int!\n");
+    }
+
+    if (total_edge_count != edge_count * 2){
+        throw std::runtime_error("The inputted adjacency list is not symmetric!\n");
+    }
+
+    return edge_count;
+}
+
+
+void EdgeCut::get_split_regions_info(int &split_region1_tree_root, int &split_region1_dval,
+                                     int &split_region1_pop, int &split_region2_tree_root,
+                                     int &split_region2_dval, int &split_region2_pop) const {
+    // Always make region 1 the smaller one by size (allowing for ties)
+
+    if (cut_below_region_size <= cut_above_region_size) {
+        // if true then cut below is smalelr so make that region 1
+        split_region1_tree_root = cut_vertex;
+        split_region1_dval = cut_below_region_size;
+        split_region1_pop = cut_below_pop;
+
+        split_region2_tree_root = tree_root;
+        split_region2_dval = cut_above_region_size;
+        split_region2_pop = cut_above_pop;
+    } else {
+        // if false then cut above is smalelr so make that region 1
+        split_region2_tree_root = cut_vertex;
+        split_region2_dval = cut_below_region_size;
+        split_region2_pop = cut_below_pop;
+
+        split_region1_tree_root = tree_root;
+        split_region1_dval = cut_above_region_size;
+        split_region1_pop = cut_above_pop;
+    }
+};
+
+std::array<double, 2> EdgeCut::compute_signed_pop_deviances(double target) const {
+    // get the target populations for the regions
+    double cut_below_target = target * cut_below_region_size;
+    double cut_above_target = target * cut_above_region_size;
+    // get the deviation
+    double below_dev =
+        (static_cast<double>(cut_below_pop) - cut_below_target) / cut_below_target;
+    double above_dev =
+        (static_cast<double>(cut_above_pop) - cut_above_target) / cut_above_target;
+
+    return std::array<double, 2>{below_dev, above_dev};
+}
+
+std::array<double, 2> EdgeCut::compute_abs_pop_deviances(double target) const {
+    // get the raw unsigned deviations
+    std::array<double, 2> unsigned_devs = compute_signed_pop_deviances(target);
+    // take the absolute value
+    std::array<double, 2> signed_devs = {std::fabs(unsigned_devs.at(0)),
+                                         std::fabs(unsigned_devs.at(1))};
+
+    return signed_devs;
+}
+
+// loads a sampling spaces type enum from a control string
+SamplingSpace get_sampling_space(std::string const &sampling_space_str) {
+    // find the type or throw an error
+    if (sampling_space_str == "graph_plan") {
+        return SamplingSpace::GraphSpace;
+    } else if (sampling_space_str == "spanning_forest") {
+        return SamplingSpace::ForestSpace;
+    } else if (sampling_space_str == "linking_edge") {
+        return SamplingSpace::LinkingEdgeSpace;
+    } else if (sampling_space_str == "lct_graph") {
+        return SamplingSpace::LCTGraphSpace;
+    } else {
+        throw std::invalid_argument(
+            "Invalid sampling space '" + sampling_space_str +
+            "'. Expected one of: graph_plan, spanning_forest, "
+            "linking_edge, or lct_graph."
+        );
+    }
+}
+
+// Get convinient string representation
+std::string sampling_space_to_str(SamplingSpace sampling_space) {
+    if (sampling_space == SamplingSpace::GraphSpace) {
+        return "Graph";
+    } else if (sampling_space == SamplingSpace::ForestSpace) {
+        return "Forest";
+    } else if (sampling_space == SamplingSpace::LinkingEdgeSpace) {
+        return "Linking Edge";
+    } else if (sampling_space == SamplingSpace::LCTGraphSpace) {
+        return "LCT Graph";
+    } else {
+        throw std::logic_error(
+            "sampling_space_to_str received an unknown SamplingSpace value: " +
+            std::to_string(static_cast<unsigned int>(sampling_space))
+        );
+    }
+}
+
+SplittingMethodType get_splitting_type(std::string const &splitting_type_str) {
+    // find the type or throw an error
+    if (splitting_type_str == "top_k") {
+        return SplittingMethodType::NaiveTopK;
+    } else if (splitting_type_str == "unif_valid") {
+        return SplittingMethodType::UnifValid;
+    } else if (splitting_type_str == "exp_abs_dev") {
+        return SplittingMethodType::ExpBiggerAbsDev;
+    } else if (splitting_type_str == "expo_smaller_abs_dev") {
+        return SplittingMethodType::ExpSmallerAbsDev;
+    } else if (splitting_type_str == "experimental") {
+        return SplittingMethodType::Experimental;
+    } else if (splitting_type_str == "constraint") {
+        return SplittingMethodType::Constraint;
+    } else {
+        throw std::invalid_argument("Invalid splitting method \"" + splitting_type_str + "\".");
+    }
+}
+
+std::string splitting_method_to_str(SplittingMethodType splitting_method) {
+    if (splitting_method == SplittingMethodType::NaiveTopK) {
+        return "Naive Top K Splitter";
+    } else if (splitting_method == SplittingMethodType::UnifValid) {
+        return "Uniform Valid Edge Splitter";
+    } else if (splitting_method == SplittingMethodType::ExpBiggerAbsDev) {
+        return "Exponentially Weighted Absolute Bigger Deviance Splitter";
+    } else if (splitting_method == SplittingMethodType::ExpSmallerAbsDev) {
+        return "Exponentially Weighted Absolute Smaller Deviance Splitter";
+    } else if (splitting_method == SplittingMethodType::Experimental) {
+        return "Experimental Splitter";
+    } else if (splitting_method == SplittingMethodType::Constraint) {
+        return "Constraint Splitter";
+    } else {
+        throw std::logic_error(
+            "splitting_method_to_str received an unknown SplittingMethodType value: " +
+            std::to_string(static_cast<unsigned int>(splitting_method))
+        );
+    }
+}
+
+SplittingSizeScheduleType
+get_splitting_size_regime(std::string const &splitting_size_regime_str) {
+    // find the type or throw an error
+    if (splitting_size_regime_str == "split_district_only") {
+        return SplittingSizeScheduleType::DistrictOnlySMD;
+    } else if (splitting_size_regime_str == "any_valid_sizes") {
+        return SplittingSizeScheduleType::AnyValidSizeSMD;
+    } else if (splitting_size_regime_str == "split_district_only_mmd") {
+        return SplittingSizeScheduleType::DistrictOnlyMMD;
+    } else if (splitting_size_regime_str == "any_valid_sizes_mmd") {
+        return SplittingSizeScheduleType::AnyValidSizeMMD;
+    } else if (splitting_size_regime_str == "one_custom_size") {
+        return SplittingSizeScheduleType::OneCustomSize;
+    } else if (splitting_size_regime_str == "pure_ms_size") {
+        return SplittingSizeScheduleType::PureMergeSplitSize;
+    } else if (splitting_size_regime_str == "custom") {
+        return SplittingSizeScheduleType::CustomSizes;
+    } else {
+        throw std::invalid_argument(
+            "Invalid splitting size regime: '" +
+            splitting_size_regime_str + "'"
+        );
+    }
+};
+
+
+// Returns the edge weights to store in a GraphEdgeIndex. An empty input means
+// the graph is unweighted so every edge gets weight 1.
+static std::vector<double> build_edge_weights(std::vector<double> const &edge_weights,
+                                              int const num_edges) {
+    if (edge_weights.empty()) {
+        return std::vector<double>(num_edges, 1.0);
+    }
+
+    if (static_cast<int>(edge_weights.size()) != num_edges) {
+        std::ostringstream oss;
+        oss << "GraphEdgeIndex edge weight count mismatch. "
+            << "expected " << num_edges
+            << ", got " << edge_weights.size();
+        throw std::invalid_argument(oss.str());
+    }
+
+    for (std::size_t edge_id = 0; edge_id < edge_weights.size(); ++edge_id) {
+        double const weight = edge_weights[edge_id];
+        if (!std::isfinite(weight) || weight <= 0) {
+            std::ostringstream oss;
+            oss << "GraphEdgeIndex edge weights must be strictly positive and finite, "
+                << "but edge " << edge_id << " has weight " << weight;
+            throw std::invalid_argument(oss.str());
+        }
+    }
+
+    return edge_weights;
+}
+
+GraphEdgeIndex::GraphEdgeIndex(Graph const &g, int const num_edges,
+                               std::vector<double> const &edge_weights)
+    :  num_edges(num_edges), V(g.size()),
+       edge_weights(build_edge_weights(edge_weights, num_edges)),
+       is_weighted(!edge_weights.empty()),
+       incident_edges(g.size()) {
+
+    if (g.size() > MAX_SUPPORTED_NUM_VERTICES) {
+        throw std::invalid_argument("Too many vertices for VertexID in GraphEdgeIndex!");
+    }
+
+    int const V = static_cast<int>(g.size());
+    max_num_edges = 1;
+
+    // Edge ids are canonical: edge e is the e-th (v, u) pair with v < u in
+    // lexicographic order. This makes ids depend only on the graph and not on
+    // the order neighbors appear in the adjacency list, so edge-indexed output
+    // (spanning forests, linking edges) is comparable across runs and maps.
+    //
+    // First pass validates the adjacency list and collects the (v, u) pairs.
+    edges.reserve(num_edges);
+    for (int v = 0; v < V; ++v) {
+        auto num_v_edges = g[v].size();
+        incident_edges[v].reserve(num_v_edges);
+
+        // update the max number of edges if this is larger
+        if (num_v_edges > max_num_edges){
+            max_num_edges = num_v_edges;
+        }
+
+        std::unordered_set<int> seen_neighbors_for_v;
+        seen_neighbors_for_v.reserve(g[v].size());
+
+        for (int u : g[v]) {
+            if (u < 0 || u >= V) {
+                throw std::runtime_error("GraphEdgeIndex found invalid neighbor index!");
+            }
+
+            if (!seen_neighbors_for_v.insert(u).second) {
+                std::ostringstream oss;
+                oss << "Duplicate neighbor in graph adjacency list: "
+                    << "vertex " << v << " has neighbor " << u << " more than once.";
+
+                throw std::runtime_error(oss.str());
+            }
+
+            if (v < u) {
+                edges.push_back({
+                    static_cast<VertexID>(v),
+                    static_cast<VertexID>(u)
+                });
+            }
+        }
+    }
+
+    if (!edges.empty() &&
+        edges.size() - 1 > static_cast<std::size_t>(std::numeric_limits<EdgeID>::max())) {
+        throw std::runtime_error("Too many graph edges for EdgeID!");
+    }
+
+    std::sort(edges.begin(), edges.end());
+
+    // Second pass fills incident_edges. The traversal order here is kept
+    // identical to the order used before ids were canonicalized (neighbors are
+    // appended as each smaller endpoint is visited) since samplers walk
+    // incident_edges and changing it would change results for a given seed.
+    for (int v = 0; v < V; ++v) {
+        for (int u : g[v]) {
+            if (v >= u) continue;
+
+            std::pair<VertexID, VertexID> const edge{
+                static_cast<VertexID>(v), static_cast<VertexID>(u)
+            };
+            EdgeID const eid = static_cast<EdgeID>(
+                std::lower_bound(edges.begin(), edges.end(), edge) - edges.begin()
+            );
+
+            incident_edges[v].push_back({
+                static_cast<VertexID>(u),
+                eid
+            });
+
+            incident_edges[u].push_back({
+                static_cast<VertexID>(v),
+                eid
+            });
+        }
+    }
+
+    if (static_cast<int>(edges.size()) != num_edges) {
+        std::ostringstream oss;
+        oss << "GraphEdgeIndex edge count mismatch. "
+            << "expected " << num_edges
+            << ", built " << edges.size();
+        
+        throw std::runtime_error(oss.str());
+    }
+}
+
+
+
+
+
+void FlatGraph::erase_directed_edge(EdgeCut const &cut_edge) {
+    int const parent = cut_edge.cut_vertex_parent;
+    int const child = cut_edge.cut_vertex;
+
+    if constexpr (perf_config::supposedly_safe_input_checks) {
+        int const V = size();
+
+        if (parent < 0 || parent >= V) {
+            std::ostringstream oss;
+            oss << "FlatGraph::erase_tree_edge invalid cut_vertex_parent.\n";
+            oss << "cut_vertex_parent=" << parent << "\n";
+            oss << "cut_vertex=" << child << "\n";
+            oss << "tree_root=" << cut_edge.tree_root << "\n";
+            oss << "FlatGraph size=" << V << "\n";
+            throw std::runtime_error(oss.str());
+        }
+
+        if (child < 0 || child >= V) {
+            std::ostringstream oss;
+            oss << "FlatGraph::erase_tree_edge invalid cut_vertex.\n";
+            oss << "cut_vertex_parent=" << parent << "\n";
+            oss << "cut_vertex=" << child << "\n";
+            oss << "tree_root=" << cut_edge.tree_root << "\n";
+            oss << "FlatGraph size=" << V << "\n";
+            throw std::runtime_error(oss.str());
+        }
+    }
+
+    int const start = offsets[parent];
+    int const stop = start + sizes[parent];
+
+    int pos = stop;
+
+
+    for (std::size_t idx = start; idx < stop; ++idx) {
+        if (data[idx] == child) {
+            pos = idx;
+            break;
+        }
+    }
+
+    if constexpr (perf_config::supposedly_safe_input_checks) {
+        if (pos == stop) {
+            std::ostringstream oss;
+            oss << "FlatGraph::erase_tree_edge could not find cut edge.\n";
+            oss << "cut_vertex_parent=" << parent << "\n";
+            oss << "cut_vertex=" << child << "\n";
+            oss << "tree_root=" << cut_edge.tree_root << "\n";
+            throw std::runtime_error(oss.str());
+        }
+    }
+
+    // replaces the value at the position to remove 
+    // with the value in the tail, no shift needed 
+    // then the value at stop - 1
+    data[pos] = data[stop - 1];
+    --sizes[parent];
+}
+
+// Constructor
+MapParams::MapParams(Graph const &g, 
+    const std::vector<unsigned int> &counties, 
+    const std::vector<unsigned int> &pop,
+            int const ndists, int const total_seats,
+            std::vector<int> const &district_seat_sizes, 
+            double const lower,
+            double const target, double const upper,
+            SamplingSpace const sampling_space,
+            bool const plans_may_be_non_hierarchical,
+            std::vector<double> const &edge_weights)
+    : g(g), map_graph(g),
+    num_edges(count_undirected_edges(g)),
+    graph_edge_index(g, num_edges, edge_weights),
+    is_weighted(graph_edge_index.is_weighted),
+    num_edge_bit_words(compute_num_edge_bit_words(num_edges)),
+        counties(counties.begin(), counties.end()), 
+        num_counties(*std::max_element(counties.begin(), counties.end())), 
+        plans_may_be_non_hierarchical(plans_may_be_non_hierarchical && num_counties > 1),
+        cg(county_multigraph(g, counties)),
+        county_vertices(build_county_vertices(counties, num_counties)),
+        county_restricted_graph(num_counties > 1 ? build_restricted_county_graph(g, counties)
+                                                : g),
+        county_restricted_flat_graph(county_restricted_graph),
+        pop(pop), V(static_cast<int>(g.size())), ndists(ndists), total_seats(total_seats),
+        lower(lower), target(target), upper(upper),
+        is_district([ndists, total_seats, &district_seat_sizes]() {
+            if (ndists != total_seats && district_seat_sizes.size() == 0) {
+                throw std::runtime_error("District Seat Sizes vector must be non-empty!\n");
+            }
+            // vector where index i is true iff i seats is a district
+            std::vector<bool> is_district_vec(total_seats + 1, false);
+            if (ndists > total_seats) {
+                throw std::runtime_error("The number of distrcts must be less than or equal to "
+                                    "the total number of seats!\n");
+            } else if (ndists != total_seats) {
+                for (auto const &a_size : district_seat_sizes) {
+                    if (a_size <= 0)
+                        throw std::runtime_error(
+                            "District Seat Sizes must be strictly positive!\n");
+                    if (a_size >= total_seats)
+                        throw std::runtime_error(
+                            "District Seat Sizes must be less than total seats!\n");
+                    // mark this as a district size
+                    is_district_vec[a_size] = true;
+                }
+
+            } else {
+                is_district_vec[1] = true;
+            }
+            return is_district_vec;
+        }()),
+        district_seat_sizes(district_seat_sizes),
+        smallest_district_size(
+            *std::min_element(district_seat_sizes.begin(), district_seat_sizes.end())),
+        largest_district_size(
+            *std::max_element(district_seat_sizes.begin(), district_seat_sizes.end())),
+        is_mmd(ndists != total_seats),
+        sampling_space(sampling_space) {
+    // check the sizes are ok
+    if (ndists - 1 > MAX_SUPPORTED_NUM_DISTRICTS ||
+        total_seats - 1 > MAX_SUPPORTED_NUM_DISTRICTS) {
+        throw std::overflow_error(
+            "Too many districts. The maximum supported number of districts is " +
+            std::to_string(MAX_SUPPORTED_NUM_DISTRICTS) + "."
+        );
+    }
+    if (num_counties - 1 > MAX_SUPPORTED_NUM_COUNTIES) {
+        throw std::overflow_error(
+            "Too many counties. The maximum supported number of counties is " +
+            std::to_string(MAX_SUPPORTED_NUM_COUNTIES) + "."
+        );
+    }
+    if (V - 1 > MAX_SUPPORTED_NUM_VERTICES) {
+        throw std::overflow_error(
+            "Too many vertices. The maximum supported number of vertices is " +
+            std::to_string(MAX_SUPPORTED_NUM_VERTICES) + "."
+        );
+    }
+    if (V <= 1) {
+        throw std::underflow_error(
+            "Too few vertices. There must be at least 2 vertices."
+        );
+    }
+};
+
+
+MapParams::MapParams(Graph const &g, 
+    const std::vector<unsigned int> &counties, 
+    const std::vector<unsigned int> &pop,
+    double const lower, double const upper,
+    std::vector<double> const &edge_weights
+): MapParams(g, counties, pop,
+        6, 6, std::vector<int>{1}, lower,
+                         42.0, upper, SamplingSpace::GraphSpace, false, edge_weights) {};

@@ -71,7 +71,7 @@ equal to Pois(\code{lambda}) + 1. The default is \code{0}.}
 
 \item{pop_tol}{The strength of the hard population
 constraint. \code{pop_tol} = 0.05 means that any proposed swap that
-brings a district more than 5\% away from population parity will be
+brings a district more than 5\\% away from population parity will be
 rejected. The default is \code{NULL}.}
 
 \item{group_pop}{A vector of populations for some sub-group of

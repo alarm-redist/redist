@@ -1,4 +1,3 @@
-#include "smc_base.h"
 
 #ifndef SHATTER_SEARCH_H
 #define SHATTER_SEARCH_H

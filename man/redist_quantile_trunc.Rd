@@ -2,7 +2,7 @@
 % Please edit documentation in R/redist_smc.R
 \name{redist_quantile_trunc}
 \alias{redist_quantile_trunc}
-\title{Helper function to truncate importance weights}
+\title{Deprecated Helper function to truncate importance weights}
 \usage{
 redist_quantile_trunc(x)
 }

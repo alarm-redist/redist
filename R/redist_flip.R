@@ -140,6 +140,7 @@
 #' the initial plan in the output.  Defaults to the column name of the
 #' existing plan, or "\code{<init>}" if the initial plan is sampled.
 #' @param verbose Whether to print initialization statement. Default is \code{TRUE}.
+#' @param silent Whether to suppress all diagnostic output (overrides `verbose`).
 #'
 #' @return A \code{\link{redist_plans}} object containing the simulated plans.
 #'   If `chains > 1`, the output will include a `chain` column indicating which
@@ -187,14 +188,21 @@ redist_flip <- function(
     cl_type = "PSOCK",
     return_all = TRUE,
     init_name = NULL,
-    verbose = TRUE
+    verbose = TRUE,
+    silent = FALSE
 ) {
     chains <- as.integer(chains)
     if (chains < 1) {
         cli::cli_abort("{.arg chains} must be positive.")
     }
 
-    verbosity <- ifelse(verbose, 3, 1)
+    verbosity <- if (silent) {
+        0L
+    } else if (verbose) {
+        3L
+    } else {
+        1L
+    }
 
     if (verbosity > 0) {
         cli::cli({
@@ -322,7 +330,7 @@ redist_flip <- function(
 
     if (ncores > 1 && chains > 1) {
         `%oper%` <- `%dorng%`
-        if (verbose) {
+        if (verbosity > 0) {
             of <- ifelse(
                 Sys.info()[["sysname"]] == "Windows",
                 tempfile(
@@ -342,6 +350,7 @@ redist_flip <- function(
             cl <- parallel::makeCluster(
                 ncores,
                 type = cl_type,
+                outfile = nullfile(),
                 methods = FALSE,
                 useXDR = .Platform$endian != "little"
             )
@@ -360,7 +369,7 @@ redist_flip <- function(
         .packages = "redist"
     ) %oper%
         {
-            if (verbose) {
+            if (verbosity > 0) {
                 cat("Starting chain ", chain, "\n", sep = "")
             }
             run_verbosity <- if (chain == 1 || verbosity == 3) verbosity else 0
@@ -476,7 +485,7 @@ redist_flip <- function(
         mh_acceptance = mh,
         version = packageVersion("redist"),
         diagnostics = l_diag
-    ) %>%
+    ) |>
         mutate(
             distance_parity = rep(distance_parity, each = ndists),
             mhdecisions = rep(mhdecisions, each = ndists),
@@ -490,13 +499,12 @@ redist_flip <- function(
 
     # Add chain column if multiple chains
     if (chains > 1) {
-        out <- out %>%
-            mutate(chain = rep(seq_len(chains), each = each_len * ndists))
+        out <- out |> mutate(chain = rep(seq_len(chains), each = each_len * ndists))
     }
 
     # Add constraint columns
-    add_tb <- apply(psi_store, 1, function(x) rep(x, each = ndists)) %>%
-        dplyr::as_tibble() %>%
+    add_tb <- apply(psi_store, 1, function(x) rep(x, each = ndists)) |>
+        dplyr::as_tibble() |>
         dplyr::rename_with(function(x) paste0("constraint_", x))
 
     names_tb <- names(add_tb)[apply(add_tb, 2, function(x) {
@@ -513,7 +521,7 @@ redist_flip <- function(
         } else {
             out <- Reduce(
                 function(cur, idx) {
-                    add_reference(cur, init_plans[, idx], init_names[idx]) %>%
+                    add_reference(cur, init_plans[, idx], init_names[idx]) |>
                         mutate(chain = dplyr::coalesce(chain, idx))
                 },
                 rev(seq_len(chains)),
@@ -727,7 +735,7 @@ redist_flip_anneal <- function(
         nthin = thin,
         mh_acceptance = mean(algout$mhdecisions),
         version = packageVersion("redist"),
-    ) %>%
+    ) |>
         mutate(
             distance_parity = rep(algout$distance_parity, each = ndists),
             mhdecisions = rep(algout$mhdecisions, each = ndists),
@@ -738,8 +746,8 @@ redist_flip_anneal <- function(
             boundary_partitions = rep(algout$boundary_partitions, each = ndists),
             boundary_ratio = rep(algout$boundary_partitions, each = ndists)
         )
-    add_tb <- apply(algout$psi_store, 1, function(x) rep(x, each = ndists)) %>%
-        dplyr::as_tibble() %>%
+    add_tb <- apply(algout$psi_store, 1, function(x) rep(x, each = ndists)) |>
+        dplyr::as_tibble() |>
         dplyr::rename_with(function(x) paste0("constraint_", x))
 
     names_tb <- names(add_tb)[apply(add_tb, 2, function(x) {

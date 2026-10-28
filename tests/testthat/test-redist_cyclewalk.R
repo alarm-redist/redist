@@ -1,5 +1,5 @@
 test_that("redist_cyclewalk runs on Iowa data", {
-    result <- redist_cyclewalk(ia, nsims = 500)
+    result <- redist_cyclewalk(ia, nsims = 500, silent = TRUE)
 
     expect_s3_class(result, "redist_plans")
     expect_equal(ncol(get_plans_matrix(result)), 51)
@@ -8,7 +8,7 @@ test_that("redist_cyclewalk runs on Iowa data", {
 
 test_that("redist_cyclewalk respects population bounds", {
     set.seed(1)
-    result <- redist_cyclewalk(ia, nsims = 200)
+    result <- redist_cyclewalk(ia, nsims = 200, silent = TRUE)
 
     pop_bounds <- attr(ia, "pop_bounds")
     pops <- result |>
@@ -35,7 +35,7 @@ test_that("redist_cyclewalk with silent output works", {
 
 test_that("cycle walk can produce different plans", {
     set.seed(1)
-    result <- redist_cyclewalk(ia, nsims = 1000, thin = 1, verbose = FALSE)
+    result <- redist_cyclewalk(ia, nsims = 1000, thin = 1, verbose = FALSE, silent = TRUE)
 
     plans_mat <- get_plans_matrix(result)
 
@@ -47,7 +47,7 @@ test_that("cycle walk can produce different plans", {
 })
 
 test_that("all generated plans are contiguous", {
-    result <- redist_cyclewalk(ia, nsims = 500, verbose = FALSE)
+    result <- redist_cyclewalk(ia, nsims = 500, verbose = FALSE, silent = TRUE)
     plans_mat <- get_plans_matrix(result)
     cont <- apply(plans_mat, 2, \(x) max(contiguity(adj = ia$adj, x)))
     expect_equal(max(cont), 1)
@@ -59,7 +59,13 @@ test_that("redist_cyclewalk runs with constraints", {
     constr <- redist_constr(ia) |>
         add_constr_pop_dev(strength = 10)
 
-    result <- redist_cyclewalk(ia, nsims = 500, constraints = constr, verbose = FALSE)
+    result <- redist_cyclewalk(
+        ia,
+        nsims = 500,
+        constraints = constr,
+        verbose = FALSE,
+        silent = TRUE
+    )
 
     expect_s3_class(result, "redist_plans")
     expect_equal(ncol(get_plans_matrix(result)), 51)
@@ -67,14 +73,20 @@ test_that("redist_cyclewalk runs with constraints", {
     constr <- redist_constr(ia) |>
         add_constr_splits(strength = 5, admin = region)
 
-    result <- redist_cyclewalk(ia, nsims = 500, constraints = constr, verbose = FALSE)
+    result <- redist_cyclewalk(
+        ia,
+        nsims = 500,
+        constraints = constr,
+        verbose = FALSE,
+        silent = TRUE
+    )
 
     expect_s3_class(result, "redist_plans")
     expect_equal(ncol(get_plans_matrix(result)), 51)
 })
 
 test_that("all plans have valid district structure", {
-    result <- redist_cyclewalk(ia, nsims = 1000, verbose = FALSE)
+    result <- redist_cyclewalk(ia, nsims = 1000, verbose = FALSE, silent = TRUE)
     plans_mat <- get_plans_matrix(result)
 
     ndists <- attr(ia, "ndists")
@@ -86,7 +98,7 @@ test_that("all plans have valid district structure", {
 test_that("longer chain runs without crashing", {
     skip_on_cran()
 
-    result <- redist_cyclewalk(ia, nsims = 500, verbose = FALSE)
+    result <- redist_cyclewalk(ia, nsims = 500, verbose = FALSE, silent = TRUE)
 
     expect_s3_class(result, "redist_plans")
     expect_equal(ncol(get_plans_matrix(result)), 51)
@@ -94,21 +106,28 @@ test_that("longer chain runs without crashing", {
 
 test_that("thinning works correctly", {
     # With thin=5 and nsims=1000, should get 1000/5 + 1 = 201 plans
-    result <- redist_cyclewalk(ia, nsims = 1000, thin = 5, verbose = FALSE)
+    result <- redist_cyclewalk(ia, nsims = 1000, thin = 5, verbose = FALSE, silent = TRUE)
 
     expect_equal(ncol(get_plans_matrix(result)), 201)
 })
 
 test_that("warmup burns initial samples", {
-    result <- redist_cyclewalk(ia, nsims = 500, warmup = 10, verbose = FALSE)
+    result <- redist_cyclewalk(ia, nsims = 500, warmup = 10, verbose = FALSE, silent = TRUE)
 
     expect_s3_class(result, "redist_plans")
-    # 1 reference + 49 sampled (with thin=10 default)
-    expect_equal(ncol(get_plans_matrix(result)), 50)
+    # nsims counts post-warmup saved samples (matches merge_split convention):
+    # 500/10 = 50 sampled + 1 reference.
+    expect_equal(ncol(get_plans_matrix(result)), 51)
 })
 
 test_that("init_plan parameter works", {
-    result <- redist_cyclewalk(ia, nsims = 200, init_plan = ia$cd_2010, verbose = FALSE)
+    result <- redist_cyclewalk(
+        ia,
+        nsims = 200,
+        init_plan = ia$cd_2010,
+        verbose = FALSE,
+        silent = TRUE
+    )
 
     plans_mat <- get_plans_matrix(result)
 
@@ -119,7 +138,13 @@ test_that("cycle walk produces valid plans on 4x4 grid", {
     skip_on_cran()
 
     set.seed(42)
-    result <- redist_cyclewalk(grid, nsims = 500, init_plan = grid$init, verbose = FALSE)
+    result <- redist_cyclewalk(
+        grid,
+        nsims = 500,
+        init_plan = grid$init,
+        verbose = FALSE,
+        silent = TRUE
+    )
 
     cut_edge_counts <- comp_edges_rem(result, shp = grid) |> by_plan(ndists = 4)
 

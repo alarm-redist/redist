@@ -1,0 +1,358 @@
+#pragma once
+#ifndef TREE_SPLITTING_H
+#define TREE_SPLITTING_H
+
+#include <cmath>
+
+#include <queue>
+#include <utility>
+#include <vector>
+
+#include "advanced_types.h"
+#include "tree_op.h"
+
+class ScoringFunction;
+class Plan;
+class RNGState;
+
+
+// Designed to allow for different tree splitting methods
+// This allows us to seperate cutting the tree from finding the edge to cut
+class TreeSplitter {
+
+  public:
+    // Default Constructor
+    TreeSplitter(FlatGraph const &map_graph) :
+    visited(map_graph.size()),
+    reroot_weight(map_graph.size()),
+    no_valid_edges_vertices(map_graph.size()),
+    stack(map_graph.size()+1)
+    // balanced_edge_cuts()
+    {
+        // balanced_edge_cuts.reserve(
+        //     static_cast<int>(std::ceil(.1 * map_graph.size()))
+        // );
+    };
+    TreeSplitter(int const V) : 
+        visited(0),
+        reroot_weight(0),
+        no_valid_edges_vertices(V),
+        stack(V + 1) { 
+        // balanced_edge_cuts.reserve(
+        //     static_cast<int>(std::ceil(.1 * V))
+        // );
+    };
+
+
+    virtual ~TreeSplitter() = default;
+
+    std::vector<bool> visited; // used in retroactive prob so not needed for naive k
+    mutable std::vector<double> reroot_weight;
+    mutable std::vector<bool> no_valid_edges_vertices; // used in finding balanced edge cuts
+    
+    mutable TreePopStack stack; // used in splitting so needed for all 
+    
+    // mutable std::vector<EdgeCut> balanced_edge_cuts;
+
+    // Returns a vector of all the valid edges in the tree
+    std::vector<EdgeCut> get_all_valid_pop_edge_cuts_in_directed_tree(
+        MapParams const &map_params, Tree const &ust, // FlatGraph const &ust, 
+        const int root, 
+        std::vector<int> &pops_below_vertex, 
+        int const region_population, int const region_size, const int min_potential_cut_size,
+        const int max_potential_cut_size,
+        std::vector<int> const &smaller_cut_sizes_to_try) const;
+
+    // Takes a spanning tree and returns the edge to cut if successful
+    virtual std::pair<bool, EdgeCut> attempt_to_find_edge_to_cut(
+        const MapParams &map_params, ScoringFunction const &scoring_function,
+        RNGState &rng_state, Plan const &plan, int const split_region1, int const split_region2,
+        Tree const &ust, // FlatGraph const &ust, 
+        const int root, 
+        std::vector<int> &pops_below_vertex, 
+        int const region_population, int const region_size, const int min_potential_cut_size,
+        const int max_potential_cut_size, std::vector<int> const &smaller_cut_sizes_to_try,
+        bool save_selection_prob = false);
+
+    // Get probability a specific edge was cut in the tree made by joining
+    // the trees in the two regions where the forest is stored as a packed forest
+    virtual double get_log_retroactive_splitting_prob_for_joined_packed_tree(
+        MapParams const &map_params, ScoringFunction const &scoring_function,
+        EdgeBitset const &forest_edges, 
+        std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
+        Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
+        std::vector<int> const &smaller_cut_sizes_to_try);
+
+    // computes the effective region tree boundary length for a pair of adjacent
+    // trees in one pass
+    virtual double get_log_eff_boundary_len_for_adj_region_pair(
+        MapParams const &map_params, ScoringFunction const &scoring_function,
+        EdgeBitset const &forest_edges, 
+        std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
+        Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
+        std::vector<int> const &smaller_cut_sizes_to_try,
+        bool const count_edges_across
+    );
+
+
+    virtual double get_log_retroactive_splitting_prob_from_valid_pop_cut_list(
+        std::vector<EdgeCut> &valid_edges, EdgeCut const actual_cut_edge
+    );
+
+    // For vertex/size based splitters (this includes population based splitters)
+    // where the probability of picking a specific tree cut is proportional to 
+    // a function solely of the size and vertices in the cuts.
+    // This includes population based splitters like unif valid edge and the
+    // expo weighted deviation and also the constraint splitter
+    // it does not include splitters like those that put most of the mass on 
+    // the best cut 
+    // NOTE: We always assume this called on balanced input (ie above and below regions 
+    // are balanced for thier size).
+    // To recap: Things must not depend on the arbitrary rooting or endpoint labels 
+    // except insofar as they determine the two induced vertex sets.
+    virtual double get_unnormed_selection_prob(
+        int const root,
+        int const cut_vertex,
+        int const cut_vertex_parent,
+        int const cut_below_region_size,
+        double const cut_below_pop,
+        int const cut_above_region_size,
+        double const cut_above_pop
+    ) const {
+        throw std::logic_error("get_unnormed_selection_prob is not implemented for this TreeSplitter Variant!\n");
+    };
+
+    // Takes a vector of valid edge cuts and returns the log probability
+    // the one an index idx would have been chosen
+    virtual double get_log_selection_prob(std::vector<EdgeCut> &valid_edges, int idx) const;
+
+    // used to update the k parameter for top k splitter
+    virtual void update_single_int_param(int int_param) {
+        throw std::runtime_error(
+            "TreeSplitter::update_single_int_param is not implemented for this splitting "
+            "method. Only splitters with a single integer parameter (the top k splitter) "
+            "support it.\n");
+    };
+
+    // used to get the k parameter for top k splitter
+    virtual int get_single_int_param() const {
+        throw std::runtime_error(
+            "TreeSplitter::get_single_int_param is not implemented for this splitting "
+            "method. Only splitters with a single integer parameter (the top k splitter) "
+            "support it.\n");
+        return -1;
+    };
+
+    // returns edge cut and log probability it was chosen
+    // for tree splitters where the selection probability is solely a function of the 
+    // balanced tree cuts. It can't depend on anything else
+    virtual std::pair<bool, EdgeCut> select_edge_to_cut(
+        RNGState &rng_state, std::vector<EdgeCut> &valid_edges,
+        bool save_selection_prob
+    ) const;
+
+    virtual double compute_unnormalized_edge_cut_weight(EdgeCut const &edge_cut) const {
+        throw std::runtime_error(
+            "TreeSplitter::compute_unnormalized_edge_cut_weight is not implemented for this "
+            "splitting method.");
+    };
+};
+
+// Splitting method that just tries to pick one of the top k edges unif
+class NaiveTopKSplitter : public TreeSplitter {
+
+  public:
+    // Constructor for NaiveTopKSplitter
+    NaiveTopKSplitter(int const V, int k_param) 
+    : TreeSplitter(V), k_param(k_param) {}
+
+    // Attributes specific to NaiveTopKSplitter
+    int k_param; // Top k valuex
+
+    // how to update the k param
+    void update_single_int_param(int int_param) override;
+
+    int get_single_int_param() const override { return k_param; };
+
+    std::pair<bool, EdgeCut> select_edge_to_cut(RNGState &rng_state,
+                                                std::vector<EdgeCut> &valid_edges,
+                                                bool save_selection_prob) const override;
+
+    double get_log_selection_prob(std::vector<EdgeCut> &valid_edges, int idx) const override {
+        throw std::runtime_error("No log selection prob implemented for naive k!\n");
+    }
+};
+
+// Splitting method that just tries to pick one of the top k edges unif
+class UniformValidSplitter : public TreeSplitter {
+
+  public:
+    // implementation of the pure virtual function
+    UniformValidSplitter(FlatGraph const &map_graph) : 
+    TreeSplitter(map_graph) {};
+
+    std::pair<bool, EdgeCut> select_edge_to_cut(RNGState &rng_state,
+                                                std::vector<EdgeCut> &valid_edges,
+                                                bool save_selection_prob) const override;
+
+    double get_unnormed_selection_prob(
+            int const root,
+            int const cut_vertex,
+            int const cut_vertex_parent,
+            int const cut_below_region_size,
+            double const cut_below_pop,
+            int const cut_above_region_size,
+            double const cut_above_pop
+        ) const override;
+
+    // since uniform log prob is just -log(# of candidates)
+    double get_log_selection_prob(std::vector<EdgeCut> &valid_edges, int idx) const override {
+        return -std::log(valid_edges.size());
+    }
+};
+
+// Splitting method that picks edge w/ prob ∝ exp(-alpha*bigger dev)
+class ExpoWeightedSplitter : public TreeSplitter {
+
+  public:
+    ExpoWeightedSplitter(FlatGraph const &map_graph,
+        double alpha, double target)
+        : TreeSplitter(map_graph), alpha(alpha), target(target) {
+        if (alpha < 0.0)
+            throw std::runtime_error("Alpha must be greater than zero!");
+    }
+
+    double alpha;
+    double target;
+
+    double get_unnormed_selection_prob(
+            int const root,
+            int const cut_vertex,
+            int const cut_vertex_parent,
+            int const cut_below_region_size,
+            double const cut_below_pop,
+            int const cut_above_region_size,
+            double const cut_above_pop
+    ) const override;
+
+    double compute_unnormalized_edge_cut_weight(EdgeCut const &edge_cut) const override;
+};
+
+class ExpoWeightedSmallerDevSplitter : public TreeSplitter {
+
+  public:
+    ExpoWeightedSmallerDevSplitter(FlatGraph const &map_graph,
+        double alpha, double target)
+        : TreeSplitter(map_graph), alpha(alpha), target(target) {
+        if (alpha < 0.0)
+            throw std::runtime_error("Alpha must be greater than zero!");
+    }
+
+    double alpha;
+    double target;
+
+    double get_unnormed_selection_prob(
+            int const root,
+            int const cut_vertex,
+            int const cut_vertex_parent,
+            int const cut_below_region_size,
+            double const cut_below_pop,
+            int const cut_above_region_size,
+            double const cut_above_pop
+    ) const override;
+
+    virtual double compute_unnormalized_edge_cut_weight(EdgeCut const &edge_cut) const override;
+};
+
+// Splitting method that just tries to pick one of the top k edges unif
+class PopTemperSplitter : public TreeSplitter {
+
+  public:
+    // implementation of the pure virtual function
+    PopTemperSplitter(FlatGraph const &map_graph,
+        double const target, double const pop_temper, int const ndists)
+        : TreeSplitter(map_graph), target(target), pop_temper(pop_temper), ndists(ndists) {};
+
+    double const target;
+    double const pop_temper;
+    int const ndists;
+
+    // since uniform log prob is just -log(# of candidates)
+    double compute_unnormalized_edge_cut_weight(EdgeCut const &edge_cut) const override;
+};
+
+class ExperimentalSplitter : public TreeSplitter {
+
+  public:
+    ExperimentalSplitter(FlatGraph const &map_graph,
+        double epsilon, double target)
+        : TreeSplitter(map_graph), epsilon(epsilon), target(target) {
+        if (epsilon < 0.0)
+            throw std::runtime_error("Epsilon must be greater than zero!");
+    }
+
+    double epsilon;
+    double target;
+
+    std::pair<bool, EdgeCut> select_edge_to_cut(RNGState &rng_state,
+                                                std::vector<EdgeCut> &valid_edges,
+                                                bool save_selection_prob) const override;
+
+    double get_log_selection_prob(std::vector<EdgeCut> &valid_edges, int idx) const override;
+};
+
+class ConstraintSplitter : public TreeSplitter {
+
+  private:
+    std::vector<RegionID> underlying_plans_vec;
+    std::vector<RegionID> underlying_sizes_vec;
+    std::vector<int> underlying_pops_vec;
+
+  public:
+    ConstraintSplitter(FlatGraph const &map_graph, int const V, int const ndists)
+        : TreeSplitter(map_graph), underlying_plans_vec(V, 0), underlying_sizes_vec(ndists, 0),
+          underlying_pops_vec(ndists, 0), V(V), ndists(ndists),
+          region_ids(underlying_plans_vec, 0, V), region_sizes(underlying_sizes_vec, 0, ndists),
+          region_pops(underlying_pops_vec, 0, ndists), vertex_queue(V), dummy_forest(V) {
+        if (ndists < 0.0)
+            throw std::runtime_error("Ndists must be greater than zero!");
+    }
+
+    int const V;
+    int const ndists;
+    PlanVector region_ids;
+    RegionSizes region_sizes;
+    IntPlanAttribute region_pops;
+    CircularQueue<std::pair<int, int>> vertex_queue;
+    Tree dummy_forest;
+
+    // Takes a spanning tree and returns the edge to cut if successful
+    std::pair<bool, EdgeCut> attempt_to_find_edge_to_cut(
+        const MapParams &map_params, ScoringFunction const &scoring_function,
+        RNGState &rng_state, Plan const &plan, int const split_region1, int const split_region2,
+        Tree const &ust, // FlatGraph const &ust, 
+        const int root, 
+        std::vector<int> &pops_below_vertex, 
+        int const region_population, int const region_size, const int min_potential_cut_size,
+        const int max_potential_cut_size, std::vector<int> const &smaller_cut_sizes_to_try,
+        bool save_selection_prob = false) override;
+
+    double get_log_retroactive_splitting_prob_for_joined_packed_tree(
+        MapParams const &map_params, ScoringFunction const &scoring_function,
+        EdgeBitset const &forest_edges,
+        std::vector<int> &pops_below_vertex, const int region1_root, const int region2_root,
+        Plan const &plan, const int min_potential_cut_size, const int max_potential_cut_size,
+        std::vector<int> const &smaller_cut_sizes_to_try) override;
+
+
+    double custom_get_log_retroactive_splitting_prob_from_valid_pop_cut_list(
+            std::vector<EdgeCut> &valid_edges, EdgeCut const actual_cut_edge,
+            MapParams const &map_params, ScoringFunction const &scoring_function,
+            Plan const &plan
+    );
+
+};
+
+
+
+#endif
