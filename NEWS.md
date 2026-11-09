@@ -2,6 +2,7 @@
 
 * Speeds up spanning-tree sampling by starting Wilson walks near the existing tree and using successor-based loop erasure.
 * Old `enumpart` functions are deprecated in favor of `redist_enumpart()` which provides a more consistent syntax.
+* Fixes a bug where `redist_shortburst()` could mark a plan as dominated when scores were repeated.
 
 # redist 4.3.2
 
@@ -11,17 +12,17 @@
 # redist 4.3.0
 * Improves SMC performance by pre-allocating some memory while drawing spanning trees.
 * Replaces SMC label-counting adjustments (exact and importance-sampling-based) with a new backward kernel that eliminates approximation error and requires far less computation
-* 4.2.0 introduced some regressions in `redist_shortburst()` along with the new features. The following issues are fixed: 
+* 4.2.0 introduced some regressions in `redist_shortburst()` along with the new features. The following issues are fixed:
   * the returned `redist_plans` object would store the wrong score for the '<init>' input. This issue only impacted the returned object and the correct score was used during the shortburst process. (#180)
-  * the function would return immediately if `stop_at` was specified and `minimize = FALSE`. (#181) 
-  
+  * the function would return immediately if `stop_at` was specified and `minimize = FALSE`. (#181)
+
  * Add `summary()` support for plans sampled with the `flip` algorithm. This does not replace the full flip diagnostic suite, but provides an easy way to compute r-hats.
 
 # redist 4.2.0
 * Deprecate functionality that is provided by `redistmetrics` package.
 * Improve contiguity checking speed drastically.
 * Support for multiple independent scoring functions in `redist_shortburst()`.
-With multiple scorers, the algorithm will stochastically explore to try to 
+With multiple scorers, the algorithm will stochastically explore to try to
 find the largest Pareto frontier for the scores. The frontier can be accessed with
 `attr(<plans obj>, "pareto_score")`.
 * Removes the MPI vignette which relied on older implementations of `redist.mcmc()`, which was replaced by `redist.flip()` a few years ago, and finally `redist_flip()`.
@@ -39,23 +40,23 @@ find the largest Pareto frontier for the scores. The frontier can be accessed wi
 * Updated citation information
 
 # redist 4.0.0
-* A new constraint interface that is more flexible, user friendly, and consistent 
+* A new constraint interface that is more flexible, user friendly, and consistent
 across algorithms (see `redist_constr()` and `?constraints`). For the first time,
-user-defined custom constraints are supported and integrated within all three 
+user-defined custom constraints are supported and integrated within all three
 algorithms.
 * New diagnostic-checking function, `summary.redist_plans()`
 * Summary statistics have been broken out into a new `redistmetrics` package
-This will speed up compilation time and also provides a cleaner, more extensible 
+This will speed up compilation time and also provides a cleaner, more extensible
 interface for the implementation of additional metrics.
 * Parallel computing support for the SMC algorithm, both within and across sampling runs
 * Reproducible across-run parallelism throughout the package, via `doRNG`
 * Much faster `match_numbers()` using the Hungarian method
-* `min_move_parity()` calculates how much population needs to be moved between 
+* `min_move_parity()` calculates how much population needs to be moved between
 districts in order to completely balance a redistricting plan.
-* Support for partial SMC simulations, where fewer districts are drawn than the 
-total number. Allows advanced users to manually combine partial runs to 
+* Support for partial SMC simulations, where fewer districts are drawn than the
+total number. Allows advanced users to manually combine partial runs to
 form complete maps.
-* Improved algorithm reporting, including new progress bars and `cli` errors and 
+* Improved algorithm reporting, including new progress bars and `cli` errors and
 warnings throughout the package
 * Update the SMC algorithm to include a missing correction factor for the number
 of ways to sequentially label districts. This factor should not have an effect

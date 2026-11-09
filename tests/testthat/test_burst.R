@@ -27,7 +27,7 @@ test_that("pareto domination is calculated correctly", {
                  0, 1),
         nrow = 2
     )
-    expect_equal(pareto_dominated(x), c(FALSE, TRUE, TRUE))
+    expect_equal(pareto_dominated(x), c(TRUE, FALSE, TRUE))
 })
 
 test_that("short bursts run and improve the score over time", {

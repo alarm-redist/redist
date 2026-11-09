@@ -7,7 +7,7 @@ LogicalVector pareto_dominated(arma::mat x) {
 
     LogicalVector dominated(n); // initialized to FALSE
     // for every elelement
-    // In backwards order so that new duplicates don't show as undominated
+    // Backward scan retains the most recent plan for an exact score tie
     for (int i = n - 1; i >= 0; i--) {
         for (int j = 0; j < n; j++) { // for other non-dominated el
             if (i == j || dominated[j])
@@ -27,8 +27,8 @@ LogicalVector pareto_dominated(arma::mat x) {
                 }
             }
 
-            if (all_eq || (all_leq && any_less)) {
-                // if (all_leq && any_less) {
+            if ((all_eq && j > i) || (all_leq && any_less)) {
+
                 dominated[i] = true;
                 break;
             }
