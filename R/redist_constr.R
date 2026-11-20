@@ -1463,7 +1463,7 @@ constr_type_labels <- c(
     log_st            = "A (log-spanning-tree-type) compactness constraint",
     polsby            = "A (Polsby-Popper-type) compactness constraint",
     fry_hold          = "A (Fryer-Holden-type) compactness constraint",
-    seats      = "A region seats constraint",
+    seats             = "A region seats constraint",
     custom_plan       = "A custom plan constraint",
     custom            = "A custom constraint"
 )

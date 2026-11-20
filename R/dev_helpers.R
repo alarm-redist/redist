@@ -11,7 +11,7 @@ ld_ia <- function() {
 #'
 #' Computes the unnormalized log target density for the standard redist
 #' target measure. The density for a plan  can be decomposed into a plan-term
-#' (if relevant) and the procuct over regions of the regions compactness and
+#' (if relevant) and the product over regions of the regions compactness and
 #' its score
 #'
 #' @inheritParams redist_smc
@@ -156,9 +156,9 @@ compute_log_target_density_by_region <- function(
 
     if (inherits(plans, "redist_plans")) {
         plan_matrix <- get_plans_matrix(plans)
-    } else if (is.matrix(plans)) {
+    } else if (is.matrix(plans) && nrow(plans) == nrow(map)) {
         plan_matrix <- plans
-    } else if (is.vector(plans) && is.numeric(plans)) {
+    } else if (is.vector(plans) && is.numeric(plans) && length(plans) == nrow(map)) {
         plan_matrix <- as.matrix(plans, cols = 1)
     } else {
         cli::cli_abort("{.arg plans} must be a matrix or {.cls redist_plans} type!")

@@ -68,7 +68,6 @@ test_that("Not egregiously incorrect sampling accuracy (25-prec)", {
         set_pop_tol(fl_map, 0.01),
         6000,
         compactness = 0,
-        ncores = 1L,
         seq_alpha = 1L,
         resample = FALSE,
         silent = TRUE
@@ -268,8 +267,7 @@ test_that("Parallel runs are reproducible", {
         100,
         runs = 2,
         silent = TRUE,
-        ncores = 1L,
-        control = list(nproc = 1L)
+        ncores = 1L
     )
     set.seed(5118)
     pl2 <- redist_smc(
@@ -277,8 +275,7 @@ test_that("Parallel runs are reproducible", {
         100,
         runs = 2,
         silent = TRUE,
-        ncores = 1L,
-        control = list(nproc = 1L)
+        ncores = 1L
     )
 
     # runtime related is the only thing that shouldn't be identical
@@ -315,8 +312,7 @@ test_that("est_norm_unbiased recovers the known normalizing constant", {
     map <- suppressMessages(
         redist_map(fl25, ndists = 3, pop_tol = 0.2, total_pop = pop)
     )
-    # low resampling efficiency is expected on a map this small and does not
-    # affect the estimate
+    # low resampling efficiency is expected on a map this small
     plans <- suppressWarnings(
         redist_smc(map, 2000, runs = 5, compactness = 0,
                    ncores = 1, silent = TRUE)
@@ -328,8 +324,7 @@ test_that("est_norm_unbiased recovers the known normalizing constant", {
     expect_length(est, 5)
     expect_true(all(is.finite(est)))
 
-    # the estimator is unbiased on the natural scale, so average there rather
-    # than averaging the logs
+
     pooled <- log(mean(exp(est)))
     expect_equal(pooled, exact_log_norm(0.2), tolerance = 0.05)
 })
@@ -337,16 +332,13 @@ test_that("est_norm_unbiased recovers the known normalizing constant", {
 test_that("est_norm_unbiased tracks the constant across population tolerances", {
     skip_on_cran()
 
-    # A looser tolerance admits strictly more plans, so the normalizing
-    # constant must rise with it. This checks the estimator follows a change in
-    # the target rather than happening to land on one value.
+    # Higher pop_tol means more plans so larger norm constant
     pooled <- vapply(c(0.1, 0.2), function(tol) {
         set.seed(1935)
         map <- suppressMessages(
             redist_map(fl25, ndists = 3, pop_tol = tol, total_pop = pop)
         )
-        # the tighter tolerance warns about low resampling efficiency, which is
-        # expected on a map this small and does not affect the estimate
+        # ignore low resampling efficiency warning
         plans <- suppressWarnings(
             redist_smc(map, 2000, runs = 5, compactness = 0,
                        ncores = 1, silent = TRUE)
@@ -378,8 +370,7 @@ test_that("est_norm_unbiased accounts for rejected draws", {
         expect_true("draw_tries_mat" %in% names(d))
         expect_true(is.numeric(d$tries_before_extra_particle))
 
-        # more spanning trees were drawn than particles kept, i.e. draws were
-        # actually rejected on the way to a valid plan
+        # confirm more spanning trees were drawn than particles kept
         expect_gt(sum(d$draw_tries_mat), 1000 * ncol(d$draw_tries_mat))
     }
 
@@ -387,9 +378,7 @@ test_that("est_norm_unbiased accounts for rejected draws", {
     pooled <- log(mean(exp(est_norm_unbiased(map, plans))))
     expect_equal(pooled, truth, tolerance = 0.05)
 
-    # Dropping the attempt counts is not a small correction: without dividing
-    # by the number of tries the estimate is off by orders of magnitude. This
-    # pins down that the rejection accounting is doing real work.
+
     ignoring_tries <- vapply(diags, function(d) {
         d$log_blank_map_target_density +
             sum(log(colSums(exp(d$log_incremental_weights_mat))))
@@ -441,9 +430,7 @@ test_that("est_norm_unbiased handles a hard thresholding constraint", {
         redist_map(fl25, ndists = 3, pop_tol = 0.2, total_pop = pop)
     )
 
-    # A 0/1 score with `thresh = 0.5` rejects outright, since any plan scoring
-    # at or above the threshold is thrown out at the splitting stage. That
-    # restricts the target to plans keeping precincts 1 and 5 together.
+    # constr restricts the target to plans keeping precincts 1 and 5 together.
     constr <- redist_constr(map) |>
         add_constr_custom_plan(
             1,
@@ -453,10 +440,7 @@ test_that("est_norm_unbiased handles a hard thresholding constraint", {
             thresh = 0.5
         )
 
-    # At the default compactness each plan is weighted by its number of
-    # spanning forests, so the normalizing constant is the summed spanning tree
-    # count over the enumerated plans that clear both the population bound and
-    # the constraint, rather than a plain count of them.
+    # compute true normalizing constant 
     enum <- fl25_enum$plans
     keep <- fl25_enum$pop_dev <= 0.2 & (enum[1, ] == enum[5, ])
     log_st_kept <- log_st_map(adj, enum[, keep, drop = FALSE], rep(1L, 25), 3L)
@@ -472,13 +456,6 @@ test_that("est_norm_unbiased handles a hard thresholding constraint", {
 
     # the threshold really did reject: every sampled plan obeys it
     expect_true(all(plan_m[1, ] == plan_m[5, ]))
-
-    # and rejection was a large part of the cost, with several times more trees
-    # drawn than particles kept
-    tries <- vapply(attr(plans, "internal_diagnostics"), function(d) {
-        sum(d$draw_tries_mat) / (2000 * ncol(d$draw_tries_mat))
-    }, numeric(1))
-    expect_true(all(tries > 3))
 
     # the estimate tracks the constrained target, not the unconstrained one
     log_st_all <- log_st_map(

@@ -21,10 +21,12 @@
 #' sample less accurate.
 #' * **Standard deviation of the log weights**: More variable weights (larger s.d.)
 #' indicate less efficient sampling.
-#' * **Maximum unique plans:** The number of distinct plans from the previous
+#' * **Unique plan ancestors:** The number of distinct plans from the previous
 #' step that became parents of the plans at this step. The percentage in
 #' parentheses is relative to the number expected if the weights were even,
-#' about 63% of the samples, so it can be above 100%.
+#' about 63% of the samples (1 - 1/e, the theoretical expected percentage if
+#' all weights were uniform and each parent had equal chance of being split), 
+#' so it can be above 100%.
 #' * **Unique plans**: The number of distinct plans after each split, and after
 #' the final resampling. Only shown for plans that stored it.
 #' * **Estimated `k` parameter**: For graph space plans displays how many

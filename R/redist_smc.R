@@ -1806,7 +1806,7 @@ est_log_norm_const <- function(plans, include_extra_tries) {
         lapply(initial_log_weights, function(x) x)
     )
 
-    return(log_norm_estimates)
+    log_norm_estimates
 }
 
 
