@@ -23,8 +23,8 @@ redist.prec.pop.overlap(
 object and will use the population in that object. If nothing is provided, it weights
 all entries in plan equally.}
 
-\item{weighting}{Should weighting be done by sum of populations `'s'`, mean of
-populations `'m'`, geometric mean of populations `'g'`, or none `'n'`}
+\item{weighting}{Should weighting be done by sum of populations \code{'s'}, mean of
+populations \code{'m'}, geometric mean of populations \code{'g'}, or none \code{'n'}}
 
 \item{normalize}{Should entries be normalized by the total population}
 

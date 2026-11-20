@@ -16,7 +16,7 @@
 \item{\dots}{additional arguments}
 }
 \value{
-Prints to console and returns input redist_constr
+Invisibly returns the input \code{redist_constr}
 }
 \description{
 Generic to print redist_constr

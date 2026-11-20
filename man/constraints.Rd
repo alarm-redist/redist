@@ -16,11 +16,24 @@
 \alias{add_constr_polsby}
 \alias{add_constr_fry_hold}
 \alias{add_constr_log_st}
-\alias{add_constr_edges_rem}
+\alias{add_constr_seats}
 \alias{add_constr_custom}
+\alias{add_constr_edges_rem}
+\alias{add_constr_plan_splits}
+\alias{add_constr_total_plan_splits}
+\alias{add_constr_plan_incumbency}
+\alias{add_constr_min_group_frac}
+\alias{add_constr_custom_plan}
 \title{Sampling constraints}
 \usage{
-add_constr_status_quo(constr, strength, current)
+add_constr_status_quo(
+  constr,
+  strength,
+  current,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
+  thresh = NULL
+)
 
 add_constr_grp_pow(
   constr,
@@ -29,7 +42,10 @@ add_constr_grp_pow(
   total_pop = NULL,
   tgt_group = 0.5,
   tgt_other = 0.5,
-  pow = 1
+  pow = 1,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
+  thresh = NULL
 )
 
 add_constr_grp_hinge(
@@ -37,7 +53,10 @@ add_constr_grp_hinge(
   strength,
   group_pop,
   total_pop = NULL,
-  tgts_group = c(0.55)
+  tgts_group = c(0.55),
+  only_nregions = FALSE,
+  only_nseats = FALSE,
+  thresh = NULL
 )
 
 add_constr_grp_inv_hinge(
@@ -45,38 +64,173 @@ add_constr_grp_inv_hinge(
   strength,
   group_pop,
   total_pop = NULL,
-  tgts_group = c(0.55)
+  tgts_group = c(0.55),
+  only_nregions = FALSE,
+  only_nseats = FALSE,
+  thresh = NULL
 )
 
-add_constr_compet(constr, strength, dvote, rvote, pow = 0.5)
+add_constr_compet(
+  constr,
+  strength,
+  dvote,
+  rvote,
+  pow = 0.5,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
+  thresh = NULL
+)
 
-add_constr_incumbency(constr, strength, incumbents)
+add_constr_incumbency(
+  constr,
+  strength,
+  incumbents,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
+  thresh = NULL
+)
 
-add_constr_splits(constr, strength, admin)
+add_constr_splits(
+  constr,
+  strength,
+  admin,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
+  thresh = NULL
+)
 
-add_constr_multisplits(constr, strength, admin)
+add_constr_multisplits(
+  constr,
+  strength,
+  admin,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
+  thresh = NULL
+)
 
-add_constr_total_splits(constr, strength, admin)
+add_constr_total_splits(
+  constr,
+  strength,
+  admin,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
+  thresh = NULL
+)
 
-add_constr_pop_dev(constr, strength)
+add_constr_pop_dev(
+  constr,
+  strength,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
+  thresh = NULL
+)
 
-add_constr_segregation(constr, strength, group_pop, total_pop = NULL)
+add_constr_segregation(
+  constr,
+  strength,
+  group_pop,
+  total_pop = NULL,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
+  thresh = NULL
+)
 
-add_constr_polsby(constr, strength, perim_df = NULL)
+add_constr_polsby(
+  constr,
+  strength,
+  perim_df = NULL,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
+  thresh = NULL
+)
 
 add_constr_fry_hold(
   constr,
   strength,
   total_pop = NULL,
   ssdmat = NULL,
-  denominator = 1
+  denominator = 1,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
+  thresh = NULL
 )
 
-add_constr_log_st(constr, strength, admin = NULL)
+add_constr_log_st(
+  constr,
+  strength,
+  admin = NULL,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
+  thresh = NULL
+)
 
-add_constr_edges_rem(constr, strength)
+add_constr_seats(
+  constr,
+  strength,
+  seats,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
+  thresh = NULL
+)
 
-add_constr_custom(constr, strength, fn)
+add_constr_custom(
+  constr,
+  strength,
+  fn,
+  only_nregions = FALSE,
+  only_nseats = FALSE,
+  thresh = NULL
+)
+
+add_constr_edges_rem(
+  constr,
+  strength,
+  use_frac = FALSE,
+  only_nregions = FALSE,
+  thresh = NULL
+)
+
+add_constr_plan_splits(
+  constr,
+  strength,
+  admin,
+  only_nregions = FALSE,
+  thresh = NULL
+)
+
+add_constr_total_plan_splits(
+  constr,
+  strength,
+  admin,
+  only_nregions = FALSE,
+  thresh = NULL
+)
+
+add_constr_plan_incumbency(
+  constr,
+  strength,
+  incumbents,
+  only_nregions = FALSE,
+  thresh = NULL
+)
+
+add_constr_min_group_frac(
+  constr,
+  strength,
+  group_pops,
+  total_pops,
+  min_fracs,
+  only_nregions = FALSE,
+  thresh = NULL
+)
+
+add_constr_custom_plan(
+  constr,
+  strength,
+  fn,
+  only_nregions = FALSE,
+  thresh = NULL
+)
 }
 \arguments{
 \item{constr}{A \code{\link[=redist_constr]{redist_constr()}} object}
@@ -84,6 +238,19 @@ add_constr_custom(constr, strength, fn)
 \item{strength}{The strength of the constraint. Higher values mean a more restrictive constraint.}
 
 \item{current}{The reference map for the status quo constraint.}
+
+\item{only_nregions}{Whether or not to only apply entire-plan or region constraints
+when the plan has a particular number of regions. A value of \code{FALSE} means
+the constraint will applied to plans at every step.}
+
+\item{only_nseats}{Whether or not to only apply region constraints
+when the region has a particular number of seats. A value of \code{FALSE} means
+the constraint will applied to regions at every number of seats.}
+
+\item{thresh}{Thresholding value for constraints. If set then any plan where
+the constraints score is greater than or equal to \code{thresh} will be rejected
+at the splitting stage, ensuring that none of those plans will be in the final
+sample.}
 
 \item{group_pop}{A vector of group population}
 
@@ -99,18 +266,32 @@ add_constr_custom(constr, strength, fn)
 
 \item{incumbents}{A vector of unit indices for incumbents. For example, if
 three incumbents live in the precincts that correspond to rows 1, 2, and
-100 of your [redist_map], entering incumbents = c(1, 2, 100) would avoid
+100 of your \link{redist_map}, entering incumbents = c(1, 2, 100) would avoid
 having two or more incumbents be in the same district.}
 
 \item{admin}{A vector indicating administrative unit membership}
 
-\item{perim_df}{A dataframe output from `redistmetrics::prep_perims`}
+\item{perim_df}{A dataframe output from \code{redistmetrics::prep_perims}}
 
 \item{ssdmat}{Squared distance matrix for Fryer Holden constraint}
 
 \item{denominator}{Fryer Holden minimum value to normalize by. Default is 1 (no normalization).}
 
+\item{seats}{The desired seat values. These must be between 1 and \code{nseats}.
+Any region whose seat count is in \code{seats} will return a raw score of 1.}
+
 \item{fn}{A function}
+
+\item{use_frac}{Whether or not to normalize the number of edges removed by
+the total number of edges in the graph. If \code{TRUE} then the raw score will be
+bounded between 0 and 1.}
+
+\item{group_pops}{A list of vectors of target group populations}
+
+\item{total_pops}{A list of vectors of total populations}
+
+\item{min_fracs}{A vector of minimum fraction thresholds for each of the
+different population sets}
 }
 \description{
 The \code{\link[=redist_smc]{redist_smc()}} and \code{\link[=redist_mergesplit]{redist_mergesplit()}} algorithms in this package allow
@@ -124,8 +305,28 @@ All constraints are fed into a Gibbs measure, with coefficients on each
 constraint set by the corresponding \code{strength} parameter.
 The strength can be any real number, with zero corresponding to no constraint.
 Higher and higher \code{strength} values will eventually cause the algorithm's
-accuracy and efficiency to suffer. Whenever you use constraints, be sure to
-check all sampling diagnostics.
+accuracy and efficiency to suffer and potentially cause floating point
+overflow errors. Whenever you use constraints, be sure to check all sampling
+diagnostics.
+
+An optional \code{thresh} value can also be set as well to incorporate hard
+thresholding. Setting a \code{thresh} value turns that constraint into an indicator
+function meaning when the output of a constraint is greater than or equal to
+\code{thresh} the plan will automatically be rejected at the splitting stage. If
+the constraint score is less than the threshold it will not affect the weights
+at all. This ensures that in the final sample there will be no plans with
+scores at or above \code{thresh}. Lower \code{thresh} values will eventually cause the
+algorithms efficiency to suffer. Depending on how its used \code{thresh} can
+violate the theoretical guarantees of the algorithm so caution is advised.
+Please see the appendix of gSMC CITE HERE and the discussion on "splittable"
+score functions for more information.
+
+Optional vales of \code{only_nregions} and \code{only_nseats} can be set for all region-
+based constraints and values of \code{only_nregions} can be set for all plan-based
+constraints. Specifying values for \code{only_nregions} means that the constraint
+will only be applied to plans with regions in the range of values in \code{only_nregions.}
+Likewise for \code{only_nseats} then it will only be applied to regions with a number
+of seats in the \code{only_nseats} range.
 
 The \code{status_quo} constraint adds a term measuring the variation of
 information distance between the plan and the reference, rescaled to [0, 1].
@@ -174,8 +375,7 @@ excess district-county pairs). Values of \code{strength} should generally be
 small, given that the underlying values are counts.
 
 The \code{edges_rem} constraint adds a term counting the number of edges removed from the
-adjacency graph. This is only usable with \code{redist_flip()}, as other algorithms
-implicitly use this via the \code{compactness} parameter. Values of \code{strength} should
+adjacency graph. Values of \code{strength} should
 generally be small, given that the underlying values are counts.
 
 The \code{log_st} constraint constraint adds a term counting the log number of spanning
@@ -195,6 +395,9 @@ as measured by the dissimilarity index.
 The \code{pop_dev} constraint adds a term encouraging plans to have smaller population deviations
 from the target population.
 
+The \code{seats} constraint adds an indicator term for regions with the desired
+number of seats. Values of \code{strength} may be of moderate size.
+
 The \code{custom} constraint allows the user to specify their own constraint using
 a function which evaluates districts one at a time. The provided function
 \code{fn} should take two arguments: a vector describing the current plan
@@ -206,10 +409,37 @@ district combination, where a value of 0 indicates no penalty is applied. If
 users want to penalize an entire plan, they can have the penalty function
 return a scalar that does not depend on the district. It is important that
 \code{fn} not use information from precincts not included in \code{distr}, since in the
-case of SMC these precincts may not be assigned any district at all (\code{plan}
-will take the value of 0 for these precincts). The flexibility of this
-constraint comes with an additional computational cost, since the other
-constraints are written in C++ and so are more performant.
+case of SMC these precincts may not be assigned any district at all.
+The flexibility of this constraint comes with additional computational
+costs, since the other constraints are written in C++ and so are more performant.
+In addition to the cost of not being native C++ code, weights with custom
+R functions can not be computed in parallel and must be computed sequentially.
+This can especially slow down performance on Spanning Forest and Linking Edge
+Space as the weights for those spaces tend to be the slowest step.
+These effects can be somewhat mitigated by by increasing the number of
+processes(\code{nproc}) if multiple runs are being done.
+
+The \code{min_group_frac} constraint adds a term counting the number of districts
+in a plan where the fraction \code{group_pop/total_pop} is greater than or equal to
+a certain threshold, \code{min_frac} for each of the populations passed in.
+
+The \code{custom_plan} constraint allows the user to specify their own constraint using
+a function which evaluates the entire plan. Unlike the \code{custom} constraint,
+this allows users to penalize an entire plan, not just specific districts.
+The provided function \code{fn} should take three arguments: a 1-indexed vector
+describing the current plan assignment for each unit as its first argument,
+a 1-indexed vector mapping region ids to the number of seats in the region,
+and the number of regions the plan has.
+The function must return a single scalar for each plan where a value of 0
+indicates no penalty is applied.
+The flexibility of this constraint comes with additional computational
+costs, since the other constraints are written in C++ and so are more performant.
+In addition to the cost of not being native C++ code, weights with custom
+R functions can not be computed in parallel and must be computed sequentially.
+This can especially slow down performance on Spanning Forest and Linking Edge
+Space as the weights for those spaces tend to be the slowest step.
+These effects can be somewhat mitigated by by increasing the number of
+processes(\code{nproc}) if multiple runs are being done.
 }
 \examples{
 data(iowa)

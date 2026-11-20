@@ -45,9 +45,11 @@ LopsidedWins
 Luo
 MBC
 MH
+MMD
 Maceachren
 Mattingly
 MeanMedian
+Mergesplit
 Moines
 NAD
 NCSL's
@@ -73,6 +75,7 @@ Rodden
 Rosenblatt
 SMC
 SMC's
+SMCS
 Schwartzberg
 SmoothedSeat
 SpatialPolygonsDataFrame
@@ -87,6 +90,7 @@ WVSP
 Warrington
 ZDD
 al
+arg
 autocorr
 betaweights
 borderlength
@@ -96,6 +100,7 @@ coocur
 cyclewalk
 denom
 densplot
+dev
 districting
 districtings
 doi
@@ -116,9 +121,12 @@ ie
 incentivizes
 initializations
 intra
+labelled
 logSpanningTree
 mcmc
+mergesplit
 minorityprop
+multimember
 municpalities
 ncol
 ncores
@@ -141,6 +149,7 @@ replicability
 replicable
 reweighting
 reweights
+rhats
 rsg
 rvote
 scalable
@@ -149,6 +158,8 @@ shp
 smc
 ssd
 ssdmat
+stderr
+subgraphs
 submap
 tgt
 th
@@ -164,4 +175,5 @@ upweight
 upweights
 vap
 vra
+warump
 ’s

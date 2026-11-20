@@ -1,0 +1,613 @@
+/********************************************************
+ * Author: Philip O'Sullivan'
+ * Institution: Harvard University
+ * Date Created: 2024/10
+ * Purpose: Exposes weight calculation functions to R code
+ ********************************************************/
+
+
+#include <atomic>
+#include <thread>
+
+#include <cmath>
+#include <functional>
+#include <sstream>
+#include <string>
+
+#include "map_calc.h"
+#include "merging.h"
+#include "redist_alg_helpers.h"
+#include "tree_op.h"
+#include "tree_splitting.h"
+#include "weights.h"
+#include "threading_helpers.h"
+#include "splitting_schedule_types.h"
+#include "scoring.h"
+#include "random.h"
+#include "wilson.h"
+
+bool DEBUG_MANUAL_WEIGHTS_VERBOSE = false;
+
+
+/*
+ *
+ * Computes the contribution to the log likelihood each each region
+ * and anything that depends on the entire plan.
+ * Has the option
+ */
+// [[Rcpp::export]]
+Rcpp::NumericMatrix compute_log_unnormalized_target_density_components(
+    Rcpp::List const &adj_list, const Rcpp::IntegerVector &counties, const Rcpp::IntegerVector &pop,
+    Rcpp::List const &constraints, double const pop_temper, bool const compute_pop_temper,
+    double const rho, int const ndists, int const total_seats, int const num_regions,
+    Rcpp::IntegerVector const &district_seat_sizes, double const lower, double const target,
+    double const upper, Rcpp::IntegerMatrix const &region_ids,
+    Rcpp::IntegerMatrix const &region_sizes, std::string const &output_type,
+    int num_threads, int const verbosity = 3) {
+    // create the map param object
+    MapParams map_params(list_to_graph(adj_list), 
+        Rcpp::as<std::vector<unsigned int>>(counties), 
+        Rcpp::as<std::vector<unsigned int>>(pop),
+        ndists, total_seats,
+                         Rcpp::as<std::vector<int>>(district_seat_sizes), lower, target, upper,
+                        SamplingSpace::GraphSpace);
+
+    // create thread pool
+    RcppThread::ThreadPool pool = get_thread_pool(num_threads);
+    num_threads = get_num_threads(pool);
+
+    // Add hard constraints to scoring function
+    constraints["plan_valid_district_sizes"] = true;
+    // Create the scoring functions
+    std::vector<ScoringFunction> scoring_functions;
+    scoring_functions.reserve(num_threads);
+    for (size_t thread_id = 0; thread_id < num_threads; thread_id++) {
+        scoring_functions.emplace_back(map_params, constraints, pop_temper, true, thread_id);
+    }
+
+    // Create the plan objects
+    int num_plans = region_ids.ncol();
+
+    int global_rng_seed2 = (int)Rcpp::sample(INT_MAX, 1)[0];
+    std::vector<RNGState> rng_states;
+    rng_states.reserve(1);
+    rng_states.emplace_back(global_rng_seed2, 6);
+
+    // fake splitting schedule, don't actually use
+    // Just need for constructor
+    auto splitting_schedule_ptr = std::make_unique<PureMSSplittingSchedule>(
+        ndists, total_seats, Rcpp::as<std::vector<int>>(district_seat_sizes));
+
+    PlanEnsemble plan_ensemble(map_params, *splitting_schedule_ptr, num_regions, num_plans,
+                               SamplingSpace::GraphSpace, region_ids, region_sizes, rng_states,
+                               pool, verbosity);
+
+    // if its single density that means we only care about the
+    // whole thing, not the components
+    bool just_single_density = output_type == "single";
+
+    Rcpp::NumericMatrix log_unnormalized_component_densities(
+        just_single_density ? 1 : num_regions + 1, num_plans);
+
+    log_unnormalized_component_densities.fill(0.0);
+
+    // single thread if any custom constraints
+    if (scoring_functions[0].any_soft_custom_constraints ||
+        scoring_functions[0].any_hard_custom_constraints) {
+        pool.setNumThreads(1);
+    }
+
+    // Trick to give each thread a unique id
+    // We need the extra steps to avoid the problem where
+    // only some threads persist from previous calls but the counter resets
+    // resulting in multiple threads with the same id
+    static std::atomic<int> global_generation_counter{0};
+    int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
+    std::atomic<int> thread_id_counter{0};
+
+    const int check_int = 50; // check for interrupts every _ iterations
+    if (verbosity >= 3) {
+        Rcpp::Rcout << "Computing Log Target Density!" << std::endl;
+    }
+
+    int const n_threads = num_threads == 0 ? 1 : num_threads;
+    std::vector<PlanMultigraph> plan_multigraph_buffers(n_threads,
+                                                        PlanMultigraph(map_params, false));
+    std::vector<std::vector<bool>> county_component_lookup_buffers(
+        n_threads, std::vector<bool>(num_regions * map_params.num_counties, false));
+    std::vector<CircularQueue<int>> vertex_queue_buffers(n_threads,
+                                                         CircularQueue<int>(map_params.V));
+    std::vector<std::vector<bool>> vertices_visited_buffers(n_threads,
+                                                            std::vector<bool>(map_params.V));
+    std::vector<std::vector<bool>> regions_visited_buffers(n_threads,
+                                                           std::vector<bool>(num_regions));
+    std::vector<std::vector<bool>> zero_prob_component_buffers(
+        n_threads, std::vector<bool>(num_regions + 1));
+
+    RcppThread::ProgressBar bar(num_plans, 1);
+    pool.parallelFor(0, num_plans, [&](int i) {
+        static thread_local int thread_generation_counter = -1;
+        static thread_local int thread_id;
+
+        // check if the thread id was generated this function call
+        if (thread_generation_counter != generation) {
+            // if not then give it a new id
+            thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+            thread_generation_counter = generation;
+        }
+
+        if (thread_id < 0 || thread_id >= static_cast<int>(plan_multigraph_buffers.size())) {
+            std::ostringstream oss;
+            oss << "Thread id " << thread_id << " is outside the "
+                << plan_multigraph_buffers.size() << " per thread buffers!";
+            throw std::runtime_error(oss.str());
+        }
+        PlanMultigraph &plan_multigraph = plan_multigraph_buffers[thread_id];
+        std::vector<bool> &county_component_lookup = county_component_lookup_buffers[thread_id];
+        CircularQueue<int> &vertex_queue = vertex_queue_buffers[thread_id];
+        std::vector<bool> &vertices_visited = vertices_visited_buffers[thread_id];
+        std::vector<bool> &regions_visited = regions_visited_buffers[thread_id];
+        std::vector<bool> &zero_prob_component = zero_prob_component_buffers[thread_id];
+        // we use this to see if a component has 0 probability meaning we can skip other
+        // calculations
+        std::fill(zero_prob_component.begin(), zero_prob_component.end(), false);
+        // if only the entire plan
+        bool entire_prob_zero = false;
+
+        // The region sizes must add up to the total number of seats. Each size
+        // being a valid district size isn't enough (eg sizes 1,2,2,2 when there
+        // are 6 seats), so a plan that doesn't add up has probability zero.
+        int seat_sum = 0;
+        for (int region_id = 0; region_id < num_regions; region_id++) {
+            seat_sum += plan_ensemble.plan_ptr_vec[i]->region_sizes[region_id];
+        }
+        if (seat_sum != total_seats) {
+            if (just_single_density) {
+                log_unnormalized_component_densities(0, i) = R_NegInf;
+                if (verbosity >= 3) {
+                    ++bar;
+                }
+                RcppThread::checkUserInterrupt(i % check_int == 0);
+                return; // return to break the loop in the lambda
+            } else {
+                // it's a property of the whole plan so mark the plan component
+                log_unnormalized_component_densities(num_regions, i) = R_NegInf;
+            }
+        }
+
+        // first check each population is ok
+        auto pop_valid_result =
+            plan_ensemble.plan_ptr_vec[i]->all_region_pops_valid(map_params);
+        // get any regions with 0 prob aka neg infinity
+        for (auto const &bad_region_id : pop_valid_result.second) {
+            if (just_single_density) {
+                log_unnormalized_component_densities(0, i) = R_NegInf;
+                entire_prob_zero = true;
+            } else {
+                log_unnormalized_component_densities(bad_region_id, i) = R_NegInf;
+                zero_prob_component[bad_region_id] = true;
+            }
+        }
+        if (entire_prob_zero) {
+            if (verbosity >= 3) {
+                ++bar;
+            }
+            RcppThread::checkUserInterrupt(i % check_int == 0);
+            return; // return to break the loop in the lambda
+        }
+        // Now check for disconnected regions
+        auto disconnected_result = plan_ensemble.plan_ptr_vec[i]->all_regions_connected(
+            map_params.g, vertex_queue, vertices_visited, regions_visited);
+        for (auto const &bad_region_id : disconnected_result.second) {
+            if (just_single_density) {
+                log_unnormalized_component_densities(0, i) = R_NegInf;
+                entire_prob_zero = true;
+            } else {
+                log_unnormalized_component_densities(bad_region_id, i) = R_NegInf;
+                zero_prob_component[bad_region_id] = true;
+            }
+        }
+        if (entire_prob_zero) {
+            if (verbosity >= 3) {
+                ++bar;
+            }
+            RcppThread::checkUserInterrupt(i % check_int == 0);
+            return; // return to break the loop in the lambda
+        }
+
+        // Now check for hierarchiaclly connected
+        bool hierarchically_valid = plan_multigraph.is_hierarchically_valid(
+            *plan_ensemble.plan_ptr_vec[i], county_component_lookup);
+
+        if (!hierarchically_valid) {
+            if (just_single_density) {
+                log_unnormalized_component_densities(0, i) = R_NegInf;
+            } else {
+                for (size_t region_id = 0; region_id < num_regions; region_id++) {
+                    log_unnormalized_component_densities(region_id, i) = R_NegInf;
+                }
+            }
+            if (verbosity >= 3) {
+                ++bar;
+            }
+            RcppThread::checkUserInterrupt(i % check_int == 0);
+            return; // return to break the loop in the lambda
+        }
+
+        // now compute the plan only parts
+        auto plan_only_score_result =
+            scoring_functions[thread_id].compute_plan_score(*plan_ensemble.plan_ptr_vec[i]);
+
+        if (!plan_only_score_result.first) {
+            if (just_single_density) {
+                log_unnormalized_component_densities(0, i) = R_NegInf;
+                entire_prob_zero = true;
+                if (verbosity >= 3) {
+                    ++bar;
+                }
+                RcppThread::checkUserInterrupt(i % check_int == 0);
+                return; // return to break the loop in the lambda
+            } else {
+                log_unnormalized_component_densities(num_regions, i) = R_NegInf;
+            }
+        } else {
+            if (just_single_density) {
+                log_unnormalized_component_densities(0, i) -= plan_only_score_result.second;
+            } else {
+                log_unnormalized_component_densities(num_regions, i) -=
+                    plan_only_score_result.second;
+            }
+        }
+
+        // compute contribution for each region
+        for (size_t region_id = 0; region_id < num_regions; region_id++) {
+            // skip if already probability zero
+            if (zero_prob_component[region_id])
+                continue;
+            bool region_prob_zero = false;
+
+            auto region_score_result = scoring_functions[thread_id].compute_region_full_score(
+                *plan_ensemble.plan_ptr_vec[i], region_id);
+            if (!region_score_result.first) {
+                if (just_single_density) {
+                    log_unnormalized_component_densities(0, i) = R_NegInf;
+                    entire_prob_zero = true;
+                    if (verbosity >= 3) {
+                        ++bar;
+                    }
+                    RcppThread::checkUserInterrupt(i % check_int == 0);
+                    return; // return to break the loop in the lambda
+                } else {
+                    log_unnormalized_component_densities(region_id, i) = R_NegInf;
+                    region_prob_zero = true;
+                }
+            } else {
+                if (just_single_density) {
+                    log_unnormalized_component_densities(0, i) -= region_score_result.second;
+                } else {
+                    log_unnormalized_component_densities(region_id, i) -=
+                        region_score_result.second;
+                }
+            }
+
+            if (region_prob_zero)
+                continue;
+
+            if (rho != 0) {
+                double region_tau =
+                    rho * plan_ensemble.plan_ptr_vec[i]->compute_log_region_spanning_trees(
+                              map_params, region_id);
+                if (just_single_density) {
+                    log_unnormalized_component_densities(0, i) += region_tau;
+                } else {
+                    log_unnormalized_component_densities(region_id, i) += region_tau;
+                }
+            }
+        }
+
+        if (verbosity >= 3) {
+            ++bar;
+        }
+        RcppThread::checkUserInterrupt(i % check_int == 0);
+    });
+
+    pool.wait();
+
+    return log_unnormalized_component_densities;
+}
+
+// [[Rcpp::export]]
+std::vector<double> compute_plans_log_optimal_weights(
+    Rcpp::List const &adj_list, Rcpp::IntegerVector const &counties, Rcpp::IntegerVector const &pop,
+    Rcpp::List const &constraints, double const pop_temper, double const rho,
+    std::string const &splitting_schedule_str, int const ndists, int const total_seats,
+    Rcpp::IntegerVector const &district_seat_sizes, int const num_regions, double const lower,
+    double const target, double const upper, Rcpp::IntegerMatrix const &region_ids,
+    Rcpp::IntegerMatrix const &region_sizes, int num_threads) {
+    // Create the plan objects
+    int num_plans = region_ids.ncol();
+
+    // sampling space
+    SamplingSpace sampling_space = SamplingSpace::GraphSpace;
+
+    // create thread pool
+    if (num_threads <= 0)
+        num_threads = std::thread::hardware_concurrency();
+    RcppThread::ThreadPool pool = get_thread_pool(num_threads);
+
+    // create the map param object
+    MapParams map_params(list_to_graph(adj_list), 
+        Rcpp::as<std::vector<unsigned int>>(counties), 
+        Rcpp::as<std::vector<unsigned int>>(pop),
+        ndists, total_seats,
+                         Rcpp::as<std::vector<int>>(district_seat_sizes), lower, target, upper,
+                        sampling_space);
+    // Create the scoring function
+    ScoringFunction scoring_function(map_params, constraints, pop_temper, true);
+
+    int global_rng_seed2 = (int)Rcpp::sample(INT_MAX, 1)[0];
+    std::vector<RNGState> rng_states;
+    rng_states.reserve(1);
+    rng_states.emplace_back(global_rng_seed2, 6);
+
+    // get splitting schedule
+    Rcpp::List control;
+    SplittingSizeScheduleType splitting_schedule_type =
+        get_splitting_size_regime(splitting_schedule_str);
+    auto splitting_schedule_ptr = get_splitting_schedule(
+        1, ndists, total_seats, Rcpp::as<std::vector<int>>(district_seat_sizes),
+        splitting_schedule_type);
+    splitting_schedule_ptr->set_potential_cut_sizes_for_each_valid_size(0, num_regions - 1);
+    splitting_schedule_ptr->print_current_step_splitting_info();
+
+    PlanEnsemble plan_ensemble(map_params, *splitting_schedule_ptr, num_regions, num_plans,
+                               SamplingSpace::GraphSpace, region_ids, region_sizes, rng_states,
+                               pool);
+
+    // create the splitter
+    NaiveTopKSplitter tree_splitter(map_params.V, 1);
+
+    std::vector<double> log_weights(num_plans);
+    // Each worker formats into its own slot and the main thread prints them
+    // after `wait()`. Printing from a worker is not thread safe, and
+    // RcppThread's buffered alternative delivers nothing useful here: it only
+    // drains inside `ThreadPool::wait()`, and streaming a RegionID (an
+    // unsigned char) writes it as a character rather than a number.
+    std::vector<std::string> plan_msgs(num_plans);
+
+    const int nsims = plan_ensemble.nsims;
+    const int check_int = 50; // check for interrupts every _ iterations
+
+    static std::atomic<int> global_generation_counter{0};
+    int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
+    std::atomic<int> thread_id_counter{0};
+
+    int const n_threads = num_threads == 0 ? 1 : num_threads;
+    std::vector<PlanMultigraph> plan_multigraph_buffers(
+        n_threads,
+        PlanMultigraph(map_params, sampling_space == SamplingSpace::LinkingEdgeSpace));
+    RcppThread::ProgressBar bar(nsims, 1);
+    // Parallel thread pool where all objects in memory shared by default
+    pool.parallelFor(0, nsims, [&](int i) {
+        static thread_local int thread_generation_counter = -1;
+        static thread_local int thread_id;
+        if (thread_generation_counter != generation) {
+            thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+            thread_generation_counter = generation;
+        }
+        if (thread_id < 0 || thread_id >= static_cast<int>(plan_multigraph_buffers.size())) {
+            std::ostringstream oss;
+            oss << "Thread id " << thread_id << " is outside the "
+                << plan_multigraph_buffers.size() << " per thread buffers!";
+            throw std::runtime_error(oss.str());
+        }
+        PlanMultigraph &plan_multigraph = plan_multigraph_buffers[thread_id];
+        std::ostringstream plan_msg;
+
+        // build the multigraph
+        plan_multigraph.build_plan_multigraph(plan_ensemble.plan_ptr_vec[i]->region_ids,
+                                              plan_ensemble.plan_ptr_vec[i]->num_regions);
+        // `Rprint_detailed` writes through Rcpp::Rcerr, which is an R connection
+        // and must not be touched from a worker thread; take the string instead.
+        plan_msg << plan_multigraph.debug_string_detailed(*plan_ensemble.plan_ptr_vec[i]);
+        // plan_multigraph.pair_map.Rprint();
+        // // remove invalid hierarchical merges
+        // plan_multigraph.remove_invalid_hierarchical_merge_pairs(*plan_ensemble.plan_ptr_vec[i]);
+        // plan_multigraph.pair_map.Rprint();
+        // // remove invalid size pairs
+        // plan_multigraph.remove_invalid_size_pairs(*plan_ensemble.plan_ptr_vec[i],
+        // *splitting_schedule_ptr); plan_multigraph.pair_map.Rprint(); now make the output
+        // vector
+        std::vector<std::tuple<RegionID, RegionID, double>> region_pairs_tuple_vec;
+        region_pairs_tuple_vec.reserve(plan_multigraph.pair_map.num_hashed_pairs);
+
+        double incremental_weight = 0.0;
+
+        for (auto const key_val_pair : plan_multigraph.pair_map.get_all_values()) {
+
+            double log_boundary_len;
+            if (key_val_pair.second.admin_adjacent) {
+                // if administratively adjacent only count within same county
+                log_boundary_len = std::log(key_val_pair.second.within_county_edges);
+            } else {
+                // else only count across county
+                log_boundary_len = std::log(key_val_pair.second.across_county_edges);
+            }
+
+            incremental_weight += std::exp(log_boundary_len);
+            plan_msg << "(" << static_cast<unsigned>(key_val_pair.first.first) << ", "
+                     << static_cast<unsigned>(key_val_pair.first.second) << ") - "
+                     << std::exp(log_boundary_len) << " \n";
+        }
+
+        // REprintf("I=%d\n", i);
+        // log_weights[i] = compute_log_optimal_incremental_weights(
+        //     *plan_ensemble.plan_ptr_vec[i], plan_multigraph,
+        //     *splitting_schedule_ptr, ust_sampler, tree_splitter,
+        //     sampling_space, scoring_function,
+        //     rho, true, is_final
+        // );
+
+        plan_msg << (1.0 / static_cast<double>(incremental_weight)) << " vs "
+                 << std::exp(log_weights[i]) << " \n";
+        plan_msgs[i] = plan_msg.str();
+
+        ++bar;
+
+        RcppThread::checkUserInterrupt(i % check_int == 0);
+    });
+
+    // Wait for all the threads to finish
+    pool.wait();
+    // main thread, so REprintf is safe here
+    for (auto const &msg : plan_msgs) REprintf("%s", msg.c_str());
+    return log_weights;
+}
+
+
+// [[Rcpp::export]]
+std::vector<double> compute_plans_log_simple_weights(
+    Rcpp::List const &adj_list, Rcpp::IntegerVector const &counties, Rcpp::IntegerVector const &pop,
+    Rcpp::List const &constraints, double const pop_temper, double const rho,
+    std::string const &splitting_schedule_str, int const ndists, int const total_seats,
+    Rcpp::IntegerVector const &district_seat_sizes, int const num_regions, double const lower,
+    double const target, double const upper, Rcpp::IntegerMatrix const &region_ids,
+    Rcpp::IntegerMatrix const &region_sizes, int num_threads) {
+    // Create the plan objects
+    int num_plans = region_ids.ncol();
+
+    // sampling space
+    SamplingSpace sampling_space = SamplingSpace::GraphSpace;
+
+    // create thread pool
+    if (num_threads <= 0)
+        num_threads = std::thread::hardware_concurrency();
+    RcppThread::ThreadPool pool = get_thread_pool(num_threads);
+
+    // create the map param object
+    MapParams map_params(list_to_graph(adj_list), 
+        Rcpp::as<std::vector<unsigned int>>(counties), 
+        Rcpp::as<std::vector<unsigned int>>(pop),
+        ndists, total_seats,
+                         Rcpp::as<std::vector<int>>(district_seat_sizes), lower, target, upper, sampling_space);
+    // Create the scoring function
+    ScoringFunction scoring_function(map_params, constraints, pop_temper, true);
+
+    int global_rng_seed2 = (int)Rcpp::sample(INT_MAX, 1)[0];
+    std::vector<RNGState> rng_states;
+    rng_states.reserve(1);
+    rng_states.emplace_back(global_rng_seed2, 6);
+
+    // get splitting schedule
+    Rcpp::List control;
+    SplittingSizeScheduleType splitting_schedule_type =
+        get_splitting_size_regime(splitting_schedule_str);
+    auto splitting_schedule_ptr = get_splitting_schedule(
+        1, ndists, total_seats, Rcpp::as<std::vector<int>>(district_seat_sizes),
+        splitting_schedule_type);
+    splitting_schedule_ptr->set_potential_cut_sizes_for_each_valid_size(0, num_regions - 1);
+    splitting_schedule_ptr->print_current_step_splitting_info();
+
+    PlanEnsemble plan_ensemble(map_params, *splitting_schedule_ptr, num_regions, num_plans,
+                               SamplingSpace::GraphSpace, region_ids, region_sizes, rng_states,
+                               pool);
+
+    // create the splitter
+    NaiveTopKSplitter tree_splitter(map_params.V, 1);
+
+    std::vector<double> log_weights(num_plans);
+    // Each worker formats into its own slot and the main thread prints them
+    // after `wait()`. Printing from a worker is not thread safe, and
+    // RcppThread's buffered alternative delivers nothing useful here: it only
+    // drains inside `ThreadPool::wait()`, and streaming a RegionID (an
+    // unsigned char) writes it as a character rather than a number.
+    std::vector<std::string> plan_msgs(num_plans);
+
+    const int nsims = plan_ensemble.nsims;
+    const int check_int = 50; // check for interrupts every _ iterations
+
+    static std::atomic<int> global_generation_counter{0};
+    int const generation = global_generation_counter.fetch_add(1, std::memory_order_relaxed);
+    std::atomic<int> thread_id_counter{0};
+
+    int const n_threads = num_threads == 0 ? 1 : num_threads;
+    std::vector<PlanMultigraph> plan_multigraph_buffers(
+        n_threads,
+        PlanMultigraph(map_params, sampling_space == SamplingSpace::LinkingEdgeSpace));
+    RcppThread::ProgressBar bar(nsims, 1);
+    // Parallel thread pool where all objects in memory shared by default
+    pool.parallelFor(0, nsims, [&](int i) {
+        static thread_local int thread_generation_counter = -1;
+        static thread_local int thread_id;
+        if (thread_generation_counter != generation) {
+            thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+            thread_generation_counter = generation;
+        }
+        if (thread_id < 0 || thread_id >= static_cast<int>(plan_multigraph_buffers.size())) {
+            std::ostringstream oss;
+            oss << "Thread id " << thread_id << " is outside the "
+                << plan_multigraph_buffers.size() << " per thread buffers!";
+            throw std::runtime_error(oss.str());
+        }
+        PlanMultigraph &plan_multigraph = plan_multigraph_buffers[thread_id];
+        std::ostringstream plan_msg;
+
+        // build the multigraph
+        plan_multigraph.build_plan_multigraph(plan_ensemble.plan_ptr_vec[i]->region_ids,
+                                              plan_ensemble.plan_ptr_vec[i]->num_regions);
+        // `Rprint_detailed` writes through Rcpp::Rcerr, which is an R connection
+        // and must not be touched from a worker thread; take the string instead.
+        plan_msg << plan_multigraph.debug_string_detailed(*plan_ensemble.plan_ptr_vec[i]);
+        // plan_multigraph.pair_map.Rprint();
+        // // remove invalid hierarchical merges
+        // plan_multigraph.remove_invalid_hierarchical_merge_pairs(*plan_ensemble.plan_ptr_vec[i]);
+        // plan_multigraph.pair_map.Rprint();
+        // // remove invalid size pairs
+        // plan_multigraph.remove_invalid_size_pairs(*plan_ensemble.plan_ptr_vec[i],
+        // *splitting_schedule_ptr); plan_multigraph.pair_map.Rprint(); now make the output
+        // vector
+        std::vector<std::tuple<RegionID, RegionID, double>> region_pairs_tuple_vec;
+        region_pairs_tuple_vec.reserve(plan_multigraph.pair_map.num_hashed_pairs);
+
+        double incremental_weight = 0.0;
+
+        for (auto const key_val_pair : plan_multigraph.pair_map.get_all_values()) {
+
+            double log_boundary_len;
+            if (key_val_pair.second.admin_adjacent) {
+                // if administratively adjacent only count within same county
+                log_boundary_len = std::log(key_val_pair.second.within_county_edges);
+            } else {
+                // else only count across county
+                log_boundary_len = std::log(key_val_pair.second.across_county_edges);
+            }
+
+            incremental_weight += std::exp(log_boundary_len);
+            plan_msg << "(" << static_cast<unsigned>(key_val_pair.first.first) << ", "
+                     << static_cast<unsigned>(key_val_pair.first.second) << ") - "
+                     << std::exp(log_boundary_len) << " \n";
+        }
+
+        // REprintf("I=%d\n", i);
+        // log_weights[i] = compute_log_optimal_incremental_weights(
+        //     *plan_ensemble.plan_ptr_vec[i], plan_multigraph,
+        //     *splitting_schedule_ptr, ust_sampler, tree_splitter,
+        //     sampling_space, scoring_function,
+        //     rho, true, is_final
+        // );
+
+        plan_msg << (1.0 / static_cast<double>(incremental_weight)) << " vs "
+                 << std::exp(log_weights[i]) << " \n";
+        plan_msgs[i] = plan_msg.str();
+
+        ++bar;
+
+        RcppThread::checkUserInterrupt(i % check_int == 0);
+    });
+
+    // Wait for all the threads to finish
+    pool.wait();
+    // main thread, so REprintf is safe here
+    for (auto const &msg : plan_msgs) REprintf("%s", msg.c_str());
+    return log_weights;
+}

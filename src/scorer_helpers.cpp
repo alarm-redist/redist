@@ -1,8 +1,10 @@
-#include <RcppArmadillo.h>
+#include <functional>
+
+#include <Rcpp.h>
 #include <algorithm>
 #include <vector>
 
-#include "smc_base.h"
+#include "random.h"
 
 using namespace Rcpp;
 
@@ -17,7 +19,7 @@ NumericVector k_smallest(NumericMatrix x, int k = 1) {
         for (int j = 0; j < nrow; j++) {
             col[j] = x(j, i);
         }
-        out[i] = col[select_k(col, k)];
+        out[i] = col[global_rng_select_k(col, k)];
     }
 
     return out;

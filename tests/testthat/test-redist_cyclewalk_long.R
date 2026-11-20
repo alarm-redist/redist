@@ -14,7 +14,8 @@ test_that("cycle walk distribution matches expected (log st distribution)", {
         warmup = 10000,
         init_plan = grid$init,
         compactness = 1,
-        verbose = FALSE
+        verbose = FALSE,
+        silent = TRUE
     )
 
     cut_edge_counts <- comp_edges_rem(result, shp = grid) |> by_plan(ndists = 4)
@@ -41,7 +42,8 @@ test_that("cycle walk distribution without spanning forest weighting (uniform ov
         warmup = 10000,
         init_plan = grid$init,
         compactness = 0,
-        verbose = FALSE
+        verbose = FALSE,
+        silent = TRUE
     )
 
     cut_edge_counts <- comp_edges_rem(result, shp = grid) |> by_plan(ndists = 4)
@@ -68,7 +70,8 @@ test_that("longer chain produces stable distribution (log st distribution)", {
         warmup = 10000,
         init_plan = grid$init,
         compactness = 1,
-        verbose = FALSE
+        verbose = FALSE,
+        silent = TRUE
     )
 
     cut_edge_counts <- comp_edges_rem(result, shp = grid) |> by_plan(ndists = 4)

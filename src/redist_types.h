@@ -1,20 +1,18 @@
 #pragma once
-#ifndef TYPES_H
-#define TYPES_H
-
-#ifndef ARMA_NO_DEBUG
-#define ARMA_NO_DEBUG
-#endif
-
-#define PRINT_LN Rcout << __func__ << "(), " << __FILE__ << ":" << __LINE__ << "\n";
+#ifndef GREDIST_TYPES_H
+#define GREDIST_TYPES_H
 
 #include <vector>
+#include <unordered_map>
 
-// [[Rcpp::depends(RcppArmadillo)]]
-#include <RcppArmadillo.h>
 
+// old types
 typedef std::vector<std::vector<int>> Tree;
 typedef std::vector<std::vector<int>> Graph;
-typedef std::vector<std::vector<std::vector<int>>> Multigraph;
+
+
+typedef std::vector<std::unordered_map<int, int>> RegionMultigraphCount;
+
+
 
 #endif

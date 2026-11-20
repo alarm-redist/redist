@@ -9,6 +9,8 @@
 
 #ifndef MAKE_SWAPS_HELPER_H
 #define MAKE_SWAPS_HELPER_H
+
+#include <Rcpp.h>
 #include "redist_types.h"
 
 Rcpp::List adjcheck_propcd(Rcpp::List aList, Rcpp::NumericVector prop_partitions,
@@ -18,7 +20,8 @@ int countpartitions(Rcpp::List aList);
 Rcpp::NumericVector update_distpop(Rcpp::NumericVector prop_partition,
                                    Rcpp::NumericVector unitpop_vec, int prop_cd, int curr_cd,
                                    Rcpp::NumericVector distpop_vec);
-double update_mhprob(Rcpp::NumericVector prop_partition, Rcpp::List aList, arma::vec cds,
+double update_mhprob(Rcpp::NumericVector prop_partition, Rcpp::List aList,
+                     Rcpp::NumericVector cds,
                      int prop_cd, double eprob, double mh_prob);
 Rcpp::NumericMatrix calcPWDh(Rcpp::NumericMatrix x);
 Rcpp::NumericVector distParity(Rcpp::NumericMatrix mat, Rcpp::NumericVector popvec);

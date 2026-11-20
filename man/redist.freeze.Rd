@@ -39,7 +39,7 @@ freeze_id <- redist.freeze(adj = fl25_adj, freeze_row = (plan == 2),
 
 data(iowa)
 map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.02)
-map <- map \%>\% merge_by(freeze(cd_2010 == 1, .data = .))
+map <- merge_by(map, freeze(cd_2010 == 1, .data = map))
 
 }
 \concept{prepare}

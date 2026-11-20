@@ -6,7 +6,7 @@
 #include "make_swaps_helper.h"
 #include "redist_types.h"
 #include "shatter_search.h"
-#include <RcppArmadillo.h>
+#include <Rcpp.h>
 using namespace Rcpp;
 
 List crsg(List adj_list, NumericVector population, NumericVector area, NumericVector x_center,

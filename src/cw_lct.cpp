@@ -6,6 +6,8 @@
  * Translated from CycleWalk.jl's splaytrees.jl and linkcuttrees.jl
  ********************************************************/
 
+#include <utility>
+
 #include "cw_lct.h"
 #include <algorithm>
 #include <stdexcept>

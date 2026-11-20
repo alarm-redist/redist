@@ -26,7 +26,8 @@ redist_flip(
   cl_type = "PSOCK",
   return_all = TRUE,
   init_name = NULL,
-  verbose = TRUE
+  verbose = TRUE,
+  silent = FALSE
 )
 }
 \arguments{
@@ -99,6 +100,8 @@ the initial plan in the output.  Defaults to the column name of the
 existing plan, or "\code{<init>}" if the initial plan is sampled.}
 
 \item{verbose}{Whether to print initialization statement. Default is \code{TRUE}.}
+
+\item{silent}{Whether to suppress all diagnostic output (overrides \code{verbose}).}
 }
 \value{
 A \code{\link{redist_plans}} object containing the simulated plans.

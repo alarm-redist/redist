@@ -7,12 +7,12 @@
 \method{plot}{redist_constr}(x, y, type = "group", xlim = c(0, 1), ...)
 }
 \arguments{
-\item{x}{A [redist_constr] object.}
+\item{x}{A \link{redist_constr} object.}
 
 \item{y}{Ignored.}
 
 \item{type}{What type of constraint to visualize. Currently supports only
-`"group"`, for visualizing constraint strength by group share.}
+\code{"group"}, for visualizing constraint strength by group share.}
 
 \item{xlim}{Range of group shares to visualize.}
 
@@ -23,7 +23,7 @@ A ggplot object
 }
 \description{
 Plots the constraint strength versus some running variable. Currently
-supports visualizing the `grp_hinge`, `grp_inv_hinge`, and `grp_pow`
+supports visualizing the \code{grp_hinge}, \code{grp_inv_hinge}, and \code{grp_pow}
 constraints.
 }
 \examples{

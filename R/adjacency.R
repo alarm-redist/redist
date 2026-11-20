@@ -180,7 +180,7 @@ redist.subset <- function(shp, adj, keep_rows, total_pop, ndists, pop_tol, sub_n
     }
 
     rlist <- list(
-        shp = shp %>% dplyr::slice(keep_rows),
+        shp = shp |> dplyr::slice(keep_rows),
         adj = redist.reduce.adjacency(adj, keep_rows = keep_rows),
         keep_rows = keep_rows,
         sub_ndists = sub_ndists,

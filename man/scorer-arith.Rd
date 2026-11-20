@@ -14,11 +14,11 @@
 \method{-}{redist_scorer}(fn1, fn2)
 }
 \arguments{
-\item{x}{a numeric or a `redist_scorer` function, from [`scorers`]}
+\item{x}{a numeric or a \code{redist_scorer} function, from \code{\link{scorers}}}
 
-\item{fn2}{a `redist_scorer` function, from [`scorers`]}
+\item{fn2}{a \code{redist_scorer} function, from \code{\link{scorers}}}
 
-\item{fn1}{a `redist_scorer` function, from [`scorers`]}
+\item{fn1}{a \code{redist_scorer} function, from \code{\link{scorers}}}
 }
 \value{
 function of class redist_scorer

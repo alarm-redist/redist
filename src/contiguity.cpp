@@ -1,3 +1,5 @@
+#include <vector>
+
 #include <Rcpp.h>
 using namespace Rcpp;
 

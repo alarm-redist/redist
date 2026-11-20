@@ -28,12 +28,12 @@ comparability across values.}
 ggplot
 }
 \description{
-Plots the shape of the [add_constr_grp_pow()] penalty.
+Plots the shape of the \code{\link[=add_constr_grp_pow]{add_constr_grp_pow()}} penalty.
 }
 \details{
 This function allows you to plot the un-exponentiated penalty implemented as
-[add_constr_grp_pow()]. The function takes two key inputs,
-`tgt_min` and `tgt_other` which center the minimum penalty spots. A higher y-value
+\code{\link[=add_constr_grp_pow]{add_constr_grp_pow()}}. The function takes two key inputs,
+\code{tgt_min} and \code{tgt_other} which center the minimum penalty spots. A higher y-value
 indicates a higher penalty and incentivizes moving towards a spot with a lower y-value.
 The x-axis indicates the group population proportion in a given district.
 }

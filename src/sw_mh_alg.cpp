@@ -7,43 +7,42 @@
 /////////////////////////////////////
 
 // Header files
+#include <Rcpp.h>
+#include <cli/progress.h>
+#include <time.h>
+
 #include "constraint_calc_helper.h"
 #include "make_swaps_helper.h"
 #include "redist_types.h"
 #include "sw_mh_helper.h"
 #include "tree_op.h"
-#include <R.h>
-#include <RcppArmadillo.h>
-#include <RcppArmadilloExtensions/sample.h>
-#include <cli/progress.h>
-#include <time.h>
+#include "utils.h"
 
 using namespace Rcpp;
 
-List vector_to_list(arma::uvec vecname) {
+namespace{
 
-    List list_out(vecname.n_elem);
-    for (int i = 0; i < vecname.n_elem; i++) {
-        list_out(i) = vecname(i);
+/*
+ * Convert zero-indxed R adjacency list to Graph object (vector of vectors of ints).
+ */
+Graph list_to_graph(const Rcpp::List &l) {
+    int V = l.size();
+    Graph g;
+    for (int i = 0; i < V; i++) {
+        g.push_back(Rcpp::as<std::vector<int>>((Rcpp::IntegerVector)l[i]));
     }
-    return list_out;
+    return g;
 }
 
-arma::uvec get_not_in(arma::uvec vec1, arma::uvec vec2) {
-    int i;
-    arma::uvec findtest;
-    arma::uvec out(vec1.n_elem);
-    for (i = 0; i < vec1.n_elem; i++) {
-        findtest = find(vec2 == vec1(i));
-        if (findtest.n_elem == 0) {
-            out(i) = 1;
-        } else {
-            out(i) = 0;
-        }
-    }
-    arma::uvec candidates = vec1.elem(find(out == 1));
+}
 
-    return candidates;
+List vector_to_list(std::vector<int> const &vecname) {
+
+    List list_out(vecname.size());
+    for (std::size_t i = 0; i < vecname.size(); i++) {
+        list_out(i) = vecname[i];
+    }
+    return list_out;
 }
 
 /* Primary function to run redistricting algorithm. An implementation of
@@ -182,7 +181,7 @@ List swMH(List aList, NumericVector cdvec, NumericVector popvec, int nsims, List
     CharacterVector psi_names = CharacterVector::create(
         "pop_dev", "splits", "multisplits", "total_splits", "segregation", "grp_pow",
         "grp_hinge", "grp_inv_hinge", "compet", "status_quo", "incumbency", "polsby",
-        "fry_hold", "log_st", "edges_removed", "qps", "custom");
+        "fry_hold", "log_st", "edges_removed", "custom");
 
     NumericMatrix psi_store(psi_names.size(), nsims);
     rownames(psi_store) = psi_names;
@@ -227,7 +226,7 @@ List swMH(List aList, NumericVector cdvec, NumericVector popvec, int nsims, List
     List gt_out;
     NumericVector cdvec_prop;
     int i;
-    arma::uvec boundary_precincts;
+    std::vector<int> boundary_precincts;
     List boundary_partitions_list;
 
     if (adapt_beta == "annealing") {
@@ -237,6 +236,7 @@ List swMH(List aList, NumericVector cdvec, NumericVector popvec, int nsims, List
     }
 
     RObject bar = cli_progress_bar(nsims, cli_config(false));
+    
     Graph g = list_to_graph(aList);
     // Open the simulations
     while (k < nsims) {
@@ -269,7 +269,10 @@ List swMH(List aList, NumericVector cdvec, NumericVector popvec, int nsims, List
                     bsearch_boundary(cutedge_lists["connectedlist"], boundary);
                 boundary_partitions_list = boundary_partitions["bsearch"];
             } else {
-                boundary_precincts = find(as<arma::vec>(boundary) == 1);
+                boundary_precincts.clear();
+                for (int b = 0; b < boundary.size(); b++) {
+                    if (boundary(b) == 1) boundary_precincts.push_back(b);
+                }
                 boundary_partitions_list = vector_to_list(boundary_precincts);
             }
 

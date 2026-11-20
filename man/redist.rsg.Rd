@@ -35,13 +35,14 @@ iterations may be advised.}
 \value{
 list, containing three objects containing the completed redistricting
 plan.
-
-- `plan`:  A vector of length N, indicating the
+\itemize{
+\item \code{plan}:  A vector of length N, indicating the
 district membership of each precinct.
-\item `district_list`  A list of length Ndistrict.  Each list contains a
+\item \code{district_list}  A list of length Ndistrict.  Each list contains a
 vector of the precincts in the respective district.
-\item `district_pop`  A vector of length Ndistrict, containing the
+\item \code{district_pop}  A vector of length Ndistrict, containing the
 population totals of the respective districts.
+}
 }
 \description{
 \code{redist.rsg} generates redistricting plans using a random seed a grow

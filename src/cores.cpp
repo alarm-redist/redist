@@ -1,4 +1,5 @@
-#include "smc_base.h"
+#include <Rcpp.h>
+using namespace Rcpp;
 
 // [[Rcpp::export]]
 List cores(List adj, IntegerVector dm, int k, List cd_within_k) {

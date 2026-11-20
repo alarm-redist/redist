@@ -1,4 +1,5 @@
-#include "smc_base.h"
+#include <Rcpp.h>
+using namespace Rcpp;
 
 // [[Rcpp::export]]
 NumericMatrix polsbypopper(IntegerVector from, IntegerVector to, NumericVector area,

@@ -12,7 +12,7 @@
 preproc.shp <- function(shp) {
     if (!is.null(shp)) {
         if (inherits(shp, "SpatialPolygonsDataFrame")) {
-            shp <- shp %>% st_as_sf()
+            shp <- shp |> st_as_sf()
         } else if (!("sf" %in% class(shp))) {
             stop('Please provide "shp" as a SpatialPolygonsDataFrame or sf object.')
         }
@@ -55,8 +55,7 @@ preproc.adj <- function(shp, adj) {
 #'
 #' @return sf dataframe with n rows
 #' @export
-#' @importFrom dplyr union setdiff slice %>%
-#'
+#' @importFrom dplyr union setdiff slice
 #'
 redist.random.subgraph <- function(shp, n, adj = NULL) {
     # Check input:
@@ -83,11 +82,11 @@ redist.random.subgraph <- function(shp, n, adj = NULL) {
         index[i] <- sample(candidates, 1)
 
         # add new candidate options and ignore existing ones
-        candidates <- dplyr::union(candidates, adj[[index[i]]] + 1) %>% dplyr::setdiff(index)
+        candidates <- dplyr::union(candidates, adj[[index[i]]] + 1) |> dplyr::setdiff(index)
     }
 
     list(
-        shp = shp %>% dplyr::slice(sort(index)),
+        shp = shp |> dplyr::slice(sort(index)),
         keep_rows = sort(index)
     )
 }
